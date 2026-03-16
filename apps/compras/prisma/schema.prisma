@@ -79,6 +79,8 @@ model OrdenCompra {
   subtotal      Decimal  @db.Decimal(18, 2)
   iva           Decimal  @db.Decimal(18, 2)
   total         Decimal  @db.Decimal(18, 2)
+  presupuesto_id String? @db.Uuid // Referencia externa al Módulo de Finanzas
+  
   
   proveedor     Proveedor @relation(fields: [proveedor_id], references: [id_proveedor])
   items         OrdenCompraItem[]

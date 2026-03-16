@@ -239,6 +239,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', async (req: Request, r
             iva: subtotal * 0.16,
             total: subtotal * 1.16,
             estado: 'EMITIDA', // Se marca como emitida ya que hay fondos
+            presupuesto_id: presupuesto_id, // Guardamos el link
             items: {
               create: [{
                 tenant_id: tenantId,
@@ -292,6 +293,71 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', async (req: Request, r
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'compras', timestamp: new Date().toISOString() });
 });
+
+// Cancelar Orden de Compra y Liberar Fondos
+app.post('/api/v1/compras/ordenes-compra/:id/cancelar', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const token = req.headers.authorization;
+
+    const result = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        // 1. Buscar la OC
+        const oc = await prisma.ordenCompra.findUnique({
+          where: { id_orden: id }
+        });
+
+        if (!oc) {
+          throw new Error('Orden de Compra no encontrada.');
+        }
+
+        if (oc.estado === 'CANCELADA') {
+          throw new Error('La Orden de Compra ya está cancelada.');
+        }
+
+        if (oc.estado === 'RECIBIDA' || oc.estado === 'COBRADA') {
+          throw new Error('No se puede cancelar una OC que ya ha sido recibida o cobrada.');
+        }
+
+        // 2. [INTEGRACIÓN] Llamar a Finanzas para liberar fondos
+        if (oc.presupuesto_id) {
+          try {
+            console.log(`[Compras] 🔓 Solicitando liberación de presupuesto ${oc.presupuesto_id} por $${oc.total}...`);
+            await axios.post(`${FINANZAS_URL}/liberar-fondos`, {
+              presupuesto_id: oc.presupuesto_id,
+              monto: oc.total.toNumber(),
+              oc_id: oc.id_orden,
+              oc_codigo: oc.codigo,
+              concepto: `Liberación por cancelación de OC ${oc.codigo}`
+            }, {
+              headers: { Authorization: token }
+            });
+            console.log(`[Compras] ✅ Fondos liberados en Finanzas.`);
+          } catch (error: any) {
+             const errMsg = error.response?.data?.error?.message || error.message;
+             console.error('[Compras] ⚠️ Error liberando fondos:', errMsg);
+             // Decisión: Si la liberación falla, ¿cancelamos la OC localmente? 
+             // En este MVP seguiremos para mantener el estado local actualizado.
+          }
+        }
+
+        // 3. Actualizar estado local
+        return await prisma.ordenCompra.update({
+          where: { id_orden: id },
+          data: { estado: 'CANCELADA' }
+        });
+      }
+    );
+
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    console.error('[Compras] Error cancelando OC:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

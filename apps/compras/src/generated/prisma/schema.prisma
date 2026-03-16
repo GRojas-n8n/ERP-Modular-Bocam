@@ -67,18 +67,19 @@ model RequisicionItem {
 
 // --- Transaccional: Órdenes de Compra ---
 model OrdenCompra {
-  id_orden      String   @id @default(uuid()) @db.Uuid
-  tenant_id     String   @db.Uuid
-  proyecto_id   String   @db.Uuid // Centro de Costos
-  proveedor_id  String   @db.Uuid
-  codigo        String   @db.VarChar(50) // Ej. OC-2026-001
-  fecha_emision DateTime @default(now())
-  estado        String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, RECIBIDA, CANCELADA
-  moneda        String   @default("MXN")
-  tipo_cambio   Decimal  @default(1.0) @db.Decimal(18, 4)
-  subtotal      Decimal  @db.Decimal(18, 2)
-  iva           Decimal  @db.Decimal(18, 2)
-  total         Decimal  @db.Decimal(18, 2)
+  id_orden       String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  proyecto_id    String   @db.Uuid // Centro de Costos
+  proveedor_id   String   @db.Uuid
+  codigo         String   @db.VarChar(50) // Ej. OC-2026-001
+  fecha_emision  DateTime @default(now())
+  estado         String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, RECIBIDA, CANCELADA
+  moneda         String   @default("MXN")
+  tipo_cambio    Decimal  @default(1.0) @db.Decimal(18, 4)
+  subtotal       Decimal  @db.Decimal(18, 2)
+  iva            Decimal  @db.Decimal(18, 2)
+  total          Decimal  @db.Decimal(18, 2)
+  presupuesto_id String?  @db.Uuid // Referencia externa al Módulo de Finanzas
 
   proveedor Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
   items     OrdenCompraItem[]

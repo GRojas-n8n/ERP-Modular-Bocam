@@ -542,6 +542,88 @@ app.post('/api/v1/finanzas/comprometer-fondos', async (req: Request, res: Respon
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENDPOINT: POST /api/v1/finanzas/liberar-fondos
+//
+// Complemento de comprometer-fondos. Se usa cuando una OC es cancelada
+// o el monto final de la factura es menor al comprometido.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post('/api/v1/finanzas/liberar-fondos', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const {
+      presupuesto_id, monto, oc_id, oc_codigo, concepto,
+    } = req.body;
+
+    if (!presupuesto_id || !monto || !oc_id || !oc_codigo) {
+      res.status(400).json(createApiError(
+        'FIN_MISSING_FIELDS',
+        'Los campos presupuesto_id, monto, oc_id y oc_codigo son obligatorios.'
+      ));
+      return;
+    }
+
+    const result = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        const presupuesto = await prisma.presupuestoAsignado.findUnique({
+          where: { id_presupuesto: presupuesto_id },
+        });
+
+        if (!presupuesto) {
+          throw new Error('Presupuesto no encontrado.');
+        }
+
+        const montoNum = Number(monto);
+
+        // Crear movimiento de liberación
+        const movimiento = await prisma.movimientoPresupuestal.create({
+          data: {
+            tenant_id: tenantId,
+            proyecto_id: proyectoId,
+            presupuesto_id,
+            tipo: TipoMovimiento.LIBERACION,
+            concepto: concepto || `Liberación de fondos por OC ${oc_codigo} (Cancelación/Ajuste)`,
+            monto: montoNum,
+            referencia_modulo: 'compras',
+            referencia_entidad: 'OrdenCompra',
+            referencia_id: oc_id,
+            referencia_codigo: oc_codigo,
+            usuario_id: userId,
+            notas: 'Proceso automático de liberación de fondos.',
+          },
+        });
+
+        // Actualizar saldos: Disminuir comprometido, Aumentar disponible
+        await prisma.presupuestoAsignado.update({
+          where: { id_presupuesto: presupuesto_id },
+          data: {
+            monto_comprometido: { decrement: montoNum },
+            monto_disponible: { increment: montoNum },
+          },
+        });
+
+        console.log(`[Finanzas] 🔓 FONDOS LIBERADOS: $${montoNum.toLocaleString()} para OC ${oc_codigo}`);
+
+        return {
+          evento: FinanzasEvents.FONDOS_LIBERADOS,
+          movimiento_id: movimiento.id_movimiento,
+          presupuesto_id,
+          monto_liberado: montoNum,
+          oc_id,
+          oc_codigo,
+        };
+      }
+    );
+
+    res.status(201).json(createApiResponse(result, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Finanzas] Error liberando fondos:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al liberar fondos.'));
+  }
+});
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PROGRAMA DE PAGOS — CRUD
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -628,6 +710,65 @@ app.post('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
     res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al programar pago.'));
   }
 });
+
+// Crear programación de pagos masiva
+app.post('/api/v1/finanzas/pagos/bulk', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId, roles } = req.securityContext;
+    const { pagos } = req.body; // Array de pagos
+
+    // Validación RBAC
+    const rolesAutorizados = ['admin', 'superintendent', 'finance'];
+    if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
+      res.status(403).json(createApiError(
+        'FIN_FORBIDDEN',
+        'No tienes permisos para programar pagos.'
+      ));
+      return;
+    }
+
+    if (!pagos || !Array.isArray(pagos) || pagos.length === 0) {
+      res.status(400).json(createApiError(
+        'FIN_INVALID_PAYLOAD',
+        'Se requiere un array de pagos no vacío.'
+      ));
+      return;
+    }
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        const payload = pagos.map((p: any) => ({
+          tenant_id: tenantId,
+          proyecto_id: proyectoId,
+          presupuesto_id: p.presupuesto_id,
+          concepto: p.concepto,
+          beneficiario: p.beneficiario,
+          beneficiario_id: p.beneficiario_id,
+          monto_programado: Number(p.monto_programado),
+          fecha_programada: new Date(p.fecha_programada),
+          estado: 'PENDIENTE',
+          metodo_pago: p.metodo_pago,
+          banco: p.banco,
+          referencia_modulo: p.referencia_modulo,
+          referencia_entidad: p.referencia_entidad,
+          referencia_id: p.referencia_id,
+        }));
+
+        return await prisma.programaPagos.createMany({
+          data: payload,
+        });
+      }
+    );
+
+    console.log(`[Finanzas] ✅ Carga masiva completada: ${pagos.length} pagos registrados.`);
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Finanzas] Error en carga masiva de pagos:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar carga masiva.'));
+  }
+});
+
 
 // Registrar pago realizado (cambiar estado a PAGADO)
 app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response) => {

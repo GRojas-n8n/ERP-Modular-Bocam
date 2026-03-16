@@ -166,7 +166,8 @@ exports.Prisma.OrdenCompraScalarFieldEnum = {
   tipo_cambio: 'tipo_cambio',
   subtotal: 'subtotal',
   iva: 'iva',
-  total: 'total'
+  total: 'total',
+  presupuesto_id: 'presupuesto_id'
 };
 
 exports.Prisma.OrdenCompraItemScalarFieldEnum = {

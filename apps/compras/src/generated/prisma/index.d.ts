@@ -4513,6 +4513,7 @@ export namespace Prisma {
     subtotal: Decimal | null
     iva: Decimal | null
     total: Decimal | null
+    presupuesto_id: string | null
   }
 
   export type OrdenCompraMaxAggregateOutputType = {
@@ -4528,6 +4529,7 @@ export namespace Prisma {
     subtotal: Decimal | null
     iva: Decimal | null
     total: Decimal | null
+    presupuesto_id: string | null
   }
 
   export type OrdenCompraCountAggregateOutputType = {
@@ -4543,6 +4545,7 @@ export namespace Prisma {
     subtotal: number
     iva: number
     total: number
+    presupuesto_id: number
     _all: number
   }
 
@@ -4574,6 +4577,7 @@ export namespace Prisma {
     subtotal?: true
     iva?: true
     total?: true
+    presupuesto_id?: true
   }
 
   export type OrdenCompraMaxAggregateInputType = {
@@ -4589,6 +4593,7 @@ export namespace Prisma {
     subtotal?: true
     iva?: true
     total?: true
+    presupuesto_id?: true
   }
 
   export type OrdenCompraCountAggregateInputType = {
@@ -4604,6 +4609,7 @@ export namespace Prisma {
     subtotal?: true
     iva?: true
     total?: true
+    presupuesto_id?: true
     _all?: true
   }
 
@@ -4706,6 +4712,7 @@ export namespace Prisma {
     subtotal: Decimal
     iva: Decimal
     total: Decimal
+    presupuesto_id: string | null
     _count: OrdenCompraCountAggregateOutputType | null
     _avg: OrdenCompraAvgAggregateOutputType | null
     _sum: OrdenCompraSumAggregateOutputType | null
@@ -4740,6 +4747,7 @@ export namespace Prisma {
     subtotal?: boolean
     iva?: boolean
     total?: boolean
+    presupuesto_id?: boolean
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
     items?: boolean | OrdenCompra$itemsArgs<ExtArgs>
     _count?: boolean | OrdenCompraCountOutputTypeDefaultArgs<ExtArgs>
@@ -4758,6 +4766,7 @@ export namespace Prisma {
     subtotal?: boolean
     iva?: boolean
     total?: boolean
+    presupuesto_id?: boolean
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["ordenCompra"]>
 
@@ -4774,6 +4783,7 @@ export namespace Prisma {
     subtotal?: boolean
     iva?: boolean
     total?: boolean
+    presupuesto_id?: boolean
   }
 
   export type OrdenCompraInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4804,6 +4814,7 @@ export namespace Prisma {
       subtotal: Prisma.Decimal
       iva: Prisma.Decimal
       total: Prisma.Decimal
+      presupuesto_id: string | null
     }, ExtArgs["result"]["ordenCompra"]>
     composites: {}
   }
@@ -5211,6 +5222,7 @@ export namespace Prisma {
     readonly subtotal: FieldRef<"OrdenCompra", 'Decimal'>
     readonly iva: FieldRef<"OrdenCompra", 'Decimal'>
     readonly total: FieldRef<"OrdenCompra", 'Decimal'>
+    readonly presupuesto_id: FieldRef<"OrdenCompra", 'String'>
   }
     
 
@@ -8646,7 +8658,8 @@ export namespace Prisma {
     tipo_cambio: 'tipo_cambio',
     subtotal: 'subtotal',
     iva: 'iva',
-    total: 'total'
+    total: 'total',
+    presupuesto_id: 'presupuesto_id'
   };
 
   export type OrdenCompraScalarFieldEnum = (typeof OrdenCompraScalarFieldEnum)[keyof typeof OrdenCompraScalarFieldEnum]
@@ -9018,6 +9031,7 @@ export namespace Prisma {
     subtotal?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     iva?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: UuidNullableFilter<"OrdenCompra"> | string | null
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
     items?: OrdenCompraItemListRelationFilter
   }
@@ -9035,6 +9049,7 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
+    presupuesto_id?: SortOrderInput | SortOrder
     proveedor?: ProveedorOrderByWithRelationInput
     items?: OrdenCompraItemOrderByRelationAggregateInput
   }
@@ -9056,6 +9071,7 @@ export namespace Prisma {
     subtotal?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     iva?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: UuidNullableFilter<"OrdenCompra"> | string | null
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
     items?: OrdenCompraItemListRelationFilter
   }, "id_orden" | "tenant_id_codigo">
@@ -9073,6 +9089,7 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
+    presupuesto_id?: SortOrderInput | SortOrder
     _count?: OrdenCompraCountOrderByAggregateInput
     _avg?: OrdenCompraAvgOrderByAggregateInput
     _max?: OrdenCompraMaxOrderByAggregateInput
@@ -9096,6 +9113,7 @@ export namespace Prisma {
     subtotal?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     iva?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: UuidNullableWithAggregatesFilter<"OrdenCompra"> | string | null
   }
 
   export type OrdenCompraItemWhereInput = {
@@ -9568,6 +9586,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
     proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
     items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
   }
@@ -9585,6 +9604,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
     items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
   }
 
@@ -9600,6 +9620,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
     items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
   }
@@ -9617,6 +9638,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
   }
 
@@ -9633,6 +9655,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
   }
 
   export type OrdenCompraUpdateManyMutationInput = {
@@ -9647,6 +9670,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrdenCompraUncheckedUpdateManyInput = {
@@ -9662,6 +9686,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrdenCompraItemCreateInput = {
@@ -10202,6 +10227,18 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type ProveedorRelationFilter = {
     is?: ProveedorWhereInput
     isNot?: ProveedorWhereInput
@@ -10235,6 +10272,7 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
+    presupuesto_id?: SortOrder
   }
 
   export type OrdenCompraAvgOrderByAggregateInput = {
@@ -10257,6 +10295,7 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
+    presupuesto_id?: SortOrder
   }
 
   export type OrdenCompraMinOrderByAggregateInput = {
@@ -10272,6 +10311,7 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
+    presupuesto_id?: SortOrder
   }
 
   export type OrdenCompraSumOrderByAggregateInput = {
@@ -10279,6 +10319,21 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type OrdenCompraRelationFilter = {
@@ -10896,6 +10951,31 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -10921,6 +11001,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
     items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
   }
 
@@ -10936,6 +11017,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
     items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
   }
 
@@ -11013,6 +11095,7 @@ export namespace Prisma {
     subtotal?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     iva?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: UuidNullableFilter<"OrdenCompra"> | string | null
   }
 
   export type ComparativaDetalleUpsertWithWhereUniqueWithoutProveedorInput = {
@@ -11299,6 +11382,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
     proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
   }
 
@@ -11315,6 +11399,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
   }
 
   export type OrdenCompraCreateOrConnectWithoutItemsInput = {
@@ -11345,6 +11430,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
   }
 
@@ -11361,6 +11447,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateWithoutCuadroInput = {
@@ -11543,6 +11630,7 @@ export namespace Prisma {
     subtotal: Decimal | DecimalJsLike | number | string
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
   }
 
   export type ComparativaDetalleCreateManyProveedorInput = {
@@ -11568,6 +11656,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
   }
 
@@ -11583,6 +11672,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
   }
 
@@ -11598,6 +11688,7 @@ export namespace Prisma {
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUpdateWithoutProveedorInput = {
