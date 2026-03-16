@@ -1,0 +1,141 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Compras (Procuración)
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Entidad 3 MDM: Proveedor (Tercero) ---
+// Módulo Propietario: Finanzas (Simulado aquí para el MVP de Compras)
+model Proveedor {
+  id_proveedor   String  @id @default(uuid()) @db.Uuid
+  tenant_id      String  @db.Uuid
+  rfc_tax_id     String  @db.VarChar(20)
+  razon_social   String  @db.VarChar(255)
+  email_contacto String? @db.VarChar(100)
+  telefono       String? @db.VarChar(20)
+  estatus        String  @default("ACTIVO") // ACTIVO, VETADO, PENDIENTE
+
+  ordenes      OrdenCompra[]
+  comparativas ComparativaDetalle[]
+
+  @@unique([tenant_id, rfc_tax_id])
+  @@map("proveedores")
+}
+
+// --- Transaccional: Requisiciones ---
+model Requisicion {
+  id_requisicion  String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid // Centro de Costos
+  codigo          String   @db.VarChar(50) // Ej. REQ-2026-001
+  fecha_solicitud DateTime @default(now())
+  solicitante_id  String   @db.Uuid // Referencia a Usuario_Identidad
+  prioridad       String   @default("NORMAL") // BAJA, NORMAL, URGENTE
+  estado          String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, RECHAZADA, COMPRADA
+  observaciones   String?  @db.Text
+
+  items RequisicionItem[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("requisiciones")
+}
+
+model RequisicionItem {
+  id_item        String  @id @default(uuid()) @db.Uuid
+  tenant_id      String  @db.Uuid
+  proyecto_id    String  @db.Uuid
+  requisicion_id String  @db.Uuid
+  insumo_id      String  @db.Uuid // Referencia a MDM: Insumo_Catalogo (Propiedad de Gerencia Técnica)
+  cantidad       Decimal @db.Decimal(18, 4)
+  notas          String? @db.Text
+
+  requisicion Requisicion @relation(fields: [requisicion_id], references: [id_requisicion], onDelete: Cascade)
+
+  @@index([tenant_id, requisicion_id])
+  @@map("requisiciones_items")
+}
+
+// --- Transaccional: Órdenes de Compra ---
+model OrdenCompra {
+  id_orden      String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  proyecto_id   String   @db.Uuid // Centro de Costos
+  proveedor_id  String   @db.Uuid
+  codigo        String   @db.VarChar(50) // Ej. OC-2026-001
+  fecha_emision DateTime @default(now())
+  estado        String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, RECIBIDA, CANCELADA
+  moneda        String   @default("MXN")
+  tipo_cambio   Decimal  @default(1.0) @db.Decimal(18, 4)
+  subtotal      Decimal  @db.Decimal(18, 2)
+  iva           Decimal  @db.Decimal(18, 2)
+  total         Decimal  @db.Decimal(18, 2)
+
+  proveedor Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
+  items     OrdenCompraItem[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("ordenes_compra")
+}
+
+model OrdenCompraItem {
+  id_item         String  @id @default(uuid()) @db.Uuid
+  tenant_id       String  @db.Uuid
+  proyecto_id     String  @db.Uuid
+  orden_id        String  @db.Uuid
+  insumo_id       String  @db.Uuid // Referencia a MDM: Insumo_Catalogo
+  cantidad        Decimal @db.Decimal(18, 4)
+  precio_unitario Decimal @db.Decimal(18, 4)
+  importe         Decimal @db.Decimal(18, 2)
+
+  orden OrdenCompra @relation(fields: [orden_id], references: [id_orden], onDelete: Cascade)
+
+  @@index([tenant_id, orden_id])
+  @@map("ordenes_compra_items")
+}
+
+// --- Operativo: Cuadros Comparativos ---
+model CuadroComparativo {
+  id_cuadro      String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  proyecto_id    String   @db.Uuid
+  requisicion_id String   @db.Uuid
+  codigo         String   @db.VarChar(50) // Ej. CC-2026-001
+  fecha_creacion DateTime @default(now())
+  estado         String   @default("ABIERTO") // ABIERTO, CERRADO, APROBADO
+  notas          String?  @db.Text
+
+  detalles ComparativaDetalle[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("cuadros_comparativos")
+}
+
+model ComparativaDetalle {
+  id_detalle      String  @id @default(uuid()) @db.Uuid
+  tenant_id       String  @db.Uuid
+  proyecto_id     String  @db.Uuid
+  cuadro_id       String  @db.Uuid
+  proveedor_id    String  @db.Uuid
+  insumo_id       String  @db.Uuid
+  precio_ofertado Decimal @db.Decimal(18, 4)
+  tiempo_entrega  String? @db.VarChar(50)
+  es_ganador      Boolean @default(false)
+
+  cuadro    CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
+  proveedor Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
+
+  @@index([tenant_id, cuadro_id])
+  @@map("comparativas_detalles")
+}

@@ -1,0 +1,125 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Finanzas (Tesorería y Flujo de Caja)
+//
+// ARQUITECTURA:
+// Este esquema es INDEPENDIENTE de los demás módulos (Soberanía de Datos).
+// Contiene ÚNICAMENTE las tablas financieras: presupuestos asignados,
+// movimientos presupuestales y programación de pagos.
+// Los demás módulos consultan la suficiencia presupuestal via API HTTP.
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Entidad MDM: Presupuesto Asignado (por Proyecto / Centro de Costos) ────
+// Representa la bolsa de dinero autorizada para cada proyecto.
+// El superintendente o director financiero define este techo presupuestal.
+model PresupuestoAsignado {
+  id_presupuesto String @id @default(uuid()) @db.Uuid
+  tenant_id      String @db.Uuid
+  proyecto_id    String @db.Uuid // Centro de Costos
+
+  codigo             String  @db.VarChar(50) // Ej. PRES-2026-GUA-01
+  descripcion        String  @db.VarChar(500)
+  monto_autorizado   Decimal @db.Decimal(18, 2) // Techo máximo aprobado
+  monto_ejercido     Decimal @default(0) @db.Decimal(18, 2) // Total gastado
+  monto_comprometido Decimal @default(0) @db.Decimal(18, 2) // Congelado por OC emitidas
+  monto_disponible   Decimal @default(0) @db.Decimal(18, 2) // = autorizado - ejercido - comprometido
+  moneda             String  @default("MXN") @db.VarChar(5)
+
+  // Clasificación presupuestal (CAPÍTULO de gasto)
+  capitulo String @default("MATERIALES") // MATERIALES, MANO_OBRA, SUBCONTRATOS, EQUIPOS, INDIRECTOS
+  estatus  String @default("ACTIVO") // ACTIVO, CERRADO, SUSPENDIDO
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  movimientos    MovimientoPresupuestal[]
+  programa_pagos ProgramaPagos[]
+
+  @@unique([tenant_id, proyecto_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, capitulo])
+  @@map("presupuestos_asignados")
+}
+
+// ─── Transaccional: Movimiento Presupuestal ─────────────────────────────────
+// Registro inmutable de cada operación que afecta el presupuesto.
+// Patrón Event-Sourcing: NUNCA se modifica un movimiento, solo se crean nuevos.
+model MovimientoPresupuestal {
+  id_movimiento String @id @default(uuid()) @db.Uuid
+  tenant_id     String @db.Uuid
+  proyecto_id   String @db.Uuid // Centro de Costos
+
+  presupuesto_id String  @db.Uuid
+  tipo           String // COMPROMISO, DEVENGADO, EJERCIDO, LIBERACION, TRANSFERENCIA
+  concepto       String  @db.VarChar(500)
+  monto          Decimal @db.Decimal(18, 2)
+  moneda         String  @default("MXN") @db.VarChar(5)
+
+  // Trazabilidad inter-módulos (ANTI-JOIN: Solo UUIDs, nunca FK cruzada)
+  referencia_modulo  String? @db.VarChar(50) // Ej. "compras", "gerencia-tecnica"
+  referencia_entidad String? @db.VarChar(50) // Ej. "OrdenCompra", "Estimacion"
+  referencia_id      String? @db.Uuid // UUID de la entidad origen
+  referencia_codigo  String? @db.VarChar(50) // Ej. "OC-2026-001" (para lectura humana)
+
+  usuario_id     String   @db.Uuid // Quién ejecutó la operación
+  fecha_registro DateTime @default(now())
+  notas          String?  @db.Text
+
+  presupuesto PresupuestoAsignado @relation(fields: [presupuesto_id], references: [id_presupuesto], onDelete: Cascade)
+
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, presupuesto_id])
+  @@index([referencia_id])
+  @@map("movimientos_presupuestales")
+}
+
+// ─── Transaccional: Programa de Pagos ───────────────────────────────────────
+// Calendariza los pagos comprometidos contra estimaciones o facturas.
+// Permite al tesorero ver flujo de caja proyectado por semana/mes.
+model ProgramaPagos {
+  id_pago     String @id @default(uuid()) @db.Uuid
+  tenant_id   String @db.Uuid
+  proyecto_id String @db.Uuid // Centro de Costos
+
+  presupuesto_id  String  @db.Uuid
+  concepto        String  @db.VarChar(500)
+  beneficiario    String  @db.VarChar(255) // Nombre del proveedor/subcontratista
+  beneficiario_id String? @db.Uuid // UUID del Tercero (referencia inter-módulo)
+
+  monto_programado Decimal @db.Decimal(18, 2)
+  monto_pagado     Decimal @default(0) @db.Decimal(18, 2)
+  moneda           String  @default("MXN") @db.VarChar(5)
+
+  fecha_programada DateTime // Cuándo se espera pagar
+  fecha_pago_real  DateTime? // Cuándo se pagó realmente
+  estado           String    @default("PENDIENTE") // PENDIENTE, PROGRAMADO, PAGADO, CANCELADO, VENCIDO
+
+  // Trazabilidad inter-módulos
+  referencia_modulo  String? @db.VarChar(50)
+  referencia_entidad String? @db.VarChar(50)
+  referencia_id      String? @db.Uuid
+
+  metodo_pago         String? @db.VarChar(50) // TRANSFERENCIA, CHEQUE, EFECTIVO
+  banco               String? @db.VarChar(100)
+  referencia_bancaria String? @db.VarChar(100)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  presupuesto PresupuestoAsignado @relation(fields: [presupuesto_id], references: [id_presupuesto], onDelete: Cascade)
+
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, estado])
+  @@index([tenant_id, fecha_programada])
+  @@map("programa_pagos")
+}

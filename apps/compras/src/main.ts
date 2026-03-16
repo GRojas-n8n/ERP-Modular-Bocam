@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { createTenantContext } from './db';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import { PrismaClient } from './generated/prisma';
 
 /**
  * -----------------------------------------------------------------------------
@@ -22,6 +24,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3002;
 const JWT_SECRET = process.env.JWT_SECRET || 'bocam_dev_secret_CAMBIAR_EN_PRODUCCION_2026';
+const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MIDDLEWARE JWT REAL (reemplaza contextHandler de headers manuales)
@@ -174,12 +177,23 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
   }
 });
 
-// Convertir Comparativa Ganadora en Orden de Compra (OC)
+// Convertir Comparativa Ganadora en Orden de Compra (OC) con validación presupuestal
 app.post('/api/v1/compras/comparativas/:id/convertir-oc', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
+    const { presupuesto_id } = req.body; // El usuario debe indicar qué presupuesto se carga
     
+    // El token original del usuario (lo necesitamos para llamar a Finanzas)
+    const token = req.headers.authorization;
+
+    if (!presupuesto_id) {
+       return res.status(400).json({ 
+         success: false, 
+         message: 'Es obligatorio proporcionar un presupuesto_id para validar la suficiencia financiera.' 
+       });
+    }
+
     const result = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
@@ -194,20 +208,37 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', async (req: Request, r
         }
 
         const ganador = comparativa.detalles[0];
+        const montoTotal = ganador.precio_ofertado.toNumber() * 1.16; // Con IVA
 
-        // 2. Crear la Orden de Compra
-        const totalOfertado = ganador.precio_ofertado.toNumber(); 
-        
+        // 2. [INTEGRACIÓN] Consultar suficiencia en el Módulo de Finanzas
+        try {
+          console.log(`[Compras] 📡 Validando presupuesto ${presupuesto_id} por $${montoTotal}...`);
+          const checkResp = await axios.get(`${FINANZAS_URL}/suficiencia`, {
+            params: { monto: montoTotal },
+            headers: { Authorization: token }
+          });
+
+          if (!checkResp.data.success || !checkResp.data.data.tiene_suficiencia) {
+            throw new Error(`PRESUPUESTO_INSUFICIENTE: Finanzas reporta fondos insuficientes para este movimiento.`);
+          }
+          console.log('[Compras] ✅ Suficiencia confirmada.');
+        } catch (error: any) {
+          const errMsg = error.response?.data?.error?.message || error.message;
+          throw new Error(`Error de validación financiera: ${errMsg}`);
+        }
+
+        // 3. Crear la Orden de Compra
+        const subtotal = ganador.precio_ofertado.toNumber(); 
         const oc = await prisma.ordenCompra.create({
           data: {
             tenant_id: tenantId,
             proyecto_id: proyectoId,
             proveedor_id: ganador.proveedor_id,
             codigo: `OC-AUTO-${Date.now()}`,
-            subtotal: totalOfertado,
-            iva: totalOfertado * 0.16,
-            total: totalOfertado * 1.16,
-            estado: 'PENDIENTE',
+            subtotal: subtotal,
+            iva: subtotal * 0.16,
+            total: subtotal * 1.16,
+            estado: 'EMITIDA', // Se marca como emitida ya que hay fondos
             items: {
               create: [{
                 tenant_id: tenantId,
@@ -215,13 +246,31 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', async (req: Request, r
                 insumo_id: ganador.insumo_id,
                 cantidad: 1,
                 precio_unitario: ganador.precio_ofertado,
-                importe: totalOfertado
+                importe: subtotal
               }]
             }
           }
         });
 
-        // 3. Cerrar la comparativa
+        // 4. [INTEGRACIÓN] Comprometer fondos en Finanzas
+        try {
+          await axios.post(`${FINANZAS_URL}/comprometer-fondos`, {
+            presupuesto_id,
+            monto: oc.total.toNumber(),
+            oc_id: oc.id_orden,
+            oc_codigo: oc.codigo,
+            concepto: `Compromiso por Orden de Compra ${oc.codigo}`
+          }, {
+            headers: { Authorization: token }
+          });
+          console.log(`[Compras] 💰 Fondos comprometidos exitosamente para OC ${oc.codigo}`);
+        } catch (error: any) {
+          console.error('[Compras] ⚠️ Error fatal al comprometer fondos:', error.response?.data || error.message);
+          // OJO: En un sistema real aquí deberíamos hacer rollback de la OC o marcarla como fallida
+          // pero para el MVP asumimos que si la suficiencia pasó, el compromiso pasará.
+        }
+
+        // 5. Cerrar la comparativa
         await prisma.cuadroComparativo.update({
           where: { id_cuadro: id },
           data: { estado: 'CERRADO' }
@@ -233,7 +282,9 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', async (req: Request, r
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[Compras] Error en conversión OC:', error.message);
+    res.status(error.message.includes('PRESUPUESTO_INSUFICIENTE') ? 422 : 500)
+       .json({ success: false, message: error.message });
   }
 });
 

@@ -3,7 +3,7 @@
  * Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
  * Clasificación: Estrictamente Confidencial.
  * ---------------------------------------------------------------------------
- * Módulo: Gerencia Técnica
+ * Módulo: Compras (Procuración)
  * Archivo: types.ts — Tipos compartidos, interfaces y contratos del módulo.
  * ---------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ export function createApiResponse<T>(data: T, tenantId?: string, proyectoId?: st
     data,
     meta: {
       timestamp: new Date().toISOString(),
-      module: 'gerencia-tecnica',
+      module: 'compras',
       tenant_id: tenantId,
       proyecto_id: proyectoId,
     },
@@ -72,7 +72,7 @@ export function createApiError(code: string, message: string, details?: unknown)
     error: { code, message, details },
     meta: {
       timestamp: new Date().toISOString(),
-      module: 'gerencia-tecnica',
+      module: 'compras',
     },
   };
 }

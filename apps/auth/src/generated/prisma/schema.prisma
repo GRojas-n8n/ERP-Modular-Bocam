@@ -1,0 +1,112 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Auth (IAM — Identity & Access Management)
+//
+// ARQUITECTURA:
+// Este esquema es INDEPENDIENTE de los demás módulos (Soberanía de Datos).
+// Contiene ÚNICAMENTE las tablas de identidad y sesiones.
+// Los demás módulos referencian a los usuarios por UUID, nunca por JOIN cruzado.
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Entidad MDM: Tenant (Constructora / Cliente del SaaS) ---
+model Tenant {
+  id_tenant     String   @id @default(uuid()) @db.Uuid
+  nombre        String   @db.VarChar(255)
+  rfc           String?  @db.VarChar(20)
+  logo_url      String?  @db.VarChar(500)
+  primary_color String?  @db.VarChar(50) // HSL value para White-Label
+  plan          String   @default("BASICO") // BASICO, PROFESIONAL, ENTERPRISE
+  activo        Boolean  @default(true)
+  created_at    DateTime @default(now())
+
+  usuarios  User[]
+  proyectos Proyecto[]
+
+  @@map("tenants")
+}
+
+// --- Entidad MDM: Proyecto (Centro de Costos / Sucursal) ---
+model Proyecto {
+  id_proyecto          String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  codigo_centro_costos String   @db.VarChar(50) // Ej. CC-2026-GUA-01
+  nombre_oficial       String   @db.VarChar(255)
+  tipo_contrato        String   @default("PRECIOS_UNITARIOS") // PRECIOS_UNITARIOS, PRECIO_ALZADO, EPC, MIXTO
+  moneda_base          String   @default("MXN") @db.VarChar(5)
+  estatus              String   @default("CONSTRUCCION") // LICITACION, ADJUDICADO, CONSTRUCCION, CIERRE_TECNICO, CIERRE_FINANCIERO
+  activo               Boolean  @default(true)
+  created_at           DateTime @default(now())
+
+  tenant       Tenant              @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  asignaciones UserProjectAccess[]
+
+  @@unique([tenant_id, codigo_centro_costos])
+  @@index([tenant_id])
+  @@map("proyectos")
+}
+
+// --- Entidad MDM: Usuario_Identidad (Colaborador / Aprobador) ---
+model User {
+  id_usuario                   String   @id @default(uuid()) @db.Uuid
+  tenant_id                    String   @db.Uuid
+  email                        String   @db.VarChar(255)
+  password_hash                String   @db.VarChar(255)
+  nombre                       String   @db.VarChar(150)
+  rol_global                   String[] // Ej: ['superintendent', 'admin']
+  limite_aprobacion_financiera Decimal  @default(0) @db.Decimal(18, 2)
+  activo                       Boolean  @default(true)
+  created_at                   DateTime @default(now())
+  updated_at                   DateTime @updatedAt
+
+  tenant           Tenant              @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  tokens           RefreshToken[]
+  proyectos_acceso UserProjectAccess[]
+
+  @@unique([tenant_id, email])
+  @@index([tenant_id])
+  @@map("users")
+}
+
+// --- Tabla Puente: Acceso de Usuario a Proyectos ---
+// Implementa la directiva RBAC: "proyectos_autorizados (Array de UUIDs)"
+model UserProjectAccess {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  proyecto_id  String   @db.Uuid
+  rol_proyecto String?  @db.VarChar(50) // Rol específico en este proyecto (override)
+  created_at   DateTime @default(now())
+
+  user     User     @relation(fields: [user_id], references: [id_usuario], onDelete: Cascade)
+  proyecto Proyecto @relation(fields: [proyecto_id], references: [id_proyecto], onDelete: Cascade)
+
+  @@unique([user_id, proyecto_id])
+  @@map("user_project_access")
+}
+
+// --- Sesiones: Refresh Tokens (Rotación Segura) ---
+model RefreshToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  token_hash String   @db.VarChar(255) // Almacenar hash, NUNCA el token raw
+  expires_at DateTime
+  revoked    Boolean  @default(false)
+  created_at DateTime @default(now())
+  user_agent String?  @db.VarChar(500)
+  ip_address String?  @db.VarChar(50)
+
+  user User @relation(fields: [user_id], references: [id_usuario], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([token_hash])
+  @@map("refresh_tokens")
+}
