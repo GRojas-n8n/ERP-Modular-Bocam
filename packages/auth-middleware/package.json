@@ -1,0 +1,23 @@
+{
+  "name": "@bocam/auth-middleware",
+  "version": "1.0.0",
+  "description": "Middleware JWT compartido para todos los microservicios del ecosistema BOCAM",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.1.3"
+  },
+  "author": "Constructora Bocam, S. A. de C.V.",
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # 🗄️ INFRAESTRUCTURA DE DATOS
+  postgres.prod:
+    image: postgres:15-alpine
+    container_name: bocam-postgres-prod
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: bocam_erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - bocam-network
+    restart: always
+
+  redis.prod:
+    image: redis:7-alpine
+    container_name: bocam-redis-prod
+    networks:
+      - bocam-network
+    restart: always
+
+  rabbitmq.prod:
+    image: rabbitmq:3.12-management-alpine
+    container_name: bocam-rabbitmq-prod
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RMQ_USER:-user}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
+    networks:
+      - bocam-network
+    restart: always
+
+  # 💻 MICROSERVICIOS (Apps)
+  gerencia-tecnica:
+    build:
+      context: ./apps/gerencia-tecnica
+      dockerfile: Dockerfile
+    container_name: bocam-gerencia-tecnica
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@postgres.prod:5432/bocam_erp?schema=public
+      PORT: 3001
+      RABBITMQ_URL: amqp://${RMQ_USER:-user}:${RMQ_PASSWORD}@rabbitmq.prod:5672
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres.prod
+      - rabbitmq.prod
+    networks:
+      - bocam-network
+    restart: always
+
+  compras:
+    build:
+      context: ./apps/compras
+      dockerfile: Dockerfile
+    container_name: bocam-compras
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@postgres.prod:5432/bocam_erp?schema=public
+      PORT: 3002
+      RABBITMQ_URL: amqp://${RMQ_USER:-user}:${RMQ_PASSWORD}@rabbitmq.prod:5672
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres.prod
+      - rabbitmq.prod
+    networks:
+      - bocam-network
+    restart: always
+
+  app-shell:
+    build:
+      context: ./apps/app-shell
+      dockerfile: Dockerfile
+    container_name: bocam-app-shell
+    environment:
+      VITE_API_URL: /api/v1
+    ports:
+      - "80:80"
+    depends_on:
+      - gerencia-tecnica
+    networks:
+      - bocam-network
+    restart: always
+
+networks:
+  bocam-network:
+    driver: bridge
+
+volumes:
+  postgres_prod_data:

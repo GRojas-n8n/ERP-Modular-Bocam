@@ -1,0 +1,15 @@
+{
+  "name": "@bocam/ui-core",
+  "version": "0.0.1",
+  "description": "Librería de componentes UI para BOCAM",
+  "main": "index.js",
+  "devDependencies": {
+    "tailwindcss": "^3.0.0",
+    "autoprefixer": "^10.0.0",
+    "postcss": "^8.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}

@@ -1,0 +1,108 @@
+// ---------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Clasificación: Estrictamente Confidencial.
+// Módulo: Gerencia Técnica (Ingeniería y Presupuestos)
+// Responsabilidad: Catálogo Maestro de Insumos y Presupuesto Base.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  // clientExtensions ya es GA en Prisma 5+, no se requiere previewFeatures.
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ======================================================================
+// ENTIDADES MAESTRAS (DUEÑO: Gerencia Técnica)
+// ======================================================================
+
+/// Catálogo Maestro de Insumos: Materiales, Mano de Obra, Equipo, Subcontratos.
+/// Tabla maestra con aislamiento por tenant_id (RLS).
+model Insumo {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String     @db.Uuid
+
+  clave         String     @db.VarChar(50)
+  descripcion   String     @db.Text
+  unidad_medida String     @db.VarChar(20)
+  tipo_insumo   TipoInsumo
+  costo_base    Decimal    @db.Decimal(12, 4)
+
+  activo        Boolean    @default(true)
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime   @updatedAt @db.Timestamptz(6)
+
+  // Índices de rendimiento Multi-Tenant
+  @@unique([tenant_id, clave], name: "uq_insumo_tenant_clave")
+  @@index([tenant_id], name: "idx_insumo_tenant")
+  @@map("insumos")
+}
+
+/// Presupuesto Base de un proyecto/centro de costos.
+/// Tabla transaccional: requiere OBLIGATORIAMENTE tenant_id + proyecto_id.
+model PresupuestoBase {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String            @db.Uuid
+  proyecto_id   String            @db.Uuid
+
+  version       Int               @default(1)
+  estado        EstadoPresupuesto @default(BORRADOR)
+  importe_total Decimal           @default(0.00) @db.Decimal(15, 2)
+
+  conceptos     Concepto[]
+
+  created_at    DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime          @updatedAt @db.Timestamptz(6)
+
+  // Índices de rendimiento Multi-Tenant + Multi-Proyecto
+  @@index([tenant_id, proyecto_id], name: "idx_presupuesto_tenant_proyecto")
+  @@index([tenant_id], name: "idx_presupuesto_tenant")
+  @@map("presupuestos_base")
+}
+
+/// Concepto de Obra: Línea o partida específica de un presupuesto.
+/// Tabla transaccional hija, hereda tenant_id y proyecto_id del padre.
+model Concepto {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String          @db.Uuid
+  proyecto_id     String          @db.Uuid
+  presupuesto_id  String          @db.Uuid
+  presupuesto     PresupuestoBase @relation(fields: [presupuesto_id], references: [id], onDelete: Cascade)
+
+  clave           String          @db.VarChar(50)
+  descripcion     String          @db.Text
+  unidad_medida   String          @db.VarChar(20)
+  cantidad        Decimal         @db.Decimal(12, 4)
+  precio_unitario Decimal         @db.Decimal(12, 4)
+  importe         Decimal         @db.Decimal(15, 2)
+
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime        @updatedAt @db.Timestamptz(6)
+
+  // Índices de rendimiento Multi-Tenant + Multi-Proyecto
+  @@index([tenant_id, proyecto_id], name: "idx_concepto_tenant_proyecto")
+  @@index([tenant_id, presupuesto_id], name: "idx_concepto_tenant_presupuesto")
+  @@map("conceptos")
+}
+
+// ======================================================================
+// ENUMERACIONES
+// ======================================================================
+
+enum TipoInsumo {
+  MATERIAL
+  MANO_DE_OBRA
+  EQUIPO
+  SUBCONTRATO
+  INDIRECTO
+}
+
+enum EstadoPresupuesto {
+  BORRADOR
+  EN_REVISION
+  LIBERADO     // Emite evento: PresupuestoBaseLiberado
+  CONGELADO
+}

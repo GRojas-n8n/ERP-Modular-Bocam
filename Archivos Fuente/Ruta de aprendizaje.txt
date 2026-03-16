@@ -1,0 +1,40 @@
+1. Seguridad y Aislamiento de Datos (Nivel Crítico)
+Antes de escribir la primera línea de lógica de negocio, debes asegurar que los datos de un cliente nunca se filtren a otro.
+
+Row-Level Security (RLS) en PostgreSQL: Es el mecanismo que garantiza el aislamiento obligatorio por tenant_id y proyecto_id a nivel de motor de base de datos.
+
+Gestión de Identidad y RBAC: Debes comprender cómo funciona un sistema de Single Sign-On (SSO) y cómo los tokens JWT transportan los permisos y los límites de autoridad financiera del usuario.
+
+Middleware de Validación: Cómo interceptar cada petición para extraer el contexto de seguridad del token, nunca confiando en el cuerpo del mensaje enviado por el cliente.
+
+2. Arquitectura de Sistemas y MDM (Nivel Estructural)
+Un ERP modular falla si los módulos no hablan el mismo "idioma".
+
+Master Data Management (MDM): Comprender que cada entidad tiene un "Módulo Propietario" (SSOT) y cómo los demás módulos deben usar exclusivamente sus UUIDs para referenciar datos.
+
+Diseño de APIs y Contratos: Aprender a documentar interfaces con OpenAPI/Swagger para que los módulos se comuniquen por red y no por memoria local.
+
+Soberanía de Datos (Anti-JOINs): Interiorizar la prohibición de realizar consultas SQL que crucen tablas de diferentes módulos; la comunicación debe ser mediante clientes HTTP o eventos.
+
+3. Comunicación Asíncrona (Nivel Operativo)
+Para que el sistema sea resiliente y soporte automatizaciones pesadas sin detenerse.
+
+Arquitectura Orientada a Eventos: Estudiar cómo usar un bus de mensajes (como RabbitMQ o Redis) para que un módulo emita un evento (ej. OrdenCompraEmitida) y otros reaccionen en segundo plano.
+
+Event Payloads: Asegurar que cada mensaje incluya el contexto de seguridad necesario para que el consumidor sepa a qué cliente y sucursal pertenece la acción.
+
+4. Ingeniería de Software y Código Limpio (Nivel de Escalabilidad)
+Para evitar la deuda técnica que mencionas en tus instrucciones.
+
+Arquitectura de 3 Capas: Separación estricta entre la capa de datos, la lógica (orquestación) y la interfaz de ejecución.
+
+TypeScript y Tipado Estricto: Al no usar n8n, el tipado te ayudará a prevenir errores de lógica antes de que el código se ejecute.
+
+ORM (Object-Relational Mapping): Herramientas como Prisma o TypeORM para manejar las tablas como objetos, facilitando las migraciones y la seguridad.
+
+5. Frontend Agnóstico y Marca Blanca (Nivel de Presentación)
+El valor comercial del SaaS depende de su capacidad de verse como un producto propio de cada cliente.
+
+Micro-frontends y App Shell: Comprender cómo una "carcasa maestra" inyecta el logo y colores del cliente dinámicamente en módulos que deben ser visualmente agnósticos.
+
+Design Systems (Tailwind + Componentes): Uso obligatorio de clases utilitarias y librerías compartidas (como @bocam/ui-core) para mantener la homogeneidad visual sin usar CSS personalizado.

@@ -1,0 +1,23 @@
+{
+  "name": "bocam-erp-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo para el ERP SaaS Modular BOCAM",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "keywords": [
+    "saas",
+    "erp",
+    "multi-tenant",
+    "microservices"
+  ],
+  "author": "Constructora Bocam, S. A. de C.V.",
+  "license": "UNLICENSED"
+}
