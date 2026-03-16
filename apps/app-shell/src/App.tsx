@@ -130,6 +130,8 @@ const Dashboard: React.FC<{ onNavigate: (v: string) => void }> = ({ onNavigate }
 
 import { ComprasView } from './views/ComprasView';
 import { ComparativaPrecios } from './views/ComparativaPrecios';
+import { FinanzasView } from './views/FinanzasView';
+
 
 const AuthenticatedApp: React.FC = () => {
   const [currentView, setCurrentView] = useState<string>('dashboard');
@@ -140,6 +142,7 @@ const AuthenticatedApp: React.FC = () => {
       case 'insumos': return <InsumosView />;
       case 'compras': return <ComprasView />;
       case 'comparativa': return <ComparativaPrecios />;
+      case 'finanzas': return <FinanzasView />;
       default: return <Dashboard onNavigate={setCurrentView} />;
     }
   };

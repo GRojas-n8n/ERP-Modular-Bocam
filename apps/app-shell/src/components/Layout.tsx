@@ -8,7 +8,8 @@ import {
   ShoppingCart, 
   ShieldCheck,
   ChevronRight,
-  LogOut
+  LogOut,
+  Wallet
 } from 'lucide-react';
 import { useTenant } from '../context/TenantContext';
 import { cn } from '../lib/utils';
@@ -17,6 +18,7 @@ const navItems = [
   { name: 'Dashboard', icon: BarChart3, id: 'dashboard' },
   { name: 'Gerencia Técnica', icon: Briefcase, id: 'insumos' },
   { name: 'Compras', icon: ShoppingCart, id: 'compras' },
+  { name: 'Finanzas', icon: Wallet, id: 'finanzas' },
   { name: 'Control de Obra', icon: FileText, id: 'control-obra' },
   { name: 'Personal', icon: Users, id: 'personal' },
   { name: 'Seguridad', icon: ShieldCheck, id: 'seguridad' },
