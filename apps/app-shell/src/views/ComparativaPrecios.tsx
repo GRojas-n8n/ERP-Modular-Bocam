@@ -1,149 +1,164 @@
-import React, { useState, useEffect } from 'react';
-import { Scale, CheckCircle2, AlertCircle, TrendingDown } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import {
+  IconScale,
+  IconAlertCircle,
+  IconPlus,
+  IconFileText,
+} from '../components/Icons';
+import { cn } from '../lib/utils';
 
 interface Comparativa {
-  id_cuadro: string;
-  codigo: string;
-  fecha_creacion: string;
+  id: string;
+  folio: string;
+  fecha: string;
+  titulo: string;
   estado: string;
-  detalles: any[];
+  requisicion_folio: string;
 }
 
 export const ComparativaPrecios: React.FC = () => {
   const [comparativas, setComparativas] = useState<Comparativa[]>([]);
-  const [selectedCC, setSelectedCC] = useState<Comparativa | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchComparativas = async () => {
       try {
-        const res = await api.get('/compras/comparativas');
-        setComparativas(res.data.data);
-        if (res.data.data.length > 0) setSelectedCC(res.data.data[0]);
-      } catch (err) {
-        console.error(err);
+        setLoading(true);
+        const response = await api.get('/compras/comparativas');
+        setComparativas(response.data.data || []);
+      } catch (err: any) {
+        console.error('Error fetching comparativas:', err);
+        setError('Error al conectar con el mÃ³dulo de ProcuraciÃ³n.');
       } finally {
         setLoading(false);
       }
     };
+
     fetchComparativas();
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Scale className="h-6 w-6 text-primary" />
-          Comparativa de Precios
-        </h1>
-        <p className="text-muted-foreground mt-1">Análisis de ofertas y selección de proveedores ganadores.</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+        <div>
+          <div className="mb-2 flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/5 bg-amber-500/10">
+              <IconScale className="h-7 w-7 text-amber-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+                Cuadros Comparativos
+              </h1>
+              <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                AnÃ¡lisis de Ofertas y SelecciÃ³n de Proveedores
+              </p>
+            </div>
+          </div>
+        </div>
+        <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/20 transition-all hover:bg-slate-800 active:scale-95">
+          <IconPlus className="h-4 w-4" />
+          Nueva Comparativa
+        </button>
       </div>
 
       {loading ? (
-        <div className="p-12 text-center italic text-muted-foreground">Analizando ofertas...</div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Listado lateral */}
-          <div className="lg:col-span-1 space-y-3">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">Cuadros Abiertos</h3>
-            {comparativas.map(cc => (
-              <button
-                key={cc.id_cuadro}
-                onClick={() => setSelectedCC(cc)}
-                className={`w-full text-left p-3 rounded-xl border transition-all ${
-                  selectedCC?.id_cuadro === cc.id_cuadro 
-                    ? 'bg-primary/5 border-primary shadow-sm ring-1 ring-primary/20' 
-                    : 'bg-card hover:bg-muted/50'
-                }`}
-              >
-                <div className="font-bold text-sm text-primary">{cc.codigo}</div>
-                <div className="text-[10px] text-muted-foreground mt-1 uppercase font-medium">
-                  {new Date(cc.fecha_creacion).toLocaleDateString()} • {cc.estado}
-                </div>
-              </button>
-            ))}
+        <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
+          <div className="relative h-16 w-16">
+            <div className="absolute inset-0 rounded-full border-4 border-amber-500/10" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-amber-600 animate-spin" />
           </div>
-
-          {/* Área de Comparación */}
-          <div className="lg:col-span-3 space-y-6">
-            {selectedCC ? (
-              <>
-                <div className="bg-card rounded-2xl border shadow-sm p-6 overflow-hidden relative">
-                   <div className="absolute top-0 right-0 p-4">
-                      <span className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
-                        OPTIMIZACIÓN: -4.2% VS PPTO
-                      </span>
-                   </div>
-                   
-                   <h2 className="text-xl font-bold mb-6">Matriz de Decisión: {selectedCC.codigo}</h2>
-
-                   <div className="overflow-x-auto">
-                     <table className="w-full">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="py-3 px-4 text-left text-xs font-bold text-muted-foreground uppercase">Proveedor</th>
-                            <th className="py-3 px-4 text-center text-xs font-bold text-muted-foreground uppercase">Precio Unit.</th>
-                            <th className="py-3 px-4 text-center text-xs font-bold text-muted-foreground uppercase">Entrega</th>
-                            <th className="py-3 px-4 text-center text-xs font-bold text-muted-foreground uppercase">Estado</th>
-                            <th className="py-3 px-4 text-right text-xs font-bold text-muted-foreground uppercase">Selección</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {selectedCC.detalles.map((det: any) => (
-                            <tr key={det.id_detalle} className={`group hover:bg-muted/30 transition-colors ${det.es_ganador ? 'bg-green-50/30' : ''}`}>
-                              <td className="py-4 px-4 font-semibold">{det.proveedor?.razon_social}</td>
-                              <td className="py-4 px-4 text-center font-mono font-bold">${det.precio_ofertado}</td>
-                              <td className="py-4 px-4 text-center text-sm text-muted-foreground">{det.tiempo_entrega}</td>
-                              <td className="py-4 px-4 text-center">
-                                {det.es_ganador ? (
-                                  <span className="inline-flex items-center gap-1 text-green-600 font-bold text-[10px] bg-green-100 px-2 py-0.5 rounded-md">
-                                    <CheckCircle2 className="h-3 w-3" /> GANADOR
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-medium text-slate-400">DESCARTADO</span>
-                                )}
-                              </td>
-                              <td className="py-4 px-4 text-right">
-                                {!det.es_ganador && (
-                                  <button className="text-[11px] font-bold text-primary hover:underline border border-primary/20 px-3 py-1 rounded-md bg-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Seleccionar
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                     </table>
-                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl flex gap-3">
-                    <AlertCircle className="h-5 w-5 text-blue-500 shrink-0" />
-                    <p className="text-xs text-blue-700 leading-relaxed font-medium">
-                      El sistema recomienda a <strong>CEMEX</strong> por tener el mejor balance entre precio ($3,200) y tiempos de entrega (2 días).
-                    </p>
-                  </div>
-                  <div className="bg-slate-900 text-white p-4 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ahorro Estimado</div>
-                      <div className="text-xl font-bold flex items-center gap-2">
-                        <TrendingDown className="h-5 w-5 text-green-400" />
-                        $24,500.00
+          <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">
+            Analizando Matriz de Ofertas...
+          </p>
+        </div>
+      ) : error ? (
+        <div className="space-y-4 rounded-3xl border border-destructive/20 bg-destructive/5 p-12 text-center">
+          <IconAlertCircle className="mx-auto h-12 w-12 text-destructive" />
+          <h3 className="text-xl font-black tracking-tighter text-destructive uppercase">Falla de Suministros</h3>
+          <p className="mx-auto max-w-sm text-xs font-medium text-muted-foreground">{error}</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-3xl border border-border/40 bg-card shadow-xl backdrop-blur-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-[760px] w-full text-left">
+              <thead>
+                <tr className="border-b border-border/40 bg-muted/30">
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
+                    Folio / Fecha
+                  </th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
+                    TÃ­tulo del AnÃ¡lisis
+                  </th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
+                    Ref. RequisiciÃ³n
+                  </th>
+                  <th className="px-4 py-4 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
+                    Estado
+                  </th>
+                  <th className="px-4 py-4 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/20">
+                {comparativas.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-16 text-center md:px-8 md:py-20">
+                      <div className="flex flex-col items-center opacity-40">
+                        <IconScale className="mb-4 h-12 w-12" />
+                        <p className="text-sm font-bold uppercase tracking-widest">Sin cuadros comparativos</p>
+                        <p className="mt-1 text-[10px] font-medium">
+                          No se han generado anÃ¡lisis de ofertas para este periodo.
+                        </p>
                       </div>
-                    </div>
-                    <button className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 transition-all">
-                      Aprobar y Crear OC
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="h-[400px] flex items-center justify-center text-muted-foreground italic border border-dashed rounded-2xl">
-                Selecciona un cuadro comparativo para analizar
-              </div>
-            )}
+                    </td>
+                  </tr>
+                ) : (
+                  comparativas.map((comp) => (
+                    <tr key={comp.id} className="group transition-colors hover:bg-amber-500/[0.02]">
+                      <td className="px-4 py-5 md:px-8 md:py-6">
+                        <div className="flex flex-col">
+                          <span className="font-black tracking-tighter text-slate-900">{comp.folio}</span>
+                          <span className="text-[10px] font-bold text-muted-foreground">
+                            {new Date(comp.fecha).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-5 md:px-8 md:py-6">
+                        <span className="text-sm font-bold text-slate-800">{comp.titulo}</span>
+                      </td>
+                      <td className="px-4 py-5 md:px-8 md:py-6">
+                        <span className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                          REQ: {comp.requisicion_folio}
+                        </span>
+                      </td>
+                      <td className="px-4 py-5 text-center md:px-8 md:py-6">
+                        <div className="flex items-center justify-center gap-2">
+                          <span
+                            className={cn(
+                              'h-2 w-2 rounded-full',
+                              comp.estado === 'AUTORIZADO'
+                                ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]'
+                                : 'bg-amber-500'
+                            )}
+                          />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                            {comp.estado}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-5 text-right md:px-8 md:py-6">
+                        <button className="rounded-xl border border-border/20 bg-muted/50 p-2.5 transition-all hover:bg-primary/10 hover:text-primary">
+                          <IconFileText className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

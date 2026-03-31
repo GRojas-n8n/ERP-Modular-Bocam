@@ -8,7 +8,13 @@
     "dev": "ts-node-dev --transpile-only src/main.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "test:integration:compras-events": "node -r ts-node/register/transpile-only test/integration/compras.events.integration.test.ts",
+    "test:integration:control-obra-avance": "node -r ts-node/register/transpile-only test/integration/control-obra.avance-validado.integration.test.ts",
+    "test:integration:control-obra-event": "node -r ts-node/register/transpile-only test/integration/control-obra.event.integration.test.ts",
+    "test:integration:event-contracts": "node -r ts-node/register/transpile-only test/integration/event-contracts.integration.test.ts",
+    "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
+    "test:e2e:idempotencia": "node -r ts-node/register/transpile-only test/e2e/idempotencia.e2e.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

@@ -53,6 +53,8 @@ export interface SecurityContext {
   email: string;
   /** Nombre del usuario. */
   name: string;
+  /** Alias legible para módulos heredados. */
+  userName?: string;
   /** Roles del usuario en este tenant. */
   roles: string[];
   /** Proyectos a los que tiene acceso. */

@@ -10,7 +10,15 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "mcp:memory-bank": "mcp-server-memory-bank",
+    "test:integration:event-bus": "npm run test:integration:rabbitmq -w @bocam/event-bus",
+    "test:integration:intermodulo": "npm run test:integration:control-obra-event -w @bocam/finanzas && npm run test:integration:control-obra-avance -w @bocam/finanzas && npm run test:integration:compras-events -w @bocam/finanzas && npm run test:integration:finanzas-feedback -w @bocam/compras && npm run test:integration:finanzas-pago-feedback -w @bocam/control-obra && npm run test:integration:finanzas-pago -w @bocam/contabilidad && npm run test:integration:compras-oc -w @bocam/contabilidad && npm run test:integration:compras-oc-cancelada -w @bocam/contabilidad && npm run test:integration:finanzas-compromiso-conciliacion -w @bocam/contabilidad && npm run test:integration:finanzas-liberacion-conciliacion -w @bocam/contabilidad && npm run test:integration:finanzas-pago-cfdi -w @bocam/contabilidad && npm run test:integration:finanzas-sat-externo -w @bocam/contabilidad && npm run test:integration:finanzas-sat-worker -w @bocam/contabilidad && npm run test:integration:finanzas-sat-banco -w @bocam/contabilidad && npm run test:integration:finanzas-banco-lote -w @bocam/contabilidad && npm run test:integration:finanzas-banco-archivo -w @bocam/contabilidad && npm run test:integration:finanzas-transferencia -w @bocam/contabilidad",
+    "test:integration:event-contracts": "npm run test:integration:event-contracts -w @bocam/finanzas",
+    "test:e2e:criticas": "npm run test:e2e:reconciliacion && npm run test:e2e:seguridad && npm run test:e2e:idempotencia",
+    "test:e2e:reconciliacion": "npm run test:e2e:reconciliacion -w @bocam/compras && npm run test:e2e:reconciliacion -w @bocam/control-obra",
+    "test:e2e:seguridad": "npm run test:e2e:seguridad -w @bocam/compras && npm run test:e2e:seguridad -w @bocam/control-obra && npm run test:e2e:seguridad -w @bocam/finanzas",
+    "test:e2e:idempotencia": "npm run test:e2e:idempotencia -w @bocam/finanzas"
   },
   "keywords": [
     "saas",
@@ -19,5 +27,8 @@
     "microservices"
   ],
   "author": "Constructora Bocam, S. A. de C.V.",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@allpepper/memory-bank-mcp": "^0.2.2"
+  }
 }

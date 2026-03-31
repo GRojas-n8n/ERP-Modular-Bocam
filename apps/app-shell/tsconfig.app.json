@@ -5,6 +5,11 @@
     "useDefineForClassFields": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "@bocam/ui-core": ["../../packages/ui-core/src/index.tsx"],
+      "@bocam/ui-core/dashboard": ["../../packages/ui-core/src/dashboard/index.tsx"]
+    },
     "types": ["vite/client"],
     "skipLibCheck": true,
 

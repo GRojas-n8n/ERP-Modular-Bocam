@@ -1,0 +1,91 @@
+name: Backend E2E Criticas
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  backend-e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bocam_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d bocam_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      rabbitmq:
+        image: rabbitmq:3.12-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: user
+          RABBITMQ_DEFAULT_PASS: password
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=public
+      JWT_SECRET: bocam-ci-secret
+      RABBITMQ_URL: amqp://user:password@localhost:5672
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma clients
+        run: |
+          npx prisma generate --schema apps/compras/prisma/schema.prisma
+          npx prisma generate --schema apps/finanzas/prisma/schema.prisma
+          npx prisma generate --schema apps/control-obra/prisma/schema.prisma
+          npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
+
+      - name: Push Prisma schemas
+        run: |
+          npx prisma db push --schema apps/compras/prisma/schema.prisma
+          npx prisma db push --schema apps/finanzas/prisma/schema.prisma
+          npx prisma db push --schema apps/control-obra/prisma/schema.prisma
+          npx prisma db push --schema apps/contabilidad/prisma/schema.prisma
+
+      - name: Typecheck critical modules
+        run: |
+          npx tsc --noEmit -p apps/compras/tsconfig.json
+          npx tsc --noEmit -p apps/finanzas/tsconfig.json
+          npx tsc --noEmit -p apps/control-obra/tsconfig.json
+          npx tsc --noEmit -p apps/contabilidad/tsconfig.json
+
+      - name: Run RabbitMQ integration
+        run: npm run test:integration:event-bus
+
+      - name: Run inter-module RabbitMQ integration
+        run: npm run test:integration:intermodulo
+
+      - name: Run event contract hardening suite
+        run: npm run test:integration:event-contracts
+
+      - name: Run critical E2E suite
+        run: npm run test:e2e:criticas

@@ -1,27 +1,29 @@
-import React from 'react';
-import { 
-  BarChart3, 
-  Settings, 
-  Users, 
-  Briefcase, 
-  FileText, 
-  ShoppingCart, 
-  ShieldCheck,
-  ChevronRight,
-  LogOut,
-  Wallet
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { BrandMark, Button, SectionBadge, cn } from '@bocam/ui-core';
+import {
+  IconDashboard,
+  IconBriefcase,
+  IconShoppingCart,
+  IconWallet,
+  IconFileText,
+  IconUsers,
+  IconShieldCheck,
+  IconChevronRight,
+  IconLogOut,
+  IconSettings,
+  IconMenu,
+  IconX,
+} from './Icons';
 import { useTenant } from '../context/TenantContext';
-import { cn } from '../lib/utils';
 
 const navItems = [
-  { name: 'Dashboard', icon: BarChart3, id: 'dashboard' },
-  { name: 'Gerencia Técnica', icon: Briefcase, id: 'insumos' },
-  { name: 'Compras', icon: ShoppingCart, id: 'compras' },
-  { name: 'Finanzas', icon: Wallet, id: 'finanzas' },
-  { name: 'Control de Obra', icon: FileText, id: 'control-obra' },
-  { name: 'Personal', icon: Users, id: 'personal' },
-  { name: 'Seguridad', icon: ShieldCheck, id: 'seguridad' },
+  { name: 'Dashboard', icon: IconDashboard, id: 'dashboard' },
+  { name: 'Gerencia Tecnica', icon: IconBriefcase, id: 'insumos' },
+  { name: 'Compras', icon: IconShoppingCart, id: 'compras' },
+  { name: 'Finanzas', icon: IconWallet, id: 'finanzas' },
+  { name: 'Control de Obra', icon: IconFileText, id: 'control-obra' },
+  { name: 'Personal', icon: IconUsers, id: 'personal' },
+  { name: 'Seguridad', icon: IconShieldCheck, id: 'seguridad' },
 ];
 
 interface LayoutProps {
@@ -32,97 +34,164 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView }) => {
   const { tenant, user, logout } = useTenant();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isMobileNavOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileNavOpen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEsc);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isMobileNavOpen]);
+
+  const handleNavigate = (view: string) => {
+    onNavigate(view);
+    setIsMobileNavOpen(false);
+  };
+
+  const handleLogout = () => {
+    setIsMobileNavOpen(false);
+    logout();
+  };
+
+  const currentProject = user?.projects?.[0];
+
+  const renderSidebarContent = () => (
+    <>
+      <div className="flex items-center gap-3 p-6">
+        <BrandMark label={tenant?.name || 'Tenant Shell'} logoUrl={tenant?.logoUrl} className="h-9 w-9" />
+        <div className="flex min-w-0 flex-col">
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold uppercase tracking-widest leading-tight">
+            {tenant?.name || 'Tenant Shell'}
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground opacity-70">
+            Workspace multi-proyecto
+          </span>
+        </div>
+      </div>
+
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-4 py-6">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleNavigate(item.id)}
+            className={cn(
+              'group relative flex w-full items-center gap-3 overflow-hidden rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300',
+              currentView === item.id
+                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                : 'text-muted-foreground hover:translate-x-1 hover:bg-muted/50 hover:text-foreground'
+            )}
+          >
+            <item.icon
+              className={cn(
+                'h-4 w-4',
+                currentView === item.id ? 'text-white' : 'transition-colors group-hover:text-primary'
+              )}
+            />
+            {item.name}
+            {currentView === item.id && <div className="absolute right-0 top-0 h-full w-1 bg-white/20" />}
+          </button>
+        ))}
+      </nav>
+
+      <div className="mt-auto border-t bg-muted/20 p-4 backdrop-blur-sm">
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-border/40 bg-card px-3 py-3 shadow-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-xs font-bold text-primary">
+            {user?.name.charAt(0) || 'U'}
+          </div>
+          <div className="flex flex-col overflow-hidden">
+            <span className="truncate text-sm font-bold text-foreground">{user?.name}</span>
+            <span className="truncate text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
+              {user?.email}
+            </span>
+          </div>
+        </div>
+        <Button onClick={handleLogout} variant="destructive" className="w-full justify-start" id="logout-btn">
+          <IconLogOut className="h-4 w-4" />
+          Cerrar Sesion
+        </Button>
+      </div>
+    </>
+  );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 border-r bg-card flex flex-col z-20 shadow-sm">
-        <div className="p-6 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-md">
-            B
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-sm leading-tight uppercase tracking-wider overflow-hidden text-ellipsis whitespace-nowrap w-40">
-              {tenant?.name || 'BOCAM ERP'}
-            </span>
-            <span className="text-[10px] text-muted-foreground font-medium">SaaS Operational Shell</span>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-4 py-4 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 group",
-                currentView === item.id 
-                  ? "bg-primary/10 text-primary shadow-sm" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <item.icon className={cn(
-                "h-4 w-4",
-                currentView === item.id ? "text-primary" : "group-hover:text-foreground"
-              )} />
-              {item.name}
-              {item.name === 'Gerencia Técnica' && (
-                <span className="ml-auto flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
-              )}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 mt-auto border-t bg-muted/30">
-          <div className="flex items-center gap-3 px-2 py-2 mb-2">
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold border border-border">
-              {user?.name.charAt(0)}
-            </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-semibold truncate">{user?.name}</span>
-              <span className="text-[11px] text-muted-foreground truncate">{user?.email}</span>
-            </div>
-          </div>
-          <button 
-            onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-            id="logout-btn"
-          >
-            <LogOut className="h-4 w-4" />
-            Cerrar Sesión
-          </button>
-        </div>
+    <div className="flex h-screen overflow-hidden bg-background font-sans">
+      <aside className="z-20 hidden w-64 flex-col border-r bg-card shadow-sm md:flex">
+        {renderSidebarContent()}
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Header */}
-        <header className="h-16 border-b bg-card/80 backdrop-blur-md flex items-center justify-between px-8 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground italic font-medium">
-            <Briefcase className="h-4 w-4" />
-            <span>Proyectos / {tenant?.name} / Centro de Costos Activo</span>
-            <ChevronRight className="h-3 w-3 mx-1" />
-            <span className="text-foreground font-semibold px-2 py-0.5 bg-accent rounded-md">
-              {user?.projects?.[0]?.code || 'Sin Proyecto'}
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar navegacion"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setIsMobileNavOpen(false)}
+          />
+          <aside className="relative z-10 flex h-full w-[88vw] max-w-xs flex-col border-r bg-card shadow-2xl">
+            <div className="flex items-center justify-end px-4 pt-4">
+              <Button
+                type="button"
+                aria-label="Cerrar menu"
+                onClick={() => setIsMobileNavOpen(false)}
+                variant="outline"
+                size="icon"
+              >
+                <IconX className="h-5 w-5" />
+              </Button>
+            </div>
+            {renderSidebarContent()}
+          </aside>
+        </div>
+      )}
+
+      <div className="relative flex flex-1 flex-col overflow-hidden">
+        <header className="z-10 flex h-16 items-center justify-between border-b bg-card/70 px-4 shadow-sm backdrop-blur-xl md:px-8">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <Button
+              type="button"
+              aria-label="Abrir navegacion"
+              onClick={() => setIsMobileNavOpen(true)}
+              variant="outline"
+              size="icon"
+              className="mr-1 md:hidden"
+            >
+              <IconMenu className="h-5 w-5" />
+            </Button>
+            <IconBriefcase className="h-4 w-4 opacity-50" />
+            <span className="hidden opacity-50 sm:inline">Proyectos</span>
+            <IconChevronRight className="h-3 w-3 opacity-30" />
+            <span className="rounded-md bg-accent px-2 py-1 text-foreground shadow-inner">
+              {currentProject?.code || 'Sin Proyecto'}
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-[12px] font-bold tracking-tight shadow-inner">
-              <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></span>
-              NODE: ONLINE
-            </div>
-            <button className="h-9 w-9 rounded-md border flex items-center justify-center hover:bg-muted transition-all duration-200">
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </button>
+          <div className="flex items-center gap-5">
+            <SectionBadge className="hidden border-green-500/20 bg-green-500/10 text-green-600 md:inline-flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              Sistema sincronizado
+            </SectionBadge>
+            <Button variant="outline" size="icon" className="group">
+              <IconSettings className="h-4 w-4 text-muted-foreground transition-transform duration-500 group-hover:rotate-90" />
+            </Button>
           </div>
         </header>
 
-        {/* Dynamic Viewport */}
-        <main className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
-          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {children}
-          </div>
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8">
+          <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

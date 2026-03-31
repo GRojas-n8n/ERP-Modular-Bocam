@@ -1,21 +1,100 @@
 import React, { useState } from 'react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import {
+  BrandMark,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  FormField,
+  Input,
+  SectionBadge,
+  Select,
+} from '@bocam/ui-core';
 import { useTenant } from '../context/TenantContext';
-import { Building2, Lock, Mail, Loader2, AlertCircle, Shield } from 'lucide-react';
 
-/**
- * ---------------------------------------------------------------------------
- * Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
- * App Shell — Vista de Login
- *
- * Pantalla de autenticación con diseño premium White-Label.
- * Se conecta al servicio de Auth real (/api/v1/auth/login).
- * ---------------------------------------------------------------------------
- */
+const IconShield = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  </svg>
+);
 
-// Tenants disponibles para selección rápida en desarrollo
+const IconBuilding = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+    <path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01" />
+    <path d="M16 6h.01" />
+    <path d="M8 10h.01" />
+    <path d="M16 10h.01" />
+    <path d="M8 14h.01" />
+    <path d="M16 14h.01" />
+  </svg>
+);
+
+const IconMail = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </svg>
+);
+
+const IconLock = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
 const DEV_TENANTS = [
-  { id: '11111111-aaaa-bbbb-cccc-111111111111', name: 'Constructora Alfa S.A.' },
-  { id: '22222222-aaaa-bbbb-cccc-222222222222', name: 'Desarrollos Beta Corp.' },
+  { id: '11111111-aaaa-bbbb-cccc-111111111111', name: 'Tenant Demo A' },
+  { id: '22222222-aaaa-bbbb-cccc-222222222222', name: 'Tenant Demo B' },
 ];
 
 export const LoginView: React.FC = () => {
@@ -34,7 +113,7 @@ export const LoginView: React.FC = () => {
     try {
       await login(email, password, tenantId);
     } catch {
-      setLocalError(loginError || 'Error al iniciar sesión.');
+      setLocalError(loginError || 'Error al iniciar sesion.');
     } finally {
       setIsSubmitting(false);
     }
@@ -43,120 +122,127 @@ export const LoginView: React.FC = () => {
   const error = localError || loginError;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo Area */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <Shield className="h-8 w-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">BOCAM ERP</h1>
-          <p className="text-sm text-muted-foreground mt-1">Ecosistema Modular de Construcción</p>
-        </div>
-
-        {/* Login Card */}
-        <div className="bg-card rounded-2xl border border-border shadow-lg p-8">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-foreground">Iniciar Sesión</h2>
-            <p className="text-sm text-muted-foreground mt-1">Ingresa tus credenciales corporativas</p>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <span className="text-sm text-destructive">{error}</span>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 px-4 py-12 font-sans">
+      <div className="mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-md items-center">
+        <div className="w-full">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex w-fit items-center justify-center rounded-2xl border border-border/40 bg-card p-3 shadow-sm">
+              <BrandMark label="Tenant Shell" className="h-12 w-12" />
+              <IconShield className="-ml-2 h-8 w-8 text-primary" />
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Selector de Organización */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
-                Organización
-              </label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <select
-                  value={tenantId}
-                  onChange={(e) => setTenantId(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors appearance-none"
-                  id="login-tenant-select"
-                >
-                  {DEV_TENANTS.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
-                Correo Corporativo
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@empresa.com"
-                  required
-                  id="login-email-input"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  id="login-password-input"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              id="login-submit-btn"
-              className="w-full py-2.5 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Autenticando...
-                </>
-              ) : (
-                'Iniciar Sesión'
-              )}
-            </button>
-          </form>
-
-          {/* Dev Hint */}
-          <div className="mt-6 pt-4 border-t border-border">
-            <p className="text-[11px] text-muted-foreground text-center">
-              🔒 Autenticación JWT con firma criptográfica
+            <h1 className="text-3xl font-bold tracking-tighter text-foreground">Portal de Acceso</h1>
+            <p className="mt-1 text-sm font-medium text-muted-foreground">
+              Shell multi-tenant para modulos operativos
             </p>
           </div>
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-[10px] text-muted-foreground mt-6">
-          © 2026 Constructora Bocam, S. A. de C.V. — Todos los derechos reservados.
-        </p>
+          <Card className="border-border/40 shadow-xl">
+            <CardHeader className="pb-4">
+              <CardTitle>Iniciar Sesion</CardTitle>
+              <CardDescription className="font-medium leading-relaxed text-balance">
+                Ingresa tus credenciales y selecciona la organizacion de trabajo.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-5">
+              {error ? (
+                <div className="flex items-start gap-3 rounded-xl border border-destructive/10 bg-destructive/5 p-4">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+                  <span className="text-xs font-semibold leading-relaxed text-destructive">{error}</span>
+                </div>
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <FormField label="Organizacion">
+                  <div className="group relative">
+                    <IconBuilding className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Select
+                      value={tenantId}
+                      onChange={(e) => setTenantId(e.target.value)}
+                      id="login-tenant-select"
+                      className="bg-background py-3 pl-11 pr-10"
+                    >
+                      {DEV_TENANTS.map((tenant) => (
+                        <option key={tenant.id} value={tenant.id}>
+                          {tenant.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-50">
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M1 1L5 5L9 1"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </FormField>
+
+                <FormField label="Correo Corporativo">
+                  <div className="group relative">
+                    <IconMail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="usuario@empresa.com"
+                      required
+                      id="login-email-input"
+                      className="bg-background py-3 pl-11 pr-4"
+                    />
+                  </div>
+                </FormField>
+
+                <FormField label="Contrasena">
+                  <div className="group relative">
+                    <IconLock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="current-password"
+                      id="login-password-input"
+                      className="bg-background py-3 pl-11 pr-4"
+                    />
+                  </div>
+                </FormField>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  id="login-submit-btn"
+                  className="mt-4 h-14 w-full shadow-lg shadow-primary/20"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Autenticando...
+                    </>
+                  ) : (
+                    'Acceder al Ecosistema'
+                  )}
+                </Button>
+              </form>
+
+              <div className="border-t border-border/40 pt-6 text-center">
+                <SectionBadge className="shadow-inner">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Sesion segura via JWT
+                </SectionBadge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <p className="mt-10 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+            Plataforma white-label multi-tenant
+          </p>
+        </div>
       </div>
     </div>
   );

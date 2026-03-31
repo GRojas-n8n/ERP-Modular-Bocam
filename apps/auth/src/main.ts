@@ -1,62 +1,52 @@
 /**
  * ---------------------------------------------------------------------------
  * Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
- * Clasificación: Estrictamente Confidencial.
+ * Clasificacion: Estrictamente Confidencial.
  * ---------------------------------------------------------------------------
- * Módulo: Auth (IAM — Identity & Access Management)
+ * Modulo: Auth (IAM - Identity & Access Management)
  * Puerto: 3003
- *
- * Responsabilidades:
- * 1. Autenticación de usuarios (login con email/password).
- * 2. Emisión de tokens JWT (access + refresh).
- * 3. Renovación de sesiones (refresh token rotation).
- * 4. Provisión de identidad (/me) para el App Shell.
- * 5. Registro de nuevos usuarios dentro de un tenant existente.
- *
- * SEGURIDAD:
- * - Passwords hasheados con bcrypt (cost factor 12).
- * - Refresh tokens almacenados como HASH, nunca en texto plano.
- * - Access tokens de corta duración (15 min por defecto).
- * - Refresh tokens de larga duración (7 días) con rotación obligatoria.
  * ---------------------------------------------------------------------------
  */
 
 import express, { Request, Response } from 'express';
-import { PrismaClient } from './generated/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import { createTenantContext, disconnectDb, runAsSystem } from './db';
+import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
 
 const app = express();
 app.use(express.json());
 
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-});
-
-// ─── Configuración JWT ──────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || 'bocam_dev_secret_CAMBIAR_EN_PRODUCCION_2026';
+const JWT_SECRET = requireEnv('JWT_SECRET');
 const JWT_ACCESS_EXPIRATION = process.env.JWT_ACCESS_EXPIRATION || '15m';
 const JWT_REFRESH_EXPIRATION = process.env.JWT_REFRESH_EXPIRATION || '7d';
 const BCRYPT_ROUNDS = 12;
 const PORT = process.env.PORT || 3003;
 
-// ─── Utilidades ─────────────────────────────────────────────────────────────
+app.use(createAuthMiddleware({
+  jwtSecret: JWT_SECRET,
+  excludePaths: [
+    '/health',
+    '/api/v1/auth/login',
+    '/api/v1/auth/register',
+    '/api/v1/auth/refresh',
+  ],
+}));
 
-/**
- * Genera un par de tokens (access + refresh) para un usuario autenticado.
- */
-function generateTokenPair(user: {
+type AuthUser = {
   id_usuario: string;
   tenant_id: string;
   email: string;
   nombre: string;
   rol_global: string[];
-  limite_aprobacion_financiera: any;
+  limite_aprobacion_financiera: unknown;
   proyectos_acceso: { proyecto_id: string; rol_proyecto: string | null }[];
-}, activeProyectoId?: string) {
-  const projectIds = user.proyectos_acceso.map(p => p.proyecto_id);
+};
+
+function generateTokenPair(user: AuthUser, activeProyectoId?: string) {
+  const projectIds = user.proyectos_acceso.map((p) => p.proyecto_id);
 
   const accessPayload = {
     sub: user.id_usuario,
@@ -70,7 +60,7 @@ function generateTokenPair(user: {
   };
 
   const accessToken = jwt.sign(accessPayload, JWT_SECRET, {
-    expiresIn: JWT_ACCESS_EXPIRATION as any,
+    expiresIn: JWT_ACCESS_EXPIRATION as jwt.SignOptions['expiresIn'],
   });
 
   const refreshToken = uuidv4();
@@ -82,14 +72,10 @@ function generateTokenPair(user: {
   return { accessToken, refreshToken, refreshTokenHash };
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENDPOINT: POST /api/v1/auth/login
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
   try {
     const { email, password, tenant_id, proyecto_id } = req.body;
 
-    // Validación de campos obligatorios
     if (!email || !password || !tenant_id) {
       res.status(400).json({
         success: false,
@@ -101,77 +87,78 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
       return;
     }
 
-    // Buscar usuario dentro del tenant
-    const user = await prisma.user.findUnique({
-      where: {
-        tenant_id_email: { tenant_id, email },
-      },
-      include: {
-        tenant: true,
-        proyectos_acceso: {
-          include: { proyecto: true },
+    const user = await createTenantContext(
+      { tenantId: tenant_id },
+      async (prisma) => prisma.user.findUnique({
+        where: {
+          tenant_id_email: { tenant_id, email },
         },
-      },
-    });
+        include: {
+          tenant: true,
+          proyectos_acceso: {
+            include: { proyecto: true },
+          },
+        },
+      })
+    );
 
     if (!user || !user.activo) {
-      // Respuesta genérica para no revelar si el email existe
       res.status(401).json({
         success: false,
         error: {
           code: 'AUTH_INVALID_CREDENTIALS',
-          message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          message: 'Credenciales invalidas. Verifica tu correo y contrasena.',
         },
       });
       return;
     }
 
-    // Verificar contraseña
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       res.status(401).json({
         success: false,
         error: {
           code: 'AUTH_INVALID_CREDENTIALS',
-          message: 'Credenciales inválidas. Verifica tu correo y contraseña.',
+          message: 'Credenciales invalidas. Verifica tu correo y contrasena.',
         },
       });
       return;
     }
 
-    // Verificar que el tenant esté activo
     if (!user.tenant.activo) {
       res.status(403).json({
         success: false,
         error: {
           code: 'AUTH_TENANT_INACTIVE',
-          message: 'Tu organización se encuentra desactivada. Contacta al administrador.',
+          message: 'Tu organizacion se encuentra desactivada. Contacta al administrador.',
         },
       });
       return;
     }
 
-    // Generar tokens
     const { accessToken, refreshToken, refreshTokenHash } = generateTokenPair(
       user,
       proyecto_id
     );
 
-    // Almacenar refresh token (hash) en BD
     const refreshExpiry = new Date();
     refreshExpiry.setDate(refreshExpiry.getDate() + 7);
 
-    await prisma.refreshToken.create({
-      data: {
-        user_id: user.id_usuario,
-        token_hash: refreshTokenHash,
-        expires_at: refreshExpiry,
-        user_agent: req.headers['user-agent'] || 'unknown',
-        ip_address: req.ip || 'unknown',
-      },
-    });
+    await createTenantContext(
+      { tenantId: tenant_id, userId: user.id_usuario },
+      async (prisma) => {
+        await prisma.refreshToken.create({
+          data: {
+            user_id: user.id_usuario,
+            token_hash: refreshTokenHash,
+            expires_at: refreshExpiry,
+            user_agent: req.headers['user-agent'] || 'unknown',
+            ip_address: req.ip || 'unknown',
+          },
+        });
+      }
+    );
 
-    // Respuesta exitosa
     res.json({
       success: true,
       data: {
@@ -190,7 +177,7 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
             logo_url: user.tenant.logo_url,
             primary_color: user.tenant.primary_color,
           },
-          projects: user.proyectos_acceso.map(pa => ({
+          projects: user.proyectos_acceso.map((pa) => ({
             id: pa.proyecto_id,
             name: pa.proyecto.nombre_oficial,
             code: pa.proyecto.codigo_centro_costos,
@@ -215,9 +202,6 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
   }
 });
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENDPOINT: POST /api/v1/auth/register
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
   try {
     const { email, password, nombre, tenant_id, roles, proyecto_ids } = req.body;
@@ -233,59 +217,48 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
       return;
     }
 
-    // Verificar que el tenant existe
-    const tenant = await prisma.tenant.findUnique({
-      where: { id_tenant: tenant_id },
-    });
-
-    if (!tenant || !tenant.activo) {
-      res.status(404).json({
-        success: false,
-        error: {
-          code: 'AUTH_TENANT_NOT_FOUND',
-          message: 'El tenant especificado no existe o está desactivado.',
-        },
-      });
-      return;
-    }
-
-    // Verificar que no exista el email en este tenant
-    const existingUser = await prisma.user.findUnique({
-      where: { tenant_id_email: { tenant_id, email } },
-    });
-
-    if (existingUser) {
-      res.status(409).json({
-        success: false,
-        error: {
-          code: 'AUTH_EMAIL_EXISTS',
-          message: 'Ya existe un usuario con este correo en la organización.',
-        },
-      });
-      return;
-    }
-
-    // Hashear password
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Crear usuario con acceso a proyectos
-    const user = await prisma.user.create({
-      data: {
-        tenant_id,
-        email,
-        password_hash: passwordHash,
-        nombre,
-        rol_global: roles || ['resident'],
-        proyectos_acceso: proyecto_ids ? {
-          create: (proyecto_ids as string[]).map(pid => ({ proyecto_id: pid })),
-        } : undefined,
-      },
-      include: {
-        proyectos_acceso: {
-          include: { proyecto: true },
-        },
-      },
-    });
+    const user = await createTenantContext(
+      { tenantId: tenant_id },
+      async (prisma) => {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id_tenant: tenant_id },
+        });
+
+        if (!tenant || !tenant.activo) {
+          throw new Error('AUTH_TENANT_NOT_FOUND');
+        }
+
+        const existingUser = await prisma.user.findUnique({
+          where: { tenant_id_email: { tenant_id, email } },
+        });
+
+        if (existingUser) {
+          throw new Error('AUTH_EMAIL_EXISTS');
+        }
+
+        return prisma.user.create({
+          data: {
+            tenant_id,
+            email,
+            password_hash: passwordHash,
+            nombre,
+            rol_global: roles || ['resident'],
+            proyectos_acceso: Array.isArray(proyecto_ids) && proyecto_ids.length > 0
+              ? {
+                  create: proyecto_ids.map((pid: string) => ({ proyecto_id: pid })),
+                }
+              : undefined,
+          },
+          include: {
+            proyectos_acceso: {
+              include: { proyecto: true },
+            },
+          },
+        });
+      }
+    );
 
     res.status(201).json({
       success: true,
@@ -294,7 +267,7 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
         email: user.email,
         name: user.nombre,
         roles: user.rol_global,
-        projects: user.proyectos_acceso.map(pa => ({
+        projects: user.proyectos_acceso.map((pa) => ({
           id: pa.proyecto_id,
           name: pa.proyecto.nombre_oficial,
         })),
@@ -305,6 +278,28 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    if (error.message === 'AUTH_TENANT_NOT_FOUND') {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'AUTH_TENANT_NOT_FOUND',
+          message: 'El tenant especificado no existe o esta desactivado.',
+        },
+      });
+      return;
+    }
+
+    if (error.message === 'AUTH_EMAIL_EXISTS') {
+      res.status(409).json({
+        success: false,
+        error: {
+          code: 'AUTH_EMAIL_EXISTS',
+          message: 'Ya existe un usuario con este correo en la organizacion.',
+        },
+      });
+      return;
+    }
+
     console.error('[Auth] Error en register:', error.message);
     res.status(500).json({
       success: false,
@@ -316,9 +311,6 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
   }
 });
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENDPOINT: POST /api/v1/auth/refresh
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.post('/api/v1/auth/refresh', async (req: Request, res: Response) => {
   try {
     const { refresh_token } = req.body;
@@ -334,14 +326,12 @@ app.post('/api/v1/auth/refresh', async (req: Request, res: Response) => {
       return;
     }
 
-    // Hashear el token recibido para comparar con el almacenado
     const tokenHash = crypto
       .createHash('sha256')
       .update(refresh_token)
       .digest('hex');
 
-    // Buscar en BD
-    const storedToken = await prisma.refreshToken.findFirst({
+    const tokenLocator = await runAsSystem((prisma) => prisma.refreshToken.findFirst({
       where: {
         token_hash: tokenHash,
         revoked: false,
@@ -349,56 +339,98 @@ app.post('/api/v1/auth/refresh', async (req: Request, res: Response) => {
       },
       include: {
         user: {
-          include: {
-            tenant: true,
-            proyectos_acceso: {
-              include: { proyecto: true },
-            },
+          select: {
+            id_usuario: true,
+            tenant_id: true,
+            activo: true,
           },
         },
       },
-    });
+    }));
 
-    if (!storedToken) {
+    if (!tokenLocator || !tokenLocator.user.activo) {
       res.status(401).json({
         success: false,
         error: {
           code: 'AUTH_REFRESH_INVALID',
-          message: 'Refresh token inválido o expirado. Inicia sesión nuevamente.',
+          message: 'Refresh token invalido o expirado. Inicia sesion nuevamente.',
         },
       });
       return;
     }
 
-    // Revocar el token usado (Rotación — cada refresh token es de un solo uso)
-    await prisma.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revoked: true },
-    });
+    const tokenRotation = await createTenantContext(
+      { tenantId: tokenLocator.user.tenant_id, userId: tokenLocator.user_id },
+      async (prisma) => {
+        const storedToken = await prisma.refreshToken.findFirst({
+          where: {
+            token_hash: tokenHash,
+            revoked: false,
+            expires_at: { gt: new Date() },
+          },
+          include: {
+            user: {
+              include: {
+                tenant: true,
+                proyectos_acceso: {
+                  include: { proyecto: true },
+                },
+              },
+            },
+          },
+        });
 
-    // Generar nuevos tokens
-    const { accessToken, refreshToken: newRefreshToken, refreshTokenHash } =
-      generateTokenPair(storedToken.user);
+        if (!storedToken || !storedToken.user.activo) {
+          return null;
+        }
 
-    // Almacenar nuevo refresh token
-    const refreshExpiry = new Date();
-    refreshExpiry.setDate(refreshExpiry.getDate() + 7);
+        await prisma.refreshToken.update({
+          where: { id: storedToken.id },
+          data: { revoked: true },
+        });
 
-    await prisma.refreshToken.create({
-      data: {
-        user_id: storedToken.user_id,
-        token_hash: refreshTokenHash,
-        expires_at: refreshExpiry,
-        user_agent: req.headers['user-agent'] || 'unknown',
-        ip_address: req.ip || 'unknown',
-      },
-    });
+        const {
+          accessToken,
+          refreshToken: newRefreshToken,
+          refreshTokenHash,
+        } = generateTokenPair(storedToken.user);
+
+        const refreshExpiry = new Date();
+        refreshExpiry.setDate(refreshExpiry.getDate() + 7);
+
+        await prisma.refreshToken.create({
+          data: {
+            user_id: storedToken.user_id,
+            token_hash: refreshTokenHash,
+            expires_at: refreshExpiry,
+            user_agent: req.headers['user-agent'] || 'unknown',
+            ip_address: req.ip || 'unknown',
+          },
+        });
+
+        return {
+          accessToken,
+          refreshToken: newRefreshToken,
+        };
+      }
+    );
+
+    if (!tokenRotation) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTH_REFRESH_INVALID',
+          message: 'Refresh token invalido o expirado. Inicia sesion nuevamente.',
+        },
+      });
+      return;
+    }
 
     res.json({
       success: true,
       data: {
-        access_token: accessToken,
-        refresh_token: newRefreshToken,
+        access_token: tokenRotation.accessToken,
+        refresh_token: tokenRotation.refreshToken,
         token_type: 'Bearer',
         expires_in: JWT_ACCESS_EXPIRATION,
       },
@@ -419,35 +451,22 @@ app.post('/api/v1/auth/refresh', async (req: Request, res: Response) => {
   }
 });
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENDPOINT: GET /api/v1/auth/me (Requiere Bearer Token)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/api/v1/auth/me', async (req: Request, res: Response) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_TOKEN_MISSING',
-          message: 'Token de autenticación requerido.',
-        },
-      });
-      return;
-    }
+    const { tenantId, userId } = req.securityContext;
 
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-
-    const user = await prisma.user.findUnique({
-      where: { id_usuario: decoded.sub },
-      include: {
-        tenant: true,
-        proyectos_acceso: {
-          include: { proyecto: true },
+    const user = await createTenantContext(
+      { tenantId, userId },
+      async (prisma) => prisma.user.findUnique({
+        where: { id_usuario: userId },
+        include: {
+          tenant: true,
+          proyectos_acceso: {
+            include: { proyecto: true },
+          },
         },
-      },
-    });
+      })
+    );
 
     if (!user || !user.activo) {
       res.status(404).json({
@@ -475,7 +494,7 @@ app.get('/api/v1/auth/me', async (req: Request, res: Response) => {
           primary_color: user.tenant.primary_color,
           plan: user.tenant.plan,
         },
-        projects: user.proyectos_acceso.map(pa => ({
+        projects: user.proyectos_acceso.map((pa) => ({
           id: pa.proyecto_id,
           name: pa.proyecto.nombre_oficial,
           code: pa.proyecto.codigo_centro_costos,
@@ -494,38 +513,25 @@ app.get('/api/v1/auth/me', async (req: Request, res: Response) => {
         success: false,
         error: {
           code: 'AUTH_TOKEN_EXPIRED',
-          message: 'Tu sesión ha expirado.',
+          message: 'Tu sesion ha expirado.',
         },
       });
       return;
     }
+
     res.status(401).json({
       success: false,
       error: {
         code: 'AUTH_TOKEN_INVALID',
-        message: 'Token inválido.',
+        message: 'Token invalido.',
       },
     });
   }
 });
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENDPOINT: POST /api/v1/auth/switch-project
-// Permite cambiar el proyecto activo sin re-login (emite nuevo access token)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.post('/api/v1/auth/switch-project', async (req: Request, res: Response) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'AUTH_TOKEN_MISSING', message: 'Token requerido.' },
-      });
-      return;
-    }
-
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const { tenantId, userId } = req.securityContext;
     const { proyecto_id } = req.body;
 
     if (!proyecto_id) {
@@ -539,31 +545,32 @@ app.post('/api/v1/auth/switch-project', async (req: Request, res: Response) => {
       return;
     }
 
-    // Verificar que el usuario tiene acceso al proyecto solicitado
-    const user = await prisma.user.findUnique({
-      where: { id_usuario: decoded.sub },
-      include: {
-        proyectos_acceso: {
-          include: { proyecto: true },
+    const user = await createTenantContext(
+      { tenantId, userId },
+      async (prisma) => prisma.user.findUnique({
+        where: { id_usuario: userId },
+        include: {
+          proyectos_acceso: {
+            include: { proyecto: true },
+          },
         },
-      },
-    });
+      })
+    );
 
     if (!user) {
       res.status(404).json({
         success: false,
-        error: { code: 'AUTH_USER_NOT_FOUND', message: 'Usuario no encontrado.' },
+        error: {
+          code: 'AUTH_USER_NOT_FOUND',
+          message: 'Usuario no encontrado.',
+        },
       });
       return;
     }
 
-    const hasAccess = user.proyectos_acceso.some(
-      pa => pa.proyecto_id === proyecto_id
-    );
-
-    // Los admins y superintendentes tienen acceso a todos los proyectos del tenant
-    const isGlobalRole = user.rol_global.some(
-      r => ['admin', 'superintendent', 'finance'].includes(r)
+    const hasAccess = user.proyectos_acceso.some((pa) => pa.proyecto_id === proyecto_id);
+    const isGlobalRole = user.rol_global.some((r) =>
+      ['admin', 'superintendent', 'finance', 'procurement'].includes(r)
     );
 
     if (!hasAccess && !isGlobalRole) {
@@ -577,7 +584,6 @@ app.post('/api/v1/auth/switch-project', async (req: Request, res: Response) => {
       return;
     }
 
-    // Generar nuevo access token con el proyecto activo actualizado
     const { accessToken } = generateTokenPair(user, proyecto_id);
 
     res.json({
@@ -595,32 +601,45 @@ app.post('/api/v1/auth/switch-project', async (req: Request, res: Response) => {
     console.error('[Auth] Error en switch-project:', error.message);
     res.status(500).json({
       success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' },
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Error interno del servidor.',
+      },
     });
   }
 });
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HEALTH CHECK
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'auth', timestamp: new Date().toISOString() });
 });
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ARRANQUE
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-app.listen(PORT, () => {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('  🔐  Módulo: AUTH (Identity & Access Management)');
-  console.log('  🏢  Propiedad: Constructora Bocam, S. A. de C.V.');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`[Auth] ✅ Servidor en puerto ${PORT}`);
-  console.log(`[Auth] 📡 Rutas disponibles:`);
-  console.log(`   POST /api/v1/auth/login`);
-  console.log(`   POST /api/v1/auth/register`);
-  console.log(`   POST /api/v1/auth/refresh`);
-  console.log(`   GET  /api/v1/auth/me`);
-  console.log(`   POST /api/v1/auth/switch-project`);
-  console.log(`   GET  /health`);
+const server = app.listen(PORT, () => {
+  console.log('----------------------------------------------------');
+  console.log('  Modulo: AUTH (Identity & Access Management)');
+  console.log('  Propiedad: Constructora Bocam, S. A. de C.V.');
+  console.log('----------------------------------------------------');
+  console.log(`[Auth] Servidor en puerto ${PORT}`);
+  console.log('[Auth] Rutas disponibles:');
+  console.log('   POST /api/v1/auth/login');
+  console.log('   POST /api/v1/auth/register');
+  console.log('   POST /api/v1/auth/refresh');
+  console.log('   GET  /api/v1/auth/me');
+  console.log('   POST /api/v1/auth/switch-project');
+  console.log('   GET  /health');
+});
+
+async function shutdown(signal: string) {
+  console.log(`[Auth] Senal ${signal} recibida. Apagando limpiamente...`);
+  server.close(async () => {
+    await disconnectDb();
+    process.exit(0);
+  });
+}
+
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
+});
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
 });

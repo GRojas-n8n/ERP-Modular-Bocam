@@ -4,13 +4,13 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../../",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../packages/auth-middleware/src/**/*", "../../packages/event-bus/src/**/*", "../../packages/observability/src/**/*", "../../packages/tenant-idempotency/src/**/*"],
   "exclude": ["node_modules"]
 }

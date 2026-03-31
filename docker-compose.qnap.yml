@@ -1,0 +1,358 @@
+services:
+  workspace-tooling:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.tooling
+    container_name: bocam-qnap-workspace-tooling
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
+      COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
+      FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
+      CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
+      CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
+      PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
+      SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
+      GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    command: ["sleep", "infinity"]
+    restart: "no"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: bocam-qnap-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - qnap_postgres_data:/var/lib/postgresql/data
+    networks:
+      - bocam-qnap-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: bocam-qnap-redis
+    volumes:
+      - qnap_redis_data:/data
+    networks:
+      - bocam-qnap-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: bocam-qnap-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
+    volumes:
+      - qnap_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - bocam-qnap-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  auth:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/auth"
+        APP_PATH: "apps/auth"
+    container_name: bocam-qnap-auth
+    environment:
+      PORT: 3003
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  gerencia-tecnica:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/gerencia-tecnica"
+        APP_PATH: "apps/gerencia-tecnica"
+    container_name: bocam-qnap-gerencia-tecnica
+    environment:
+      PORT: 3001
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  compras:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/compras"
+        APP_PATH: "apps/compras"
+    container_name: bocam-qnap-compras
+    environment:
+      PORT: 3002
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      finanzas:
+        condition: service_started
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  finanzas:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/finanzas"
+        APP_PATH: "apps/finanzas"
+    container_name: bocam-qnap-finanzas
+    environment:
+      PORT: 3004
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  control-obra:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/control-obra"
+        APP_PATH: "apps/control-obra"
+    container_name: bocam-qnap-control-obra
+    environment:
+      PORT: 3005
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      finanzas:
+        condition: service_started
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  personal:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/personal"
+        APP_PATH: "apps/personal"
+    container_name: bocam-qnap-personal
+    environment:
+      PORT: 3006
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  seguridad:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/seguridad"
+        APP_PATH: "apps/seguridad"
+    container_name: bocam-qnap-seguridad
+    environment:
+      PORT: 3007
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  contabilidad:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/contabilidad"
+        APP_PATH: "apps/contabilidad"
+    container_name: bocam-qnap-contabilidad
+    environment:
+      PORT: 3008
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
+      CONTABILIDAD_BASE_URL: ${CONTABILIDAD_BASE_URL}
+      CONTABILIDAD_EVENT_BUS_NAME: contabilidad
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SAT_CALLBACK_SHARED_SECRET: ${SAT_CALLBACK_SHARED_SECRET}
+      SAT_ADAPTER_BASE_URL: ${SAT_ADAPTER_BASE_URL}
+      SAT_ADAPTER_API_KEY: ${SAT_ADAPTER_API_KEY}
+      SAT_ADAPTER_TIMEOUT_MS: ${SAT_ADAPTER_TIMEOUT_MS}
+      SAT_WORKER_RETRY_DELAY_MS: ${SAT_WORKER_RETRY_DELAY_MS}
+      SAT_WORKER_MAX_ATTEMPTS: ${SAT_WORKER_MAX_ATTEMPTS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  contabilidad-sat-worker:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/contabilidad"
+        APP_PATH: "apps/contabilidad"
+    container_name: bocam-qnap-contabilidad-sat-worker
+    command: ["sh", "-c", "node apps/contabilidad/dist/apps/contabilidad/src/sat-worker.js"]
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DATABASE_URL: ${DATABASE_URL}
+      CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
+      CONTABILIDAD_BASE_URL: ${CONTABILIDAD_BASE_URL}
+      CONTABILIDAD_EVENT_BUS_NAME: contabilidad
+      CONTABILIDAD_SAT_WORKER_NAME: contabilidad-sat-worker
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SAT_CALLBACK_SHARED_SECRET: ${SAT_CALLBACK_SHARED_SECRET}
+      SAT_ADAPTER_BASE_URL: ${SAT_ADAPTER_BASE_URL}
+      SAT_ADAPTER_API_KEY: ${SAT_ADAPTER_API_KEY}
+      SAT_ADAPTER_TIMEOUT_MS: ${SAT_ADAPTER_TIMEOUT_MS}
+      SAT_WORKER_RETRY_DELAY_MS: ${SAT_WORKER_RETRY_DELAY_MS}
+      SAT_WORKER_MAX_ATTEMPTS: ${SAT_WORKER_MAX_ATTEMPTS}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      contabilidad:
+        condition: service_started
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+  app-shell:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app-shell
+    container_name: bocam-qnap-app-shell
+    ports:
+      - "${QNAP_APP_PORT:-18080}:80"
+    depends_on:
+      auth:
+        condition: service_started
+    networks:
+      - bocam-qnap-network
+    restart: unless-stopped
+
+networks:
+  bocam-qnap-network:
+    driver: bridge
+
+volumes:
+  qnap_postgres_data:
+  qnap_redis_data:
+  qnap_rabbitmq_data:

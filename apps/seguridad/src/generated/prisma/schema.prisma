@@ -1,0 +1,200 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Seguridad / HSE (Higiene, Seguridad y Medio Ambiente)
+// Clasificación: Estrictamente Confidencial.
+//
+// Entidades propias de este módulo:
+// 1. Incidente           — Reportes de accidentes, casi-accidentes, actos inseguros
+// 2. InspeccionSeguridad — Inspecciones periódicas de seguridad en sitio
+// 3. PermisoTrabajo      — Permisos especiales (alturas, espacio confinado, etc.)
+// 4. Capacitacion        — Cursos y certificaciones HSE
+// 5. RegistroCapacitacion — Detalle de empleados capacitados por sesión
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 1: Incidente
+// Registro de accidentes, casi-accidentes, actos inseguros, condiciones
+// inseguras o eventos ambientales reportados en obra.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model Incidente {
+  id_incidente    String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  codigo          String   @db.VarChar(30) // Ej: "INC-2026-001"
+  tipo            String   @db.VarChar(30) // ACCIDENTE, CASI_ACCIDENTE, ACTO_INSEGURO, CONDICION_INSEGURA, AMBIENTAL
+  severidad       String   @default("MEDIA") // BAJA, MEDIA, ALTA, CRITICA
+  fecha_incidente DateTime @db.Timestamptz(3)
+  hora_incidente  String?  @db.VarChar(5) // "14:30"
+  ubicacion       String   @db.VarChar(200) // Frente / área de trabajo
+  descripcion     String   @db.Text
+
+  // Personas involucradas (UUIDs del módulo Personal, referencia por valor)
+  empleado_afectado_id     String? @db.Uuid // UUID del empleado afectado
+  empleado_afectado_nombre String? @db.VarChar(200)
+  testigos                 String? @db.Text // JSON: ["nombre1", "nombre2"]
+
+  // Investigación y cierre
+  causa_raiz               String? @db.Text
+  accion_correctiva        String? @db.Text
+  accion_preventiva        String? @db.Text
+  dias_incapacidad         Int     @default(0)
+  requirio_atencion_medica Boolean @default(false)
+  reportado_stps           Boolean @default(false) // Reportado a STyPS (obligatorio para graves)
+
+  estado        String    @default("ABIERTO") // ABIERTO, EN_INVESTIGACION, ACCION_CORRECTIVA, CERRADO
+  reportado_por String    @db.Uuid // userId que reportó
+  cerrado_por   String?   @db.Uuid
+  fecha_cierre  DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, tipo])
+  @@index([tenant_id, proyecto_id, severidad])
+  @@map("incidentes")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 2: Inspección de Seguridad
+// Checklists periódicos de seguridad realizados en sitio.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model InspeccionSeguridad {
+  id_inspeccion      String   @id @default(uuid()) @db.Uuid
+  tenant_id          String   @db.Uuid
+  proyecto_id        String   @db.Uuid
+  codigo             String   @db.VarChar(30) // Ej: "INS-2026-001"
+  tipo_inspeccion    String   @db.VarChar(100) // "EPP", "Andamios", "Excavaciones", "Eléctrica", "General"
+  fecha_inspeccion   DateTime @db.Date
+  area_inspeccionada String   @db.VarChar(200) // Frente o zona inspeccionada
+
+  // Resultado
+  items_revisados         Int     @default(0)
+  items_conformes         Int     @default(0)
+  items_no_conformes      Int     @default(0)
+  porcentaje_cumplimiento Decimal @default(0) @db.Decimal(5, 2)
+  resultado               String  @default("OBSERVACIONES") // APROBADA, OBSERVACIONES, NO_APROBADA
+
+  observaciones   String? @db.Text
+  hallazgos       String? @db.Text // JSON con lista de hallazgos
+  evidencia_fotos String? @db.Text // JSON con URLs de fotos
+
+  inspector_id     String @db.Uuid // userId que inspeccionó
+  inspector_nombre String @db.VarChar(200)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, resultado])
+  @@map("inspecciones_seguridad")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 3: Permiso de Trabajo
+// Autorizaciones especiales para trabajos de alto riesgo:
+// alturas, espacio confinado, trabajo caliente, excavación, izaje, eléctrico.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model PermisoTrabajo {
+  id_permiso          String @id @default(uuid()) @db.Uuid
+  tenant_id           String @db.Uuid
+  proyecto_id         String @db.Uuid
+  codigo              String @db.VarChar(30) // Ej: "PT-ALT-001"
+  tipo_permiso        String @db.VarChar(30) // ALTURAS, ESPACIO_CONFINADO, TRABAJO_CALIENTE, EXCAVACION, IZAJE, ELECTRICO
+  area_trabajo        String @db.VarChar(200)
+  descripcion_trabajo String @db.Text
+
+  // Vigencia
+  fecha_inicio DateTime @db.Timestamptz(3)
+  fecha_fin    DateTime @db.Timestamptz(3)
+  estado       String   @default("VIGENTE") // VIGENTE, EXPIRADO, CANCELADO
+
+  // Medidas de seguridad requeridas
+  epp_requerido    String? @db.Text // JSON: ["Arnés","Línea de vida","Casco"]
+  medidas_control  String? @db.Text // Descripción de medidas
+  checklist_previo Boolean @default(false) // ¿Se completó checklist?
+
+  // Personas
+  solicitado_por     String  @db.Uuid
+  solicitante_nombre String  @db.VarChar(200)
+  autorizado_por     String? @db.Uuid
+  autorizador_nombre String? @db.VarChar(200)
+  trabajadores       String? @db.Text // JSON: [{"id":"uuid","nombre":"..."}]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, tipo_permiso])
+  @@map("permisos_trabajo")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 4: Capacitación
+// Cursos de seguridad, pláticas de 5 minutos, certificaciones DC3, STyPS.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model Capacitacion {
+  id_capacitacion String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  codigo          String   @db.VarChar(30) // Ej: "CAP-2026-001"
+  titulo          String   @db.VarChar(200) // "Trabajo en Alturas — DC3"
+  tipo            String   @db.VarChar(50) // INDUCCION, DC3, PLATICA_5MIN, SIMULACRO, CERTIFICACION
+  instructor      String   @db.VarChar(200)
+  fecha           DateTime @db.Date
+  duracion_horas  Decimal  @db.Decimal(4, 1) // Horas
+  ubicacion       String?  @db.VarChar(200)
+  contenido       String?  @db.Text // Temario
+  validez_meses   Int? // Vigencia en meses (null = permanente)
+  estado          String   @default("PROGRAMADA") // PROGRAMADA, COMPLETADA, CANCELADA
+
+  registros RegistroCapacitacion[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("capacitaciones")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 5: Registro de Capacitación (detalle)
+// Empleados que asistieron a una capacitación.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model RegistroCapacitacion {
+  id_registro     String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  capacitacion_id String   @db.Uuid
+  empleado_id     String   @db.Uuid // UUID del módulo Personal
+  empleado_nombre String   @db.VarChar(200) // Snapshot del nombre
+  asistio         Boolean  @default(true)
+  calificacion    Decimal? @db.Decimal(5, 2) // Nota de evaluación (0-100)
+  aprobado        Boolean  @default(true)
+  observaciones   String?  @db.Text
+
+  capacitacion Capacitacion @relation(fields: [capacitacion_id], references: [id_capacitacion], onDelete: Cascade)
+
+  @@index([tenant_id, capacitacion_id])
+  @@index([tenant_id, empleado_id])
+  @@map("registros_capacitacion")
+}

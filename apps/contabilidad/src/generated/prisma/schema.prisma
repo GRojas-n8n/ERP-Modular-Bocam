@@ -1,0 +1,126 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Modulo: Contabilidad (Registro y Cierre Fiscal)
+//
+// ARQUITECTURA:
+// - Modulo consumidor soberano: no crea operaciones de obra ni compras.
+// - Traduce eventos de dominio a lenguaje contable.
+// - Mantiene aislamiento SaaS via tenant_id + proyecto_id.
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AsientoContable {
+  id_asiento              String    @id @default(uuid()) @db.Uuid
+  tenant_id               String    @db.Uuid
+  proyecto_id             String    @db.Uuid
+  pago_id                 String?   @db.Uuid
+  external_event_key      String?   @db.VarChar(180)
+  referencia_funcional    String?   @db.VarChar(120)
+  evento_conciliacion_key String?   @db.VarChar(180)
+  tipo_poliza             String    @default("EGRESO") @db.VarChar(50)
+  folio_poliza            String    @db.VarChar(80)
+  concepto                String    @db.VarChar(500)
+  monto_total             Decimal   @db.Decimal(18, 2)
+  moneda                  String    @default("MXN") @db.VarChar(5)
+  fecha_poliza            DateTime  @default(now())
+  beneficiario            String    @db.VarChar(255)
+  referencia_modulo       String?   @db.VarChar(50)
+  referencia_entidad      String?   @db.VarChar(50)
+  referencia_id           String?   @db.Uuid
+  estatus                 String    @default("REGISTRADO") @db.VarChar(50)
+  cfdi_status             String    @default("PENDIENTE") @db.VarChar(50)
+  bancario_status         String    @default("PENDIENTE") @db.VarChar(50)
+  notas                   String?   @db.Text
+  conciliado_at           DateTime?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  @@unique([tenant_id, external_event_key])
+  @@unique([tenant_id, evento_conciliacion_key])
+  @@unique([tenant_id, proyecto_id, folio_poliza])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, estatus])
+  @@index([tenant_id, proyecto_id, referencia_funcional])
+  @@map("asientos_contables")
+}
+
+model ConciliacionFiscal {
+  id_conciliacion                String    @id @default(uuid()) @db.Uuid
+  tenant_id                      String    @db.Uuid
+  proyecto_id                    String    @db.Uuid
+  asiento_id                     String    @db.Uuid
+  pago_id                        String?   @db.Uuid
+  uuid_fiscal                    String?   @db.VarChar(80)
+  serie                          String?   @db.VarChar(20)
+  folio                          String?   @db.VarChar(40)
+  rfc_emisor                     String?   @db.VarChar(20)
+  rfc_receptor                   String?   @db.VarChar(20)
+  monto_pagado                   Decimal   @db.Decimal(18, 2)
+  monto_cfdi                     Decimal?  @db.Decimal(18, 2)
+  moneda                         String    @default("MXN") @db.VarChar(5)
+  fecha_emision                  DateTime?
+  fecha_timbrado                 DateTime?
+  estatus_fiscal                 String    @default("PENDIENTE_CFDI") @db.VarChar(50)
+  estatus_sat                    String    @default("PENDIENTE_VALIDACION") @db.VarChar(50)
+  fecha_validacion_sat           DateTime?
+  fecha_cancelacion_sat          DateTime?
+  ultima_verificacion_sat_at     DateTime?
+  sat_requested_at               DateTime?
+  sat_next_retry_at              DateTime?
+  sat_dlq_at                     DateTime?
+  sat_retry_count                Int       @default(0)
+  sat_dispatch_id                String?   @db.VarChar(80)
+  sat_last_completed_dispatch_id String?   @db.VarChar(80)
+  sat_processing_started_at      DateTime?
+  mensaje_sat                    String?   @db.Text
+  sat_last_error                 String?   @db.Text
+  fuente                         String    @default("MANUAL") @db.VarChar(30)
+  fecha_conciliacion             DateTime?
+  notas                          String?   @db.Text
+  created_at                     DateTime  @default(now())
+  updated_at                     DateTime  @updatedAt
+
+  @@unique([tenant_id, asiento_id])
+  @@unique([tenant_id, uuid_fiscal])
+  @@index([tenant_id, proyecto_id, estatus_fiscal])
+  @@index([tenant_id, proyecto_id, estatus_sat])
+  @@index([tenant_id, pago_id])
+  @@map("conciliaciones_fiscales")
+}
+
+model ConciliacionBancaria {
+  id_conciliacion_bancaria  String    @id @default(uuid()) @db.Uuid
+  tenant_id                 String    @db.Uuid
+  proyecto_id               String    @db.Uuid
+  asiento_id                String    @db.Uuid
+  pago_id                   String?   @db.Uuid
+  referencia_bancaria       String?   @db.VarChar(100)
+  banco                     String?   @db.VarChar(100)
+  metodo_pago               String?   @db.VarChar(50)
+  monto_pagado              Decimal   @db.Decimal(18, 2)
+  monto_banco               Decimal?  @db.Decimal(18, 2)
+  moneda                    String    @default("MXN") @db.VarChar(5)
+  fecha_pago_real           DateTime?
+  fecha_movimiento_bancario DateTime?
+  estatus_bancario          String    @default("PENDIENTE_MOVIMIENTO") @db.VarChar(50)
+  fuente                    String    @default("EVENTO_FINANZAS") @db.VarChar(30)
+  fecha_conciliacion        DateTime?
+  notas                     String?   @db.Text
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @updatedAt
+
+  @@unique([tenant_id, asiento_id])
+  @@index([tenant_id, proyecto_id, estatus_bancario])
+  @@index([tenant_id, pago_id])
+  @@index([tenant_id, referencia_bancaria])
+  @@map("conciliaciones_bancarias")
+}

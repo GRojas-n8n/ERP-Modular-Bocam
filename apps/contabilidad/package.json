@@ -1,0 +1,44 @@
+{
+  "name": "@bocam/contabilidad",
+  "version": "1.0.0",
+  "description": "Modulo de Contabilidad (Registro contable y cierre fiscal del ERP BOCAM)",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev --transpile-only src/main.ts",
+    "dev:worker-sat": "ts-node-dev --transpile-only src/sat-worker.ts",
+    "test:integration:compras-oc-cancelada": "node -r ts-node/register/transpile-only test/integration/compras.oc-cancelada.integration.test.ts",
+    "test:integration:finanzas-compromiso-conciliacion": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-comprometidos.conciliacion.integration.test.ts",
+    "test:integration:finanzas-liberacion-conciliacion": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-liberados.conciliacion.integration.test.ts",
+    "test:integration:finanzas-pago-cfdi": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-cfdi.conciliacion.integration.test.ts",
+    "test:integration:finanzas-sat-externo": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-sat-externo.integration.test.ts",
+    "test:integration:finanzas-sat-worker": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-sat-worker.integration.test.ts",
+    "test:integration:finanzas-sat-banco": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-sat-banco.conciliacion.integration.test.ts",
+    "test:integration:finanzas-banco-lote": "node -r ts-node/register/transpile-only test/integration/finanzas.banco-lote.conciliacion.integration.test.ts",
+    "test:integration:finanzas-banco-archivo": "node -r ts-node/register/transpile-only test/integration/finanzas.banco-archivo.conciliacion.integration.test.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "test:integration:compras-oc": "node -r ts-node/register/transpile-only test/integration/compras.oc-creada.integration.test.ts",
+    "test:integration:finanzas-pago": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-registrado.integration.test.ts",
+    "test:integration:finanzas-transferencia": "node -r ts-node/register/transpile-only test/integration/finanzas.transferencia.integration.test.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "amqplib": "^0.10.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.1",
+    "@types/express": "^4.17.17",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.2",
+    "prisma": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.3"
+  }
+}

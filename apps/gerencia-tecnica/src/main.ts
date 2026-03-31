@@ -25,7 +25,7 @@ import {
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 // En desarrollo local sin el paquete compilado, se puede usar el path relativo.
 // En producción, se importaría desde '@bocam/auth-middleware'.
-import { createAuthMiddleware } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
 import type { SecurityContext } from '../../../packages/auth-middleware/src';
 
 const app = express();
@@ -34,12 +34,13 @@ app.use(express.json());
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MIDDLEWARE JWT: Verificación real con firma criptográfica
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const JWT_SECRET = process.env.JWT_SECRET || 'bocam_dev_secret_CAMBIAR_EN_PRODUCCION_2026';
+const JWT_SECRET = requireEnv('JWT_SECRET');
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
   excludePaths: ['/health'],
 }));
+app.use(requireProjectAccess());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // RUTAS: /api/v1/gerencia-tecnica/insumos

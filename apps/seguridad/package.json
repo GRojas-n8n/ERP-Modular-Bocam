@@ -1,0 +1,33 @@
+{
+  "name": "@bocam/seguridad",
+  "version": "1.0.0",
+  "description": "Módulo de Seguridad, Higiene y Medio Ambiente (HSE) — Incidentes, Inspecciones, Permisos de Trabajo, Capacitaciones",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev --transpile-only src/main.ts",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "amqplib": "^0.10.3",
+    "axios": "^1.13.6",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "redis": "^4.6.7",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.1",
+    "@types/express": "^4.17.17",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.2",
+    "prisma": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.3"
+  }
+}

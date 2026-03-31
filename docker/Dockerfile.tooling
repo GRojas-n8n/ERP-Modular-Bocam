@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:20-bookworm-slim
+
+WORKDIR /workspace
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl python3 make g++ bash curl \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY apps/*/package.json ./apps/
+COPY packages/*/package.json ./packages/
+
+RUN npm ci
+
+COPY . .
+
+CMD ["sleep", "infinity"]

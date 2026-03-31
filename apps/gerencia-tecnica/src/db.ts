@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from './generated/prisma';
 
 // ─── Tipos del Contexto de Seguridad ────────────────────────────────────────
 export interface TenantContext {
@@ -77,7 +77,17 @@ export function createTenantContext(ctx: TenantContext) {
   return basePrisma.$extends({
     query: {
       $allModels: {
-        async $allOperations({ model, operation, args, query }) {
+        async $allOperations({
+          model,
+          operation,
+          args,
+          query,
+        }: {
+          model?: string;
+          operation: string;
+          args: unknown;
+          query: (args: unknown) => Promise<unknown>;
+        }) {
           // ─── Ejecutar dentro de una transacción interactiva ────────
           // Esto garantiza que set_config() y la query real compartan
           // la MISMA conexión/sesión de PostgreSQL.

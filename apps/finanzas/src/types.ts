@@ -22,6 +22,7 @@ export interface ApiResponse<T = unknown> {
     module: string;
     tenant_id?: string;
     proyecto_id?: string;
+    correlation_id?: string;
   };
 }
 
@@ -41,6 +42,7 @@ export interface BocamEvent<T = unknown> {
     tenant_id: string;
     proyecto_id: string;
     user_id: string;
+    correlation_id?: string;
   };
   payload: T;
 }
@@ -75,6 +77,7 @@ export interface FondosComprometidosPayload {
   monto_disponible_restante: number;
   referencia_oc_id: string;
   referencia_oc_codigo: string;
+  idempotente?: boolean;
 }
 
 export interface PresupuestoInsuficientePayload {
@@ -84,6 +87,47 @@ export interface PresupuestoInsuficientePayload {
   deficit: number;
   referencia_oc_id: string;
   referencia_oc_codigo: string;
+  idempotente?: boolean;
+}
+
+export interface FondosLiberadosPayload {
+  presupuesto_id: string;
+  movimiento_id: string;
+  monto_liberado: number;
+  referencia_oc_id: string;
+  referencia_oc_codigo: string;
+  idempotente?: boolean;
+}
+
+export interface PagoRegistradoPayload {
+  id_pago: string;
+  presupuesto_id: string;
+  monto_pagado: number;
+  moneda?: string;
+  fecha_pago_real: string;
+  referencia_bancaria?: string;
+  metodo_pago?: string;
+  banco?: string;
+  referencia_modulo?: string;
+  referencia_entidad?: string;
+  referencia_id?: string;
+  concepto: string;
+  beneficiario: string;
+}
+
+export interface TransferenciaPresupuestalPayload {
+  transferencia_id: string;
+  movimiento_origen_id: string;
+  movimiento_destino_id: string;
+  presupuesto_origen_id: string;
+  presupuesto_destino_id: string;
+  codigo_origen: string;
+  codigo_destino: string;
+  capitulo_origen: string;
+  capitulo_destino: string;
+  monto_transferido: number;
+  concepto: string;
+  idempotente?: boolean;
 }
 
 // ─── Payload de Suficiencia (Respuesta a GET /suficiencia) ──────────────────
@@ -121,7 +165,7 @@ export enum TipoMovimiento {
 }
 
 // ─── Factory de ApiResponse ─────────────────────────────────────────────────
-export function createApiResponse<T>(data: T, tenantId?: string, proyectoId?: string): ApiResponse<T> {
+export function createApiResponse<T>(data: T, tenantId?: string, proyectoId?: string, correlationId?: string): ApiResponse<T> {
   return {
     success: true,
     data,
@@ -130,17 +174,19 @@ export function createApiResponse<T>(data: T, tenantId?: string, proyectoId?: st
       module: 'finanzas',
       tenant_id: tenantId,
       proyecto_id: proyectoId,
+      correlation_id: correlationId,
     },
   };
 }
 
-export function createApiError(code: string, message: string, details?: unknown): ApiResponse {
+export function createApiError(code: string, message: string, details?: unknown, correlationId?: string): ApiResponse {
   return {
     success: false,
     error: { code, message, details },
     meta: {
       timestamp: new Date().toISOString(),
       module: 'finanzas',
+      correlation_id: correlationId,
     },
   };
 }

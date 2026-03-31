@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "allpepper-memory-bank": {
+      "command": "node",
+      "args": [
+        "D:\\Mis_Scripts_IA\\Flujos Agenticos\\Proyecto ERP MODULAR Bocam\\node_modules\\@allpepper\\memory-bank-mcp\\dist\\main\\index.js"
+      ],
+      "env": {
+        "MEMORY_BANK_ROOT": "D:\\Mis_Scripts_IA\\Flujos Agenticos\\Proyecto ERP MODULAR Bocam\\.memory-bank"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "memory_bank_read",
+        "memory_bank_write",
+        "memory_bank_update",
+        "list_projects",
+        "list_project_files"
+      ]
+    }
+  }
+}

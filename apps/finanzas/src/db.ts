@@ -14,7 +14,17 @@ import { PrismaClient } from './generated/prisma';
  */
 
 // Instancia base (NO usar directamente en lógica de negocio para evitar bypass de RLS)
+const finanzasDatabaseUrl = process.env.FINANZAS_DATABASE_URL || process.env.DATABASE_URL;
 const basePrisma = new PrismaClient({
+  ...(finanzasDatabaseUrl
+    ? {
+        datasources: {
+          db: {
+            url: finanzasDatabaseUrl,
+          },
+        },
+      }
+    : {}),
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 });
 
@@ -49,9 +59,15 @@ export async function createTenantContext<T>(
   return await basePrisma.$transaction(async (tx) => {
     // Inyectar variables de sesión en PostgreSQL (Sesión de la Transacción)
     // Esto activa las políticas RLS definidas en el DDL del schema finanzas
-    await tx.$executeRawUnsafe(`SET LOCAL app.current_tenant_id = '${context.tenantId}';`);
-    await tx.$executeRawUnsafe(`SET LOCAL app.current_proyecto_id = '${context.proyectoId}';`);
-    await tx.$executeRawUnsafe(`SET LOCAL app.current_user_id = '${context.userId}';`);
+    await tx.$executeRaw`
+      SELECT set_config('app.current_tenant_id', ${context.tenantId}, true)
+    `;
+    await tx.$executeRaw`
+      SELECT set_config('app.current_proyecto_id', ${context.proyectoId}, true)
+    `;
+    await tx.$executeRaw`
+      SELECT set_config('app.current_user_id', ${context.userId}, true)
+    `;
 
     // Ejecutar la lógica de negocio con el cliente transaccional
     return await callback(tx as unknown as PrismaClient);

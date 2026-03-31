@@ -1,0 +1,155 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Control de Obra (Bitácoras, Avances Físicos, Estimaciones)
+// Clasificación: Estrictamente Confidencial.
+//
+// Entidades propias de este módulo:
+// 1. Bitácora de Obra — Registro diario de actividades en sitio
+// 2. Avance Físico   — Porcentaje de avance por concepto del presupuesto
+// 3. Estimación      — Documento de facturación basado en avances validados
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 1: Bitácora de Obra
+// Registro diario obligatorio en sitio. Cada entrada pertenece a un frente
+// de trabajo y es firmada por el residente responsable.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model BitacoraObra {
+  id_bitacora     String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  numero_entrada  Int                             // Consecutivo por proyecto
+  fecha           DateTime @db.Date               // Día de la anotación
+  frente_trabajo  String   @db.VarChar(100)       // Ej: "Frente 1 - Cimentación"
+  turno           String   @default("DIURNO")     // DIURNO, NOCTURNO, MIXTO
+  clima           String?  @db.VarChar(50)        // Ej: "Soleado", "Lluvioso"
+  temperatura_c   Decimal? @db.Decimal(4, 1)      // Temperatura ambiente
+
+  // Contenido
+  actividades_realizadas String  @db.Text          // Descripción detallada
+  personal_en_sitio      Int     @default(0)       // Número de personas
+  incidencias            String? @db.Text          // Accidentes, paros, etc.
+  material_recibido      String? @db.Text          // Materiales llegados hoy
+  observaciones          String? @db.Text          // Notas generales
+  
+  // Firmas y estado
+  residente_id           String  @db.Uuid          // UUID del residente (ref Auth)
+  residente_nombre       String  @db.VarChar(200)   // Nombre desnormalizado
+  superintendente_id     String? @db.Uuid
+  estado                 String  @default("BORRADOR") // BORRADOR, FIRMADA, CERRADA
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@unique([tenant_id, proyecto_id, numero_entrada])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, fecha])
+  @@map("bitacoras_obra")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 2: Avance Físico
+// Registra el porcentaje de avance de un concepto del presupuesto base.
+// Es la base sobre la cual se construyen las Estimaciones.
+// Referencia externa: concepto_id → Gerencia Técnica (vía API)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model AvanceFisico {
+  id_avance            String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  proyecto_id          String   @db.Uuid
+  concepto_presupuesto String   @db.VarChar(100)    // Clave del concepto (ej: "CIM-001")
+  descripcion_concepto String   @db.VarChar(500)    // Descripción corta
+
+  // Cantidades
+  cantidad_presupuestada Decimal @db.Decimal(18, 4) // Cantidad total del presupuesto
+  cantidad_anterior      Decimal @db.Decimal(18, 4) @default(0) // Avance acumulado previo
+  cantidad_periodo       Decimal @db.Decimal(18, 4) // Avance de este periodo
+  cantidad_acumulada     Decimal @db.Decimal(18, 4) // anterior + periodo
+  unidad                 String  @db.VarChar(20)    // m³, kg, m², pza, etc.
+  precio_unitario        Decimal @db.Decimal(18, 4) // PU del presupuesto base
+  importe_periodo        Decimal @db.Decimal(18, 2) // cantidad_periodo × PU
+  importe_acumulado      Decimal @db.Decimal(18, 2) // cantidad_acumulada × PU
+
+  // Porcentaje
+  porcentaje_avance      Decimal @db.Decimal(5, 2)  // (acumulada / presupuestada) × 100
+
+  // Registro
+  periodo_inicio         DateTime @db.Date         // Inicio del periodo de medición
+  periodo_fin            DateTime @db.Date         // Fin del periodo
+  registrado_por_id      String   @db.Uuid         // Residente que midió
+  registrado_por_nombre  String   @db.VarChar(200)
+  validado_por_id        String?  @db.Uuid         // Superintendente que validó
+  validado_por_nombre    String?  @db.VarChar(200)
+  estado                 String   @default("PENDIENTE") // PENDIENTE, VALIDADO, RECHAZADO
+
+  // Vinculación a estimación (opcional, se llena al incluirlo en una)
+  estimacion_id          String?  @db.Uuid
+  estimacion             Estimacion? @relation(fields: [estimacion_id], references: [id_estimacion])
+
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, estado])
+  @@map("avances_fisicos")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 3: Estimación de Facturación
+// Agrupa avances físicos validados en un documento oficial de cobro.
+// Al ser aprobada, emite el evento EstimacionAprobada → Finanzas programa pago.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model Estimacion {
+  id_estimacion        String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  proyecto_id          String   @db.Uuid
+  numero_estimacion    Int                          // Consecutivo: Estimación 1, 2, 3...
+  codigo               String   @db.VarChar(50)     // Ej: "EST-2026-GUA-003"
+
+  // Periodo que cubre
+  periodo_inicio       DateTime @db.Date
+  periodo_fin          DateTime @db.Date
+
+  // Montos calculados (suma de avances incluidos)
+  subtotal             Decimal  @db.Decimal(18, 2)
+  retencion_fondo_garantia Decimal @db.Decimal(18, 2) @default(0) // 5% típico
+  amortizacion_anticipo    Decimal @db.Decimal(18, 2) @default(0)
+  iva                  Decimal  @db.Decimal(18, 2)  @default(0)
+  total_neto           Decimal  @db.Decimal(18, 2)  // Lo que realmente se factura
+
+  // Workflow de aprobación
+  estado               String   @default("BORRADOR") // BORRADOR, EN_REVISION, APROBADA_TECNICA, APROBADA_FINANCIERA, RECHAZADA, FACTURADA
+  elaborado_por_id     String   @db.Uuid            // Residente
+  elaborado_por_nombre String   @db.VarChar(200)
+  revisado_por_id      String?  @db.Uuid            // Superintendente
+  revisado_por_nombre  String?  @db.VarChar(200)
+  aprobado_por_id      String?  @db.Uuid            // Director / Gerente
+  aprobado_por_nombre  String?  @db.VarChar(200)
+  fecha_aprobacion     DateTime?
+  notas                String?  @db.Text
+
+  // Relación con avances
+  avances              AvanceFisico[]
+
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  @@unique([tenant_id, proyecto_id, numero_estimacion])
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, estado])
+  @@map("estimaciones")
+}

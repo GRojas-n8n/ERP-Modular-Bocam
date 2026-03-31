@@ -1,0 +1,17 @@
+{
+  "name": "@bocam/event-bus",
+  "version": "1.0.0",
+  "description": "Bus de eventos compartido (RabbitMQ) para comunicación asíncrona inter-módulo",
+  "main": "src/index.ts",
+  "scripts": {
+    "test:integration:rabbitmq": "node -r ts-node/register/transpile-only test/integration/rabbitmq.integration.test.ts"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.1",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.1.3"
+  }
+}

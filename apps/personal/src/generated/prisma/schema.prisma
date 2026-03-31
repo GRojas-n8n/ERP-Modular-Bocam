@@ -1,0 +1,192 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Personal / RRHH
+// Clasificación: Estrictamente Confidencial.
+//
+// Entidades propias de este módulo:
+// 1. Empleado        — Ficha del trabajador (RFC, CURP, puesto, contrato)
+// 2. Cuadrilla        — Grupo de trabajo con capataz asignado
+// 3. AsignacionFrente — Registro de personal enviado a frentes por periodo
+// 4. PreNomina        — Cálculo pre-nómina semanal/quincenal
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 1: Empleado
+// Ficha maestra del trabajador. Incluye datos fiscales, puesto,
+// tipo de contrato y estado activo/baja.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model Empleado {
+  id_empleado      String  @id @default(uuid()) @db.Uuid
+  tenant_id        String  @db.Uuid
+  numero_empleado  String  @db.VarChar(20) // Ej: "EMP-001"
+  nombre           String  @db.VarChar(150)
+  apellido_paterno String  @db.VarChar(100)
+  apellido_materno String? @db.VarChar(100)
+  rfc              String  @db.VarChar(13)
+  curp             String? @db.VarChar(18)
+  nss              String? @db.VarChar(11) // Número Seguro Social (IMSS)
+
+  // Puesto y contrato
+  puesto            String    @db.VarChar(100) // Ej: "Fierrero", "Operador de Maquinaria"
+  categoria         String    @default("OBRERO") // OBRERO, TECNICO, ADMINISTRATIVO, SUPERVISOR
+  tipo_contrato     String    @default("PLANTA") // PLANTA, EVENTUAL, SUBCONTRATO
+  fecha_ingreso     DateTime  @db.Date
+  fecha_baja        DateTime? @db.Date
+  salario_diario    Decimal   @db.Decimal(10, 2)
+  salario_integrado Decimal?  @db.Decimal(10, 2) // Para cálculo IMSS
+
+  // Contacto
+  telefono            String? @db.VarChar(20)
+  email               String? @db.VarChar(100)
+  contacto_emergencia String? @db.VarChar(200)
+
+  // Certificaciones HSE
+  certificaciones String? @db.Text // JSON: ["DC3-Alturas", "STyPS-01"]
+
+  // Estado
+  estado String @default("ACTIVO") // ACTIVO, BAJA, SUSPENDIDO, VACACIONES
+
+  // Relaciones
+  cuadrilla_id String?            @db.Uuid
+  cuadrilla    Cuadrilla?         @relation(fields: [cuadrilla_id], references: [id_cuadrilla])
+  asignaciones AsignacionFrente[]
+  prenominas   PreNominaDetalle[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, numero_empleado])
+  @@unique([tenant_id, rfc])
+  @@index([tenant_id])
+  @@index([tenant_id, estado])
+  @@map("empleados")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 2: Cuadrilla
+// Grupo de trabajo dirigido por un capataz. Se asigna completa a un frente.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model Cuadrilla {
+  id_cuadrilla   String  @id @default(uuid()) @db.Uuid
+  tenant_id      String  @db.Uuid
+  proyecto_id    String  @db.Uuid
+  nombre         String  @db.VarChar(100) // Ej: "Cuadrilla Alfa - Cimentación"
+  codigo         String  @db.VarChar(20) // Ej: "CUA-01"
+  especialidad   String  @db.VarChar(100) // Ej: "Cimentación", "Estructura", "Acabados"
+  capataz_id     String? @db.Uuid // ID del empleado líder
+  capataz_nombre String? @db.VarChar(200)
+  estado         String  @default("ACTIVA") // ACTIVA, INACTIVA, REUBICADA
+
+  miembros     Empleado[]
+  asignaciones AsignacionFrente[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, proyecto_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("cuadrillas")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 3: Asignación a Frente
+// Registra qué cuadrilla o empleado está asignado a qué frente de trabajo,
+// en qué turno y durante qué periodo. Permite calcular horas-hombre.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model AsignacionFrente {
+  id_asignacion  String    @id @default(uuid()) @db.Uuid
+  tenant_id      String    @db.Uuid
+  proyecto_id    String    @db.Uuid
+  empleado_id    String    @db.Uuid
+  cuadrilla_id   String?   @db.Uuid
+  frente_trabajo String    @db.VarChar(100) // Ej: "Frente 1 — Cimentación"
+  turno          String    @default("DIURNO") // DIURNO, NOCTURNO, MIXTO
+  fecha_inicio   DateTime  @db.Date
+  fecha_fin      DateTime? @db.Date
+  horas_diarias  Decimal   @default(8) @db.Decimal(4, 2)
+  estado         String    @default("ACTIVA") // ACTIVA, COMPLETADA, CANCELADA
+
+  empleado  Empleado   @relation(fields: [empleado_id], references: [id_empleado])
+  cuadrilla Cuadrilla? @relation(fields: [cuadrilla_id], references: [id_cuadrilla])
+
+  created_at DateTime @default(now())
+
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id, frente_trabajo])
+  @@map("asignaciones_frente")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 4: Pre-Nómina
+// Cálculo semanal/quincenal de la nómina antes de aprobación.
+// Agrupa detalles individuales por empleado.
+// Al autorizarse, emite evento PreNominaAutorizada → Finanzas.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model PreNomina {
+  id_prenomina       String    @id @default(uuid()) @db.Uuid
+  tenant_id          String    @db.Uuid
+  proyecto_id        String    @db.Uuid
+  codigo             String    @db.VarChar(50) // Ej: "NOM-2026-S12"
+  periodo_tipo       String    @default("SEMANAL") // SEMANAL, QUINCENAL
+  periodo_inicio     DateTime  @db.Date
+  periodo_fin        DateTime  @db.Date
+  total_percepciones Decimal   @default(0) @db.Decimal(18, 2)
+  total_deducciones  Decimal   @default(0) @db.Decimal(18, 2)
+  total_neto         Decimal   @default(0) @db.Decimal(18, 2)
+  total_empleados    Int       @default(0)
+  estado             String    @default("BORRADOR") // BORRADOR, CALCULADA, AUTORIZADA, PAGADA
+  elaborado_por      String    @db.Uuid
+  autorizado_por     String?   @db.Uuid
+  fecha_autorizacion DateTime?
+  notas              String?   @db.Text
+
+  detalles PreNominaDetalle[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("pre_nominas")
+}
+
+model PreNominaDetalle {
+  id_detalle   String @id @default(uuid()) @db.Uuid
+  tenant_id    String @db.Uuid
+  proyecto_id  String @db.Uuid
+  prenomina_id String @db.Uuid
+  empleado_id  String @db.Uuid
+
+  // Cálculo
+  dias_trabajados    Decimal @db.Decimal(4, 1)
+  horas_extra        Decimal @default(0) @db.Decimal(6, 2)
+  salario_base       Decimal @db.Decimal(10, 2) // salario_diario × días
+  monto_horas_extra  Decimal @default(0) @db.Decimal(10, 2)
+  bonos              Decimal @default(0) @db.Decimal(10, 2)
+  total_percepciones Decimal @db.Decimal(10, 2)
+  deduccion_imss     Decimal @default(0) @db.Decimal(10, 2)
+  deduccion_isr      Decimal @default(0) @db.Decimal(10, 2)
+  otras_deducciones  Decimal @default(0) @db.Decimal(10, 2)
+  total_deducciones  Decimal @default(0) @db.Decimal(10, 2)
+  neto_a_pagar       Decimal @db.Decimal(10, 2)
+
+  prenomina PreNomina @relation(fields: [prenomina_id], references: [id_prenomina], onDelete: Cascade)
+  empleado  Empleado  @relation(fields: [empleado_id], references: [id_empleado])
+
+  @@index([tenant_id, prenomina_id])
+  @@map("pre_nomina_detalles")
+}

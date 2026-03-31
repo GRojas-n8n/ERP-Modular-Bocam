@@ -1,0 +1,16 @@
+{
+  "name": "@bocam/tenant-idempotency",
+  "version": "1.0.0",
+  "description": "Primitivas compartidas para mutaciones idempotentes soberanas bajo contexto tenant/proyecto",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.1.3"
+  },
+  "author": "Constructora Bocam, S. A. de C.V.",
+  "license": "UNLICENSED"
+}

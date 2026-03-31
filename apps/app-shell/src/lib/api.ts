@@ -46,8 +46,6 @@ export function setTokens(accessToken: string, refreshToken: string): void {
 export function clearTokens(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem('bocam_tenant_id');
-  localStorage.removeItem('bocam_proyecto_id');
 }
 
 // ─── Request Interceptor: Inyectar Bearer Token ─────────────────────────────

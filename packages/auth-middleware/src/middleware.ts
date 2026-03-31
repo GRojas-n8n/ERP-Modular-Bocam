@@ -28,6 +28,18 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import type { JwtPayload, SecurityContext, AuthMiddlewareOptions } from './types';
 
+export function requireEnv(name: string): string {
+  const value = process.env[name];
+
+  if (!value || !value.trim()) {
+    throw new Error(
+      `[BOCAM::CONFIG] VIOLACION CRITICA: La variable de entorno ${name} es obligatoria.`
+    );
+  }
+
+  return value;
+}
+
 // ─── Extender Request de Express globalmente ────────────────────────────────
 declare global {
   namespace Express {
@@ -122,6 +134,7 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions) {
         proyectoId: decoded.proyecto_id || '',
         email: decoded.email || '',
         name: decoded.name || '',
+        userName: decoded.name || '',
         roles: decoded.roles || [],
         authorizedProjects: decoded.projects || [],
         limiteAprobacion: decoded.limite_aprobacion || 0,
