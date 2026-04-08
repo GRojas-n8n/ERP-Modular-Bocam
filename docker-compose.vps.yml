@@ -1,4 +1,22 @@
 services:
+  caddy:
+    profiles: ["core", "full", "staging"]
+    image: caddy:2-alpine
+    container_name: bocam-vps-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      app-shell:
+        condition: service_healthy
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - vps_caddy_data:/data
+      - vps_caddy_config:/config
+    networks:
+      - bocam-vps-network
+    restart: unless-stopped
+
   workspace-tooling:
     profiles: ["tools"]
     build:
@@ -7,7 +25,7 @@ services:
     container_name: bocam-vps-workspace-tooling
     environment:
       NODE_ENV: development
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-${AUTH_DATABASE_URL}}
       AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
       COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
       FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
@@ -16,6 +34,7 @@ services:
       PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
       SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
       GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
+      VENTAS_DATABASE_URL: ${VENTAS_DATABASE_URL:-}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -37,16 +56,18 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB: ${DB_NAME:-postgres}
     volumes:
       - vps_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME:-postgres}"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 8
+      start_period: 20s
     restart: unless-stopped
 
   redis:
@@ -93,7 +114,7 @@ services:
       PORT: 3003
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${AUTH_DATABASE_URL}
       AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
@@ -103,6 +124,12 @@ services:
         condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   gerencia-tecnica:
@@ -118,7 +145,7 @@ services:
       PORT: 3001
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
       GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
@@ -128,34 +155,12 @@ services:
         condition: service_healthy
     networks:
       - bocam-vps-network
-    restart: unless-stopped
-
-  compras:
-    profiles: ["core", "full", "staging"]
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
-      args:
-        WORKSPACE_NAME: "@bocam/compras"
-        APP_PATH: "apps/compras"
-    container_name: bocam-vps-compras
-    environment:
-      PORT: 3002
-      NODE_ENV: ${NODE_ENV}
-      JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
-      COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
-      RABBITMQ_URL: ${RABBITMQ_URL}
-      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      finanzas:
-        condition: service_started
-    networks:
-      - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   finanzas:
@@ -171,7 +176,7 @@ services:
       PORT: 3004
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${FINANZAS_DATABASE_URL}
       FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
@@ -181,6 +186,46 @@ services:
         condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+  compras:
+    profiles: ["core", "full", "staging"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/compras"
+        APP_PATH: "apps/compras"
+    container_name: bocam-vps-compras
+    environment:
+      PORT: 3002
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${COMPRAS_DATABASE_URL}
+      COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      finanzas:
+        condition: service_healthy
+    networks:
+      - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   control-obra:
@@ -196,7 +241,7 @@ services:
       PORT: 3005
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
       CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
@@ -206,9 +251,15 @@ services:
       rabbitmq:
         condition: service_healthy
       finanzas:
-        condition: service_started
+        condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   personal:
@@ -224,7 +275,7 @@ services:
       PORT: 3006
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${PERSONAL_DATABASE_URL}
       PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
@@ -237,6 +288,12 @@ services:
         condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   seguridad:
@@ -252,7 +309,7 @@ services:
       PORT: 3007
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
       SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
@@ -265,6 +322,12 @@ services:
         condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   contabilidad:
@@ -280,7 +343,7 @@ services:
       PORT: 3008
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
       CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
       CONTABILIDAD_BASE_URL: ${CONTABILIDAD_BASE_URL}
       CONTABILIDAD_EVENT_BUS_NAME: contabilidad
@@ -298,6 +361,12 @@ services:
         condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3008/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
   contabilidad-sat-worker:
@@ -312,7 +381,7 @@ services:
     command: ["sh", "-c", "node apps/contabilidad/dist/apps/contabilidad/src/sat-worker.js"]
     environment:
       NODE_ENV: ${NODE_ENV}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
       CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
       CONTABILIDAD_BASE_URL: ${CONTABILIDAD_BASE_URL}
       CONTABILIDAD_EVENT_BUS_NAME: contabilidad
@@ -328,7 +397,7 @@ services:
       rabbitmq:
         condition: service_healthy
       contabilidad:
-        condition: service_started
+        condition: service_healthy
     networks:
       - bocam-vps-network
     restart: unless-stopped
@@ -339,13 +408,27 @@ services:
       context: .
       dockerfile: docker/Dockerfile.app-shell
     container_name: bocam-vps-app-shell
-    ports:
-      - "${APP_PORT:-8080}:80"
     depends_on:
       auth:
-        condition: service_started
+        condition: service_healthy
+      gerencia-tecnica:
+        condition: service_healthy
+      compras:
+        condition: service_healthy
+      finanzas:
+        condition: service_healthy
+      control-obra:
+        condition: service_healthy
+      contabilidad:
+        condition: service_healthy
     networks:
       - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
 
 networks:
@@ -356,3 +439,5 @@ volumes:
   vps_postgres_data:
   vps_redis_data:
   vps_rabbitmq_data:
+  vps_caddy_data:
+  vps_caddy_config:

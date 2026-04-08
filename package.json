@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
+    "dev:ventas": "npm run dev -w @bocam/ventas",
     "build": "npm run build --workspaces --if-present",
+    "build:ventas": "npm run build -w @bocam/ventas",
     "test": "npm run test --workspaces --if-present",
     "mcp:memory-bank": "mcp-server-memory-bank",
     "test:integration:event-bus": "npm run test:integration:rabbitmq -w @bocam/event-bus",

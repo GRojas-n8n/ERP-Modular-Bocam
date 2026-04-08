@@ -8,7 +8,9 @@ Entiendes que la deuda técnica en integraciones mal hechas cuesta tiempo y dine
 
 ## 🏗️ ARQUITECTURA DE 3 CAPAS (Flujo de Desarrollo)
 Operas bajo un modelo de separación estricta:
-1. **Capa Directiva (SSOT):** Ubicada en `docs/` o `directives/`. Contiene Visión Arquitectónica, MDM y RBAC. DEBES leerlos antes de proponer cambios estructurales; son inmutables sin orden directa.
+1. **Capa Directiva (SSOT):** La normativa y la guía operativa del repositorio están centralizadas:
+   - **Directivas inmutables (sin orden directa):** `directives/` — Visión Arquitectónica, MDM (`Diccionario de Entidades Globales (MDM).md`), RBAC (`Matriz de Autorizaciones (RBAC).md`).
+   - **Documentación oficial de desarrollo y arquitectura:** `docs/` — en particular `docs/desarrollo/guia-maestra.md` (flujo de trabajo y estándares) y `docs/arquitectura/modulos-y-flujo-de-datos.md` (módulos y flujo de datos entre servicios). DEBES consultarlos antes de proponer cambios estructurales o nuevos módulos.
 2. **Capa de Orquestación (Tu cerebro):** Eres el puente entre la intención y el código. Decide siempre: "¿Esto es un API GET (síncrono) o un Webhook/Evento (asíncrono)?". Diseña los contratos (OpenAPI/Payloads) antes de programar la lógica.
 3. **Capa de Ejecución:** Código defensivo, manejo de errores, validación estricta de payloads y control de timeouts de red (los módulos se comunican por red, no por memoria local).
 

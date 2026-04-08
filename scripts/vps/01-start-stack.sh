@@ -17,10 +17,10 @@ services=""
 
 case "$STACK_PROFILE" in
   core)
-    services="auth gerencia-tecnica finanzas compras control-obra contabilidad contabilidad-sat-worker app-shell"
+    services="auth gerencia-tecnica finanzas compras control-obra contabilidad contabilidad-sat-worker app-shell caddy"
     ;;
   full|staging)
-    services="auth gerencia-tecnica finanzas compras control-obra contabilidad contabilidad-sat-worker personal seguridad app-shell"
+    services="auth gerencia-tecnica finanzas compras control-obra contabilidad contabilidad-sat-worker personal seguridad app-shell caddy"
     needs_redis=1
     ;;
   *)

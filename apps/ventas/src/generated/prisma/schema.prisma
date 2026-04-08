@@ -1,0 +1,80 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Ventas
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Catálogo local: Cliente (Tercero comercial) ---
+// Referencias externas a MDM/Terceros se modelan como UUID sin FK cross-módulo.
+model Cliente {
+  id_cliente     String  @id @default(uuid()) @db.Uuid
+  tenant_id      String  @db.Uuid
+  tercero_id     String? @db.Uuid // Opcional: vínculo lógico al catálogo maestro de Terceros (otro módulo)
+  rfc_tax_id     String  @db.VarChar(20)
+  razon_social   String  @db.VarChar(255)
+  email_contacto String? @db.VarChar(100)
+  telefono       String? @db.VarChar(20)
+  estatus        String  @default("ACTIVO") // ACTIVO, INACTIVO, BLOQUEADO
+
+  cotizaciones Cotizacion[]
+  facturas     Factura[]
+
+  @@unique([tenant_id, rfc_tax_id])
+  @@map("clientes")
+}
+
+// --- Transaccional: Cotizaciones ---
+model Cotizacion {
+  id_cotizacion  String    @id @default(uuid()) @db.Uuid
+  tenant_id      String    @db.Uuid
+  proyecto_id    String    @db.Uuid
+  cliente_id     String    @db.Uuid
+  codigo         String    @db.VarChar(50)
+  fecha_emision  DateTime  @default(now())
+  vigencia_hasta DateTime?
+  estado         String    @default("BORRADOR") // BORRADOR, ENVIADA, ACEPTADA, RECHAZADA, VENCIDA
+  moneda         String    @default("MXN")
+  subtotal       Decimal   @db.Decimal(18, 2)
+  iva            Decimal   @db.Decimal(18, 2)
+  total          Decimal   @db.Decimal(18, 2)
+  notas          String?   @db.Text
+
+  cliente  Cliente   @relation(fields: [cliente_id], references: [id_cliente])
+  facturas Factura[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("cotizaciones")
+}
+
+// --- Transaccional: Facturas (operativo; fiscal/CFDI vive en Contabilidad) ---
+model Factura {
+  id_factura    String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  proyecto_id   String   @db.Uuid
+  cliente_id    String   @db.Uuid
+  cotizacion_id String?  @db.Uuid
+  codigo        String   @db.VarChar(50)
+  fecha_emision DateTime @default(now())
+  estado        String   @default("BORRADOR") // BORRADOR, TIMBRADA, CANCELADA, COBRADA
+  moneda        String   @default("MXN")
+  subtotal      Decimal  @db.Decimal(18, 2)
+  iva           Decimal  @db.Decimal(18, 2)
+  total         Decimal  @db.Decimal(18, 2)
+
+  cliente    Cliente     @relation(fields: [cliente_id], references: [id_cliente])
+  cotizacion Cotizacion? @relation(fields: [cotizacion_id], references: [id_cotizacion])
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id, proyecto_id])
+  @@map("facturas")
+}

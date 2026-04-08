@@ -2,7 +2,7 @@
 
 set -eu
 
-BASE_URL="${BASE_URL:-http://localhost:8080}"
+BASE_URL="${BASE_URL:-http://localhost}"
 STACK_PROFILE="${STACK_PROFILE:-staging}"
 
 check() {

@@ -4,6 +4,8 @@
 > **Arquitectura:** SaaS Multi-Tenant y Multisucursal.  
 > **Clasificación:** Confidencial - Uso Interno.
 
+**Documentación oficial:** La documentación de producto, desarrollo y arquitectura vive en la carpeta [`docs/`](docs/). Para orientación de día a día y diseño modular, prioriza [`docs/desarrollo/guia-maestra.md`](docs/desarrollo/guia-maestra.md) y [`docs/arquitectura/modulos-y-flujo-de-datos.md`](docs/arquitectura/modulos-y-flujo-de-datos.md). Las directivas normativas (MDM, RBAC, visión) permanecen en [`directives/`](directives/). Las reglas obligatorias para asistentes de código están en [`AGENTS.md`](AGENTS.md).
+
 Bienvenido al repositorio del módulo **[Nombre del Módulo]**. Al contribuir a este código, operas como parte del ecosistema central BOCAM. Tu desarrollo debe ser completamente autónomo en su lógica, pero estrictamente obediente a las reglas globales del sistema.
 
 ## 📋 1. Dominio y Responsabilidad
