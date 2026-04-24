@@ -39,16 +39,14 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: apps/app-shell/package-lock.json
+          cache-dependency-path: package-lock.json
 
       # ── 3. Instalar dependencias ───────────────────────────
-      - name: Instalar dependencias (monorepo raiz)
-        run: npm ci --ignore-scripts
-        working-directory: .
-
-      - name: Instalar dependencias (app-shell)
+      # El monorepo usa workspaces: una sola instalacion en la raiz
+      # cubre todos los paquetes incluyendo app-shell
+      - name: Instalar dependencias (monorepo)
         run: npm ci
-        working-directory: apps/app-shell
+        working-directory: .
 
       # ── 4. Build de produccion ─────────────────────────────
       - name: Build Vite produccion

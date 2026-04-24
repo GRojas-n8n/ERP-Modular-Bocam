@@ -52,3 +52,6 @@ coverage/
 # Temp
 tmp/
 .tmp/
+
+bocam_deploy_key
+bocam_deploy_key.pub
