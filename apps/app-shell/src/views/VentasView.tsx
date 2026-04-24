@@ -4,7 +4,6 @@ import {
   IconRefreshCw,
   IconAlertCircle,
   IconSearch,
-  IconFilter,
 } from '../components/Icons';
 import { cn } from '../lib/utils';
 
