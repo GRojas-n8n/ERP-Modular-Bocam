@@ -20,7 +20,7 @@
     "dotenv": "^17.4.2",
     "express": "^4.22.1",
     "redis": "^4.6.7",
-    "uuid": "^9.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.1",
