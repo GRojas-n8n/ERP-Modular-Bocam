@@ -39,7 +39,8 @@ jobs:
           --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=public
+      # Cada modulo usa su propio PostgreSQL schema para evitar drift entre modulos
+      DB_BASE: postgresql://postgres:postgres@localhost:5432/bocam_ci
       JWT_SECRET: bocam-ci-secret
       RABBITMQ_URL: amqp://user:password@localhost:5672
       NODE_ENV: test
@@ -57,20 +58,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ── Crear schemas de PostgreSQL separados por modulo ─────────────────────
+      - name: Crear schemas de PostgreSQL
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -c "
+            CREATE SCHEMA IF NOT EXISTS compras;
+            CREATE SCHEMA IF NOT EXISTS finanzas;
+            CREATE SCHEMA IF NOT EXISTS control_obra;
+            CREATE SCHEMA IF NOT EXISTS contabilidad;
+          "
+
+      # ── Generar clientes Prisma ───────────────────────────────────────────────
       - name: Generate Prisma clients
         run: |
-          npx prisma generate --schema apps/compras/prisma/schema.prisma
-          npx prisma generate --schema apps/finanzas/prisma/schema.prisma
-          npx prisma generate --schema apps/control-obra/prisma/schema.prisma
-          npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
+          DATABASE_URL="${DB_BASE}?schema=compras"      npx prisma generate --schema apps/compras/prisma/schema.prisma
+          DATABASE_URL="${DB_BASE}?schema=finanzas"     npx prisma generate --schema apps/finanzas/prisma/schema.prisma
+          DATABASE_URL="${DB_BASE}?schema=control_obra" npx prisma generate --schema apps/control-obra/prisma/schema.prisma
+          DATABASE_URL="${DB_BASE}?schema=contabilidad" npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
 
+      # ── Aplicar schemas al DB (cada modulo aislado en su schema) ─────────────
       - name: Push Prisma schemas
         run: |
-          npx prisma db push --schema apps/compras/prisma/schema.prisma
-          npx prisma db push --schema apps/finanzas/prisma/schema.prisma
-          npx prisma db push --schema apps/control-obra/prisma/schema.prisma
-          npx prisma db push --schema apps/contabilidad/prisma/schema.prisma
+          DATABASE_URL="${DB_BASE}?schema=compras"      npx prisma db push --schema apps/compras/prisma/schema.prisma      --skip-generate --accept-data-loss
+          DATABASE_URL="${DB_BASE}?schema=finanzas"     npx prisma db push --schema apps/finanzas/prisma/schema.prisma     --skip-generate --accept-data-loss
+          DATABASE_URL="${DB_BASE}?schema=control_obra" npx prisma db push --schema apps/control-obra/prisma/schema.prisma --skip-generate --accept-data-loss
+          DATABASE_URL="${DB_BASE}?schema=contabilidad" npx prisma db push --schema apps/contabilidad/prisma/schema.prisma --skip-generate --accept-data-loss
 
+      # ── TypeScript check ──────────────────────────────────────────────────────
       - name: Typecheck critical modules
         run: |
           npx tsc --noEmit -p apps/compras/tsconfig.json
@@ -78,14 +92,71 @@ jobs:
           npx tsc --noEmit -p apps/control-obra/tsconfig.json
           npx tsc --noEmit -p apps/contabilidad/tsconfig.json
 
+      # ── Test de EventBus (no requiere DB) ─────────────────────────────────────
       - name: Run RabbitMQ integration
         run: npm run test:integration:event-bus
 
-      - name: Run inter-module RabbitMQ integration
-        run: npm run test:integration:intermodulo
+      # ── Tests inter-modulo: cada grupo con su DATABASE_URL correcto ───────────
+      - name: Run inter-module - Finanzas tests
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=finanzas
+        run: |
+          npm run test:integration:control-obra-event    -w @bocam/finanzas
+          npm run test:integration:control-obra-avance   -w @bocam/finanzas
+          npm run test:integration:compras-events        -w @bocam/finanzas
 
+      - name: Run inter-module - Compras tests
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=compras
+        run: |
+          npm run test:integration:finanzas-feedback -w @bocam/compras
+
+      - name: Run inter-module - Control Obra tests
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=control_obra
+        run: |
+          npm run test:integration:finanzas-pago-feedback -w @bocam/control-obra
+
+      - name: Run inter-module - Contabilidad tests
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=contabilidad
+        run: |
+          npm run test:integration:finanzas-pago                      -w @bocam/contabilidad
+          npm run test:integration:compras-oc                         -w @bocam/contabilidad
+          npm run test:integration:compras-oc-cancelada               -w @bocam/contabilidad
+          npm run test:integration:finanzas-compromiso-conciliacion   -w @bocam/contabilidad
+          npm run test:integration:finanzas-liberacion-conciliacion   -w @bocam/contabilidad
+          npm run test:integration:finanzas-pago-cfdi                 -w @bocam/contabilidad
+          npm run test:integration:finanzas-sat-externo               -w @bocam/contabilidad
+          npm run test:integration:finanzas-sat-worker                -w @bocam/contabilidad
+          npm run test:integration:finanzas-sat-banco                 -w @bocam/contabilidad
+          npm run test:integration:finanzas-banco-lote                -w @bocam/contabilidad
+          npm run test:integration:finanzas-banco-archivo             -w @bocam/contabilidad
+          npm run test:integration:finanzas-transferencia             -w @bocam/contabilidad
+
+      # ── Event contract suite (contabilidad) ───────────────────────────────────
       - name: Run event contract hardening suite
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=finanzas
         run: npm run test:integration:event-contracts
 
-      - name: Run critical E2E suite
-        run: npm run test:e2e:criticas
+      # ── E2E criticos con DATABASE_URL por modulo ──────────────────────────────
+      - name: Run E2E - Compras reconciliacion
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=compras
+        run: npm run test:e2e:reconciliacion -w @bocam/compras
+
+      - name: Run E2E - Control Obra reconciliacion
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=control_obra
+        run: npm run test:e2e:reconciliacion -w @bocam/control-obra
+
+      - name: Run E2E - Finanzas seguridad
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=finanzas
+        run: npm run test:e2e:seguridad -w @bocam/finanzas
+
+      - name: Run E2E - Finanzas idempotencia
+        env:
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=finanzas
+        run: npm run test:e2e:idempotencia -w @bocam/finanzas
