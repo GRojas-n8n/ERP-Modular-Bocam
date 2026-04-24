@@ -39,9 +39,10 @@ jobs:
           --health-retries 10
 
     env:
-      # Un solo schema public: todos los modulos coexisten, los tests
-      # fueron disenados con esta arquitectura (servidores HTTP compartidos).
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=public
+      # DATABASE_URL apunta al schema de finanzas por defecto.
+      # Los tests de cada modulo usan su propio schema y derivan el schema
+      # del modulo peer via string-replace (patron consistente en todos los tests).
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas
       JWT_SECRET: bocam-ci-secret
       RABBITMQ_URL: amqp://user:password@localhost:5672
       NODE_ENV: test
@@ -68,16 +69,16 @@ jobs:
           npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
 
       # ── Aplicar schemas al DB ─────────────────────────────────────────────────
-      # --accept-data-loss: evita prompt interactivo en CI cuando hay drift
-      # --skip-generate: ya se genero en el paso anterior
-      # Todos al mismo schema public: los tests arrancan servidores HTTP
-      # que comparten DATABASE_URL y esperan todas las tablas en un solo schema.
+      # Cada modulo usa su propio PostgreSQL schema para evitar que db push
+      # elimine las tablas de otros modulos (drift detection + accept-data-loss
+      # borraba todo lo anterior cuando se usaba schema=public compartido).
+      # Los tests derivan el URL del modulo peer con string-replace del schema name.
       - name: Push Prisma schemas
         run: |
-          npx prisma db push --schema apps/compras/prisma/schema.prisma      --skip-generate --accept-data-loss
-          npx prisma db push --schema apps/finanzas/prisma/schema.prisma     --skip-generate --accept-data-loss
-          npx prisma db push --schema apps/control-obra/prisma/schema.prisma --skip-generate --accept-data-loss
-          npx prisma db push --schema apps/contabilidad/prisma/schema.prisma --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npx prisma db push --schema apps/compras/prisma/schema.prisma      --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npx prisma db push --schema apps/finanzas/prisma/schema.prisma     --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npx prisma db push --schema apps/control-obra/prisma/schema.prisma --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad" npx prisma db push --schema apps/contabilidad/prisma/schema.prisma --skip-generate --accept-data-loss
 
       # ── TypeScript check ──────────────────────────────────────────────────────
       - name: Typecheck critical modules
@@ -91,8 +92,32 @@ jobs:
       - name: Run RabbitMQ integration
         run: npm run test:integration:event-bus
 
+      # ── Tests inter-modulo ────────────────────────────────────────────────────
+      # Cada test recibe DATABASE_URL apuntando al schema de SU modulo.
+      # Los tests derivan el schema del modulo peer via string-replace:
+      #   finanzas  -> schema=finanzas  (compras.events, control-obra.event, etc.)
+      #   compras   -> DATABASE_URL=schema=compras, deriva schema=finanzas
+      #   control_obra -> DATABASE_URL=schema=control_obra, deriva schema=finanzas
+      #   contabilidad -> DATABASE_URL=schema=finanzas, deriva schema=contabilidad
       - name: Run inter-module RabbitMQ integration
-        run: npm run test:integration:intermodulo
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:control-obra-event   -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:control-obra-avance  -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:compras-events       -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npm run test:integration:finanzas-feedback    -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npm run test:integration:finanzas-pago-feedback -w @bocam/control-obra
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago        -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:compras-oc           -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:compras-oc-cancelada -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-compromiso-conciliacion  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-liberacion-conciliacion  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago-cfdi   -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-externo -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-worker  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-banco   -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-lote  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-archivo -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-transferencia -w @bocam/contabilidad
 
       - name: Run event contract hardening suite
         run: npm run test:integration:event-contracts
