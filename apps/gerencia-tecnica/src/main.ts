@@ -25,7 +25,7 @@ import {
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 // En desarrollo local sin el paquete compilado, se puede usar el path relativo.
 // En producción, se importaría desde '@bocam/auth-middleware'.
-import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import type { SecurityContext } from '../../../packages/auth-middleware/src';
 
 const app = express();
@@ -111,6 +111,166 @@ app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Respo
   }
 });
 
+/**
+ * POST /api/v1/gerencia-tecnica/insumos
+ * Crea un nuevo insumo en el catálogo SSOT del tenant.
+ */
+app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+    const { clave, descripcion, unidad, costo, clase } = req.body;
+
+    if (!clave || !descripcion || !unidad || costo === undefined || !clase) {
+      return res.status(400).json(
+        createApiError('VALIDATION_ERROR', 'Campos requeridos: clave, descripcion, unidad, costo, clase.')
+      );
+    }
+
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    const insumoExistente = await db.insumo.findFirst({ where: { clave } });
+    if (insumoExistente) {
+      return res.status(409).json(
+        createApiError('DUPLICATE_KEY', `Ya existe un insumo con la clave "${clave}".`)
+      );
+    }
+
+    const insumo = await db.insumo.create({
+      data: {
+        clave,
+        descripcion,
+        unidad,
+        costo: parseFloat(costo),
+        clase,
+        activo: true,
+      },
+    });
+
+    res.status(201).json(createApiResponse(insumo, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en POST /insumos:', error.message);
+    res.status(500).json(
+      createApiError('INTERNAL_ERROR', 'Error al crear insumo.', error.message)
+    );
+  }
+});
+
+/**
+ * PATCH /api/v1/gerencia-tecnica/insumos/:id
+ * Actualiza un insumo existente (precio, descripción, unidad).
+ */
+app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+    const { id } = req.params;
+    const { descripcion, unidad, costo, clase } = req.body;
+
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    const insumo = await db.insumo.findFirst({ where: { id, activo: true } });
+    if (!insumo) {
+      return res.status(404).json(
+        createApiError('NOT_FOUND', `Insumo con id "${id}" no encontrado.`)
+      );
+    }
+
+    const insumoActualizado = await db.insumo.update({
+      where: { id },
+      data: {
+        ...(descripcion !== undefined && { descripcion }),
+        ...(unidad !== undefined && { unidad }),
+        ...(costo !== undefined && { costo: parseFloat(costo) }),
+        ...(clase !== undefined && { clase }),
+      },
+    });
+
+    res.json(createApiResponse(insumoActualizado, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en PATCH /insumos/:id:', error.message);
+    res.status(500).json(
+      createApiError('INTERNAL_ERROR', 'Error al actualizar insumo.', error.message)
+    );
+  }
+});
+
+/**
+ * DELETE /api/v1/gerencia-tecnica/insumos/:id
+ * Desactiva un insumo (soft delete — nunca se borra físicamente).
+ */
+app.delete('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+    const { id } = req.params;
+
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    const insumo = await db.insumo.findFirst({ where: { id, activo: true } });
+    if (!insumo) {
+      return res.status(404).json(
+        createApiError('NOT_FOUND', `Insumo con id "${id}" no encontrado o ya desactivado.`)
+      );
+    }
+
+    const insumoDesactivado = await db.insumo.update({
+      where: { id },
+      data: { activo: false },
+    });
+
+    res.json(createApiResponse(insumoDesactivado, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en DELETE /insumos/:id:', error.message);
+    res.status(500).json(
+      createApiError('INTERNAL_ERROR', 'Error al desactivar insumo.', error.message)
+    );
+  }
+});
+
+/**
+ * POST /api/v1/gerencia-tecnica/presupuestos
+ * Crea un nuevo presupuesto base para un proyecto.
+ */
+app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+    const { nombre, proyecto_id, version, conceptos } = req.body;
+
+    if (!nombre || !proyecto_id) {
+      return res.status(400).json(
+        createApiError('VALIDATION_ERROR', 'Campos requeridos: nombre, proyecto_id.')
+      );
+    }
+
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    const presupuesto = await db.presupuestoBase.create({
+      data: {
+        nombre,
+        proyecto_id,
+        version: version || '1.0',
+        conceptos: conceptos?.length
+          ? {
+              create: conceptos.map((c: any) => ({
+                clave: c.clave,
+                descripcion: c.descripcion,
+                unidad: c.unidad,
+                cantidad: parseFloat(c.cantidad),
+                precio_unitario: parseFloat(c.precio_unitario),
+              })),
+            }
+          : undefined,
+      },
+      include: { conceptos: true },
+    });
+
+    res.status(201).json(createApiResponse(presupuesto, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en POST /presupuestos:', error.message);
+    res.status(500).json(
+      createApiError('INTERNAL_ERROR', 'Error al crear presupuesto.', error.message)
+    );
+  }
+});
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -139,9 +299,13 @@ async function bootstrap(): Promise<void> {
     console.log(`[Gerencia Técnica] 🔐 Autenticación: JWT REAL (Bearer Token)`);
     console.log(`[Gerencia Técnica] 🛡️  Aislamiento RLS: ACTIVO`);
     console.log(`[Gerencia Técnica] 📡 Rutas disponibles:`);
-    console.log(`   GET /api/v1/gerencia-tecnica/insumos`);
-    console.log(`   GET /api/v1/gerencia-tecnica/presupuestos`);
-    console.log(`   GET /health (sin auth)`);
+    console.log(`   GET    /api/v1/gerencia-tecnica/insumos`);
+    console.log(`   POST   /api/v1/gerencia-tecnica/insumos`);
+    console.log(`   PATCH  /api/v1/gerencia-tecnica/insumos/:id`);
+    console.log(`   DELETE /api/v1/gerencia-tecnica/insumos/:id`);
+    console.log(`   GET    /api/v1/gerencia-tecnica/presupuestos`);
+    console.log(`   POST   /api/v1/gerencia-tecnica/presupuestos`);
+    console.log(`   GET    /health (sin auth)`);
   });
 
   // 3. Graceful Shutdown

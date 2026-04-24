@@ -24,6 +24,7 @@ const navItems = [
   { name: 'Control de Obra', icon: IconFileText, id: 'control-obra' },
   { name: 'Personal', icon: IconUsers, id: 'personal' },
   { name: 'Seguridad', icon: IconShieldCheck, id: 'seguridad' },
+  { name: 'Ventas', icon: IconShoppingCart, id: 'ventas' },
 ];
 
 interface LayoutProps {
