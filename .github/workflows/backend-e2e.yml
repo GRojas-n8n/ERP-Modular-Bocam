@@ -119,7 +119,9 @@ jobs:
 
       - name: Run inter-module - Contabilidad tests
         env:
-          DATABASE_URL: ${{ env.DB_BASE }}?schema=contabilidad
+          # Los tests de contabilidad esperan DATABASE_URL con schema=finanzas
+          # y derivan el schema de contabilidad internamente (replace finanzas→contabilidad)
+          DATABASE_URL: ${{ env.DB_BASE }}?schema=finanzas
         run: |
           npm run test:integration:finanzas-pago                      -w @bocam/contabilidad
           npm run test:integration:compras-oc                         -w @bocam/contabilidad
@@ -137,8 +139,9 @@ jobs:
       # ── Event contract suite (contabilidad) ───────────────────────────────────
       - name: Run event contract hardening suite
         env:
+          # event-contracts esta en finanzas y tambien deriva contabilidad internamente
           DATABASE_URL: ${{ env.DB_BASE }}?schema=finanzas
-        run: npm run test:integration:event-contracts
+        run: npm run test:integration:event-contracts -w @bocam/finanzas
 
       # ── E2E criticos con DATABASE_URL por modulo ──────────────────────────────
       - name: Run E2E - Compras reconciliacion
