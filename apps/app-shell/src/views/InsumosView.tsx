@@ -27,7 +27,7 @@ export const InsumosView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get('/insumos');
+      const response = await api.get('/api/v1/gerencia-tecnica/insumos');
       setInsumos(response.data.data || []);
     } catch (err: any) {
       console.error('Error fetching insumos:', err);

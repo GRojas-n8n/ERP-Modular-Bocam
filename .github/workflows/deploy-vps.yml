@@ -1,0 +1,122 @@
+# ============================================================
+# deploy-vps.yml — BocamOS ERP
+# Dispara en cada push a main que toque el app-shell.
+# Flujo: build frontend → SCP al VPS → reload nginx
+#
+# SECRETS requeridos en GitHub (Settings → Secrets → Actions):
+#   VPS_SSH_KEY   → contenido de la llave privada ed25519
+#   VPS_HOST      → 72.60.114.12
+#   VPS_USER      → root
+# ============================================================
+
+name: Deploy Frontend al VPS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/app-shell/**"
+      - "packages/ui-core/**"
+      - ".github/workflows/deploy-vps.yml"
+
+  # Permite disparar manualmente desde la UI de GitHub Actions
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build + Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js ─────────────────────────────────────────
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/app-shell/package-lock.json
+
+      # ── 3. Instalar dependencias ───────────────────────────
+      - name: Instalar dependencias (monorepo raiz)
+        run: npm ci --ignore-scripts
+        working-directory: .
+
+      - name: Instalar dependencias (app-shell)
+        run: npm ci
+        working-directory: apps/app-shell
+
+      # ── 4. Build de produccion ─────────────────────────────
+      - name: Build Vite produccion
+        run: npm run build
+        working-directory: apps/app-shell
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ""
+
+      # ── 5. Verificar artefacto ─────────────────────────────
+      - name: Verificar dist/
+        run: |
+          echo "Archivos generados:"
+          ls -lh apps/app-shell/dist/assets/
+          echo "Tamano total:"
+          du -sh apps/app-shell/dist/
+
+      # ── 6. Configurar SSH ──────────────────────────────────
+      - name: Configurar llave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 7. Crear directorio remoto ─────────────────────────
+      - name: Preparar directorio en VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /var/www/bocam-erp/dist && \
+             chown -R www-data:www-data /var/www/bocam-erp && \
+             chmod -R 755 /var/www/bocam-erp"
+
+      # ── 8. Subir dist al VPS ──────────────────────────────
+      - name: Deploy dist/ via SCP
+        run: |
+          scp -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              -r apps/app-shell/dist/. \
+              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bocam-erp/dist/
+
+      # ── 9. Recargar nginx ──────────────────────────────────
+      - name: Recargar nginx
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "nginx -t && systemctl reload nginx && systemctl is-active nginx"
+
+      # ── 10. Smoke test ─────────────────────────────────────
+      - name: Smoke test HTTP
+        run: |
+          sleep 3
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.VPS_HOST }})
+          echo "HTTP Status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "ERROR: El servidor respondio $STATUS"
+            exit 1
+          fi
+          echo "OK: Frontend accesible en http://${{ secrets.VPS_HOST }}"
+
+      # ── 11. Notificacion de resultado ─────────────────────
+      - name: Resumen del deploy
+        if: always()
+        run: |
+          echo "=================================="
+          echo "Deploy completado"
+          echo "URL: http://${{ secrets.VPS_HOST }}"
+          echo "Rama: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "=================================="

@@ -161,3 +161,84 @@ export async function switchProjectApi(proyectoId: string) {
 }
 
 export default api;
+
+// ─── Wrappers tipados por módulo ─────────────────────────────────────────────
+// Cada función centraliza la ruta y el manejo de la respuesta,
+// evitando que las vistas conozcan los paths del backend directamente.
+
+// ── Gerencia Técnica ─────────────────────────────────────────────────────────
+export const gtApi = {
+  getInsumos:      ()         => api.get('/api/v1/gerencia-tecnica/insumos'),
+  createInsumo:    (data: unknown) => api.post('/api/v1/gerencia-tecnica/insumos', data),
+  updateInsumo:    (id: string, data: unknown) => api.patch(`/api/v1/gerencia-tecnica/insumos/${id}`, data),
+  deleteInsumo:    (id: string) => api.delete(`/api/v1/gerencia-tecnica/insumos/${id}`),
+  getPresupuestos: ()         => api.get('/api/v1/gerencia-tecnica/presupuestos'),
+  createPresupuesto: (data: unknown) => api.post('/api/v1/gerencia-tecnica/presupuestos', data),
+};
+
+// ── Compras ──────────────────────────────────────────────────────────────────
+export const comprasApi = {
+  getRequisiciones:    ()         => api.get('/api/v1/compras/requisiciones'),
+  createRequisicion:   (data: unknown) => api.post('/api/v1/compras/requisiciones', data),
+  getOrdenesCompra:    ()         => api.get('/api/v1/compras/ordenes-compra'),
+  getProveedores:      ()         => api.get('/api/v1/compras/proveedores'),
+  getComparativas:     ()         => api.get('/api/v1/compras/comparativas'),
+  getComparativa:      (id: string) => api.get(`/api/v1/compras/comparativas/${id}`),
+  convertirAOC:        (id: string, data: unknown) => api.post(`/api/v1/compras/comparativas/${id}/convertir-oc`, data),
+  cancelarOC:          (id: string, data: unknown) => api.post(`/api/v1/compras/ordenes-compra/${id}/cancelar`, data),
+};
+
+// ── Control de Obra ──────────────────────────────────────────────────────────
+export const controlObraApi = {
+  getBitacoras:    ()         => api.get('/api/v1/control-obra/bitacoras'),
+  createBitacora:  (data: unknown) => api.post('/api/v1/control-obra/bitacoras', data),
+  getAvances:      ()         => api.get('/api/v1/control-obra/avances'),
+  createAvance:    (data: unknown) => api.post('/api/v1/control-obra/avances', data),
+  validarAvance:   (id: string) => api.patch(`/api/v1/control-obra/avances/${id}/validar`, {}),
+  getEstimaciones: ()         => api.get('/api/v1/control-obra/estimaciones'),
+  createEstimacion:(data: unknown) => api.post('/api/v1/control-obra/estimaciones', data),
+};
+
+// ── Personal ─────────────────────────────────────────────────────────────────
+export const personalApi = {
+  getEmpleados:       ()         => api.get('/api/v1/personal/empleados'),
+  createEmpleado:     (data: unknown) => api.post('/api/v1/personal/empleados', data),
+  updateEmpleado:     (id: string, data: unknown) => api.patch(`/api/v1/personal/empleados/${id}`, data),
+  bajaEmpleado:       (id: string, data: unknown) => api.patch(`/api/v1/personal/empleados/${id}/baja`, data),
+  getCuadrillas:      ()         => api.get('/api/v1/personal/cuadrillas'),
+  createCuadrilla:    (data: unknown) => api.post('/api/v1/personal/cuadrillas', data),
+  asignarCuadrilla:   (id: string, data: unknown) => api.post(`/api/v1/personal/cuadrillas/${id}/asignar`, data),
+  getPrenominas:      ()         => api.get('/api/v1/personal/prenominas'),
+  calcularPrenomina:  (data: unknown) => api.post('/api/v1/personal/prenominas/calcular', data),
+  autorizarPrenomina: (id: string) => api.patch(`/api/v1/personal/prenominas/${id}/autorizar`, {}),
+  getDashboard:       ()         => api.get('/api/v1/personal/dashboard'),
+};
+
+// ── Seguridad / HSE ──────────────────────────────────────────────────────────
+export const seguridadApi = {
+  getIncidentes:      ()         => api.get('/api/v1/seguridad/incidentes'),
+  createIncidente:    (data: unknown) => api.post('/api/v1/seguridad/incidentes', data),
+  getInspecciones:    ()         => api.get('/api/v1/seguridad/inspecciones'),
+  createInspeccion:   (data: unknown) => api.post('/api/v1/seguridad/inspecciones', data),
+  getPermisos:        ()         => api.get('/api/v1/seguridad/permisos'),
+  createPermiso:      (data: unknown) => api.post('/api/v1/seguridad/permisos', data),
+  getCapacitaciones:  ()         => api.get('/api/v1/seguridad/capacitaciones'),
+  createCapacitacion: (data: unknown) => api.post('/api/v1/seguridad/capacitaciones', data),
+};
+
+// ── Finanzas ─────────────────────────────────────────────────────────────────
+export const finanzasApi = {
+  getDashboard:    ()         => api.get('/api/v1/finanzas/dashboard'),
+  getPagos:        ()         => api.get('/api/v1/finanzas/pagos'),
+  getMovimientos:  ()         => api.get('/api/v1/finanzas/movimientos'),
+  getPresupuestos: ()         => api.get('/api/v1/finanzas/presupuestos'),
+};
+
+// ── Ventas ───────────────────────────────────────────────────────────────────
+export const ventasApi = {
+  getClientes:     ()         => api.get('/api/v1/ventas/clientes'),
+  getCotizaciones: ()         => api.get('/api/v1/ventas/cotizaciones'),
+  createCotizacion:(data: unknown) => api.post('/api/v1/ventas/cotizaciones', data),
+  aceptarCotizacion:(id: string) => api.post(`/api/v1/ventas/cotizaciones/${id}/aceptar`, {}),
+  getFacturas:     ()         => api.get('/api/v1/ventas/facturas'),
+};

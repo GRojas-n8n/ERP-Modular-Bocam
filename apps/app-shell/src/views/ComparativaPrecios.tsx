@@ -26,11 +26,11 @@ export const ComparativaPrecios: React.FC = () => {
     const fetchComparativas = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/compras/comparativas');
+        const response = await api.get('/api/v1/compras/comparativas');
         setComparativas(response.data.data || []);
       } catch (err: any) {
         console.error('Error fetching comparativas:', err);
-        setError('Error al conectar con el mÃ³dulo de ProcuraciÃ³n.');
+        setError('Error al conectar con el modulo de Procuracion.');
       } finally {
         setLoading(false);
       }
@@ -52,7 +52,7 @@ export const ComparativaPrecios: React.FC = () => {
                 Cuadros Comparativos
               </h1>
               <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                AnÃ¡lisis de Ofertas y SelecciÃ³n de Proveedores
+                Analisis de Ofertas y Seleccion de Proveedores
               </p>
             </div>
           </div>
@@ -89,10 +89,10 @@ export const ComparativaPrecios: React.FC = () => {
                     Folio / Fecha
                   </th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
-                    TÃ­tulo del AnÃ¡lisis
+                    Titulo del Analisis
                   </th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
-                    Ref. RequisiciÃ³n
+                    Ref. Requisicion
                   </th>
                   <th className="px-4 py-4 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground md:px-8 md:py-5">
                     Estado
@@ -110,7 +110,7 @@ export const ComparativaPrecios: React.FC = () => {
                         <IconScale className="mb-4 h-12 w-12" />
                         <p className="text-sm font-bold uppercase tracking-widest">Sin cuadros comparativos</p>
                         <p className="mt-1 text-[10px] font-medium">
-                          No se han generado anÃ¡lisis de ofertas para este periodo.
+                          No se han generado analisis de ofertas para este periodo.
                         </p>
                       </div>
                     </td>

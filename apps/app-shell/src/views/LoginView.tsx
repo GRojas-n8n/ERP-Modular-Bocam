@@ -98,7 +98,7 @@ const DEV_TENANTS = [
 ];
 
 export const LoginView: React.FC = () => {
-  const { login, loginError } = useTenant();
+  const { login, loginDemo, loginError } = useTenant();
   const [email, setEmail] = useState('admin@alfa.bocam.com');
   const [password, setPassword] = useState('Admin.2026');
   const [tenantId, setTenantId] = useState(DEV_TENANTS[0].id);
@@ -230,11 +230,20 @@ export const LoginView: React.FC = () => {
                 </Button>
               </form>
 
-              <div className="border-t border-border/40 pt-6 text-center">
-                <SectionBadge className="shadow-inner">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                  Sesion segura via JWT
-                </SectionBadge>
+              <div className="border-t border-border/40 pt-5 space-y-4">
+                <button
+                  type="button"
+                  onClick={loginDemo}
+                  className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-primary transition-all hover:bg-primary/10 hover:border-primary/50"
+                >
+                  ⚡ Explorar sistema en modo demo
+                </button>
+                <div className="text-center">
+                  <SectionBadge className="shadow-inner">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Sesion segura via JWT
+                  </SectionBadge>
+                </div>
               </div>
             </CardContent>
           </Card>

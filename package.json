@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "dev:ventas": "npm run dev -w @bocam/ventas",
+    "tunnel:ventas": "npm run tunnel -w @bocam/ventas",
     "build": "npm run build --workspaces --if-present",
     "build:ventas": "npm run build -w @bocam/ventas",
     "test": "npm run test --workspaces --if-present",

@@ -15,6 +15,7 @@ import { getAccessToken, setTokens, clearTokens, loginApi, fetchMe } from '../li
 
 interface TenantContextType extends AppState {
   login: (email: string, password: string, tenantId: string) => Promise<void>;
+  loginDemo: () => void;
   logout: () => void;
   setCurrentProjectId: (projectId: string) => void;
   loginError: string | null;
@@ -46,12 +47,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const data = result.data;
 
         const tenant: TenantConfig = {
-          id: data.tenant.id,
-          name: data.tenant.name,
-          logoUrl: data.tenant.logo_url || '',
-          primaryColor: data.tenant.primary_color || undefined,
+          id: data?.tenant?.id,
+          name: data?.tenant?.name,
+          logoUrl: data?.tenant?.logo_url || '/bocam-logo.png',
+          primaryColor: data?.tenant?.primary_color || undefined,
           language: 'es',
-          plan: data.tenant.plan,
+          plan: data?.tenant?.plan,
         };
 
         const user: UserContext = {
@@ -111,10 +112,10 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Construir estado
       const tenant: TenantConfig = {
-        id: userData.tenant.id,
-        name: userData.tenant.name,
-        logoUrl: userData.tenant.logo_url || '',
-        primaryColor: userData.tenant.primary_color || undefined,
+        id: userData?.tenant?.id,
+        name: userData?.tenant?.name,
+        logoUrl: userData?.tenant?.logo_url || '/bocam-logo.png',
+        primaryColor: userData?.tenant?.primary_color || undefined,
         language: 'es',
       };
 
@@ -146,6 +147,38 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
+  // ─── Demo Mode ─────────────────────────────────────────────────────────
+  const loginDemo = useCallback(() => {
+    const demoTenant: TenantConfig = {
+      id: 'bocam-demo',
+      name: 'Bocam ERP',
+      logoUrl: '/bocam-logo.png',
+      primaryColor: '#1A56DB',
+      language: 'es',
+      plan: 'enterprise',
+    };
+    const demoUser: UserContext = {
+      id: 'demo-user-001',
+      email: 'demo@bocam.com',
+      name: 'Usuario Demo',
+      role: ['ADMIN', 'GERENTE_TECNICO', 'COMPRAS'],
+      projects: [
+        { id: 'proj-001', name: 'Torre Corporativa Norte', code: 'TCN-2024', status: 'En curso' },
+        { id: 'proj-002', name: 'Residencial Las Palmas', code: 'RLP-2024', status: 'En curso' },
+        { id: 'proj-003', name: 'Bodega Industrial Vallejo', code: 'BIV-2025', status: 'Planeación' },
+      ],
+      limiteAprobacion: 5000000,
+    };
+    document.documentElement.style.setProperty('--brand-primary', demoTenant.primaryColor!);
+    setState({
+      tenant: demoTenant,
+      user: demoUser,
+      currentProjectId: 'proj-001',
+      isLoading: false,
+      isAuthenticated: true,
+    });
+  }, []);
+
   // ─── Logout ────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
     clearTokens();
@@ -164,8 +197,13 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   // ─── Render ────────────────────────────────────────────────────────────
+  // IMPORTANTE: El Provider SIEMPRE se renderiza para que el contexto esté
+  // disponible antes de que React monte los hijos. El spinner se muestra
+  // dentro del Provider (no fuera), evitando la transición DIV→Provider
+  // que en React 19 concurrent mode puede pre-renderizar hijos antes de
+  // que el contexto quede establecido (causa del Error #525).
   return (
-    <TenantContext.Provider value={{ ...state, login, logout, setCurrentProjectId, loginError }}>
+    <TenantContext.Provider value={{ ...state, login, loginDemo, logout, setCurrentProjectId, loginError }}>
       {state.isLoading ? (
         <div className="h-screen w-screen flex items-center justify-center bg-background">
           <div className="animate-pulse flex flex-col items-center">

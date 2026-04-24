@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, Component } from 'react';
 import { Layout } from './components/Layout';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { LoginView } from './views/LoginView';
@@ -10,6 +10,48 @@ import { FinanzasView } from './views/FinanzasView';
 import { ControlObraView } from './views/ControlObraView';
 import { PersonalView } from './views/PersonalView';
 import { SeguridadView } from './views/SeguridadView';
+
+// ─── View loading fallback ────────────────────────────────────────────────────
+const ViewLoader: React.FC = () => (
+  <div className="flex h-full min-h-[400px] items-center justify-center">
+    <div className="animate-pulse text-muted-foreground text-xs font-black uppercase tracking-[0.2em]">
+      Cargando módulo...
+    </div>
+  </div>
+);
+
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+interface EBState { hasError: boolean; }
+class AppErrorBoundary extends Component<{ children: React.ReactNode }, EBState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(_: Error): EBState {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    console.error('[AppShell] Error capturado por boundary:', error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-4">
+          <p className="text-sm font-bold uppercase tracking-widest text-destructive">
+            Error crítico — recarga la aplicación
+          </p>
+          <button
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold uppercase tracking-widest"
+            onClick={() => window.location.reload()}
+          >
+            Recargar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /**
  * ---------------------------------------------------------------------------
@@ -51,7 +93,9 @@ const AuthenticatedApp: React.FC = () => {
 
   return (
     <Layout onNavigate={(view) => setCurrentView(view)} currentView={currentView}>
-      {renderView()}
+      <Suspense fallback={<ViewLoader />}>
+        {renderView()}
+      </Suspense>
     </Layout>
   );
 };
@@ -68,9 +112,11 @@ const AppRouter: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <TenantProvider>
-      <AppRouter />
-    </TenantProvider>
+    <AppErrorBoundary>
+      <TenantProvider>
+        <AppRouter />
+      </TenantProvider>
+    </AppErrorBoundary>
   );
 };
 

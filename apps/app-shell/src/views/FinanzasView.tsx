@@ -57,8 +57,8 @@ export const FinanzasView: React.FC = () => {
       try {
         setLoading(true);
         const [dashRes, pagosRes] = await Promise.all([
-          api.get('/finanzas/dashboard'),
-          api.get('/finanzas/pagos'),
+          api.get('/api/v1/finanzas/dashboard'),
+          api.get('/api/v1/finanzas/pagos'),
         ]);
 
         setResumen(dashRes.data.data.resumen_presupuestal);
