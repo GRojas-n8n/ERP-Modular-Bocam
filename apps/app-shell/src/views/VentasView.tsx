@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ventasApi } from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_CLIENTES, DEMO_COTIZACIONES, DEMO_FACTURAS } from '../lib/demoData';
 import {
   IconRefreshCw,
   IconAlertCircle,
@@ -89,6 +91,7 @@ const EstatusBadge: React.FC<{ estatus: string }> = ({ estatus }) => {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export const VentasView: React.FC = () => {
+  const { tenant } = useTenant();
   const [tab, setTab] = useState<TabKey>('clientes');
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -101,6 +104,7 @@ export const VentasView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      if (tenant?.id === 'bocam-demo') { setClientes(DEMO_CLIENTES as Cliente[]); setCotizaciones(DEMO_COTIZACIONES as Cotizacion[]); setFacturas(DEMO_FACTURAS as Factura[]); return; }
       if (t === 'clientes') {
         const r = await ventasApi.getClientes();
         setClientes(r.data.data || []);

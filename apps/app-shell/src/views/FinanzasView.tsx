@@ -27,6 +27,8 @@ import {
   IconWallet,
 } from '../components/Icons';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_RESUMEN_FINANCIERO, DEMO_PAGOS } from '../lib/demoData';
 
 interface PagoProgramado {
   id_pago: string;
@@ -47,6 +49,7 @@ interface ResumenFinanciero {
 }
 
 export const FinanzasView: React.FC = () => {
+  const { tenant } = useTenant();
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [pagos, setPagos] = useState<PagoProgramado[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +59,7 @@ export const FinanzasView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        if (tenant?.id === 'bocam-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
         const [dashRes, pagosRes] = await Promise.all([
           api.get('/api/v1/finanzas/dashboard'),
           api.get('/api/v1/finanzas/pagos'),

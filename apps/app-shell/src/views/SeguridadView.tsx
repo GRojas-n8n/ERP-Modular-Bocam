@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_INCIDENTES, DEMO_INSPECCIONES, DEMO_PERMISOS, DEMO_CAPACITACIONES } from '../lib/demoData';
 import {
   Button,
   Card,
@@ -92,6 +94,7 @@ interface Capacitacion {
 type TabId = 'incidentes' | 'inspecciones' | 'permisos' | 'capacitaciones';
 
 export const SeguridadView: React.FC = () => {
+  const { tenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabId>('incidentes');
   const [incidentes, setIncidentes] = useState<Incidente[]>([]);
   const [inspecciones, setInspecciones] = useState<Inspeccion[]>([]);
@@ -104,6 +107,7 @@ export const SeguridadView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        if (tenant?.id === 'bocam-demo') { setIncidentes(DEMO_INCIDENTES as Incidente[]); setInspecciones(DEMO_INSPECCIONES as Inspeccion[]); setPermisos(DEMO_PERMISOS as Permiso[]); setCapacitaciones(DEMO_CAPACITACIONES as Capacitacion[]); return; }
         const [incRes, insRes, perRes, capRes] = await Promise.allSettled([
           api.get('/api/v1/seguridad/incidentes'),
           api.get('/api/v1/seguridad/inspecciones'),

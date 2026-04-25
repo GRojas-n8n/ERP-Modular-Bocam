@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
-import { 
+import { useTenant } from '../context/TenantContext';
+import { DEMO_INSUMOS } from '../lib/demoData';
+import {
   IconPackage, 
   IconSearch, 
   IconFilter, 
@@ -19,6 +21,7 @@ interface Insumo {
 }
 
 export const InsumosView: React.FC = () => {
+  const { tenant } = useTenant();
   const [insumos, setInsumos] = useState<Insumo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +30,7 @@ export const InsumosView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      if (tenant?.id === 'bocam-demo') { setInsumos(DEMO_INSUMOS); return; }
       const response = await api.get('/api/v1/gerencia-tecnica/insumos');
       setInsumos(response.data.data || []);
     } catch (err: any) {

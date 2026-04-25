@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_EMPLEADOS, DEMO_CUADRILLAS, DEMO_PRENOMINAS } from '../lib/demoData';
 import {
   Button,
   Card,
@@ -70,6 +72,7 @@ interface PreNomina {
 type TabId = 'empleados' | 'cuadrillas' | 'prenomina';
 
 export const PersonalView: React.FC = () => {
+  const { tenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabId>('empleados');
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cuadrillas, setCuadrillas] = useState<Cuadrilla[]>([]);
@@ -81,6 +84,7 @@ export const PersonalView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        if (tenant?.id === 'bocam-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); return; }
         const [empRes, cuaRes, pnRes] = await Promise.allSettled([
           api.get('/api/v1/personal/empleados'),
           api.get('/api/v1/personal/cuadrillas'),

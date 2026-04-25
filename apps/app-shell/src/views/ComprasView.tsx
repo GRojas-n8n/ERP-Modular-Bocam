@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_REQUISICIONES } from '../lib/demoData';
 import {
   Button,
   Card,
@@ -41,6 +43,7 @@ interface Requisicion {
 }
 
 export const ComprasView: React.FC = () => {
+  const { tenant } = useTenant();
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +60,7 @@ export const ComprasView: React.FC = () => {
   const fetchRequisiciones = async () => {
     try {
       setLoading(true);
+      if (tenant?.id === 'bocam-demo') { setRequisiciones(DEMO_REQUISICIONES as Requisicion[]); return; }
       const response = await api.get('/api/v1/compras/requisiciones');
       setRequisiciones(response.data.data || []);
     } catch (err: any) {

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_BITACORAS, DEMO_AVANCES, DEMO_ESTIMACIONES } from '../lib/demoData';
 import {
   Button,
   Card,
@@ -78,6 +80,7 @@ interface Estimacion {
 type TabId = 'bitacoras' | 'avances' | 'estimaciones';
 
 export const ControlObraView: React.FC = () => {
+  const { tenant } = useTenant();
   const [activeTab, setActiveTab] = useState<TabId>('bitacoras');
   const [bitacoras, setBitacoras] = useState<Bitacora[]>([]);
   const [avances, setAvances] = useState<AvanceFisico[]>([]);
@@ -116,6 +119,7 @@ export const ControlObraView: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      if (tenant?.id === 'bocam-demo') { setBitacoras(DEMO_BITACORAS as Bitacora[]); setAvances(DEMO_AVANCES as AvanceFisico[]); setEstimaciones(DEMO_ESTIMACIONES as Estimacion[]); return; }
       const [bitRes, avRes, estRes] = await Promise.allSettled([
         api.get('/api/v1/control-obra/bitacoras'),
         api.get('/api/v1/control-obra/avances'),
