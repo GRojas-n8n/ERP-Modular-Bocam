@@ -12,6 +12,7 @@ import { PersonalView } from './views/PersonalView';
 import { SeguridadView } from './views/SeguridadView';
 import { VentasView } from './views/VentasView';
 import { MasterView } from './views/MasterView';
+import { AdminView } from './views/AdminView';
 
 // ─── View loading fallback ────────────────────────────────────────────────────
 const ViewLoader: React.FC = () => (
@@ -90,6 +91,8 @@ const AuthenticatedApp: React.FC = () => {
         return <SeguridadView />;
       case 'ventas':
         return <VentasView />;
+      case 'admin':
+        return <AdminView />;
       default:
         return <DashboardView onNavigate={setCurrentView} />;
     }

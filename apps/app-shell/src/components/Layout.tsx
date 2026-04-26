@@ -16,15 +16,18 @@ import {
 } from './Icons';
 import { useTenant } from '../context/TenantContext';
 
-const navItems = [
-  { name: 'Dashboard', icon: IconDashboard, id: 'dashboard' },
-  { name: 'Gerencia Tecnica', icon: IconBriefcase, id: 'insumos' },
-  { name: 'Compras', icon: IconShoppingCart, id: 'compras' },
-  { name: 'Finanzas', icon: IconWallet, id: 'finanzas' },
-  { name: 'Control de Obra', icon: IconFileText, id: 'control-obra' },
-  { name: 'Personal', icon: IconUsers, id: 'personal' },
-  { name: 'Seguridad', icon: IconShieldCheck, id: 'seguridad' },
-  { name: 'Ventas', icon: IconShoppingCart, id: 'ventas' },
+// roles: [] = visible a todos | ['role'] = requiere ese rol | admin siempre ve todo
+const ALL_NAV_ITEMS = [
+  { name: 'Dashboard',       icon: IconDashboard,   id: 'dashboard',    roles: [] },
+  { name: 'Gerencia Tecnica',icon: IconBriefcase,   id: 'insumos',      roles: ['gerencia_tecnica'] },
+  { name: 'Compras',         icon: IconShoppingCart,id: 'compras',      roles: ['compras'] },
+  { name: 'Finanzas',        icon: IconWallet,      id: 'finanzas',     roles: ['finanzas'] },
+  { name: 'Contabilidad',    icon: IconFileText,    id: 'contabilidad', roles: ['contabilidad'] },
+  { name: 'Control de Obra', icon: IconFileText,    id: 'control-obra', roles: ['control_obra'] },
+  { name: 'Personal',        icon: IconUsers,       id: 'personal',     roles: ['personal_rh'] },
+  { name: 'Seguridad HSE',   icon: IconShieldCheck, id: 'seguridad',    roles: ['seguridad_hse'] },
+  { name: 'Ventas',          icon: IconShoppingCart,id: 'ventas',       roles: ['ventas'] },
+  { name: 'Administracion',  icon: IconSettings,    id: 'admin',        roles: ['admin'] },
 ];
 
 interface LayoutProps {
@@ -35,6 +38,11 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView }) => {
   const { tenant, user, logout } = useTenant();
+  const userRoles: string[] = user?.role ?? [];
+  const isAdmin = userRoles.includes('admin');
+  const navItems = ALL_NAV_ITEMS.filter(item =>
+    item.roles.length === 0 || isAdmin || item.roles.some(r => userRoles.includes(r))
+  );
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {

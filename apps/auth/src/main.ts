@@ -616,6 +616,148 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 
+
+// ─── Admin Middleware (requiere rol 'admin' en el tenant) ────────────────────
+function requireAdminRole(req: Request, res: Response, next: () => void): void {
+  const roles: string[] = req.securityContext?.roles ?? [];
+  if (!roles.includes('admin')) {
+    res.status(403).json({ success: false, error: { code: 'ADMIN_FORBIDDEN', message: 'Se requiere rol de administrador.' } });
+    return;
+  }
+  next();
+}
+
+// ─── GET /api/v1/auth/admin/users ────────────────────────────────────────────
+app.get('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const users = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.user.findMany({
+        where: { tenant_id: tenantId },
+        include: { proyectos_acceso: { include: { proyecto: true } } },
+        orderBy: { created_at: 'asc' },
+      })
+    );
+    res.json({ success: true, data: users.map(u => ({
+      id: u.id_usuario, email: u.email, nombre: u.nombre,
+      roles: u.rol_global, activo: u.activo,
+      limite_aprobacion: Number(u.limite_aprobacion_financiera),
+      proyectos: u.proyectos_acceso.map(pa => ({ id: pa.proyecto_id, nombre: pa.proyecto.nombre_oficial, codigo: pa.proyecto.codigo_centro_costos })),
+      created_at: u.created_at,
+    })) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
+// ─── POST /api/v1/auth/admin/users ───────────────────────────────────────────
+app.post('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const { email, password, nombre, roles: userRoles, proyecto_ids, limite_aprobacion } = req.body;
+    if (!email || !password || !nombre) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'email, password y nombre son obligatorios.' } });
+      return;
+    }
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const user = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.user.create({
+        data: {
+          tenant_id: tenantId, email, password_hash: passwordHash, nombre,
+          rol_global: Array.isArray(userRoles) ? userRoles : ['resident'],
+          limite_aprobacion_financiera: limite_aprobacion || 0,
+          proyectos_acceso: Array.isArray(proyecto_ids) && proyecto_ids.length > 0
+            ? { create: proyecto_ids.map((pid: string) => ({ proyecto_id: pid })) }
+            : undefined,
+        },
+      })
+    );
+    res.status(201).json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
+// ─── PATCH /api/v1/auth/admin/users/:id ──────────────────────────────────────
+app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const { id } = req.params;
+    const { nombre, roles: userRoles, activo, limite_aprobacion, password } = req.body;
+    const updateData: Record<string, unknown> = {};
+    if (nombre !== undefined) updateData.nombre = nombre;
+    if (userRoles !== undefined) updateData.rol_global = userRoles;
+    if (activo !== undefined) updateData.activo = activo;
+    if (limite_aprobacion !== undefined) updateData.limite_aprobacion_financiera = limite_aprobacion;
+    if (password) updateData.password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const user = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.user.update({ where: { id_usuario: id }, data: updateData })
+    );
+    res.json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global, activo: user.activo } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
+// ─── GET /api/v1/auth/admin/proyectos ────────────────────────────────────────
+app.get('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const proyectos = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.proyecto.findMany({ where: { tenant_id: tenantId }, orderBy: { created_at: 'asc' } })
+    );
+    res.json({ success: true, data: proyectos });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
+// ─── POST /api/v1/auth/admin/proyectos ───────────────────────────────────────
+app.post('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const { codigo_centro_costos, nombre_oficial, tipo_contrato, moneda_base, estatus } = req.body;
+    if (!codigo_centro_costos || !nombre_oficial) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'codigo_centro_costos y nombre_oficial son obligatorios.' } });
+      return;
+    }
+    const proyecto = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.proyecto.create({
+        data: {
+          tenant_id: tenantId, codigo_centro_costos, nombre_oficial,
+          tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
+          moneda_base: moneda_base || 'MXN',
+          estatus: estatus || 'CONSTRUCCION',
+        },
+      })
+    );
+    res.status(201).json({ success: true, data: proyecto });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
+// ─── PATCH /api/v1/auth/admin/proyectos/:id ──────────────────────────────────
+app.patch('/api/v1/auth/admin/proyectos/:id', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const { id } = req.params;
+    const { nombre_oficial, tipo_contrato, moneda_base, estatus, activo } = req.body;
+    const updateData: Record<string, unknown> = {};
+    if (nombre_oficial !== undefined) updateData.nombre_oficial = nombre_oficial;
+    if (tipo_contrato !== undefined) updateData.tipo_contrato = tipo_contrato;
+    if (moneda_base !== undefined) updateData.moneda_base = moneda_base;
+    if (estatus !== undefined) updateData.estatus = estatus;
+    if (activo !== undefined) updateData.activo = activo;
+    const proyecto = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.proyecto.update({ where: { id_proyecto: id }, data: updateData })
+    );
+    res.json({ success: true, data: proyecto });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+  }
+});
+
 // ─── Master Admin Middleware ──────────────────────────────────────────────────
 function requireMasterSecret(req: Request, res: Response, next: () => void): void {
   const auth = req.headers.authorization || '';
