@@ -141,8 +141,10 @@ async function toBase64Xlsx(rows: Array<Record<string, unknown>>) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('EstadoCuenta');
   if (rows.length > 0) {
-    worksheet.addRow(Object.keys(rows[0]));
-    rows.forEach((row) => worksheet.addRow(Object.values(row)));
+    // Union of all keys from all rows (mirrors xlsx json_to_sheet behavior)
+    const allKeys = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
+    worksheet.addRow(allKeys);
+    rows.forEach((row) => worksheet.addRow(allKeys.map((k) => row[k] ?? '')));
   }
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString('base64');
