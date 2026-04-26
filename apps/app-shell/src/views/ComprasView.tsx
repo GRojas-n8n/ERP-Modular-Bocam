@@ -44,6 +44,7 @@ interface Requisicion {
 
 export const ComprasView: React.FC = () => {
   const { tenant } = useTenant();
+  const isDemo = tenant?.id === 'bocam-demo';
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,13 +173,15 @@ export const ComprasView: React.FC = () => {
           </div>
         </div>
 
-        <Button
-          onClick={() => setShowReqForm(true)}
-          className="bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500"
-        >
-          <IconPlus className="h-4 w-4" />
-          Nueva Requisicion
-        </Button>
+        {!isDemo && (
+          <Button
+            onClick={() => setShowReqForm(true)}
+            className="bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500"
+          >
+            <IconPlus className="h-4 w-4" />
+            Nueva Requisicion
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -207,16 +210,18 @@ export const ComprasView: React.FC = () => {
             <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Sin requisiciones activas
             </p>
-            <div className="flex justify-center">
-              <Button
-                onClick={() => setShowReqForm(true)}
-                variant="outline"
-                className="border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/5"
-              >
-                <IconPlus className="h-4 w-4" />
-                Crear primera requisicion
-              </Button>
-            </div>
+            {!isDemo && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setShowReqForm(true)}
+                  variant="outline"
+                  className="border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/5"
+                >
+                  <IconPlus className="h-4 w-4" />
+                  Crear primera requisicion
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (

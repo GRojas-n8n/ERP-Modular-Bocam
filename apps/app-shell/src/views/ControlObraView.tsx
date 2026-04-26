@@ -81,6 +81,7 @@ type TabId = 'bitacoras' | 'avances' | 'estimaciones';
 
 export const ControlObraView: React.FC = () => {
   const { tenant } = useTenant();
+  const isDemo = tenant?.id === 'bocam-demo';
   const [activeTab, setActiveTab] = useState<TabId>('bitacoras');
   const [bitacoras, setBitacoras] = useState<Bitacora[]>([]);
   const [avances, setAvances] = useState<AvanceFisico[]>([]);
@@ -266,17 +267,19 @@ export const ControlObraView: React.FC = () => {
           </div>
         </div>
 
-        <Button
-          onClick={handleCreateClick}
-          className="bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500"
-        >
-          <IconPlus className="h-4 w-4" />
-          {activeTab === 'bitacoras'
-            ? 'Nueva Bitacora'
-            : activeTab === 'avances'
-              ? 'Registrar Avance'
-              : 'Crear Estimacion'}
-        </Button>
+        {!isDemo && (
+          <Button
+            onClick={handleCreateClick}
+            className="bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500"
+          >
+            <IconPlus className="h-4 w-4" />
+            {activeTab === 'bitacoras'
+              ? 'Nueva Bitacora'
+              : activeTab === 'avances'
+                ? 'Registrar Avance'
+                : 'Crear Estimacion'}
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
@@ -336,14 +339,16 @@ export const ControlObraView: React.FC = () => {
                   icon={<IconFileText className="h-12 w-12 text-muted-foreground/20" />}
                   title="Sin bitacoras registradas"
                   action={
-                    <Button
-                      onClick={() => setShowBitacoraForm(true)}
-                      variant="outline"
-                      className="border-sky-500/20 text-sky-600 hover:bg-sky-500/5"
-                    >
-                      <IconPlus className="h-4 w-4" />
-                      Crear primera bitacora
-                    </Button>
+                    !isDemo ? (
+                      <Button
+                        onClick={() => setShowBitacoraForm(true)}
+                        variant="outline"
+                        className="border-sky-500/20 text-sky-600 hover:bg-sky-500/5"
+                      >
+                        <IconPlus className="h-4 w-4" />
+                        Crear primera bitacora
+                      </Button>
+                    ) : undefined
                   }
                 />
               ) : (
