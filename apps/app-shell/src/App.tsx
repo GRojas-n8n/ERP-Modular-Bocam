@@ -11,6 +11,7 @@ import { ControlObraView } from './views/ControlObraView';
 import { PersonalView } from './views/PersonalView';
 import { SeguridadView } from './views/SeguridadView';
 import { VentasView } from './views/VentasView';
+import { MasterView } from './views/MasterView';
 
 // ─── View loading fallback ────────────────────────────────────────────────────
 const ViewLoader: React.FC = () => (
@@ -114,6 +115,14 @@ const AppRouter: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const isMaster = new URLSearchParams(window.location.search).has('master');
+  if (isMaster) {
+    return (
+      <AppErrorBoundary>
+        <MasterView />
+      </AppErrorBoundary>
+    );
+  }
   return (
     <AppErrorBoundary>
       <TenantProvider>

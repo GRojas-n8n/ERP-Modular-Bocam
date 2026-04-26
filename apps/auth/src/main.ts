@@ -20,6 +20,7 @@ const app = express();
 app.use(express.json());
 
 const JWT_SECRET = requireEnv('JWT_SECRET');
+const MASTER_SECRET = process.env.MASTER_SECRET || '';
 const JWT_ACCESS_EXPIRATION = process.env.JWT_ACCESS_EXPIRATION || '15m';
 const JWT_REFRESH_EXPIRATION = process.env.JWT_REFRESH_EXPIRATION || '7d';
 const BCRYPT_ROUNDS = 12;
@@ -32,6 +33,7 @@ app.use(createAuthMiddleware({
     '/api/v1/auth/login',
     '/api/v1/auth/register',
     '/api/v1/auth/refresh',
+    '/api/v1/master',
   ],
 }));
 
@@ -613,6 +615,86 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'auth', timestamp: new Date().toISOString() });
 });
 
+
+// ─── Master Admin Middleware ──────────────────────────────────────────────────
+function requireMasterSecret(req: Request, res: Response, next: () => void): void {
+  const auth = req.headers.authorization || '';
+  const secret = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!MASTER_SECRET || secret !== MASTER_SECRET) {
+    res.status(401).json({ success: false, error: { code: 'MASTER_UNAUTHORIZED', message: 'Clave maestra invalida.' } });
+    return;
+  }
+  next();
+}
+
+// ─── GET /api/v1/master/tenants ───────────────────────────────────────────────
+app.get('/api/v1/master/tenants', requireMasterSecret as express.RequestHandler, async (_req: Request, res: Response) => {
+  try {
+    const tenants = await runAsSystem(async (prisma) =>
+      prisma.tenant.findMany({ orderBy: { created_at: 'desc' } })
+    );
+    res.json({ success: true, data: tenants });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+  }
+});
+
+// ─── POST /api/v1/master/tenants ─────────────────────────────────────────────
+app.post('/api/v1/master/tenants', requireMasterSecret as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { nombre, rfc, plan, primary_color, logo_url } = req.body;
+    if (!nombre) {
+      res.status(400).json({ success: false, error: { code: 'MASTER_MISSING_FIELDS', message: 'El campo nombre es obligatorio.' } });
+      return;
+    }
+    const tenant = await runAsSystem(async (prisma) =>
+      prisma.tenant.create({
+        data: { nombre, rfc: rfc || null, plan: plan || 'BASICO', primary_color: primary_color || null, logo_url: logo_url || null },
+      })
+    );
+    res.status(201).json({ success: true, data: tenant });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+  }
+});
+
+// ─── PATCH /api/v1/master/tenants/:id ────────────────────────────────────────
+app.patch('/api/v1/master/tenants/:id', requireMasterSecret as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { nombre, rfc, plan, primary_color, logo_url, activo } = req.body;
+    const tenant = await runAsSystem(async (prisma) =>
+      prisma.tenant.update({
+        where: { id_tenant: id },
+        data: {
+          ...(nombre !== undefined && { nombre }),
+          ...(rfc !== undefined && { rfc }),
+          ...(plan !== undefined && { plan }),
+          ...(primary_color !== undefined && { primary_color }),
+          ...(logo_url !== undefined && { logo_url }),
+          ...(activo !== undefined && { activo }),
+        },
+      })
+    );
+    res.json({ success: true, data: tenant });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+  }
+});
+
+// ─── DELETE /api/v1/master/tenants/:id (soft-delete) ─────────────────────────
+app.delete('/api/v1/master/tenants/:id', requireMasterSecret as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await runAsSystem(async (prisma) =>
+      prisma.tenant.update({ where: { id_tenant: id }, data: { activo: false } })
+    );
+    res.json({ success: true, data: { message: 'Tenant desactivado.' } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+  }
+});
+
 const server = app.listen(PORT, () => {
   console.log('----------------------------------------------------');
   console.log('  Modulo: AUTH (Identity & Access Management)');
@@ -626,6 +708,10 @@ const server = app.listen(PORT, () => {
   console.log('   GET  /api/v1/auth/me');
   console.log('   POST /api/v1/auth/switch-project');
   console.log('   GET  /health');
+  console.log('   GET  /api/v1/master/tenants');
+  console.log('   POST /api/v1/master/tenants');
+  console.log('   PATCH /api/v1/master/tenants/:id');
+  console.log('   DELETE /api/v1/master/tenants/:id');
 });
 
 async function shutdown(signal: string) {
