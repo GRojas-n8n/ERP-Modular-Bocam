@@ -19,7 +19,9 @@ COPY . .
 ARG WORKSPACE_NAME
 ARG APP_PATH
 
-RUN if [ -f "${APP_PATH}/prisma/schema.prisma" ]; then npm exec -w "${WORKSPACE_NAME}" prisma generate -- --schema "${APP_PATH}/prisma/schema.prisma"; fi
+RUN if [ -f "${APP_PATH}/prisma/schema.prisma" ]; then \
+    ./node_modules/.bin/prisma generate --schema "${APP_PATH}/prisma/schema.prisma"; \
+  fi
 RUN npm run build -w ${WORKSPACE_NAME}
 
 FROM node:20-bookworm-slim AS runner
