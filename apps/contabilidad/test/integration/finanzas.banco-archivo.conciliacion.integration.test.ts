@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { PrismaClient as ContabilidadPrismaClient } from '../../src/generated/prisma';
 import { PrismaClient as FinanzasPrismaClient } from '../../../finanzas/src/generated/prisma';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
 
 const finanzasDbUrl = process.env.DATABASE_URL || 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=finanzas';
@@ -137,11 +137,14 @@ function toBase64Csv(rows: string[][]) {
   return Buffer.from(csv, 'utf8').toString('base64');
 }
 
-function toBase64Xlsx(rows: Array<Record<string, unknown>>) {
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, 'EstadoCuenta');
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+async function toBase64Xlsx(rows: Array<Record<string, unknown>>) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('EstadoCuenta');
+  if (rows.length > 0) {
+    worksheet.addRow(Object.keys(rows[0]));
+    rows.forEach((row) => worksheet.addRow(Object.values(row)));
+  }
+  const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer).toString('base64');
 }
 
@@ -244,7 +247,7 @@ async function main() {
     assert.equal(validateBody.data.valid_count, 1);
     assert.equal(validateBody.data.invalid_count, 1);
 
-    const strictXlsxBase64 = toBase64Xlsx([
+    const strictXlsxBase64 = await toBase64Xlsx([
       {
         referencia_bancaria: pago1Ref,
         monto_banco: pago1Monto,
@@ -277,7 +280,7 @@ async function main() {
 
     assert.equal(strictResponse.status, 422);
 
-    const executionXlsxBase64 = toBase64Xlsx([
+    const executionXlsxBase64 = await toBase64Xlsx([
       {
         referencia_lote: 'fila-1',
         referencia_bancaria: pago1Ref,

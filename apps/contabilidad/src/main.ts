@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { Readable } from 'node:stream';
 import { createTenantContext } from './db';
 import { buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
 import {
@@ -450,7 +451,11 @@ function parseNumericCell(value: string | undefined) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function parseBankStatementFile(fileName: string, fileBase64: string, sheetName?: string) {
+async function parseBankStatementFile(fileName: string, fileBase64: string, sheetName?: string): Promise<{
+  sheetName: string;
+  rowCount: number;
+  rows: Record<string, unknown>[];
+}> {
   const sanitizedBase64 = fileBase64.includes(',')
     ? fileBase64.slice(fileBase64.indexOf(',') + 1)
     : fileBase64;
@@ -461,24 +466,43 @@ function parseBankStatementFile(fileName: string, fileBase64: string, sheetName?
     throw new Error('BANK_FILE_UNSUPPORTED_FORMAT');
   }
 
-  const workbook = XLSX.read(buffer, {
-    type: 'buffer',
-    raw: false,
-    cellDates: true,
-  });
+  const workbook = new ExcelJS.Workbook();
+  let worksheet: ExcelJS.Worksheet | undefined;
 
-  const targetSheetName = sheetName || workbook.SheetNames[0];
-  if (!targetSheetName || !workbook.Sheets[targetSheetName]) {
+  if (extension === 'csv') {
+    worksheet = await workbook.csv.read(Readable.from(buffer));
+  } else {
+    await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
+    worksheet = sheetName
+      ? (workbook.getWorksheet(sheetName) ?? workbook.getWorksheet(1) ?? undefined)
+      : (workbook.getWorksheet(1) ?? undefined);
+  }
+
+  if (!worksheet) {
     throw new Error('BANK_FILE_SHEET_NOT_FOUND');
   }
 
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[targetSheetName], {
-    defval: '',
-    raw: false,
+  const headers: string[] = [];
+  const rows: Record<string, unknown>[] = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) {
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        headers.push(String(cell.value ?? ''));
+      });
+    } else {
+      const rowObj: Record<string, unknown> = {};
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const header = headers[colNumber - 1] ?? `col${colNumber}`;
+        const val = cell.value;
+        rowObj[header] = val instanceof Date ? val.toISOString() : val ?? '';
+      });
+      rows.push(rowObj);
+    }
   });
 
   return {
-    sheetName: targetSheetName,
+    sheetName: worksheet.name,
     rowCount: rows.length,
     rows,
   };
@@ -2424,7 +2448,7 @@ app.post(
         return;
       }
 
-      const parsed = parseBankStatementFile(file_name, file_base64, sheet_name);
+      const parsed = await parseBankStatementFile(file_name, file_base64, sheet_name);
       const validation = validateBankStatementRows(parsed.rows);
 
       logInfo(req, 'contabilidad', 'contabilidad.banco.archivo.validado', 'Archivo bancario validado antes de conciliacion', {
@@ -2490,7 +2514,7 @@ app.post(
         return;
       }
 
-      const parsed = parseBankStatementFile(file_name, file_base64, sheet_name);
+      const parsed = await parseBankStatementFile(file_name, file_base64, sheet_name);
       const validation = validateBankStatementRows(parsed.rows);
 
       if (validation.invalidItems.length > 0 && !allow_partial) {
