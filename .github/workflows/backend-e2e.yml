@@ -123,4 +123,10 @@ jobs:
         run: npm run test:integration:event-contracts
 
       - name: Run critical E2E suite
-        run: npm run test:e2e:criticas
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npm run test:e2e:reconciliacion -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npm run test:e2e:reconciliacion -w @bocam/control-obra
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npm run test:e2e:seguridad      -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npm run test:e2e:seguridad      -w @bocam/control-obra
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:e2e:seguridad      -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:e2e:idempotencia   -w @bocam/finanzas
