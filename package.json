@@ -32,6 +32,7 @@
   "author": "Constructora Bocam, S. A. de C.V.",
   "license": "UNLICENSED",
   "devDependencies": {
-    "@allpepper/memory-bank-mcp": "^0.2.2"
+    "@allpepper/memory-bank-mcp": "^0.2.2",
+    "prisma": "^5.22.0"
   }
 }
