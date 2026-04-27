@@ -40,7 +40,6 @@ COPY packages/*/package.json ./packages/
 
 RUN npm ci --omit=dev
 
-COPY --from=builder /workspace/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /workspace/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /workspace/apps ./apps
 COPY --from=builder /workspace/packages ./packages
