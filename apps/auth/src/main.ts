@@ -28,6 +28,7 @@ const PORT = process.env.PORT || 3003;
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
+  excludeByPrefix: true,
   excludePaths: [
     '/health',
     '/api/v1/auth/login',
