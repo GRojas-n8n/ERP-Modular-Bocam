@@ -23,6 +23,11 @@ RUN if [ -f "${APP_PATH}/prisma/schema.prisma" ]; then \
     ./node_modules/.bin/prisma generate --schema "${APP_PATH}/prisma/schema.prisma"; \
   fi
 RUN npm run build -w ${WORKSPACE_NAME}
+# Copiar archivos generados de Prisma al directorio dist (TypeScript no copia JS generados)
+RUN if [ -d "${APP_PATH}/src/generated/prisma" ]; then \
+    mkdir -p "${APP_PATH}/dist/${APP_PATH}/src/generated"; \
+    cp -r "${APP_PATH}/src/generated/prisma" "${APP_PATH}/dist/${APP_PATH}/src/generated/prisma"; \
+  fi
 
 FROM node:20-bookworm-slim AS runner
 
