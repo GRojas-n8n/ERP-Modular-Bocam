@@ -13,10 +13,86 @@
 | **SSH** | `ssh root@72.60.114.12` |
 | **Repo en VPS** | `/root/ERP-Modular-Bocam` |
 | **Rama activa VPS** | `main` |
-| **Tenant ID Bocam** | `d869d55f-4017-41e4-9680-65eaa44bdcf0` |
-| **Admin email** | `admin@bocam.com` |
-| **DB Name** | `bocam_ventas` (en postgres Docker) |
+| **Tenant ID Bocam** | ⚠️ Pendiente recrear (ver sección bloqueador) |
+| **Admin email** | `admin@bocam.com` (pendiente recrear) |
+| **DB Name (auth)** | `bocam_auth` (migrado desde `bocam_ventas` el 2026-04-29) |
 | **Compose file VPS** | `docker-compose.vps.yml` |
+
+---
+
+## 🚧 BLOQUEADOR ACTIVO (retomar aquí en la próxima sesión)
+
+**Síntoma:** `POST /api/v1/master/tenants` con header `x-master-secret: $MASTER_SECRET` devuelve `401 MASTER_UNAUTHORIZED` aunque:
+- `printenv MASTER_SECRET` dentro del contenedor auth = `bocam-master-2026-cambia-esto` (29 chars)
+- `grep ^MASTER_SECRET .env` en VPS = mismo valor visualmente
+- Bash `${#MASTER_SECRET}` = 29
+- Force-recreate del contenedor ya hecho, sigue 401
+
+**Hipótesis principal:** CRLF (`\r`) invisible en `.env` del VPS contaminando la variable. El proceso auth la cargó con `\r` al final, pero el header llega sin `\r` (o viceversa) → string compare falla.
+
+**Test pendiente para confirmar (ejecutar en VPS al reanudar):**
+
+```bash
+cd /root/ERP-Modular-Bocam
+echo "=== Local bash ==="
+echo -n "$MASTER_SECRET" | xxd | head -3
+echo "=== Contenedor PID 1 (auth) ==="
+docker exec bocam-vps-auth sh -c 'cat /proc/1/environ | tr "\0" "\n" | grep ^MASTER_SECRET' | xxd | head -3
+echo "=== .env raw ==="
+grep ^MASTER_SECRET .env | xxd | head -3
+```
+
+Si aparece `0d` (= `\r`) al final del valor en cualquier lado:
+
+```bash
+sed -i 's/\r$//' .env
+docker compose -f docker-compose.vps.yml --profile core up -d --force-recreate auth
+sleep 25
+# Reintentar create tenant via node http.request (usando process.env.MASTER_SECRET)
+```
+
+**Si no es CRLF**, segundo sospechoso: caracteres no-ASCII en el secret, o `MASTER_SECRET` shadowed por algún wrapper. Vector alternativo:
+- Agregar `console.log('MS bytes:', Buffer.from(MASTER_SECRET).toString('hex'))` temporalmente en `apps/auth/src/main.ts` antes del middleware y comparar con bytes del header recibido.
+
+---
+
+## 📋 ESTADO ACTUAL (2026-04-29 EOD)
+
+### Lo que SÍ avanzó esta sesión
+
+1. ✅ **Decisión arquitectónica:** Plan A — DB-per-service. Cada módulo tiene su propia DB (`bocam_auth`, `bocam_finanzas`, etc.). Coherente con la "Soberanía de Datos" declarada en los `schema.prisma`.
+2. ✅ **`.env` del VPS actualizado** con las 6 `*_DATABASE_URL`. NOTA: el `.env` no se commitea (gitignore). El backup quedó en `/root/ERP-Modular-Bocam/.env.bak.YYYYMMDD-HHMMSS`.
+3. ✅ **Auth migrado a `bocam_auth`:** `prisma db push` exitoso, contenedor healthy, `/health` responde OK.
+4. ⚠️ **`bocam_ventas` aún NO eliminada** — esperando verificar que `bocam_auth` quede 100% funcional con tenant + login antes de dropear la vieja.
+5. ⚠️ **Las 5 DBs nuevas (`bocam_finanzas`, `bocam_compras`, `bocam_control_obra`, `bocam_contabilidad`, `bocam_gerencia_tecnica`) aún NO existen.** Se crearán automáticamente cuando cada `prisma db push` de su servicio se ejecute (Prisma las crea si no existen y el user tiene permisos — confirmado con `bocam_auth`).
+
+### Plan inmediato al regresar (orden estricto)
+
+1. Resolver bloqueador 401 → crear tenant Bocam → crear admin → verificar login.
+2. Drop `bocam_ventas` (`docker exec bocam-vps-postgres psql -U bocam_admin -d postgres -c "DROP DATABASE bocam_ventas;"`).
+3. **Wave 1** (paralelo, independientes): build + db push + up de `gerencia-tecnica`, `finanzas`, `contabilidad`.
+4. **Wave 2**: `compras`, `control-obra` (dependen de finanzas healthy).
+5. **Wave 3**: `contabilidad-sat-worker` (necesita variables `SAT_*` y `CONTABILIDAD_BASE_URL` que aún faltan en `.env` — preguntar al regresar si ya tenemos adapter SAT real o usaremos stub).
+6. Verificación cross-service (`/health` de los 6).
+7. App-shell + Caddy (después).
+
+### Cambios al `.env` del VPS hechos en esta sesión
+
+```
+AUTH_DATABASE_URL=postgresql://bocam_admin:****@postgres:5432/bocam_auth   (antes: bocam_ventas)
+GERENCIA_TECNICA_DATABASE_URL=postgresql://bocam_admin:****@postgres:5432/bocam_gerencia_tecnica   (NUEVO)
+FINANZAS_DATABASE_URL=postgresql://bocam_admin:****@postgres:5432/bocam_finanzas   (NUEVO)
+COMPRAS_DATABASE_URL=postgresql://bocam_admin:****@postgres:5432/bocam_compras   (NUEVO)
+CONTROL_OBRA_DATABASE_URL=postgresql://bocam_admin:****@postgres:5432/bocam_control_obra   (NUEVO)
+CONTABILIDAD_DATABASE_URL=postgresql://bocam_admin:****@postgres:5432/bocam_contabilidad   (NUEVO)
+```
+
+`VENTAS_DATABASE_URL` (módulo perfil `full`) sigue apuntando a `bocam_ventas?schema=public` — cuando llegue el turno de `ventas` se reapuntará.
+
+### Variables faltantes en `.env` del VPS (warnings de docker-compose, no bloquean ahora)
+
+- `PERSONAL_DATABASE_URL`, `SEGURIDAD_DATABASE_URL` → perfil `full`, no necesarias para wave 1-3
+- `SAT_ADAPTER_BASE_URL`, `SAT_ADAPTER_API_KEY`, `SAT_ADAPTER_TIMEOUT_MS`, `SAT_WORKER_RETRY_DELAY_MS`, `SAT_WORKER_MAX_ATTEMPTS`, `SAT_CALLBACK_SHARED_SECRET`, `CONTABILIDAD_BASE_URL` → necesarias para `contabilidad-sat-worker`. Resolver antes de Wave 3.
 
 ---
 
@@ -27,7 +103,7 @@
 | VPS Hostinger | ✅ Activo | Ubuntu, Docker instalado |
 | PostgreSQL (Docker) | ✅ Corriendo | `bocam-vps-postgres`, puerto interno |
 | RabbitMQ (Docker) | ✅ Corriendo | `bocam-vps-rabbitmq`, credenciales en .env |
-| Redis (Docker) | ⬜ No levantado | Necesario para personal/seguridad |
+| Redis (Docker) | ✅ Corriendo | `bocam-vps-redis`, healthy desde hace 2 semanas |
 | Caddy (proxy) | ⬜ Pendiente | Necesita dominio configurado |
 
 ---
@@ -40,9 +116,9 @@
 | Build en VPS | ✅ Exitoso | Imagen `erp-modular-bocam-auth:latest` |
 | Prisma db push (schema) | ✅ Aplicado | Tablas creadas en `bocam_ventas` |
 | Contenedor corriendo | ✅ Healthy | Puerto 3003 interno |
-| Tenant Bocam creado | ✅ Creado | ID: `d869d55f-4017-41e4-9680-65eaa44bdcf0` |
-| Admin user creado | ✅ Creado | `admin@bocam.com` |
-| Login / JWT funcionando | ✅ Verificado | Access + refresh token OK |
+| Tenant Bocam creado | ❌ Pendiente recrear | DB migrada a `bocam_auth`, vacía. Tenant viejo (`d869d55f-…`) ya no existe. |
+| Admin user creado | ❌ Pendiente recrear | Bloqueado por 401 en `/master/*` (ver bloqueador) |
+| Login / JWT funcionando | ⚠️ Sin tenant aún | Endpoint responde, pero no hay datos para autenticar |
 | `wget` en imagen runner | ✅ Fix aplicado | Necesario para healthcheck |
 | `excludeByPrefix` en middleware | ✅ Fix aplicado | Rutas `/master/*` accesibles |
 | Migraciones Prisma (archivos) | ⚠️ Pendiente | Usamos `db push`; falta crear migration files |
@@ -146,4 +222,4 @@ REGLA DE ORO:
 
 ---
 
-*Última actualización: 2026-04-29 | Sesión: VPS auth deployment completo*
+*Última actualización: 2026-04-29 EOD | Sesión: Migración Plan A (DB-per-service). Auth migrado a `bocam_auth`. Bloqueado en 401 master endpoint — retomar con diagnóstico CRLF.*
