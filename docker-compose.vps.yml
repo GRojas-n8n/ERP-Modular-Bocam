@@ -411,6 +411,11 @@ services:
       context: .
       dockerfile: docker/Dockerfile.app-shell
     container_name: bocam-vps-app-shell
+    # Exposición temporal del puerto 80 al host hasta que Caddy se levante con dominio.
+    # Cuando se active Caddy, eliminar este bloque ports y dejar que solo Caddy
+    # exponga 80/443 hacia el host. App-shell quedará solo accesible vía la red docker interna.
+    ports:
+      - "80:80"
     depends_on:
       auth:
         condition: service_healthy
