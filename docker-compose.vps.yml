@@ -128,7 +128,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3003/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -159,7 +159,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -190,7 +190,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3004/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -224,7 +224,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -258,7 +258,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3005/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -292,7 +292,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3006/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -326,7 +326,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3007/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -365,7 +365,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3008/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3008/health >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
@@ -432,7 +432,7 @@ services:
     networks:
       - bocam-vps-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 6
