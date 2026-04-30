@@ -19,10 +19,12 @@ import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middlew
 const app = express();
 app.use(express.json());
 
-const JWT_SECRET = requireEnv('JWT_SECRET');
-const MASTER_SECRET = process.env.MASTER_SECRET || '';
-const JWT_ACCESS_EXPIRATION = process.env.JWT_ACCESS_EXPIRATION || '15m';
-const JWT_REFRESH_EXPIRATION = process.env.JWT_REFRESH_EXPIRATION || '7d';
+// .trim() en secrets: docker-compose .env parser puede colar trailing \n en valores,
+// rompiendo comparaciones strict-equal con headers entrantes. Ver ESTADO.md "Bloqueador 1".
+const JWT_SECRET = requireEnv('JWT_SECRET').trim();
+const MASTER_SECRET = (process.env.MASTER_SECRET || '').trim();
+const JWT_ACCESS_EXPIRATION = (process.env.JWT_ACCESS_EXPIRATION || '15m').trim();
+const JWT_REFRESH_EXPIRATION = (process.env.JWT_REFRESH_EXPIRATION || '7d').trim();
 const BCRYPT_ROUNDS = 12;
 const PORT = process.env.PORT || 3003;
 

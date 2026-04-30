@@ -24,91 +24,59 @@
 
 ### Bloqueador 1: 401 en endpoints `/api/v1/master/*` de auth
 
-**Síntoma:** `POST /api/v1/master/tenants` con header `x-master-secret: $MASTER_SECRET` devuelve `401 MASTER_UNAUTHORIZED` aunque:
-- `printenv MASTER_SECRET` dentro del contenedor auth = `bocam-master-2026-cambia-esto` (29 chars)
-- `grep ^MASTER_SECRET .env` en VPS = mismo valor visualmente
-- Bash `${#MASTER_SECRET}` = 29
-- Force-recreate del contenedor ya hecho, sigue 401
-- Probado con `wget` y con `node http.request` directo, mismo resultado
+**Causa raíz identificada (2026-04-30):** docker-compose .env parser **cuela un `\n` literal al final del valor de `MASTER_SECRET`** al pasarlo al container. Verificado con xxd:
+- Bash (cut + tr): `bocam-master-2026-cambia-esto` (29 bytes, limpio)
+- Container PID 1 environ: `bocam-master-2026-cambia-esto\n` (30 bytes, **TIENE LF al final**)
+- Header del cliente llega sin `\n` → `secret !== MASTER_SECRET` siempre falla → 401.
 
-**Hipótesis principal:** CRLF (`\r`) invisible en `.env` del VPS contaminando la variable. El proceso auth la cargó con `\r` al final, pero el header llega sin `\r` (o viceversa) → string compare falla.
+Las DATABASE_URL y JWT_SECRET no se ven afectadas (postgres ignora trailing whitespace; JWT verify no usa string compare directo). Solo MASTER_SECRET sufre porque el middleware hace strict equal byte a byte.
 
-### Bloqueador 2: nginx nativo con config vacía (NO hacer reload)
+**Fix aplicado al código** (`apps/auth/src/main.ts`): hacer `.trim()` defensivo a todos los secrets (`MASTER_SECRET`, `JWT_SECRET`, `JWT_*_EXPIRATION`). Versionado en commit pendiente.
 
-**Descubrimiento NO documentado antes:** existe un `nginx` **nativo del VPS** (no docker) corriendo desde Apr 28, sirviendo el app-shell ya buildeado en `http://localhost:80`. Este nginx **no estaba mencionado en ESTADO.md** y no es parte del `docker-compose.vps.yml` (que define un Caddy en docker que aún no se ha levantado).
-
-**Estado actual del nginx nativo:**
-- Servicio activo, healthy, escuchando en :80
-- Sirve correctamente el HTML del App Shell desde memoria
-- **MIS configs en disco están vacías:** `/etc/nginx/sites-available/bocam-erp` fue truncado a 0 bytes hoy 2026-04-30 15:39 UTC. Causa desconocida (Monarx descartado: sus logs no muestran actividad). Posible accidente humano de sesión previa o script no documentado.
-- `nginx -T` no muestra ningún `server { listen 80 ... }` en disco
-- **Si nginx hace reload o reinicia, el app-shell se cae.**
-
-**Document root identificado:** `/var/www/bocam-erp/dist/` (index.html + assets ya buildeados están a salvo en disco). Backup defensivo creado en `/root/backup-2026-04-30/dist/`.
-
-**Plan de reconstrucción mañana** (copiar este server block a `/etc/nginx/sites-available/bocam-erp` y `nginx -s reload`):
-
-```nginx
-server {
-    listen 80 default_server;
-    server_name _;
-
-    root /var/www/bocam-erp/dist;
-    index index.html;
-
-    # SPA fallback
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Reverse proxy a auth (puerto interno docker)
-    location /api/v1/auth/ {
-        proxy_pass http://127.0.0.1:3003;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Master endpoints
-    location /api/v1/master/ {
-        proxy_pass http://127.0.0.1:3003;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-NOTA: la lista de `location` para los demás módulos (`/api/v1/finanzas/`, `/api/v1/compras/`, etc.) hay que añadirla cuando levantemos cada wave. Para que el reverse proxy a docker funcione, **postgres ya tiene `0.0.0.0:5432` mapeado al host**, pero los módulos NO. Si no exponemos sus puertos al host, nginx nativo no los puede llamar. Decisión arquitectónica: o exponer puertos de cada microservicio al host, **o moverse al Caddy del compose (mismo network docker, no requiere exponer puertos)**. Recomendación: ahora que toca decidir, ir al Caddy del compose (más limpio, no requiere puertos al host).
-
-### Bloqueador 3: Firewall Hostinger no aplica regla TCP 443
-
-Reglas configuradas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero test desde laptop muestra 22/80 ABIERTOS y **443 bloqueado** (timeout, drop activo). Re-sync pendiente, posible glitch del panel. Si tras re-sync sigue cerrado: borrar y recrear regla 443.
-
-**Test pendiente para confirmar (ejecutar en VPS al reanudar):**
+**PENDIENTE de aplicar al regresar:**
 
 ```bash
 cd /root/ERP-Modular-Bocam
-echo "=== Local bash ==="
-echo -n "$MASTER_SECRET" | xxd | head -3
-echo "=== Contenedor PID 1 (auth) ==="
-docker exec bocam-vps-auth sh -c 'cat /proc/1/environ | tr "\0" "\n" | grep ^MASTER_SECRET' | xxd | head -3
-echo "=== .env raw ==="
-grep ^MASTER_SECRET .env | xxd | head -3
-```
 
-Si aparece `0d` (= `\r`) al final del valor en cualquier lado:
+# Revertir las quotes que pusimos al .env (ya no las necesitamos)
+sed -i 's/^MASTER_SECRET="\(.*\)"$/MASTER_SECRET=\1/' .env
 
-```bash
-sed -i 's/\r$//' .env
+# Pull del fix de main.ts
+git pull
+
+# Rebuild auth (el código cambió)
+docker compose -f docker-compose.vps.yml build auth
 docker compose -f docker-compose.vps.yml --profile core up -d --force-recreate auth
 sleep 25
-# Reintentar create tenant via node http.request (usando process.env.MASTER_SECRET)
+
+# Reintentar create tenant via app-shell proxy
+MASTER_SECRET=$(grep ^MASTER_SECRET .env | cut -d= -f2)
+curl -s -X POST http://localhost/api/v1/master/tenants \
+  -H "Content-Type: application/json" \
+  -H "x-master-secret: $MASTER_SECRET" \
+  -d '{"nombre":"Bocam","plan":"BASICO"}' | jq
+
+# Capturar id_tenant y crear admin via /api/v1/auth/register
 ```
 
-**Si no es CRLF**, segundo sospechoso: caracteres no-ASCII en el secret, o `MASTER_SECRET` shadowed por algún wrapper. Vector alternativo:
-- Agregar `console.log('MS bytes:', Buffer.from(MASTER_SECRET).toString('hex'))` temporalmente en `apps/auth/src/main.ts` antes del middleware y comparar con bytes del header recibido.
+### ~~Bloqueador 2~~ RESUELTO 2026-04-30: migrado a app-shell del compose
+
+✅ **nginx nativo del VPS ELIMINADO** (apt purge). `/etc/nginx/` borrado completo.
+✅ **`bocam-vps-app-shell` corriendo healthy** desde compose, sirviendo frontend Vite/React + reverse proxy a microservicios via DNS docker.
+✅ **Refactor del `docker/nginx.qnap.conf`**: ahora usa `resolver 127.0.0.11` + `set $upstream` para lazy DNS resolution → arranca aunque módulos no existan, devuelve 502 limpio si llega request a un upstream caído.
+✅ **`docker-compose.vps.yml` modificado**: `app-shell` expone `ports: 80:80` (temporal hasta Caddy con dominio); todos los healthchecks usan `127.0.0.1` explícito (alpine BusyBox-wget prefiere `::1` y crashea).
+✅ **`docker/Dockerfile.app-shell` arreglado**: el `COPY apps/*/package.json ./apps/` colapsaba paths y rompía resolución de workspaces npm. Cambiado a `COPY . . && npm ci`.
+✅ **Validado E2E**: `curl http://localhost/api/v1/auth/health` devuelve `{"status":"ok",...}` proxeado a `auth:3003` por DNS docker.
+
+**Implicación arquitectónica resuelta:** Los microservicios docker NO necesitan exponer puertos al host. Toda comunicación pública entra por `app-shell:80` (que mapea host:80) y se enruta internamente vía DNS docker. Cuando se active Caddy con dominio, eliminar `ports: 80:80` de app-shell — Caddy tomará 80/443 y enrutará a `app-shell` por DNS docker.
+
+### Bloqueador 3: Firewall Hostinger no aplica regla TCP 443
+
+Reglas configuradas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero test desde laptop muestra 22/80 ABIERTOS y **443 bloqueado** (timeout, drop activo). Re-sync pendiente, posible glitch del panel. Si tras re-sync sigue cerrado: borrar y recrear regla 443. **No bloquea nada hoy** (Caddy con dominio aún no levantado, app-shell sirve por 80 directo).
+
+### Reboot pendiente del VPS
+
+Sistema pide `*** System restart required ***` con 11 updates pendientes. Hacer al inicio de próxima sesión, después del git pull. Los containers tienen `restart: unless-stopped` así que sobreviven reboot, pero confirmar después.
 
 ---
 
@@ -290,4 +258,4 @@ REGLA DE ORO:
 
 ---
 
-*Última actualización: 2026-04-30 EOD | Sesión: Migración Plan A + activación firewall Hostinger + auditoría seguridad por phishing CVE-2026-31431 (limpia) + descubrimiento nginx nativo no documentado. 3 bloqueadores documentados con plan de retomada.*
+*Última actualización: 2026-04-30 (sesión 2) | Sesión: migración nginx nativo → app-shell del compose COMPLETA (Bloqueador 2 cerrado), bug LF en MASTER_SECRET identificado y fix de código aplicado pendiente de rebuild+test, refactor nginx.qnap.conf con lazy DNS, fix Dockerfile.app-shell workspaces.*
