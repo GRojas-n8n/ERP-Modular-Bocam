@@ -4,13 +4,14 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /workspace
 
-COPY package*.json ./
-COPY apps/*/package.json ./apps/
-COPY packages/*/package.json ./packages/
+# NOTE: el patrón clasico "COPY package*.json + COPY apps/*/package.json"
+# fallaba porque el glob colapsa todos los package.json en un mismo destino,
+# rompiendo la resolucion de workspaces de npm y omitiendo devDependencies
+# (typescript, vite, etc.). Copiamos el repo completo primero — sacrifica
+# cache del layer de npm ci pero garantiza la estructura de workspaces correcta.
+COPY . .
 
 RUN npm ci
-
-COPY . .
 
 RUN npm run build -w app-shell
 
