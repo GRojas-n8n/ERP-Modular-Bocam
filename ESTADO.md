@@ -20,15 +20,71 @@
 
 ---
 
-## 🚧 BLOQUEADOR ACTIVO (retomar aquí en la próxima sesión)
+## 🚧 BLOQUEADORES ACTIVOS (retomar aquí en la próxima sesión)
+
+### Bloqueador 1: 401 en endpoints `/api/v1/master/*` de auth
 
 **Síntoma:** `POST /api/v1/master/tenants` con header `x-master-secret: $MASTER_SECRET` devuelve `401 MASTER_UNAUTHORIZED` aunque:
 - `printenv MASTER_SECRET` dentro del contenedor auth = `bocam-master-2026-cambia-esto` (29 chars)
 - `grep ^MASTER_SECRET .env` en VPS = mismo valor visualmente
 - Bash `${#MASTER_SECRET}` = 29
 - Force-recreate del contenedor ya hecho, sigue 401
+- Probado con `wget` y con `node http.request` directo, mismo resultado
 
 **Hipótesis principal:** CRLF (`\r`) invisible en `.env` del VPS contaminando la variable. El proceso auth la cargó con `\r` al final, pero el header llega sin `\r` (o viceversa) → string compare falla.
+
+### Bloqueador 2: nginx nativo con config vacía (NO hacer reload)
+
+**Descubrimiento NO documentado antes:** existe un `nginx` **nativo del VPS** (no docker) corriendo desde Apr 28, sirviendo el app-shell ya buildeado en `http://localhost:80`. Este nginx **no estaba mencionado en ESTADO.md** y no es parte del `docker-compose.vps.yml` (que define un Caddy en docker que aún no se ha levantado).
+
+**Estado actual del nginx nativo:**
+- Servicio activo, healthy, escuchando en :80
+- Sirve correctamente el HTML del App Shell desde memoria
+- **MIS configs en disco están vacías:** `/etc/nginx/sites-available/bocam-erp` fue truncado a 0 bytes hoy 2026-04-30 15:39 UTC. Causa desconocida (Monarx descartado: sus logs no muestran actividad). Posible accidente humano de sesión previa o script no documentado.
+- `nginx -T` no muestra ningún `server { listen 80 ... }` en disco
+- **Si nginx hace reload o reinicia, el app-shell se cae.**
+
+**Document root identificado:** `/var/www/bocam-erp/dist/` (index.html + assets ya buildeados están a salvo en disco). Backup defensivo creado en `/root/backup-2026-04-30/dist/`.
+
+**Plan de reconstrucción mañana** (copiar este server block a `/etc/nginx/sites-available/bocam-erp` y `nginx -s reload`):
+
+```nginx
+server {
+    listen 80 default_server;
+    server_name _;
+
+    root /var/www/bocam-erp/dist;
+    index index.html;
+
+    # SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Reverse proxy a auth (puerto interno docker)
+    location /api/v1/auth/ {
+        proxy_pass http://127.0.0.1:3003;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Master endpoints
+    location /api/v1/master/ {
+        proxy_pass http://127.0.0.1:3003;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+NOTA: la lista de `location` para los demás módulos (`/api/v1/finanzas/`, `/api/v1/compras/`, etc.) hay que añadirla cuando levantemos cada wave. Para que el reverse proxy a docker funcione, **postgres ya tiene `0.0.0.0:5432` mapeado al host**, pero los módulos NO. Si no exponemos sus puertos al host, nginx nativo no los puede llamar. Decisión arquitectónica: o exponer puertos de cada microservicio al host, **o moverse al Caddy del compose (mismo network docker, no requiere exponer puertos)**. Recomendación: ahora que toca decidir, ir al Caddy del compose (más limpio, no requiere puertos al host).
+
+### Bloqueador 3: Firewall Hostinger no aplica regla TCP 443
+
+Reglas configuradas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero test desde laptop muestra 22/80 ABIERTOS y **443 bloqueado** (timeout, drop activo). Re-sync pendiente, posible glitch del panel. Si tras re-sync sigue cerrado: borrar y recrear regla 443.
 
 **Test pendiente para confirmar (ejecutar en VPS al reanudar):**
 
@@ -65,16 +121,28 @@ sleep 25
 3. ✅ **Auth migrado a `bocam_auth`:** `prisma db push` exitoso, contenedor healthy, `/health` responde OK.
 4. ⚠️ **`bocam_ventas` aún NO eliminada** — esperando verificar que `bocam_auth` quede 100% funcional con tenant + login antes de dropear la vieja.
 5. ⚠️ **Las 5 DBs nuevas (`bocam_finanzas`, `bocam_compras`, `bocam_control_obra`, `bocam_contabilidad`, `bocam_gerencia_tecnica`) aún NO existen.** Se crearán automáticamente cuando cada `prisma db push` de su servicio se ejecute (Prisma las crea si no existen y el user tiene permisos — confirmado con `bocam_auth`).
+6. ✅ **Firewall Hostinger activado** con reglas Accept TCP 22/80/443 + Drop Any Any. Funcional para 22 y 80, problema con 443 (ver Bloqueador 3).
+7. ✅ **Auditoría de seguridad COMPLETA: limpia.** Recibido correo de phishing CVE-2026-31431 ("Copy Fail") con comando `rmmod algif_aead`. Verificado: no se ejecutó. No hay compromiso del VPS — todos los logins SSH son desde IPs propias del usuario, llaves SSH solo las esperadas, sin procesos/crons/binarios sospechosos, sin archivos plantados.
+8. ⚠️ **Descubierto nginx nativo no documentado** sirviendo app-shell. Ver Bloqueador 2.
+
+### Hostinger preinstaló Monarx Agent (no es backdoor)
+
+Detectado durante auditoría: hay un proceso `monarx-agent` (PID variable) corriendo y conectado a `100.21.1.170:443` (backend de Monarx Security en AWS). Es **anti-malware preinstalado por Hostinger** en sus VPS. Legítimo. No tomó acción contra el archivo nginx (logs vacíos hoy). Configuración en `/etc/monarx-agent.conf`. Cron de actualización en `/etc/cron.d/monarx-update` (lunes 22:44 UTC).
 
 ### Plan inmediato al regresar (orden estricto)
 
-1. Resolver bloqueador 401 → crear tenant Bocam → crear admin → verificar login.
-2. Drop `bocam_ventas` (`docker exec bocam-vps-postgres psql -U bocam_admin -d postgres -c "DROP DATABASE bocam_ventas;"`).
-3. **Wave 1** (paralelo, independientes): build + db push + up de `gerencia-tecnica`, `finanzas`, `contabilidad`.
-4. **Wave 2**: `compras`, `control-obra` (dependen de finanzas healthy).
-5. **Wave 3**: `contabilidad-sat-worker` (necesita variables `SAT_*` y `CONTABILIDAD_BASE_URL` que aún faltan en `.env` — preguntar al regresar si ya tenemos adapter SAT real o usaremos stub).
-6. Verificación cross-service (`/health` de los 6).
-7. App-shell + Caddy (después).
+1. **Reconstruir `/etc/nginx/sites-available/bocam-erp`** con el server block del Bloqueador 2. Verificar `nginx -t` antes de `systemctl reload nginx`. Mientras tanto, app-shell sigue sirviéndose desde memoria — no urgente pero hacer ANTES de cualquier reboot del VPS.
+2. **Resolver bloqueador 401** → diagnóstico CRLF con `xxd` → `sed -i 's/\r$//' .env` si aplica → force-recreate auth → crear tenant Bocam → crear admin → verificar login.
+3. **Re-sync firewall Hostinger** para regla 443 → re-test puerto.
+4. **Decisión arquitectónica:** ¿nginx nativo o Caddy del compose?
+   - **Recomendación**: migrar a Caddy del compose (mejor aislamiento docker, no requiere exponer puertos al host)
+   - Si se mantiene nginx nativo: hay que exponer puertos host de cada microservicio docker (3001, 3002, 3004, 3005, 3008) — antipatrón
+5. Drop `bocam_ventas` (`docker exec bocam-vps-postgres psql -U bocam_admin -d postgres -c "DROP DATABASE bocam_ventas;"`).
+6. **Wave 1** (paralelo, independientes): build + db push + up de `gerencia-tecnica`, `finanzas`, `contabilidad`.
+7. **Wave 2**: `compras`, `control-obra` (dependen de finanzas healthy).
+8. **Wave 3**: `contabilidad-sat-worker` (necesita variables `SAT_*` y `CONTABILIDAD_BASE_URL` que aún faltan en `.env` — preguntar al regresar si ya tenemos adapter SAT real o usaremos stub).
+9. Verificación cross-service (`/health` de los 6).
+10. Caddy/proxy oficial + dominio (después).
 
 ### Cambios al `.env` del VPS hechos en esta sesión
 
@@ -222,4 +290,4 @@ REGLA DE ORO:
 
 ---
 
-*Última actualización: 2026-04-29 EOD | Sesión: Migración Plan A (DB-per-service). Auth migrado a `bocam_auth`. Bloqueado en 401 master endpoint — retomar con diagnóstico CRLF.*
+*Última actualización: 2026-04-30 EOD | Sesión: Migración Plan A + activación firewall Hostinger + auditoría seguridad por phishing CVE-2026-31431 (limpia) + descubrimiento nginx nativo no documentado. 3 bloqueadores documentados con plan de retomada.*
