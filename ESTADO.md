@@ -13,53 +13,54 @@
 | **SSH** | `ssh root@72.60.114.12` |
 | **Repo en VPS** | `/root/ERP-Modular-Bocam` |
 | **Rama activa VPS** | `main` |
-| **Tenant ID Bocam** | ⚠️ Pendiente recrear (ver sección bloqueador) |
-| **Admin email** | `admin@bocam.com` (pendiente recrear) |
-| **DB Name (auth)** | `bocam_auth` (migrado desde `bocam_ventas` el 2026-04-29) |
+| **Tenant ID Bocam** | `8e07a7ac-8157-4e5d-8499-e985a9fcdbfc` |
+| **Admin email** | `admin@bocam.com` |
+| **Admin user_id** | `35a359f1-f281-45cc-9592-e1c95be9f451` |
+| **DB Name (auth)** | `bocam_auth` |
 | **Compose file VPS** | `docker-compose.vps.yml` |
+| **Header master endpoints** | `Authorization: Bearer <MASTER_SECRET>` (NO `x-master-secret`) |
 
 ---
 
-## 🚧 BLOQUEADORES ACTIVOS (retomar aquí en la próxima sesión)
+## 📊 ESTADO CONSOLIDADO (cierre 2026-05-04)
 
-### Bloqueador 1: 401 en endpoints `/api/v1/master/*` de auth
+### Microservicios desplegados — 5 de 6 core healthy
 
-**Causa raíz identificada (2026-04-30):** docker-compose .env parser **cuela un `\n` literal al final del valor de `MASTER_SECRET`** al pasarlo al container. Verificado con xxd:
-- Bash (cut + tr): `bocam-master-2026-cambia-esto` (29 bytes, limpio)
-- Container PID 1 environ: `bocam-master-2026-cambia-esto\n` (30 bytes, **TIENE LF al final**)
-- Header del cliente llega sin `\n` → `secret !== MASTER_SECRET` siempre falla → 401.
+| Módulo | Puerto | Estado | DB |
+|---|---|---|---|
+| `auth` | 3003 | ✅ healthy | `bocam_auth` (con tenant + admin) |
+| `finanzas` | 3004 | ✅ healthy | `bocam_finanzas` |
+| `compras` | 3002 | ✅ healthy | `bocam_compras` |
+| `control-obra` | 3005 | ✅ healthy | `bocam_control_obra` |
+| `contabilidad` | 3008 | ✅ healthy | `bocam_contabilidad` |
+| `gerencia-tecnica` | 3001 | ⏸️ skipped (Wave 4) | `bocam_gerencia_tecnica` (vacía) |
+| `app-shell` | 80 (host) | ✅ healthy, sirve frontend + reverse proxy | — |
+| `contabilidad-sat-worker` | — | ⏸️ postpuesto (no hay SAT real ni stub) | — |
 
-Las DATABASE_URL y JWT_SECRET no se ven afectadas (postgres ignora trailing whitespace; JWT verify no usa string compare directo). Solo MASTER_SECRET sufre porque el middleware hace strict equal byte a byte.
+### Bugs encontrados y arreglados hoy 2026-05-04
 
-**Fix aplicado al código** (`apps/auth/src/main.ts`): hacer `.trim()` defensivo a todos los secrets (`MASTER_SECRET`, `JWT_SECRET`, `JWT_*_EXPIRATION`). Versionado en commit pendiente.
+1. **Header del cliente master endpoints**: el middleware lee `Authorization: Bearer <secret>`, no `x-master-secret`. Documentado en datos críticos.
+2. **`packages/auth-middleware/src/middleware.ts`**: `requireProjectAccess()` rechazaba con 401 las rutas excluidas del JWT middleware previo (faltaba el `securityContext`). Fix: pasa transparente cuando no hay context (route was excluded). Sirve para todos los servicios futuros.
+3. **`apps/gerencia-tecnica/src/main.ts`**: código out-of-sync con schema Prisma actual (campos `unidad`, `costo`, `clase`, `nombre` no existen). Marcado como Wave 4 deuda técnica.
 
-**PENDIENTE de aplicar al regresar:**
+---
 
-```bash
-cd /root/ERP-Modular-Bocam
+## 🚧 BLOQUEADORES PENDIENTES (no críticos)
 
-# Revertir las quotes que pusimos al .env (ya no las necesitamos)
-sed -i 's/^MASTER_SECRET="\(.*\)"$/MASTER_SECRET=\1/' .env
+### Bloqueador 3: Firewall Hostinger no aplica regla TCP 443
 
-# Pull del fix de main.ts
-git pull
+Reglas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero 22/80 abiertos, **443 bloqueado** (timeout). Re-sync o recrear regla. **No bloquea nada hoy** — Caddy con dominio aún no levantado, app-shell sirve por 80 directo.
 
-# Rebuild auth (el código cambió)
-docker compose -f docker-compose.vps.yml build auth
-docker compose -f docker-compose.vps.yml --profile core up -d --force-recreate auth
-sleep 25
+### Wave 4 (deuda técnica gerencia-tecnica)
 
-# Reintentar create tenant via app-shell proxy
-MASTER_SECRET=$(grep ^MASTER_SECRET .env | cut -d= -f2)
-curl -s -X POST http://localhost/api/v1/master/tenants \
-  -H "Content-Type: application/json" \
-  -H "x-master-secret: $MASTER_SECRET" \
-  -d '{"nombre":"Bocam","plan":"BASICO"}' | jq
+`apps/gerencia-tecnica/src/main.ts` rompe build con TS errors porque usa nombres viejos del schema. Sesión dedicada para alinear código a schema actual + tests. Ver task #16.
 
-# Capturar id_tenant y crear admin via /api/v1/auth/register
-```
+### Wave 3 (sat-worker)
 
-### ~~Bloqueador 2~~ RESUELTO 2026-04-30: migrado a app-shell del compose
+Necesita decidir: ¿adapter SAT real (URLs/keys) o stub mock? Mientras tanto, los pagos registrados quedan en RabbitMQ esperando worker.
+
+### ~~Bloqueador 1~~ RESUELTO 2026-05-04 — fix del header
+### ~~Bloqueador 2~~ RESUELTO 2026-04-30 — migración a app-shell del compose
 
 ✅ **nginx nativo del VPS ELIMINADO** (apt purge). `/etc/nginx/` borrado completo.
 ✅ **`bocam-vps-app-shell` corriendo healthy** desde compose, sirviendo frontend Vite/React + reverse proxy a microservicios via DNS docker.
@@ -97,20 +98,15 @@ Sistema pide `*** System restart required ***` con 11 updates pendientes. Hacer 
 
 Detectado durante auditoría: hay un proceso `monarx-agent` (PID variable) corriendo y conectado a `100.21.1.170:443` (backend de Monarx Security en AWS). Es **anti-malware preinstalado por Hostinger** en sus VPS. Legítimo. No tomó acción contra el archivo nginx (logs vacíos hoy). Configuración en `/etc/monarx-agent.conf`. Cron de actualización en `/etc/cron.d/monarx-update` (lunes 22:44 UTC).
 
-### Plan inmediato al regresar (orden estricto)
+### Plan inmediato al regresar (orden recomendado)
 
-1. **Reconstruir `/etc/nginx/sites-available/bocam-erp`** con el server block del Bloqueador 2. Verificar `nginx -t` antes de `systemctl reload nginx`. Mientras tanto, app-shell sigue sirviéndose desde memoria — no urgente pero hacer ANTES de cualquier reboot del VPS.
-2. **Resolver bloqueador 401** → diagnóstico CRLF con `xxd` → `sed -i 's/\r$//' .env` si aplica → force-recreate auth → crear tenant Bocam → crear admin → verificar login.
-3. **Re-sync firewall Hostinger** para regla 443 → re-test puerto.
-4. **Decisión arquitectónica:** ¿nginx nativo o Caddy del compose?
-   - **Recomendación**: migrar a Caddy del compose (mejor aislamiento docker, no requiere exponer puertos al host)
-   - Si se mantiene nginx nativo: hay que exponer puertos host de cada microservicio docker (3001, 3002, 3004, 3005, 3008) — antipatrón
-5. Drop `bocam_ventas` (`docker exec bocam-vps-postgres psql -U bocam_admin -d postgres -c "DROP DATABASE bocam_ventas;"`).
-6. **Wave 1** (paralelo, independientes): build + db push + up de `gerencia-tecnica`, `finanzas`, `contabilidad`.
-7. **Wave 2**: `compras`, `control-obra` (dependen de finanzas healthy).
-8. **Wave 3**: `contabilidad-sat-worker` (necesita variables `SAT_*` y `CONTABILIDAD_BASE_URL` que aún faltan en `.env` — preguntar al regresar si ya tenemos adapter SAT real o usaremos stub).
-9. Verificación cross-service (`/health` de los 6).
-10. Caddy/proxy oficial + dominio (después).
+1. **`git pull`** en VPS y laptop.
+2. Verificar containers siguen healthy: `docker ps`.
+3. **Wave 4: arreglar `gerencia-tecnica`** — alinear `main.ts` al schema Prisma actual (`unidad → unidad_medida`, `costo → costo_base`, `clase → tipo_insumo`, eliminar `nombre` de PresupuestoBase, agregar campo `importe` a Concepto). Idealmente con tests E2E mínimos antes de reintentar build.
+4. **Wave 3: sat-worker** — decidir SAT real o stub. Si stub: implementar mock service. Si real: agregar vars al `.env` y levantar.
+5. **Re-sync firewall 443** en panel Hostinger (re-test con `nc -zv 72.60.114.12 443`).
+6. **Caddy + dominio**: cuando se decida dominio, levantar caddy del compose, quitar `ports: 80:80` de app-shell (ver Bloqueador 2 cerrado).
+7. Aplicar 3 updates `apt` pendientes (cloud-init, docker-ce minor) — no urgentes.
 
 ### Cambios al `.env` del VPS hechos en esta sesión
 
@@ -258,4 +254,4 @@ REGLA DE ORO:
 
 ---
 
-*Última actualización: 2026-04-30 (sesión 2) | Sesión: migración nginx nativo → app-shell del compose COMPLETA (Bloqueador 2 cerrado), bug LF en MASTER_SECRET identificado y fix de código aplicado pendiente de rebuild+test, refactor nginx.qnap.conf con lazy DNS, fix Dockerfile.app-shell workspaces.*
+*Última actualización: 2026-05-04 EOD | Sesión: Wave 1 + Wave 2 deployed (5/6 microservicios core healthy). Tenant Bocam recreado tras drop bocam_ventas. Bug fix en packages/auth-middleware (requireProjectAccess). gerencia-tecnica → Wave 4 deuda técnica. sat-worker → postpuesto.*
