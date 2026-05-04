@@ -118,11 +118,11 @@ app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Respo
 app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
-    const { clave, descripcion, unidad, costo, clase } = req.body;
+    const { clave, descripcion, unidad_medida, costo_base, tipo_insumo } = req.body;
 
-    if (!clave || !descripcion || !unidad || costo === undefined || !clase) {
+    if (!clave || !descripcion || !unidad_medida || costo_base === undefined || !tipo_insumo) {
       return res.status(400).json(
-        createApiError('VALIDATION_ERROR', 'Campos requeridos: clave, descripcion, unidad, costo, clase.')
+        createApiError('VALIDATION_ERROR', 'Campos requeridos: clave, descripcion, unidad_medida, costo_base, tipo_insumo.')
       );
     }
 
@@ -137,11 +137,12 @@ app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintende
 
     const insumo = await db.insumo.create({
       data: {
+        tenant_id: tenantId,
         clave,
         descripcion,
-        unidad,
-        costo: parseFloat(costo),
-        clase,
+        unidad_medida,
+        costo_base: parseFloat(costo_base),
+        tipo_insumo,
         activo: true,
       },
     });
@@ -163,7 +164,7 @@ app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superin
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { id } = req.params;
-    const { descripcion, unidad, costo, clase } = req.body;
+    const { descripcion, unidad_medida, costo_base, tipo_insumo } = req.body;
 
     const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
@@ -178,9 +179,9 @@ app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superin
       where: { id },
       data: {
         ...(descripcion !== undefined && { descripcion }),
-        ...(unidad !== undefined && { unidad }),
-        ...(costo !== undefined && { costo: parseFloat(costo) }),
-        ...(clase !== undefined && { clase }),
+        ...(unidad_medida !== undefined && { unidad_medida }),
+        ...(costo_base !== undefined && { costo_base: parseFloat(costo_base) }),
+        ...(tipo_insumo !== undefined && { tipo_insumo }),
       },
     });
 
@@ -232,31 +233,43 @@ app.delete('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin'), async 
 app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
-    const { nombre, proyecto_id, version, conceptos } = req.body;
+    const { proyecto_id, version, conceptos } = req.body;
 
-    if (!nombre || !proyecto_id) {
+    if (!proyecto_id) {
       return res.status(400).json(
-        createApiError('VALIDATION_ERROR', 'Campos requeridos: nombre, proyecto_id.')
+        createApiError('VALIDATION_ERROR', 'Campos requeridos: proyecto_id.')
       );
     }
 
     const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
+    // Calcular importe_total sumando los importes de cada concepto.
+    let importeTotal = 0;
+    const conceptosNormalizados = (conceptos || []).map((c: any) => {
+      const cantidad = parseFloat(c.cantidad);
+      const precioUnitario = parseFloat(c.precio_unitario);
+      const importe = cantidad * precioUnitario;
+      importeTotal += importe;
+      return {
+        tenant_id: tenantId,
+        proyecto_id,
+        clave: c.clave,
+        descripcion: c.descripcion,
+        unidad_medida: c.unidad_medida,
+        cantidad,
+        precio_unitario: precioUnitario,
+        importe,
+      };
+    });
+
     const presupuesto = await db.presupuestoBase.create({
       data: {
-        nombre,
+        tenant_id: tenantId,
         proyecto_id,
-        version: version || '1.0',
-        conceptos: conceptos?.length
-          ? {
-              create: conceptos.map((c: any) => ({
-                clave: c.clave,
-                descripcion: c.descripcion,
-                unidad: c.unidad,
-                cantidad: parseFloat(c.cantidad),
-                precio_unitario: parseFloat(c.precio_unitario),
-              })),
-            }
+        version: parseInt(String(version), 10) || 1,
+        importe_total: importeTotal,
+        conceptos: conceptosNormalizados.length > 0
+          ? { create: conceptosNormalizados }
           : undefined,
       },
       include: { conceptos: true },
