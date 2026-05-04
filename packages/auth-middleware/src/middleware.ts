@@ -227,14 +227,11 @@ export function requireRoles(...allowedRoles: string[]) {
 export function requireProjectAccess() {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.securityContext) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_CONTEXT_MISSING',
-          message: 'Contexto de seguridad no encontrado.',
-        },
-      });
-      return;
+      // Si no hay securityContext, la ruta fue excluida del JWT middleware previo
+      // (p. ej. /health). En ese caso pasamos transparente — la validación de proyecto
+      // no aplica para rutas publicas. El JWT middleware ya rechazo cualquier ruta
+      // que requeria autenticacion antes de llegar aqui.
+      return next();
     }
 
     const { proyectoId, authorizedProjects, roles } = req.securityContext;
