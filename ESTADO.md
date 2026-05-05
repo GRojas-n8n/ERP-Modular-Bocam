@@ -22,22 +22,35 @@
 
 ---
 
-## 📊 ESTADO CONSOLIDADO (sesión 2026-05-05 inicio)
+## 📊 ESTADO CONSOLIDADO (sesión 2026-05-05 EOD)
 
-### 🎯 Microservicios desplegados — 6/6 core healthy
+### 🚀 PRODUCCIÓN HTTPS PÚBLICA: https://iretum.com
 
-| Módulo | Puerto | Estado | DB |
-|---|---|---|---|
-| `auth` | 3003 | ✅ healthy | `bocam_auth` (con tenant + admin) |
-| `gerencia-tecnica` | 3001 | ✅ healthy | `bocam_gerencia_tecnica` |
-| `finanzas` | 3004 | ✅ healthy | `bocam_finanzas` |
-| `compras` | 3002 | ✅ healthy | `bocam_compras` |
-| `control-obra` | 3005 | ✅ healthy | `bocam_control_obra` |
-| `contabilidad` | 3008 | ✅ healthy | `bocam_contabilidad` |
-| `app-shell` | 80 (host) | ✅ healthy, sirve frontend + reverse proxy | — |
-| `contabilidad-sat-worker` | — | ⏸️ postpuesto (no hay SAT real ni stub) | — |
+| Capa | Detalle |
+|---|---|
+| Dominio | `iretum.com` y `www.iretum.com` |
+| CDN/proxy | Cloudflare en modo **Full (strict)** — verifica cert válido del origen |
+| TLS origen | Caddy 2-alpine con Let's Encrypt automático |
+| Reverse proxy interno | `app-shell` (nginx) con DNS docker → microservicios |
+| Redirect HTTP→HTTPS | Permanent 308 (automático por Caddy) |
+| HTTP/2 | Habilitado (vía Cloudflare) |
+| Puertos públicos VPS | Solo 22 (SSH), 80 (Caddy), 443 (Caddy). Postgres/Redis/RabbitMQ aislados a red docker |
 
-**Stack completo**: 6 microservicios + 3 infra (postgres, rabbitmq, redis) + app-shell = **10 containers up healthy**. Validados con `restart: unless-stopped` que sobreviven reboot del host (probado).
+### 13 servicios healthy en producción
+
+| Capa | Servicios |
+|---|---|
+| **Core (6)** | `auth` 3003 · `gerencia-tecnica` 3001 · `finanzas` 3004 · `compras` 3002 · `control-obra` 3005 · `contabilidad` 3008 |
+| **Full (2)** | `personal` 3006 · `seguridad` 3007 |
+| **Edge (2)** | `caddy` (80/443 público) · `app-shell` (reverse proxy interno + frontend Vite/React) |
+| **Infra (3)** | `postgres` 5432 (red docker) · `rabbitmq` (red docker) · `redis` (red docker) |
+
+**Validado E2E**: 8/8 microservicios responden HTTP 200 vía `https://iretum.com/api/v1/*/health` desde internet. Containers con `restart: unless-stopped`, sobreviven reboot del host.
+
+### ⏸️ Servicios fuera del stack (intencional)
+
+- `contabilidad-sat-worker`: movido a `profiles: ["sat"]`. Activación cuando haya SAT real con `--profile sat`. Detenido y removido del stack actual.
+- `ventas`: nunca fue servicio del `docker-compose.vps.yml`. Solo `VENTAS_DATABASE_URL` quedaba en `.env` (limpieza cosmética).
 
 ### Bugs encontrados y arreglados (sesiones 2026-04-30 → 2026-05-04)
 
@@ -52,21 +65,23 @@
 
 ## 🚧 PENDIENTES (no críticos)
 
-### Bloqueador 3: Firewall Hostinger no aplica regla TCP 443
-
-Reglas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero 22/80 abiertos, **443 bloqueado** (timeout). Re-sync o recrear regla. **No bloquea nada hoy** — Caddy con dominio aún no levantado, app-shell sirve por 80 directo. Atender cuando se vaya a configurar TLS+dominio.
-
 ### Wave 3 (sat-worker)
 
-Necesita decidir: ¿adapter SAT real (URLs/keys) o stub mock? Mientras tanto, los pagos registrados quedan en RabbitMQ esperando worker. No bloquea operación normal hoy.
+Necesita decidir cuando aplique: ¿adapter SAT real (URLs/keys) o stub mock? Service movido a `profiles: ["sat"]` en compose. Activar con `docker compose -f docker-compose.vps.yml --profile sat up -d contabilidad-sat-worker` cuando vars `SAT_*` estén configuradas en `.env`.
 
-### Caddy + dominio (TLS público)
+### Tests E2E intermodulo
 
-`docker-compose.vps.yml` ya tiene servicio `caddy` definido pero `docker/Caddyfile` no existe en el repo. Cuando se decida dominio: escribir Caddyfile, levantar caddy, eliminar `ports: 80:80` de app-shell para que solo Caddy exponga 80/443.
+`package.json` define `npm run test:integration:intermodulo` que cubre flujos compras→finanzas, control-obra→finanzas, etc. Útil para validar que la arquitectura microservicios + RabbitMQ funciona end-to-end con datos reales. Sesión dedicada cuando se necesite.
 
-### ~~Bloqueador 1~~ RESUELTO 2026-05-04 — fix del header
+### Datos reales de producción
+
+Tenant Bocam y admin existen pero sin proyectos, insumos, presupuestos. Para uso real, alguien con conocimiento del negocio debe poblar el catálogo maestro de insumos (gerencia-tecnica) y crear el primer proyecto.
+
+### ~~Bloqueador 1~~ RESUELTO 2026-05-04 — fix del header `Authorization: Bearer`
 ### ~~Bloqueador 2~~ RESUELTO 2026-04-30 — migración a app-shell del compose
+### ~~Bloqueador 3~~ RESUELTO 2026-05-05 — TLS 443 abierto vía Caddy + Cloudflare
 ### ~~Wave 4 deuda técnica gerencia-tecnica~~ RESUELTO 2026-05-04 EOD
+### ~~Caddy + dominio~~ RESUELTO 2026-05-05 — iretum.com en producción
 
 ### ~~Bloqueador 1~~ RESUELTO 2026-05-04 — fix del header
 ### ~~Bloqueador 2~~ RESUELTO 2026-04-30 — migración a app-shell del compose
@@ -263,4 +278,4 @@ REGLA DE ORO:
 
 ---
 
-*Última actualización: 2026-05-05 inicio sesión | Estado: 6/6 microservicios core healthy + 3 infra + app-shell = 10 containers up 18h continuos. Sesión 2026-05-04 EOD cerró Wave 4 (gerencia-tecnica alineado al schema). Pendientes no críticos: firewall 443, Wave 3 sat-worker, Caddy+dominio.*
+*Última actualización: 2026-05-05 EOD | 🚀 PRODUCCIÓN PÚBLICA en https://iretum.com con TLS Cloudflare Full strict + Caddy + Let's Encrypt. 13 servicios healthy. sat-worker movido a perfil sat. Resta: Wave 3 SAT real, tests E2E, poblar datos reales.*
