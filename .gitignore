@@ -20,9 +20,13 @@ out/
 .env.test.local
 .env.production.local
 .env.*.local
+.env.bak.*
 
 # Prisma
 prisma/migrations/**/migration_lock.toml
+# Binarios nativos generados por Prisma client (especificos del SO)
+**/generated/prisma/libquery_engine-*.so.node
+**/generated/prisma/query_engine-windows.dll.node
 
 # IDE
 .vscode/

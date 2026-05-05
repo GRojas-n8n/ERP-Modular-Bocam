@@ -16,7 +16,6 @@ services:
     networks:
       - bocam-vps-network
     restart: unless-stopped
-
   workspace-tooling:
     profiles: ["tools"]
     build:
@@ -49,12 +48,12 @@ services:
       - bocam-vps-network
     command: ["sleep", "infinity"]
     restart: "no"
-
   postgres:
     image: postgres:15-alpine
     container_name: bocam-vps-postgres
-    ports:
-      - "5432:5432"  # <--- ESTO ABRE LA PUERTA AL MUNDO EXTERIOR
+    # Postgres SOLO accesible via la red docker interna (sin puerto al host).
+    # Para acceso externo (pgadmin/dbeaver desde laptop): usar SSH tunnel:
+    #   ssh -L 5432:localhost:5432 root@72.60.114.12
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -71,7 +70,6 @@ services:
       retries: 8
       start_period: 20s
     restart: unless-stopped
-
   redis:
     image: redis:7-alpine
     container_name: bocam-vps-redis
@@ -85,7 +83,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: bocam-vps-rabbitmq
@@ -102,7 +99,6 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
-
   auth:
     profiles: ["core", "full", "staging"]
     build:
@@ -134,7 +130,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   gerencia-tecnica:
     profiles: ["core", "full", "staging"]
     build:
@@ -165,7 +160,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   finanzas:
     profiles: ["core", "full", "staging"]
     build:
@@ -196,7 +190,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   compras:
     profiles: ["core", "full", "staging"]
     build:
@@ -230,7 +223,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   control-obra:
     profiles: ["core", "full", "staging"]
     build:
@@ -264,7 +256,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   personal:
     profiles: ["full", "staging"]
     build:
@@ -298,7 +289,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   seguridad:
     profiles: ["full", "staging"]
     build:
@@ -332,7 +322,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   contabilidad:
     profiles: ["core", "full", "staging"]
     build:
@@ -371,7 +360,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
   contabilidad-sat-worker:
     # Perfil dedicado: NO se levanta con --profile core/full por default.
     # Activar solo cuando haya SAT real (URLs/keys en .env) con: --profile sat
@@ -406,18 +394,18 @@ services:
     networks:
       - bocam-vps-network
     restart: unless-stopped
-
   app-shell:
     profiles: ["core", "full", "staging"]
     build:
       context: .
       dockerfile: docker/Dockerfile.app-shell
     container_name: bocam-vps-app-shell
-    # Exposición temporal del puerto 80 al host hasta que Caddy se levante con dominio.
-    # Cuando se active Caddy, eliminar este bloque ports y dejar que solo Caddy
-    # exponga 80/443 hacia el host. App-shell quedará solo accesible vía la red docker interna.
-    ports:
-      - "80:80"
+    # App-shell NO expone puerto al host directamente. Toda comunicación pública
+    # entra por Caddy (puertos 80/443) que hace reverse proxy a app-shell:80
+    # via la red docker interna. App-shell internamente sigue siendo un nginx
+    # que sirve el frontend Vite/React + reverse proxy a los microservicios.
+    expose:
+      - "80"
     depends_on:
       auth:
         condition: service_healthy
@@ -440,11 +428,9 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-
 networks:
   bocam-vps-network:
     driver: bridge
-
 volumes:
   vps_postgres_data:
   vps_redis_data:

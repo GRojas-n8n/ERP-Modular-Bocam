@@ -1,0 +1,4 @@
+iretum.com, www.iretum.com {
+    reverse_proxy app-shell:80
+    encode gzip zstd
+}
