@@ -22,42 +22,51 @@
 
 ---
 
-## 📊 ESTADO CONSOLIDADO (cierre 2026-05-04)
+## 📊 ESTADO CONSOLIDADO (sesión 2026-05-05 inicio)
 
-### Microservicios desplegados — 5 de 6 core healthy
+### 🎯 Microservicios desplegados — 6/6 core healthy
 
 | Módulo | Puerto | Estado | DB |
 |---|---|---|---|
 | `auth` | 3003 | ✅ healthy | `bocam_auth` (con tenant + admin) |
+| `gerencia-tecnica` | 3001 | ✅ healthy | `bocam_gerencia_tecnica` |
 | `finanzas` | 3004 | ✅ healthy | `bocam_finanzas` |
 | `compras` | 3002 | ✅ healthy | `bocam_compras` |
 | `control-obra` | 3005 | ✅ healthy | `bocam_control_obra` |
 | `contabilidad` | 3008 | ✅ healthy | `bocam_contabilidad` |
-| `gerencia-tecnica` | 3001 | ⏸️ skipped (Wave 4) | `bocam_gerencia_tecnica` (vacía) |
 | `app-shell` | 80 (host) | ✅ healthy, sirve frontend + reverse proxy | — |
 | `contabilidad-sat-worker` | — | ⏸️ postpuesto (no hay SAT real ni stub) | — |
 
-### Bugs encontrados y arreglados hoy 2026-05-04
+**Stack completo**: 6 microservicios + 3 infra (postgres, rabbitmq, redis) + app-shell = **10 containers up healthy**. Validados con `restart: unless-stopped` que sobreviven reboot del host (probado).
+
+### Bugs encontrados y arreglados (sesiones 2026-04-30 → 2026-05-04)
 
 1. **Header del cliente master endpoints**: el middleware lee `Authorization: Bearer <secret>`, no `x-master-secret`. Documentado en datos críticos.
 2. **`packages/auth-middleware/src/middleware.ts`**: `requireProjectAccess()` rechazaba con 401 las rutas excluidas del JWT middleware previo (faltaba el `securityContext`). Fix: pasa transparente cuando no hay context (route was excluded). Sirve para todos los servicios futuros.
-3. **`apps/gerencia-tecnica/src/main.ts`**: código out-of-sync con schema Prisma actual (campos `unidad`, `costo`, `clase`, `nombre` no existen). Marcado como Wave 4 deuda técnica.
+3. **`apps/gerencia-tecnica/src/main.ts`**: código out-of-sync con schema Prisma actual. Fix aplicado: alineado a `unidad_medida`, `costo_base`, `tipo_insumo`, `importe` (calculado en Concepto), `version` a Int, `tenant_id` y `proyecto_id` explícitos en `.create()` (RLS los exige aunque set_config esté activo). Wave 4 cerrada.
+4. **`docker/Dockerfile.app-shell`**: el `COPY apps/*/package.json ./apps/` colapsaba paths y rompía resolución de workspaces npm. Cambiado a `COPY . . && npm ci`.
+5. **`docker/nginx.qnap.conf`**: refactor a `resolver 127.0.0.11` + `set $upstream` para lazy DNS resolution. Arranca aunque módulos no existan.
+6. **`docker-compose.vps.yml` healthchecks**: cambio de `localhost` → `127.0.0.1` explícito (alpine BusyBox-wget prefiere `::1` y crashea sin servicio IPv6).
 
 ---
 
-## 🚧 BLOQUEADORES PENDIENTES (no críticos)
+## 🚧 PENDIENTES (no críticos)
 
 ### Bloqueador 3: Firewall Hostinger no aplica regla TCP 443
 
-Reglas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero 22/80 abiertos, **443 bloqueado** (timeout). Re-sync o recrear regla. **No bloquea nada hoy** — Caddy con dominio aún no levantado, app-shell sirve por 80 directo.
-
-### Wave 4 (deuda técnica gerencia-tecnica)
-
-`apps/gerencia-tecnica/src/main.ts` rompe build con TS errors porque usa nombres viejos del schema. Sesión dedicada para alinear código a schema actual + tests. Ver task #16.
+Reglas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero 22/80 abiertos, **443 bloqueado** (timeout). Re-sync o recrear regla. **No bloquea nada hoy** — Caddy con dominio aún no levantado, app-shell sirve por 80 directo. Atender cuando se vaya a configurar TLS+dominio.
 
 ### Wave 3 (sat-worker)
 
-Necesita decidir: ¿adapter SAT real (URLs/keys) o stub mock? Mientras tanto, los pagos registrados quedan en RabbitMQ esperando worker.
+Necesita decidir: ¿adapter SAT real (URLs/keys) o stub mock? Mientras tanto, los pagos registrados quedan en RabbitMQ esperando worker. No bloquea operación normal hoy.
+
+### Caddy + dominio (TLS público)
+
+`docker-compose.vps.yml` ya tiene servicio `caddy` definido pero `docker/Caddyfile` no existe en el repo. Cuando se decida dominio: escribir Caddyfile, levantar caddy, eliminar `ports: 80:80` de app-shell para que solo Caddy exponga 80/443.
+
+### ~~Bloqueador 1~~ RESUELTO 2026-05-04 — fix del header
+### ~~Bloqueador 2~~ RESUELTO 2026-04-30 — migración a app-shell del compose
+### ~~Wave 4 deuda técnica gerencia-tecnica~~ RESUELTO 2026-05-04 EOD
 
 ### ~~Bloqueador 1~~ RESUELTO 2026-05-04 — fix del header
 ### ~~Bloqueador 2~~ RESUELTO 2026-04-30 — migración a app-shell del compose
@@ -75,9 +84,9 @@ Necesita decidir: ¿adapter SAT real (URLs/keys) o stub mock? Mientras tanto, lo
 
 Reglas configuradas en panel: Accept TCP 22/80/443 + Drop Any Any. Sincronizadas. Pero test desde laptop muestra 22/80 ABIERTOS y **443 bloqueado** (timeout, drop activo). Re-sync pendiente, posible glitch del panel. Si tras re-sync sigue cerrado: borrar y recrear regla 443. **No bloquea nada hoy** (Caddy con dominio aún no levantado, app-shell sirve por 80 directo).
 
-### Reboot pendiente del VPS
+### ~~Reboot pendiente del VPS~~ RESUELTO 2026-05-01
 
-Sistema pide `*** System restart required ***` con 11 updates pendientes. Hacer al inicio de próxima sesión, después del git pull. Los containers tienen `restart: unless-stopped` así que sobreviven reboot, pero confirmar después.
+Aplicado el reboot el 2026-05-01. Validado: containers sobrevivieron limpios (`restart: unless-stopped` funcional). Updates posteriores aplicados al 2026-05-05 (0 pendientes hoy).
 
 ---
 
@@ -254,4 +263,4 @@ REGLA DE ORO:
 
 ---
 
-*Última actualización: 2026-05-04 EOD | Sesión: Wave 1 + Wave 2 deployed (5/6 microservicios core healthy). Tenant Bocam recreado tras drop bocam_ventas. Bug fix en packages/auth-middleware (requireProjectAccess). gerencia-tecnica → Wave 4 deuda técnica. sat-worker → postpuesto.*
+*Última actualización: 2026-05-05 inicio sesión | Estado: 6/6 microservicios core healthy + 3 infra + app-shell = 10 containers up 18h continuos. Sesión 2026-05-04 EOD cerró Wave 4 (gerencia-tecnica alineado al schema). Pendientes no críticos: firewall 443, Wave 3 sat-worker, Caddy+dominio.*
