@@ -373,7 +373,9 @@ services:
     restart: unless-stopped
 
   contabilidad-sat-worker:
-    profiles: ["core", "full", "staging"]
+    # Perfil dedicado: NO se levanta con --profile core/full por default.
+    # Activar solo cuando haya SAT real (URLs/keys en .env) con: --profile sat
+    profiles: ["sat"]
     build:
       context: .
       dockerfile: docker/Dockerfile.backend
