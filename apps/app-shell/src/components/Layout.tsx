@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrandMark, Button, SectionBadge, cn } from '@bocam/ui-core';
+import { Button, SectionBadge, cn } from '@bocam/ui-core';
 import {
   IconDashboard,
   IconBriefcase,

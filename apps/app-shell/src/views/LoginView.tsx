@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import {
-  Button,
   FormField,
   Input,
 } from '@bocam/ui-core';
