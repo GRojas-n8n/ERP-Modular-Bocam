@@ -25,98 +25,65 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   IRETUM — Modern Industrial Dark Theme
-   Primary:    #00D1FF  →  HSL 192 100% 50%   (Electric Cyan)
-   Background: #101828  →  HSL 218  43% 11%   (Deep Petrol)
-   Card:       #1A2535  →  HSL 218  35% 15%
-   Muted:      #1E293B  →  HSL 218  32% 18%
-───────────────────────────────────────────────────────────────────────────── */
-
 @layer base {
+  /* iretum — Modern Industrial palette
+   * Primary:    #00D1FF (Electric Cyan)   = HSL 188 100% 50%
+   * Foreground: #101828 (Deep Petrol)     = HSL 220 43% 11%
+   * Tono: serio + tecnológico (sector hidrocarburos / construcción industrial)
+   */
   :root {
-    /* ── Superficies ── */
-    --background:            218 43% 11%;   /* #101828 Deep Petrol */
-    --foreground:            210 40% 96%;   /* near-white */
+    --background: 0 0% 100%;
+    --foreground: 220 43% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 43% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 43% 11%;
+    --primary: 188 100% 50%;
+    --primary-foreground: 220 43% 11%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 43% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 188 100% 92%;
+    --accent-foreground: 220 43% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 14% 91%;
+    --input: 220 14% 91%;
+    --ring: 188 100% 50%;
+    --radius: 0.5rem;
+  }
 
-    --card:                  218 35% 15%;   /* #1A2535 */
-    --card-foreground:       210 40% 96%;
-
-    --popover:               218 35% 13%;
-    --popover-foreground:    210 40% 96%;
-
-    /* ── Marca ── */
-    --primary:               192 100% 50%;  /* #00D1FF Electric Cyan */
-    --primary-foreground:    218 43% 11%;   /* dark text sobre cyan */
-
-    /* ── Secundarios ── */
-    --secondary:             218 32% 20%;
-    --secondary-foreground:  210 40% 85%;
-
-    --muted:                 218 32% 18%;   /* #1E293B */
-    --muted-foreground:      215 20% 55%;
-
-    --accent:                192 100% 50%;  /* mismo cyan como accent */
-    --accent-foreground:     218 43% 11%;
-
-    /* ── Semánticos ── */
-    --destructive:           0 72% 51%;
-    --destructive-foreground:210 40% 98%;
-
-    /* ── Estructura ── */
-    --border:                218 30% 22%;
-    --input:                 218 32% 18%;
-    --ring:                  192 100% 50%;
-    --radius:                0.625rem;
+  .dark {
+    --background: 220 43% 11%;
+    --foreground: 220 14% 96%;
+    --card: 220 43% 14%;
+    --card-foreground: 220 14% 96%;
+    --popover: 220 43% 14%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 188 100% 50%;
+    --primary-foreground: 220 43% 11%;
+    --secondary: 220 30% 18%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 220 14% 65%;
+    --accent: 220 30% 18%;
+    --accent-foreground: 188 100% 80%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 30% 18%;
+    --input: 220 30% 18%;
+    --ring: 188 100% 50%;
   }
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border) / 0.6);
+    border-color: hsl(var(--border) / 0.1);
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    letter-spacing: -0.02em;
-  }
-
-  /* Números y datos en tablas → JetBrains Mono */
-  .tabular-nums, .font-mono, code, pre, td, th {
-    font-family: 'JetBrains Mono', monospace;
-  }
-}
-
-/* ── Scrollbar sutil estilo dark ── */
-@layer base {
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
-  }
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.5);
-  }
-}
-
-/* ── Glow cyan para elementos primarios activos ── */
-@layer utilities {
-  .glow-cyan {
-    box-shadow: 0 0 20px hsl(192 100% 50% / 0.25), 0 0 40px hsl(192 100% 50% / 0.1);
-  }
-  .glow-cyan-sm {
-    box-shadow: 0 0 8px hsl(192 100% 50% / 0.3);
   }
 }
