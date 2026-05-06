@@ -81,13 +81,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
   const renderSidebarContent = () => (
     <>
       <div className="flex items-center gap-3 p-5 border-b" style={{ borderColor: 'hsl(218 30% 22%)' }}>
-        {/* Isotipo hexagonal Iretum */}
-        <svg width="32" height="37" viewBox="0 0 56 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-          <path d="M28 2L54 17V47L28 62L2 47V17L28 2Z" fill="hsl(218 43% 11%)" stroke="#00D1FF" strokeWidth="2.5" />
-          <rect x="23" y="18" width="10" height="3" rx="1" fill="#00D1FF" />
-          <rect x="25.5" y="21" width="5" height="22" rx="1" fill="#00D1FF" />
-          <rect x="23" y="43" width="10" height="3" rx="1" fill="#00D1FF" />
-        </svg>
+        {/* Logo Iretum */}
+        <img src="/favicon.svg" alt="Iretum" width={32} height={31} className="shrink-0" />
         <div className="flex min-w-0 flex-col">
           <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.03em' }}
             className="text-base font-bold text-foreground leading-tight">

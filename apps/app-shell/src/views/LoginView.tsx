@@ -28,22 +28,10 @@ const IconLock = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ─── Logo Iretum (wordmark SVG) ───────────────────────────────────────────────
+// ─── Logo Iretum ──────────────────────────────────────────────────────────────
 const IretumLogo = () => (
-  <div className="flex flex-col items-center gap-1">
-    {/* Hexágono isotipo */}
-    <svg width="56" height="64" viewBox="0 0 56 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M28 2L54 17V47L28 62L2 47V17L28 2Z"
-        fill="hsl(218 43% 11%)"
-        stroke="#00D1FF"
-        strokeWidth="2.5"
-      />
-      {/* I calada */}
-      <rect x="23" y="18" width="10" height="3" rx="1" fill="#00D1FF" />
-      <rect x="25.5" y="21" width="5" height="22" rx="1" fill="#00D1FF" />
-      <rect x="23" y="43" width="10" height="3" rx="1" fill="#00D1FF" />
-    </svg>
+  <div className="flex flex-col items-center gap-2">
+    <img src="/favicon.svg" alt="Iretum" width={56} height={54} className="drop-shadow-lg" />
     <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.04em' }}
       className="text-3xl font-bold text-foreground tracking-tight">
       iretum
