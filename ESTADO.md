@@ -22,6 +22,36 @@
 
 ---
 
+## 📊 ESTADO CONSOLIDADO (sesión 2026-05-06 EOD)
+
+### ✅ Lo que se hizo en esta sesión
+
+1. **Identidad visual Iretum aplicada al frontend** — 4 archivos modificados y desplegados:
+   - `index.html`: título "Iretum | ERP Industrial", fuentes Plus Jakarta Sans + Inter + JetBrains Mono
+   - `index.css`: tema dark industrial completo (`--background: 218 43% 11%`, `--primary: 192 100% 50%` cyan)
+   - `LoginView.tsx`: rediseño completo — fondo petrol, grid overlay, glow cyan, tenant hardcodeado a Bocam, footer legal
+   - `Layout.tsx`: sidebar con logo Iretum + wordmark, `BrandMark` removido
+2. **Logo real** — `favicon.svg` ya estaba en GitHub (commit anterior). El login y sidebar ahora usan `<img src="/favicon.svg" />`. El logo correcto (isotipo "i" en cubo azul) está **solo en la laptop del trabajo** — pendiente hacer push desde ahí.
+3. **Deploy exitoso** — `app-shell` rebuilt y corriendo healthy en VPS. 9/9 contenedores healthy.
+4. **.gitignore actualizado** — agregadas reglas para `bocam_deploy_key` y `*_deploy_key`
+
+### ⚠️ Pendiente inmediato al regresar
+
+- **Logo real**: desde la laptop del trabajo, hacer `git add apps/app-shell/public/favicon.svg && git commit -m "feat(assets): logo oficial Iretum" && git push`, luego rebuild VPS.
+- **Probar login**: ir a iretum.com, entrar con `admin@bocam.com` (contraseña no documentada — si se olvidó, resetear desde VPS con psql).
+- **Resetear contraseña admin si es necesario** (ver instrucción abajo).
+
+### 🔑 Resetear contraseña admin (si se olvidó)
+
+```bash
+ssh root@72.60.114.12
+docker exec -it bocam-vps-postgres psql -U bocam_admin -d bocam_auth
+UPDATE "User" SET password_hash = crypt('NuevaPassword123!', gen_salt('bf')) WHERE email = 'admin@bocam.com';
+\q
+```
+
+---
+
 ## 📊 ESTADO CONSOLIDADO (sesión 2026-05-05 EOD)
 
 ### 🚀 PRODUCCIÓN HTTPS PÚBLICA: https://iretum.com
