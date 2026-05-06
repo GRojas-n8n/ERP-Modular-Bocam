@@ -59,3 +59,9 @@ tmp/
 
 bocam_deploy_key
 bocam_deploy_key.pub
+
+# SSH Deploy keys (never commit private keys)
+bocam_deploy_key
+bocam_deploy_key.pub
+*_deploy_key
+*_deploy_key.pub
