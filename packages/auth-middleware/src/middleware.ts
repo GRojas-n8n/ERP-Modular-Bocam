@@ -77,11 +77,19 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions) {
     );
   }
 
+  const isPathExcluded = (requestPath: string): boolean => {
+    return excludePaths.some((path) => {
+      if (!excludeByPrefix) {
+        return requestPath === path;
+      }
+
+      return requestPath === path || requestPath.startsWith(`${path}/`);
+    });
+  };
+
   return (req: Request, res: Response, next: NextFunction): void => {
     // ─── Verificar si la ruta está excluida ─────────────────────────
-    const isExcluded = excludeByPrefix
-      ? excludePaths.some(path => req.path.startsWith(path))
-      : excludePaths.includes(req.path);
+    const isExcluded = isPathExcluded(req.path);
 
     if (isExcluded) {
       return next();
@@ -245,7 +253,18 @@ export function requireProjectAccess() {
     }
 
     // Para roles de nivel Proyecto, verificar acceso explícito
-    if (proyectoId && !authorizedProjects.includes(proyectoId)) {
+    if (!proyectoId) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTH_PROJECT_REQUIRED',
+          message: 'Se requiere un proyecto activo para esta operación.',
+        },
+      });
+      return;
+    }
+
+    if (!authorizedProjects.includes(proyectoId)) {
       res.status(403).json({
         success: false,
         error: {

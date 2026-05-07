@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { createTenantContext, disconnectDb, runAsSystem } from './db';
 import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
+import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 
 const app = express();
 app.use(express.json());
@@ -80,8 +81,11 @@ function generateTokenPair(user: AuthUser, activeProyectoId?: string) {
 app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
   try {
     const { email, password, tenant_id, proyecto_id } = req.body;
+    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : '';
+    const normalizedTenantId = typeof tenant_id === 'string' ? tenant_id.trim() : '';
+    const requestedProjectId = typeof proyecto_id === 'string' ? proyecto_id.trim() : '';
 
-    if (!email || !password || !tenant_id) {
+    if (!normalizedEmail || !password || !normalizedTenantId) {
       res.status(400).json({
         success: false,
         error: {
@@ -93,10 +97,10 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
     }
 
     const user = await createTenantContext(
-      { tenantId: tenant_id },
+      { tenantId: normalizedTenantId },
       async (prisma) => prisma.user.findUnique({
         where: {
-          tenant_id_email: { tenant_id, email },
+          tenant_id_email: { tenant_id: normalizedTenantId, email: normalizedEmail },
         },
         include: {
           tenant: true,
@@ -141,16 +145,13 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
       return;
     }
 
-    const { accessToken, refreshToken, refreshTokenHash } = generateTokenPair(
-      user,
-      proyecto_id
-    );
+    const activeProjectId = resolveActiveProjectId(user, requestedProjectId);
+    const { accessToken, refreshToken, refreshTokenHash } = generateTokenPair(user, activeProjectId);
 
-    const refreshExpiry = new Date();
-    refreshExpiry.setDate(refreshExpiry.getDate() + 7);
+    const refreshExpiry = resolveRefreshExpiry(JWT_REFRESH_EXPIRATION);
 
     await createTenantContext(
-      { tenantId: tenant_id, userId: user.id_usuario },
+      { tenantId: normalizedTenantId, userId: user.id_usuario },
       async (prisma) => {
         await prisma.refreshToken.create({
           data: {
@@ -196,6 +197,17 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    if (error.message === 'AUTH_PROJECT_FORBIDDEN') {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTH_PROJECT_FORBIDDEN',
+          message: 'No tienes acceso al proyecto solicitado para iniciar sesion.',
+        },
+      });
+      return;
+    }
+
     console.error('[Auth] Error en login:', error.message);
     res.status(500).json({
       success: false,
@@ -210,8 +222,10 @@ app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
 app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
   try {
     const { email, password, nombre, tenant_id, roles, proyecto_ids } = req.body;
+    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : '';
+    const normalizedTenantId = typeof tenant_id === 'string' ? tenant_id.trim() : '';
 
-    if (!email || !password || !nombre || !tenant_id) {
+    if (!normalizedEmail || !password || !nombre || !normalizedTenantId) {
       res.status(400).json({
         success: false,
         error: {
@@ -225,10 +239,10 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const user = await createTenantContext(
-      { tenantId: tenant_id },
+      { tenantId: normalizedTenantId },
       async (prisma) => {
         const tenant = await prisma.tenant.findUnique({
-          where: { id_tenant: tenant_id },
+          where: { id_tenant: normalizedTenantId },
         });
 
         if (!tenant || !tenant.activo) {
@@ -236,7 +250,7 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
         }
 
         const existingUser = await prisma.user.findUnique({
-          where: { tenant_id_email: { tenant_id, email } },
+          where: { tenant_id_email: { tenant_id: normalizedTenantId, email: normalizedEmail } },
         });
 
         if (existingUser) {
@@ -245,8 +259,8 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
 
         return prisma.user.create({
           data: {
-            tenant_id,
-            email,
+            tenant_id: normalizedTenantId,
+            email: normalizedEmail,
             password_hash: passwordHash,
             nombre,
             rol_global: roles || ['resident'],
@@ -400,8 +414,7 @@ app.post('/api/v1/auth/refresh', async (req: Request, res: Response) => {
           refreshTokenHash,
         } = generateTokenPair(storedToken.user);
 
-        const refreshExpiry = new Date();
-        refreshExpiry.setDate(refreshExpiry.getDate() + 7);
+        const refreshExpiry = resolveRefreshExpiry(JWT_REFRESH_EXPIRATION);
 
         await prisma.refreshToken.create({
           data: {

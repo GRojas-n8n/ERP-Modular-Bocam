@@ -82,7 +82,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     <>
       <div className="flex items-center gap-3 p-5 border-b" style={{ borderColor: 'hsl(218 30% 22%)' }}>
         {/* Logo Iretum */}
-        <img src="/favicon.svg" alt="Iretum" width={32} height={31} className="shrink-0" />
+        <picture className="shrink-0">
+          <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+          <img src="/logo.svg" alt="Iretum" width={32} height={31} />
+        </picture>
         <div className="flex min-w-0 flex-col">
           <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.03em' }}
             className="text-base font-bold text-foreground leading-tight">

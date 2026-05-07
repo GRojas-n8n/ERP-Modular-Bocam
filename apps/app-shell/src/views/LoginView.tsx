@@ -5,9 +5,9 @@ import {
   Input,
 } from '@bocam/ui-core';
 import { useTenant } from '../context/TenantContext';
+import heroImage from '../assets/hero.png';
 
-// ─── Tenant fijo de producción ────────────────────────────────────────────────
-const BOCAM_TENANT_ID = '8e07a7ac-8157-4e5d-8499-e985a9fcdbfc';
+const DEFAULT_TENANT_ID = (import.meta.env.VITE_DEFAULT_TENANT_ID || '').trim();
 
 // ─── Iconos inline ────────────────────────────────────────────────────────────
 const IconMail = ({ className }: { className?: string }) => (
@@ -31,7 +31,10 @@ const IconLock = ({ className }: { className?: string }) => (
 // ─── Logo Iretum ──────────────────────────────────────────────────────────────
 const IretumLogo = () => (
   <div className="flex flex-col items-center gap-2">
-    <img src="/favicon.svg" alt="Iretum" width={56} height={54} className="drop-shadow-lg" />
+    <picture>
+      <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+      <img src="/logo.svg" alt="Iretum" width={56} height={54} className="drop-shadow-lg" />
+    </picture>
     <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.04em' }}
       className="text-3xl font-bold text-foreground tracking-tight">
       iretum
@@ -52,7 +55,12 @@ export const LoginView: React.FC = () => {
     setIsSubmitting(true);
     setLocalError(null);
     try {
-      await login(email, password, BOCAM_TENANT_ID);
+      if (!DEFAULT_TENANT_ID) {
+        setLocalError('Configuración inválida: falta VITE_DEFAULT_TENANT_ID.');
+        return;
+      }
+
+      await login(email, password, DEFAULT_TENANT_ID);
     } catch {
       setLocalError(loginError || 'Credenciales incorrectas. Verifica tu correo y contraseña.');
     } finally {
@@ -65,6 +73,12 @@ export const LoginView: React.FC = () => {
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center px-4 py-12"
       style={{ background: 'hsl(218 43% 11%)' }}>
+      <img
+        src={heroImage}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute right-0 top-0 hidden h-full w-auto max-w-[48vw] object-cover opacity-10 lg:block"
+      />
 
       {/* ── Fondo: rejilla isométrica sutil ── */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.04]"

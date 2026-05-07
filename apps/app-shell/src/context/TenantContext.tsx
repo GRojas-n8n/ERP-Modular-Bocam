@@ -49,7 +49,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const tenant: TenantConfig = {
           id: data?.tenant?.id,
           name: data?.tenant?.name,
-          logoUrl: data?.tenant?.logo_url || '/bocam-logo.png',
+          logoUrl: data?.tenant?.logo_url || '/logo.svg',
           primaryColor: data?.tenant?.primary_color || undefined,
           language: 'es',
           plan: data?.tenant?.plan,
@@ -114,7 +114,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const tenant: TenantConfig = {
         id: userData?.tenant?.id,
         name: userData?.tenant?.name,
-        logoUrl: userData?.tenant?.logo_url || '/bocam-logo.png',
+        logoUrl: userData?.tenant?.logo_url || '/logo.svg',
         primaryColor: userData?.tenant?.primary_color || undefined,
         language: 'es',
       };
@@ -141,7 +141,10 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isAuthenticated: true,
       });
     } catch (err: any) {
-      const message = err.response?.data?.error?.message || 'Error de conexión con el servidor.';
+      const backendError = err.response?.data?.error;
+      const message = backendError?.message
+        || (backendError?.code ? `Error de autenticación (${backendError.code}).` : null)
+        || 'Error de conexión con el servidor.';
       setLoginError(message);
       throw err;
     }
@@ -152,7 +155,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const demoTenant: TenantConfig = {
       id: 'bocam-demo',
       name: 'Bocam ERP',
-      logoUrl: '/bocam-logo.png',
+      logoUrl: '/logo.svg',
       primaryColor: '#1A56DB',
       language: 'es',
       plan: 'enterprise',
