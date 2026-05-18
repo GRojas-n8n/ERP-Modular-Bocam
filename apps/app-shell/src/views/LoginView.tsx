@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import {
-  FormField,
-  Input,
-} from '@bocam/ui-core';
 import { useTenant } from '../context/TenantContext';
-import heroImage from '../assets/hero.png';
 
-const DEFAULT_TENANT_ID = (import.meta.env.VITE_DEFAULT_TENANT_ID || '').trim();
+// ─── Tenant desde variable de entorno (fallback hardcodeado para Bocam) ───────
+const DEFAULT_TENANT_ID = (import.meta.env.VITE_DEFAULT_TENANT_ID || '8e07a7ac-8157-4e5d-8499-e985a9fcdbfc').trim();
 
 // ─── Iconos inline ────────────────────────────────────────────────────────────
 const IconMail = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
     className={className}>
     <rect width="20" height="16" x="2" y="4" rx="2" />
@@ -20,7 +16,7 @@ const IconMail = ({ className }: { className?: string }) => (
 );
 
 const IconLock = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
     className={className}>
     <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
@@ -28,27 +24,13 @@ const IconLock = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ─── Logo Iretum ──────────────────────────────────────────────────────────────
-const IretumLogo = () => (
-  <div className="flex flex-col items-center gap-2">
-    <picture>
-      <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-      <img src="/logo.svg" alt="Iretum" width={56} height={54} className="drop-shadow-lg" />
-    </picture>
-    <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.04em' }}
-      className="text-3xl font-bold text-foreground tracking-tight">
-      iretum
-    </span>
-  </div>
-);
-
 // ─── Componente principal ─────────────────────────────────────────────────────
 export const LoginView: React.FC = () => {
   const { login, loginDemo, loginError } = useTenant();
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError]     = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +41,6 @@ export const LoginView: React.FC = () => {
         setLocalError('Configuración inválida: falta VITE_DEFAULT_TENANT_ID.');
         return;
       }
-
       await login(email, password, DEFAULT_TENANT_ID);
     } catch {
       setLocalError(loginError || 'Credenciales incorrectas. Verifica tu correo y contraseña.');
@@ -71,163 +52,394 @@ export const LoginView: React.FC = () => {
   const error = localError || loginError;
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex items-center justify-center px-4 py-12"
-      style={{ background: 'hsl(218 43% 11%)' }}>
-      <img
-        src={heroImage}
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-0 hidden h-full w-auto max-w-[48vw] object-cover opacity-10 lg:block"
-      />
+    <>
+      {/* ── Keyframe animations ── */}
+      <style>{`
+        @keyframes glow-pulse {
+          0%, 100% { opacity: 0.13; transform: scale(1); }
+          50%       { opacity: 0.25; transform: scale(1.06); }
+        }
+        @keyframes glow-pulse-2 {
+          0%, 100% { opacity: 0.07; transform: scale(1); }
+          50%       { opacity: 0.16; transform: scale(1.1); }
+        }
+        @keyframes scan-line {
+          0%   { transform: translateY(-4px); opacity: 0; }
+          5%   { opacity: 1; }
+          95%  { opacity: 1; }
+          100% { transform: translateY(100vh); opacity: 0; }
+        }
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-in-right {
+          from { opacity: 0; transform: translateX(28px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-      {/* ── Fondo: rejilla isométrica sutil ── */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: `linear-gradient(hsl(192 100% 50%) 1px, transparent 1px),
-                            linear-gradient(90deg, hsl(192 100% 50%) 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      />
+        .lr-logo     { animation: fade-in-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+        .lr-badge    { animation: fade-in-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+        .lr-tagline  { animation: fade-in-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.25s both; }
+        .lr-stats    { animation: fade-in-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.38s both; }
+        .lr-form     { animation: slide-in-right 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
 
-      {/* ── Glow superior cyan ── */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full opacity-10"
-        style={{ background: 'radial-gradient(ellipse, #00D1FF 0%, transparent 70%)' }}
-      />
+        .lr-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          border-bottom: 1.5px solid hsl(218 30% 26%);
+          padding: 10px 10px 10px 34px;
+          color: hsl(210 40% 96%);
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s ease;
+          font-family: 'Inter', sans-serif;
+          line-height: 1.5;
+        }
+        .lr-input::placeholder { color: hsl(215 20% 36%); }
+        .lr-input:focus        { border-bottom-color: #00D1FF; }
+        .lr-input-wrap { position: relative; }
+        .lr-input-icon {
+          position: absolute; left: 8px; top: 50%;
+          transform: translateY(-50%);
+          color: hsl(215 20% 42%);
+          transition: color 0.2s ease;
+          pointer-events: none;
+        }
+        .lr-input-wrap:focus-within .lr-input-icon { color: #00D1FF; }
+        .lr-label {
+          display: block;
+          font-size: 10px; font-weight: 600;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          color: hsl(215 20% 46%);
+          margin-bottom: 6px;
+          font-family: 'Inter', sans-serif;
+        }
+        .lr-submit {
+          width: 100%; height: 48px;
+          border-radius: 10px; border: none;
+          background: linear-gradient(110deg, #00AACC 0%, #00D1FF 40%, #7CF5FF 60%, #00D1FF 80%, #00AACC 100%);
+          background-size: 250% auto;
+          color: hsl(218 43% 9%);
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 14px; font-weight: 700;
+          letter-spacing: 0.01em;
+          cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          transition: background-position 0.4s ease, box-shadow 0.3s ease, transform 0.15s ease;
+          box-shadow: 0 0 24px hsl(192 100% 50% / 0.3);
+        }
+        .lr-submit:hover:not(:disabled) {
+          background-position: right center;
+          box-shadow: 0 0 36px hsl(192 100% 50% / 0.55), 0 0 72px hsl(192 100% 50% / 0.18);
+          transform: translateY(-1px);
+        }
+        .lr-submit:active:not(:disabled) { transform: translateY(0); }
+        .lr-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-      {/* ── Tarjeta de login ── */}
-      <div className="relative w-full max-w-sm z-10">
+        .lr-demo {
+          width: 100%; padding: 11px;
+          border-radius: 10px;
+          border: 1px dashed hsl(192 100% 50% / 0.22);
+          background: transparent;
+          color: hsl(192 100% 62%);
+          font-size: 11px; font-weight: 700;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .lr-demo:hover {
+          background: hsl(192 100% 50% / 0.06);
+          border-color: hsl(192 100% 50% / 0.42);
+        }
+      `}</style>
 
-        {/* Logo */}
-        <div className="mb-10 flex flex-col items-center">
-          <IretumLogo />
-          <p className="mt-3 text-sm text-muted-foreground font-medium tracking-wide">
-            ERP Industrial para Constructoras
-          </p>
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'hsl(218 43% 9%)' }}>
+
+        {/* ════════════════════════════════════════════
+            PANEL IZQUIERDO — Branding
+        ════════════════════════════════════════════ */}
+        <div style={{
+          display: 'none',
+          position: 'relative',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          width: '58%',
+          background: 'hsl(218 43% 10%)',
+        }} className="lg:flex">
+
+          {/* Glow 1 — centro-izquierda */}
+          <div style={{
+            position: 'absolute', top: '25%', left: '15%',
+            width: 520, height: 520, borderRadius: '50%',
+            background: 'radial-gradient(ellipse, hsl(192 100% 50% / 0.18) 0%, transparent 65%)',
+            animation: 'glow-pulse 4.5s ease-in-out infinite',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Glow 2 — esquina inferior derecha */}
+          <div style={{
+            position: 'absolute', bottom: '-8%', right: '-4%',
+            width: 420, height: 420, borderRadius: '50%',
+            background: 'radial-gradient(ellipse, hsl(220 80% 65% / 0.12) 0%, transparent 65%)',
+            animation: 'glow-pulse-2 5.5s ease-in-out infinite 1.2s',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Grid isométrico */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            backgroundImage: `
+              linear-gradient(hsl(192 100% 50% / 0.035) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(192 100% 50% / 0.035) 1px, transparent 1px)`,
+            backgroundSize: '48px 48px',
+          }} />
+
+          {/* Scan line */}
+          <div style={{
+            position: 'absolute', left: 0, right: 0, height: 1, pointerEvents: 'none',
+            background: 'linear-gradient(90deg, transparent 0%, hsl(192 100% 50% / 0.5) 30%, hsl(192 100% 50% / 0.8) 50%, hsl(192 100% 50% / 0.5) 70%, transparent 100%)',
+            animation: 'scan-line 7s linear infinite 0.8s',
+          }} />
+
+          {/* Contenido del panel */}
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', padding: '52px 56px' }}>
+
+            {/* Logo arriba */}
+            <div className="lr-logo" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <picture>
+                <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+                <img src="/favicon.svg" alt="Iretum" width={34} height={33} />
+              </picture>
+              <span style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 20, fontWeight: 700,
+                letterSpacing: '-0.04em',
+                color: 'hsl(210 40% 96%)',
+              }}>iretum</span>
+            </div>
+
+            {/* Tagline central */}
+            <div className="lr-tagline">
+              <div className="lr-badge" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '5px 12px',
+                borderRadius: 20,
+                border: '1px solid hsl(192 100% 50% / 0.25)',
+                background: 'hsl(192 100% 50% / 0.06)',
+                marginBottom: 24,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D1FF', display: 'inline-block', animation: 'glow-pulse 2s ease-in-out infinite' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#00D1FF', fontFamily: "'Inter', sans-serif" }}>
+                  ERP Industrial · SaaS
+                </span>
+              </div>
+
+              <h1 style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(38px, 3.8vw, 56px)',
+                fontWeight: 800,
+                lineHeight: 1.07,
+                letterSpacing: '-0.03em',
+                color: 'hsl(210 40% 97%)',
+                marginBottom: 20,
+              }}>
+                Control total<br />
+                <span style={{
+                  background: 'linear-gradient(130deg, #00D1FF 0%, #7CF5FF 45%, #00BBEE 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>de tu obra.</span>
+              </h1>
+
+              <p style={{
+                fontSize: 15,
+                color: 'hsl(215 20% 52%)',
+                lineHeight: 1.65,
+                maxWidth: 360,
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                Gestiona proyectos, compras, finanzas y control de avance — todo integrado, con timbrado SAT incluido.
+              </p>
+            </div>
+
+            {/* Stats abajo */}
+            <div className="lr-stats" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 1,
+              borderRadius: 12,
+              overflow: 'hidden',
+              border: '1px solid hsl(218 30% 20%)',
+              background: 'hsl(218 30% 20%)',
+            }}>
+              {[
+                { value: '9',   label: 'Módulos' },
+                { value: 'SAT', label: 'Certificado' },
+                { value: 'RLS', label: 'Multi-tenant' },
+              ].map((s) => (
+                <div key={s.label} style={{ background: 'hsl(218 38% 12%)', padding: '18px 16px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 22, fontWeight: 700, color: '#00D1FF', letterSpacing: '-0.02em' }}>
+                    {s.value}
+                  </div>
+                  <div style={{ fontSize: 10, fontWeight: 500, color: 'hsl(215 20% 42%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl border p-8 shadow-2xl"
-          style={{
-            background: 'hsl(218 35% 15%)',
-            borderColor: 'hsl(218 30% 22%)',
-            boxShadow: '0 0 0 1px hsl(218 30% 22%), 0 25px 50px hsl(218 43% 6% / 0.8)',
-          }}>
+        {/* ════════════════════════════════════════════
+            PANEL DERECHO — Formulario
+        ════════════════════════════════════════════ */}
+        <div className="lr-form" style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '32px',
+          position: 'relative',
+          background: 'hsl(218 40% 11%)',
+        }}>
 
-          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.02em' }}
-            className="text-xl font-bold text-foreground mb-1">
-            Acceso al sistema
-          </h2>
-          <p className="text-xs text-muted-foreground mb-6">
-            Constructora Bocam S.A. de C.V.
-          </p>
+          {/* Divisor vertical con glow */}
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0, width: 1,
+            background: 'linear-gradient(to bottom, transparent 5%, hsl(192 100% 50% / 0.28) 35%, hsl(192 100% 50% / 0.28) 65%, transparent 95%)',
+          }} className="hidden lg:block" />
 
-          {/* Error */}
-          {error && (
-            <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-3 mb-5">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <span className="text-xs font-medium leading-relaxed text-destructive">{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField label="Correo corporativo">
-              <div className="relative group">
-                <IconMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@bocam.com.mx"
-                  required
-                  id="login-email-input"
-                  className="pl-10 py-3"
-                  style={{ background: 'hsl(218 32% 18%)', borderColor: 'hsl(218 30% 25%)' }}
-                />
-              </div>
-            </FormField>
-
-            <FormField label="Contraseña">
-              <div className="relative group">
-                <IconLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  autoComplete="current-password"
-                  id="login-password-input"
-                  className="pl-10 py-3"
-                  style={{ background: 'hsl(218 32% 18%)', borderColor: 'hsl(218 30% 25%)' }}
-                />
-              </div>
-            </FormField>
-
-            {/* Botón principal con glow cyan */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              id="login-submit-btn"
-              className="mt-2 w-full h-12 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{
-                background: isSubmitting ? 'hsl(192 100% 40%)' : '#00D1FF',
-                color: 'hsl(218 43% 11%)',
-                boxShadow: isSubmitting ? 'none' : '0 0 20px hsl(192 100% 50% / 0.35)',
-              }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Autenticando...
-                </>
-              ) : (
-                'Ingresar'
-              )}
-            </button>
-          </form>
-
-          {/* Separador */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t" style={{ borderColor: 'hsl(218 30% 22%)' }} />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
-                style={{ background: 'hsl(218 35% 15%)' }}>
-                o
-              </span>
-            </div>
+          {/* Logo mobile */}
+          <div className="flex lg:hidden items-center gap-3 mb-10">
+            <picture>
+              <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+              <img src="/favicon.svg" alt="Iretum" width={30} height={29} />
+            </picture>
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: '-0.04em', color: 'hsl(210 40% 96%)' }}>
+              iretum
+            </span>
           </div>
 
-          {/* Demo */}
-          <button
-            type="button"
-            onClick={loginDemo}
-            className="w-full rounded-xl border border-dashed px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-200"
-            style={{
-              borderColor: 'hsl(192 100% 50% / 0.3)',
-              color: '#00D1FF',
-              background: 'hsl(192 100% 50% / 0.05)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'hsl(192 100% 50% / 0.1)';
-              e.currentTarget.style.borderColor = 'hsl(192 100% 50% / 0.5)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'hsl(192 100% 50% / 0.05)';
-              e.currentTarget.style.borderColor = 'hsl(192 100% 50% / 0.3)';
-            }}
-          >
-            ⚡ Explorar en modo demo
-          </button>
-        </div>
+          <div style={{ width: '100%', maxWidth: 336 }}>
 
-        {/* Footer legal */}
-        <p className="mt-8 text-center text-[10px] font-medium text-muted-foreground/40 leading-relaxed">
-          Iretum® es una plataforma desarrollada y operada por<br />
-          Constructora Bocam, S.A. de C.V. · Todos los derechos reservados
-        </p>
+            {/* Encabezado */}
+            <div style={{ marginBottom: 38 }}>
+              <h2 style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 24, fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: 'hsl(210 40% 97%)',
+                marginBottom: 6,
+              }}>
+                Acceso al sistema
+              </h2>
+              <p style={{ fontSize: 13, color: 'hsl(215 20% 45%)', fontFamily: "'Inter', sans-serif" }}>
+                Constructora Bocam S.A. de C.V.
+              </p>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '12px 14px', borderRadius: 10, marginBottom: 24,
+                background: 'hsl(0 72% 51% / 0.08)',
+                border: '1px solid hsl(0 72% 51% / 0.22)',
+              }}>
+                <AlertCircle style={{ width: 14, height: 14, color: 'hsl(0 72% 62%)', flexShrink: 0, marginTop: 1 }} />
+                <span style={{ fontSize: 12, color: 'hsl(0 72% 65%)', lineHeight: 1.55, fontFamily: "'Inter', sans-serif" }}>
+                  {error}
+                </span>
+              </div>
+            )}
+
+            {/* Formulario */}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+
+              <div>
+                <label className="lr-label">Correo corporativo</label>
+                <div className="lr-input-wrap">
+                  <IconMail className="lr-input-icon" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="usuario@bocam.com.mx"
+                    required
+                    id="login-email-input"
+                    autoComplete="email"
+                    className="lr-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="lr-label">Contraseña</label>
+                <div className="lr-input-wrap">
+                  <IconLock className="lr-input-icon" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    id="login-password-input"
+                    autoComplete="current-password"
+                    className="lr-input"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                id="login-submit-btn"
+                className="lr-submit"
+                style={{ marginTop: 6 }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 style={{ width: 15, height: 15, animation: 'spin 1s linear infinite' }} />
+                    Autenticando...
+                  </>
+                ) : (
+                  'Ingresar →'
+                )}
+              </button>
+            </form>
+
+            {/* Separador */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0' }}>
+              <div style={{ flex: 1, height: 1, background: 'hsl(218 30% 20%)' }} />
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'hsl(215 20% 32%)', fontFamily: "'Inter', sans-serif" }}>o</span>
+              <div style={{ flex: 1, height: 1, background: 'hsl(218 30% 20%)' }} />
+            </div>
+
+            {/* Demo */}
+            <button type="button" onClick={loginDemo} className="lr-demo">
+              ⚡ Explorar en modo demo
+            </button>
+
+            {/* Footer legal */}
+            <p style={{
+              marginTop: 36, textAlign: 'center',
+              fontSize: 10, color: 'hsl(215 20% 28%)',
+              lineHeight: 1.7, fontFamily: "'Inter', sans-serif",
+            }}>
+              Iretum® · Constructora Bocam S.A. de C.V.<br />
+              Todos los derechos reservados
+            </p>
+
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
