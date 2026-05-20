@@ -126,7 +126,7 @@ export const InsumosView: React.FC = () => {
               <IconBriefcase className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-tighter text-foreground">
+              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
                 Catálogo de Obra
               </h1>
               <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">

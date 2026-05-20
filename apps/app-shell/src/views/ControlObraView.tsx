@@ -257,7 +257,7 @@ export const ControlObraView: React.FC = () => {
               <IconFileText className="h-8 w-8 text-sky-600" />
             </div>
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900">
+              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
                 Control de Obra
               </h1>
               <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">

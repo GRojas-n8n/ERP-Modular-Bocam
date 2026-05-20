@@ -163,7 +163,7 @@ export const ComprasView: React.FC = () => {
               <IconShoppingCart className="h-7 w-7 text-emerald-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900">
+              <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-foreground">
                 Centro de Compras
               </h1>
               <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">

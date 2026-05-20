@@ -159,7 +159,7 @@ export const VentasView: React.FC = () => {
             <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center">
               <IconShoppingBag className="h-6 w-6 text-emerald-500" />
             </div>
-            <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+            <h1 className="text-xl md:text-3xl font-black tracking-tighter text-foreground uppercase">
               Ventas
             </h1>
           </div>

@@ -48,7 +48,7 @@ export const ComparativaPrecios: React.FC = () => {
               <IconScale className="h-7 w-7 text-amber-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+              <h1 className="text-xl md:text-3xl font-black tracking-tighter text-foreground uppercase">
                 Cuadros Comparativos
               </h1>
               <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">

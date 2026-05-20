@@ -156,7 +156,7 @@ export const FinanzasView: React.FC = () => {
               <IconWallet className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900">
+              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
                 Flujo de Caja
               </h1>
               <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -240,7 +240,7 @@ export const FinanzasView: React.FC = () => {
                     </SectionBadge>
                   ) : null}
                 </div>
-                <div className={cn('relative z-10 text-3xl font-black tracking-tighter', stat.color)}>
+                <div className={cn('relative z-10 text-xl md:text-3xl font-black tracking-tighter', stat.color)}>
                   {formatCurrency(stat.value)}
                 </div>
                 <div className="relative z-10 mt-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70">

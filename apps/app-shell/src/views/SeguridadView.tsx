@@ -260,7 +260,7 @@ export const SeguridadView: React.FC = () => {
               <IconShieldCheck className="h-8 w-8 text-rose-600" />
             </div>
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900">
+              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
                 Seguridad
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-3">
