@@ -75,7 +75,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView }) => {
-  const { tenant, user, logout } = useTenant();
+  const { tenant, user, logout, currentProjectId, setCurrentProjectId } = useTenant();
   const { isDark, toggle: toggleTheme } = useTheme();
   const userRoles: string[] = user?.role ?? [];
   const isAdmin = userRoles.includes('admin');
@@ -83,6 +83,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     item.roles.length === 0 || isAdmin || item.roles.some(r => userRoles.includes(r))
   );
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined;
@@ -93,9 +94,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
   }, [isMobileNavOpen]);
 
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    if (!isProjectDropdownOpen) return undefined;
+    const onClickOutside = () => setIsProjectDropdownOpen(false);
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsProjectDropdownOpen(false); };
+    setTimeout(() => window.addEventListener('click', onClickOutside), 0);
+    window.addEventListener('keydown', onEsc);
+    return () => { window.removeEventListener('click', onClickOutside); window.removeEventListener('keydown', onEsc); };
+  }, [isProjectDropdownOpen]);
+
   const handleNavigate = (view: string) => { onNavigate(view); setIsMobileNavOpen(false); };
   const handleLogout   = () => { setIsMobileNavOpen(false); logout(); };
-  const currentProject = user?.projects?.[0];
+  const projects       = user?.projects || [];
+  const currentProject = projects.find(p => p.id === currentProjectId) || projects[0];
   const userInitial    = user?.name?.charAt(0)?.toUpperCase() || 'U';
 
   // ─── Sidebar ─────────────────────────────────────────────────────────────
@@ -240,10 +252,63 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
               <IconBriefcase className="h-3.5 w-3.5 shrink-0 opacity-50" />
               <span className="hidden sm:inline opacity-60 shrink-0">Proyectos</span>
               <IconChevronRight className="h-3 w-3 opacity-30 shrink-0" />
-              <span className="rounded-md px-2 py-1 text-foreground font-bold truncate"
-                style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}>
-                {currentProject?.code || 'Sin Proyecto'}
-              </span>
+
+              {/* ── Selector de proyecto ── */}
+              <div className="relative min-w-0">
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 font-bold truncate max-w-[180px] transition-all hover:opacity-80"
+                  style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}
+                >
+                  <span className="truncate">{currentProject?.code || 'Sin Proyecto'}</span>
+                  {projects.length > 1 && (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                      className={`shrink-0 transition-transform duration-200 ${isProjectDropdownOpen ? 'rotate-180' : ''}`}>
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  )}
+                </button>
+
+                {/* Dropdown */}
+                {isProjectDropdownOpen && projects.length > 1 && (
+                  <div
+                    className="absolute top-full left-0 mt-2 z-50 min-w-[240px] rounded-xl border shadow-xl overflow-hidden"
+                    style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="px-3 py-2 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                        Seleccionar proyecto
+                      </p>
+                    </div>
+                    {projects.map(project => {
+                      const active = project.id === (currentProjectId || projects[0]?.id);
+                      return (
+                        <button
+                          key={project.id}
+                          type="button"
+                          onClick={() => { setCurrentProjectId(project.id); setIsProjectDropdownOpen(false); }}
+                          className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+                        >
+                          <div className="min-w-0">
+                            <p className={`text-xs font-bold truncate ${active ? 'text-primary' : 'text-foreground'}`}>
+                              {project.name}
+                            </p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                              {project.code}
+                            </p>
+                          </div>
+                          {active && (
+                            <div className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
