@@ -104,12 +104,16 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      try {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
+      // Sin refresh token → modo demo u otro estado sin sesión real.
+      // No disparar session-expired: solo rechazar la petición individualmente.
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        isRefreshing = false;
+        processQueue(new Error('No refresh token'), undefined);
+        return Promise.reject(error);
+      }
 
+      try {
         const { data } = await axios.post(
           `${import.meta.env.VITE_API_URL || ''}/api/v1/auth/refresh`,
           { refresh_token: refreshToken }
@@ -125,7 +129,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, undefined);
-        // Refresh falló → forzar logout
+        // Refresh falló con token real → forzar logout
         clearTokens();
         window.dispatchEvent(new CustomEvent('iretum:session-expired'));
         return Promise.reject(refreshError);

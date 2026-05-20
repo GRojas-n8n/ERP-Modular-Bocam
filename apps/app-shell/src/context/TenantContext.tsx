@@ -164,7 +164,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: 'demo-user-001',
       email: 'demo@iretum.com',
       name: 'Usuario Demo',
-      role: ['ADMIN', 'GERENTE_TECNICO', 'COMPRAS'],
+      role: ['admin', 'gerencia_tecnica', 'compras', 'finanzas', 'contabilidad', 'control_obra', 'personal_rh', 'seguridad_hse', 'ventas'],
       projects: [
         { id: 'proj-001', name: 'Torre Corporativa Norte', code: 'TCN-2024', status: 'En curso' },
         { id: 'proj-002', name: 'Residencial Las Palmas', code: 'RLP-2024', status: 'En curso' },

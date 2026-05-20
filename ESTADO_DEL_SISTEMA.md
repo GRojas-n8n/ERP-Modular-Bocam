@@ -271,3 +271,32 @@ Solo 4 módulos tienen tests de integración. ventas, personal, gerencia-técnic
 ---
 
 *Generado automáticamente por revisión de código — BocamOS ERP Modular*
+
+---
+
+## 🗓️ Sesión 2026-05-18 — Cierre
+
+### ✅ Completado
+
+- **Login rediseñado (split-screen wow)**: Panel izquierdo de branding con glows animados, grid isométrico, scan-line y stats. Panel derecho con formulario minimalista, inputs borderless, botón shimmer cyan.
+- **Tenant ID**: migrado de hardcodeado a `VITE_DEFAULT_TENANT_ID` con fallback al ID de Bocam.
+- **Conflicto de merge resuelto**: laptop trabajo vs laptop personal en `LoginView.tsx`.
+- **Logo**: `favicon.svg` ya está en GitHub. El logo correcto (isotipo "i" en cubo azul) está pendiente de push desde laptop del trabajo.
+
+### ⚠️ Pendiente inmediato al retomar
+
+1. **`package-lock.json` desincronizado** — build del VPS falla con `vite@7.3.2 vs 7.3.3`. Desde la laptop:
+   ```powershell
+   npm install
+   git add package-lock.json
+   git commit -m "fix: sync package-lock.json vite 7.3.3"
+   git push
+   ```
+   Luego en VPS: `git pull && docker compose -f docker-compose.vps.yml build app-shell && docker compose -f docker-compose.vps.yml up app-shell -d`
+
+2. **Logo real** — hacer push del `favicon.svg` correcto desde laptop del trabajo.
+
+3. **Probar login** — entrar a iretum.com con `admin@bocam.com`. Si olvidaste la contraseña, resetear desde VPS con psql.
+
+4. **Vulnerabilidades dependabot** — GitHub reporta 2 high, 4 moderate, 1 low. Revisar en panel de seguridad del repo.
+

@@ -13,6 +13,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
+import { DEMO_REQUISICIONES, DEMO_RESUMEN_FINANCIERO, DEMO_PAGOS } from '../lib/demoData';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -71,6 +73,9 @@ export interface DashboardData {
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function useDashboardData(): DashboardData {
+  const { tenant } = useTenant();
+  const isDemo = tenant?.id === 'iretum-demo';
+
   const [resumen, setResumen] = useState<ResumenPresupuestal | null>(null);
   const [movimientos, setMovimientos] = useState<MovimientoReciente[]>([]);
   const [pagosVencidos, setPagosVencidos] = useState(0);
@@ -83,6 +88,18 @@ export function useDashboardData(): DashboardData {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setErrors({});
+
+    // ── Modo demo: datos locales, sin llamadas al backend ──────────────────
+    if (isDemo) {
+      setResumen(DEMO_RESUMEN_FINANCIERO as ResumenPresupuestal);
+      setMovimientos([]);
+      setPagosVencidos(DEMO_PAGOS.filter((p: any) => p.estado === 'VENCIDO').length);
+      setOrdenesCompra([]);
+      setRequisiciones(DEMO_REQUISICIONES as unknown as Requisicion[]);
+      setTotalInsumos(15);
+      setLoading(false);
+      return;
+    }
     const newErrors: Record<string, string> = {};
 
     // Lanzar todas las peticiones en paralelo (independientes)
@@ -138,7 +155,7 @@ export function useDashboardData(): DashboardData {
 
     setErrors(newErrors);
     setLoading(false);
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => {
     fetchAll();
