@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
-import { DEMO_INSUMOS, DEMO_REQUISICIONES, DEMO_INVENTARIO, DEMO_MOVIMIENTOS_ALMACEN } from '../lib/demoData';
+import { DEMO_INSUMOS, DEMO_REQUISICIONES, DEMO_INVENTARIO, DEMO_MOVIMIENTOS_ALMACEN, DEMO_COMPARATIVAS } from '../lib/demoData';
+import { ComparativaDetail } from '../components/ComparativaDetail';
+import type { ComparativaLocal } from '../components/ComparativaDetail';
 import {
   Button,
   Card,
@@ -33,6 +35,7 @@ import {
   IconPackage,
   IconPlus,
   IconRefreshCw,
+  IconScale,
   IconSearch,
   IconShoppingCart,
   IconX,
@@ -126,6 +129,8 @@ export const ComprasView: React.FC = () => {
   const [insumos, setInsumos] = useState<Insumo[]>([]);
   const [inventario, setInventario] = useState<ItemInventario[]>([]);
   const [movimientosAlmacen, setMovimientosAlmacen] = useState<MovimientoAlmacen[]>([]);
+  const [comparativas, setComparativas] = useState<ComparativaLocal[]>([]);
+  const [activeReqId, setActiveReqId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -191,18 +196,21 @@ export const ComprasView: React.FC = () => {
         setInsumos(DEMO_INSUMOS as Insumo[]);
         setInventario(DEMO_INVENTARIO as ItemInventario[]);
         setMovimientosAlmacen(DEMO_MOVIMIENTOS_ALMACEN as MovimientoAlmacen[]);
+        setComparativas(DEMO_COMPARATIVAS as unknown as ComparativaLocal[]);
         return;
       }
-      const [reqRes, insRes, invRes, movRes] = await Promise.allSettled([
+      const [reqRes, insRes, invRes, movRes, compRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
         api.get('/api/v1/compras/insumos'),
         api.get('/api/v1/compras/almacen/inventario'),
         api.get('/api/v1/compras/almacen/movimientos'),
+        api.get('/api/v1/compras/comparativas'),
       ]);
       if (reqRes.status === 'fulfilled') setRequisiciones(reqRes.value.data?.data || []);
       if (insRes.status === 'fulfilled') setInsumos(insRes.value.data?.data || []);
       if (invRes.status === 'fulfilled') setInventario(invRes.value.data?.data || []);
       if (movRes.status === 'fulfilled') setMovimientosAlmacen(movRes.value.data?.data || []);
+      if (compRes.status === 'fulfilled') setComparativas(compRes.value.data?.data || []);
     } catch {
       setError('Error al conectar con el modulo de Compras.');
     } finally {
@@ -411,6 +419,30 @@ export const ComprasView: React.FC = () => {
     }
   };
 
+  // ─── Handlers comparativa ────────────────────────────────────────────────────
+  const openComparativa = (req: Requisicion) => {
+    // Si no existe comparativa para esta req, crear una en blanco
+    const existing = comparativas.find(c => c.requisicion_id === req.id);
+    if (!existing) {
+      const blank: ComparativaLocal = {
+        id: `comp-new-${Date.now()}`,
+        requisicion_id: req.id,
+        estado: 'BORRADOR',
+        proveedores: [],
+        lineas: [],
+        ordenes_compra: [],
+      };
+      setComparativas(prev => [...prev, blank]);
+    }
+    setActiveReqId(req.id);
+  };
+
+  const updateComparativa = (updated: ComparativaLocal) => {
+    setComparativas(prev =>
+      prev.map(c => c.requisicion_id === updated.requisicion_id ? updated : c)
+    );
+  };
+
   // ─── Badge helpers ─────────────────────────────────────────────────────────
   const claseBadge = (clase: string) => {
     const s = CLASE_STYLE[clase] || DEFAULT_CLASE;
@@ -615,7 +647,24 @@ export const ComprasView: React.FC = () => {
         <>
           {/* ── TAB: Requisiciones ───────────────────────────────────────────── */}
           {activeTab === 'requisiciones' && (
-            requisiciones.length === 0 ? (
+            // Vista detalle: ComparativaDetail
+            activeReqId ? (
+              (() => {
+                const req = requisiciones.find(r => r.id === activeReqId);
+                const comp = comparativas.find(c => c.requisicion_id === activeReqId);
+                if (!req || !comp) return null;
+                return (
+                  <ComparativaDetail
+                    requisicionFolio={req.folio}
+                    comparativa={comp}
+                    insumos={insumos}
+                    isDemo={isDemo}
+                    onBack={() => setActiveReqId(null)}
+                    onUpdate={updateComparativa}
+                  />
+                );
+              })()
+            ) : requisiciones.length === 0 ? (
               <Card className="border-dashed border-border/60">
                 <CardContent className="space-y-4 p-16 text-center">
                   <IconSearch className="mx-auto h-12 w-12 text-muted-foreground/20" />
@@ -630,32 +679,58 @@ export const ComprasView: React.FC = () => {
               </Card>
             ) : (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {requisiciones.map(req => (
-                  <Card key={req.id} className="group relative overflow-hidden border-border/40 transition-all hover:-translate-y-1 hover:shadow-2xl">
-                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <IconShoppingCart className="h-20 w-20" />
-                    </div>
-                    <CardHeader className="space-y-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <SectionBadge className="rounded-full px-3 py-1 text-[10px]">Folio: {req.folio}</SectionBadge>
-                        {prioridadBadge(req.prioridad)}
+                {requisiciones.map(req => {
+                  const hasComp = comparativas.some(c => c.requisicion_id === req.id);
+                  const compEstado = comparativas.find(c => c.requisicion_id === req.id)?.estado;
+                  return (
+                    <Card key={req.id} className="group relative overflow-hidden border-border/40 transition-all hover:-translate-y-1 hover:shadow-2xl">
+                      <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <IconShoppingCart className="h-20 w-20" />
                       </div>
-                      <div className="space-y-3">
-                        <CardTitle className="text-base uppercase tracking-tight text-foreground">Requisicion de obra</CardTitle>
-                        <CardDescription className="flex items-center gap-2 text-[11px] font-medium">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[8px] font-black text-muted-foreground">U</span>
-                          {req.solicitante}
-                        </CardDescription>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-between border-t border-border/40 pt-4">
-                      {estadoBadge(req.estado)}
-                      <div className="text-[10px] font-bold uppercase text-muted-foreground">
-                        {new Date(req.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <CardHeader className="space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <SectionBadge className="rounded-full px-3 py-1 text-[10px]">Folio: {req.folio}</SectionBadge>
+                          {prioridadBadge(req.prioridad)}
+                        </div>
+                        <div className="space-y-3">
+                          <CardTitle className="text-base uppercase tracking-tight text-foreground">Requisicion de obra</CardTitle>
+                          <CardDescription className="flex items-center gap-2 text-[11px] font-medium">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[8px] font-black text-muted-foreground">U</span>
+                            {req.solicitante}
+                          </CardDescription>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3 border-t border-border/40 pt-4">
+                        <div className="flex items-center justify-between">
+                          {estadoBadge(req.estado)}
+                          <div className="text-[10px] font-bold uppercase text-muted-foreground">
+                            {new Date(req.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                          </div>
+                        </div>
+                        {/* Botón comparativa para APROBADAS */}
+                        {req.estado === 'APROBADA' && (
+                          <Button
+                            onClick={() => openComparativa(req)}
+                            variant="outline"
+                            className={cn(
+                              'w-full rounded-xl text-[9px] font-black uppercase tracking-widest',
+                              compEstado === 'AUTORIZADA'
+                                ? 'border-green-500/30 text-green-600 hover:bg-green-500/5'
+                                : 'border-amber-500/30 text-amber-600 hover:bg-amber-500/5'
+                            )}
+                          >
+                            <IconScale className="h-3.5 w-3.5" />
+                            {compEstado === 'AUTORIZADA'
+                              ? 'Ver OC generadas'
+                              : hasComp
+                              ? 'Continuar comparativa'
+                              : 'Iniciar comparativa'}
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )
           )}

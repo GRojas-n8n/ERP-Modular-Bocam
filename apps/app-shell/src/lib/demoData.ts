@@ -118,6 +118,62 @@ export const DEMO_CAPACITACIONES = [
   { id_capacitacion: 'cap-003', codigo: 'CAP-2024-010', titulo: 'Manejo de residuos peligrosos NOM-052', tipo: 'ESPECIALIZADA', instructor: 'Ing. Sandra Flores — STPS', fecha: '2024-04-25', duracion_horas: 8, estado: 'PROGRAMADA', _count: { registros: 0 } },
 ];
 
+// ─── COMPRAS — Comparativas de Cotización ────────────────────────────────────
+export const DEMO_COMPARATIVAS = [
+  {
+    id: 'comp-001',
+    requisicion_id: 'req-001',
+    estado: 'EN_PROCESO',
+    proveedores: [
+      { id: 'pv-a', nombre: 'CEMEX México SA de CV' },
+      { id: 'pv-b', nombre: 'Deacero Monterrey SA de CV' },
+    ],
+    lineas: [
+      {
+        id: 'lin-001', insumo_id: 'ins-001', insumo_clave: 'MAT-001',
+        insumo_descripcion: 'Cemento Portland CPC 30R saco 50kg', insumo_unidad: 'SAC', cantidad: 200,
+        precios: { 'pv-a': '285', 'pv-b': '295' }, ganador: 'pv-a',
+      },
+      {
+        id: 'lin-002', insumo_id: 'ins-002', insumo_clave: 'MAT-002',
+        insumo_descripcion: 'Varilla corrugada 3/8" x 12m G60', insumo_unidad: 'PZA', cantidad: 150,
+        precios: { 'pv-a': '198', 'pv-b': '189' }, ganador: 'pv-b',
+      },
+      {
+        id: 'lin-003', insumo_id: 'ins-015', insumo_clave: 'MAT-008',
+        insumo_descripcion: "Concreto premezclado f'c=250 kg/cm²", insumo_unidad: 'M3', cantidad: 30,
+        precios: { 'pv-a': '1680', 'pv-b': '' }, ganador: null,
+      },
+    ],
+    ordenes_compra: [],
+  },
+  {
+    id: 'comp-002',
+    requisicion_id: 'req-004',
+    estado: 'AUTORIZADA',
+    proveedores: [
+      { id: 'pv-x', nombre: 'Bloquera del Norte SA de CV' },
+      { id: 'pv-y', nombre: 'Materiales Construcción GDL' },
+    ],
+    lineas: [
+      {
+        id: 'lin-004', insumo_id: 'ins-003', insumo_clave: 'MAT-003',
+        insumo_descripcion: 'Block de concreto 15x20x40 cm', insumo_unidad: 'PZA', cantidad: 1000,
+        precios: { 'pv-x': '17.5', 'pv-y': '18.9' }, ganador: 'pv-x',
+      },
+      {
+        id: 'lin-005', insumo_id: 'ins-007', insumo_clave: 'MAT-007',
+        insumo_descripcion: 'Tablaroca 1/2" x 1.22x2.44m', insumo_unidad: 'PZA', cantidad: 80,
+        precios: { 'pv-x': '', 'pv-y': '205' }, ganador: 'pv-y',
+      },
+    ],
+    ordenes_compra: [
+      { codigo: 'OC-2024-045', proveedor_nombre: 'Bloquera del Norte SA de CV', total: 17500 },
+      { codigo: 'OC-2024-046', proveedor_nombre: 'Materiales Construcción GDL', total: 16400 },
+    ],
+  },
+];
+
 // ─── COMPRAS — Almacén: Inventario ───────────────────────────────────────────
 export const DEMO_INVENTARIO = [
   { id: 'inv-001', insumo_id: 'ins-001', clave: 'MAT-001', descripcion: 'Cemento Portland CPC 30R saco 50kg',         unidad: 'SAC', stock_actual:  45, stock_minimo: 100, ubicacion: 'Bodega A-01' },
