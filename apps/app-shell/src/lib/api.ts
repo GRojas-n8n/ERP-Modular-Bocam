@@ -18,8 +18,8 @@ import type { InternalAxiosRequestConfig } from 'axios';
  * ---------------------------------------------------------------------------
  */
 
-const AUTH_TOKEN_KEY = 'bocam_access_token';
-const REFRESH_TOKEN_KEY = 'bocam_refresh_token';
+const AUTH_TOKEN_KEY = 'iretum_access_token';
+const REFRESH_TOKEN_KEY = 'iretum_refresh_token';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '',
@@ -127,7 +127,7 @@ api.interceptors.response.use(
         processQueue(refreshError, undefined);
         // Refresh falló → forzar logout
         clearTokens();
-        window.dispatchEvent(new CustomEvent('bocam:session-expired'));
+        window.dispatchEvent(new CustomEvent('iretum:session-expired'));
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

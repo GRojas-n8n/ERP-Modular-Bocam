@@ -84,7 +84,7 @@ export const PersonalView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        if (tenant?.id === 'bocam-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); return; }
+        if (tenant?.id === 'iretum-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); return; }
         const [empRes, cuaRes, pnRes] = await Promise.allSettled([
           api.get('/api/v1/personal/empleados'),
           api.get('/api/v1/personal/cuadrillas'),

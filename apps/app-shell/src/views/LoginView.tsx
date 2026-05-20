@@ -317,13 +317,23 @@ export const LoginView: React.FC = () => {
           }} className="hidden lg:block" />
 
           {/* Logo mobile */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
-            <picture>
-              <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-              <img src="/favicon.svg" alt="Iretum" width={30} height={29} />
-            </picture>
-            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: '-0.04em', color: 'hsl(210 40% 96%)' }}>
+          <div className="flex lg:hidden flex-col items-center gap-3 mb-10">
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', inset: -12, borderRadius: '50%',
+                background: 'radial-gradient(ellipse, hsl(192 100% 50% / 0.2) 0%, transparent 70%)',
+                animation: 'glow-pulse 3s ease-in-out infinite',
+              }} />
+              <picture>
+                <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+                <img src="/favicon.svg" alt="Iretum" width={56} height={54} style={{ position: 'relative', zIndex: 1 }} />
+              </picture>
+            </div>
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: 'hsl(210 40% 96%)' }}>
               iretum
+            </span>
+            <span style={{ fontSize: 11, color: 'hsl(215 20% 45%)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
+              ERP Industrial · SaaS
             </span>
           </div>
 
@@ -341,7 +351,7 @@ export const LoginView: React.FC = () => {
                 Acceso al sistema
               </h2>
               <p style={{ fontSize: 13, color: 'hsl(215 20% 45%)', fontFamily: "'Inter', sans-serif" }}>
-                Constructora Bocam S.A. de C.V.
+                ERP Industrial · Plataforma de gestión
               </p>
             </div>
 
@@ -371,7 +381,7 @@ export const LoginView: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="usuario@bocam.com.mx"
+                    placeholder="usuario@empresa.com"
                     required
                     id="login-email-input"
                     autoComplete="email"
@@ -433,7 +443,7 @@ export const LoginView: React.FC = () => {
               fontSize: 10, color: 'hsl(215 20% 28%)',
               lineHeight: 1.7, fontFamily: "'Inter', sans-serif",
             }}>
-              Iretum® · Constructora Bocam S.A. de C.V.<br />
+              Iretum® · ERP Industrial SaaS<br />
               Todos los derechos reservados
             </p>
 

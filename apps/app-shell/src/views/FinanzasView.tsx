@@ -59,7 +59,7 @@ export const FinanzasView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        if (tenant?.id === 'bocam-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
+        if (tenant?.id === 'iretum-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
         const [dashRes, pagosRes] = await Promise.all([
           api.get('/api/v1/finanzas/dashboard'),
           api.get('/api/v1/finanzas/pagos'),
@@ -190,7 +190,7 @@ export const FinanzasView: React.FC = () => {
                 Sincronizando Core Financiero
               </p>
               <p className="mt-2 text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
-                Bocam Cloud Hub v4.0
+                Iretum Cloud Hub v1.0
               </p>
             </div>
           </CardContent>

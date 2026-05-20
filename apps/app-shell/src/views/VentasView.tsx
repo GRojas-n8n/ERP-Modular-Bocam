@@ -104,7 +104,7 @@ export const VentasView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      if (tenant?.id === 'bocam-demo') { setClientes(DEMO_CLIENTES as Cliente[]); setCotizaciones(DEMO_COTIZACIONES as Cotizacion[]); setFacturas(DEMO_FACTURAS as Factura[]); return; }
+      if (tenant?.id === 'iretum-demo') { setClientes(DEMO_CLIENTES as Cliente[]); setCotizaciones(DEMO_COTIZACIONES as Cotizacion[]); setFacturas(DEMO_FACTURAS as Factura[]); return; }
       if (t === 'clientes') {
         const r = await ventasApi.getClientes();
         setClientes(r.data.data || []);

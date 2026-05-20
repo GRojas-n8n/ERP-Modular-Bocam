@@ -96,8 +96,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
     };
 
-    window.addEventListener('bocam:session-expired', handleSessionExpired);
-    return () => window.removeEventListener('bocam:session-expired', handleSessionExpired);
+    window.addEventListener('iretum:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('iretum:session-expired', handleSessionExpired);
   }, []);
 
   // ─── Login ─────────────────────────────────────────────────────────────
@@ -153,8 +153,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // ─── Demo Mode ─────────────────────────────────────────────────────────
   const loginDemo = useCallback(() => {
     const demoTenant: TenantConfig = {
-      id: 'bocam-demo',
-      name: 'Bocam ERP',
+      id: 'iretum-demo',
+      name: 'Iretum Demo',
       logoUrl: '/logo.svg',
       primaryColor: '#1A56DB',
       language: 'es',
@@ -162,7 +162,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     const demoUser: UserContext = {
       id: 'demo-user-001',
-      email: 'demo@bocam.com',
+      email: 'demo@iretum.com',
       name: 'Usuario Demo',
       role: ['ADMIN', 'GERENTE_TECNICO', 'COMPRAS'],
       projects: [

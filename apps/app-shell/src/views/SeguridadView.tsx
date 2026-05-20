@@ -107,7 +107,7 @@ export const SeguridadView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        if (tenant?.id === 'bocam-demo') { setIncidentes(DEMO_INCIDENTES as Incidente[]); setInspecciones(DEMO_INSPECCIONES as Inspeccion[]); setPermisos(DEMO_PERMISOS as Permiso[]); setCapacitaciones(DEMO_CAPACITACIONES as Capacitacion[]); return; }
+        if (tenant?.id === 'iretum-demo') { setIncidentes(DEMO_INCIDENTES as Incidente[]); setInspecciones(DEMO_INSPECCIONES as Inspeccion[]); setPermisos(DEMO_PERMISOS as Permiso[]); setCapacitaciones(DEMO_CAPACITACIONES as Capacitacion[]); return; }
         const [incRes, insRes, perRes, capRes] = await Promise.allSettled([
           api.get('/api/v1/seguridad/incidentes'),
           api.get('/api/v1/seguridad/inspecciones'),

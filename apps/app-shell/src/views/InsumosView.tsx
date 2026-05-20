@@ -30,7 +30,7 @@ export const InsumosView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      if (tenant?.id === 'bocam-demo') { setInsumos(DEMO_INSUMOS); return; }
+      if (tenant?.id === 'iretum-demo') { setInsumos(DEMO_INSUMOS); return; }
       const response = await api.get('/api/v1/gerencia-tecnica/insumos');
       setInsumos(response.data.data || []);
     } catch (err: any) {

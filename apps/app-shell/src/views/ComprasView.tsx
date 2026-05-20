@@ -44,7 +44,7 @@ interface Requisicion {
 
 export const ComprasView: React.FC = () => {
   const { tenant } = useTenant();
-  const isDemo = tenant?.id === 'bocam-demo';
+  const isDemo = tenant?.id === 'iretum-demo';
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export const ComprasView: React.FC = () => {
   const fetchRequisiciones = async () => {
     try {
       setLoading(true);
-      if (tenant?.id === 'bocam-demo') { setRequisiciones(DEMO_REQUISICIONES as Requisicion[]); return; }
+      if (tenant?.id === 'iretum-demo') { setRequisiciones(DEMO_REQUISICIONES as Requisicion[]); return; }
       const response = await api.get('/api/v1/compras/requisiciones');
       setRequisiciones(response.data.data || []);
     } catch (err: any) {
