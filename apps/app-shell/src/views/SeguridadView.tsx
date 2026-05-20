@@ -238,14 +238,6 @@ export const SeguridadView: React.FC = () => {
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  const tabs = [
-    { id: 'incidentes' as TabId, label: 'Incidentes', count: incidentes.length, icon: IconAlertCircle },
-    { id: 'inspecciones' as TabId, label: 'Inspecciones', count: inspecciones.length, icon: IconCheckCircle2 },
-    { id: 'permisos' as TabId, label: 'Permisos', count: permisos.length, icon: IconFileText },
-    { id: 'capacitaciones' as TabId, label: 'Capacitaciones', count: capacitaciones.length, icon: IconUsers },
-    { id: 'epp' as TabId, label: 'EPP', count: epp.length, icon: IconActivity, alertCount: eppAlerta.length },
-  ];
-
   const incAbiertos = incidentes.filter((incidente) => incidente.estado !== 'CERRADO').length;
   const incCriticos = incidentes.filter((incidente) => incidente.severidad === 'CRITICA').length;
   const permVigentes = permisos.filter((permiso) => permiso.estado === 'VIGENTE').length;
@@ -255,6 +247,14 @@ export const SeguridadView: React.FC = () => {
   );
   const eppAlerta = epp.filter(e => diasParaRenovar(e.proxima_renovacion) <= EPP_ALERTA_DIAS);
   const eppVencidos = epp.filter(e => diasParaRenovar(e.proxima_renovacion) < 0);
+
+const tabs = [
+    { id: 'incidentes' as TabId, label: 'Incidentes', count: incidentes.length, icon: IconAlertCircle },
+    { id: 'inspecciones' as TabId, label: 'Inspecciones', count: inspecciones.length, icon: IconCheckCircle2 },
+    { id: 'permisos' as TabId, label: 'Permisos', count: permisos.length, icon: IconFileText },
+    { id: 'capacitaciones' as TabId, label: 'Capacitaciones', count: capacitaciones.length, icon: IconUsers },
+    { id: 'epp' as TabId, label: 'EPP', count: epp.length, icon: IconActivity, alertCount: eppAlerta.length },
+  ];
   const avgCumplimiento = inspecciones.length
     ? (
         inspecciones.reduce(
