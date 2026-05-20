@@ -48,11 +48,116 @@ interface ResumenFinanciero {
   porcentaje_ejercido: number;
 }
 
+// ─── Exportación CSV ─────────────────────────────────────────────────────────
+function exportarCSV(resumen: ResumenFinanciero | null, pagos: PagoProgramado[], formatCurrency: (n: number) => string) {
+  const fecha = new Date().toLocaleDateString('es-MX');
+  const filas: string[][] = [];
+
+  filas.push(['REPORTE DE FINANZAS — FLUJO DE CAJA']);
+  filas.push([`Generado: ${fecha}`]);
+  filas.push([]);
+  filas.push(['RESUMEN PRESUPUESTAL']);
+  filas.push(['Concepto', 'Importe (MXN)']);
+  if (resumen) {
+    filas.push(['Autorizado Total',  formatCurrency(resumen.total_autorizado)]);
+    filas.push(['Comprometido (OC)', formatCurrency(resumen.total_comprometido)]);
+    filas.push(['Ejercido (Pagado)', formatCurrency(resumen.total_ejercido)]);
+    filas.push(['Disponible Real',   formatCurrency(resumen.total_disponible)]);
+  }
+  filas.push([]);
+  filas.push(['EGRESOS PROGRAMADOS']);
+  filas.push(['Fecha', 'Concepto', 'Beneficiario', 'Módulo', 'Monto (MXN)', 'Estado']);
+  pagos.forEach(p => {
+    filas.push([
+      new Date(p.fecha_programada).toLocaleDateString('es-MX'),
+      p.concepto,
+      p.beneficiario,
+      p.referencia_modulo,
+      formatCurrency(p.monto_programado),
+      p.estado,
+    ]);
+  });
+
+  const csv = '﻿' + filas.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `finanzas-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Exportación PDF (ventana de impresión) ───────────────────────────────────
+function exportarPDF(resumen: ResumenFinanciero | null, pagos: PagoProgramado[], formatCurrency: (n: number) => string) {
+  const fecha = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  const filasPagos = pagos.map(p => `
+    <tr>
+      <td>${new Date(p.fecha_programada).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</td>
+      <td><strong>${p.concepto}</strong><br><small>${p.beneficiario}</small></td>
+      <td>${p.referencia_modulo}</td>
+      <td class="mono right">${formatCurrency(p.monto_programado)}</td>
+      <td><span class="badge ${p.estado}">${p.estado}</span></td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Reporte Finanzas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #1e293b; padding: 32px; }
+    .header { border-bottom: 3px solid #00b8d9; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .header h1 { font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px; }
+    .header p { color: #64748b; font-size: 10px; }
+    .section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 20px 0 8px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+    .stat .label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
+    .stat .value { font-size: 16px; font-weight: 900; color: #00b8d9; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8fafc; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    td small { color: #94a3b8; font-size: 9px; }
+    .mono { font-family: monospace; font-weight: 700; }
+    .right { text-align: right; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+    .badge.PAGADO { background: #dcfce7; color: #16a34a; }
+    .badge.PENDIENTE { background: #fef9c3; color: #ca8a04; }
+    .badge.CANCELADO { background: #fee2e2; color: #dc2626; }
+    .footer { margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 9px; color: #94a3b8; display: flex; justify-content: space-between; }
+    @media print { body { padding: 20px; } }
+  </style></head><body>
+  <div class="header">
+    <div><h1>Flujo de Caja</h1><p>Módulo de Finanzas · Iretum ERP Industrial</p></div>
+    <div style="text-align:right"><p style="font-weight:700">Fecha de generación</p><p>${fecha}</p></div>
+  </div>
+  ${resumen ? `
+  <p class="section-title">Resumen Presupuestal</p>
+  <div class="stats">
+    <div class="stat"><div class="label">Autorizado Total</div><div class="value">${formatCurrency(resumen.total_autorizado)}</div></div>
+    <div class="stat"><div class="label">Comprometido</div><div class="value" style="color:#f59e0b">${formatCurrency(resumen.total_comprometido)}</div></div>
+    <div class="stat"><div class="label">Ejercido</div><div class="value" style="color:#6366f1">${formatCurrency(resumen.total_ejercido)}</div></div>
+    <div class="stat"><div class="label">Disponible</div><div class="value" style="color:#22c55e">${formatCurrency(resumen.total_disponible)}</div></div>
+  </div>` : ''}
+  <p class="section-title">Egresos Programados (${pagos.length} registros)</p>
+  <table><thead><tr><th>Fecha</th><th>Concepto / Beneficiario</th><th>Módulo</th><th class="right">Monto</th><th>Estado</th></tr></thead>
+  <tbody>${filasPagos || '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">Sin egresos registrados</td></tr>'}</tbody></table>
+  <div class="footer"><span>Iretum® ERP Industrial SaaS</span><span>Reporte confidencial — uso interno</span></div>
+  </body></html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 400);
+}
+
 export const FinanzasView: React.FC = () => {
   const { tenant } = useTenant();
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [pagos, setPagos] = useState<PagoProgramado[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -167,10 +272,47 @@ export const FinanzasView: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button variant="outline" className="rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-widest">
-            <IconDownload className="h-4 w-4" />
-            Descargar Reporte
-          </Button>
+          {/* Dropdown de exportación */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              className="rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-widest"
+              onClick={() => setIsExportOpen(o => !o)}
+              disabled={loading || !!error}
+            >
+              <IconDownload className="h-4 w-4" />
+              Descargar Reporte
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                className={`ml-1 transition-transform ${isExportOpen ? 'rotate-180' : ''}`}>
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </Button>
+            {isExportOpen && (
+              <div
+                className="absolute right-0 top-full z-50 mt-2 min-w-[180px] overflow-hidden rounded-xl border shadow-xl"
+                style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { exportarCSV(resumen, pagos, formatCurrency); setIsExportOpen(false); }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-xs font-bold transition-colors hover:bg-muted/60"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-500/10 text-green-600 font-black text-[10px]">XLS</span>
+                  Excel / CSV
+                </button>
+                <div className="mx-3 border-t" style={{ borderColor: 'hsl(var(--border))' }} />
+                <button
+                  type="button"
+                  onClick={() => { exportarPDF(resumen, pagos, formatCurrency); setIsExportOpen(false); }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-xs font-bold transition-colors hover:bg-muted/60"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/10 text-red-600 font-black text-[10px]">PDF</span>
+                  PDF
+                </button>
+              </div>
+            )}
+          </div>
           <Button className="rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800">
             <IconCalendar className="h-4 w-4" />
             Programar Egreso
