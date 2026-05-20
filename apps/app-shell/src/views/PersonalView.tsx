@@ -69,7 +69,40 @@ interface PreNomina {
   estado: string;
 }
 
-type TabId = 'empleados' | 'cuadrillas' | 'prenomina';
+interface PaseAcceso {
+  id: string;
+  numero_pase: string;
+  empleado_nombre: string;
+  empleado_numero: string;
+  puesto: string;
+  fecha_emision: string;
+  fecha_vencimiento: string;
+  area_acceso?: string;
+}
+
+const ALERTA_DIAS = 15; // días antes del vencimiento para alertar
+
+function diasRestantes(fechaVenc: string): number {
+  return Math.ceil((new Date(fechaVenc).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function urgenciaPase(dias: number): { label: string; className: string; dot: string } {
+  if (dias < 0)  return { label: 'VENCIDO',    className: 'bg-red-500/10 text-red-600 border-red-500/20',       dot: 'bg-red-500' };
+  if (dias <= 7) return { label: 'CRÍTICO',    className: 'bg-orange-500/10 text-orange-600 border-orange-500/20', dot: 'bg-orange-500' };
+  if (dias <= ALERTA_DIAS) return { label: 'POR VENCER', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20', dot: 'bg-amber-500 animate-pulse' };
+  return           { label: 'VIGENTE',    className: 'bg-green-500/10 text-green-600 border-green-500/20',   dot: 'bg-green-500' };
+}
+
+// Demo data para pases
+const DEMO_PASES: PaseAcceso[] = [
+  { id: '1', numero_pase: 'A-0142', empleado_nombre: 'Carlos Reyes López',     empleado_numero: 'EMP-001', puesto: 'Oficial',    fecha_emision: '2025-01-10', fecha_vencimiento: new Date(Date.now() + 3  * 86400000).toISOString().split('T')[0], area_acceso: 'Zona A' },
+  { id: '2', numero_pase: 'A-0198', empleado_nombre: 'Martín Torres García',   empleado_numero: 'EMP-002', puesto: 'Albañil',    fecha_emision: '2025-01-10', fecha_vencimiento: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0], area_acceso: 'Zona B' },
+  { id: '3', numero_pase: 'A-0205', empleado_nombre: 'Jorge Mendoza Silva',    empleado_numero: 'EMP-003', puesto: 'Supervisor', fecha_emision: '2025-01-10', fecha_vencimiento: new Date(Date.now() - 2  * 86400000).toISOString().split('T')[0], area_acceso: 'General' },
+  { id: '4', numero_pase: 'A-0210', empleado_nombre: 'Luis Hernández Ruiz',    empleado_numero: 'EMP-004', puesto: 'Técnico',    fecha_emision: '2025-02-01', fecha_vencimiento: new Date(Date.now() + 45 * 86400000).toISOString().split('T')[0], area_acceso: 'Zona A' },
+  { id: '5', numero_pase: 'A-0215', empleado_nombre: 'Roberto Castillo Díaz',  empleado_numero: 'EMP-005', puesto: 'Operador',   fecha_emision: '2025-02-01', fecha_vencimiento: new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0], area_acceso: 'Zona C' },
+];
+
+type TabId = 'empleados' | 'cuadrillas' | 'prenomina' | 'pases';
 
 export const PersonalView: React.FC = () => {
   const { tenant } = useTenant();
@@ -77,6 +110,7 @@ export const PersonalView: React.FC = () => {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cuadrillas, setCuadrillas] = useState<Cuadrilla[]>([]);
   const [prenominas, setPrenominas] = useState<PreNomina[]>([]);
+  const [pases, setPases] = useState<PaseAcceso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,16 +118,18 @@ export const PersonalView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        if (tenant?.id === 'iretum-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); return; }
-        const [empRes, cuaRes, pnRes] = await Promise.allSettled([
+        if (tenant?.id === 'iretum-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); setPases(DEMO_PASES); return; }
+        const [empRes, cuaRes, pnRes, pasesRes] = await Promise.allSettled([
           api.get('/api/v1/personal/empleados'),
           api.get('/api/v1/personal/cuadrillas'),
           api.get('/api/v1/personal/prenominas'),
+          api.get('/api/v1/personal/pases-acceso'),
         ]);
 
         if (empRes.status === 'fulfilled') setEmpleados(empRes.value.data?.data || []);
         if (cuaRes.status === 'fulfilled') setCuadrillas(cuaRes.value.data?.data || []);
         if (pnRes.status === 'fulfilled') setPrenominas(pnRes.value.data?.data || []);
+        if (pasesRes.status === 'fulfilled') setPases(pasesRes.value.data?.data || []);
       } catch {
         setError('Error al conectar con el modulo de Personal.');
       } finally {
@@ -141,10 +177,14 @@ export const PersonalView: React.FC = () => {
     );
   };
 
+  const pasesAlerta = pases.filter(p => diasRestantes(p.fecha_vencimiento) <= ALERTA_DIAS);
+  const pasesVencidos = pases.filter(p => diasRestantes(p.fecha_vencimiento) < 0);
+
   const tabs = [
     { id: 'empleados' as TabId, label: 'Empleados', count: empleados.length, icon: IconUsers },
     { id: 'cuadrillas' as TabId, label: 'Cuadrillas', count: cuadrillas.length, icon: IconBriefcase },
     { id: 'prenomina' as TabId, label: 'Pre-Nomina', count: prenominas.length, icon: IconWallet },
+    { id: 'pases' as TabId, label: 'Pases de Acceso', count: pases.length, icon: IconShieldCheck, alert: pasesAlerta.length },
   ];
 
   const activos = empleados.filter((empleado) => empleado.estado === 'ACTIVO').length;
@@ -196,6 +236,37 @@ export const PersonalView: React.FC = () => {
         </Button>
       </div>
 
+      {/* ── Banner de alertas de pases ── */}
+      {pasesAlerta.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setActiveTab('pases')}
+          className="w-full rounded-2xl border text-left transition-all hover:opacity-90 active:scale-[0.99]"
+          style={{
+            borderColor: pasesVencidos.length > 0 ? 'hsl(0 72% 51% / 0.3)' : 'hsl(38 92% 50% / 0.3)',
+            background: pasesVencidos.length > 0 ? 'hsl(0 72% 51% / 0.06)' : 'hsl(38 92% 50% / 0.06)',
+          }}
+        >
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${pasesVencidos.length > 0 ? 'bg-red-500/10' : 'bg-amber-500/10'}`}>
+              <IconAlertCircle className={`h-4 w-4 ${pasesVencidos.length > 0 ? 'text-red-500' : 'text-amber-500'}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-black uppercase tracking-wide ${pasesVencidos.length > 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                {pasesVencidos.length > 0
+                  ? `${pasesVencidos.length} pase${pasesVencidos.length > 1 ? 's' : ''} VENCIDO${pasesVencidos.length > 1 ? 'S' : ''} — Acceso bloqueado`
+                  : `${pasesAlerta.length} pase${pasesAlerta.length > 1 ? 's' : ''} por vencer en menos de ${ALERTA_DIAS} días`
+                }
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {pasesAlerta.map(p => p.empleado_nombre.split(' ')[0]).join(', ')} — Click para ver detalles
+              </p>
+            </div>
+            <IconShieldCheck className={`h-4 w-4 shrink-0 ${pasesVencidos.length > 0 ? 'text-red-400' : 'text-amber-400'}`} />
+          </div>
+        </button>
+      )}
+
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
         {tabs.map((tab) => (
           <Button
@@ -210,7 +281,7 @@ export const PersonalView: React.FC = () => {
             )}
           >
             <tab.icon className="h-4 w-4" />
-            {tab.label}
+            <span className="hidden sm:inline">{tab.label}</span>
             <span
               className={cn(
                 'rounded-full px-2 py-0.5 text-[10px] font-black',
@@ -221,6 +292,11 @@ export const PersonalView: React.FC = () => {
             >
               {tab.count}
             </span>
+            {'alert' in tab && (tab as any).alert > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white">
+                {(tab as any).alert}
+              </span>
+            )}
           </Button>
         ))}
       </div>
@@ -374,6 +450,99 @@ export const PersonalView: React.FC = () => {
                 ))
               )}
             </div>
+          )}
+
+          {activeTab === 'pases' && (
+            <Card className="overflow-hidden rounded-3xl border-border/40 shadow-xl">
+              <TableContainer>
+                <Table className="min-w-[720px]">
+                  <TableHeader>
+                    <tr>
+                      <TableHead># Pase</TableHead>
+                      <TableHead>Trabajador</TableHead>
+                      <TableHead>Puesto</TableHead>
+                      <TableHead>Área</TableHead>
+                      <TableHead className="text-center">Vencimiento</TableHead>
+                      <TableHead className="text-center">Días Restantes</TableHead>
+                      <TableHead className="text-center">Estado</TableHead>
+                    </tr>
+                  </TableHeader>
+                  <TableBody>
+                    {pases.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="py-16 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <IconShieldCheck className="h-12 w-12 text-muted-foreground opacity-20" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">
+                              Sin pases registrados
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      [...pases]
+                        .sort((a, b) => diasRestantes(a.fecha_vencimiento) - diasRestantes(b.fecha_vencimiento))
+                        .map((pase) => {
+                          const dias = diasRestantes(pase.fecha_vencimiento);
+                          const urgencia = urgenciaPase(dias);
+                          return (
+                            <TableRow key={pase.id} className="group">
+                              <TableCell>
+                                <span className="font-mono font-black text-sm text-violet-600">{pase.numero_pase}</span>
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <div className="text-sm font-bold text-foreground">{pase.empleado_nombre}</div>
+                                  <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{pase.empleado_numero}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm font-medium text-muted-foreground">{pase.puesto}</TableCell>
+                              <TableCell>
+                                <SectionBadge className="rounded-md bg-muted px-2 py-1 text-[10px] text-muted-foreground">
+                                  {pase.area_acceso || '—'}
+                                </SectionBadge>
+                              </TableCell>
+                              <TableCell className="text-center text-sm font-bold text-foreground">
+                                {new Date(pase.fecha_vencimiento).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span className={`font-mono font-black text-sm ${dias < 0 ? 'text-red-600' : dias <= 7 ? 'text-orange-600' : dias <= ALERTA_DIAS ? 'text-amber-600' : 'text-green-600'}`}>
+                                  {dias < 0 ? `−${Math.abs(dias)}` : dias} días
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <SectionBadge className={cn('rounded-full border px-3 py-1 text-[10px] font-black', urgencia.className)}>
+                                  <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', urgencia.dot)} />
+                                  {urgencia.label}
+                                </SectionBadge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {pases.length > 0 && (
+                <TableFooterBar>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    {pases.length} pases registrados
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {pasesVencidos.length > 0 && (
+                      <SectionBadge className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-[10px] text-red-600">
+                        {pasesVencidos.length} vencidos
+                      </SectionBadge>
+                    )}
+                    {pasesAlerta.filter(p => diasRestantes(p.fecha_vencimiento) >= 0).length > 0 && (
+                      <SectionBadge className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-600">
+                        {pasesAlerta.filter(p => diasRestantes(p.fecha_vencimiento) >= 0).length} por vencer
+                      </SectionBadge>
+                    )}
+                  </div>
+                </TableFooterBar>
+              )}
+            </Card>
           )}
 
           {activeTab === 'prenomina' && (
