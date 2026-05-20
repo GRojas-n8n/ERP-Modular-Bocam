@@ -118,6 +118,32 @@ export const DEMO_CAPACITACIONES = [
   { id_capacitacion: 'cap-003', codigo: 'CAP-2024-010', titulo: 'Manejo de residuos peligrosos NOM-052', tipo: 'ESPECIALIZADA', instructor: 'Ing. Sandra Flores — STPS', fecha: '2024-04-25', duracion_horas: 8, estado: 'PROGRAMADA', _count: { registros: 0 } },
 ];
 
+// ─── COMPRAS — Almacén: Inventario ───────────────────────────────────────────
+export const DEMO_INVENTARIO = [
+  { id: 'inv-001', insumo_id: 'ins-001', clave: 'MAT-001', descripcion: 'Cemento Portland CPC 30R saco 50kg',         unidad: 'SAC', stock_actual:  45, stock_minimo: 100, ubicacion: 'Bodega A-01' },
+  { id: 'inv-002', insumo_id: 'ins-002', clave: 'MAT-002', descripcion: 'Varilla corrugada 3/8" x 12m G60',           unidad: 'PZA', stock_actual: 280, stock_minimo: 200, ubicacion: 'Patio Exterior' },
+  { id: 'inv-003', insumo_id: 'ins-003', clave: 'MAT-003', descripcion: 'Block de concreto 15x20x40 cm',              unidad: 'PZA', stock_actual:   0, stock_minimo: 500, ubicacion: 'Bodega B-02' },
+  { id: 'inv-004', insumo_id: 'ins-005', clave: 'MAT-005', descripcion: 'Grava 3/4" puesta en obra m³',               unidad: 'M3',  stock_actual:  12, stock_minimo:  10, ubicacion: 'Patio Norte' },
+  { id: 'inv-005', insumo_id: 'ins-006', clave: 'MAT-006', descripcion: 'Arena lavada m³',                            unidad: 'M3',  stock_actual:   3, stock_minimo:   8, ubicacion: 'Patio Norte' },
+  { id: 'inv-006', insumo_id: 'ins-007', clave: 'MAT-007', descripcion: 'Tablaroca 1/2" x 1.22x2.44m',               unidad: 'PZA', stock_actual:  95, stock_minimo:  50, ubicacion: 'Bodega A-03' },
+  { id: 'inv-007', insumo_id: 'ins-015', clave: 'MAT-008', descripcion: "Concreto premezclado f'c=250 kg/cm²",        unidad: 'M3',  stock_actual:   0, stock_minimo:  20, ubicacion: 'N/A — pedido directo' },
+  { id: 'inv-008', insumo_id: 'ins-004', clave: 'MAT-004', descripcion: 'Impermeabilizante acrílico blanco 19L',      unidad: 'CUB', stock_actual:   8, stock_minimo:   5, ubicacion: 'Bodega A-02' },
+];
+
+// ─── COMPRAS — Almacén: Movimientos ─────────────────────────────────────────
+export const DEMO_MOVIMIENTOS_ALMACEN = [
+  { id: 'mov-001', tipo: 'INGRESO',  fecha: '2024-04-18', insumo_clave: 'MAT-002', insumo_descripcion: 'Varilla corrugada 3/8" x 12m G60',      cantidad: 150, unidad: 'PZA', origen: 'Proveedor: Deacero Monterrey',           destino: 'Patio Exterior',                 responsable: 'María López',      referencia: 'OC-2024-038' },
+  { id: 'mov-002', tipo: 'EGRESO',   fecha: '2024-04-18', insumo_clave: 'MAT-001', insumo_descripcion: 'Cemento Portland CPC 30R saco 50kg',    cantidad:  80, unidad: 'SAC', origen: 'Bodega A-01',                           destino: 'Frente Nivel 12',                responsable: 'Roberto Hernández', referencia: 'REQ-2024-041' },
+  { id: 'mov-003', tipo: 'EGRESO',   fecha: '2024-04-17', insumo_clave: 'MAT-007', insumo_descripcion: 'Tablaroca 1/2" x 1.22x2.44m',           cantidad:  40, unidad: 'PZA', origen: 'Bodega A-03',                           destino: 'Niveles 7-9 — Acabados',         responsable: 'Arturo Morales',   referencia: 'REQ-2024-043' },
+  { id: 'mov-004', tipo: 'INGRESO',  fecha: '2024-04-17', insumo_clave: 'MAT-006', insumo_descripcion: 'Arena lavada m³',                        cantidad:   5, unidad: 'M3',  origen: 'Proveedor: Áridos del Norte SA',        destino: 'Patio Norte',                    responsable: 'María López',      referencia: 'OC-2024-035' },
+  { id: 'mov-005', tipo: 'TRASPASO', fecha: '2024-04-16', insumo_clave: 'MAT-004', insumo_descripcion: 'Impermeabilizante acrílico blanco 19L', cantidad:   4, unidad: 'CUB', origen: 'Bodega A-02 (TCN-2024)',                destino: 'Bodega B-01 (Proy. RLP-2024)',   responsable: 'Ing. Juan Pérez', referencia: 'TRP-2024-005' },
+  { id: 'mov-006', tipo: 'EGRESO',   fecha: '2024-04-15', insumo_clave: 'MAT-005', insumo_descripcion: 'Grava 3/4" puesta en obra m³',           cantidad:   8, unidad: 'M3',  origen: 'Patio Norte',                           destino: 'Zapatas PB — Zona D',            responsable: 'Ing. Carlos Ruiz', referencia: 'REQ-2024-042' },
+  { id: 'mov-007', tipo: 'INGRESO',  fecha: '2024-04-14', insumo_clave: 'MAT-003', insumo_descripcion: 'Block de concreto 15x20x40 cm',          cantidad: 500, unidad: 'PZA', origen: 'Proveedor: Bloquera del Norte SA',      destino: 'Bodega B-02',                    responsable: 'María López',      referencia: 'OC-2024-032' },
+  { id: 'mov-008', tipo: 'EGRESO',   fecha: '2024-04-14', insumo_clave: 'MAT-003', insumo_descripcion: 'Block de concreto 15x20x40 cm',          cantidad: 500, unidad: 'PZA', origen: 'Bodega B-02',                           destino: 'Muro perimetral — Eje NP',       responsable: 'Roberto Hernández', referencia: 'REQ-2024-038' },
+  { id: 'mov-009', tipo: 'TRASPASO', fecha: '2024-04-12', insumo_clave: 'MAT-001', insumo_descripcion: 'Cemento Portland CPC 30R saco 50kg',    cantidad:  20, unidad: 'SAC', origen: 'Bodega A-01',                           destino: 'Bodega C-01 — Alm. Temporal N12', responsable: 'María López',     referencia: 'TRP-2024-004' },
+  { id: 'mov-010', tipo: 'INGRESO',  fecha: '2024-04-10', insumo_clave: 'MAT-001', insumo_descripcion: 'Cemento Portland CPC 30R saco 50kg',    cantidad: 200, unidad: 'SAC', origen: 'Proveedor: CEMEX México SA de CV',      destino: 'Bodega A-01',                    responsable: 'María López',      referencia: 'OC-2024-029' },
+];
+
 // ─── VENTAS ──────────────────────────────────────────────────────────────────
 export const DEMO_CLIENTES = [
   { id: 'cli-001', nombre: 'Inmobiliaria Monterrey Norte SA de CV', rfc: 'IMN920315AB1', email: 'contacto@inmobiliariamty.com', telefono: '81-4523-7890', estatus: 'ACTIVO' },

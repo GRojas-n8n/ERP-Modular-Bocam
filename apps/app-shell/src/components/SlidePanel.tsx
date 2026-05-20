@@ -35,11 +35,13 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
   children,
 }) => {
   const colors: Record<string, { gradient: string }> = {
-    sky: { gradient: 'from-sky-500 via-cyan-500 to-sky-500' },
+    sky:     { gradient: 'from-sky-500 via-cyan-500 to-sky-500' },
     emerald: { gradient: 'from-emerald-500 via-teal-500 to-emerald-500' },
-    violet: { gradient: 'from-violet-500 via-purple-500 to-violet-500' },
-    amber: { gradient: 'from-amber-500 via-orange-500 to-amber-500' },
-    indigo: { gradient: 'from-indigo-500 via-blue-500 to-indigo-500' },
+    violet:  { gradient: 'from-violet-500 via-purple-500 to-violet-500' },
+    amber:   { gradient: 'from-amber-500 via-orange-500 to-amber-500' },
+    indigo:  { gradient: 'from-indigo-500 via-blue-500 to-indigo-500' },
+    red:     { gradient: 'from-red-500 via-rose-500 to-red-500' },
+    blue:    { gradient: 'from-blue-500 via-sky-500 to-blue-500' },
   };
   const c = colors[accentColor] || colors.sky;
 
@@ -77,11 +79,13 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
   onClick,
 }) => {
   const colorMap: Record<string, string> = {
-    sky: 'bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500',
+    sky:     'bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500',
     emerald: 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500',
-    violet: 'bg-violet-600 text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500',
-    amber: 'bg-amber-600 text-white shadow-xl shadow-amber-600/20 hover:bg-amber-500',
-    indigo: 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500',
+    violet:  'bg-violet-600 text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500',
+    amber:   'bg-amber-600 text-white shadow-xl shadow-amber-600/20 hover:bg-amber-500',
+    indigo:  'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500',
+    red:     'bg-red-600 text-white shadow-xl shadow-red-600/20 hover:bg-red-500',
+    blue:    'bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:bg-blue-500',
   };
 
   return (
