@@ -4,7 +4,6 @@ import { useTenant } from '../context/TenantContext';
 import {
   IconBriefcase,
   IconSearch,
-  IconFilter,
   IconAlertCircle,
   IconRefreshCw,
   IconDownload,
