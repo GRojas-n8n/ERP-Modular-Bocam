@@ -91,7 +91,45 @@ interface Capacitacion {
   _count?: { registros: number };
 }
 
-type TabId = 'incidentes' | 'inspecciones' | 'permisos' | 'capacitaciones';
+interface EntregaEPP {
+  id: string;
+  empleado_nombre: string;
+  empleado_numero: string;
+  tipo_epp: string;
+  descripcion: string;
+  fecha_entrega: string;
+  periodo_renovacion_dias: number;
+  proxima_renovacion: string;
+  entregado_por: string;
+  fuera_de_periodo: boolean;
+  justificacion?: string;
+}
+
+const EPP_ALERTA_DIAS = 10;
+
+function diasParaRenovar(proxima: string) {
+  return Math.ceil((new Date(proxima).getTime() - Date.now()) / 86400000);
+}
+
+function urgenciaEPP(dias: number) {
+  if (dias < 0)  return { label: 'VENCIDO',      cls: 'bg-red-500/10 text-red-600 border-red-500/20',       dot: 'bg-red-500' };
+  if (dias <= 5) return { label: 'CRÍTICO',       cls: 'bg-orange-500/10 text-orange-600 border-orange-500/20', dot: 'bg-orange-500' };
+  if (dias <= EPP_ALERTA_DIAS) return { label: 'POR RENOVAR', cls: 'bg-amber-500/10 text-amber-600 border-amber-500/20',  dot: 'bg-amber-500 animate-pulse' };
+  return           { label: 'VIGENTE',       cls: 'bg-green-500/10 text-green-600 border-green-500/20',   dot: 'bg-green-500' };
+}
+
+const d = (offset: number) => new Date(Date.now() + offset * 86400000).toISOString().split('T')[0];
+
+const DEMO_EPP: EntregaEPP[] = [
+  { id: '1', empleado_nombre: 'Carlos Reyes López',    empleado_numero: 'EMP-001', tipo_epp: 'Casco',              descripcion: 'Casco clase E amarillo', fecha_entrega: '2025-01-10', periodo_renovacion_dias: 365, proxima_renovacion: d(4),  entregado_por: 'Supervisor HSE', fuera_de_periodo: false },
+  { id: '2', empleado_nombre: 'Martín Torres García',  empleado_numero: 'EMP-002', tipo_epp: 'Guantes',            descripcion: 'Guantes nitrilo talla L', fecha_entrega: '2025-04-01', periodo_renovacion_dias: 90,  proxima_renovacion: d(-3), entregado_por: 'Supervisor HSE', fuera_de_periodo: false },
+  { id: '3', empleado_nombre: 'Jorge Mendoza Silva',   empleado_numero: 'EMP-003', tipo_epp: 'Arnés',              descripcion: 'Arnés cuerpo completo',   fecha_entrega: '2025-02-15', periodo_renovacion_dias: 365, proxima_renovacion: d(8),  entregado_por: 'Supervisor HSE', fuera_de_periodo: false },
+  { id: '4', empleado_nombre: 'Martín Torres García',  empleado_numero: 'EMP-002', tipo_epp: 'Lentes',             descripcion: 'Lentes policarbonato',    fecha_entrega: '2025-03-01', periodo_renovacion_dias: 180, proxima_renovacion: d(60), entregado_por: 'Supervisor HSE', fuera_de_periodo: true, justificacion: 'Lentes anteriores dañados por impacto' },
+  { id: '5', empleado_nombre: 'Luis Hernández Ruiz',   empleado_numero: 'EMP-004', tipo_epp: 'Botas',              descripcion: 'Botas punta acero #27',   fecha_entrega: '2025-01-20', periodo_renovacion_dias: 365, proxima_renovacion: d(90), entregado_por: 'Supervisor HSE', fuera_de_periodo: false },
+  { id: '6', empleado_nombre: 'Roberto Castillo Díaz', empleado_numero: 'EMP-005', tipo_epp: 'Mascarilla',         descripcion: 'Mascarilla N95',          fecha_entrega: '2025-04-15', periodo_renovacion_dias: 30,  proxima_renovacion: d(12), entregado_por: 'Supervisor HSE', fuera_de_periodo: false },
+];
+
+type TabId = 'incidentes' | 'inspecciones' | 'permisos' | 'capacitaciones' | 'epp';
 
 export const SeguridadView: React.FC = () => {
   const { tenant } = useTenant();
@@ -100,6 +138,7 @@ export const SeguridadView: React.FC = () => {
   const [inspecciones, setInspecciones] = useState<Inspeccion[]>([]);
   const [permisos, setPermisos] = useState<Permiso[]>([]);
   const [capacitaciones, setCapacitaciones] = useState<Capacitacion[]>([]);
+  const [epp, setEpp] = useState<EntregaEPP[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,18 +146,20 @@ export const SeguridadView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        if (tenant?.id === 'iretum-demo') { setIncidentes(DEMO_INCIDENTES as Incidente[]); setInspecciones(DEMO_INSPECCIONES as Inspeccion[]); setPermisos(DEMO_PERMISOS as Permiso[]); setCapacitaciones(DEMO_CAPACITACIONES as Capacitacion[]); return; }
-        const [incRes, insRes, perRes, capRes] = await Promise.allSettled([
+        if (tenant?.id === 'iretum-demo') { setIncidentes(DEMO_INCIDENTES as Incidente[]); setInspecciones(DEMO_INSPECCIONES as Inspeccion[]); setPermisos(DEMO_PERMISOS as Permiso[]); setCapacitaciones(DEMO_CAPACITACIONES as Capacitacion[]); setEpp(DEMO_EPP); return; }
+        const [incRes, insRes, perRes, capRes, eppRes] = await Promise.allSettled([
           api.get('/api/v1/seguridad/incidentes'),
           api.get('/api/v1/seguridad/inspecciones'),
           api.get('/api/v1/seguridad/permisos'),
           api.get('/api/v1/seguridad/capacitaciones'),
+          api.get('/api/v1/seguridad/epp'),
         ]);
 
         if (incRes.status === 'fulfilled') setIncidentes(incRes.value.data?.data || []);
         if (insRes.status === 'fulfilled') setInspecciones(insRes.value.data?.data || []);
         if (perRes.status === 'fulfilled') setPermisos(perRes.value.data?.data || []);
         if (capRes.status === 'fulfilled') setCapacitaciones(capRes.value.data?.data || []);
+        if (eppRes.status === 'fulfilled') setEpp(eppRes.value.data?.data || []);
       } catch {
         setError('Error al conectar con el modulo de Seguridad.');
       } finally {
@@ -202,11 +243,18 @@ export const SeguridadView: React.FC = () => {
     { id: 'inspecciones' as TabId, label: 'Inspecciones', count: inspecciones.length, icon: IconCheckCircle2 },
     { id: 'permisos' as TabId, label: 'Permisos', count: permisos.length, icon: IconFileText },
     { id: 'capacitaciones' as TabId, label: 'Capacitaciones', count: capacitaciones.length, icon: IconUsers },
+    { id: 'epp' as TabId, label: 'EPP', count: epp.length, icon: IconActivity, alertCount: eppAlerta.length },
   ];
 
   const incAbiertos = incidentes.filter((incidente) => incidente.estado !== 'CERRADO').length;
   const incCriticos = incidentes.filter((incidente) => incidente.severidad === 'CRITICA').length;
   const permVigentes = permisos.filter((permiso) => permiso.estado === 'VIGENTE').length;
+
+  const eppSorted = [...epp].sort(
+    (a, b) => diasParaRenovar(a.proxima_renovacion) - diasParaRenovar(b.proxima_renovacion)
+  );
+  const eppAlerta = epp.filter(e => diasParaRenovar(e.proxima_renovacion) <= EPP_ALERTA_DIAS);
+  const eppVencidos = epp.filter(e => diasParaRenovar(e.proxima_renovacion) < 0);
   const avgCumplimiento = inspecciones.length
     ? (
         inspecciones.reduce(
@@ -290,7 +338,9 @@ export const SeguridadView: React.FC = () => {
               ? 'Nueva Inspeccion'
               : activeTab === 'permisos'
                 ? 'Nuevo Permiso'
-                : 'Nueva Capacitacion'}
+                : activeTab === 'epp'
+                  ? 'Registrar Entrega EPP'
+                  : 'Nueva Capacitacion'}
         </Button>
       </div>
 
@@ -317,6 +367,62 @@ export const SeguridadView: React.FC = () => {
         ))}
       </div>
 
+      {eppAlerta.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setActiveTab('epp')}
+          className={cn(
+            'w-full rounded-2xl border px-5 py-4 text-left transition-all hover:shadow-md',
+            eppVencidos.length > 0
+              ? 'border-red-500/30 bg-red-500/5 hover:bg-red-500/10'
+              : 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+                eppVencidos.length > 0 ? 'bg-red-500/10' : 'bg-amber-500/10'
+              )}
+            >
+              <IconAlertCircle
+                className={cn(
+                  'h-5 w-5',
+                  eppVencidos.length > 0 ? 'text-red-600' : 'text-amber-600 animate-pulse'
+                )}
+              />
+            </span>
+            <div>
+              <p
+                className={cn(
+                  'text-xs font-black uppercase tracking-widest',
+                  eppVencidos.length > 0 ? 'text-red-700' : 'text-amber-700'
+                )}
+              >
+                {eppVencidos.length > 0
+                  ? `${eppVencidos.length} EPP vencido${eppVencidos.length > 1 ? 's' : ''} — Renovación urgente`
+                  : `${eppAlerta.length} EPP próximo${eppAlerta.length > 1 ? 's' : ''} a vencer`}
+              </p>
+              <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                {eppVencidos.length > 0
+                  ? 'Hay equipo de protección personal vencido. Gestionar reposición inmediata.'
+                  : `Renovar antes de los próximos ${EPP_ALERTA_DIAS} días para mantener cobertura.`}
+              </p>
+            </div>
+            <span
+              className={cn(
+                'ml-auto shrink-0 rounded-full px-3 py-1 text-[11px] font-black',
+                eppVencidos.length > 0
+                  ? 'bg-red-500/10 text-red-700'
+                  : 'bg-amber-500/10 text-amber-700'
+              )}
+            >
+              Ver EPP →
+            </span>
+          </div>
+        </button>
+      )}
+
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
         {tabs.map((tab) => (
           <Button
@@ -342,6 +448,11 @@ export const SeguridadView: React.FC = () => {
             >
               {tab.count}
             </span>
+            {'alertCount' in tab && (tab.alertCount as number) > 0 && (
+              <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-black text-white">
+                {tab.alertCount as number}
+              </span>
+            )}
           </Button>
         ))}
       </div>
@@ -598,6 +709,98 @@ export const SeguridadView: React.FC = () => {
                 ))
               )}
             </div>
+          )}
+
+          {activeTab === 'epp' && (
+            <Card className="overflow-hidden rounded-3xl border-border/40 shadow-xl">
+              <TableContainer>
+                <Table className="min-w-[900px]">
+                  <TableHeader>
+                    <tr>
+                      <TableHead>Empleado</TableHead>
+                      <TableHead>Tipo EPP</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead className="text-center">Entregado</TableHead>
+                      <TableHead className="text-center">Próx. Renovación</TableHead>
+                      <TableHead className="text-center">Días</TableHead>
+                      <TableHead className="text-center">Estado</TableHead>
+                    </tr>
+                  </TableHeader>
+                  <TableBody>
+                    {eppSorted.map((item) => {
+                      const dias = diasParaRenovar(item.proxima_renovacion);
+                      const urg = urgenciaEPP(dias);
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div className="text-sm font-bold text-foreground">{item.empleado_nombre}</div>
+                            <div className="mt-0.5 text-[10px] font-bold text-muted-foreground">
+                              {item.empleado_numero}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="rounded-md bg-rose-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-rose-700">
+                              {item.tipo_epp}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm font-medium text-muted-foreground">
+                            <div>{item.descripcion}</div>
+                            {item.fuera_de_periodo && (
+                              <div className="mt-1 flex items-start gap-1">
+                                <span className="shrink-0 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black text-amber-700">
+                                  Fuera de periodo
+                                </span>
+                                {item.justificacion && (
+                                  <span className="text-[10px] text-amber-600">{item.justificacion}</span>
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center text-[11px] font-medium text-muted-foreground">
+                            {formatDate(item.fecha_entrega)}
+                            <div className="mt-0.5 text-[10px] text-muted-foreground/60">
+                              por {item.entregado_por}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center text-[11px] font-medium text-muted-foreground">
+                            {formatDate(item.proxima_renovacion)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span
+                              className={cn(
+                                'inline-block rounded-full px-2 py-0.5 text-[11px] font-black',
+                                dias < 0 ? 'text-red-600' : dias <= 5 ? 'text-orange-600' : dias <= EPP_ALERTA_DIAS ? 'text-amber-600' : 'text-green-600'
+                              )}
+                            >
+                              {dias < 0 ? `${Math.abs(dias)}d` : `${dias}d`}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black',
+                                urg.cls
+                              )}
+                            >
+                              <span className={cn('h-1.5 w-1.5 rounded-full', urg.dot)} />
+                              {urg.label}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {epp.length === 0 ? (
+                <div className="p-16 text-center">
+                  <IconActivity className="mx-auto mb-4 h-12 w-12 text-muted-foreground/20" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                    Sin entregas de EPP registradas
+                  </p>
+                </div>
+              ) : null}
+            </Card>
           )}
 
           {activeTab === 'capacitaciones' && (
