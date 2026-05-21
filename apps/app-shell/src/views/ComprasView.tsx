@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
+import { useNotification } from '../context/NotificationContext';
 import { DEMO_INSUMOS, DEMO_REQUISICIONES, DEMO_INVENTARIO, DEMO_MOVIMIENTOS_ALMACEN, DEMO_COMPARATIVAS } from '../lib/demoData';
 import { ComparativaDetail } from '../components/ComparativaDetail';
 import type { ComparativaLocal } from '../components/ComparativaDetail';
@@ -122,6 +123,7 @@ const MOV_STYLE: Record<MovTipo, { badge: string; label: string; Icon: React.FC<
 export const ComprasView: React.FC = () => {
   const { tenant } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
+  const { notify } = useNotification();
 
   // ─── State ────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabId>('requisiciones');
@@ -300,7 +302,17 @@ export const ComprasView: React.FC = () => {
   const handleSubmitRequisicion = async () => {
     const validItems = reqForm.items.filter(i => i.insumo_id && i.cantidad);
     if (validItems.length === 0) { alert('Agrega al menos un insumo con cantidad.'); return; }
-    if (isDemo) { setShowReqForm(false); resetReqForm(); return; }
+    if (isDemo) {
+      const folio = `REQ-${new Date().getFullYear()}-${String(requisiciones.length + 41).padStart(3, '0')}`;
+      notify({
+        type: 'success',
+        title: 'Requisición creada',
+        message: `${folio} · ${validItems.length} insumo${validItems.length !== 1 ? 's' : ''} · Prioridad ${reqForm.prioridad}`,
+      });
+      setShowReqForm(false);
+      resetReqForm();
+      return;
+    }
     try {
       setFormLoading(true);
       await api.post('/api/v1/compras/requisiciones', {
@@ -397,7 +409,51 @@ export const ComprasView: React.FC = () => {
   const handleSubmitMovimiento = async () => {
     if (!movForm.insumo_id || !movForm.cantidad) { alert('Selecciona un insumo e ingresa la cantidad.'); return; }
     if (!movForm.origen || !movForm.destino) { alert('Origen y destino son requeridos.'); return; }
-    if (isDemo) { setShowMovForm(false); return; }
+    if (isDemo) {
+      const cant = Number(movForm.cantidad);
+      const insumoItem = inventario.find(i => i.insumo_id === movForm.insumo_id);
+      const clave = insumoItem?.clave ?? movForm.insumo_label.split(' — ')[0];
+
+      // Agregar movimiento a la lista
+      const newMov: MovimientoAlmacen = {
+        id: `mov-new-${Date.now()}`,
+        tipo: movForm.tipo,
+        fecha: new Date().toISOString().split('T')[0],
+        insumo_clave: clave,
+        insumo_descripcion: movForm.insumo_label.split(' — ')[1] || movForm.insumo_label,
+        cantidad: cant,
+        unidad: movForm.insumo_unidad,
+        origen: movForm.origen,
+        destino: movForm.destino,
+        responsable: movForm.responsable || 'Usuario Demo',
+        referencia: movForm.referencia || undefined,
+      };
+      setMovimientosAlmacen(prev => [newMov, ...prev]);
+
+      // Actualizar stock en inventario
+      if (insumoItem) {
+        let newStock = insumoItem.stock_actual;
+        if (movForm.tipo === 'INGRESO') newStock += cant;
+        else if (movForm.tipo === 'EGRESO') newStock = Math.max(0, newStock - cant);
+        setInventario(prev =>
+          prev.map(i => i.id === insumoItem.id ? { ...i, stock_actual: newStock } : i)
+        );
+        // Alertas de stock (solo en EGRESO)
+        if (movForm.tipo === 'EGRESO') {
+          if (newStock === 0) {
+            notify({ type: 'error', title: 'Stock agotado', message: `${clave} — sin existencias en almacén`, duration: 6000 });
+          } else if (newStock < insumoItem.stock_minimo) {
+            notify({ type: 'warning', title: 'Stock bajo mínimo', message: `${clave} · ${newStock} ${movForm.insumo_unidad} (mín. ${insumoItem.stock_minimo})`, duration: 6000 });
+          }
+        }
+      }
+
+      // Toast de confirmación
+      const movTitles: Record<MovTipo, string> = { INGRESO: 'Ingreso registrado', EGRESO: 'Egreso registrado', TRASPASO: 'Traspaso registrado' };
+      notify({ type: 'success', title: movTitles[movForm.tipo], message: `${clave} · ${cant} ${movForm.insumo_unidad}` });
+      setShowMovForm(false);
+      return;
+    }
     try {
       setFormLoading(true);
       await api.post('/api/v1/compras/almacen/movimientos', {
@@ -441,6 +497,17 @@ export const ComprasView: React.FC = () => {
     setComparativas(prev =>
       prev.map(c => c.requisicion_id === updated.requisicion_id ? updated : c)
     );
+    // Notificar cuando se generan OCs
+    if (updated.estado === 'AUTORIZADA' && updated.ordenes_compra.length > 0) {
+      const total = updated.ordenes_compra.reduce((sum, oc) => sum + oc.total, 0);
+      const n = updated.ordenes_compra.length;
+      notify({
+        type: 'success',
+        title: `${n} OC${n !== 1 ? 's' : ''} generada${n !== 1 ? 's' : ''}`,
+        message: `Total comprometido: $${total.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+        duration: 6000,
+      });
+    }
   };
 
   // ─── Badge helpers ─────────────────────────────────────────────────────────

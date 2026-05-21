@@ -1,4 +1,6 @@
 import React, { useState, Suspense, Component } from 'react';
+import { NotificationProvider } from './context/NotificationContext';
+import { ToastContainer } from './components/ToastContainer';
 import { Layout } from './components/Layout';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { LoginView } from './views/LoginView';
@@ -128,9 +130,12 @@ const App: React.FC = () => {
   }
   return (
     <AppErrorBoundary>
-      <TenantProvider>
-        <AppRouter />
-      </TenantProvider>
+      <NotificationProvider>
+        <TenantProvider>
+          <AppRouter />
+        </TenantProvider>
+        <ToastContainer />
+      </NotificationProvider>
     </AppErrorBoundary>
   );
 };
