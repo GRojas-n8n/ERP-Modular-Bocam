@@ -419,7 +419,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                     </td>
 
                     {/* Precios por proveedor */}
-                    {comp.proveedores.map((prov, i) => {
+                    {comp.proveedores.map((prov) => {
                       const precio = parseFloat(linea.precios[prov.id] || '0') || 0;
                       const subtotal = precio * linea.cantidad;
                       return (
