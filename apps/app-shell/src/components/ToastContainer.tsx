@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNotification, Toast, ToastType } from '../context/NotificationContext';
+import { useNotification } from '../context/NotificationContext';
+import type { Toast, ToastType } from '../context/NotificationContext';
 import {
   IconCheckCircle2,
   IconAlertCircle,
