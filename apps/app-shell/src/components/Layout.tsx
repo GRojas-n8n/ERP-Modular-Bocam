@@ -13,6 +13,7 @@ import {
   IconSettings,
   IconMenu,
   IconX,
+  IconClipboardCheck,
 } from './Icons';
 import { useTenant } from '../context/TenantContext';
 
@@ -61,8 +62,9 @@ const ALL_NAV_ITEMS = [
   { name: 'Compras',         icon: IconShoppingCart,id: 'compras',      roles: ['compras'] },
   { name: 'Finanzas',        icon: IconWallet,      id: 'finanzas',     roles: ['finanzas'] },
   { name: 'Contabilidad',    icon: IconFileText,    id: 'contabilidad', roles: ['contabilidad'] },
-  { name: 'Control de Obra', icon: IconFileText,    id: 'control-obra', roles: ['control_obra'] },
-  { name: 'Personal',        icon: IconUsers,       id: 'personal',     roles: ['personal_rh'] },
+  { name: 'Control de Obra', icon: IconFileText,       id: 'control-obra', roles: ['control_obra'] },
+  { name: 'Residencia',      icon: IconClipboardCheck, id: 'residencia',   roles: ['residencia', 'control_obra'] },
+  { name: 'Personal',        icon: IconUsers,          id: 'personal',     roles: ['personal_rh'] },
   { name: 'Seguridad HSE',   icon: IconShieldCheck, id: 'seguridad',    roles: ['seguridad_hse'] },
   { name: 'Ventas',          icon: IconShoppingCart,id: 'ventas',       roles: ['ventas'] },
   { name: 'Administracion',  icon: IconSettings,    id: 'admin',        roles: ['admin'] },

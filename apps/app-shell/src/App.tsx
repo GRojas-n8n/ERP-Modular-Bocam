@@ -15,6 +15,7 @@ import { SeguridadView } from './views/SeguridadView';
 import { VentasView } from './views/VentasView';
 import { MasterView } from './views/MasterView';
 import { AdminView } from './views/AdminView';
+import { ResidenciaView } from './views/ResidenciaView';
 
 // ─── View loading fallback ────────────────────────────────────────────────────
 const ViewLoader: React.FC = () => (
@@ -85,6 +86,8 @@ const AuthenticatedApp: React.FC = () => {
         return <ComparativaPrecios />;
       case 'finanzas':
         return <FinanzasView />;
+      case 'residencia':
+        return <ResidenciaView />;
       case 'control-obra':
         return <ControlObraView />;
       case 'personal':

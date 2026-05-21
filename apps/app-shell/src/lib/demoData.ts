@@ -218,3 +218,67 @@ export const DEMO_FACTURAS = [
   { id: 'fac-001', folio: 'FAC-A-00234', cliente: { nombre: 'Inmobiliaria Monterrey Norte SA de CV' }, monto_total: 3125000, estatus: 'PAGADA', fecha_emision: '2024-03-31' },
   { id: 'fac-002', folio: 'FAC-A-00235', cliente: { nombre: 'Inmobiliaria Monterrey Norte SA de CV' }, monto_total: 3125000, estatus: 'EMITIDA', fecha_emision: '2024-04-30' },
 ];
+
+// ─── RESIDENCIA DE OBRA ───────────────────────────────────────────────────────
+
+export const DEMO_ESTIMACIONES_RESIDENCIA = [
+  { id: 'est-r-001', codigo: 'EST-TCN-001', numero: 1, periodo_inicio: '2024-02-01', periodo_fin: '2024-02-29', frente: 'Frente A — Cimentación', descripcion: 'Excavación y plantilla, zapatas y muro de cimentación', conceptos: 8, subtotal: 625000, iva: 100000, total_neto: 725000, estado: 'PAGADA',     fecha_autorizacion: '2024-03-15', autorizador: 'Ing. Juan Pérez Garza' },
+  { id: 'est-r-002', codigo: 'EST-TCN-002', numero: 2, periodo_inicio: '2024-03-01', periodo_fin: '2024-03-31', frente: 'Frente A — Estructura',   descripcion: 'Colado de columnas y losas niveles 1-5',          conceptos: 12, subtotal: 780000, iva: 124800, total_neto: 904800, estado: 'PAGADA',     fecha_autorizacion: '2024-04-10', autorizador: 'Ing. Juan Pérez Garza' },
+  { id: 'est-r-003', codigo: 'EST-TCN-003', numero: 3, periodo_inicio: '2024-04-01', periodo_fin: '2024-04-30', frente: 'Frente B — Instalaciones', descripcion: 'Instalaciones hidráulicas y eléctricas niveles 1-8', conceptos: 15, subtotal: 875000, iva: 140000, total_neto: 1015000, estado: 'AUTORIZADA', fecha_autorizacion: '2024-05-02', autorizador: 'Ing. Juan Pérez Garza' },
+  { id: 'est-r-004', codigo: 'EST-TCN-004', numero: 4, periodo_inicio: '2024-05-01', periodo_fin: '2024-05-15', frente: 'Frente C — Acabados',      descripcion: 'Acabados nivel 7-10, cancelería fachada norte',   conceptos: 9,  subtotal: 975640, iva: 156102, total_neto: 1131742, estado: 'EN_REVISION', fecha_autorizacion: null, autorizador: null },
+  { id: 'est-r-005', codigo: 'EST-TCN-005', numero: 5, periodo_inicio: '2024-05-16', periodo_fin: '2024-05-31', frente: 'Frente A — Impermeabilización', descripcion: 'Impermeabilización azotea y cisternas',        conceptos: 5,  subtotal: 342000, iva:  54720, total_neto:  396720, estado: 'BORRADOR',    fecha_autorizacion: null, autorizador: null },
+];
+
+export const DEMO_PRENOMINAS_RESIDENCIA = [
+  {
+    id: 'pnr-001', codigo: 'NOM-2024-07', periodo_tipo: 'QUINCENAL',
+    periodo_inicio: '2024-04-01', periodo_fin: '2024-04-15',
+    total_bruto: 198500, total_deducciones: 11000, total_neto: 187500,
+    total_empleados: 38, estado: 'PAGADA',
+    cuadrillas: [
+      { nombre: 'Cuadrilla Estructura A',  empleados: 12, total: 79200 },
+      { nombre: 'Cuadrilla Instalaciones', empleados:  8, total: 52400 },
+      { nombre: 'Cuadrilla Acabados',      empleados: 10, total: 41800 },
+      { nombre: 'Administrativos',          empleados:  8, total: 25100 },
+    ],
+  },
+  {
+    id: 'pnr-002', codigo: 'NOM-2024-08', periodo_tipo: 'QUINCENAL',
+    periodo_inicio: '2024-04-16', periodo_fin: '2024-04-30',
+    total_bruto: 202800, total_deducciones: 11600, total_neto: 191200,
+    total_empleados: 40, estado: 'EN_PROCESO',
+    cuadrillas: [
+      { nombre: 'Cuadrilla Estructura A',  empleados: 13, total: 83200 },
+      { nombre: 'Cuadrilla Instalaciones', empleados:  8, total: 53400 },
+      { nombre: 'Cuadrilla Acabados',      empleados: 11, total: 42100 },
+      { nombre: 'Subcontrato Cancelería',  empleados:  2, total:  6900 },
+      { nombre: 'Administrativos',          empleados:  6, total: 16200 },
+    ],
+  },
+  {
+    id: 'pnr-003', codigo: 'NOM-2024-09', periodo_tipo: 'QUINCENAL',
+    periodo_inicio: '2024-05-01', periodo_fin: '2024-05-15',
+    total_bruto: 195600, total_deducciones: 10400, total_neto: 185200,
+    total_empleados: 37, estado: 'PENDIENTE',
+    cuadrillas: [
+      { nombre: 'Cuadrilla Estructura A',  empleados: 11, total: 77400 },
+      { nombre: 'Cuadrilla Instalaciones', empleados:  8, total: 52200 },
+      { nombre: 'Cuadrilla Acabados',      empleados: 10, total: 41400 },
+      { nombre: 'Administrativos',          empleados:  8, total: 24600 },
+    ],
+  },
+];
+
+export const DEMO_ASISTENCIA = [
+  // ── 2024-05-21 · Cuadrilla Estructura A ────────────────────────────────────
+  { id: 'a-001', fecha: '2024-05-21', cuadrilla_id: 'cua-001', cuadrilla_nombre: 'Cuadrilla Estructura A',  empleado_nombre: 'Roberto Hernández', puesto: 'Maestro de Obra',      hora_entrada: '07:03', hora_salida: '17:05', estado: 'PRESENTE',    tipo_registro: 'QR'     },
+  { id: 'a-002', fecha: '2024-05-21', cuadrilla_id: 'cua-001', cuadrilla_nombre: 'Cuadrilla Estructura A',  empleado_nombre: 'Miguel Torres',      puesto: 'Oficial Albañil',       hora_entrada: '07:11', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'QR'     },
+  { id: 'a-003', fecha: '2024-05-21', cuadrilla_id: 'cua-001', cuadrilla_nombre: 'Cuadrilla Estructura A',  empleado_nombre: 'José Luis Mendoza',  puesto: 'Ayudante General',      hora_entrada: null,    hora_salida: null,    estado: 'AUSENTE',     tipo_registro: null     },
+  { id: 'a-004', fecha: '2024-05-21', cuadrilla_id: 'cua-001', cuadrilla_nombre: 'Cuadrilla Estructura A',  empleado_nombre: 'Salvador Jiménez',   puesto: 'Soldador Estructural',  hora_entrada: null,    hora_salida: null,    estado: 'INCAPACIDAD', tipo_registro: null     },
+  // ── 2024-05-21 · Cuadrilla Instalaciones ───────────────────────────────────
+  { id: 'a-005', fecha: '2024-05-21', cuadrilla_id: 'cua-002', cuadrilla_nombre: 'Cuadrilla Instalaciones', empleado_nombre: 'Francisco Ramírez',  puesto: 'Electricista Oficial',  hora_entrada: '07:05', hora_salida: '17:00', estado: 'PRESENTE',    tipo_registro: 'QR'     },
+  { id: 'a-006', fecha: '2024-05-21', cuadrilla_id: 'cua-002', cuadrilla_nombre: 'Cuadrilla Instalaciones', empleado_nombre: 'Alejandro García',   puesto: 'Plomero Oficial',       hora_entrada: '07:22', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'MANUAL' },
+  // ── 2024-05-21 · Cuadrilla Acabados ────────────────────────────────────────
+  { id: 'a-007', fecha: '2024-05-21', cuadrilla_id: 'cua-003', cuadrilla_nombre: 'Cuadrilla Acabados',      empleado_nombre: 'Guillermo Morales',  puesto: 'Oficial Carpintero',    hora_entrada: '07:08', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'QR'     },
+  { id: 'a-008', fecha: '2024-05-21', cuadrilla_id: 'cua-003', cuadrilla_nombre: 'Cuadrilla Acabados',      empleado_nombre: 'Arturo Vega',        puesto: 'Residente de Obra',     hora_entrada: '08:01', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'MANUAL' },
+];
