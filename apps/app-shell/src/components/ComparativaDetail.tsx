@@ -420,7 +420,6 @@ export const ComparativaDetail: React.FC<Props> = ({
 
                     {/* Precios por proveedor */}
                     {comp.proveedores.map((prov, i) => {
-                      const c = PROV_COLORS[i] || PROV_COLORS[0];
                       const precio = parseFloat(linea.precios[prov.id] || '0') || 0;
                       const subtotal = precio * linea.cantidad;
                       return (
