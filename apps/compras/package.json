@@ -10,7 +10,8 @@
     "prisma:migrate": "prisma migrate dev",
     "test:integration:finanzas-feedback": "node -r ts-node/register/transpile-only test/integration/finanzas.feedback.integration.test.ts",
     "test:e2e:reconciliacion": "node -r ts-node/register/transpile-only test/e2e/reconciliacion.e2e.test.ts",
-    "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts"
+    "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
+    "test:integration:oc-error-alert": "node -r ts-node/register/transpile-only test/integration/oc-error-alert.integration.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

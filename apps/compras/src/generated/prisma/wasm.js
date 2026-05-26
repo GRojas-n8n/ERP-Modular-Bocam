@@ -204,6 +204,50 @@ exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   es_ganador: 'es_ganador'
 };
 
+exports.Prisma.AlertaOcErrorScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  oc_id: 'oc_id',
+  oc_codigo: 'oc_codigo',
+  presupuesto_id: 'presupuesto_id',
+  error_message: 'error_message',
+  resuelta: 'resuelta',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.ItemInventarioScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  insumo_id: 'insumo_id',
+  clave: 'clave',
+  descripcion: 'descripcion',
+  unidad: 'unidad',
+  categoria: 'categoria',
+  stock_actual: 'stock_actual',
+  stock_minimo: 'stock_minimo',
+  ubicacion: 'ubicacion',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.MovimientoAlmacenScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  item_id: 'item_id',
+  tipo: 'tipo',
+  cantidad: 'cantidad',
+  unidad: 'unidad',
+  origen: 'origen',
+  destino: 'destino',
+  responsable: 'responsable',
+  referencia: 'referencia',
+  fecha: 'fecha'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -227,7 +271,10 @@ exports.Prisma.ModelName = {
   OrdenCompra: 'OrdenCompra',
   OrdenCompraItem: 'OrdenCompraItem',
   CuadroComparativo: 'CuadroComparativo',
-  ComparativaDetalle: 'ComparativaDetalle'
+  ComparativaDetalle: 'ComparativaDetalle',
+  AlertaOcError: 'AlertaOcError',
+  ItemInventario: 'ItemInventario',
+  MovimientoAlmacen: 'MovimientoAlmacen'
 };
 
 /**

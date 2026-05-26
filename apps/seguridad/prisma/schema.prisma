@@ -198,3 +198,27 @@ model RegistroCapacitacion {
   @@index([tenant_id, empleado_id])
   @@map("registros_capacitacion")
 }
+
+// ── Equipos de Protección Personal ───────────────────────────────────────────
+
+model RegistroEPP {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenant_id         String   @db.Uuid
+  proyecto_id       String   @db.Uuid
+  empleado_id       String   @db.Uuid
+  empleado_nombre   String   @db.VarChar(150)
+  tipo_epp          String   @db.VarChar(100) // Casco, Arnés, Guantes, etc.
+  descripcion       String?  @db.VarChar(255)
+  talla             String?  @db.VarChar(20)
+  fecha_entrega     DateTime
+  fecha_vencimiento DateTime?
+  estado            String   @db.VarChar(30)  // ACTIVO | VENCIDO | ENTREGADO | PERDIDO
+  observaciones     String?  @db.Text
+  entregado_por     String?  @db.VarChar(100)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, empleado_id])
+  @@map("epp_registros")
+}

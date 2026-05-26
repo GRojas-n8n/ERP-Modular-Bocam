@@ -609,3 +609,94 @@ app.listen(PORT, async () => {
     console.warn(`[Seguridad] ⚠️ EventBus no disponible (modo degradado)`);
   }
 });
+
+// ── EPP ──────────────────────────────────────────────────────────────────────
+
+app.get('/api/v1/seguridad/epp', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { estado, empleado_id } = req.query;
+
+    const where: Record<string, any> = {};
+    if (estado)      where.estado      = estado as string;
+    if (empleado_id) where.empleado_id = empleado_id as string;
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma: any) => prisma.registroEPP.findMany({
+        where,
+        orderBy: [{ estado: 'asc' }, { fecha_vencimiento: 'asc' }],
+      })
+    );
+
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/v1/seguridad/epp', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const {
+      empleado_id, empleado_nombre, tipo_epp, descripcion,
+      talla, fecha_entrega, fecha_vencimiento, entregado_por, observaciones,
+    } = req.body;
+
+    if (!empleado_id || !empleado_nombre || !tipo_epp || !fecha_entrega) {
+      return res.status(400).json({
+        success: false,
+        message: 'empleado_id, empleado_nombre, tipo_epp y fecha_entrega son obligatorios.',
+      });
+    }
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma: any) => prisma.registroEPP.create({
+        data: {
+          tenant_id:        tenantId,
+          proyecto_id:      proyectoId,
+          empleado_id,
+          empleado_nombre,
+          tipo_epp,
+          descripcion,
+          talla,
+          fecha_entrega:    new Date(fecha_entrega),
+          fecha_vencimiento: fecha_vencimiento ? new Date(fecha_vencimiento) : null,
+          estado:           'ACTIVO',
+          entregado_por,
+          observaciones,
+        },
+      })
+    );
+
+    res.status(201).json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.patch('/api/v1/seguridad/epp/:id/estado', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { estado, observaciones } = req.body;
+
+    const ESTADOS = ['ACTIVO', 'VENCIDO', 'ENTREGADO', 'PERDIDO'];
+    if (!estado || !ESTADOS.includes(estado)) {
+      return res.status(400).json({ success: false, message: `estado debe ser: ${ESTADOS.join(', ')}` });
+    }
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma: any) => prisma.registroEPP.update({
+        where: { id },
+        data:  { estado, observaciones },
+      })
+    );
+
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});

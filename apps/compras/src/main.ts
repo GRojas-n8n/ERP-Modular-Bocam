@@ -269,6 +269,52 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         }
       );
 
+      // ── [ALERTA] 2.1 Persistir inconsistencia en BD (idempotente por @@unique[tenant_id, oc_id]) ──
+      await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          await prisma.alertaOcError.upsert({
+            where: { tenant_id_oc_id: { tenant_id: tenantId, oc_id: oc.id_orden } },
+            update: { error_message: errMsg, updated_at: new Date() },
+            create: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              oc_id: oc.id_orden,
+              oc_codigo: oc.codigo,
+              presupuesto_id: presupuesto_id ?? null,
+              error_message: errMsg,
+            },
+          });
+        }
+      );
+      logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada',
+        'Alerta de OC en ERROR_FINANZAS persistida en BD', {
+          oc_id: oc.id_orden,
+          oc_codigo: oc.codigo,
+          presupuesto_id,
+        });
+
+      // ── [ALERTA] 2.2 + 2.3 Publicar evento al bus (best-effort, usa buildEventContext) ──
+      try {
+        await eventBus.publish({
+          event_type: 'compras.oc_error_finanzas',
+          timestamp: new Date().toISOString(),
+          context: buildEventContext(req),
+          payload: {
+            oc_id: oc.id_orden,
+            oc_codigo: oc.codigo,
+            presupuesto_id: presupuesto_id ?? null,
+            error_message: errMsg,
+          },
+        });
+      } catch (busError: any) {
+        logWarn(req, 'compras', 'compras.oc_error_finanzas.bus_offline',
+          'EventBus no disponible al publicar alerta — la alerta ya persiste en BD', {
+            oc_id: oc.id_orden,
+            bus_error: busError.message,
+          });
+      }
+
       return res.status(error.response?.status === 422 ? 422 : 502).json({
         success: false,
         code: 'COMPRAS_OC_PENDIENTE_RESOLUCION',
@@ -1004,6 +1050,30 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
         data: { estado: OC_STATUS.ERROR_FINANZAS },
       });
 
+      // ── [ALERTA] 3.1 Persistir alerta en BD (mismo contexto RLS, idempotente) ──────
+      await prisma.alertaOcError.upsert({
+        where: { tenant_id_oc_id: { tenant_id: event.context.tenant_id, oc_id: referencia_oc_id } },
+        update: {
+          error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
+          updated_at: new Date(),
+        },
+        create: {
+          tenant_id:     event.context.tenant_id,
+          proyecto_id:   event.context.proyecto_id,
+          oc_id:         referencia_oc_id,
+          oc_codigo:     referencia_oc_codigo,
+          presupuesto_id: presupuesto_id ?? null,
+          error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
+        },
+      });
+      console.log(JSON.stringify({
+        action:     'compras.oc_error_finanzas.alerta_creada',
+        path:       'async',
+        oc_id:      referencia_oc_id,
+        tenant_id:  event.context.tenant_id,
+        proyecto_id: event.context.proyecto_id,
+      }));
+
       logTerminalState({
         terminalState: 'applied',
         actions: {
@@ -1012,10 +1082,10 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
           applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
         },
         context: {
-          eventType: event.event_type,
+          eventType:     event.event_type,
           correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
+          tenantId:      event.context.tenant_id,
+          proyectoId:    event.context.proyecto_id,
         },
         extras: {
           referencia_oc_id,
@@ -1024,7 +1094,66 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
       });
     }
   );
+
+  // ── [ALERTA] 3.2 Publicar evento al bus (best-effort, fuera del contexto prisma) ──
+  try {
+    await eventBus.publish({
+      event_type: 'compras.oc_error_finanzas',
+      timestamp:  new Date().toISOString(),
+      context: {
+        tenant_id:      event.context.tenant_id,
+        proyecto_id:    event.context.proyecto_id,
+        user_id:        event.context.user_id,
+        correlation_id: event.context.correlation_id,
+      },
+      payload: {
+        oc_id:         referencia_oc_id,
+        oc_codigo:     referencia_oc_codigo,
+        presupuesto_id: presupuesto_id ?? null,
+        error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
+      },
+    });
+  } catch (busError: any) {
+    console.warn(JSON.stringify({
+      action:    'compras.oc_error_finanzas.bus_offline',
+      path:      'async',
+      oc_id:     referencia_oc_id,
+      bus_error: busError.message,
+    }));
+  }
 }
+
+// ── Alertas de Integridad Financiera ─────────────────────────────────────────
+// 4.1 Endpoint de consulta de OCs en ERROR_FINANZAS para procuración.
+// Solo roles con capacidad de intervención financiera pueden verlas.
+
+app.get('/api/v1/compras/alertas/oc-error',
+  requireRoles('admin', 'superintendent', 'procurement'),
+  async (req: Request, res: Response) => {
+    try {
+      // 4.2 Extraer contexto del JWT (nunca del body)
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.alertaOcError.findMany({
+          where:    { resuelta: false, tenant_id: tenantId, proyecto_id: proyectoId },
+          orderBy:  { created_at: 'desc' },
+        })
+      );
+
+      // 4.3 Respuesta estándar + log de observabilidad
+      logInfo(req, 'compras', 'compras.alertas.oc_error.listadas',
+        'Alertas de OC en ERROR_FINANZAS consultadas', { total: data.length });
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.alertas.oc_error.error',
+        'Error al consultar alertas de OC en error', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
 
 export async function startServer() {
   return app.listen(PORT, async () => {
@@ -1044,3 +1173,122 @@ export async function startServer() {
 if (require.main === module) {
   void startServer();
 }
+
+// ── Almacén ──────────────────────────────────────────────────────────────────
+
+app.get('/api/v1/compras/almacen/inventario', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma: any) => prisma.itemInventario.findMany({
+        orderBy: { clave: 'asc' },
+      })
+    );
+
+    // Serializar Decimal a number
+    const serialized = data.map((item: any) => ({
+      ...item,
+      stock_actual: Number(item.stock_actual),
+      stock_minimo: Number(item.stock_minimo),
+    }));
+
+    res.json({ success: true, data: serialized });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/v1/compras/almacen/movimientos', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { tipo, desde, hasta } = req.query;
+
+    const where: Record<string, any> = {};
+    if (tipo) where.tipo = tipo as string;
+    if (desde || hasta) {
+      where.fecha = {};
+      if (desde) where.fecha.gte = new Date(desde as string);
+      if (hasta) where.fecha.lte = new Date(hasta as string);
+    }
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma: any) => prisma.movimientoAlmacen.findMany({
+        where,
+        include: { item: { select: { clave: true, descripcion: true, unidad: true } } },
+        orderBy: { fecha: 'desc' },
+        take: 200,
+      })
+    );
+
+    const serialized = data.map((mov: any) => ({
+      ...mov,
+      cantidad: Number(mov.cantidad),
+      insumo_clave:        mov.item?.clave        ?? '',
+      insumo_descripcion:  mov.item?.descripcion  ?? '',
+    }));
+
+    res.json({ success: true, data: serialized });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/v1/compras/almacen/movimientos', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { item_id, tipo, cantidad, origen, destino, responsable, referencia } = req.body;
+
+    if (!item_id || !tipo || !cantidad) {
+      return res.status(400).json({ success: false, message: 'item_id, tipo y cantidad son obligatorios.' });
+    }
+
+    const TIPOS_VALIDOS = ['INGRESO', 'EGRESO', 'TRASPASO'];
+    if (!TIPOS_VALIDOS.includes(tipo)) {
+      return res.status(400).json({ success: false, message: `tipo debe ser uno de: ${TIPOS_VALIDOS.join(', ')}` });
+    }
+
+    const result = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma: any) => {
+        const item = await prisma.itemInventario.findUnique({ where: { id: item_id } });
+        if (!item) throw new Error('Item de inventario no encontrado.');
+
+        const cant = Number(cantidad);
+        let nuevoStock = Number(item.stock_actual);
+        if (tipo === 'INGRESO')  nuevoStock += cant;
+        if (tipo === 'EGRESO')   nuevoStock = Math.max(0, nuevoStock - cant);
+        // TRASPASO: no cambia stock total del proyecto
+
+        const [movimiento] = await prisma.$transaction([
+          prisma.movimientoAlmacen.create({
+            data: {
+              tenant_id:   tenantId,
+              proyecto_id: proyectoId,
+              item_id,
+              tipo,
+              cantidad:    cant,
+              unidad:      item.unidad,
+              origen,
+              destino,
+              responsable,
+              referencia,
+            },
+          }),
+          prisma.itemInventario.update({
+            where: { id: item_id },
+            data:  { stock_actual: nuevoStock },
+          }),
+        ]);
+
+        return { movimiento: { ...movimiento, cantidad: Number(movimiento.cantidad) }, nuevo_stock: nuevoStock };
+      }
+    );
+
+    res.status(201).json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
