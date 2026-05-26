@@ -37,6 +37,6 @@
 
 ## 7. Migración en Producción (VPS)
 
-- [ ] 7.1 En el servidor VPS, ejecutar `docker compose exec compras npx prisma migrate deploy` para aplicar la migración `add-alerta-oc-error`
-- [ ] 7.2 Verificar que el endpoint `GET /api/v1/compras/alertas/oc-error` responde correctamente vía `curl` o el frontend
-- [ ] 7.3 Hacer una OC de prueba con Finanzas caído y confirmar que aparece en el endpoint de alertas
+- [x] 7.1 Tablas creadas en producción vía SQL directo (postgres no tenía historial Prisma). Se crearon `alertas_oc_error`, `inventario_almacen` y `movimientos_almacen`. Luego `git pull` + `docker compose build --no-cache compras` + `docker compose up -d --no-deps compras`. Nota: el schema.prisma faltaba el modelo AlertaOcError en el commit anterior — corregido con commit `a005172`.
+- [x] 7.2 `GET /api/v1/compras/alertas/oc-error` verificado en producción: sin token → 401 ✅; con JWT admin → `{ success: true, data: [] }` ✅ (lista vacía = sin alertas activas, estado esperado).
+- [ ] 7.3 Pendiente: OC de prueba con Finanzas caído en el entorno real para confirmar alerta visible en el endpoint. Se puede realizar desde el frontend (iretum.com) cuando se esté operando normalmente.
