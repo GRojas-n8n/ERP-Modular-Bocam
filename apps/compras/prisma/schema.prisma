@@ -142,6 +142,27 @@ model ComparativaDetalle {
   @@map("comparativas_detalles")
 }
 
+// ── Alertas de Integridad Financiera ─────────────────────────────────────────
+// Persiste OCs que entraron en ERROR_FINANZAS para que el equipo de procuración
+// pueda detectar inconsistencias sin depender del EventBus (best-effort).
+
+model AlertaOcError {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  proyecto_id    String   @db.Uuid
+  oc_id          String   @db.Uuid
+  oc_codigo      String   @db.VarChar(50)
+  presupuesto_id String?  @db.Uuid
+  error_message  String   @db.Text
+  resuelta       Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([tenant_id, oc_id])
+  @@index([tenant_id, proyecto_id])
+  @@map("alertas_oc_error")
+}
+
 // ── Almacén ──────────────────────────────────────────────────────────────────
 
 model ItemInventario {
