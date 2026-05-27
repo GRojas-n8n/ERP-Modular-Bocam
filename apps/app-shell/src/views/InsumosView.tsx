@@ -32,7 +32,6 @@ import {
   IconX,
   IconCheckCircle2,
   IconInfo,
-  IconEye,
   IconPackage,
   IconActivity,
 } from '../components/Icons';
