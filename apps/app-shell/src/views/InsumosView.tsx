@@ -271,6 +271,29 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
     return 'MATERIAL'; // CFM, CIM, etc.
   }
 
+  // Extrae la clave de concepto de un array de celdas buscando el patrón
+  // "Clave: X" (mismo cell) o "Clave:" (cell N) + valor (cell N+1).
+  // IMPORTANTE: el dos puntos es OBLIGATORIO — evita falsos positivos con "CLAVE"
+  // en filas de encabezado de tabla (CLAVE | DESCRIPCION | UNIDAD | ...).
+  function extraerClaveConcepto(celdas: string[]): string | null {
+    for (let i = 0; i < celdas.length; i++) {
+      const cell = celdas[i];
+      // El dos puntos debe estar presente para distinguir "Clave: 5" de la
+      // columna de encabezado "CLAVE".
+      if (!/clave\s*:/i.test(cell)) continue;
+      // Caso 1: "Clave: 1" o "Clave:1" en la misma celda
+      const m = cell.match(/clave\s*:\s*(.+)/i);
+      if (m && m[1].trim()) return m[1].trim();
+      // Caso 2: la celda dice sólo "Clave:" (con dos puntos, sin valor tras él)
+      // → el valor está en la siguiente celda no vacía de la misma fila
+      if (/^clave\s*:\s*$/i.test(cell)) {
+        const nextVal = celdas.slice(i + 1).find(c => c.trim() !== '');
+        if (nextVal?.trim()) return nextVal.trim();
+      }
+    }
+    return null;
+  }
+
   const insumoMap     = new Map<string, InsumoPreview>();
   const composicionMap = new Map<string, ComposicionConcepto>(); // clave_concepto → composición
 
@@ -298,28 +321,32 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
     const firstNonEmpty = noVacias[0] ?? '';
 
     // ── Inicio de nuevo concepto → resetear estado ────────────────────────────
-    if (/^analisis\s+del\s+total/i.test(firstNonEmpty)) {
-      headerDetectado = false; tipoActual = null; enAuxiliar = false;
-      continue;
-    }
-    if (/^clave\s*:/i.test(firstNonEmpty)) {
-      // Extraer clave: "Clave: 1" → "1"
-      // En algunos exports de OPUS la clave está en la misma celda ("Clave: 1");
-      // en otros, la celda dice sólo "Clave:" y el valor está en la siguiente celda.
-      const m = firstNonEmpty.match(/clave\s*:\s*(.+)/i);
-      if (m && m[1].trim()) {
-        conceptoClave = m[1].trim();
-      } else {
-        // Fallback: tomar la siguiente celda no vacía de la misma fila
-        conceptoClave = noVacias[1]?.trim() || null;
-      }
+    // Detecta "ANALISIS DEL TOTAL..." y "ANALISIS DEL PRECIO UNITARIO..."
+    // Incluye variante con tilde (ANÁLISIS) y sin ella.
+    if (/^an[aá]lisis\s+del\s+(total|precio)/i.test(firstNonEmpty)) {
+      // La clave del concepto puede estar en otra celda de esta misma fila
+      const claveEnFila = extraerClaveConcepto(celdas);
+      if (claveEnFila) conceptoClave = claveEnFila;
       headerDetectado = false; tipoActual = null; enAuxiliar = false;
       continue;
     }
 
+    // Detectar "Clave: X" en CUALQUIER celda de la fila.
+    // OPUS puede poner "Clave:" en columna B y el valor en columna D.
+    // Condición de trigger: la celda debe contener "clave:" (con dos puntos)
+    // para NO confundirla con la columna de encabezado "CLAVE" (sin dos puntos).
+    if (celdas.some(c => /clave\s*:/i.test(c))) {
+      const clave = extraerClaveConcepto(celdas);
+      if (clave !== null) {
+        conceptoClave = clave;
+        headerDetectado = false; tipoActual = null; enAuxiliar = false;
+        continue;
+      }
+    }
+
     // ── Skip metadatos del concepto ───────────────────────────────────────────
-    if (/^descripci/i.test(firstNonEmpty)) continue; // "Descripción"
-    if (/^unidad\s*:/i.test(firstNonEmpty)) continue; // "Unidad: M3 / Cantidad: ..."
+    if (/^descripci[oó]n?/i.test(firstNonEmpty)) continue; // "Descripción"
+    if (/^unidad\s*:/i.test(firstNonEmpty)) continue;       // "Unidad: M3 / Cantidad: ..."
 
     // ── Detectar encabezado de tabla de insumos (CLAVE + DESCRIPCION) ─────────
     if (!headerDetectado) {
@@ -423,6 +450,31 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
         comp.insumos.push({ clave_insumo: claveNorm, tipo_insumo: tipo, cantidad, rendimiento, costo_unitario: costoBase });
       }
     }
+  }
+
+  // ── Diagnóstico en consola si no se generaron composiciones ─────────────────
+  // Abre F12 → Consola en el navegador para ver qué filas detectó el parser.
+  if (composicionMap.size === 0 && insumoMap.size > 0) {
+    console.warn(
+      `[APU Parser] ⚠️ ${insumoMap.size} insumos encontrados PERO 0 composiciones.\n` +
+      'El parser no pudo identificar filas "Clave: X" en el archivo.\n' +
+      'Revisa las primeras 50 filas del archivo a continuación:'
+    );
+    rawRows.slice(0, 50).forEach((row, i) => {
+      const nonEmpty = row.map(c => String(c ?? '').trim()).filter(Boolean);
+      if (nonEmpty.length > 0) {
+        console.log(`  Fila ${String(i).padStart(2, '0')}: ${nonEmpty.join(' | ')}`);
+      }
+    });
+    console.info(
+      '[APU Parser] 💡 Busca en las filas de arriba el texto "Clave" o el número de partida ' +
+      'que precede a cada grupo de insumos. Ese es el patrón que necesita el parser.'
+    );
+  } else if (composicionMap.size > 0) {
+    console.log(
+      `[APU Parser] ✅ ${composicionMap.size} composiciones detectadas:`,
+      Array.from(composicionMap.keys())
+    );
   }
 
   return {
@@ -1618,30 +1670,49 @@ export const InsumosView: React.FC = () => {
             )}
 
             {/* ── Banner de Composición APU (solo panel APU) ──────────────── */}
-            {mostrarComposicion && previewComposiciones.length > 0 && (
+            {mostrarComposicion && (
               <div className={cn(
                 'rounded-2xl border p-4 flex gap-3',
-                presupuesto
-                  ? 'bg-indigo-500/5 border-indigo-500/20'
-                  : 'bg-amber-500/5 border-amber-500/20'
+                previewComposiciones.length > 0
+                  ? (presupuesto ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-amber-500/5 border-amber-500/20')
+                  : 'bg-rose-500/5 border-rose-500/20'
               )}>
-                <IconLayers className={cn('h-5 w-5 shrink-0 mt-0.5', presupuesto ? 'text-indigo-500' : 'text-amber-500')} />
+                <IconLayers className={cn(
+                  'h-5 w-5 shrink-0 mt-0.5',
+                  previewComposiciones.length > 0
+                    ? (presupuesto ? 'text-indigo-500' : 'text-amber-500')
+                    : 'text-rose-500'
+                )} />
                 <div className="flex-1">
-                  <p className={cn('text-xs font-bold', presupuesto ? 'text-indigo-700' : 'text-amber-700')}>
-                    {previewComposiciones.length} APUs detectados
-                    {presupuesto && composicionesVinculables > 0 && (
-                      <> · <span className="font-black">{composicionesVinculables} coinciden</span> con el presupuesto</>
-                    )}
-                    {presupuesto && composicionesVinculables === 0 && (
-                      <> · <span className="text-amber-600">0 coinciden</span> (verifica las claves del presupuesto)</>
-                    )}
-                  </p>
-                  <p className={cn('text-[10px] mt-1', presupuesto ? 'text-indigo-600/70' : 'text-amber-600/70')}>
-                    {presupuesto
-                      ? `Al confirmar, se guardarán las relaciones insumo→concepto del APU (${previewComposiciones.reduce((s, c) => s + c.insumos.length, 0)} vínculos totales).`
-                      : 'Sin presupuesto cargado. Importa el "Catálogo de Obra" primero para que los APUs se vinculen con los conceptos.'
-                    }
-                  </p>
+                  {previewComposiciones.length > 0 ? (
+                    <>
+                      <p className={cn('text-xs font-bold', presupuesto ? 'text-indigo-700' : 'text-amber-700')}>
+                        {previewComposiciones.length} APUs detectados
+                        {presupuesto && composicionesVinculables > 0 && (
+                          <> · <span className="font-black">{composicionesVinculables} coinciden</span> con el presupuesto</>
+                        )}
+                        {presupuesto && composicionesVinculables === 0 && (
+                          <> · <span className="text-amber-600">0 coinciden</span> (verifica las claves del presupuesto)</>
+                        )}
+                      </p>
+                      <p className={cn('text-[10px] mt-1', presupuesto ? 'text-indigo-600/70' : 'text-amber-600/70')}>
+                        {presupuesto
+                          ? `Al confirmar, se guardarán las relaciones insumo→concepto del APU (${previewComposiciones.reduce((s, c) => s + c.insumos.length, 0)} vínculos totales).`
+                          : 'Sin presupuesto cargado. Importa el "Catálogo de Obra" primero para que los APUs se vinculen con los conceptos.'
+                        }
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs font-bold text-rose-700">
+                        0 composiciones detectadas — el parser no identificó grupos "Clave: X"
+                      </p>
+                      <p className="text-[10px] text-rose-600/80 mt-1">
+                        Abre <strong>F12 → Consola</strong> y verás las primeras filas del archivo.
+                        Comparte ese diagnóstico para que podamos adaptar el parser al formato de tu OPUS.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             )}
