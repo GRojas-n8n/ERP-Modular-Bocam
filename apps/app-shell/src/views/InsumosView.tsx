@@ -32,6 +32,9 @@ import {
   IconX,
   IconCheckCircle2,
   IconInfo,
+  IconEye,
+  IconPackage,
+  IconActivity,
 } from '../components/Icons';
 import { cn } from '../lib/utils';
 
@@ -90,6 +93,23 @@ interface InsumoPreview {
   costo_base: number;
   _valido: boolean;
   _error?: string;
+}
+
+/** Ítem de composición APU devuelto por GET /conceptos/:id/composicion */
+interface ComposicionItemData {
+  id: string;
+  tipo_insumo: TipoInsumo;
+  cantidad: number;       // cantidad del insumo por UNIDAD de concepto
+  rendimiento: number;
+  costo_unitario: number; // precio del insumo al momento del APU
+  subtotal: number;       // cantidad × costo_unitario (por unidad de concepto)
+  insumo: {
+    clave: string;
+    descripcion: string;
+    unidad_medida: string;
+    tipo_insumo: TipoInsumo;
+    costo_base: number;
+  };
 }
 
 /** Un insumo dentro de la composición APU de un concepto. */
@@ -590,6 +610,13 @@ export const InsumosView: React.FC = () => {
   // Composiciones APU: solo disponibles cuando se importa un APU (no Explosión)
   const [previewComposiciones, setPreviewComposiciones] = useState<ComposicionConcepto[]>([]);
 
+  // ── Estado: Take-off / Panel de Composición APU ────────────────────────────
+  const [panelTakeoff,         setPanelTakeoff]         = useState(false);
+  const [conceptoTakeoff,      setConceptoTakeoff]      = useState<Concepto | null>(null);
+  const [composicionItems,     setComposicionItems]     = useState<ComposicionItemData[]>([]);
+  const [loadingComposicion,   setLoadingComposicion]   = useState(false);
+  const [cantidadTakeoff,      setCantidadTakeoff]      = useState<number>(0);
+
   // ── Derivados Tab 1 ───────────────────────────────────────────────────────
   const validRows    = useMemo(() => preview.filter(r => r._valido), [preview]);
   const invalidRows  = useMemo(() => preview.filter(r => !r._valido), [preview]);
@@ -634,6 +661,37 @@ export const InsumosView: React.FC = () => {
   const validPreviewInsumos   = useMemo(() => previewInsumos.filter(r => r._valido), [previewInsumos]);
   const invalidPreviewInsumos = useMemo(() => previewInsumos.filter(r => !r._valido), [previewInsumos]);
 
+  // ── Derivados: Take-off ───────────────────────────────────────────────────
+  /** Cada ítem de composición multiplicado por la cantidad a ejecutar */
+  const takeoffItems = useMemo(() =>
+    composicionItems.map(item => ({
+      ...item,
+      cantidad_total:  item.cantidad * cantidadTakeoff,
+      subtotal_total:  item.cantidad * cantidadTakeoff * item.costo_unitario,
+    })),
+    [composicionItems, cantidadTakeoff]
+  );
+
+  /** Costo total agrupado por tipo */
+  const takeoffPorTipo = useMemo(() => {
+    const result: Partial<Record<TipoInsumo, number>> = {};
+    for (const item of takeoffItems) {
+      result[item.tipo_insumo] = (result[item.tipo_insumo] ?? 0) + item.subtotal_total;
+    }
+    return result;
+  }, [takeoffItems]);
+
+  const takeoffTotal = useMemo(() =>
+    takeoffItems.reduce((s, i) => s + i.subtotal_total, 0),
+    [takeoffItems]
+  );
+
+  /** Costo unitario derivado de la composición (debe ≈ precio_unitario del concepto) */
+  const costoDirectoUnitario = useMemo(() =>
+    composicionItems.reduce((s, i) => s + i.subtotal, 0),
+    [composicionItems]
+  );
+
   // ── Fetch Tab 1 ───────────────────────────────────────────────────────────
   const fetchPresupuesto = async () => {
     setLoading(true);
@@ -667,6 +725,23 @@ export const InsumosView: React.FC = () => {
 
   useEffect(() => { void fetchPresupuesto(); }, []);
   useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
+
+  // ── Abrir panel de Take-off para un concepto ──────────────────────────────
+  const handleAbrirTakeoff = async (concepto: Concepto) => {
+    setConceptoTakeoff(concepto);
+    setCantidadTakeoff(Number(concepto.cantidad)); // default = cantidad presupuestada
+    setComposicionItems([]);
+    setPanelTakeoff(true);
+    setLoadingComposicion(true);
+    try {
+      const res = await api.get(`/api/v1/gerencia-tecnica/conceptos/${concepto.id}/composicion`);
+      setComposicionItems(res.data.data || []);
+    } catch (_) {
+      setComposicionItems([]);
+    } finally {
+      setLoadingComposicion(false);
+    }
+  };
 
   // ── Leer Catálogo de Obra (Tab 1) ─────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1122,11 +1197,12 @@ export const InsumosView: React.FC = () => {
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Cantidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">P.U.</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Importe</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">APU</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/20">
                       {conceptosFiltrados.map((c) => (
-                        <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors">
+                        <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors group">
                           <td className="px-6 py-4 font-black text-primary tracking-tighter text-sm whitespace-nowrap">{c.clave}</td>
                           <td className="px-6 py-4 max-w-sm">
                             <span className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{c.descripcion}</span>
@@ -1145,12 +1221,22 @@ export const InsumosView: React.FC = () => {
                           <td className="px-6 py-4 text-right">
                             <span className="font-mono font-black text-sm text-primary">{formatMXN(Number(c.importe))}</span>
                           </td>
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              onClick={() => handleAbrirTakeoff(c)}
+                              title="Ver composición APU y calcular take-off"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 text-[9px] font-black uppercase tracking-widest hover:bg-indigo-500/20 active:scale-95 transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <IconActivity className="h-3 w-3" />
+                              APU
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-border/60 bg-muted/20">
-                        <td colSpan={5} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                        <td colSpan={6} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
                           Total {search ? `(filtrado)` : `(${conceptosFiltrados.length} conceptos)`}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -1611,6 +1697,186 @@ export const InsumosView: React.FC = () => {
         </SlidePanel>
         );
       })}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* PANEL: Take-off — Composición APU + Calculadora de materiales      */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <SlidePanel
+        isOpen={panelTakeoff}
+        onClose={() => { setPanelTakeoff(false); setComposicionItems([]); setConceptoTakeoff(null); }}
+        title={`Take-off · ${conceptoTakeoff?.clave ?? ''}`}
+        subtitle={conceptoTakeoff?.descripcion ?? 'Composición APU'}
+        accentColor="indigo"
+        maxWidthClassName="max-w-5xl"
+      >
+        {conceptoTakeoff && (
+          <div className="space-y-6 pb-10">
+
+            {/* ── Datos del concepto ── */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Unidad', value: conceptoTakeoff.unidad_medida },
+                { label: 'Cant. presupuestada', value: Number(conceptoTakeoff.cantidad).toLocaleString('es-MX', { maximumFractionDigits: 4 }) },
+                { label: 'Precio Unitario', value: formatMXN(Number(conceptoTakeoff.precio_unitario)) },
+              ].map(d => (
+                <div key={d.label} className="rounded-2xl border border-border/40 bg-muted/30 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{d.label}</p>
+                  <p className="mt-1 text-base font-black text-foreground truncate">{d.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Calculadora ── */}
+            <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-600 mb-3">
+                Cantidad a ejecutar ({conceptoTakeoff.unidad_medida})
+              </p>
+              <div className="flex items-center gap-4">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={cantidadTakeoff === 0 ? '' : cantidadTakeoff}
+                  onChange={e => setCantidadTakeoff(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  className="w-40 px-4 py-3 bg-background border border-indigo-500/30 rounded-xl text-xl font-black text-indigo-700 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500/60 transition-all text-right"
+                />
+                <span className="text-sm font-bold text-indigo-600">{conceptoTakeoff.unidad_medida}</span>
+                <div className="ml-auto text-right">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Costo total estimado</p>
+                  <p className="text-2xl font-black text-indigo-700">{formatMXN(takeoffTotal)}</p>
+                  {costoDirectoUnitario > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {formatMXN(costoDirectoUnitario)} / {conceptoTakeoff.unidad_medida} (directo APU)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Cards resumen por tipo ── */}
+            {composicionItems.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {(['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'INDIRECTO'] as TipoInsumo[]).map(tipo => {
+                  const monto = takeoffPorTipo[tipo];
+                  if (!monto) return null;
+                  return (
+                    <div key={tipo} className={cn('rounded-2xl border p-4', TIPO_COLOR[tipo])}>
+                      <p className="text-[9px] font-black uppercase tracking-widest opacity-70">{TIPO_LABEL[tipo]}</p>
+                      <p className="text-lg font-black mt-1">{formatMXN(monto)}</p>
+                      <p className="text-[9px] opacity-60 mt-0.5">
+                        {takeoffTotal > 0 ? `${((monto / takeoffTotal) * 100).toFixed(1)}%` : '—'}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── Tabla de composición ── */}
+            {loadingComposicion ? (
+              <div className="flex items-center justify-center h-48 gap-4">
+                <div className="h-10 w-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Cargando composición APU…</p>
+              </div>
+            ) : composicionItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 gap-5 text-center rounded-2xl border border-dashed border-border/60 bg-muted/20">
+                <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                  <IconPackage className="h-7 w-7 text-indigo-500 opacity-60" />
+                </div>
+                <div>
+                  <p className="text-sm font-black uppercase tracking-tight text-foreground">Sin composición APU</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                    Este concepto no tiene composición guardada. Ve a la pestaña <strong>Insumos</strong> y vuelve a importar el APU — ahora el sistema guardará la composición automáticamente.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border/40 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border/40 bg-muted/40">
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Tipo</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Clave</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Descripción</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">U</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-right">Cant/U</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-right">Cant Total</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-right">Costo U</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {takeoffItems.map((item, idx) => (
+                        <tr key={idx} className={cn('transition-colors hover:bg-indigo-500/[0.02]', TIPO_COLOR[item.tipo_insumo].includes('emerald') ? 'bg-emerald-500/[0.01]' : '')}>
+                          <td className="px-4 py-3">
+                            <span className={cn('inline-block rounded-full border px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider', TIPO_COLOR[item.tipo_insumo])}>
+                              {TIPO_LABEL[item.tipo_insumo]}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-black text-primary text-xs whitespace-nowrap">{item.insumo.clave}</td>
+                          <td className="px-4 py-3 max-w-xs">
+                            <span className="font-semibold text-foreground line-clamp-2 leading-tight">{item.insumo.descripcion}</span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-black uppercase text-muted-foreground">{item.insumo.unidad_medida}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                            {item.cantidad.toLocaleString('es-MX', { maximumFractionDigits: 4 })}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className={cn(
+                              'font-mono font-black',
+                              cantidadTakeoff > 0 ? 'text-indigo-700' : 'text-muted-foreground'
+                            )}>
+                              {cantidadTakeoff > 0
+                                ? item.cantidad_total.toLocaleString('es-MX', { maximumFractionDigits: 4 })
+                                : '—'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-foreground">
+                            {formatMXN(item.costo_unitario)}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className={cn('font-mono font-black', cantidadTakeoff > 0 ? 'text-indigo-700' : 'text-muted-foreground')}>
+                              {cantidadTakeoff > 0 ? formatMXN(item.subtotal_total) : formatMXN(item.subtotal)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-border/60 bg-muted/20">
+                        <td colSpan={7} className="px-4 py-3 text-right">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            {cantidadTakeoff > 0 ? `Total para ${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}` : 'Costo directo por unidad'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono font-black text-indigo-700">
+                            {cantidadTakeoff > 0 ? formatMXN(takeoffTotal) : formatMXN(costoDirectoUnitario)}
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── Nota si sin composición ── */}
+            {composicionItems.length > 0 && (
+              <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex gap-3">
+                <IconInfo className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-sky-700 leading-relaxed">
+                  <strong>Take-off de materiales:</strong> la columna "Cant Total" es la cantidad de cada insumo necesaria para ejecutar {cantidadTakeoff > 0 ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}` : 'la cantidad indicada'}. Úsala para generar requisiciones de compra.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </SlidePanel>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* PANEL: Guía de exportación desde OPUS                              */}
