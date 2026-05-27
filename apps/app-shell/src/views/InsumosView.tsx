@@ -97,6 +97,7 @@ interface InsumoPreview {
 /** Ítem de composición APU devuelto por GET /conceptos/:id/composicion */
 interface ComposicionItemData {
   id: string;
+  insumo_id: string;      // UUID del insumo en el catálogo — requerido para requisiciones
   tipo_insumo: TipoInsumo;
   cantidad: number;       // cantidad del insumo por UNIDAD de concepto
   rendimiento: number;
@@ -674,6 +675,7 @@ export const InsumosView: React.FC = () => {
   const [composicionItems,     setComposicionItems]     = useState<ComposicionItemData[]>([]);
   const [loadingComposicion,   setLoadingComposicion]   = useState(false);
   const [cantidadTakeoff,      setCantidadTakeoff]      = useState<number>(0);
+  const [generandoReq,         setGenerandoReq]         = useState(false);
 
   // ── Derivados Tab 1 ───────────────────────────────────────────────────────
   const validRows    = useMemo(() => preview.filter(r => r._valido), [preview]);
@@ -798,6 +800,59 @@ export const InsumosView: React.FC = () => {
       setComposicionItems([]);
     } finally {
       setLoadingComposicion(false);
+    }
+  };
+
+  // ── Generar Requisición de Compra desde el Take-off ──────────────────────
+  const handleGenerarRequisicion = async () => {
+    if (!conceptoTakeoff || cantidadTakeoff <= 0) return;
+
+    // Solo materiales: Mano de Obra y Equipo se contratan por separado
+    const materialesReq = takeoffItems.filter(
+      item => item.tipo_insumo === 'MATERIAL' && item.cantidad_total > 0 && item.insumo_id
+    );
+
+    if (materialesReq.length === 0) {
+      notify({
+        type: 'error',
+        title: 'Sin materiales a requisitar',
+        message: 'Este concepto no tiene insumos tipo MATERIAL con cantidad > 0.',
+        duration: 5000,
+      });
+      return;
+    }
+
+    setGenerandoReq(true);
+    try {
+      const res = await api.post('/api/v1/compras/requisiciones', {
+        observaciones: `Take-off APU · ${conceptoTakeoff.clave} · ${conceptoTakeoff.descripcion} · ${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}`,
+        prioridad: 'NORMAL',
+        items: materialesReq.map(item => ({
+          insumo_id: item.insumo_id,
+          cantidad: Number(item.cantidad_total.toFixed(4)),
+          notas: `APU ${conceptoTakeoff.clave}: ${item.cantidad} × ${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}`,
+        })),
+      });
+      const reqGenerada = res.data.data;
+      notify({
+        type: 'success',
+        title: 'Requisición generada',
+        message: `${reqGenerada.codigo} · ${materialesReq.length} material${materialesReq.length !== 1 ? 'es' : ''} · Ve a Compras para cotizar.`,
+        duration: 8000,
+      });
+      // Cerrar el panel después de generar la requisición
+      setPanelTakeoff(false);
+      setComposicionItems([]);
+      setConceptoTakeoff(null);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error al generar requisición',
+        message: err.response?.data?.message || err.message,
+        duration: 6000,
+      });
+    } finally {
+      setGenerandoReq(false);
     }
   };
 
@@ -1797,7 +1852,7 @@ export const InsumosView: React.FC = () => {
         maxWidthClassName="max-w-5xl"
       >
         {conceptoTakeoff && (
-          <div className="space-y-6 pb-10">
+          <div className="space-y-6 pb-28">
 
             {/* ── Datos del concepto ── */}
             <div className="grid grid-cols-3 gap-3">
@@ -1952,16 +2007,56 @@ export const InsumosView: React.FC = () => {
               </div>
             )}
 
-            {/* ── Nota si sin composición ── */}
+            {/* ── Nota take-off ── */}
             {composicionItems.length > 0 && (
               <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex gap-3">
                 <IconInfo className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-sky-700 leading-relaxed">
-                  <strong>Take-off de materiales:</strong> la columna "Cant Total" es la cantidad de cada insumo necesaria para ejecutar {cantidadTakeoff > 0 ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}` : 'la cantidad indicada'}. Úsala para generar requisiciones de compra.
+                  <strong>Take-off de materiales:</strong> la columna "Cant Total" es la cantidad de cada insumo necesaria para ejecutar {cantidadTakeoff > 0 ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}` : 'la cantidad indicada'}. Usa el botón <strong>Generar Requisición</strong> para enviar los materiales directo a Compras.
                 </p>
               </div>
             )}
           </div>
+
+          {/* ── Barra inferior: Generar Requisición ── */}
+          {composicionItems.length > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-between gap-4">
+              <div>
+                {(() => {
+                  const nMat = takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length;
+                  const totalMat = takeoffItems
+                    .filter(i => i.tipo_insumo === 'MATERIAL')
+                    .reduce((s, i) => s + i.subtotal_total, 0);
+                  return (
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        {nMat} material{nMat !== 1 ? 'es' : ''} · {cantidadTakeoff > 0 ? formatMXN(totalMat) : '—'}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
+                        {cantidadTakeoff > 0
+                          ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida} · Clave ${conceptoTakeoff.clave}`
+                          : 'Ingresa una cantidad para calcular'}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setPanelTakeoff(false); setComposicionItems([]); setConceptoTakeoff(null); }}
+                  className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+                >
+                  Cerrar
+                </button>
+                <SubmitButton
+                  label={`Generar Requisición (${takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length} mat.)`}
+                  loading={generandoReq}
+                  color="sky"
+                  onClick={handleGenerarRequisicion}
+                />
+              </div>
+            </div>
+          )}
         )}
       </SlidePanel>
 

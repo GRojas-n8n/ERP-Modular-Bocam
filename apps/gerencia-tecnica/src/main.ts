@@ -626,6 +626,7 @@ app.get(
 
       const data = composicion.map(ci => ({
         id: ci.id,
+        insumo_id: ci.insumo_id,    // UUID del insumo — requerido para crear requisiciones
         tipo_insumo: ci.tipo_insumo,
         cantidad: Number(ci.cantidad),
         rendimiento: Number(ci.rendimiento),
