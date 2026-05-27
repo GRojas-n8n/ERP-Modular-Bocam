@@ -23,6 +23,7 @@ interface SlidePanelProps {
   title: string;
   subtitle?: string;
   accentColor?: string;
+  maxWidthClassName?: string;
   children: React.ReactNode;
 }
 
@@ -32,6 +33,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
   title,
   subtitle,
   accentColor = 'sky',
+  maxWidthClassName,
   children,
 }) => {
   const colors: Record<string, { gradient: string }> = {
@@ -53,6 +55,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
       description={subtitle}
       topSlot={<div className={cn('h-1 w-full bg-gradient-to-r', c.gradient)} />}
       closeAriaLabel="Cerrar panel"
+      maxWidthClassName={maxWidthClassName}
     >
       {children}
     </SideSheet>
