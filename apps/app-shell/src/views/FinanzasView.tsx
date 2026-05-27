@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  EmptyStatePanel,
   OperationalBanner,
   SectionBadge,
   Table,
@@ -23,12 +24,44 @@ import {
   IconClock,
   IconDownload,
   IconFilter,
+  IconPlus,
   IconTrendingUp,
   IconWallet,
 } from '../components/Icons';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
+import { useNotification } from '../context/NotificationContext';
+import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { DEMO_RESUMEN_FINANCIERO, DEMO_PAGOS } from '../lib/demoData';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface PresupuestoAsignado {
+  id_presupuesto: string;
+  codigo: string;
+  descripcion: string;
+  capitulo: string;
+  moneda: string;
+  monto_autorizado: number;
+  monto_disponible: number;
+  monto_comprometido: number;
+  monto_ejercido: number;
+}
+
+const CAPITULOS = [
+  { value: 'MATERIALES',   label: 'Materiales' },
+  { value: 'MANO_OBRA',    label: 'Mano de Obra' },
+  { value: 'SUBCONTRATOS', label: 'Subcontratos' },
+  { value: 'EQUIPOS',      label: 'Equipos' },
+  { value: 'INDIRECTOS',   label: 'Indirectos' },
+] as const;
+
+const CAPITULO_COLOR: Record<string, string> = {
+  MATERIALES:   'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  MANO_OBRA:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  SUBCONTRATOS: 'bg-violet-500/10 text-violet-600 border-violet-500/20',
+  EQUIPOS:      'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  INDIRECTOS:   'bg-slate-500/10 text-slate-500 border-slate-500/20',
+};
 
 interface PagoProgramado {
   id_pago: string;
@@ -154,34 +187,84 @@ function exportarPDF(resumen: ResumenFinanciero | null, pagos: PagoProgramado[],
 
 export const FinanzasView: React.FC = () => {
   const { tenant } = useTenant();
+  const { notify } = useNotification();
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [pagos, setPagos] = useState<PagoProgramado[]>([]);
+  const [presupuestos, setPresupuestos] = useState<PresupuestoAsignado[]>([]);
   const [loading, setLoading] = useState(true);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        if (tenant?.id === 'iretum-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
-        const [dashRes, pagosRes] = await Promise.all([
-          api.get('/api/v1/finanzas/dashboard'),
-          api.get('/api/v1/finanzas/pagos'),
-        ]);
+  // ── Panel Nuevo Presupuesto ──────────────────────────────────────────────
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [form, setForm] = useState({
+    codigo: '',
+    descripcion: '',
+    capitulo: 'MATERIALES',
+    monto_autorizado: '',
+    moneda: 'MXN',
+  });
+  const [formError, setFormError] = useState<string | null>(null);
 
-        setResumen(dashRes.data.data.resumen_presupuestal);
-        setPagos(pagosRes.data.data);
-      } catch (err: any) {
-        console.error('Error fetching finanzas data:', err);
-        setError('Error al conectar con el modulo de Finanzas Central.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const resetForm = () => {
+    setForm({ codigo: '', descripcion: '', capitulo: 'MATERIALES', monto_autorizado: '', moneda: 'MXN' });
+    setFormError(null);
+  };
 
-    fetchData();
-  }, []);
+  const handleGuardarPresupuesto = async () => {
+    if (!form.codigo.trim() || !form.descripcion.trim() || !form.monto_autorizado) {
+      setFormError('Código, descripción y monto son obligatorios.');
+      return;
+    }
+    const monto = parseFloat(form.monto_autorizado);
+    if (isNaN(monto) || monto <= 0) {
+      setFormError('El monto debe ser un número mayor a cero.');
+      return;
+    }
+    setGuardando(true);
+    setFormError(null);
+    try {
+      await api.post('/api/v1/finanzas/presupuestos', {
+        codigo: form.codigo.trim().toUpperCase(),
+        descripcion: form.descripcion.trim(),
+        capitulo: form.capitulo,
+        monto_autorizado: monto,
+        moneda: form.moneda,
+      });
+      notify({ type: 'success', title: 'Presupuesto creado', message: `${form.codigo.toUpperCase()} — $${monto.toLocaleString('es-MX')} MXN asignados al proyecto.` });
+      setPanelOpen(false);
+      resetForm();
+      void fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al crear el presupuesto.';
+      setFormError(msg);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      if (tenant?.id === 'iretum-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
+      const [dashRes, pagosRes, presRes] = await Promise.all([
+        api.get('/api/v1/finanzas/dashboard'),
+        api.get('/api/v1/finanzas/pagos'),
+        api.get('/api/v1/finanzas/presupuestos'),
+      ]);
+      setResumen(dashRes.data.data.resumen_presupuestal);
+      setPagos(pagosRes.data.data);
+      setPresupuestos(presRes.data.data ?? []);
+    } catch (err: any) {
+      console.error('Error fetching finanzas data:', err);
+      setError('Error al conectar con el modulo de Finanzas Central.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void fetchData(); }, []);
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-MX', {
@@ -316,6 +399,13 @@ export const FinanzasView: React.FC = () => {
           <Button className="rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800">
             <IconCalendar className="h-4 w-4" />
             Programar Egreso
+          </Button>
+          <Button
+            className="rounded-2xl bg-emerald-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-700"
+            onClick={() => { resetForm(); setPanelOpen(true); }}
+          >
+            <IconPlus className="h-4 w-4" />
+            Nuevo Presupuesto
           </Button>
         </div>
       </div>
@@ -590,8 +680,189 @@ export const FinanzasView: React.FC = () => {
               </Card>
             </div>
           </div>
+        {/* ── Tabla: Presupuestos Asignados ─────────────────────────────── */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest">Presupuestos Asignados</h2>
+              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Fondos autorizados por capítulo para este proyecto
+              </p>
+            </div>
+          </div>
+
+          {presupuestos.length === 0 ? (
+            <EmptyStatePanel
+              title="Sin presupuestos asignados"
+              description="Crea al menos un presupuesto para que Compras pueda verificar suficiencia antes de emitir OCs."
+              action={
+                <Button
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700"
+                  onClick={() => { resetForm(); setPanelOpen(true); }}
+                >
+                  <IconPlus className="h-3.5 w-3.5" />
+                  Nuevo Presupuesto
+                </Button>
+              }
+            />
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Código</TableHeader>
+                    <TableHeader>Descripción</TableHeader>
+                    <TableHeader>Capítulo</TableHeader>
+                    <TableHeader className="text-right">Autorizado</TableHeader>
+                    <TableHeader className="text-right">Comprometido</TableHeader>
+                    <TableHeader className="text-right">Ejercido</TableHeader>
+                    <TableHeader className="text-right">Disponible</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {presupuestos.map(p => {
+                    const pct = p.monto_autorizado > 0
+                      ? Math.round(((p.monto_autorizado - p.monto_disponible) / p.monto_autorizado) * 100)
+                      : 0;
+                    return (
+                      <TableRow key={p.id_presupuesto}>
+                        <TableCell>
+                          <span className="rounded-lg border border-border/40 bg-muted/50 px-2 py-0.5 font-mono text-[10px] font-bold">
+                            {p.codigo}
+                          </span>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-xs">{p.descripcion}</TableCell>
+                        <TableCell>
+                          <span className={cn('rounded-lg border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider', CAPITULO_COLOR[p.capitulo] ?? 'bg-muted text-muted-foreground border-border')}>
+                            {CAPITULOS.find(c => c.value === p.capitulo)?.label ?? p.capitulo}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs">{formatCurrency(p.monto_autorizado)}</TableCell>
+                        <TableCell className="text-right font-mono text-xs text-amber-600">{formatCurrency(p.monto_comprometido)}</TableCell>
+                        <TableCell className="text-right font-mono text-xs text-indigo-600">{formatCurrency(p.monto_ejercido)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={cn('font-mono text-xs font-bold', p.monto_disponible <= 0 ? 'text-red-500' : 'text-emerald-600')}>
+                              {formatCurrency(p.monto_disponible)}
+                            </span>
+                            <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={cn('h-full rounded-full transition-all', pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500')}
+                                style={{ width: `${Math.min(pct, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </div>
         </>
       )}
+
+      {/* ── SlidePanel: Nuevo Presupuesto Asignado ──────────────────────── */}
+      <SlidePanel
+        isOpen={panelOpen}
+        onClose={() => { setPanelOpen(false); resetForm(); }}
+        title="Nuevo Presupuesto Asignado"
+        subtitle="Define el fondo autorizado para un capítulo del proyecto"
+        accentColor="emerald"
+      >
+        <div className="space-y-5">
+          {formError && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-bold text-red-500">
+              {formError}
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Código *
+            </label>
+            <input
+              className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono uppercase focus:border-emerald-500/50 focus:outline-none"
+              placeholder="PRES-MAT-001"
+              value={form.codigo}
+              onChange={e => setForm(f => ({ ...f, codigo: e.target.value }))}
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">Identificador único del presupuesto. Ej: PRES-MAT-001</p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Descripción *
+            </label>
+            <input
+              className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-emerald-500/50 focus:outline-none"
+              placeholder="Materiales de construcción — Cimentación"
+              value={form.descripcion}
+              onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Capítulo
+              </label>
+              <select
+                className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                value={form.capitulo}
+                onChange={e => setForm(f => ({ ...f, capitulo: e.target.value }))}
+              >
+                {CAPITULOS.map(c => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Moneda
+              </label>
+              <select
+                className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                value={form.moneda}
+                onChange={e => setForm(f => ({ ...f, moneda: e.target.value }))}
+              >
+                <option value="MXN">MXN — Peso Mexicano</option>
+                <option value="USD">USD — Dólar</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Monto Autorizado *
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full rounded-xl border border-border/40 bg-muted/50 py-2 pl-7 pr-3 text-sm font-mono focus:border-emerald-500/50 focus:outline-none"
+                placeholder="0.00"
+                value={form.monto_autorizado}
+                onChange={e => setForm(f => ({ ...f, monto_autorizado: e.target.value }))}
+              />
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              Al crearse, el monto disponible = monto autorizado. Los fondos disminuyen al emitir OCs.
+            </p>
+          </div>
+
+          <SubmitButton
+            label="Crear Presupuesto"
+            loading={guardando}
+            color="emerald"
+            onClick={handleGuardarPresupuesto}
+          />
+        </div>
+      </SlidePanel>
     </div>
   );
 };
