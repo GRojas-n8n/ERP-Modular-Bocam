@@ -150,14 +150,32 @@ function normalizarFila(row: Record<string, string | number>): ConceptoPreview {
 
 /**
  * Detecta si una fila es de encabezado o de estructura (títulos de partida, totales, etc.)
- * OPUS incluye filas de nivel que no son conceptos individuales
+ * OPUS incluye filas de nivel que no son conceptos individuales:
+ *   - Capítulos/partidas: clave numérica ("1", "1.1", "2.3.4") sin precio ni cantidad
+ *   - Filas de totales/subtotales: sin clave, solo importe
+ *   - Filas casi vacías: <= 1 celda con datos
  */
 function esFilaEstructural(row: Record<string, string | number>): boolean {
   const values = Object.values(row).map(v => String(v ?? '').trim());
   const textos = values.filter(v => v.length > 0);
   if (textos.length <= 1) return true; // Filas casi vacías
-  // Si la clave es solo números (ej: "1", "1.1", "1.1.1") podría ser partida
-  // Pero si tiene precio > 0 sí es concepto → no es estructural
+
+  // Detectar filas de partida/capítulo OPUS:
+  //   clave numérica pura ("1" / "1.1" / "2.3.4") + precio = 0 + cantidad = 0
+  //   → son encabezados de sección, no conceptos facturables
+  const clavePar  = Object.entries(row).find(([k]) => mapearColumna(k) === 'clave');
+  const precioPar = Object.entries(row).find(([k]) => mapearColumna(k) === 'precio_unitario');
+  const cantPar   = Object.entries(row).find(([k]) => mapearColumna(k) === 'cantidad');
+
+  if (clavePar) {
+    const claveVal    = String(clavePar[1]  ?? '').trim();
+    const precioVal   = parsearNumero(String(precioPar?.[1] ?? ''));
+    const cantidadVal = parsearNumero(String(cantPar?.[1]   ?? ''));
+
+    // Clave solo números (con o sin puntos decimales de nivel) y sin precio ni cantidad
+    if (/^\d+(\.\d+)*$/.test(claveVal) && precioVal === 0 && cantidadVal === 0) return true;
+  }
+
   return false;
 }
 
