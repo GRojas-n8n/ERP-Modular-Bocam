@@ -249,10 +249,44 @@ export const InsumosView: React.FC = () => {
         const sheetName = wb.SheetNames[0];
         const ws = wb.Sheets[sheetName];
 
-        // Convertir a array de objetos (primera fila = headers)
+        // ── Detectar fila de encabezados reales ───────────────────────────────
+        // Los archivos OPUS incluyen filas de título (nombre de empresa, fecha,
+        // etc.) antes de los encabezados de datos. Escanear las primeras 30 filas
+        // en modo array para encontrar la que contiene al menos 2 columnas
+        // reconocidas (CLAVE, DESCRIPCION, UNIDAD, CANTIDAD, P.U., IMPORTE…).
+        const allRowsRaw: (string | number)[][] = XLSX.utils.sheet_to_json(ws, {
+          header: 1,
+          defval: '',
+          raw: false,
+        });
+
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(30, allRowsRaw.length); i++) {
+          const fila = allRowsRaw[i];
+          const reconocidas = fila.filter(
+            cell => typeof cell === 'string' && mapearColumna(cell) !== null
+          );
+          if (reconocidas.length >= 2) {
+            headerRowIndex = i;
+            break;
+          }
+        }
+
+        if (headerRowIndex === -1) {
+          const primeraFila = allRowsRaw[0] ?? [];
+          setParseError(
+            `No se reconocieron columnas del formato OPUS.\n` +
+            `Columnas detectadas: ${primeraFila.join(', ')}\n` +
+            `Columnas esperadas: CLAVE, DESCRIPCION, UNIDAD, CANTIDAD, P.U., IMPORTE`
+          );
+          return;
+        }
+
+        // Convertir a array de objetos usando la fila detectada como encabezados
         const rawRows: Record<string, string | number>[] = XLSX.utils.sheet_to_json(ws, {
           defval: '',
           raw: false,
+          range: headerRowIndex,  // sheet_to_json usa esta fila como headers
         });
 
         if (rawRows.length === 0) {
@@ -260,7 +294,7 @@ export const InsumosView: React.FC = () => {
           return;
         }
 
-        // Verificar que al menos una columna reconocida existe
+        // Verificar columnas reconocidas (segunda pasada de seguridad)
         const primeraFila = rawRows[0];
         const columnasReconocidas = Object.keys(primeraFila).filter(k => mapearColumna(k) !== null);
         if (columnasReconocidas.length < 2) {
