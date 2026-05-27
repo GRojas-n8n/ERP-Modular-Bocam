@@ -303,9 +303,16 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
       continue;
     }
     if (/^clave\s*:/i.test(firstNonEmpty)) {
-      // Extraer clave: "Clave:  1" → "1"
+      // Extraer clave: "Clave: 1" → "1"
+      // En algunos exports de OPUS la clave está en la misma celda ("Clave: 1");
+      // en otros, la celda dice sólo "Clave:" y el valor está en la siguiente celda.
       const m = firstNonEmpty.match(/clave\s*:\s*(.+)/i);
-      conceptoClave = m ? m[1].trim() : null;
+      if (m && m[1].trim()) {
+        conceptoClave = m[1].trim();
+      } else {
+        // Fallback: tomar la siguiente celda no vacía de la misma fila
+        conceptoClave = noVacias[1]?.trim() || null;
+      }
       headerDetectado = false; tipoActual = null; enAuxiliar = false;
       continue;
     }
@@ -925,18 +932,38 @@ export const InsumosView: React.FC = () => {
       });
       const { creados, actualizados, omitidos } = res.data.data;
 
-      // 2. Importar composiciones APU (solo si hay composiciones y existe presupuesto)
+      // 2. Importar composiciones APU (solo si el parser extrajo composiciones)
       let compMsg = '';
-      if (previewComposiciones.length > 0 && presupuesto?.id) {
-        try {
-          const resComp = await api.post(
-            `/api/v1/gerencia-tecnica/presupuestos/${presupuesto.id}/composicion-apu`,
-            { composiciones: previewComposiciones }
-          );
-          const { vinculados, actualizados: compAct } = resComp.data.data;
-          compMsg = ` · ${vinculados + compAct} relaciones APU vinculadas`;
-        } catch (_) {
-          compMsg = ' · composición APU no guardada (reintenta)';
+      if (previewComposiciones.length > 0) {
+        // Asegurar que tenemos el presupuesto_id: usar el state o hacer re-fetch
+        let presupuestoId = presupuesto?.id;
+        if (!presupuestoId) {
+          try {
+            const resp = await api.get('/api/v1/gerencia-tecnica/presupuestos');
+            const lista: Presupuesto[] = resp.data.data || [];
+            if (lista.length > 0) {
+              presupuestoId = lista[0].id;
+              setPresupuesto(lista[0]);
+            }
+          } catch (_) { /* ignorar — se avisará al usuario */ }
+        }
+
+        if (presupuestoId) {
+          try {
+            const resComp = await api.post(
+              `/api/v1/gerencia-tecnica/presupuestos/${presupuestoId}/composicion-apu`,
+              { composiciones: previewComposiciones }
+            );
+            const { vinculados, actualizados: compAct, omitidos: compOmit } = resComp.data.data;
+            const total = vinculados + compAct;
+            compMsg = total > 0
+              ? ` · ${total} relaciones APU vinculadas`
+              : ` · composición APU: ${compOmit} vínculos omitidos (verifica que las claves coincidan)`;
+          } catch (_) {
+            compMsg = ' · composición APU no guardada (reintenta)';
+          }
+        } else {
+          compMsg = ' · sin presupuesto — importa primero el Catálogo de Obra';
         }
       }
 
