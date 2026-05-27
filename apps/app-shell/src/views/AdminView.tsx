@@ -64,7 +64,13 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
     setSaving(true); setError(null);
     try {
       if (isEdit) {
-        const body: Record<string, unknown> = { nombre: form.nombre, roles: form.roles, activo: form.activo, limite_aprobacion: form.limite_aprobacion };
+        const body: Record<string, unknown> = {
+          nombre: form.nombre,
+          roles: form.roles,
+          activo: form.activo,
+          limite_aprobacion: form.limite_aprobacion,
+          proyecto_ids: form.proyecto_ids,   // ← sincronizar asignaciones de proyectos
+        };
         if (form.password) body.password = form.password;
         await api.patch(`/api/v1/auth/admin/users/${user!.id}`, body);
       } else {
@@ -389,7 +395,7 @@ export const AdminView: React.FC = () => {
       {showUserModal && (
         <UserModal user={editingUser} proyectos={proyectos}
           onClose={() => { setShowUserModal(false); setEditingUser(undefined); }}
-          onSaved={loadAll} />
+          onSaved={async () => { await loadAll(); await refreshUser(); }} />
       )}
       {showProyectoModal && (
         <ProyectoModal proyecto={editingProyecto}

@@ -699,16 +699,31 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
   try {
     const { tenantId } = req.securityContext;
     const { id } = req.params;
-    const { nombre, roles: userRoles, activo, limite_aprobacion, password } = req.body;
+    const { nombre, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = req.body;
     const updateData: Record<string, unknown> = {};
     if (nombre !== undefined) updateData.nombre = nombre;
     if (userRoles !== undefined) updateData.rol_global = userRoles;
     if (activo !== undefined) updateData.activo = activo;
     if (limite_aprobacion !== undefined) updateData.limite_aprobacion_financiera = limite_aprobacion;
     if (password) updateData.password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const user = await createTenantContext({ tenantId }, async (prisma) =>
-      prisma.user.update({ where: { id_usuario: id }, data: updateData })
-    );
+
+    const user = await createTenantContext({ tenantId }, async (prisma) => {
+      const updated = await prisma.user.update({ where: { id_usuario: id }, data: updateData });
+
+      // Sincronizar asignaciones de proyectos si se envió proyecto_ids
+      if (Array.isArray(proyecto_ids)) {
+        // Eliminar las asignaciones actuales y recrear con la lista nueva
+        await prisma.userProjectAccess.deleteMany({ where: { user_id: id } });
+        if (proyecto_ids.length > 0) {
+          await prisma.userProjectAccess.createMany({
+            data: proyecto_ids.map((pid: string) => ({ user_id: id, proyecto_id: pid })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      return updated;
+    });
     res.json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global, activo: user.activo } });
   } catch (err) {
     res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
