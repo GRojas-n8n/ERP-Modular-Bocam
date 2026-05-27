@@ -66,7 +66,7 @@
 
 ## 12. Deploy a VPS
 
-- [ ] 12.1 Aplicar migración en VPS: `docker compose exec compras npx prisma migrate deploy` (o verificar que el contenedor la aplica al arrancar)
-- [ ] 12.2 Rebuild y redeploy del contenedor `compras`: `docker compose -f docker-compose.vps.yml --profile core build --no-cache compras && docker compose -f docker-compose.vps.yml --profile core up -d compras`
-- [ ] 12.3 Rebuild y redeploy del contenedor `app-shell` con los cambios de frontend
-- [ ] 12.4 Verificar en producción que cuadros existentes tienen `estado = BORRADOR` (migrados desde `ABIERTO`) y que el flujo completo funciona con un cuadro de prueba
+- [x] 12.1 Aplicar migración en VPS: `docker compose exec compras npx prisma migrate deploy` (o verificar que el contenedor la aplica al arrancar)
+- [x] 12.2 Rebuild y redeploy del contenedor `compras`: `docker compose -f docker-compose.vps.yml --profile core build --no-cache compras && docker compose -f docker-compose.vps.yml --profile core up -d compras`
+- [x] 12.3 Rebuild y redeploy del contenedor `app-shell` con los cambios de frontend
+- [x] 12.4 Verificar en producción que cuadros existentes tienen `estado = BORRADOR` (migrados desde `ABIERTO`) y que el flujo completo funciona con un cuadro de prueba
