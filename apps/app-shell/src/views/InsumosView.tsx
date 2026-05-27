@@ -365,7 +365,6 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
     if (noVacias.length === 0) continue;
 
     const c0 = celdas[0] ?? '';
-    const c0Up = c0.toUpperCase();
 
     // ── Detectar sección de tipo ────────────────────────────────────────────
     if (/^material(es)?$/i.test(c0)) {
