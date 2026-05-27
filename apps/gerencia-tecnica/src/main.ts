@@ -410,22 +410,21 @@ app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superin
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
- * POST /api/v1/gerencia-tecnica/presupuestos/:presupuesto_id/composicion-apu
+ * POST /api/v1/gerencia-tecnica/composicion-apu
  *
- * Importa la composición APU: para cada concepto (identificado por clave),
- * guarda los insumos que lo componen con su cantidad, rendimiento y costo.
+ * Importa la composición APU buscando el presupuesto más reciente del
+ * proyecto activo (del JWT). El frontend NO necesita conocer el presupuesto_id.
  * Hace upsert por (concepto_id, insumo_id): crea o actualiza.
  *
  * Body: { composiciones: Array<{ concepto_clave: string, insumos: [...] }> }
- * Returns: { vinculados, actualizados, omitidos }
+ * Returns: { presupuesto_id, vinculados, actualizados, omitidos }
  */
 app.post(
-  '/api/v1/gerencia-tecnica/presupuestos/:presupuesto_id/composicion-apu',
+  '/api/v1/gerencia-tecnica/composicion-apu',
   requireRoles('admin', 'superintendent', 'gerencia_tecnica'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId } = req.securityContext;
-      const { presupuesto_id } = req.params;
       const { composiciones } = req.body;
 
       if (!Array.isArray(composiciones) || composiciones.length === 0) {
@@ -436,16 +435,19 @@ app.post(
 
       const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
-      // Verificar que el presupuesto pertenece al tenant + proyecto
+      // Buscar el presupuesto más reciente del proyecto activo (del JWT)
+      // No se necesita presupuesto_id del frontend — el backend lo resuelve.
       const presupuesto = await db.presupuestoBase.findFirst({
-        where: { id: presupuesto_id, proyecto_id: proyectoId },
+        where: { proyecto_id: proyectoId },
+        orderBy: { created_at: 'desc' },
         include: { conceptos: { select: { id: true, clave: true } } },
       });
       if (!presupuesto) {
         return res.status(404).json(
-          createApiError('NOT_FOUND', 'Presupuesto no encontrado o no pertenece al proyecto activo.')
+          createApiError('NOT_FOUND', 'No hay presupuesto registrado para el proyecto activo. Importa el Catálogo de Obra primero.')
         );
       }
+      const presupuesto_id = presupuesto.id;
 
       // Mapa clave (normalizada) → concepto_id
       const claveAConceptoId = new Map(
@@ -509,13 +511,90 @@ app.post(
         }
       }
 
-      console.log(`[Gerencia Técnica] Composición APU: +${vinculados} vinculados, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
-      res.json(createApiResponse({ vinculados, actualizados, omitidos }, tenantId, proyectoId));
+      console.log(`[Gerencia Técnica] Composición APU (presupuesto ${presupuesto_id}): +${vinculados} vinculados, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
+      res.json(createApiResponse({ presupuesto_id, vinculados, actualizados, omitidos }, tenantId, proyectoId));
     } catch (error: any) {
       console.error('[Gerencia Técnica] Error en POST /composicion-apu:', error.message);
       res.status(500).json(
         createApiError('INTERNAL_ERROR', 'Error al importar composición APU.', error.message)
       );
+    }
+  }
+);
+
+/**
+ * POST /api/v1/gerencia-tecnica/presupuestos/:presupuesto_id/composicion-apu
+ * @deprecated Usar POST /api/v1/gerencia-tecnica/composicion-apu (sin presupuesto_id en URL).
+ * Este endpoint se mantiene por compatibilidad pero ignora el presupuesto_id
+ * del URL — el backend siempre usa el presupuesto más reciente del proyecto JWT.
+ */
+app.post(
+  '/api/v1/gerencia-tecnica/presupuestos/:presupuesto_id/composicion-apu',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { composiciones } = req.body;
+
+      if (!Array.isArray(composiciones) || composiciones.length === 0) {
+        return res.status(400).json(
+          createApiError('VALIDATION_ERROR', 'Se requiere un array de composiciones no vacío.')
+        );
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const presupuesto = await db.presupuestoBase.findFirst({
+        where: { proyecto_id: proyectoId },
+        orderBy: { created_at: 'desc' },
+        include: { conceptos: { select: { id: true, clave: true } } },
+      });
+      if (!presupuesto) {
+        return res.status(404).json(
+          createApiError('NOT_FOUND', 'No hay presupuesto para el proyecto activo.')
+        );
+      }
+
+      const claveAConceptoId = new Map(presupuesto.conceptos.map(c => [c.clave.trim().toUpperCase(), c.id]));
+      const insumos = await db.insumo.findMany({ select: { id: true, clave: true } });
+      const claveAInsumoId = new Map(insumos.map(i => [i.clave.toUpperCase(), i.id]));
+      const TIPOS_VALIDOS = ['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'];
+      let vinculados = 0; let actualizados = 0; let omitidos = 0;
+
+      for (const comp of composiciones) {
+        const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
+        const conceptoId = claveAConceptoId.get(claveConcepto);
+        if (!conceptoId) { omitidos++; continue; }
+        if (!Array.isArray(comp.insumos)) { omitidos++; continue; }
+        for (const ins of comp.insumos) {
+          const claveInsumo = String(ins.clave_insumo ?? '').trim().toUpperCase();
+          const insumoId = claveAInsumoId.get(claveInsumo);
+          if (!insumoId || !TIPOS_VALIDOS.includes(ins.tipo_insumo)) { omitidos++; continue; }
+          const cantidad = Math.max(0, parseFloat(String(ins.cantidad ?? 0)) || 0);
+          const rendimiento = Math.max(0, parseFloat(String(ins.rendimiento ?? 0)) || 0);
+          const costoUnitario = Math.max(0, parseFloat(String(ins.costo_unitario ?? 0)) || 0);
+          try {
+            const existing = await db.conceptoInsumo.findUnique({
+              where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+            });
+            if (existing) {
+              await db.conceptoInsumo.update({
+                where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+                data: { tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
+              });
+              actualizados++;
+            } else {
+              await db.conceptoInsumo.create({
+                data: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: conceptoId, insumo_id: insumoId, tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
+              });
+              vinculados++;
+            }
+          } catch (_) { omitidos++; }
+        }
+      }
+      res.json(createApiResponse({ presupuesto_id: presupuesto.id, vinculados, actualizados, omitidos }, tenantId, proyectoId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al importar composición APU.', error.message));
     }
   }
 );
