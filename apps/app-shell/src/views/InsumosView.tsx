@@ -1851,7 +1851,7 @@ export const InsumosView: React.FC = () => {
         accentColor="indigo"
         maxWidthClassName="max-w-5xl"
       >
-        {conceptoTakeoff && (
+        {conceptoTakeoff && (<>
           <div className="space-y-6 pb-28">
 
             {/* ── Datos del concepto ── */}
@@ -2022,24 +2022,19 @@ export const InsumosView: React.FC = () => {
           {composicionItems.length > 0 && (
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-between gap-4">
               <div>
-                {(() => {
-                  const nMat = takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length;
-                  const totalMat = takeoffItems
-                    .filter(i => i.tipo_insumo === 'MATERIAL')
-                    .reduce((s, i) => s + i.subtotal_total, 0);
-                  return (
-                    <div>
-                      <p className="text-xs font-bold text-foreground">
-                        {nMat} material{nMat !== 1 ? 'es' : ''} · {cantidadTakeoff > 0 ? formatMXN(totalMat) : '—'}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
-                        {cantidadTakeoff > 0
-                          ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida} · Clave ${conceptoTakeoff.clave}`
-                          : 'Ingresa una cantidad para calcular'}
-                      </p>
-                    </div>
-                  );
-                })()}
+                <p className="text-xs font-bold text-foreground">
+                  {takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length} material
+                  {takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length !== 1 ? 'es' : ''}
+                  {' · '}
+                  {cantidadTakeoff > 0
+                    ? formatMXN(takeoffPorTipo.MATERIAL ?? 0)
+                    : '—'}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
+                  {cantidadTakeoff > 0
+                    ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida} · Clave ${conceptoTakeoff.clave}`
+                    : 'Ingresa una cantidad para calcular'}
+                </p>
               </div>
               <div className="flex gap-3">
                 <button
@@ -2057,6 +2052,7 @@ export const InsumosView: React.FC = () => {
               </div>
             </div>
           )}
+          </>
         )}
       </SlidePanel>
 
