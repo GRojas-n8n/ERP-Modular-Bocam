@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import {
@@ -31,7 +32,10 @@ import {
 import {
   IconCheckCircle2,
   IconClipboardCheck,
+  IconClock,
   IconQrCode,
+  IconSearch,
+  IconShoppingCart,
   IconUserCheck,
   IconPlus,
   IconX,
@@ -50,7 +54,52 @@ import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 type EstimacionEstado = 'BORRADOR' | 'EN_REVISION' | 'AUTORIZADA' | 'PAGADA';
 type NominaEstado = 'PENDIENTE' | 'EN_PROCESO' | 'APROBADA' | 'PAGADA';
 type AsistenciaEstado = 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADA' | 'INCAPACIDAD';
-type TabId = 'estimaciones' | 'nomina' | 'asistencia';
+type TabId = 'estimaciones' | 'nomina' | 'asistencia' | 'requisiciones';
+
+// ── Tipos Requisiciones del Residente ─────────────────────────────────────────
+
+interface ReqResidente {
+  id: string;
+  folio: string;
+  fecha: string;
+  estado: string;
+  tipo?: string;
+  prioridad: string;
+  observaciones?: string;
+}
+
+interface ConceptoSimple {
+  id: string;
+  clave: string;
+  descripcion: string;
+  unidad_medida: string;
+}
+
+interface MaterialTakeoff {
+  insumo_id: string;
+  clave: string;
+  descripcion: string;
+  unidad: string;
+  cantidad_unitaria: number; // por unidad de concepto (del APU)
+  cantidad_total: number;    // cantidad_unitaria × cantidadTakeoff
+}
+
+interface ImprevistoItem {
+  descripcion_libre: string;
+  unidad_libre: string;
+  cantidad: string;
+  notas: string;
+}
+
+const UNIDADES_REQ = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
+
+const REQ_ESTADO_BADGE: Record<string, { cls: string; label: string }> = {
+  PENDIENTE: { cls: 'bg-amber-500/10 text-amber-600',   label: 'Pendiente'  },
+  APROBADA:  { cls: 'bg-emerald-500/10 text-emerald-600', label: 'Aprobada' },
+  COMPRADA:  { cls: 'bg-sky-500/10 text-sky-600',        label: 'Comprada'  },
+  BORRADOR:  { cls: 'bg-zinc-500/10 text-zinc-500',      label: 'Borrador'  },
+  RECHAZADA: { cls: 'bg-red-500/10 text-red-600',        label: 'Rechazada' },
+};
 
 interface Estimacion {
   id: string;
@@ -219,6 +268,29 @@ export const ResidenciaView: React.FC = () => {
   const [cuadrillaFiltro, setCuadrillaFiltro] = useState('all');
   const [qrModal, setQrModal] = useState<{ id: string; nombre: string } | null>(null);
 
+  // ─ Requisiciones del Residente ─────────────────────────────────────────────
+  const [reqsResidente, setReqsResidente] = useState<ReqResidente[]>([]);
+  const [showReqPanel, setShowReqPanel] = useState(false);
+  const [reqTipo, setReqTipo] = useState<'NORMAL' | 'IMPREVISTO'>('NORMAL');
+  const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
+  const [reqNotas, setReqNotas] = useState('');
+  const [generandoReq, setGenerandoReq] = useState(false);
+
+  // Take-off APU (tipo NORMAL)
+  const [conceptos, setConceptos] = useState<ConceptoSimple[]>([]);
+  const [conceptoSearch, setConceptoSearch] = useState('');
+  const [conceptoDropdownOpen, setConceptoDropdownOpen] = useState(false);
+  const [conceptoSeleccionado, setConceptoSeleccionado] = useState<ConceptoSimple | null>(null);
+  const [cantidadTakeoff, setCantidadTakeoff] = useState('');
+  const [materialesTakeoff, setMaterialesTakeoff] = useState<MaterialTakeoff[]>([]);
+  const [loadingComposicion, setLoadingComposicion] = useState(false);
+  const conceptoDropdownRef = useRef<HTMLDivElement>(null);
+
+  // IMPREVISTO items
+  const [itemsImprevisto, setItemsImprevisto] = useState<ImprevistoItem[]>([
+    { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' },
+  ]);
+
   // ── Carga inicial ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (isDemo) {
@@ -228,9 +300,88 @@ export const ResidenciaView: React.FC = () => {
       setLoading(false);
       return;
     }
-    // TODO: fetch real
+    // TODO: fetch real estimaciones, nómina, asistencia
     setLoading(false);
   }, [isDemo]);
+
+  // ── Carga de requisiciones y conceptos (cuando se activa el tab) ──────────
+  useEffect(() => {
+    if (activeTab !== 'requisiciones' || isDemo) return;
+    const loadReqs = async () => {
+      try {
+        const [reqRes, presRes] = await Promise.allSettled([
+          api.get('/api/v1/compras/requisiciones'),
+          api.get('/api/v1/gerencia-tecnica/presupuesto/activo'),
+        ]);
+        if (reqRes.status === 'fulfilled') {
+          const raw: any[] = reqRes.value.data?.data || [];
+          setReqsResidente(raw.map(r => ({
+            id:           r.id_requisicion ?? r.id,
+            folio:        r.codigo ?? r.folio,
+            fecha:        r.fecha_solicitud ?? r.fecha,
+            estado:       r.estado,
+            tipo:         r.tipo,
+            prioridad:    r.prioridad,
+            observaciones: r.observaciones,
+          })));
+        }
+        if (presRes.status === 'fulfilled') {
+          const pres = presRes.value.data?.data;
+          const conceptosRaw: any[] = pres?.conceptos ?? [];
+          setConceptos(conceptosRaw.map((c: any) => ({
+            id:           c.id,
+            clave:        c.clave,
+            descripcion:  c.descripcion,
+            unidad_medida: c.unidad_medida,
+          })));
+        }
+      } catch { /* silencioso */ }
+    };
+    loadReqs();
+  }, [activeTab, isDemo]);
+
+  // ── Cerrar dropdown de conceptos al click afuera ─────────────────────────
+  useEffect(() => {
+    if (!conceptoDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (conceptoDropdownRef.current && !conceptoDropdownRef.current.contains(e.target as Node)) {
+        setConceptoDropdownOpen(false);
+      }
+    };
+    setTimeout(() => window.addEventListener('mousedown', handler), 0);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [conceptoDropdownOpen]);
+
+  // ── Cargar composición al seleccionar concepto ────────────────────────────
+  useEffect(() => {
+    if (!conceptoSeleccionado) { setMaterialesTakeoff([]); return; }
+    const fetchComposicion = async () => {
+      setLoadingComposicion(true);
+      try {
+        const res = await api.get(`/api/v1/gerencia-tecnica/conceptos/${conceptoSeleccionado.id}/composicion`);
+        const items: any[] = res.data?.data ?? [];
+        const materiales = items
+          .filter(ci => ci.tipo_insumo === 'MATERIAL' && ci.insumo_id)
+          .map(ci => ({
+            insumo_id:        ci.insumo_id,
+            clave:            ci.insumo?.clave ?? '',
+            descripcion:      ci.insumo?.descripcion ?? '',
+            unidad:           ci.insumo?.unidad_medida ?? '',
+            cantidad_unitaria: Number(ci.cantidad),
+            cantidad_total:   Number(ci.cantidad) * (parseFloat(cantidadTakeoff) || 0),
+          }));
+        setMaterialesTakeoff(materiales);
+      } catch { setMaterialesTakeoff([]); }
+      finally { setLoadingComposicion(false); }
+    };
+    fetchComposicion();
+  }, [conceptoSeleccionado]);
+
+  // ── Recalcular totales cuando cambia la cantidad ──────────────────────────
+  useEffect(() => {
+    const qty = parseFloat(cantidadTakeoff) || 0;
+    setMaterialesTakeoff(prev => prev.map(m => ({ ...m, cantidad_total: +(m.cantidad_unitaria * qty).toFixed(4) })));
+  }, [cantidadTakeoff]);
 
   // ── KPI helpers ───────────────────────────────────────────────────────────
   const kpiEstimaciones = {
@@ -304,6 +455,117 @@ export const ResidenciaView: React.FC = () => {
     setNominaDetalle(null);
   };
 
+  // ── Requisiciones ─────────────────────────────────────────────────────────
+  const resetReqPanel = () => {
+    setReqTipo('NORMAL');
+    setReqPrioridad('MEDIA');
+    setReqNotas('');
+    setConceptoSearch('');
+    setConceptoSeleccionado(null);
+    setCantidadTakeoff('');
+    setMaterialesTakeoff([]);
+    setItemsImprevisto([{ descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' }]);
+  };
+
+  const conceptosFiltrados = conceptoSearch.trim()
+    ? conceptos.filter(c =>
+        c.clave.toLowerCase().includes(conceptoSearch.toLowerCase()) ||
+        c.descripcion.toLowerCase().includes(conceptoSearch.toLowerCase())
+      ).slice(0, 10)
+    : conceptos.slice(0, 10);
+
+  const handleGenerarRequisicion = async () => {
+    if (reqTipo === 'NORMAL') {
+      if (!conceptoSeleccionado) {
+        notify({ type: 'error', title: 'Selecciona un concepto APU', message: '' }); return;
+      }
+      const qty = parseFloat(cantidadTakeoff);
+      if (!qty || qty <= 0) {
+        notify({ type: 'error', title: 'Ingresa una cantidad válida', message: '' }); return;
+      }
+      const materiales = materialesTakeoff.filter(m => m.cantidad_total > 0);
+      if (materiales.length === 0) {
+        notify({ type: 'error', title: 'Sin materiales en la composición', message: 'Este concepto no tiene insumos de tipo MATERIAL.' }); return;
+      }
+      if (isDemo) {
+        notify({ type: 'success', title: 'Requisición generada (demo)',
+          message: `${conceptoSeleccionado.clave} · ${materiales.length} material${materiales.length !== 1 ? 'es' : ''} · Prioridad ${reqPrioridad}`,
+          duration: 6000 });
+        setShowReqPanel(false); resetReqPanel(); return;
+      }
+      try {
+        setGenerandoReq(true);
+        const res = await api.post('/api/v1/compras/requisiciones', {
+          tipo: 'NORMAL',
+          prioridad: reqPrioridad,
+          observaciones: `Take-off APU · ${conceptoSeleccionado.clave} · ${conceptoSeleccionado.descripcion} · ${qty} ${conceptoSeleccionado.unidad_medida}`,
+          items: materiales.map(m => ({
+            insumo_id: m.insumo_id,
+            cantidad:  m.cantidad_total,
+            notas:     `APU ${conceptoSeleccionado.clave}: ${m.cantidad_unitaria} × ${qty} ${conceptoSeleccionado.unidad_medida}`,
+          })),
+        });
+        const r = res.data.data;
+        const folio = r.codigo ?? r.id;
+        notify({ type: 'success', title: 'Requisición creada',
+          message: `${folio} · ${materiales.length} material${materiales.length !== 1 ? 'es' : ''} · Procurement la revisará.`,
+          duration: 7000 });
+        setShowReqPanel(false); resetReqPanel();
+        // refrescar lista
+        const fresh = await api.get('/api/v1/compras/requisiciones');
+        const raw: any[] = fresh.data?.data || [];
+        setReqsResidente(raw.map(r2 => ({
+          id: r2.id_requisicion ?? r2.id, folio: r2.codigo ?? r2.folio,
+          fecha: r2.fecha_solicitud ?? r2.fecha, estado: r2.estado,
+          tipo: r2.tipo, prioridad: r2.prioridad, observaciones: r2.observaciones,
+        })));
+      } catch (err: any) {
+        notify({ type: 'error', title: 'Error al crear requisición', message: err.response?.data?.message || err.message });
+      } finally { setGenerandoReq(false); }
+
+    } else {
+      // IMPREVISTO
+      const validos = itemsImprevisto.filter(i => i.descripcion_libre.trim() && i.cantidad);
+      if (validos.length === 0) {
+        notify({ type: 'error', title: 'Agrega al menos un ítem con descripción y cantidad', message: '' }); return;
+      }
+      if (isDemo) {
+        notify({ type: 'success', title: 'Req. Imprevisto creada (demo)',
+          message: `${validos.length} ítem${validos.length !== 1 ? 's' : ''} · Prioridad ${reqPrioridad}` });
+        setShowReqPanel(false); resetReqPanel(); return;
+      }
+      try {
+        setGenerandoReq(true);
+        const res = await api.post('/api/v1/compras/requisiciones', {
+          tipo: 'IMPREVISTO',
+          prioridad: reqPrioridad,
+          observaciones: reqNotas || undefined,
+          items: validos.map(i => ({
+            descripcion_libre: i.descripcion_libre,
+            unidad_libre: i.unidad_libre || 'PZA',
+            cantidad: Number(i.cantidad),
+            notas: i.notas || undefined,
+            es_imprevisto: true,
+          })),
+        });
+        const r = res.data.data;
+        notify({ type: 'success', title: 'Req. Imprevisto enviada',
+          message: `${r.codigo ?? r.id} · Procurement la revisará antes de cotizar.`,
+          duration: 7000 });
+        setShowReqPanel(false); resetReqPanel();
+        const fresh = await api.get('/api/v1/compras/requisiciones');
+        const raw: any[] = fresh.data?.data || [];
+        setReqsResidente(raw.map(r2 => ({
+          id: r2.id_requisicion ?? r2.id, folio: r2.codigo ?? r2.folio,
+          fecha: r2.fecha_solicitud ?? r2.fecha, estado: r2.estado,
+          tipo: r2.tipo, prioridad: r2.prioridad, observaciones: r2.observaciones,
+        })));
+      } catch (err: any) {
+        notify({ type: 'error', title: 'Error al crear requisición', message: err.response?.data?.message || err.message });
+      } finally { setGenerandoReq(false); }
+    }
+  };
+
   const handleRegistrarManual = (registro: RegistroAsistencia) => {
     const nuevoEstado: AsistenciaEstado = registro.estado === 'AUSENTE' ? 'PRESENTE' : 'AUSENTE';
     setAsistencia(prev => prev.map(a =>
@@ -317,10 +579,12 @@ export const ResidenciaView: React.FC = () => {
   };
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
-  const TABS: { id: TabId; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'estimaciones', label: 'Estimaciones', icon: IconClipboardCheck },
-    { id: 'nomina',       label: 'Nómina',        icon: IconUserCheck      },
-    { id: 'asistencia',  label: 'Asistencia QR',  icon: IconQrCode         },
+  const TABS: { id: TabId; label: string; icon: React.FC<{ className?: string }>; count?: number }[] = [
+    { id: 'estimaciones',  label: 'Estimaciones',   icon: IconClipboardCheck },
+    { id: 'nomina',        label: 'Nómina',          icon: IconUserCheck      },
+    { id: 'asistencia',   label: 'Asistencia QR',   icon: IconQrCode         },
+    { id: 'requisiciones', label: 'Requisiciones',   icon: IconShoppingCart,
+      count: isDemo ? 0 : reqsResidente.filter(r => r.estado === 'PENDIENTE').length },
   ];
 
   if (loading) {
@@ -399,9 +663,27 @@ export const ResidenciaView: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'requisiciones' && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: 'Total',      value: isDemo ? '—' : String(reqsResidente.length),                                               cls: 'text-foreground'  },
+            { label: 'Pendientes', value: isDemo ? '—' : String(reqsResidente.filter(r => r.estado === 'PENDIENTE').length),         cls: 'text-amber-600'   },
+            { label: 'Aprobadas',  value: isDemo ? '—' : String(reqsResidente.filter(r => r.estado === 'APROBADA').length),          cls: 'text-emerald-600' },
+            { label: 'Imprevistos',value: isDemo ? '—' : String(reqsResidente.filter(r => r.tipo === 'IMPREVISTO').length),          cls: 'text-orange-600'  },
+          ].map(k => (
+            <Card key={k.label}>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{k.label}</p>
+                <p className={cn('mt-1 text-xl font-black', k.cls)}>{k.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* ── Tab bar ────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 rounded-xl border border-border bg-muted/30 p-1 w-fit">
-        {TABS.map(({ id, label, icon: Icon }) => (
+      <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted/30 p-1 w-fit">
+        {TABS.map(({ id, label, icon: Icon, count }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
@@ -414,6 +696,11 @@ export const ResidenciaView: React.FC = () => {
           >
             <Icon className="h-3.5 w-3.5" />
             {label}
+            {typeof count === 'number' && count > 0 && (
+              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black text-amber-600">
+                {count}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -834,6 +1121,347 @@ export const ResidenciaView: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* TAB: REQUISICIONES                                               */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {activeTab === 'requisiciones' && (
+        <div className="space-y-4">
+          {/* Header con botón nueva req */}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Tus solicitudes de compra para este frente de obra
+            </p>
+            <Button
+              size="sm"
+              onClick={() => setShowReqPanel(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black"
+            >
+              <IconPlus className="mr-1.5 h-3.5 w-3.5" />
+              Nueva Requisición
+            </Button>
+          </div>
+
+          {isDemo ? (
+            <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
+              <IconShoppingCart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+              <p className="text-sm font-bold text-muted-foreground">Demo — usa "Nueva Requisición" para simular</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                En producción verás aquí todas las solicitudes que hayas enviado a Compras.
+              </p>
+            </div>
+          ) : reqsResidente.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
+              <IconShoppingCart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+              <p className="text-sm font-bold text-muted-foreground">Sin requisiciones activas</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Crea una desde un concepto APU o como imprevisto de obra.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {reqsResidente.map(req => {
+                const badge = REQ_ESTADO_BADGE[req.estado] ?? { cls: 'bg-zinc-500/10 text-zinc-500', label: req.estado };
+                return (
+                  <Card key={req.id} className="border-border/40">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-[10px] font-black text-indigo-700">
+                          {req.folio}
+                        </span>
+                        {req.tipo === 'IMPREVISTO' && (
+                          <span className="rounded-md border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[9px] font-black text-orange-700">
+                            Imprevisto
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black', badge.cls)}>
+                          <IconClock className="h-3 w-3" />
+                          {badge.label}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(req.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                        </span>
+                      </div>
+                      {req.observaciones && (
+                        <p className="text-[11px] text-muted-foreground line-clamp-2">{req.observaciones}</p>
+                      )}
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span>Prioridad: <strong>{req.prioridad}</strong></span>
+                        {req.estado === 'PENDIENTE' && (
+                          <span className="text-amber-600">⏳ Esperando aprobación</span>
+                        )}
+                        {req.estado === 'APROBADA' && (
+                          <span className="text-emerald-600">✓ En cotización</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* SLIDE PANEL — Nueva Requisición (Residente)                      */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <SlidePanel
+        isOpen={showReqPanel}
+        onClose={() => { setShowReqPanel(false); resetReqPanel(); }}
+        title="Nueva Requisición"
+        subtitle={reqTipo === 'IMPREVISTO' ? 'Imprevisto de obra — texto libre' : 'Solicitud desde APU'}
+        accentColor={reqTipo === 'IMPREVISTO' ? 'amber' : 'indigo'}
+      >
+        <div className="space-y-5">
+
+          {/* Selector tipo */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: 'NORMAL',     label: '📋 Desde APU',    sub: 'Calcula materiales desde el catálogo de obra' },
+              { value: 'IMPREVISTO', label: '⚠️ Imprevisto',   sub: 'Material que no está en el presupuesto APU'   },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setReqTipo(opt.value as 'NORMAL' | 'IMPREVISTO')}
+                className={cn(
+                  'flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all',
+                  reqTipo === opt.value
+                    ? opt.value === 'IMPREVISTO'
+                      ? 'border-orange-500/40 bg-orange-500/10 shadow-sm'
+                      : 'border-indigo-500/40 bg-indigo-500/10 shadow-sm'
+                    : 'border-border/30 bg-muted/20 hover:bg-muted/40'
+                )}
+              >
+                <span className={cn('text-xs font-black',
+                  reqTipo === opt.value
+                    ? opt.value === 'IMPREVISTO' ? 'text-orange-700' : 'text-indigo-700'
+                    : 'text-foreground'
+                )}>
+                  {opt.label}
+                </span>
+                <span className="mt-0.5 text-[10px] text-muted-foreground leading-snug">{opt.sub}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* ── NORMAL: búsqueda de concepto APU ── */}
+          {reqTipo === 'NORMAL' && (
+            <div className="space-y-4">
+              {/* Concepto seleccionado */}
+              {conceptoSeleccionado ? (
+                <div className="flex items-center justify-between rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3">
+                  <div>
+                    <p className="text-xs font-black text-indigo-700">{conceptoSeleccionado.clave} — {conceptoSeleccionado.descripcion}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{conceptoSeleccionado.unidad_medida}</p>
+                  </div>
+                  <button type="button" onClick={() => { setConceptoSeleccionado(null); setMaterialesTakeoff([]); setCantidadTakeoff(''); }}
+                    className="ml-3 text-muted-foreground hover:text-foreground">
+                    <IconX className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <FormField label="Concepto APU" required hint="Busca por clave o descripción">
+                  <div ref={conceptoDropdownRef} className="relative">
+                    <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      className="pl-9 text-xs"
+                      placeholder="Ej: 1.3 — Cimentación corrida..."
+                      value={conceptoSearch}
+                      onFocus={() => setConceptoDropdownOpen(true)}
+                      onChange={e => { setConceptoSearch(e.target.value); setConceptoDropdownOpen(true); }}
+                    />
+                    {conceptoDropdownOpen && conceptosFiltrados.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full rounded-xl border border-border/40 bg-card shadow-xl max-h-56 overflow-y-auto">
+                        {conceptosFiltrados.map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onMouseDown={() => {
+                              setConceptoSeleccionado(c);
+                              setConceptoSearch('');
+                              setConceptoDropdownOpen(false);
+                            }}
+                            className="flex w-full items-start gap-3 px-4 py-2.5 text-left hover:bg-muted/60 first:rounded-t-xl last:rounded-b-xl"
+                          >
+                            <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-black text-indigo-700 shrink-0">{c.clave}</span>
+                            <span className="flex-1 text-xs text-foreground leading-snug">{c.descripcion}</span>
+                            <span className="shrink-0 text-[9px] text-muted-foreground">{c.unidad_medida}</span>
+                          </button>
+                        ))}
+                        {conceptosFiltrados.length === 0 && conceptoSearch && (
+                          <div className="px-4 py-3 text-xs text-muted-foreground">Sin conceptos en el presupuesto activo</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </FormField>
+              )}
+
+              {/* Cantidad a ejecutar */}
+              {conceptoSeleccionado && (
+                <FormField label={`Cantidad a ejecutar (${conceptoSeleccionado.unidad_medida})`} required>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={cantidadTakeoff}
+                    onChange={e => setCantidadTakeoff(e.target.value)}
+                  />
+                </FormField>
+              )}
+
+              {/* Materiales del take-off */}
+              {loadingComposicion && (
+                <div className="text-center py-4">
+                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-600" />
+                  <p className="mt-2 text-[10px] text-muted-foreground">Cargando composición APU...</p>
+                </div>
+              )}
+              {!loadingComposicion && materialesTakeoff.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Materiales a requisitar
+                    </p>
+                    <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-[9px] font-black text-indigo-700">
+                      {materialesTakeoff.length} insumo{materialesTakeoff.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-border/40 overflow-hidden">
+                    {materialesTakeoff.map((m, i) => (
+                      <div key={m.insumo_id}
+                        className={cn('flex items-center justify-between gap-3 px-4 py-2.5 text-xs',
+                          i % 2 === 0 ? 'bg-muted/20' : 'bg-transparent'
+                        )}>
+                        <div className="flex-1 min-w-0">
+                          <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700 mr-2">{m.clave}</span>
+                          <span className="text-foreground truncate">{m.descripcion}</span>
+                        </div>
+                        <span className={cn('shrink-0 font-black text-right',
+                          (parseFloat(cantidadTakeoff) || 0) > 0 ? 'text-indigo-700' : 'text-muted-foreground'
+                        )}>
+                          {(parseFloat(cantidadTakeoff) || 0) > 0
+                            ? `${m.cantidad_total.toFixed(4)} ${m.unidad}`
+                            : '—'
+                          }
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {!cantidadTakeoff && (
+                    <p className="text-[10px] text-muted-foreground text-center">Ingresa la cantidad para ver los totales</p>
+                  )}
+                </div>
+              )}
+              {!loadingComposicion && conceptoSeleccionado && materialesTakeoff.length === 0 && (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[10px] text-amber-700">
+                  Este concepto no tiene insumos de tipo MATERIAL en su composición APU.
+                  Si necesitas materiales no catalogados, usa el tipo <strong>Imprevisto</strong>.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── IMPREVISTO: texto libre ── */}
+          {reqTipo === 'IMPREVISTO' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Materiales a solicitar <span className="text-red-500">*</span>
+                </p>
+                <button type="button"
+                  onClick={() => setItemsImprevisto(prev => [...prev, { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' }])}
+                  className="flex items-center gap-1 text-[10px] font-black text-orange-600 hover:text-orange-500"
+                >
+                  <IconPlus className="h-3 w-3" /> Agregar ítem
+                </button>
+              </div>
+              {itemsImprevisto.map((item, idx) => (
+                <Card key={idx} className="border-orange-500/20 bg-orange-500/5 shadow-none">
+                  <CardContent className="relative p-4 space-y-3">
+                    {itemsImprevisto.length > 1 && (
+                      <button type="button"
+                        onClick={() => setItemsImprevisto(prev => prev.filter((_, i) => i !== idx))}
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-red-500">
+                        <IconX className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    <FormField label="Descripción del material" required>
+                      <Input
+                        placeholder="Ej: Tabique rojo recocido 7×14×28 cm"
+                        value={item.descripcion_libre}
+                        onChange={e => setItemsImprevisto(prev => {
+                          const n = [...prev]; n[idx] = { ...n[idx], descripcion_libre: e.target.value }; return n;
+                        })}
+                      />
+                    </FormField>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField label="Unidad">
+                        <Select value={item.unidad_libre} onChange={e => setItemsImprevisto(prev => {
+                          const n = [...prev]; n[idx] = { ...n[idx], unidad_libre: e.target.value }; return n;
+                        })}>
+                          {UNIDADES_REQ.map(u => <option key={u} value={u}>{u}</option>)}
+                        </Select>
+                      </FormField>
+                      <FormField label="Cantidad" required>
+                        <Input type="number" placeholder="0"
+                          value={item.cantidad}
+                          onChange={e => setItemsImprevisto(prev => {
+                            const n = [...prev]; n[idx] = { ...n[idx], cantidad: e.target.value }; return n;
+                          })}
+                        />
+                      </FormField>
+                    </div>
+                    <FormField label="Notas (frente, área)">
+                      <Input className="text-xs" placeholder="Ej: Frente Nivel 12 eje A-B"
+                        value={item.notas}
+                        onChange={e => setItemsImprevisto(prev => {
+                          const n = [...prev]; n[idx] = { ...n[idx], notas: e.target.value }; return n;
+                        })}
+                      />
+                    </FormField>
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-[10px] text-orange-700">
+                ⚠️ Los imprevistos quedan etiquetados para reportes de desviación presupuestal. Procurement los revisará antes de cotizar.
+              </div>
+            </div>
+          )}
+
+          {/* Prioridad y notas comunes */}
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Prioridad">
+              <Select value={reqPrioridad} onChange={e => setReqPrioridad(e.target.value)}>
+                <option value="BAJA">Baja</option>
+                <option value="MEDIA">Media</option>
+                <option value="ALTA">Alta — urgente</option>
+              </Select>
+            </FormField>
+            <div />
+          </div>
+
+          <FormField label={reqTipo === 'IMPREVISTO' ? 'Justificación' : 'Notas adicionales'}>
+            <Textarea className="min-h-[70px]"
+              placeholder={reqTipo === 'IMPREVISTO' ? 'Motivo del imprevisto...' : 'Observaciones...'}
+              value={reqNotas}
+              onChange={e => setReqNotas(e.target.value)}
+            />
+          </FormField>
+
+          <div className="border-t border-border/40 pt-4">
+            <SubmitButton
+              label={reqTipo === 'IMPREVISTO' ? 'Enviar Imprevisto a Compras' : 'Generar Requisición APU'}
+              loading={generandoReq}
+              color={reqTipo === 'IMPREVISTO' ? 'amber' : 'indigo'}
+              onClick={handleGenerarRequisicion}
+            />
+          </div>
+        </div>
+      </SlidePanel>
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* MODAL — QR de asistencia                                        */}
