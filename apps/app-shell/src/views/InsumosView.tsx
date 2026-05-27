@@ -453,14 +453,6 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
   return Array.from(insumoMap.values());
 }
 
-/** Heurística de tipo_insumo desde prefijo de clave OPUS */
-function inferirTipoDesdeClaveOPUS(clave: string): TipoInsumo {
-  const c = clave.toUpperCase();
-  if (/^J(OR)?[0-9A-Z]/.test(c) || /^MO[0-9]/.test(c)) return 'MANO_DE_OBRA';
-  if (/^(H|EQ|MAQ|EQP|HER)[0-9A-Z]/.test(c))           return 'EQUIPO';
-  if (/^S(UB)?[0-9A-Z]/.test(c))                        return 'SUBCONTRATO';
-  return 'MATERIAL';
-}
 
 // ─── Leer archivo Excel/CSV como array de arrays ──────────────────────────────
 function leerArchivoComoRawRows(
