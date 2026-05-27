@@ -6894,6 +6894,11 @@ export namespace Prisma {
     fecha_creacion: Date | null
     estado: string | null
     notas: string | null
+    evaluacion_residente_id: string | null
+    fecha_evaluacion_tecnica: Date | null
+    gerente_tecnico_id: string | null
+    fecha_aprobacion_gt: Date | null
+    comentario_gt_general: string | null
   }
 
   export type CuadroComparativoMaxAggregateOutputType = {
@@ -6905,6 +6910,11 @@ export namespace Prisma {
     fecha_creacion: Date | null
     estado: string | null
     notas: string | null
+    evaluacion_residente_id: string | null
+    fecha_evaluacion_tecnica: Date | null
+    gerente_tecnico_id: string | null
+    fecha_aprobacion_gt: Date | null
+    comentario_gt_general: string | null
   }
 
   export type CuadroComparativoCountAggregateOutputType = {
@@ -6916,6 +6926,11 @@ export namespace Prisma {
     fecha_creacion: number
     estado: number
     notas: number
+    evaluacion_residente_id: number
+    fecha_evaluacion_tecnica: number
+    gerente_tecnico_id: number
+    fecha_aprobacion_gt: number
+    comentario_gt_general: number
     _all: number
   }
 
@@ -6929,6 +6944,11 @@ export namespace Prisma {
     fecha_creacion?: true
     estado?: true
     notas?: true
+    evaluacion_residente_id?: true
+    fecha_evaluacion_tecnica?: true
+    gerente_tecnico_id?: true
+    fecha_aprobacion_gt?: true
+    comentario_gt_general?: true
   }
 
   export type CuadroComparativoMaxAggregateInputType = {
@@ -6940,6 +6960,11 @@ export namespace Prisma {
     fecha_creacion?: true
     estado?: true
     notas?: true
+    evaluacion_residente_id?: true
+    fecha_evaluacion_tecnica?: true
+    gerente_tecnico_id?: true
+    fecha_aprobacion_gt?: true
+    comentario_gt_general?: true
   }
 
   export type CuadroComparativoCountAggregateInputType = {
@@ -6951,6 +6976,11 @@ export namespace Prisma {
     fecha_creacion?: true
     estado?: true
     notas?: true
+    evaluacion_residente_id?: true
+    fecha_evaluacion_tecnica?: true
+    gerente_tecnico_id?: true
+    fecha_aprobacion_gt?: true
+    comentario_gt_general?: true
     _all?: true
   }
 
@@ -7035,6 +7065,11 @@ export namespace Prisma {
     fecha_creacion: Date
     estado: string
     notas: string | null
+    evaluacion_residente_id: string | null
+    fecha_evaluacion_tecnica: Date | null
+    gerente_tecnico_id: string | null
+    fecha_aprobacion_gt: Date | null
+    comentario_gt_general: string | null
     _count: CuadroComparativoCountAggregateOutputType | null
     _min: CuadroComparativoMinAggregateOutputType | null
     _max: CuadroComparativoMaxAggregateOutputType | null
@@ -7063,6 +7098,11 @@ export namespace Prisma {
     fecha_creacion?: boolean
     estado?: boolean
     notas?: boolean
+    evaluacion_residente_id?: boolean
+    fecha_evaluacion_tecnica?: boolean
+    gerente_tecnico_id?: boolean
+    fecha_aprobacion_gt?: boolean
+    comentario_gt_general?: boolean
     detalles?: boolean | CuadroComparativo$detallesArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cuadroComparativo"]>
@@ -7076,6 +7116,11 @@ export namespace Prisma {
     fecha_creacion?: boolean
     estado?: boolean
     notas?: boolean
+    evaluacion_residente_id?: boolean
+    fecha_evaluacion_tecnica?: boolean
+    gerente_tecnico_id?: boolean
+    fecha_aprobacion_gt?: boolean
+    comentario_gt_general?: boolean
   }, ExtArgs["result"]["cuadroComparativo"]>
 
   export type CuadroComparativoSelectScalar = {
@@ -7087,6 +7132,11 @@ export namespace Prisma {
     fecha_creacion?: boolean
     estado?: boolean
     notas?: boolean
+    evaluacion_residente_id?: boolean
+    fecha_evaluacion_tecnica?: boolean
+    gerente_tecnico_id?: boolean
+    fecha_aprobacion_gt?: boolean
+    comentario_gt_general?: boolean
   }
 
   export type CuadroComparativoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7109,6 +7159,11 @@ export namespace Prisma {
       fecha_creacion: Date
       estado: string
       notas: string | null
+      evaluacion_residente_id: string | null
+      fecha_evaluacion_tecnica: Date | null
+      gerente_tecnico_id: string | null
+      fecha_aprobacion_gt: Date | null
+      comentario_gt_general: string | null
     }, ExtArgs["result"]["cuadroComparativo"]>
     composites: {}
   }
@@ -7511,6 +7566,11 @@ export namespace Prisma {
     readonly fecha_creacion: FieldRef<"CuadroComparativo", 'DateTime'>
     readonly estado: FieldRef<"CuadroComparativo", 'String'>
     readonly notas: FieldRef<"CuadroComparativo", 'String'>
+    readonly evaluacion_residente_id: FieldRef<"CuadroComparativo", 'String'>
+    readonly fecha_evaluacion_tecnica: FieldRef<"CuadroComparativo", 'DateTime'>
+    readonly gerente_tecnico_id: FieldRef<"CuadroComparativo", 'String'>
+    readonly fecha_aprobacion_gt: FieldRef<"CuadroComparativo", 'DateTime'>
+    readonly comentario_gt_general: FieldRef<"CuadroComparativo", 'String'>
   }
     
 
@@ -7889,6 +7949,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | null
     tiempo_entrega: string | null
     es_ganador: boolean | null
+    evaluacion_tecnica: string | null
+    comentario_tecnico: string | null
+    aprobacion_gt: string | null
+    comentario_gt: string | null
   }
 
   export type ComparativaDetalleMaxAggregateOutputType = {
@@ -7901,6 +7965,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | null
     tiempo_entrega: string | null
     es_ganador: boolean | null
+    evaluacion_tecnica: string | null
+    comentario_tecnico: string | null
+    aprobacion_gt: string | null
+    comentario_gt: string | null
   }
 
   export type ComparativaDetalleCountAggregateOutputType = {
@@ -7913,6 +7981,10 @@ export namespace Prisma {
     precio_ofertado: number
     tiempo_entrega: number
     es_ganador: number
+    evaluacion_tecnica: number
+    comentario_tecnico: number
+    aprobacion_gt: number
+    comentario_gt: number
     _all: number
   }
 
@@ -7935,6 +8007,10 @@ export namespace Prisma {
     precio_ofertado?: true
     tiempo_entrega?: true
     es_ganador?: true
+    evaluacion_tecnica?: true
+    comentario_tecnico?: true
+    aprobacion_gt?: true
+    comentario_gt?: true
   }
 
   export type ComparativaDetalleMaxAggregateInputType = {
@@ -7947,6 +8023,10 @@ export namespace Prisma {
     precio_ofertado?: true
     tiempo_entrega?: true
     es_ganador?: true
+    evaluacion_tecnica?: true
+    comentario_tecnico?: true
+    aprobacion_gt?: true
+    comentario_gt?: true
   }
 
   export type ComparativaDetalleCountAggregateInputType = {
@@ -7959,6 +8039,10 @@ export namespace Prisma {
     precio_ofertado?: true
     tiempo_entrega?: true
     es_ganador?: true
+    evaluacion_tecnica?: true
+    comentario_tecnico?: true
+    aprobacion_gt?: true
+    comentario_gt?: true
     _all?: true
   }
 
@@ -8058,6 +8142,10 @@ export namespace Prisma {
     precio_ofertado: Decimal
     tiempo_entrega: string | null
     es_ganador: boolean
+    evaluacion_tecnica: string
+    comentario_tecnico: string | null
+    aprobacion_gt: string
+    comentario_gt: string | null
     _count: ComparativaDetalleCountAggregateOutputType | null
     _avg: ComparativaDetalleAvgAggregateOutputType | null
     _sum: ComparativaDetalleSumAggregateOutputType | null
@@ -8089,6 +8177,10 @@ export namespace Prisma {
     precio_ofertado?: boolean
     tiempo_entrega?: boolean
     es_ganador?: boolean
+    evaluacion_tecnica?: boolean
+    comentario_tecnico?: boolean
+    aprobacion_gt?: boolean
+    comentario_gt?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["comparativaDetalle"]>
@@ -8103,6 +8195,10 @@ export namespace Prisma {
     precio_ofertado?: boolean
     tiempo_entrega?: boolean
     es_ganador?: boolean
+    evaluacion_tecnica?: boolean
+    comentario_tecnico?: boolean
+    aprobacion_gt?: boolean
+    comentario_gt?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["comparativaDetalle"]>
@@ -8117,6 +8213,10 @@ export namespace Prisma {
     precio_ofertado?: boolean
     tiempo_entrega?: boolean
     es_ganador?: boolean
+    evaluacion_tecnica?: boolean
+    comentario_tecnico?: boolean
+    aprobacion_gt?: boolean
+    comentario_gt?: boolean
   }
 
   export type ComparativaDetalleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8144,6 +8244,10 @@ export namespace Prisma {
       precio_ofertado: Prisma.Decimal
       tiempo_entrega: string | null
       es_ganador: boolean
+      evaluacion_tecnica: string
+      comentario_tecnico: string | null
+      aprobacion_gt: string
+      comentario_gt: string | null
     }, ExtArgs["result"]["comparativaDetalle"]>
     composites: {}
   }
@@ -8548,6 +8652,10 @@ export namespace Prisma {
     readonly precio_ofertado: FieldRef<"ComparativaDetalle", 'Decimal'>
     readonly tiempo_entrega: FieldRef<"ComparativaDetalle", 'String'>
     readonly es_ganador: FieldRef<"ComparativaDetalle", 'Boolean'>
+    readonly evaluacion_tecnica: FieldRef<"ComparativaDetalle", 'String'>
+    readonly comentario_tecnico: FieldRef<"ComparativaDetalle", 'String'>
+    readonly aprobacion_gt: FieldRef<"ComparativaDetalle", 'String'>
+    readonly comentario_gt: FieldRef<"ComparativaDetalle", 'String'>
   }
     
 
@@ -12047,7 +12155,12 @@ export namespace Prisma {
     codigo: 'codigo',
     fecha_creacion: 'fecha_creacion',
     estado: 'estado',
-    notas: 'notas'
+    notas: 'notas',
+    evaluacion_residente_id: 'evaluacion_residente_id',
+    fecha_evaluacion_tecnica: 'fecha_evaluacion_tecnica',
+    gerente_tecnico_id: 'gerente_tecnico_id',
+    fecha_aprobacion_gt: 'fecha_aprobacion_gt',
+    comentario_gt_general: 'comentario_gt_general'
   };
 
   export type CuadroComparativoScalarFieldEnum = (typeof CuadroComparativoScalarFieldEnum)[keyof typeof CuadroComparativoScalarFieldEnum]
@@ -12062,7 +12175,11 @@ export namespace Prisma {
     insumo_id: 'insumo_id',
     precio_ofertado: 'precio_ofertado',
     tiempo_entrega: 'tiempo_entrega',
-    es_ganador: 'es_ganador'
+    es_ganador: 'es_ganador',
+    evaluacion_tecnica: 'evaluacion_tecnica',
+    comentario_tecnico: 'comentario_tecnico',
+    aprobacion_gt: 'aprobacion_gt',
+    comentario_gt: 'comentario_gt'
   };
 
   export type ComparativaDetalleScalarFieldEnum = (typeof ComparativaDetalleScalarFieldEnum)[keyof typeof ComparativaDetalleScalarFieldEnum]
@@ -12613,6 +12730,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFilter<"CuadroComparativo"> | Date | string
     estado?: StringFilter<"CuadroComparativo"> | string
     notas?: StringNullableFilter<"CuadroComparativo"> | string | null
+    evaluacion_residente_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
+    fecha_evaluacion_tecnica?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
+    gerente_tecnico_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
+    fecha_aprobacion_gt?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
+    comentario_gt_general?: StringNullableFilter<"CuadroComparativo"> | string | null
     detalles?: ComparativaDetalleListRelationFilter
   }
 
@@ -12625,6 +12747,11 @@ export namespace Prisma {
     fecha_creacion?: SortOrder
     estado?: SortOrder
     notas?: SortOrderInput | SortOrder
+    evaluacion_residente_id?: SortOrderInput | SortOrder
+    fecha_evaluacion_tecnica?: SortOrderInput | SortOrder
+    gerente_tecnico_id?: SortOrderInput | SortOrder
+    fecha_aprobacion_gt?: SortOrderInput | SortOrder
+    comentario_gt_general?: SortOrderInput | SortOrder
     detalles?: ComparativaDetalleOrderByRelationAggregateInput
   }
 
@@ -12641,6 +12768,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFilter<"CuadroComparativo"> | Date | string
     estado?: StringFilter<"CuadroComparativo"> | string
     notas?: StringNullableFilter<"CuadroComparativo"> | string | null
+    evaluacion_residente_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
+    fecha_evaluacion_tecnica?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
+    gerente_tecnico_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
+    fecha_aprobacion_gt?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
+    comentario_gt_general?: StringNullableFilter<"CuadroComparativo"> | string | null
     detalles?: ComparativaDetalleListRelationFilter
   }, "id_cuadro" | "tenant_id_codigo">
 
@@ -12653,6 +12785,11 @@ export namespace Prisma {
     fecha_creacion?: SortOrder
     estado?: SortOrder
     notas?: SortOrderInput | SortOrder
+    evaluacion_residente_id?: SortOrderInput | SortOrder
+    fecha_evaluacion_tecnica?: SortOrderInput | SortOrder
+    gerente_tecnico_id?: SortOrderInput | SortOrder
+    fecha_aprobacion_gt?: SortOrderInput | SortOrder
+    comentario_gt_general?: SortOrderInput | SortOrder
     _count?: CuadroComparativoCountOrderByAggregateInput
     _max?: CuadroComparativoMaxOrderByAggregateInput
     _min?: CuadroComparativoMinOrderByAggregateInput
@@ -12670,6 +12807,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeWithAggregatesFilter<"CuadroComparativo"> | Date | string
     estado?: StringWithAggregatesFilter<"CuadroComparativo"> | string
     notas?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+    evaluacion_residente_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+    fecha_evaluacion_tecnica?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
+    gerente_tecnico_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+    fecha_aprobacion_gt?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
+    comentario_gt_general?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
   }
 
   export type ComparativaDetalleWhereInput = {
@@ -12685,6 +12827,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: StringNullableFilter<"ComparativaDetalle"> | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
+    evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
+    comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
+    comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
   }
@@ -12699,6 +12845,10 @@ export namespace Prisma {
     precio_ofertado?: SortOrder
     tiempo_entrega?: SortOrderInput | SortOrder
     es_ganador?: SortOrder
+    evaluacion_tecnica?: SortOrder
+    comentario_tecnico?: SortOrderInput | SortOrder
+    aprobacion_gt?: SortOrder
+    comentario_gt?: SortOrderInput | SortOrder
     cuadro?: CuadroComparativoOrderByWithRelationInput
     proveedor?: ProveedorOrderByWithRelationInput
   }
@@ -12716,6 +12866,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: StringNullableFilter<"ComparativaDetalle"> | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
+    evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
+    comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
+    comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
   }, "id_detalle">
@@ -12730,6 +12884,10 @@ export namespace Prisma {
     precio_ofertado?: SortOrder
     tiempo_entrega?: SortOrderInput | SortOrder
     es_ganador?: SortOrder
+    evaluacion_tecnica?: SortOrder
+    comentario_tecnico?: SortOrderInput | SortOrder
+    aprobacion_gt?: SortOrder
+    comentario_gt?: SortOrderInput | SortOrder
     _count?: ComparativaDetalleCountOrderByAggregateInput
     _avg?: ComparativaDetalleAvgOrderByAggregateInput
     _max?: ComparativaDetalleMaxOrderByAggregateInput
@@ -12750,6 +12908,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalWithAggregatesFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
     es_ganador?: BoolWithAggregatesFilter<"ComparativaDetalle"> | boolean
+    evaluacion_tecnica?: StringWithAggregatesFilter<"ComparativaDetalle"> | string
+    comentario_tecnico?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    aprobacion_gt?: StringWithAggregatesFilter<"ComparativaDetalle"> | string
+    comentario_gt?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
   }
 
   export type AlertaOcErrorWhereInput = {
@@ -13454,6 +13616,11 @@ export namespace Prisma {
     fecha_creacion?: Date | string
     estado?: string
     notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
   }
 
@@ -13466,6 +13633,11 @@ export namespace Prisma {
     fecha_creacion?: Date | string
     estado?: string
     notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
   }
 
@@ -13478,6 +13650,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
   }
 
@@ -13490,6 +13667,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
@@ -13502,6 +13684,11 @@ export namespace Prisma {
     fecha_creacion?: Date | string
     estado?: string
     notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
   }
 
   export type CuadroComparativoUpdateManyMutationInput = {
@@ -13513,6 +13700,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CuadroComparativoUncheckedUpdateManyInput = {
@@ -13524,6 +13716,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateInput = {
@@ -13534,6 +13731,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutDetallesInput
     proveedor: ProveedorCreateNestedOneWithoutComparativasInput
   }
@@ -13548,6 +13749,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
   }
 
   export type ComparativaDetalleUpdateInput = {
@@ -13558,6 +13763,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput
     proveedor?: ProveedorUpdateOneRequiredWithoutComparativasNestedInput
   }
@@ -13572,6 +13781,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateManyInput = {
@@ -13584,6 +13797,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
   }
 
   export type ComparativaDetalleUpdateManyMutationInput = {
@@ -13594,6 +13811,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUncheckedUpdateManyInput = {
@@ -13606,6 +13827,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AlertaOcErrorCreateInput = {
@@ -14377,6 +14602,17 @@ export namespace Prisma {
     importe?: SortOrder
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type CuadroComparativoTenant_idCodigoCompoundUniqueInput = {
     tenant_id: string
     codigo: string
@@ -14391,6 +14627,11 @@ export namespace Prisma {
     fecha_creacion?: SortOrder
     estado?: SortOrder
     notas?: SortOrder
+    evaluacion_residente_id?: SortOrder
+    fecha_evaluacion_tecnica?: SortOrder
+    gerente_tecnico_id?: SortOrder
+    fecha_aprobacion_gt?: SortOrder
+    comentario_gt_general?: SortOrder
   }
 
   export type CuadroComparativoMaxOrderByAggregateInput = {
@@ -14402,6 +14643,11 @@ export namespace Prisma {
     fecha_creacion?: SortOrder
     estado?: SortOrder
     notas?: SortOrder
+    evaluacion_residente_id?: SortOrder
+    fecha_evaluacion_tecnica?: SortOrder
+    gerente_tecnico_id?: SortOrder
+    fecha_aprobacion_gt?: SortOrder
+    comentario_gt_general?: SortOrder
   }
 
   export type CuadroComparativoMinOrderByAggregateInput = {
@@ -14413,6 +14659,25 @@ export namespace Prisma {
     fecha_creacion?: SortOrder
     estado?: SortOrder
     notas?: SortOrder
+    evaluacion_residente_id?: SortOrder
+    fecha_evaluacion_tecnica?: SortOrder
+    gerente_tecnico_id?: SortOrder
+    fecha_aprobacion_gt?: SortOrder
+    comentario_gt_general?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type BoolFilter<$PrismaModel = never> = {
@@ -14435,6 +14700,10 @@ export namespace Prisma {
     precio_ofertado?: SortOrder
     tiempo_entrega?: SortOrder
     es_ganador?: SortOrder
+    evaluacion_tecnica?: SortOrder
+    comentario_tecnico?: SortOrder
+    aprobacion_gt?: SortOrder
+    comentario_gt?: SortOrder
   }
 
   export type ComparativaDetalleAvgOrderByAggregateInput = {
@@ -14451,6 +14720,10 @@ export namespace Prisma {
     precio_ofertado?: SortOrder
     tiempo_entrega?: SortOrder
     es_ganador?: SortOrder
+    evaluacion_tecnica?: SortOrder
+    comentario_tecnico?: SortOrder
+    aprobacion_gt?: SortOrder
+    comentario_gt?: SortOrder
   }
 
   export type ComparativaDetalleMinOrderByAggregateInput = {
@@ -14463,6 +14736,10 @@ export namespace Prisma {
     precio_ofertado?: SortOrder
     tiempo_entrega?: SortOrder
     es_ganador?: SortOrder
+    evaluacion_tecnica?: SortOrder
+    comentario_tecnico?: SortOrder
+    aprobacion_gt?: SortOrder
+    comentario_gt?: SortOrder
   }
 
   export type ComparativaDetalleSumOrderByAggregateInput = {
@@ -14891,6 +15168,10 @@ export namespace Prisma {
     connect?: ComparativaDetalleWhereUniqueInput | ComparativaDetalleWhereUniqueInput[]
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type ComparativaDetalleUpdateManyWithoutCuadroNestedInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
@@ -15193,6 +15474,31 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -15256,6 +15562,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutDetallesInput
   }
 
@@ -15268,6 +15578,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
   }
 
   export type ComparativaDetalleCreateOrConnectWithoutProveedorInput = {
@@ -15344,6 +15658,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: StringNullableFilter<"ComparativaDetalle"> | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
+    evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
+    comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
+    comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
   }
 
   export type RequisicionItemCreateWithoutRequisicionInput = {
@@ -15675,6 +15993,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
     proveedor: ProveedorCreateNestedOneWithoutComparativasInput
   }
 
@@ -15687,6 +16009,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
   }
 
   export type ComparativaDetalleCreateOrConnectWithoutCuadroInput = {
@@ -15724,6 +16050,11 @@ export namespace Prisma {
     fecha_creacion?: Date | string
     estado?: string
     notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
   }
 
   export type CuadroComparativoUncheckedCreateWithoutDetallesInput = {
@@ -15735,6 +16066,11 @@ export namespace Prisma {
     fecha_creacion?: Date | string
     estado?: string
     notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
   }
 
   export type CuadroComparativoCreateOrConnectWithoutDetallesInput = {
@@ -15789,6 +16125,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutDetallesInput = {
@@ -15800,6 +16141,11 @@ export namespace Prisma {
     fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProveedorUpsertWithoutComparativasInput = {
@@ -16011,6 +16357,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
   }
 
   export type OrdenCompraUpdateWithoutProveedorInput = {
@@ -16068,6 +16418,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput
   }
 
@@ -16080,6 +16434,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUncheckedUpdateManyWithoutProveedorInput = {
@@ -16091,6 +16449,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionItemCreateManyRequisicionInput = {
@@ -16178,6 +16540,10 @@ export namespace Prisma {
     precio_ofertado: Decimal | DecimalJsLike | number | string
     tiempo_entrega?: string | null
     es_ganador?: boolean
+    evaluacion_tecnica?: string
+    comentario_tecnico?: string | null
+    aprobacion_gt?: string
+    comentario_gt?: string | null
   }
 
   export type ComparativaDetalleUpdateWithoutCuadroInput = {
@@ -16188,6 +16554,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutComparativasNestedInput
   }
 
@@ -16200,6 +16570,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUncheckedUpdateManyWithoutCuadroInput = {
@@ -16211,6 +16585,10 @@ export namespace Prisma {
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
+    evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
+    comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobacion_gt?: StringFieldUpdateOperationsInput | string
+    comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenCreateManyItemInput = {

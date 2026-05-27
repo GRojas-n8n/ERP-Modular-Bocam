@@ -142,6 +142,54 @@ app.get('/api/v1/compras/comparativas', async (req: Request, res: Response) => {
   }
 });
 
+// ── Bandejas de trabajo (deben ir ANTES de /:id para que Express no capture el path estático) ──
+
+// GET pendientes-evaluacion — bandeja del Residente
+app.get('/api/v1/compras/comparativas/pendientes-evaluacion',
+  requireRoles('resident', 'control_obra', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.cuadroComparativo.findMany({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'EN_EVALUACION_TECNICA' },
+          include: { detalles: { include: { proveedor: true } } },
+          orderBy: { fecha_creacion: 'desc' },
+        })
+      );
+      logInfo(req, 'compras', 'compras.comparativas.pendientes_evaluacion.listadas', 'Bandeja evaluación técnica consultada', { total: data.length });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativas.pendientes_evaluacion.error', 'Error al listar pendientes de evaluación', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// GET pendientes-gt — bandeja del Gerente Técnico
+app.get('/api/v1/compras/comparativas/pendientes-gt',
+  requireRoles('gerencia_tecnica', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.cuadroComparativo.findMany({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'EN_APROBACION_GT' },
+          include: { detalles: { include: { proveedor: true } } },
+          orderBy: { fecha_creacion: 'desc' },
+        })
+      );
+      logInfo(req, 'compras', 'compras.comparativas.pendientes_gt.listadas', 'Bandeja aprobación GT consultada', { total: data.length });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativas.pendientes_gt.error', 'Error al listar pendientes de GT', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -180,15 +228,21 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       async (prisma) => {
         const comparativa = await prisma.cuadroComparativo.findUnique({
           where: { id_cuadro: id },
-          include: { detalles: { where: { es_ganador: true }, include: { proveedor: true } } }
+          // 5.2: filtrar solo detalles con aprobacion_gt=APROBADO y es_ganador=true
+          include: { detalles: { where: { es_ganador: true, aprobacion_gt: 'APROBADO' }, include: { proveedor: true } } }
         });
 
-        if (!comparativa || comparativa.detalles.length === 0) {
-          throw new Error('No se encontró un proveedor ganador seleccionado en este cuadro.');
+        if (!comparativa) {
+          throw new Error('Cuadro comparativo no encontrado.');
         }
 
-        if (comparativa.estado === 'CERRADO') {
-          throw new Error('La comparativa ya fue cerrada y no puede convertirse nuevamente.');
+        // 5.1: solo se puede convertir si el cuadro fue aprobado por GT
+        if (comparativa.estado !== 'APROBADO_GT') {
+          throw new Error(`La OC solo puede generarse de un cuadro aprobado por Gerencia Técnica. Estado actual: ${comparativa.estado}`);
+        }
+
+        if (comparativa.detalles.length === 0) {
+          throw new Error('No hay renglones aprobados por Gerencia Técnica con proveedor ganador seleccionado.');
         }
 
         const ganador = comparativa.detalles[0];
@@ -335,6 +389,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           data: { estado: OC_STATUS.EMITIDA }
         });
 
+        // 5.3: solo cerrar el cuadro cuando la OC queda EMITIDA (no en ERROR_FINANZAS)
         await prisma.cuadroComparativo.update({
           where: { id_cuadro: orderSeed.comparativaId },
           data: { estado: 'CERRADO' }
@@ -374,6 +429,311 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       .json({ success: false, message: error.message });
   }
 });
+
+// ── Flujo de aprobación en dos etapas del Cuadro Comparativo ─────────────────
+
+// 2.1 PATCH enviar-evaluacion — Compras envía al Residente
+app.patch('/api/v1/compras/comparativas/:id/enviar-evaluacion',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true },
+          });
+
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado !== 'BORRADOR') {
+            return res.status(400).json({
+              success: false,
+              message: `Solo se pueden enviar a evaluación cuadros en estado BORRADOR. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          if (cuadro.detalles.length === 0) {
+            return res.status(400).json({ success: false, message: 'El cuadro no tiene renglones para evaluar.' });
+          }
+
+          // Marcar todos los detalles como PENDIENTE de evaluación técnica
+          await prisma.comparativaDetalle.updateMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            data: { evaluacion_tecnica: 'PENDIENTE' },
+          });
+
+          return prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: { estado: 'EN_EVALUACION_TECNICA' },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      logInfo(req, 'compras', 'compras.comparativa.enviada_evaluacion', 'Cuadro enviado a evaluación técnica', { cuadro_id: id });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.enviar_evaluacion.error', 'Error al enviar cuadro a evaluación', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 2.2 PATCH evaluar — Residente registra evaluación técnica por renglón
+app.patch('/api/v1/compras/comparativas/:id/evaluar',
+  requireRoles('resident', 'control_obra', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { evaluaciones } = req.body as {
+        evaluaciones: { detalle_id: string; evaluacion_tecnica: 'APROBADO' | 'RECHAZADO'; comentario_tecnico?: string }[];
+      };
+
+      if (!evaluaciones || !Array.isArray(evaluaciones) || evaluaciones.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere un array "evaluaciones" con al menos un ítem.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true },
+          });
+
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
+            return res.status(400).json({
+              success: false,
+              message: `El cuadro no está en evaluación técnica. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          // Validar que los detalle_id pertenecen a este cuadro
+          const detalleIds = new Set(cuadro.detalles.map(d => d.id_detalle));
+          const invalid = evaluaciones.find(e => !detalleIds.has(e.detalle_id));
+          if (invalid) {
+            return res.status(400).json({
+              success: false,
+              message: `Renglón ${invalid.detalle_id} no pertenece a este cuadro comparativo.`,
+            });
+          }
+
+          // Actualizar evaluación técnica por renglón
+          await Promise.all(
+            evaluaciones.map(ev =>
+              prisma.comparativaDetalle.update({
+                where: { id_detalle: ev.detalle_id },
+                data: {
+                  evaluacion_tecnica: ev.evaluacion_tecnica,
+                  comentario_tecnico: ev.comentario_tecnico ?? null,
+                },
+              })
+            )
+          );
+
+          return prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: {
+              estado: 'EVALUADO_TECNICAMENTE',
+              evaluacion_residente_id: userId,
+              fecha_evaluacion_tecnica: new Date(),
+            },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      logInfo(req, 'compras', 'compras.comparativa.evaluada_tecnicamente', 'Evaluación técnica registrada', { cuadro_id: id, evaluador: userId });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.evaluar.error', 'Error al registrar evaluación técnica', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 2.3 PATCH enviar-gt — Residente/Compras envía al Gerente Técnico
+app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
+  requireRoles('resident', 'control_obra', 'procurement', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true },
+          });
+
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado !== 'EVALUADO_TECNICAMENTE') {
+            return res.status(400).json({
+              success: false,
+              message: `El cuadro no está en estado EVALUADO_TECNICAMENTE. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          const hayAprobados = cuadro.detalles.some(d => d.evaluacion_tecnica === 'APROBADO');
+          if (!hayAprobados) {
+            return res.status(400).json({
+              success: false,
+              message: 'Sin renglones aprobados técnicamente — no es posible remitir al Gerente Técnico.',
+            });
+          }
+
+          return prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: { estado: 'EN_APROBACION_GT' },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      logInfo(req, 'compras', 'compras.comparativa.enviada_gt', 'Cuadro enviado a aprobación de Gerencia Técnica', { cuadro_id: id });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.enviar_gt.error', 'Error al enviar cuadro al GT', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 2.4 + 3.1 PATCH revisar-gt — Gerente Técnico aprueba/rechaza por renglón + evento
+app.patch('/api/v1/compras/comparativas/:id/revisar-gt',
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { aprobaciones, comentario_gt_general } = req.body as {
+        aprobaciones: { detalle_id: string; aprobacion_gt: 'APROBADO' | 'RECHAZADO'; comentario_gt?: string }[];
+        comentario_gt_general?: string;
+      };
+
+      if (!aprobaciones || !Array.isArray(aprobaciones) || aprobaciones.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere un array "aprobaciones" con al menos un ítem.' });
+      }
+
+      const result = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true },
+          });
+
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado !== 'EN_APROBACION_GT') {
+            return res.status(400).json({
+              success: false,
+              message: `El cuadro no está en aprobación GT. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          // Mapa de detalles para validación rápida
+          const detalleMap = new Map(cuadro.detalles.map(d => [d.id_detalle, d]));
+
+          // Regla: GT no puede APROBAR un renglón rechazado por el Residente
+          for (const ap of aprobaciones) {
+            const detalle = detalleMap.get(ap.detalle_id);
+            if (!detalle) {
+              return res.status(400).json({
+                success: false,
+                message: `Renglón ${ap.detalle_id} no pertenece a este cuadro comparativo.`,
+              });
+            }
+            if (ap.aprobacion_gt === 'APROBADO' && detalle.evaluacion_tecnica === 'RECHAZADO') {
+              return res.status(400).json({
+                success: false,
+                message: `No es posible aprobar el renglón ${detalle.id_detalle}: fue rechazado en la evaluación técnica del Residente.`,
+              });
+            }
+          }
+
+          // Actualizar aprobación GT por renglón
+          await Promise.all(
+            aprobaciones.map(ap =>
+              prisma.comparativaDetalle.update({
+                where: { id_detalle: ap.detalle_id },
+                data: {
+                  aprobacion_gt: ap.aprobacion_gt,
+                  comentario_gt: ap.comentario_gt ?? null,
+                },
+              })
+            )
+          );
+
+          // Determinar estado final: si al menos uno aprobado → APROBADO_GT, si todos rechazados → RECHAZADO_GT
+          const hayAprobadosGT = aprobaciones.some(ap => ap.aprobacion_gt === 'APROBADO');
+          const estadoFinal = hayAprobadosGT ? 'APROBADO_GT' : 'RECHAZADO_GT';
+
+          return prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: {
+              estado: estadoFinal,
+              gerente_tecnico_id: userId,
+              fecha_aprobacion_gt: new Date(),
+              comentario_gt_general: comentario_gt_general ?? null,
+            },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+
+      const cuadroActualizado = result as any;
+      const estadoFinal = cuadroActualizado.estado;
+      const renglones_aprobados = (cuadroActualizado.detalles || []).filter((d: any) => d.aprobacion_gt === 'APROBADO').length;
+
+      logInfo(req, 'compras', `compras.comparativa.${estadoFinal === 'APROBADO_GT' ? 'aprobada_gt' : 'rechazada_gt'}`,
+        `Cuadro comparativo ${estadoFinal} por Gerencia Técnica`,
+        { cuadro_id: id, estado_final: estadoFinal, renglones_aprobados, gerente_id: userId }
+      );
+
+      // 3.1 Publicar evento al bus (best-effort)
+      if (estadoFinal === 'APROBADO_GT') {
+        try {
+          await eventBus.publish({
+            event_type: 'compras.comparativa_aprobada_gt',
+            timestamp: new Date().toISOString(),
+            context: buildEventContext(req),
+            payload: {
+              cuadro_id: id,
+              codigo: cuadroActualizado.codigo,
+              requisicion_id: cuadroActualizado.requisicion_id,
+              renglones_aprobados,
+            },
+          });
+        } catch (_) {
+          logWarn(req, 'compras', 'compras.comparativa_aprobada_gt.bus_offline',
+            'EventBus no disponible al publicar comparativa_aprobada_gt — la aprobación ya está persistida', { cuadro_id: id });
+        }
+      }
+
+      res.json({ success: true, data: result });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.revisar_gt.error', 'Error en revisión GT', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
 
 app.get('/api/v1/compras/ordenes-compra/reconciliacion/pendientes', requireRoles('admin', 'superintendent', 'procurement'), async (req: Request, res: Response) => {
   try {
@@ -1176,36 +1536,91 @@ if (require.main === module) {
 
 // ── Almacén ──────────────────────────────────────────────────────────────────
 
+// GET inventario — lista ítems con filtro tenant/proyecto (defensa en profundidad + RLS)
 app.get('/api/v1/compras/almacen/inventario', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
-      async (prisma: any) => prisma.itemInventario.findMany({
+      async (prisma) => prisma.itemInventario.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId },
         orderBy: { clave: 'asc' },
       })
     );
 
-    // Serializar Decimal a number
-    const serialized = data.map((item: any) => ({
+    const serialized = data.map((item) => ({
       ...item,
       stock_actual: Number(item.stock_actual),
       stock_minimo: Number(item.stock_minimo),
     }));
 
+    logInfo(req, 'compras', 'compras.almacen.inventario.listado', 'Inventario consultado', { total: serialized.length });
     res.json({ success: true, data: serialized });
   } catch (error: any) {
+    logError(req, 'compras', 'compras.almacen.inventario.error', 'Error al listar inventario', { error_message: error.message });
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
+// POST inventario — creación manual de ítem (admin puede pre-cargar stock inicial)
+app.post('/api/v1/compras/almacen/inventario',
+  requireRoles('admin', 'superintendent', 'procurement'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { insumo_id, clave, descripcion, unidad, categoria, stock_actual, stock_minimo, ubicacion } = req.body;
+
+      if (!clave || !descripcion || !unidad || !categoria) {
+        return res.status(400).json({ success: false, message: 'clave, descripcion, unidad y categoria son obligatorios.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const existing = await prisma.itemInventario.findFirst({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, clave },
+          });
+          if (existing) {
+            const err = new Error(`Ya existe un ítem con la clave "${clave}" en este proyecto.`) as any;
+            err.status = 409;
+            throw err;
+          }
+          return prisma.itemInventario.create({
+            data: {
+              tenant_id:   tenantId,
+              proyecto_id: proyectoId,
+              insumo_id:   insumo_id ?? null,
+              clave,
+              descripcion,
+              unidad,
+              categoria,
+              stock_actual: stock_actual ?? 0,
+              stock_minimo: stock_minimo ?? 0,
+              ubicacion:   ubicacion ?? null,
+            },
+          });
+        }
+      );
+
+      const serialized = { ...data, stock_actual: Number(data.stock_actual), stock_minimo: Number(data.stock_minimo) };
+      logInfo(req, 'compras', 'compras.almacen.item.creado', 'Ítem de inventario creado', { id: data.id, clave });
+      res.status(201).json({ success: true, data: serialized });
+    } catch (error: any) {
+      const status = (error as any).status ?? 500;
+      logError(req, 'compras', 'compras.almacen.item.crear.error', 'Error al crear ítem de inventario', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// GET movimientos — filtro tenant/proyecto + filtros opcionales tipo/fecha
 app.get('/api/v1/compras/almacen/movimientos', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { tipo, desde, hasta } = req.query;
 
-    const where: Record<string, any> = {};
+    const where: Record<string, any> = { tenant_id: tenantId, proyecto_id: proyectoId };
     if (tipo) where.tipo = tipo as string;
     if (desde || hasta) {
       where.fecha = {};
@@ -1215,7 +1630,7 @@ app.get('/api/v1/compras/almacen/movimientos', async (req: Request, res: Respons
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
-      async (prisma: any) => prisma.movimientoAlmacen.findMany({
+      async (prisma) => prisma.movimientoAlmacen.findMany({
         where,
         include: { item: { select: { clave: true, descripcion: true, unidad: true } } },
         orderBy: { fecha: 'desc' },
@@ -1223,72 +1638,127 @@ app.get('/api/v1/compras/almacen/movimientos', async (req: Request, res: Respons
       })
     );
 
-    const serialized = data.map((mov: any) => ({
-      ...mov,
-      cantidad: Number(mov.cantidad),
+    const serialized = data.map((mov) => ({
+      id:                  mov.id,
+      tipo:                mov.tipo,
+      fecha:               mov.fecha,
+      cantidad:            Number(mov.cantidad),
+      unidad:              mov.unidad,
+      origen:              mov.origen,
+      destino:             mov.destino,
+      responsable:         mov.responsable,
+      referencia:          mov.referencia,
       insumo_clave:        mov.item?.clave        ?? '',
       insumo_descripcion:  mov.item?.descripcion  ?? '',
     }));
 
+    logInfo(req, 'compras', 'compras.almacen.movimientos.listados', 'Movimientos consultados', { total: serialized.length });
     res.json({ success: true, data: serialized });
   } catch (error: any) {
+    logError(req, 'compras', 'compras.almacen.movimientos.error', 'Error al listar movimientos', { error_message: error.message });
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-app.post('/api/v1/compras/almacen/movimientos', async (req: Request, res: Response) => {
-  try {
-    const { tenantId, proyectoId, userId } = req.securityContext;
-    const { item_id, tipo, cantidad, origen, destino, responsable, referencia } = req.body;
+// POST movimientos — registra INGRESO/EGRESO/TRASPASO con actualización atómica de stock.
+// Acepta insumo_id (referencia al catálogo). Auto-crea el ítem en inventario en el primer INGRESO.
+app.post('/api/v1/compras/almacen/movimientos',
+  requireRoles('admin', 'superintendent', 'procurement', 'resident', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { insumo_id, clave, descripcion, unidad, categoria,
+              tipo, cantidad, origen, destino, responsable, referencia } = req.body;
 
-    if (!item_id || !tipo || !cantidad) {
-      return res.status(400).json({ success: false, message: 'item_id, tipo y cantidad son obligatorios.' });
-    }
+      if (!insumo_id || !tipo || !cantidad) {
+        return res.status(400).json({ success: false, message: 'insumo_id, tipo y cantidad son obligatorios.' });
+      }
+      const TIPOS_VALIDOS = ['INGRESO', 'EGRESO', 'TRASPASO'];
+      if (!TIPOS_VALIDOS.includes(tipo)) {
+        return res.status(400).json({ success: false, message: `tipo debe ser uno de: ${TIPOS_VALIDOS.join(', ')}` });
+      }
 
-    const TIPOS_VALIDOS = ['INGRESO', 'EGRESO', 'TRASPASO'];
-    if (!TIPOS_VALIDOS.includes(tipo)) {
-      return res.status(400).json({ success: false, message: `tipo debe ser uno de: ${TIPOS_VALIDOS.join(', ')}` });
-    }
+      const result = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          // Buscar ítem existente por insumo_id del catálogo
+          let item = await prisma.itemInventario.findFirst({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, insumo_id },
+          });
 
-    const result = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma: any) => {
-        const item = await prisma.itemInventario.findUnique({ where: { id: item_id } });
-        if (!item) throw new Error('Item de inventario no encontrado.');
+          // Auto-crear ítem en el primer INGRESO — requiere datos del catálogo
+          if (!item) {
+            if (tipo !== 'INGRESO') {
+              const err = new Error('Este insumo no tiene existencias en el almacén de este proyecto. Registra primero un INGRESO.') as any;
+              err.status = 404;
+              throw err;
+            }
+            if (!clave || !descripcion || !unidad || !categoria) {
+              throw new Error('Para el primer ingreso de un insumo se requieren: clave, descripcion, unidad y categoria.');
+            }
+            item = await prisma.itemInventario.create({
+              data: {
+                tenant_id:   tenantId,
+                proyecto_id: proyectoId,
+                insumo_id,
+                clave,
+                descripcion,
+                unidad,
+                categoria,
+                stock_actual: 0,
+                stock_minimo: 0,
+              },
+            });
+          }
 
-        const cant = Number(cantidad);
-        let nuevoStock = Number(item.stock_actual);
-        if (tipo === 'INGRESO')  nuevoStock += cant;
-        if (tipo === 'EGRESO')   nuevoStock = Math.max(0, nuevoStock - cant);
-        // TRASPASO: no cambia stock total del proyecto
+          const cant = Number(cantidad);
+          let nuevoStock = Number(item.stock_actual);
+          if (tipo === 'INGRESO') nuevoStock += cant;
+          if (tipo === 'EGRESO')  nuevoStock = Math.max(0, nuevoStock - cant);
+          // TRASPASO: no modifica el stock total del proyecto (origen → destino)
 
-        const [movimiento] = await prisma.$transaction([
-          prisma.movimientoAlmacen.create({
+          // Operaciones secuenciales dentro del mismo contexto transaccional de createTenantContext
+          const movimiento = await prisma.movimientoAlmacen.create({
             data: {
               tenant_id:   tenantId,
               proyecto_id: proyectoId,
-              item_id,
+              item_id:     item.id,
               tipo,
               cantidad:    cant,
               unidad:      item.unidad,
-              origen,
-              destino,
-              responsable,
-              referencia,
+              origen:      origen  ?? null,
+              destino:     destino ?? null,
+              responsable: responsable ?? null,
+              referencia:  referencia  ?? null,
             },
-          }),
-          prisma.itemInventario.update({
-            where: { id: item_id },
+          });
+
+          await prisma.itemInventario.update({
+            where: { id: item.id },
             data:  { stock_actual: nuevoStock },
-          }),
-        ]);
+          });
 
-        return { movimiento: { ...movimiento, cantidad: Number(movimiento.cantidad) }, nuevo_stock: nuevoStock };
-      }
-    );
+          return {
+            movimiento:  { ...movimiento, cantidad: Number(movimiento.cantidad) },
+            nuevo_stock: nuevoStock,
+            item_clave:  item.clave,
+          };
+        }
+      );
 
-    res.status(201).json({ success: true, data: result });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+      logInfo(req, 'compras', 'compras.almacen.movimiento.creado',
+        `Movimiento ${tipo} registrado`, {
+          insumo_id, tipo,
+          cantidad:    Number(cantidad),
+          nuevo_stock: result.nuevo_stock,
+          item_clave:  result.item_clave,
+        });
+      res.status(201).json({ success: true, data: result });
+    } catch (error: any) {
+      const status = (error as any).status ?? 500;
+      logError(req, 'compras', 'compras.almacen.movimiento.crear.error',
+        'Error al registrar movimiento de almacén', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
   }
-});
+);

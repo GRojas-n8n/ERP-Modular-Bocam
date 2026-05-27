@@ -99,7 +99,7 @@ interface MovimientoAlmacen {
 
 type MovTipo = 'INGRESO' | 'EGRESO' | 'TRASPASO';
 type AlmacenSubView = 'inventario' | 'movimientos';
-type TabId = 'requisiciones' | 'catalogo' | 'almacen';
+type TabId = 'requisiciones' | 'catalogo' | 'almacen' | 'pendientes-eval' | 'pendientes-gt';
 
 // ─── Colores por categoría ───────────────────────────────────────────────────
 const CLASE_STYLE: Record<string, { badge: string; chip: string; label: string }> = {
@@ -111,6 +111,22 @@ const CLASE_STYLE: Record<string, { badge: string; chip: string; label: string }
 const DEFAULT_CLASE = { badge: 'border-slate-200 bg-slate-100 text-slate-600', chip: 'bg-slate-100 text-slate-600', label: 'Otro' };
 
 const CLASES = Object.keys(CLASE_STYLE);
+
+// Mapeo bidireccional entre etiquetas de clase locales y enum TipoInsumo de gerencia-tecnica
+const GT_TIPO_TO_CLASE: Record<string, string> = {
+  MATERIAL:    'MATERIALES',
+  MANO_DE_OBRA: 'MANO_OBRA',
+  EQUIPO:      'EQUIPOS',
+  SUBCONTRATO: 'SUBCONTRATOS',
+  INDIRECTO:   'INDIRECTO',
+};
+const CLASE_TO_GT_TIPO: Record<string, string> = {
+  MATERIALES:  'MATERIAL',
+  MANO_OBRA:   'MANO_DE_OBRA',
+  EQUIPOS:     'EQUIPO',
+  SUBCONTRATOS: 'SUBCONTRATO',
+  INDIRECTO:   'INDIRECTO',
+};
 const UNIDADES = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
 
 // ─── Estilos de movimiento ────────────────────────────────────────────────────
@@ -125,6 +141,11 @@ export const ComprasView: React.FC = () => {
   const isDemo = tenant?.id === 'iretum-demo';
   const { notify } = useNotification();
 
+  // Roles del usuario actual
+  const roles: string[] = (tenant as any)?.roles ?? [];
+  const isResident    = roles.some(r => ['resident', 'control_obra'].includes(r));
+  const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
+
   // ─── State ────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabId>('requisiciones');
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
@@ -132,6 +153,8 @@ export const ComprasView: React.FC = () => {
   const [inventario, setInventario] = useState<ItemInventario[]>([]);
   const [movimientosAlmacen, setMovimientosAlmacen] = useState<MovimientoAlmacen[]>([]);
   const [comparativas, setComparativas] = useState<ComparativaLocal[]>([]);
+  const [pendientesEval, setPendientesEval] = useState<ComparativaLocal[]>([]);
+  const [pendientesGT, setPendientesGT] = useState<ComparativaLocal[]>([]);
   const [activeReqId, setActiveReqId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,6 +194,7 @@ export const ComprasView: React.FC = () => {
     insumo_id: '',
     insumo_label: '',
     insumo_unidad: '',
+    insumo_categoria: '',
     cantidad: '',
     origen: '',
     destino: '',
@@ -198,21 +222,41 @@ export const ComprasView: React.FC = () => {
         setInsumos(DEMO_INSUMOS as Insumo[]);
         setInventario(DEMO_INVENTARIO as ItemInventario[]);
         setMovimientosAlmacen(DEMO_MOVIMIENTOS_ALMACEN as MovimientoAlmacen[]);
-        setComparativas(DEMO_COMPARATIVAS as unknown as ComparativaLocal[]);
+        const demoComps = DEMO_COMPARATIVAS as unknown as ComparativaLocal[];
+        setComparativas(demoComps);
+        setPendientesEval(demoComps.filter(c => c.estado === 'EN_EVALUACION_TECNICA'));
+        setPendientesGT(demoComps.filter(c => c.estado === 'EN_APROBACION_GT'));
         return;
       }
-      const [reqRes, insRes, invRes, movRes, compRes] = await Promise.allSettled([
+      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
-        api.get('/api/v1/compras/insumos'),
+        api.get('/api/v1/gerencia-tecnica/insumos'),
         api.get('/api/v1/compras/almacen/inventario'),
         api.get('/api/v1/compras/almacen/movimientos'),
         api.get('/api/v1/compras/comparativas'),
+        // Bandejas de aprobación (pueden fallar por rol — ignorar 403)
+        api.get('/api/v1/compras/comparativas/pendientes-evaluacion').catch(() => null),
+        api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
       ]);
       if (reqRes.status === 'fulfilled') setRequisiciones(reqRes.value.data?.data || []);
-      if (insRes.status === 'fulfilled') setInsumos(insRes.value.data?.data || []);
+      if (insRes.status === 'fulfilled') {
+        // Normalizar campos de gerencia-tecnica → interfaz Insumo local
+        const raw: any[] = insRes.value.data?.data || [];
+        setInsumos(raw.map((i) => ({
+          id:          i.id,
+          clave:       i.clave,
+          descripcion: i.descripcion,
+          unidad:      i.unidad_medida ?? i.unidad ?? '',
+          costo:       Number(i.costo_base ?? i.costo ?? 0),
+          clase:       GT_TIPO_TO_CLASE[i.tipo_insumo] ?? i.tipo_insumo ?? '',
+          activo:      i.activo,
+        })));
+      }
       if (invRes.status === 'fulfilled') setInventario(invRes.value.data?.data || []);
       if (movRes.status === 'fulfilled') setMovimientosAlmacen(movRes.value.data?.data || []);
       if (compRes.status === 'fulfilled') setComparativas(compRes.value.data?.data || []);
+      if (evalRes.status === 'fulfilled' && evalRes.value) setPendientesEval(evalRes.value.data?.data || []);
+      if (gtRes.status === 'fulfilled' && gtRes.value) setPendientesGT(gtRes.value.data?.data || []);
     } catch {
       setError('Error al conectar con el modulo de Compras.');
     } finally {
@@ -376,9 +420,12 @@ export const ComprasView: React.FC = () => {
     if (isDemo) { setShowInsumoForm(false); resetInsumoForm(); return; }
     try {
       setFormLoading(true);
-      await api.post('/api/v1/compras/insumos', {
-        ...insumoForm,
-        costo: Number(insumoForm.costo) || undefined,
+      await api.post('/api/v1/gerencia-tecnica/insumos', {
+        clave:         insumoForm.clave,
+        descripcion:   insumoForm.descripcion,
+        unidad_medida: insumoForm.unidad,
+        tipo_insumo:   CLASE_TO_GT_TIPO[insumoForm.clase] ?? insumoForm.clase,
+        costo_base:    Number(insumoForm.costo) || 0,
       });
       setShowInsumoForm(false);
       resetInsumoForm();
@@ -395,13 +442,19 @@ export const ComprasView: React.FC = () => {
 
   // ─── Handlers movimiento almacén ──────────────────────────────────────────
   const openMovForm = (tipo: MovTipo) => {
-    setMovForm(f => ({ ...f, tipo, insumo_id: '', insumo_label: '', insumo_unidad: '', cantidad: '', origen: '', destino: '', responsable: '', referencia: '', notas: '' }));
+    setMovForm(f => ({ ...f, tipo, insumo_id: '', insumo_label: '', insumo_unidad: '', insumo_categoria: '', cantidad: '', origen: '', destino: '', responsable: '', referencia: '', notas: '' }));
     setMovSearch('');
     setShowMovForm(true);
   };
 
   const selectMovInsumo = (insumo: Insumo) => {
-    setMovForm(f => ({ ...f, insumo_id: insumo.id, insumo_label: `${insumo.clave} — ${insumo.descripcion}`, insumo_unidad: insumo.unidad }));
+    setMovForm(f => ({
+      ...f,
+      insumo_id:        insumo.id,
+      insumo_label:     `${insumo.clave} — ${insumo.descripcion}`,
+      insumo_unidad:    insumo.unidad,
+      insumo_categoria: insumo.clase,
+    }));
     setMovSearch('');
     setMovDropdownOpen(false);
   };
@@ -456,15 +509,20 @@ export const ComprasView: React.FC = () => {
     }
     try {
       setFormLoading(true);
+      // Extraer clave y descripcion del label del insumo (para auto-crear ítem en primer INGRESO)
+      const [clave, ...descParts] = movForm.insumo_label.split(' — ');
       await api.post('/api/v1/compras/almacen/movimientos', {
-        tipo: movForm.tipo,
-        insumo_id: movForm.insumo_id,
-        cantidad: Number(movForm.cantidad),
-        origen: movForm.origen,
-        destino: movForm.destino,
+        tipo:        movForm.tipo,
+        insumo_id:   movForm.insumo_id,
+        clave:       clave.trim(),
+        descripcion: (descParts.join(' — ').trim()) || clave.trim(),
+        unidad:      movForm.insumo_unidad,
+        categoria:   movForm.insumo_categoria || 'MATERIALES',
+        cantidad:    Number(movForm.cantidad),
+        origen:      movForm.origen,
+        destino:     movForm.destino,
         responsable: movForm.responsable || undefined,
-        referencia: movForm.referencia || undefined,
-        notas: movForm.notas || undefined,
+        referencia:  movForm.referencia  || undefined,
       });
       setShowMovForm(false);
       await fetchData();
@@ -664,12 +722,18 @@ export const ComprasView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
         {([
-          { id: 'requisiciones' as TabId, label: 'Requisiciones',     icon: IconShoppingCart, count: requisiciones.length },
-          { id: 'catalogo'      as TabId, label: 'Catálogo',          icon: IconPackage,       count: insumos.length },
-          { id: 'almacen'       as TabId, label: 'Almacén',           icon: IconLayers,        count: inventario.length },
-        ] as const).map(tab => (
+          { id: 'requisiciones'   as TabId, label: 'Requisiciones', icon: IconShoppingCart, count: requisiciones.length, show: true },
+          { id: 'catalogo'        as TabId, label: 'Catálogo',      icon: IconPackage,      count: insumos.length,       show: true },
+          { id: 'almacen'         as TabId, label: 'Almacén',       icon: IconLayers,       count: inventario.length,    show: true },
+          // 9.1 Bandeja Residente
+          { id: 'pendientes-eval' as TabId, label: 'Eval. Técnica', icon: IconClock,        count: pendientesEval.length, show: isResident || roles.includes('superintendent') },
+          // 9.2 Bandeja GT
+          { id: 'pendientes-gt'   as TabId, label: 'Aprob. GT',    icon: IconCheckCircle2, count: pendientesGT.length,   show: isGT },
+        ] as { id: TabId; label: string; icon: React.FC<{className?: string}>; count: number; show: boolean }[])
+         .filter(t => t.show)
+         .map(tab => (
           <Button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -1173,6 +1237,80 @@ export const ComprasView: React.FC = () => {
               )}
             </div>
           )}
+          {/* ── 9.1 TAB: Pendientes de Evaluación Técnica (Residente) ──────────── */}
+          {activeTab === 'pendientes-eval' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  Cuadros comparativos pendientes de tu evaluación técnica
+                </p>
+                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-black text-amber-700">
+                  {pendientesEval.length} pendiente{pendientesEval.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              {pendientesEval.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
+                  <IconCheckCircle2 className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+                  <p className="text-sm font-bold text-muted-foreground">Sin cuadros pendientes de evaluación técnica</p>
+                </div>
+              ) : (
+                pendientesEval.map(cc => (
+                  <Card key={cc.id} className="rounded-2xl border-amber-500/20 bg-amber-500/5 shadow-none">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div>
+                        <span className="text-xs font-black text-amber-700">{(cc as any).codigo ?? cc.id}</span>
+                        <p className="text-[11px] text-muted-foreground">{(cc as any).detalles?.length ?? 0} renglones · Enviado por Compras</p>
+                      </div>
+                      <Button
+                        onClick={() => { setActiveTab('requisiciones'); setActiveReqId(cc.requisicion_id); }}
+                        className="rounded-xl bg-amber-500 px-4 text-xs font-black text-white hover:bg-amber-400"
+                      >
+                        Evaluar →
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* ── 9.2 TAB: Pendientes de Aprobación GT ──────────────────────────── */}
+          {activeTab === 'pendientes-gt' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-widest text-violet-700">
+                  Cuadros comparativos pendientes de tu aprobación como Gerencia Técnica
+                </p>
+                <span className="rounded-full bg-violet-500/10 px-3 py-1 text-[10px] font-black text-violet-700">
+                  {pendientesGT.length} pendiente{pendientesGT.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              {pendientesGT.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
+                  <IconCheckCircle2 className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+                  <p className="text-sm font-bold text-muted-foreground">Sin cuadros pendientes de aprobación GT</p>
+                </div>
+              ) : (
+                pendientesGT.map(cc => (
+                  <Card key={cc.id} className="rounded-2xl border-violet-500/20 bg-violet-500/5 shadow-none">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div>
+                        <span className="text-xs font-black text-violet-700">{(cc as any).codigo ?? cc.id}</span>
+                        <p className="text-[11px] text-muted-foreground">{(cc as any).detalles?.length ?? 0} renglones · Evaluado por Residente</p>
+                      </div>
+                      <Button
+                        onClick={() => { setActiveTab('requisiciones'); setActiveReqId(cc.requisicion_id); }}
+                        className="rounded-xl bg-violet-600 px-4 text-xs font-black text-white hover:bg-violet-500"
+                      >
+                        Revisar y Aprobar →
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+
         </>
       )}
 

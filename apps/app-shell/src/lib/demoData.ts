@@ -120,37 +120,125 @@ export const DEMO_CAPACITACIONES = [
 
 // ─── COMPRAS — Comparativas de Cotización ────────────────────────────────────
 export const DEMO_COMPARATIVAS = [
+  // ── comp-001: BORRADOR — recién creado por Compras, aún sin enviar a evaluación ──
   {
     id: 'comp-001',
     requisicion_id: 'req-001',
-    estado: 'EN_PROCESO',
+    codigo: 'CC-2024-007',
+    estado: 'BORRADOR',
     proveedores: [
       { id: 'pv-a', nombre: 'CEMEX México SA de CV' },
       { id: 'pv-b', nombre: 'Deacero Monterrey SA de CV' },
+      { id: 'pv-c', nombre: 'Materiales y Áridos del Norte SA' },
     ],
     lineas: [
       {
         id: 'lin-001', insumo_id: 'ins-001', insumo_clave: 'MAT-001',
         insumo_descripcion: 'Cemento Portland CPC 30R saco 50kg', insumo_unidad: 'SAC', cantidad: 200,
-        precios: { 'pv-a': '285', 'pv-b': '295' }, ganador: 'pv-a',
+        precios: { 'pv-a': '285', 'pv-b': '295', 'pv-c': '279' }, ganador: 'pv-c',
+        evaluacion_tecnica: 'PENDIENTE', comentario_tecnico: undefined,
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
       },
       {
         id: 'lin-002', insumo_id: 'ins-002', insumo_clave: 'MAT-002',
         insumo_descripcion: 'Varilla corrugada 3/8" x 12m G60', insumo_unidad: 'PZA', cantidad: 150,
-        precios: { 'pv-a': '198', 'pv-b': '189' }, ganador: 'pv-b',
+        precios: { 'pv-a': '198', 'pv-b': '189', 'pv-c': '' }, ganador: 'pv-b',
+        evaluacion_tecnica: 'PENDIENTE', comentario_tecnico: undefined,
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
       },
       {
         id: 'lin-003', insumo_id: 'ins-015', insumo_clave: 'MAT-008',
         insumo_descripcion: "Concreto premezclado f'c=250 kg/cm²", insumo_unidad: 'M3', cantidad: 30,
-        precios: { 'pv-a': '1680', 'pv-b': '' }, ganador: null,
+        precios: { 'pv-a': '1680', 'pv-b': '', 'pv-c': '1650' }, ganador: 'pv-c',
+        evaluacion_tecnica: 'PENDIENTE', comentario_tecnico: undefined,
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
       },
     ],
     ordenes_compra: [],
   },
+
+  // ── comp-002: EN_EVALUACION_TECNICA — enviado al Residente, esperando su evaluación ──
   {
     id: 'comp-002',
+    requisicion_id: 'req-002',
+    codigo: 'CC-2024-008',
+    estado: 'EN_EVALUACION_TECNICA',
+    proveedores: [
+      { id: 'pv-d', nombre: 'Impermeabilizaciones del Norte SA' },
+      { id: 'pv-e', nombre: 'Quimikoa Impermeabilizantes SA de CV' },
+    ],
+    lineas: [
+      {
+        id: 'lin-006', insumo_id: 'ins-004', insumo_clave: 'MAT-004',
+        insumo_descripcion: 'Impermeabilizante acrílico blanco 19L', insumo_unidad: 'CUB', cantidad: 50,
+        precios: { 'pv-d': '785', 'pv-e': '740' }, ganador: 'pv-e',
+        evaluacion_tecnica: 'PENDIENTE', comentario_tecnico: undefined,
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
+      },
+      {
+        id: 'lin-007', insumo_id: 'ins-009', insumo_clave: 'MAT-010',
+        insumo_descripcion: 'Membrana impermeabilizante 4mm x 10m', insumo_unidad: 'ROL', cantidad: 20,
+        precios: { 'pv-d': '2100', 'pv-e': '2350' }, ganador: 'pv-d',
+        evaluacion_tecnica: 'PENDIENTE', comentario_tecnico: undefined,
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
+      },
+    ],
+    ordenes_compra: [],
+  },
+
+  // ── comp-003: EN_APROBACION_GT — Residente evaluó técnicamente, enviado al GT ──
+  {
+    id: 'comp-003',
+    requisicion_id: 'req-003',
+    codigo: 'CC-2024-005',
+    estado: 'EN_APROBACION_GT',
+    evaluacion_residente_id: 'usr-residente-demo',
+    fecha_evaluacion_tecnica: '2024-04-16T10:30:00.000Z',
+    proveedores: [
+      { id: 'pv-f', nombre: 'Cancelería Aluminio del Bajío SA' },
+      { id: 'pv-g', nombre: 'Aluminios Industriales de GDL' },
+      { id: 'pv-h', nombre: 'Ventanas y Puertas Premium SA de CV' },
+    ],
+    lineas: [
+      {
+        id: 'lin-008', insumo_id: 'ins-011', insumo_clave: 'MAT-011',
+        insumo_descripcion: 'Ventana corrediza aluminio natural 1.20x1.50m', insumo_unidad: 'PZA', cantidad: 24,
+        precios: { 'pv-f': '3850', 'pv-g': '3620', 'pv-h': '4100' }, ganador: 'pv-g',
+        evaluacion_tecnica: 'APROBADO',
+        comentario_tecnico: 'Perfil 3" cumple con especificación. Vidrio 6mm solicitado.',
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
+      },
+      {
+        id: 'lin-009', insumo_id: 'ins-012', insumo_clave: 'MAT-012',
+        insumo_descripcion: 'Puerta de aluminio con vidrio templado 0.90x2.10m', insumo_unidad: 'PZA', cantidad: 8,
+        precios: { 'pv-f': '6200', 'pv-g': '', 'pv-h': '5800' }, ganador: 'pv-h',
+        evaluacion_tecnica: 'APROBADO',
+        comentario_tecnico: 'Herrajes de acero inoxidable incluidos. OK.',
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
+      },
+      {
+        id: 'lin-010', insumo_id: 'ins-013', insumo_clave: 'MAT-013',
+        insumo_descripcion: 'Vitropiso porcelanato gris 60x60cm', insumo_unidad: 'M2', cantidad: 320,
+        precios: { 'pv-f': '185', 'pv-g': '172', 'pv-h': '190' }, ganador: 'pv-g',
+        evaluacion_tecnica: 'RECHAZADO',
+        comentario_tecnico: 'No es del ramo. Fuera de alcance de esta cotización. Requiere licitación separada.',
+        aprobacion_gt: 'PENDIENTE', comentario_gt: undefined,
+      },
+    ],
+    ordenes_compra: [],
+  },
+
+  // ── comp-004: APROBADO_GT — GT aprobó, listo para generar OC ──
+  {
+    id: 'comp-004',
     requisicion_id: 'req-004',
-    estado: 'AUTORIZADA',
+    codigo: 'CC-2024-003',
+    estado: 'APROBADO_GT',
+    evaluacion_residente_id: 'usr-residente-demo',
+    fecha_evaluacion_tecnica: '2024-04-08T09:15:00.000Z',
+    gerente_tecnico_id: 'usr-gt-demo',
+    fecha_aprobacion_gt: '2024-04-09T16:45:00.000Z',
+    comentario_gt_general: 'Precios dentro de presupuesto. Se autoriza proceder con los renglones aprobados.',
     proveedores: [
       { id: 'pv-x', nombre: 'Bloquera del Norte SA de CV' },
       { id: 'pv-y', nombre: 'Materiales Construcción GDL' },
@@ -160,16 +248,52 @@ export const DEMO_COMPARATIVAS = [
         id: 'lin-004', insumo_id: 'ins-003', insumo_clave: 'MAT-003',
         insumo_descripcion: 'Block de concreto 15x20x40 cm', insumo_unidad: 'PZA', cantidad: 1000,
         precios: { 'pv-x': '17.5', 'pv-y': '18.9' }, ganador: 'pv-x',
+        evaluacion_tecnica: 'APROBADO',
+        comentario_tecnico: 'Norma NMX-C-404 cumplida. Resistencia 60 kg/cm².',
+        aprobacion_gt: 'APROBADO',
+        comentario_gt: 'Precio competitivo. Procede.',
       },
       {
         id: 'lin-005', insumo_id: 'ins-007', insumo_clave: 'MAT-007',
         insumo_descripcion: 'Tablaroca 1/2" x 1.22x2.44m', insumo_unidad: 'PZA', cantidad: 80,
         precios: { 'pv-x': '', 'pv-y': '205' }, ganador: 'pv-y',
+        evaluacion_tecnica: 'APROBADO',
+        comentario_tecnico: 'Marca USG especificada. Cumple.',
+        aprobacion_gt: 'APROBADO',
+        comentario_gt: undefined,
+      },
+    ],
+    ordenes_compra: [],
+  },
+
+  // ── comp-005: CERRADO — OC ya emitida ──
+  {
+    id: 'comp-005',
+    requisicion_id: 'req-006',
+    codigo: 'CC-2024-001',
+    estado: 'CERRADO',
+    evaluacion_residente_id: 'usr-residente-demo',
+    fecha_evaluacion_tecnica: '2024-03-22T11:00:00.000Z',
+    gerente_tecnico_id: 'usr-gt-demo',
+    fecha_aprobacion_gt: '2024-03-23T14:30:00.000Z',
+    comentario_gt_general: 'Aprobado. Precios negociados conforme a estimado.',
+    proveedores: [
+      { id: 'pv-m', nombre: 'Arrendadora Caterpillar SA' },
+      { id: 'pv-n', nombre: 'Grúas y Maquinaria del Norte SA' },
+    ],
+    lineas: [
+      {
+        id: 'lin-011', insumo_id: 'ins-020', insumo_clave: 'SRV-001',
+        insumo_descripcion: 'Renta retroexcavadora con operador por mes', insumo_unidad: 'MES', cantidad: 1,
+        precios: { 'pv-m': '52500', 'pv-n': '55000' }, ganador: 'pv-m',
+        evaluacion_tecnica: 'APROBADO',
+        comentario_tecnico: 'Equipo con certificación IMSS. OK.',
+        aprobacion_gt: 'APROBADO',
+        comentario_gt: 'Precio referenciado. Autorizado.',
       },
     ],
     ordenes_compra: [
-      { codigo: 'OC-2024-045', proveedor_nombre: 'Bloquera del Norte SA de CV', total: 17500 },
-      { codigo: 'OC-2024-046', proveedor_nombre: 'Materiales Construcción GDL', total: 16400 },
+      { codigo: 'OC-2024-031', proveedor_nombre: 'Arrendadora Caterpillar SA', total: 60900 },
     ],
   },
 ];

@@ -189,7 +189,12 @@ exports.Prisma.CuadroComparativoScalarFieldEnum = {
   codigo: 'codigo',
   fecha_creacion: 'fecha_creacion',
   estado: 'estado',
-  notas: 'notas'
+  notas: 'notas',
+  evaluacion_residente_id: 'evaluacion_residente_id',
+  fecha_evaluacion_tecnica: 'fecha_evaluacion_tecnica',
+  gerente_tecnico_id: 'gerente_tecnico_id',
+  fecha_aprobacion_gt: 'fecha_aprobacion_gt',
+  comentario_gt_general: 'comentario_gt_general'
 };
 
 exports.Prisma.ComparativaDetalleScalarFieldEnum = {
@@ -201,7 +206,11 @@ exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   insumo_id: 'insumo_id',
   precio_ofertado: 'precio_ofertado',
   tiempo_entrega: 'tiempo_entrega',
-  es_ganador: 'es_ganador'
+  es_ganador: 'es_ganador',
+  evaluacion_tecnica: 'evaluacion_tecnica',
+  comentario_tecnico: 'comentario_tecnico',
+  aprobacion_gt: 'aprobacion_gt',
+  comentario_gt: 'comentario_gt'
 };
 
 exports.Prisma.AlertaOcErrorScalarFieldEnum = {
