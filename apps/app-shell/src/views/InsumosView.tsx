@@ -92,6 +92,27 @@ interface InsumoPreview {
   _error?: string;
 }
 
+/** Un insumo dentro de la composición APU de un concepto. */
+interface InsumoComposicion {
+  clave_insumo: string;
+  tipo_insumo: TipoInsumo;
+  cantidad: number;
+  rendimiento: number;
+  costo_unitario: number;
+}
+
+/** Composición APU de un concepto: lista de insumos con cantidad y rendimiento. */
+interface ComposicionConcepto {
+  concepto_clave: string;    // Clave del concepto en el presupuesto (ej. "1", "2.3")
+  insumos: InsumoComposicion[];
+}
+
+/** Resultado completo del parser APU: insumos planos + composiciones por concepto. */
+interface APUParseResult {
+  insumos: InsumoPreview[];
+  composiciones: ComposicionConcepto[];
+}
+
 // ─── Constantes de UI ─────────────────────────────────────────────────────────
 
 const TIPO_LABEL: Record<TipoInsumo, string> = {
@@ -221,26 +242,32 @@ function esCapituloNormalizado(c: ConceptoPreview): boolean {
 //
 // Extrae insumos únicos (por clave) de todas las secciones.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoAPU(rawRows: (string | number)[][]): InsumoPreview[] {
-  // Infiere tipo de insumo a partir del prefijo de clave OPUS (usado en sección "Auxiliar")
+function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
+  // Infiere tipo de insumo desde prefijo de clave OPUS (sección "Auxiliar")
   function inferirTipoAPU(clave: string): TipoInsumo {
     const c = clave.toUpperCase();
     if (/^(CAM|EQ|MAQ|EXCAV|BOMB|GRUA|COMP|VIBR|SOLD|TORNO|RETRO)/.test(c)) return 'EQUIPO';
-    if (/^(CFAP|JOR|MO|OFIC|PEO|ALB|ELEC|PLOM|PINT|CARP|HERR|AYU)/.test(c)) return 'MANO_DE_OBRA';
-    if (/^(HH|HS|HER|HERRA)/.test(c)) return 'INDIRECTO';
-    // CFM, CIM, etc. → MATERIAL por defecto
-    return 'MATERIAL';
+    if (/^(CFAP|JOR|MO|OFIC|PEO|ALB|ELEC|PLOM|PINT|CARP|AYU)/.test(c))      return 'MANO_DE_OBRA';
+    if (/^(HH|HS|HER|HERRA)/.test(c))                                         return 'INDIRECTO';
+    return 'MATERIAL'; // CFM, CIM, etc.
   }
 
-  const insumoMap = new Map<string, InsumoPreview>();
-  let tipoActual: TipoInsumo | null = null;
-  let enAuxiliar = false; // sección "Auxiliar": inferir tipo desde la clave
-  let headerDetectado = false; // se resetea en cada concepto nuevo ("ANALISIS DEL TOTAL" / "Clave:")
+  const insumoMap     = new Map<string, InsumoPreview>();
+  const composicionMap = new Map<string, ComposicionConcepto>(); // clave_concepto → composición
 
-  // Defaults con col 0 vacía en OPUS Excel (CLAVE suele estar en col 1)
+  let tipoActual: TipoInsumo | null = null;
+  let enAuxiliar      = false;
+  let headerDetectado = false; // se resetea al inicio de cada concepto
+
+  // Clave del concepto actual (extraída de "Clave: X")
+  let conceptoClave: string | null = null;
+
+  // Posiciones de columna — defaults para OPUS Excel (col 0 vacía)
   let colClave         = 1;
   let colDescripcion   = 2;
   let colUnidad        = 3;
+  let colCantidad      = 4;
+  let colRendimiento   = 5;
   let colCostoUnitario = 6;
 
   for (const fila of rawRows) {
@@ -248,74 +275,84 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): InsumoPreview[] {
     const noVacias = celdas.filter(c => c !== '');
     if (noVacias.length === 0) continue;
 
-    // Primera celda no vacía → detectar secciones aunque haya columnas vacías al inicio
+    // Primera celda no vacía — robusta ante columnas vacías al inicio
     const firstNonEmpty = noVacias[0] ?? '';
 
-    // ── Inicio de nuevo concepto → resetear estado por concepto ──────────────
-    if (/^analisis\s+del\s+total/i.test(firstNonEmpty) || /^clave\s*:/i.test(firstNonEmpty)) {
-      headerDetectado = false;
-      tipoActual = null;
-      enAuxiliar = false;
+    // ── Inicio de nuevo concepto → resetear estado ────────────────────────────
+    if (/^analisis\s+del\s+total/i.test(firstNonEmpty)) {
+      headerDetectado = false; tipoActual = null; enAuxiliar = false;
+      continue;
+    }
+    if (/^clave\s*:/i.test(firstNonEmpty)) {
+      // Extraer clave: "Clave:  1" → "1"
+      const m = firstNonEmpty.match(/clave\s*:\s*(.+)/i);
+      conceptoClave = m ? m[1].trim() : null;
+      headerDetectado = false; tipoActual = null; enAuxiliar = false;
       continue;
     }
 
-    // ── Skip filas de metadatos del encabezado del concepto ──────────────────
-    if (/^descripci/i.test(firstNonEmpty)) continue;    // "Descripción"
-    if (/^unidad\s*:/i.test(firstNonEmpty)) continue;   // "Unidad: M3 / Cantidad: ..."
+    // ── Skip metadatos del concepto ───────────────────────────────────────────
+    if (/^descripci/i.test(firstNonEmpty)) continue; // "Descripción"
+    if (/^unidad\s*:/i.test(firstNonEmpty)) continue; // "Unidad: M3 / Cantidad: ..."
 
-    // ── Detectar encabezado de tabla (CLAVE + DESCRIPCION en misma fila) ─────
+    // ── Detectar encabezado de tabla de insumos (CLAVE + DESCRIPCION) ─────────
     if (!headerDetectado) {
       const norm = celdas.map(c => c.toUpperCase().replace(/\s+/g, '').replace(/[^A-Z]/g, ''));
-      const idxClave = norm.findIndex(c => c === 'CLAVE' || c === 'CODIGO');
-      const idxDesc  = norm.findIndex(c => c.startsWith('DESCRIPCION') || c === 'DESC');
-      if (idxClave >= 0 && idxDesc >= 0) {
-        colClave       = idxClave;
-        colDescripcion = idxDesc;
-        const iU = norm.findIndex(c => c === 'UNIDAD' || c === 'UM' || c === 'UNIDADMEDIDA');
-        if (iU >= 0) colUnidad = iU;
-        const iCosto = celdas.findIndex(c => /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
-        if (iCosto >= 0) colCostoUnitario = iCosto;
+      const iCl  = norm.findIndex(c => c === 'CLAVE' || c === 'CODIGO');
+      const iDe  = norm.findIndex(c => c.startsWith('DESCRIPCION') || c === 'DESC');
+      if (iCl >= 0 && iDe >= 0) {
+        colClave       = iCl;
+        colDescripcion = iDe;
+        const iU  = norm.findIndex(c => c === 'UNIDAD' || c === 'UM' || c === 'UNIDADMEDIDA');
+        if (iU  >= 0) colUnidad = iU;
+        const iCa = norm.findIndex(c => c === 'CANTIDAD' || c === 'CANT');
+        if (iCa >= 0) colCantidad = iCa;
+        const iRe = norm.findIndex(c => c === 'RENDIMIENTO' || c.startsWith('RENDIM'));
+        if (iRe >= 0) colRendimiento = iRe;
+        const iCo = celdas.findIndex(c => /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
+        if (iCo >= 0) colCostoUnitario = iCo;
         headerDetectado = true;
       }
-      continue; // antes del primer encabezado de tabla, saltar todo
+      continue;
     }
 
-    // ── Detectar secciones de tipo (solo actualizar tipoActual, nunca resetear) ──
-    if (/^material(es)?$/i.test(firstNonEmpty))   { tipoActual = 'MATERIAL';    enAuxiliar = false; continue; }
+    // ── Detectar secciones de tipo (no resetean headerDetectado) ──────────────
+    if (/^material(es)?$/i.test(firstNonEmpty))    { tipoActual = 'MATERIAL';    enAuxiliar = false; continue; }
     if (/^mano\s+de\s+obra$/i.test(firstNonEmpty)) { tipoActual = 'MANO_DE_OBRA'; enAuxiliar = false; continue; }
-    if (/^herramienta(s)?$/i.test(firstNonEmpty)) { tipoActual = 'INDIRECTO';   enAuxiliar = false; continue; }
-    if (/^equipo/i.test(firstNonEmpty))           { tipoActual = 'EQUIPO';      enAuxiliar = false; continue; }
-    if (/^subcontrat/i.test(firstNonEmpty))       { tipoActual = 'SUBCONTRATO'; enAuxiliar = false; continue; }
-    if (/^auxiliar/i.test(firstNonEmpty))         { tipoActual = null; enAuxiliar = true; continue; }
+    if (/^herramienta(s)?$/i.test(firstNonEmpty))  { tipoActual = 'INDIRECTO';   enAuxiliar = false; continue; }
+    if (/^equipo/i.test(firstNonEmpty))            { tipoActual = 'EQUIPO';      enAuxiliar = false; continue; }
+    if (/^subcontrat/i.test(firstNonEmpty))        { tipoActual = 'SUBCONTRATO'; enAuxiliar = false; continue; }
+    if (/^auxiliar/i.test(firstNonEmpty))          { tipoActual = null; enAuxiliar = true; continue; }
 
-    // ── Skip filas de totales y resumen ──────────────────────────────────────
-    if (/^total\s+de\s+/i.test(firstNonEmpty))         continue; // "Total de Material X"
-    if (/^rendimiento\s*\//i.test(firstNonEmpty))       continue; // "Rendimiento / JOR 10 Total X"
+    // ── Skip filas de totales / resumen ──────────────────────────────────────
+    if (/^total\s+de\s+/i.test(firstNonEmpty))          continue;
+    if (/^rendimiento\s*\//i.test(firstNonEmpty))        continue;
     if (/^costo\s+(directo|unitario)/i.test(firstNonEmpty)) continue;
-    if (/^precio\s+unitario/i.test(firstNonEmpty))      continue;
-    if (/^indirectos/i.test(firstNonEmpty))             continue;
-    if (/^subtotal/i.test(firstNonEmpty))               continue;
-    if (/^financiamiento/i.test(firstNonEmpty))         continue;
-    if (/^utilidad/i.test(firstNonEmpty))               continue;
-    if (/^cargos\s+adicionales/i.test(firstNonEmpty))   continue;
-    if (/^\*\*/.test(firstNonEmpty))                    continue; // "** CINCO MIL... **"
-    if (/^cantidad\s+\S/i.test(firstNonEmpty))          continue; // "Cantidad 1.2000 Total 53.14"
+    if (/^precio\s+unitario/i.test(firstNonEmpty))       continue;
+    if (/^indirectos/i.test(firstNonEmpty))              continue;
+    if (/^subtotal/i.test(firstNonEmpty))                continue;
+    if (/^financiamiento/i.test(firstNonEmpty))          continue;
+    if (/^utilidad/i.test(firstNonEmpty))                continue;
+    if (/^cargos\s+adicionales/i.test(firstNonEmpty))    continue;
+    if (/^\*\*/.test(firstNonEmpty))                     continue;
+    if (/^cantidad\s+\S/i.test(firstNonEmpty))           continue;
 
     // ── Procesar fila de insumo ───────────────────────────────────────────────
     const clave = celdas[colClave] ?? '';
     const desc  = celdas[colDescripcion] ?? '';
     let unidad  = celdas[colUnidad] ?? '';
 
-    // Validar clave real de insumo
-    if (!clave) continue;
-    if (/^\d+(\.\d+)*$/.test(clave)) continue;          // clave numérica → capítulo
+    if (!clave || clave.length < 2) continue;
+    if (/^\d+(\.\d+)*$/.test(clave)) continue;
     if (/^(total|suma|sub)/i.test(clave)) continue;
-    if (clave.length < 2) continue;
 
-    // Inferir tipo para sección Auxiliar (sub-APUs: BN001, RA001, etc.)
     const tipo: TipoInsumo = enAuxiliar ? inferirTipoAPU(clave) : (tipoActual ?? 'MATERIAL');
 
-    // Costo: columna detectada, con fallback al primer número > 0 desde col 4
+    // Cantidad y rendimiento (para la composición)
+    const cantidad    = parsearNumero(celdas[colCantidad]);
+    const rendimiento = parsearNumero(celdas[colRendimiento]);
+
+    // Costo unitario con fallback al primer número > 0 desde col 4
     let costoBase = parsearNumero(celdas[colCostoUnitario]);
     if (costoBase === 0) {
       for (let i = 4; i < celdas.length; i++) {
@@ -324,31 +361,48 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): InsumoPreview[] {
       }
     }
 
-    // Default de unidad según tipo (M.O. no tiene unidad explícita en APU)
+    // Default de unidad por tipo
     if (!unidad) {
       if (tipo === 'MANO_DE_OBRA') unidad = 'JOR';
       else if (tipo === 'EQUIPO')  unidad = 'HORA';
     }
 
     const claveNorm = clave.toUpperCase().trim();
+
+    // ── Catálogo plano (único por clave) ─────────────────────────────────────
     if (!insumoMap.has(claveNorm)) {
       const errores: string[] = [];
       if (!desc)           errores.push('sin descripción');
       if (costoBase === 0) errores.push('sin costo unitario');
-
       insumoMap.set(claveNorm, {
         clave:         claveNorm,
         descripcion:   desc || '(sin descripción)',
         unidad_medida: (unidad || 'PZA').toUpperCase(),
         tipo_insumo:   tipo,
         costo_base:    costoBase,
-        _valido:       Boolean(clave && desc), // unidad tiene default, no se exige
+        _valido:       Boolean(clave && desc),
         _error:        errores.length ? errores.join(', ') : undefined,
       });
     }
+
+    // ── Composición por concepto ──────────────────────────────────────────────
+    if (conceptoClave) {
+      const ck = conceptoClave.trim().toUpperCase();
+      if (!composicionMap.has(ck)) {
+        composicionMap.set(ck, { concepto_clave: conceptoClave.trim(), insumos: [] });
+      }
+      // Un insumo puede aparecer en múltiples conceptos; dentro de uno solo una vez
+      const comp = composicionMap.get(ck)!;
+      if (!comp.insumos.find(i => i.clave_insumo === claveNorm)) {
+        comp.insumos.push({ clave_insumo: claveNorm, tipo_insumo: tipo, cantidad, rendimiento, costo_unitario: costoBase });
+      }
+    }
   }
 
-  return Array.from(insumoMap.values());
+  return {
+    insumos:       Array.from(insumoMap.values()),
+    composiciones: Array.from(composicionMap.values()),
+  };
 }
 
 // ─── Parser: Explosión de Insumos ─────────────────────────────────────────────
@@ -533,6 +587,8 @@ export const InsumosView: React.FC = () => {
   const [archivoNombreInsumo, setArchivoNombreInsumo] = useState('');
   const [previewInsumos, setPreviewInsumos] = useState<InsumoPreview[]>([]);
   const [parseErrorInsumos, setParseErrorInsumos] = useState<string | null>(null);
+  // Composiciones APU: solo disponibles cuando se importa un APU (no Explosión)
+  const [previewComposiciones, setPreviewComposiciones] = useState<ComposicionConcepto[]>([]);
 
   // ── Derivados Tab 1 ───────────────────────────────────────────────────────
   const validRows    = useMemo(() => preview.filter(r => r._valido), [preview]);
@@ -731,18 +787,20 @@ export const InsumosView: React.FC = () => {
     if (!file) return;
     setArchivoNombreInsumo(file.name);
     setParseErrorInsumos(null);
+    setPreviewComposiciones([]); // limpiar composiciones anteriores
     leerArchivoComoRawRows(
       file,
       (rows) => {
-        const extraidos = parsearArchivoAPU(rows);
-        if (extraidos.length === 0) {
+        const resultado = parsearArchivoAPU(rows);
+        if (resultado.insumos.length === 0) {
           setParseErrorInsumos(
             'No se encontraron insumos en el archivo APU.\n' +
             'Verifica que el archivo sea la exportación "ANÁLISIS DE PRECIOS UNITARIOS" de OPUS.'
           );
           return;
         }
-        setPreviewInsumos(extraidos);
+        setPreviewInsumos(resultado.insumos);
+        setPreviewComposiciones(resultado.composiciones);
         setPanelAPU(true);
       },
       (msg) => setParseErrorInsumos(msg)
@@ -756,6 +814,7 @@ export const InsumosView: React.FC = () => {
     if (!file) return;
     setArchivoNombreInsumo(file.name);
     setParseErrorInsumos(null);
+    setPreviewComposiciones([]); // Explosión no genera composiciones
     leerArchivoComoRawRows(
       file,
       (rows) => {
@@ -780,6 +839,7 @@ export const InsumosView: React.FC = () => {
     if (validPreviewInsumos.length === 0) return;
     setImportandoInsumos(true);
     try {
+      // 1. Importar catálogo plano de insumos
       const res = await api.post('/api/v1/gerencia-tecnica/insumos/importar-lote', {
         insumos: validPreviewInsumos.map(i => ({
           clave: i.clave,
@@ -790,15 +850,32 @@ export const InsumosView: React.FC = () => {
         })),
       });
       const { creados, actualizados, omitidos } = res.data.data;
+
+      // 2. Importar composiciones APU (solo si hay composiciones y existe presupuesto)
+      let compMsg = '';
+      if (previewComposiciones.length > 0 && presupuesto?.id) {
+        try {
+          const resComp = await api.post(
+            `/api/v1/gerencia-tecnica/presupuestos/${presupuesto.id}/composicion-apu`,
+            { composiciones: previewComposiciones }
+          );
+          const { vinculados, actualizados: compAct } = resComp.data.data;
+          compMsg = ` · ${vinculados + compAct} relaciones APU vinculadas`;
+        } catch (_) {
+          compMsg = ' · composición APU no guardada (reintenta)';
+        }
+      }
+
       notify({
         type: 'success',
         title: 'Insumos importados',
-        message: `${creados} nuevos · ${actualizados} actualizados${omitidos > 0 ? ` · ${omitidos} omitidos` : ''}`,
+        message: `${creados} nuevos · ${actualizados} actualizados${omitidos > 0 ? ` · ${omitidos} omitidos` : ''}${compMsg}`,
         duration: 6000,
       });
       setPanelAPU(false);
       setPanelExplosion(false);
       setPreviewInsumos([]);
+      setPreviewComposiciones([]);
       setArchivoNombreInsumo('');
       void fetchInsumos();
     } catch (err: any) {
@@ -1355,9 +1432,30 @@ export const InsumosView: React.FC = () => {
       {/* PANEL: Vista previa — Importación APU / Explosión de Insumos       */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {[
-        { isOpen: panelAPU,       onClose: () => { setPanelAPU(false);       setPreviewInsumos([]); setArchivoNombreInsumo(''); }, title: 'Vista previa — Importación APU',              subtitle: 'Análisis de Precios Unitarios · OPUS' },
-        { isOpen: panelExplosion, onClose: () => { setPanelExplosion(false); setPreviewInsumos([]); setArchivoNombreInsumo(''); }, title: 'Vista previa — Explosión de Insumos',       subtitle: 'Catálogo consolidado de insumos · OPUS' },
-      ].map(({ isOpen, onClose, title, subtitle }) => (
+        {
+          isOpen: panelAPU,
+          onClose: () => { setPanelAPU(false); setPreviewInsumos([]); setPreviewComposiciones([]); setArchivoNombreInsumo(''); },
+          title: 'Vista previa — Importación APU',
+          subtitle: 'Análisis de Precios Unitarios · OPUS',
+          mostrarComposicion: true,
+        },
+        {
+          isOpen: panelExplosion,
+          onClose: () => { setPanelExplosion(false); setPreviewInsumos([]); setPreviewComposiciones([]); setArchivoNombreInsumo(''); },
+          title: 'Vista previa — Explosión de Insumos',
+          subtitle: 'Catálogo consolidado de insumos · OPUS',
+          mostrarComposicion: false,
+        },
+      ].map(({ isOpen, onClose, title, subtitle, mostrarComposicion }) => {
+        // Cuántos conceptos del APU coinciden con el presupuesto cargado
+        const clavesEnPresupuesto = new Set(
+          (presupuesto?.conceptos ?? []).map(c => c.clave.trim().toUpperCase())
+        );
+        const composicionesVinculables = previewComposiciones.filter(
+          c => clavesEnPresupuesto.has(c.concepto_clave.trim().toUpperCase())
+        ).length;
+
+        return (
         <SlidePanel
           key={title}
           isOpen={isOpen}
@@ -1402,6 +1500,35 @@ export const InsumosView: React.FC = () => {
                   <p className="text-[10px] text-amber-600/80 mt-1">
                     {invalidPreviewInsumos.slice(0, 3).map(r => `"${r.clave}" (${r._error})`).join(' · ')}
                     {invalidPreviewInsumos.length > 3 && ` · y ${invalidPreviewInsumos.length - 3} más`}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Banner de Composición APU (solo panel APU) ──────────────── */}
+            {mostrarComposicion && previewComposiciones.length > 0 && (
+              <div className={cn(
+                'rounded-2xl border p-4 flex gap-3',
+                presupuesto
+                  ? 'bg-indigo-500/5 border-indigo-500/20'
+                  : 'bg-amber-500/5 border-amber-500/20'
+              )}>
+                <IconLayers className={cn('h-5 w-5 shrink-0 mt-0.5', presupuesto ? 'text-indigo-500' : 'text-amber-500')} />
+                <div className="flex-1">
+                  <p className={cn('text-xs font-bold', presupuesto ? 'text-indigo-700' : 'text-amber-700')}>
+                    {previewComposiciones.length} APUs detectados
+                    {presupuesto && composicionesVinculables > 0 && (
+                      <> · <span className="font-black">{composicionesVinculables} coinciden</span> con el presupuesto</>
+                    )}
+                    {presupuesto && composicionesVinculables === 0 && (
+                      <> · <span className="text-amber-600">0 coinciden</span> (verifica las claves del presupuesto)</>
+                    )}
+                  </p>
+                  <p className={cn('text-[10px] mt-1', presupuesto ? 'text-indigo-600/70' : 'text-amber-600/70')}>
+                    {presupuesto
+                      ? `Al confirmar, se guardarán las relaciones insumo→concepto del APU (${previewComposiciones.reduce((s, c) => s + c.insumos.length, 0)} vínculos totales).`
+                      : 'Sin presupuesto cargado. Importa el "Catálogo de Obra" primero para que los APUs se vinculen con los conceptos.'
+                    }
                   </p>
                 </div>
               </div>
@@ -1462,6 +1589,9 @@ export const InsumosView: React.FC = () => {
             <p className="text-xs text-muted-foreground">
               <strong className="text-foreground">{validPreviewInsumos.length}</strong> insumos a importar
               {invalidPreviewInsumos.length > 0 && <> · <span className="text-amber-600">{invalidPreviewInsumos.length} se omitirán</span></>}
+              {mostrarComposicion && composicionesVinculables > 0 && presupuesto && (
+                <> · <span className="text-indigo-600 font-bold">{composicionesVinculables} APUs vinculables</span></>
+              )}
             </p>
             <div className="flex gap-3">
               <button
@@ -1479,7 +1609,8 @@ export const InsumosView: React.FC = () => {
             </div>
           </div>
         </SlidePanel>
-      ))}
+        );
+      })}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* PANEL: Guía de exportación desde OPUS                              */}

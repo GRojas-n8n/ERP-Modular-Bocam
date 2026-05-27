@@ -161,6 +161,20 @@ exports.Prisma.ConceptoScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.ConceptoInsumoScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
+  insumo_id: 'insumo_id',
+  tipo_insumo: 'tipo_insumo',
+  cantidad: 'cantidad',
+  rendimiento: 'rendimiento',
+  costo_unitario: 'costo_unitario',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -188,7 +202,8 @@ exports.EstadoPresupuesto = exports.$Enums.EstadoPresupuesto = {
 exports.Prisma.ModelName = {
   Insumo: 'Insumo',
   PresupuestoBase: 'PresupuestoBase',
-  Concepto: 'Concepto'
+  Concepto: 'Concepto',
+  ConceptoInsumo: 'ConceptoInsumo'
 };
 
 /**

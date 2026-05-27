@@ -31,6 +31,13 @@ export type PresupuestoBase = $Result.DefaultSelection<Prisma.$PresupuestoBasePa
  * Tabla transaccional hija, hereda tenant_id y proyecto_id del padre.
  */
 export type Concepto = $Result.DefaultSelection<Prisma.$ConceptoPayload>
+/**
+ * Model ConceptoInsumo
+ * Composición APU: relación entre un Concepto y sus Insumos (rendimientos y cantidades).
+ * Se pobla al importar el archivo "ANÁLISIS DE PRECIOS UNITARIOS" de OPUS.
+ * Permite calcular take-off de materiales a partir del avance reportado.
+ */
+export type ConceptoInsumo = $Result.DefaultSelection<Prisma.$ConceptoInsumoPayload>
 
 /**
  * Enums
@@ -218,6 +225,16 @@ export class PrismaClient<
     * ```
     */
   get concepto(): Prisma.ConceptoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.conceptoInsumo`: Exposes CRUD operations for the **ConceptoInsumo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ConceptoInsumos
+    * const conceptoInsumos = await prisma.conceptoInsumo.findMany()
+    * ```
+    */
+  get conceptoInsumo(): Prisma.ConceptoInsumoDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -661,7 +678,8 @@ export namespace Prisma {
   export const ModelName: {
     Insumo: 'Insumo',
     PresupuestoBase: 'PresupuestoBase',
-    Concepto: 'Concepto'
+    Concepto: 'Concepto',
+    ConceptoInsumo: 'ConceptoInsumo'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -677,7 +695,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "insumo" | "presupuestoBase" | "concepto"
+      modelProps: "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -891,6 +909,76 @@ export namespace Prisma {
           }
         }
       }
+      ConceptoInsumo: {
+        payload: Prisma.$ConceptoInsumoPayload<ExtArgs>
+        fields: Prisma.ConceptoInsumoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ConceptoInsumoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ConceptoInsumoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>
+          }
+          findFirst: {
+            args: Prisma.ConceptoInsumoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ConceptoInsumoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>
+          }
+          findMany: {
+            args: Prisma.ConceptoInsumoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>[]
+          }
+          create: {
+            args: Prisma.ConceptoInsumoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>
+          }
+          createMany: {
+            args: Prisma.ConceptoInsumoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ConceptoInsumoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>[]
+          }
+          delete: {
+            args: Prisma.ConceptoInsumoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>
+          }
+          update: {
+            args: Prisma.ConceptoInsumoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>
+          }
+          deleteMany: {
+            args: Prisma.ConceptoInsumoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ConceptoInsumoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ConceptoInsumoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoInsumoPayload>
+          }
+          aggregate: {
+            args: Prisma.ConceptoInsumoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateConceptoInsumo>
+          }
+          groupBy: {
+            args: Prisma.ConceptoInsumoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ConceptoInsumoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ConceptoInsumoCountArgs<ExtArgs>
+            result: $Utils.Optional<ConceptoInsumoCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1048,6 +1136,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type InsumoCountOutputType
+   */
+
+  export type InsumoCountOutputType = {
+    concepto_insumos: number
+  }
+
+  export type InsumoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    concepto_insumos?: boolean | InsumoCountOutputTypeCountConcepto_insumosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * InsumoCountOutputType without action
+   */
+  export type InsumoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InsumoCountOutputType
+     */
+    select?: InsumoCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * InsumoCountOutputType without action
+   */
+  export type InsumoCountOutputTypeCountConcepto_insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConceptoInsumoWhereInput
+  }
+
+
+  /**
    * Count Type PresupuestoBaseCountOutputType
    */
 
@@ -1075,6 +1194,37 @@ export namespace Prisma {
    */
   export type PresupuestoBaseCountOutputTypeCountConceptosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ConceptoWhereInput
+  }
+
+
+  /**
+   * Count Type ConceptoCountOutputType
+   */
+
+  export type ConceptoCountOutputType = {
+    insumos: number
+  }
+
+  export type ConceptoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    insumos?: boolean | ConceptoCountOutputTypeCountInsumosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ConceptoCountOutputType without action
+   */
+  export type ConceptoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCountOutputType
+     */
+    select?: ConceptoCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ConceptoCountOutputType without action
+   */
+  export type ConceptoCountOutputTypeCountInsumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConceptoInsumoWhereInput
   }
 
 
@@ -1320,6 +1470,8 @@ export namespace Prisma {
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
+    concepto_insumos?: boolean | Insumo$concepto_insumosArgs<ExtArgs>
+    _count?: boolean | InsumoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["insumo"]>
 
   export type InsumoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1348,10 +1500,17 @@ export namespace Prisma {
     updated_at?: boolean
   }
 
+  export type InsumoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    concepto_insumos?: boolean | Insumo$concepto_insumosArgs<ExtArgs>
+    _count?: boolean | InsumoCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type InsumoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $InsumoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Insumo"
-    objects: {}
+    objects: {
+      concepto_insumos: Prisma.$ConceptoInsumoPayload<ExtArgs>[]
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       tenant_id: string
@@ -1727,6 +1886,7 @@ export namespace Prisma {
    */
   export interface Prisma__InsumoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    concepto_insumos<T extends Insumo$concepto_insumosArgs<ExtArgs> = {}>(args?: Subset<T, Insumo$concepto_insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1779,6 +1939,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * Filter, which Insumo to fetch.
      */
     where: InsumoWhereUniqueInput
@@ -1793,6 +1957,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * Filter, which Insumo to fetch.
      */
     where: InsumoWhereUniqueInput
@@ -1806,6 +1974,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the Insumo
      */
     select?: InsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
     /**
      * Filter, which Insumo to fetch.
      */
@@ -1851,6 +2023,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * Filter, which Insumo to fetch.
      */
     where?: InsumoWhereInput
@@ -1895,6 +2071,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * Filter, which Insumos to fetch.
      */
     where?: InsumoWhereInput
@@ -1933,6 +2113,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the Insumo
      */
     select?: InsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
     /**
      * The data needed to create a Insumo.
      */
@@ -1974,6 +2158,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * The data needed to update a Insumo.
      */
     data: XOR<InsumoUpdateInput, InsumoUncheckedUpdateInput>
@@ -2006,6 +2194,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * The filter to search for the Insumo to update in case it exists.
      */
     where: InsumoWhereUniqueInput
@@ -2028,6 +2220,10 @@ export namespace Prisma {
      */
     select?: InsumoSelect<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    /**
      * Filter which Insumo to delete.
      */
     where: InsumoWhereUniqueInput
@@ -2044,6 +2240,26 @@ export namespace Prisma {
   }
 
   /**
+   * Insumo.concepto_insumos
+   */
+  export type Insumo$concepto_insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    where?: ConceptoInsumoWhereInput
+    orderBy?: ConceptoInsumoOrderByWithRelationInput | ConceptoInsumoOrderByWithRelationInput[]
+    cursor?: ConceptoInsumoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ConceptoInsumoScalarFieldEnum | ConceptoInsumoScalarFieldEnum[]
+  }
+
+  /**
    * Insumo without action
    */
   export type InsumoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2051,6 +2267,10 @@ export namespace Prisma {
      * Select specific fields to fetch from the Insumo
      */
     select?: InsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
   }
 
 
@@ -3339,6 +3559,8 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    insumos?: boolean | Concepto$insumosArgs<ExtArgs>
+    _count?: boolean | ConceptoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["concepto"]>
 
   export type ConceptoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -3374,6 +3596,8 @@ export namespace Prisma {
 
   export type ConceptoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    insumos?: boolean | Concepto$insumosArgs<ExtArgs>
+    _count?: boolean | ConceptoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ConceptoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
@@ -3383,6 +3607,7 @@ export namespace Prisma {
     name: "Concepto"
     objects: {
       presupuesto: Prisma.$PresupuestoBasePayload<ExtArgs>
+      insumos: Prisma.$ConceptoInsumoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3762,6 +3987,7 @@ export namespace Prisma {
   export interface Prisma__ConceptoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     presupuesto<T extends PresupuestoBaseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PresupuestoBaseDefaultArgs<ExtArgs>>): Prisma__PresupuestoBaseClient<$Result.GetResult<Prisma.$PresupuestoBasePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    insumos<T extends Concepto$insumosArgs<ExtArgs> = {}>(args?: Subset<T, Concepto$insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4121,6 +4347,26 @@ export namespace Prisma {
   }
 
   /**
+   * Concepto.insumos
+   */
+  export type Concepto$insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    where?: ConceptoInsumoWhereInput
+    orderBy?: ConceptoInsumoOrderByWithRelationInput | ConceptoInsumoOrderByWithRelationInput[]
+    cursor?: ConceptoInsumoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ConceptoInsumoScalarFieldEnum | ConceptoInsumoScalarFieldEnum[]
+  }
+
+  /**
    * Concepto without action
    */
   export type ConceptoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4132,6 +4378,1068 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ConceptoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ConceptoInsumo
+   */
+
+  export type AggregateConceptoInsumo = {
+    _count: ConceptoInsumoCountAggregateOutputType | null
+    _avg: ConceptoInsumoAvgAggregateOutputType | null
+    _sum: ConceptoInsumoSumAggregateOutputType | null
+    _min: ConceptoInsumoMinAggregateOutputType | null
+    _max: ConceptoInsumoMaxAggregateOutputType | null
+  }
+
+  export type ConceptoInsumoAvgAggregateOutputType = {
+    cantidad: Decimal | null
+    rendimiento: Decimal | null
+    costo_unitario: Decimal | null
+  }
+
+  export type ConceptoInsumoSumAggregateOutputType = {
+    cantidad: Decimal | null
+    rendimiento: Decimal | null
+    costo_unitario: Decimal | null
+  }
+
+  export type ConceptoInsumoMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    insumo_id: string | null
+    tipo_insumo: $Enums.TipoInsumo | null
+    cantidad: Decimal | null
+    rendimiento: Decimal | null
+    costo_unitario: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ConceptoInsumoMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    insumo_id: string | null
+    tipo_insumo: $Enums.TipoInsumo | null
+    cantidad: Decimal | null
+    rendimiento: Decimal | null
+    costo_unitario: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ConceptoInsumoCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    concepto_id: number
+    insumo_id: number
+    tipo_insumo: number
+    cantidad: number
+    rendimiento: number
+    costo_unitario: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ConceptoInsumoAvgAggregateInputType = {
+    cantidad?: true
+    rendimiento?: true
+    costo_unitario?: true
+  }
+
+  export type ConceptoInsumoSumAggregateInputType = {
+    cantidad?: true
+    rendimiento?: true
+    costo_unitario?: true
+  }
+
+  export type ConceptoInsumoMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    insumo_id?: true
+    tipo_insumo?: true
+    cantidad?: true
+    rendimiento?: true
+    costo_unitario?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ConceptoInsumoMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    insumo_id?: true
+    tipo_insumo?: true
+    cantidad?: true
+    rendimiento?: true
+    costo_unitario?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ConceptoInsumoCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    insumo_id?: true
+    tipo_insumo?: true
+    cantidad?: true
+    rendimiento?: true
+    costo_unitario?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ConceptoInsumoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConceptoInsumo to aggregate.
+     */
+    where?: ConceptoInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoInsumos to fetch.
+     */
+    orderBy?: ConceptoInsumoOrderByWithRelationInput | ConceptoInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ConceptoInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoInsumos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ConceptoInsumos
+    **/
+    _count?: true | ConceptoInsumoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ConceptoInsumoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ConceptoInsumoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ConceptoInsumoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ConceptoInsumoMaxAggregateInputType
+  }
+
+  export type GetConceptoInsumoAggregateType<T extends ConceptoInsumoAggregateArgs> = {
+        [P in keyof T & keyof AggregateConceptoInsumo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateConceptoInsumo[P]>
+      : GetScalarType<T[P], AggregateConceptoInsumo[P]>
+  }
+
+
+
+
+  export type ConceptoInsumoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConceptoInsumoWhereInput
+    orderBy?: ConceptoInsumoOrderByWithAggregationInput | ConceptoInsumoOrderByWithAggregationInput[]
+    by: ConceptoInsumoScalarFieldEnum[] | ConceptoInsumoScalarFieldEnum
+    having?: ConceptoInsumoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ConceptoInsumoCountAggregateInputType | true
+    _avg?: ConceptoInsumoAvgAggregateInputType
+    _sum?: ConceptoInsumoSumAggregateInputType
+    _min?: ConceptoInsumoMinAggregateInputType
+    _max?: ConceptoInsumoMaxAggregateInputType
+  }
+
+  export type ConceptoInsumoGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    insumo_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal
+    rendimiento: Decimal
+    costo_unitario: Decimal
+    created_at: Date
+    updated_at: Date
+    _count: ConceptoInsumoCountAggregateOutputType | null
+    _avg: ConceptoInsumoAvgAggregateOutputType | null
+    _sum: ConceptoInsumoSumAggregateOutputType | null
+    _min: ConceptoInsumoMinAggregateOutputType | null
+    _max: ConceptoInsumoMaxAggregateOutputType | null
+  }
+
+  type GetConceptoInsumoGroupByPayload<T extends ConceptoInsumoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ConceptoInsumoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ConceptoInsumoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ConceptoInsumoGroupByOutputType[P]>
+            : GetScalarType<T[P], ConceptoInsumoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ConceptoInsumoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    insumo_id?: boolean
+    tipo_insumo?: boolean
+    cantidad?: boolean
+    rendimiento?: boolean
+    costo_unitario?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    concepto?: boolean | ConceptoDefaultArgs<ExtArgs>
+    insumo?: boolean | InsumoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["conceptoInsumo"]>
+
+  export type ConceptoInsumoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    insumo_id?: boolean
+    tipo_insumo?: boolean
+    cantidad?: boolean
+    rendimiento?: boolean
+    costo_unitario?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    concepto?: boolean | ConceptoDefaultArgs<ExtArgs>
+    insumo?: boolean | InsumoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["conceptoInsumo"]>
+
+  export type ConceptoInsumoSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    insumo_id?: boolean
+    tipo_insumo?: boolean
+    cantidad?: boolean
+    rendimiento?: boolean
+    costo_unitario?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type ConceptoInsumoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    concepto?: boolean | ConceptoDefaultArgs<ExtArgs>
+    insumo?: boolean | InsumoDefaultArgs<ExtArgs>
+  }
+  export type ConceptoInsumoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    concepto?: boolean | ConceptoDefaultArgs<ExtArgs>
+    insumo?: boolean | InsumoDefaultArgs<ExtArgs>
+  }
+
+  export type $ConceptoInsumoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ConceptoInsumo"
+    objects: {
+      concepto: Prisma.$ConceptoPayload<ExtArgs>
+      insumo: Prisma.$InsumoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      concepto_id: string
+      insumo_id: string
+      tipo_insumo: $Enums.TipoInsumo
+      /**
+       * Cantidad del insumo por unidad de concepto (ej. 0.15 M3 de oxígeno por M3 excavado)
+       */
+      cantidad: Prisma.Decimal
+      /**
+       * Rendimiento: unidades de producción por jornada/hora (OPUS: col "Rendimiento")
+       */
+      rendimiento: Prisma.Decimal
+      /**
+       * Costo unitario del insumo al momento de importación del APU
+       */
+      costo_unitario: Prisma.Decimal
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["conceptoInsumo"]>
+    composites: {}
+  }
+
+  type ConceptoInsumoGetPayload<S extends boolean | null | undefined | ConceptoInsumoDefaultArgs> = $Result.GetResult<Prisma.$ConceptoInsumoPayload, S>
+
+  type ConceptoInsumoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ConceptoInsumoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ConceptoInsumoCountAggregateInputType | true
+    }
+
+  export interface ConceptoInsumoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ConceptoInsumo'], meta: { name: 'ConceptoInsumo' } }
+    /**
+     * Find zero or one ConceptoInsumo that matches the filter.
+     * @param {ConceptoInsumoFindUniqueArgs} args - Arguments to find a ConceptoInsumo
+     * @example
+     * // Get one ConceptoInsumo
+     * const conceptoInsumo = await prisma.conceptoInsumo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ConceptoInsumoFindUniqueArgs>(args: SelectSubset<T, ConceptoInsumoFindUniqueArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ConceptoInsumo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ConceptoInsumoFindUniqueOrThrowArgs} args - Arguments to find a ConceptoInsumo
+     * @example
+     * // Get one ConceptoInsumo
+     * const conceptoInsumo = await prisma.conceptoInsumo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ConceptoInsumoFindUniqueOrThrowArgs>(args: SelectSubset<T, ConceptoInsumoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ConceptoInsumo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoFindFirstArgs} args - Arguments to find a ConceptoInsumo
+     * @example
+     * // Get one ConceptoInsumo
+     * const conceptoInsumo = await prisma.conceptoInsumo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ConceptoInsumoFindFirstArgs>(args?: SelectSubset<T, ConceptoInsumoFindFirstArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ConceptoInsumo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoFindFirstOrThrowArgs} args - Arguments to find a ConceptoInsumo
+     * @example
+     * // Get one ConceptoInsumo
+     * const conceptoInsumo = await prisma.conceptoInsumo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ConceptoInsumoFindFirstOrThrowArgs>(args?: SelectSubset<T, ConceptoInsumoFindFirstOrThrowArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ConceptoInsumos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ConceptoInsumos
+     * const conceptoInsumos = await prisma.conceptoInsumo.findMany()
+     * 
+     * // Get first 10 ConceptoInsumos
+     * const conceptoInsumos = await prisma.conceptoInsumo.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const conceptoInsumoWithIdOnly = await prisma.conceptoInsumo.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ConceptoInsumoFindManyArgs>(args?: SelectSubset<T, ConceptoInsumoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ConceptoInsumo.
+     * @param {ConceptoInsumoCreateArgs} args - Arguments to create a ConceptoInsumo.
+     * @example
+     * // Create one ConceptoInsumo
+     * const ConceptoInsumo = await prisma.conceptoInsumo.create({
+     *   data: {
+     *     // ... data to create a ConceptoInsumo
+     *   }
+     * })
+     * 
+     */
+    create<T extends ConceptoInsumoCreateArgs>(args: SelectSubset<T, ConceptoInsumoCreateArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ConceptoInsumos.
+     * @param {ConceptoInsumoCreateManyArgs} args - Arguments to create many ConceptoInsumos.
+     * @example
+     * // Create many ConceptoInsumos
+     * const conceptoInsumo = await prisma.conceptoInsumo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ConceptoInsumoCreateManyArgs>(args?: SelectSubset<T, ConceptoInsumoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ConceptoInsumos and returns the data saved in the database.
+     * @param {ConceptoInsumoCreateManyAndReturnArgs} args - Arguments to create many ConceptoInsumos.
+     * @example
+     * // Create many ConceptoInsumos
+     * const conceptoInsumo = await prisma.conceptoInsumo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ConceptoInsumos and only return the `id`
+     * const conceptoInsumoWithIdOnly = await prisma.conceptoInsumo.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ConceptoInsumoCreateManyAndReturnArgs>(args?: SelectSubset<T, ConceptoInsumoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ConceptoInsumo.
+     * @param {ConceptoInsumoDeleteArgs} args - Arguments to delete one ConceptoInsumo.
+     * @example
+     * // Delete one ConceptoInsumo
+     * const ConceptoInsumo = await prisma.conceptoInsumo.delete({
+     *   where: {
+     *     // ... filter to delete one ConceptoInsumo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ConceptoInsumoDeleteArgs>(args: SelectSubset<T, ConceptoInsumoDeleteArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ConceptoInsumo.
+     * @param {ConceptoInsumoUpdateArgs} args - Arguments to update one ConceptoInsumo.
+     * @example
+     * // Update one ConceptoInsumo
+     * const conceptoInsumo = await prisma.conceptoInsumo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ConceptoInsumoUpdateArgs>(args: SelectSubset<T, ConceptoInsumoUpdateArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ConceptoInsumos.
+     * @param {ConceptoInsumoDeleteManyArgs} args - Arguments to filter ConceptoInsumos to delete.
+     * @example
+     * // Delete a few ConceptoInsumos
+     * const { count } = await prisma.conceptoInsumo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ConceptoInsumoDeleteManyArgs>(args?: SelectSubset<T, ConceptoInsumoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ConceptoInsumos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ConceptoInsumos
+     * const conceptoInsumo = await prisma.conceptoInsumo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ConceptoInsumoUpdateManyArgs>(args: SelectSubset<T, ConceptoInsumoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ConceptoInsumo.
+     * @param {ConceptoInsumoUpsertArgs} args - Arguments to update or create a ConceptoInsumo.
+     * @example
+     * // Update or create a ConceptoInsumo
+     * const conceptoInsumo = await prisma.conceptoInsumo.upsert({
+     *   create: {
+     *     // ... data to create a ConceptoInsumo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ConceptoInsumo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ConceptoInsumoUpsertArgs>(args: SelectSubset<T, ConceptoInsumoUpsertArgs<ExtArgs>>): Prisma__ConceptoInsumoClient<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ConceptoInsumos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoCountArgs} args - Arguments to filter ConceptoInsumos to count.
+     * @example
+     * // Count the number of ConceptoInsumos
+     * const count = await prisma.conceptoInsumo.count({
+     *   where: {
+     *     // ... the filter for the ConceptoInsumos we want to count
+     *   }
+     * })
+    **/
+    count<T extends ConceptoInsumoCountArgs>(
+      args?: Subset<T, ConceptoInsumoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ConceptoInsumoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ConceptoInsumo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ConceptoInsumoAggregateArgs>(args: Subset<T, ConceptoInsumoAggregateArgs>): Prisma.PrismaPromise<GetConceptoInsumoAggregateType<T>>
+
+    /**
+     * Group by ConceptoInsumo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoInsumoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ConceptoInsumoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ConceptoInsumoGroupByArgs['orderBy'] }
+        : { orderBy?: ConceptoInsumoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ConceptoInsumoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetConceptoInsumoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ConceptoInsumo model
+   */
+  readonly fields: ConceptoInsumoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ConceptoInsumo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ConceptoInsumoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    concepto<T extends ConceptoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ConceptoDefaultArgs<ExtArgs>>): Prisma__ConceptoClient<$Result.GetResult<Prisma.$ConceptoPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    insumo<T extends InsumoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, InsumoDefaultArgs<ExtArgs>>): Prisma__InsumoClient<$Result.GetResult<Prisma.$InsumoPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ConceptoInsumo model
+   */ 
+  interface ConceptoInsumoFieldRefs {
+    readonly id: FieldRef<"ConceptoInsumo", 'String'>
+    readonly tenant_id: FieldRef<"ConceptoInsumo", 'String'>
+    readonly proyecto_id: FieldRef<"ConceptoInsumo", 'String'>
+    readonly concepto_id: FieldRef<"ConceptoInsumo", 'String'>
+    readonly insumo_id: FieldRef<"ConceptoInsumo", 'String'>
+    readonly tipo_insumo: FieldRef<"ConceptoInsumo", 'TipoInsumo'>
+    readonly cantidad: FieldRef<"ConceptoInsumo", 'Decimal'>
+    readonly rendimiento: FieldRef<"ConceptoInsumo", 'Decimal'>
+    readonly costo_unitario: FieldRef<"ConceptoInsumo", 'Decimal'>
+    readonly created_at: FieldRef<"ConceptoInsumo", 'DateTime'>
+    readonly updated_at: FieldRef<"ConceptoInsumo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ConceptoInsumo findUnique
+   */
+  export type ConceptoInsumoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * Filter, which ConceptoInsumo to fetch.
+     */
+    where: ConceptoInsumoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoInsumo findUniqueOrThrow
+   */
+  export type ConceptoInsumoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * Filter, which ConceptoInsumo to fetch.
+     */
+    where: ConceptoInsumoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoInsumo findFirst
+   */
+  export type ConceptoInsumoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * Filter, which ConceptoInsumo to fetch.
+     */
+    where?: ConceptoInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoInsumos to fetch.
+     */
+    orderBy?: ConceptoInsumoOrderByWithRelationInput | ConceptoInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConceptoInsumos.
+     */
+    cursor?: ConceptoInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoInsumos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConceptoInsumos.
+     */
+    distinct?: ConceptoInsumoScalarFieldEnum | ConceptoInsumoScalarFieldEnum[]
+  }
+
+  /**
+   * ConceptoInsumo findFirstOrThrow
+   */
+  export type ConceptoInsumoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * Filter, which ConceptoInsumo to fetch.
+     */
+    where?: ConceptoInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoInsumos to fetch.
+     */
+    orderBy?: ConceptoInsumoOrderByWithRelationInput | ConceptoInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConceptoInsumos.
+     */
+    cursor?: ConceptoInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoInsumos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConceptoInsumos.
+     */
+    distinct?: ConceptoInsumoScalarFieldEnum | ConceptoInsumoScalarFieldEnum[]
+  }
+
+  /**
+   * ConceptoInsumo findMany
+   */
+  export type ConceptoInsumoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * Filter, which ConceptoInsumos to fetch.
+     */
+    where?: ConceptoInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoInsumos to fetch.
+     */
+    orderBy?: ConceptoInsumoOrderByWithRelationInput | ConceptoInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ConceptoInsumos.
+     */
+    cursor?: ConceptoInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoInsumos.
+     */
+    skip?: number
+    distinct?: ConceptoInsumoScalarFieldEnum | ConceptoInsumoScalarFieldEnum[]
+  }
+
+  /**
+   * ConceptoInsumo create
+   */
+  export type ConceptoInsumoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ConceptoInsumo.
+     */
+    data: XOR<ConceptoInsumoCreateInput, ConceptoInsumoUncheckedCreateInput>
+  }
+
+  /**
+   * ConceptoInsumo createMany
+   */
+  export type ConceptoInsumoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ConceptoInsumos.
+     */
+    data: ConceptoInsumoCreateManyInput | ConceptoInsumoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConceptoInsumo createManyAndReturn
+   */
+  export type ConceptoInsumoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ConceptoInsumos.
+     */
+    data: ConceptoInsumoCreateManyInput | ConceptoInsumoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ConceptoInsumo update
+   */
+  export type ConceptoInsumoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ConceptoInsumo.
+     */
+    data: XOR<ConceptoInsumoUpdateInput, ConceptoInsumoUncheckedUpdateInput>
+    /**
+     * Choose, which ConceptoInsumo to update.
+     */
+    where: ConceptoInsumoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoInsumo updateMany
+   */
+  export type ConceptoInsumoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ConceptoInsumos.
+     */
+    data: XOR<ConceptoInsumoUpdateManyMutationInput, ConceptoInsumoUncheckedUpdateManyInput>
+    /**
+     * Filter which ConceptoInsumos to update
+     */
+    where?: ConceptoInsumoWhereInput
+  }
+
+  /**
+   * ConceptoInsumo upsert
+   */
+  export type ConceptoInsumoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ConceptoInsumo to update in case it exists.
+     */
+    where: ConceptoInsumoWhereUniqueInput
+    /**
+     * In case the ConceptoInsumo found by the `where` argument doesn't exist, create a new ConceptoInsumo with this data.
+     */
+    create: XOR<ConceptoInsumoCreateInput, ConceptoInsumoUncheckedCreateInput>
+    /**
+     * In case the ConceptoInsumo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ConceptoInsumoUpdateInput, ConceptoInsumoUncheckedUpdateInput>
+  }
+
+  /**
+   * ConceptoInsumo delete
+   */
+  export type ConceptoInsumoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
+    /**
+     * Filter which ConceptoInsumo to delete.
+     */
+    where: ConceptoInsumoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoInsumo deleteMany
+   */
+  export type ConceptoInsumoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConceptoInsumos to delete
+     */
+    where?: ConceptoInsumoWhereInput
+  }
+
+  /**
+   * ConceptoInsumo without action
+   */
+  export type ConceptoInsumoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoInsumo
+     */
+    select?: ConceptoInsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInsumoInclude<ExtArgs> | null
   }
 
 
@@ -4195,6 +5503,23 @@ export namespace Prisma {
   };
 
   export type ConceptoScalarFieldEnum = (typeof ConceptoScalarFieldEnum)[keyof typeof ConceptoScalarFieldEnum]
+
+
+  export const ConceptoInsumoScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    concepto_id: 'concepto_id',
+    insumo_id: 'insumo_id',
+    tipo_insumo: 'tipo_insumo',
+    cantidad: 'cantidad',
+    rendimiento: 'rendimiento',
+    costo_unitario: 'costo_unitario',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ConceptoInsumoScalarFieldEnum = (typeof ConceptoInsumoScalarFieldEnum)[keyof typeof ConceptoInsumoScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -4340,6 +5665,7 @@ export namespace Prisma {
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
+    concepto_insumos?: ConceptoInsumoListRelationFilter
   }
 
   export type InsumoOrderByWithRelationInput = {
@@ -4353,6 +5679,7 @@ export namespace Prisma {
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    concepto_insumos?: ConceptoInsumoOrderByRelationAggregateInput
   }
 
   export type InsumoWhereUniqueInput = Prisma.AtLeast<{
@@ -4370,6 +5697,7 @@ export namespace Prisma {
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
+    concepto_insumos?: ConceptoInsumoListRelationFilter
   }, "id" | "uq_insumo_tenant_clave">
 
   export type InsumoOrderByWithAggregationInput = {
@@ -4495,6 +5823,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Concepto"> | Date | string
     updated_at?: DateTimeFilter<"Concepto"> | Date | string
     presupuesto?: XOR<PresupuestoBaseRelationFilter, PresupuestoBaseWhereInput>
+    insumos?: ConceptoInsumoListRelationFilter
   }
 
   export type ConceptoOrderByWithRelationInput = {
@@ -4511,6 +5840,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     presupuesto?: PresupuestoBaseOrderByWithRelationInput
+    insumos?: ConceptoInsumoOrderByRelationAggregateInput
   }
 
   export type ConceptoWhereUniqueInput = Prisma.AtLeast<{
@@ -4530,6 +5860,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Concepto"> | Date | string
     updated_at?: DateTimeFilter<"Concepto"> | Date | string
     presupuesto?: XOR<PresupuestoBaseRelationFilter, PresupuestoBaseWhereInput>
+    insumos?: ConceptoInsumoListRelationFilter
   }, "id">
 
   export type ConceptoOrderByWithAggregationInput = {
@@ -4570,6 +5901,97 @@ export namespace Prisma {
     updated_at?: DateTimeWithAggregatesFilter<"Concepto"> | Date | string
   }
 
+  export type ConceptoInsumoWhereInput = {
+    AND?: ConceptoInsumoWhereInput | ConceptoInsumoWhereInput[]
+    OR?: ConceptoInsumoWhereInput[]
+    NOT?: ConceptoInsumoWhereInput | ConceptoInsumoWhereInput[]
+    id?: UuidFilter<"ConceptoInsumo"> | string
+    tenant_id?: UuidFilter<"ConceptoInsumo"> | string
+    proyecto_id?: UuidFilter<"ConceptoInsumo"> | string
+    concepto_id?: UuidFilter<"ConceptoInsumo"> | string
+    insumo_id?: UuidFilter<"ConceptoInsumo"> | string
+    tipo_insumo?: EnumTipoInsumoFilter<"ConceptoInsumo"> | $Enums.TipoInsumo
+    cantidad?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+    updated_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+    concepto?: XOR<ConceptoRelationFilter, ConceptoWhereInput>
+    insumo?: XOR<InsumoRelationFilter, InsumoWhereInput>
+  }
+
+  export type ConceptoInsumoOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    insumo_id?: SortOrder
+    tipo_insumo?: SortOrder
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    concepto?: ConceptoOrderByWithRelationInput
+    insumo?: InsumoOrderByWithRelationInput
+  }
+
+  export type ConceptoInsumoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_concepto_insumo?: ConceptoInsumoUq_concepto_insumoCompoundUniqueInput
+    AND?: ConceptoInsumoWhereInput | ConceptoInsumoWhereInput[]
+    OR?: ConceptoInsumoWhereInput[]
+    NOT?: ConceptoInsumoWhereInput | ConceptoInsumoWhereInput[]
+    tenant_id?: UuidFilter<"ConceptoInsumo"> | string
+    proyecto_id?: UuidFilter<"ConceptoInsumo"> | string
+    concepto_id?: UuidFilter<"ConceptoInsumo"> | string
+    insumo_id?: UuidFilter<"ConceptoInsumo"> | string
+    tipo_insumo?: EnumTipoInsumoFilter<"ConceptoInsumo"> | $Enums.TipoInsumo
+    cantidad?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+    updated_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+    concepto?: XOR<ConceptoRelationFilter, ConceptoWhereInput>
+    insumo?: XOR<InsumoRelationFilter, InsumoWhereInput>
+  }, "id" | "uq_concepto_insumo">
+
+  export type ConceptoInsumoOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    insumo_id?: SortOrder
+    tipo_insumo?: SortOrder
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: ConceptoInsumoCountOrderByAggregateInput
+    _avg?: ConceptoInsumoAvgOrderByAggregateInput
+    _max?: ConceptoInsumoMaxOrderByAggregateInput
+    _min?: ConceptoInsumoMinOrderByAggregateInput
+    _sum?: ConceptoInsumoSumOrderByAggregateInput
+  }
+
+  export type ConceptoInsumoScalarWhereWithAggregatesInput = {
+    AND?: ConceptoInsumoScalarWhereWithAggregatesInput | ConceptoInsumoScalarWhereWithAggregatesInput[]
+    OR?: ConceptoInsumoScalarWhereWithAggregatesInput[]
+    NOT?: ConceptoInsumoScalarWhereWithAggregatesInput | ConceptoInsumoScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ConceptoInsumo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ConceptoInsumo"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"ConceptoInsumo"> | string
+    concepto_id?: UuidWithAggregatesFilter<"ConceptoInsumo"> | string
+    insumo_id?: UuidWithAggregatesFilter<"ConceptoInsumo"> | string
+    tipo_insumo?: EnumTipoInsumoWithAggregatesFilter<"ConceptoInsumo"> | $Enums.TipoInsumo
+    cantidad?: DecimalWithAggregatesFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalWithAggregatesFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalWithAggregatesFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeWithAggregatesFilter<"ConceptoInsumo"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"ConceptoInsumo"> | Date | string
+  }
+
   export type InsumoCreateInput = {
     id?: string
     tenant_id: string
@@ -4581,6 +6003,7 @@ export namespace Prisma {
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
+    concepto_insumos?: ConceptoInsumoCreateNestedManyWithoutInsumoInput
   }
 
   export type InsumoUncheckedCreateInput = {
@@ -4594,6 +6017,7 @@ export namespace Prisma {
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
+    concepto_insumos?: ConceptoInsumoUncheckedCreateNestedManyWithoutInsumoInput
   }
 
   export type InsumoUpdateInput = {
@@ -4607,6 +6031,7 @@ export namespace Prisma {
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_insumos?: ConceptoInsumoUpdateManyWithoutInsumoNestedInput
   }
 
   export type InsumoUncheckedUpdateInput = {
@@ -4620,6 +6045,7 @@ export namespace Prisma {
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_insumos?: ConceptoInsumoUncheckedUpdateManyWithoutInsumoNestedInput
   }
 
   export type InsumoCreateManyInput = {
@@ -4755,6 +6181,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     presupuesto: PresupuestoBaseCreateNestedOneWithoutConceptosInput
+    insumos?: ConceptoInsumoCreateNestedManyWithoutConceptoInput
   }
 
   export type ConceptoUncheckedCreateInput = {
@@ -4770,6 +6197,7 @@ export namespace Prisma {
     importe: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
+    insumos?: ConceptoInsumoUncheckedCreateNestedManyWithoutConceptoInput
   }
 
   export type ConceptoUpdateInput = {
@@ -4785,6 +6213,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutConceptosNestedInput
+    insumos?: ConceptoInsumoUpdateManyWithoutConceptoNestedInput
   }
 
   export type ConceptoUncheckedUpdateInput = {
@@ -4800,6 +6229,7 @@ export namespace Prisma {
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: ConceptoInsumoUncheckedUpdateManyWithoutConceptoNestedInput
   }
 
   export type ConceptoCreateManyInput = {
@@ -4842,6 +6272,102 @@ export namespace Prisma {
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoInsumoCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    concepto: ConceptoCreateNestedOneWithoutInsumosInput
+    insumo: InsumoCreateNestedOneWithoutConcepto_insumosInput
+  }
+
+  export type ConceptoInsumoUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    insumo_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoInsumoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto?: ConceptoUpdateOneRequiredWithoutInsumosNestedInput
+    insumo?: InsumoUpdateOneRequiredWithoutConcepto_insumosNestedInput
+  }
+
+  export type ConceptoInsumoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoInsumoCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    insumo_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoInsumoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoInsumoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4905,6 +6431,16 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type ConceptoInsumoListRelationFilter = {
+    every?: ConceptoInsumoWhereInput
+    some?: ConceptoInsumoWhereInput
+    none?: ConceptoInsumoWhereInput
+  }
+
+  export type ConceptoInsumoOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type InsumoUq_insumo_tenant_claveCompoundUniqueInput = {
@@ -5199,6 +6735,89 @@ export namespace Prisma {
     importe?: SortOrder
   }
 
+  export type ConceptoRelationFilter = {
+    is?: ConceptoWhereInput
+    isNot?: ConceptoWhereInput
+  }
+
+  export type InsumoRelationFilter = {
+    is?: InsumoWhereInput
+    isNot?: InsumoWhereInput
+  }
+
+  export type ConceptoInsumoUq_concepto_insumoCompoundUniqueInput = {
+    concepto_id: string
+    insumo_id: string
+  }
+
+  export type ConceptoInsumoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    insumo_id?: SortOrder
+    tipo_insumo?: SortOrder
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConceptoInsumoAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+  }
+
+  export type ConceptoInsumoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    insumo_id?: SortOrder
+    tipo_insumo?: SortOrder
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConceptoInsumoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    insumo_id?: SortOrder
+    tipo_insumo?: SortOrder
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConceptoInsumoSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    rendimiento?: SortOrder
+    costo_unitario?: SortOrder
+  }
+
+  export type ConceptoInsumoCreateNestedManyWithoutInsumoInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
+    createMany?: ConceptoInsumoCreateManyInsumoInputEnvelope
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+  }
+
+  export type ConceptoInsumoUncheckedCreateNestedManyWithoutInsumoInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
+    createMany?: ConceptoInsumoCreateManyInsumoInputEnvelope
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -5221,6 +6840,34 @@ export namespace Prisma {
 
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type ConceptoInsumoUpdateManyWithoutInsumoNestedInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
+    upsert?: ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput | ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput[]
+    createMany?: ConceptoInsumoCreateManyInsumoInputEnvelope
+    set?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    disconnect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    delete?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    update?: ConceptoInsumoUpdateWithWhereUniqueWithoutInsumoInput | ConceptoInsumoUpdateWithWhereUniqueWithoutInsumoInput[]
+    updateMany?: ConceptoInsumoUpdateManyWithWhereWithoutInsumoInput | ConceptoInsumoUpdateManyWithWhereWithoutInsumoInput[]
+    deleteMany?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
+  }
+
+  export type ConceptoInsumoUncheckedUpdateManyWithoutInsumoNestedInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
+    upsert?: ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput | ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput[]
+    createMany?: ConceptoInsumoCreateManyInsumoInputEnvelope
+    set?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    disconnect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    delete?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    update?: ConceptoInsumoUpdateWithWhereUniqueWithoutInsumoInput | ConceptoInsumoUpdateWithWhereUniqueWithoutInsumoInput[]
+    updateMany?: ConceptoInsumoUpdateManyWithWhereWithoutInsumoInput | ConceptoInsumoUpdateManyWithWhereWithoutInsumoInput[]
+    deleteMany?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
   }
 
   export type ConceptoCreateNestedManyWithoutPresupuestoInput = {
@@ -5283,12 +6930,82 @@ export namespace Prisma {
     connect?: PresupuestoBaseWhereUniqueInput
   }
 
+  export type ConceptoInsumoCreateNestedManyWithoutConceptoInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutConceptoInput, ConceptoInsumoUncheckedCreateWithoutConceptoInput> | ConceptoInsumoCreateWithoutConceptoInput[] | ConceptoInsumoUncheckedCreateWithoutConceptoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutConceptoInput | ConceptoInsumoCreateOrConnectWithoutConceptoInput[]
+    createMany?: ConceptoInsumoCreateManyConceptoInputEnvelope
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+  }
+
+  export type ConceptoInsumoUncheckedCreateNestedManyWithoutConceptoInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutConceptoInput, ConceptoInsumoUncheckedCreateWithoutConceptoInput> | ConceptoInsumoCreateWithoutConceptoInput[] | ConceptoInsumoUncheckedCreateWithoutConceptoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutConceptoInput | ConceptoInsumoCreateOrConnectWithoutConceptoInput[]
+    createMany?: ConceptoInsumoCreateManyConceptoInputEnvelope
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+  }
+
   export type PresupuestoBaseUpdateOneRequiredWithoutConceptosNestedInput = {
     create?: XOR<PresupuestoBaseCreateWithoutConceptosInput, PresupuestoBaseUncheckedCreateWithoutConceptosInput>
     connectOrCreate?: PresupuestoBaseCreateOrConnectWithoutConceptosInput
     upsert?: PresupuestoBaseUpsertWithoutConceptosInput
     connect?: PresupuestoBaseWhereUniqueInput
     update?: XOR<XOR<PresupuestoBaseUpdateToOneWithWhereWithoutConceptosInput, PresupuestoBaseUpdateWithoutConceptosInput>, PresupuestoBaseUncheckedUpdateWithoutConceptosInput>
+  }
+
+  export type ConceptoInsumoUpdateManyWithoutConceptoNestedInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutConceptoInput, ConceptoInsumoUncheckedCreateWithoutConceptoInput> | ConceptoInsumoCreateWithoutConceptoInput[] | ConceptoInsumoUncheckedCreateWithoutConceptoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutConceptoInput | ConceptoInsumoCreateOrConnectWithoutConceptoInput[]
+    upsert?: ConceptoInsumoUpsertWithWhereUniqueWithoutConceptoInput | ConceptoInsumoUpsertWithWhereUniqueWithoutConceptoInput[]
+    createMany?: ConceptoInsumoCreateManyConceptoInputEnvelope
+    set?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    disconnect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    delete?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    update?: ConceptoInsumoUpdateWithWhereUniqueWithoutConceptoInput | ConceptoInsumoUpdateWithWhereUniqueWithoutConceptoInput[]
+    updateMany?: ConceptoInsumoUpdateManyWithWhereWithoutConceptoInput | ConceptoInsumoUpdateManyWithWhereWithoutConceptoInput[]
+    deleteMany?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
+  }
+
+  export type ConceptoInsumoUncheckedUpdateManyWithoutConceptoNestedInput = {
+    create?: XOR<ConceptoInsumoCreateWithoutConceptoInput, ConceptoInsumoUncheckedCreateWithoutConceptoInput> | ConceptoInsumoCreateWithoutConceptoInput[] | ConceptoInsumoUncheckedCreateWithoutConceptoInput[]
+    connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutConceptoInput | ConceptoInsumoCreateOrConnectWithoutConceptoInput[]
+    upsert?: ConceptoInsumoUpsertWithWhereUniqueWithoutConceptoInput | ConceptoInsumoUpsertWithWhereUniqueWithoutConceptoInput[]
+    createMany?: ConceptoInsumoCreateManyConceptoInputEnvelope
+    set?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    disconnect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    delete?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
+    update?: ConceptoInsumoUpdateWithWhereUniqueWithoutConceptoInput | ConceptoInsumoUpdateWithWhereUniqueWithoutConceptoInput[]
+    updateMany?: ConceptoInsumoUpdateManyWithWhereWithoutConceptoInput | ConceptoInsumoUpdateManyWithWhereWithoutConceptoInput[]
+    deleteMany?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
+  }
+
+  export type ConceptoCreateNestedOneWithoutInsumosInput = {
+    create?: XOR<ConceptoCreateWithoutInsumosInput, ConceptoUncheckedCreateWithoutInsumosInput>
+    connectOrCreate?: ConceptoCreateOrConnectWithoutInsumosInput
+    connect?: ConceptoWhereUniqueInput
+  }
+
+  export type InsumoCreateNestedOneWithoutConcepto_insumosInput = {
+    create?: XOR<InsumoCreateWithoutConcepto_insumosInput, InsumoUncheckedCreateWithoutConcepto_insumosInput>
+    connectOrCreate?: InsumoCreateOrConnectWithoutConcepto_insumosInput
+    connect?: InsumoWhereUniqueInput
+  }
+
+  export type ConceptoUpdateOneRequiredWithoutInsumosNestedInput = {
+    create?: XOR<ConceptoCreateWithoutInsumosInput, ConceptoUncheckedCreateWithoutInsumosInput>
+    connectOrCreate?: ConceptoCreateOrConnectWithoutInsumosInput
+    upsert?: ConceptoUpsertWithoutInsumosInput
+    connect?: ConceptoWhereUniqueInput
+    update?: XOR<XOR<ConceptoUpdateToOneWithWhereWithoutInsumosInput, ConceptoUpdateWithoutInsumosInput>, ConceptoUncheckedUpdateWithoutInsumosInput>
+  }
+
+  export type InsumoUpdateOneRequiredWithoutConcepto_insumosNestedInput = {
+    create?: XOR<InsumoCreateWithoutConcepto_insumosInput, InsumoUncheckedCreateWithoutConcepto_insumosInput>
+    connectOrCreate?: InsumoCreateOrConnectWithoutConcepto_insumosInput
+    upsert?: InsumoUpsertWithoutConcepto_insumosInput
+    connect?: InsumoWhereUniqueInput
+    update?: XOR<XOR<InsumoUpdateToOneWithWhereWithoutConcepto_insumosInput, InsumoUpdateWithoutConcepto_insumosInput>, InsumoUncheckedUpdateWithoutConcepto_insumosInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -5484,6 +7201,75 @@ export namespace Prisma {
     _max?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
   }
 
+  export type ConceptoInsumoCreateWithoutInsumoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    concepto: ConceptoCreateNestedOneWithoutInsumosInput
+  }
+
+  export type ConceptoInsumoUncheckedCreateWithoutInsumoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoInsumoCreateOrConnectWithoutInsumoInput = {
+    where: ConceptoInsumoWhereUniqueInput
+    create: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput>
+  }
+
+  export type ConceptoInsumoCreateManyInsumoInputEnvelope = {
+    data: ConceptoInsumoCreateManyInsumoInput | ConceptoInsumoCreateManyInsumoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput = {
+    where: ConceptoInsumoWhereUniqueInput
+    update: XOR<ConceptoInsumoUpdateWithoutInsumoInput, ConceptoInsumoUncheckedUpdateWithoutInsumoInput>
+    create: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput>
+  }
+
+  export type ConceptoInsumoUpdateWithWhereUniqueWithoutInsumoInput = {
+    where: ConceptoInsumoWhereUniqueInput
+    data: XOR<ConceptoInsumoUpdateWithoutInsumoInput, ConceptoInsumoUncheckedUpdateWithoutInsumoInput>
+  }
+
+  export type ConceptoInsumoUpdateManyWithWhereWithoutInsumoInput = {
+    where: ConceptoInsumoScalarWhereInput
+    data: XOR<ConceptoInsumoUpdateManyMutationInput, ConceptoInsumoUncheckedUpdateManyWithoutInsumoInput>
+  }
+
+  export type ConceptoInsumoScalarWhereInput = {
+    AND?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
+    OR?: ConceptoInsumoScalarWhereInput[]
+    NOT?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
+    id?: UuidFilter<"ConceptoInsumo"> | string
+    tenant_id?: UuidFilter<"ConceptoInsumo"> | string
+    proyecto_id?: UuidFilter<"ConceptoInsumo"> | string
+    concepto_id?: UuidFilter<"ConceptoInsumo"> | string
+    insumo_id?: UuidFilter<"ConceptoInsumo"> | string
+    tipo_insumo?: EnumTipoInsumoFilter<"ConceptoInsumo"> | $Enums.TipoInsumo
+    cantidad?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+    updated_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+  }
+
   export type ConceptoCreateWithoutPresupuestoInput = {
     id?: string
     tenant_id: string
@@ -5496,6 +7282,7 @@ export namespace Prisma {
     importe: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
+    insumos?: ConceptoInsumoCreateNestedManyWithoutConceptoInput
   }
 
   export type ConceptoUncheckedCreateWithoutPresupuestoInput = {
@@ -5510,6 +7297,7 @@ export namespace Prisma {
     importe: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
+    insumos?: ConceptoInsumoUncheckedCreateNestedManyWithoutConceptoInput
   }
 
   export type ConceptoCreateOrConnectWithoutPresupuestoInput = {
@@ -5583,6 +7371,42 @@ export namespace Prisma {
     create: XOR<PresupuestoBaseCreateWithoutConceptosInput, PresupuestoBaseUncheckedCreateWithoutConceptosInput>
   }
 
+  export type ConceptoInsumoCreateWithoutConceptoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    insumo: InsumoCreateNestedOneWithoutConcepto_insumosInput
+  }
+
+  export type ConceptoInsumoUncheckedCreateWithoutConceptoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    insumo_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoInsumoCreateOrConnectWithoutConceptoInput = {
+    where: ConceptoInsumoWhereUniqueInput
+    create: XOR<ConceptoInsumoCreateWithoutConceptoInput, ConceptoInsumoUncheckedCreateWithoutConceptoInput>
+  }
+
+  export type ConceptoInsumoCreateManyConceptoInputEnvelope = {
+    data: ConceptoInsumoCreateManyConceptoInput | ConceptoInsumoCreateManyConceptoInput[]
+    skipDuplicates?: boolean
+  }
+
   export type PresupuestoBaseUpsertWithoutConceptosInput = {
     update: XOR<PresupuestoBaseUpdateWithoutConceptosInput, PresupuestoBaseUncheckedUpdateWithoutConceptosInput>
     create: XOR<PresupuestoBaseCreateWithoutConceptosInput, PresupuestoBaseUncheckedCreateWithoutConceptosInput>
@@ -5616,6 +7440,218 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ConceptoInsumoUpsertWithWhereUniqueWithoutConceptoInput = {
+    where: ConceptoInsumoWhereUniqueInput
+    update: XOR<ConceptoInsumoUpdateWithoutConceptoInput, ConceptoInsumoUncheckedUpdateWithoutConceptoInput>
+    create: XOR<ConceptoInsumoCreateWithoutConceptoInput, ConceptoInsumoUncheckedCreateWithoutConceptoInput>
+  }
+
+  export type ConceptoInsumoUpdateWithWhereUniqueWithoutConceptoInput = {
+    where: ConceptoInsumoWhereUniqueInput
+    data: XOR<ConceptoInsumoUpdateWithoutConceptoInput, ConceptoInsumoUncheckedUpdateWithoutConceptoInput>
+  }
+
+  export type ConceptoInsumoUpdateManyWithWhereWithoutConceptoInput = {
+    where: ConceptoInsumoScalarWhereInput
+    data: XOR<ConceptoInsumoUpdateManyMutationInput, ConceptoInsumoUncheckedUpdateManyWithoutConceptoInput>
+  }
+
+  export type ConceptoCreateWithoutInsumosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    precio_unitario: Decimal | DecimalJsLike | number | string
+    importe: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    presupuesto: PresupuestoBaseCreateNestedOneWithoutConceptosInput
+  }
+
+  export type ConceptoUncheckedCreateWithoutInsumosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    precio_unitario: Decimal | DecimalJsLike | number | string
+    importe: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoCreateOrConnectWithoutInsumosInput = {
+    where: ConceptoWhereUniqueInput
+    create: XOR<ConceptoCreateWithoutInsumosInput, ConceptoUncheckedCreateWithoutInsumosInput>
+  }
+
+  export type InsumoCreateWithoutConcepto_insumosInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type InsumoUncheckedCreateWithoutConcepto_insumosInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type InsumoCreateOrConnectWithoutConcepto_insumosInput = {
+    where: InsumoWhereUniqueInput
+    create: XOR<InsumoCreateWithoutConcepto_insumosInput, InsumoUncheckedCreateWithoutConcepto_insumosInput>
+  }
+
+  export type ConceptoUpsertWithoutInsumosInput = {
+    update: XOR<ConceptoUpdateWithoutInsumosInput, ConceptoUncheckedUpdateWithoutInsumosInput>
+    create: XOR<ConceptoCreateWithoutInsumosInput, ConceptoUncheckedCreateWithoutInsumosInput>
+    where?: ConceptoWhereInput
+  }
+
+  export type ConceptoUpdateToOneWithWhereWithoutInsumosInput = {
+    where?: ConceptoWhereInput
+    data: XOR<ConceptoUpdateWithoutInsumosInput, ConceptoUncheckedUpdateWithoutInsumosInput>
+  }
+
+  export type ConceptoUpdateWithoutInsumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutConceptosNestedInput
+  }
+
+  export type ConceptoUncheckedUpdateWithoutInsumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    presupuesto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InsumoUpsertWithoutConcepto_insumosInput = {
+    update: XOR<InsumoUpdateWithoutConcepto_insumosInput, InsumoUncheckedUpdateWithoutConcepto_insumosInput>
+    create: XOR<InsumoCreateWithoutConcepto_insumosInput, InsumoUncheckedCreateWithoutConcepto_insumosInput>
+    where?: InsumoWhereInput
+  }
+
+  export type InsumoUpdateToOneWithWhereWithoutConcepto_insumosInput = {
+    where?: InsumoWhereInput
+    data: XOR<InsumoUpdateWithoutConcepto_insumosInput, InsumoUncheckedUpdateWithoutConcepto_insumosInput>
+  }
+
+  export type InsumoUpdateWithoutConcepto_insumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InsumoUncheckedUpdateWithoutConcepto_insumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoInsumoCreateManyInsumoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoInsumoUpdateWithoutInsumoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto?: ConceptoUpdateOneRequiredWithoutInsumosNestedInput
+  }
+
+  export type ConceptoInsumoUncheckedUpdateWithoutInsumoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoInsumoUncheckedUpdateManyWithoutInsumoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ConceptoCreateManyPresupuestoInput = {
     id?: string
     tenant_id: string
@@ -5642,6 +7678,7 @@ export namespace Prisma {
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: ConceptoInsumoUpdateManyWithoutConceptoNestedInput
   }
 
   export type ConceptoUncheckedUpdateWithoutPresupuestoInput = {
@@ -5656,6 +7693,7 @@ export namespace Prisma {
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: ConceptoInsumoUncheckedUpdateManyWithoutConceptoNestedInput
   }
 
   export type ConceptoUncheckedUpdateManyWithoutPresupuestoInput = {
@@ -5672,15 +7710,75 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ConceptoInsumoCreateManyConceptoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    insumo_id: string
+    tipo_insumo: $Enums.TipoInsumo
+    cantidad: Decimal | DecimalJsLike | number | string
+    rendimiento?: Decimal | DecimalJsLike | number | string
+    costo_unitario?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoInsumoUpdateWithoutConceptoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumo?: InsumoUpdateOneRequiredWithoutConcepto_insumosNestedInput
+  }
+
+  export type ConceptoInsumoUncheckedUpdateWithoutConceptoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoInsumoUncheckedUpdateManyWithoutConceptoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
 
 
   /**
    * Aliases for legacy arg types
    */
     /**
+     * @deprecated Use InsumoCountOutputTypeDefaultArgs instead
+     */
+    export type InsumoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InsumoCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use PresupuestoBaseCountOutputTypeDefaultArgs instead
      */
     export type PresupuestoBaseCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PresupuestoBaseCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ConceptoCountOutputTypeDefaultArgs instead
+     */
+    export type ConceptoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use InsumoDefaultArgs instead
      */
@@ -5693,6 +7791,10 @@ export namespace Prisma {
      * @deprecated Use ConceptoDefaultArgs instead
      */
     export type ConceptoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ConceptoInsumoDefaultArgs instead
+     */
+    export type ConceptoInsumoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoInsumoDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

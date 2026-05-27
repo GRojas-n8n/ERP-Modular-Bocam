@@ -406,6 +406,172 @@ app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superin
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// COMPOSICIÓN APU — Relación Concepto ↔ Insumos
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * POST /api/v1/gerencia-tecnica/presupuestos/:presupuesto_id/composicion-apu
+ *
+ * Importa la composición APU: para cada concepto (identificado por clave),
+ * guarda los insumos que lo componen con su cantidad, rendimiento y costo.
+ * Hace upsert por (concepto_id, insumo_id): crea o actualiza.
+ *
+ * Body: { composiciones: Array<{ concepto_clave: string, insumos: [...] }> }
+ * Returns: { vinculados, actualizados, omitidos }
+ */
+app.post(
+  '/api/v1/gerencia-tecnica/presupuestos/:presupuesto_id/composicion-apu',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { presupuesto_id } = req.params;
+      const { composiciones } = req.body;
+
+      if (!Array.isArray(composiciones) || composiciones.length === 0) {
+        return res.status(400).json(
+          createApiError('VALIDATION_ERROR', 'Se requiere un array de composiciones no vacío.')
+        );
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      // Verificar que el presupuesto pertenece al tenant + proyecto
+      const presupuesto = await db.presupuestoBase.findFirst({
+        where: { id: presupuesto_id, proyecto_id: proyectoId },
+        include: { conceptos: { select: { id: true, clave: true } } },
+      });
+      if (!presupuesto) {
+        return res.status(404).json(
+          createApiError('NOT_FOUND', 'Presupuesto no encontrado o no pertenece al proyecto activo.')
+        );
+      }
+
+      // Mapa clave (normalizada) → concepto_id
+      const claveAConceptoId = new Map(
+        presupuesto.conceptos.map(c => [c.clave.trim().toUpperCase(), c.id])
+      );
+
+      // Mapa clave → insumo_id del catálogo del tenant
+      const insumos = await db.insumo.findMany({ select: { id: true, clave: true } });
+      const claveAInsumoId = new Map(insumos.map(i => [i.clave.toUpperCase(), i.id]));
+
+      const TIPOS_VALIDOS = ['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'];
+      let vinculados = 0;
+      let actualizados = 0;
+      let omitidos = 0;
+
+      for (const comp of composiciones) {
+        const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
+        const conceptoId = claveAConceptoId.get(claveConcepto);
+        if (!conceptoId) { omitidos++; continue; }
+        if (!Array.isArray(comp.insumos)) { omitidos++; continue; }
+
+        for (const ins of comp.insumos) {
+          const claveInsumo = String(ins.clave_insumo ?? '').trim().toUpperCase();
+          const insumoId = claveAInsumoId.get(claveInsumo);
+          if (!insumoId) { omitidos++; continue; }
+          if (!TIPOS_VALIDOS.includes(ins.tipo_insumo)) { omitidos++; continue; }
+
+          const cantidad      = Math.max(0, parseFloat(String(ins.cantidad      ?? 0)) || 0);
+          const rendimiento   = Math.max(0, parseFloat(String(ins.rendimiento   ?? 0)) || 0);
+          const costoUnitario = Math.max(0, parseFloat(String(ins.costo_unitario ?? 0)) || 0);
+
+          try {
+            const existing = await db.conceptoInsumo.findUnique({
+              where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+            });
+
+            if (existing) {
+              await db.conceptoInsumo.update({
+                where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+                data: { tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
+              });
+              actualizados++;
+            } else {
+              await db.conceptoInsumo.create({
+                data: {
+                  tenant_id: tenantId,
+                  proyecto_id: proyectoId,
+                  concepto_id: conceptoId,
+                  insumo_id: insumoId,
+                  tipo_insumo: ins.tipo_insumo as any,
+                  cantidad,
+                  rendimiento,
+                  costo_unitario: costoUnitario,
+                },
+              });
+              vinculados++;
+            }
+          } catch (_) {
+            omitidos++;
+          }
+        }
+      }
+
+      console.log(`[Gerencia Técnica] Composición APU: +${vinculados} vinculados, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
+      res.json(createApiResponse({ vinculados, actualizados, omitidos }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[Gerencia Técnica] Error en POST /composicion-apu:', error.message);
+      res.status(500).json(
+        createApiError('INTERNAL_ERROR', 'Error al importar composición APU.', error.message)
+      );
+    }
+  }
+);
+
+/**
+ * GET /api/v1/gerencia-tecnica/conceptos/:concepto_id/composicion
+ *
+ * Devuelve los insumos que componen un concepto (su APU almacenada).
+ * Incluye detalles del insumo: clave, descripción, unidad, tipo, costo_base.
+ */
+app.get(
+  '/api/v1/gerencia-tecnica/conceptos/:concepto_id/composicion',
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { concepto_id } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const composicion = await db.conceptoInsumo.findMany({
+        where: { concepto_id },
+        include: {
+          insumo: {
+            select: { clave: true, descripcion: true, unidad_medida: true, tipo_insumo: true, costo_base: true },
+          },
+        },
+        orderBy: [{ tipo_insumo: 'asc' }, { insumo: { clave: 'asc' } }],
+      });
+
+      const data = composicion.map(ci => ({
+        id: ci.id,
+        tipo_insumo: ci.tipo_insumo,
+        cantidad: Number(ci.cantidad),
+        rendimiento: Number(ci.rendimiento),
+        costo_unitario: Number(ci.costo_unitario),
+        subtotal: Number(ci.cantidad) * Number(ci.costo_unitario),
+        insumo: {
+          clave: ci.insumo.clave,
+          descripcion: ci.insumo.descripcion,
+          unidad_medida: ci.insumo.unidad_medida,
+          tipo_insumo: ci.insumo.tipo_insumo,
+          costo_base: Number(ci.insumo.costo_base),
+        },
+      }));
+
+      res.json(createApiResponse(data, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[Gerencia Técnica] Error en GET /conceptos/:id/composicion:', error.message);
+      res.status(500).json(
+        createApiError('INTERNAL_ERROR', 'Error al obtener composición del concepto.', error.message)
+      );
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {
