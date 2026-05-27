@@ -1,5 +1,5 @@
 # BocamOS / Iretum ERP — Estado del Sistema
-**Última revisión:** 20 de Mayo 2026  
+**Última revisión:** 27 de Mayo 2026  
 **Stack:** React 19 · Vite 7 · TypeScript · Express · Prisma · PostgreSQL · RabbitMQ · Redis  
 **Producto:** Iretum ERP (SaaS Multi-Tenant para constructoras)  
 **VPS:** `72.60.114.12` · SSH `root@72.60.114.12` · Proyecto en `/root/ERP-Modular-Bocam`  
@@ -19,10 +19,10 @@
 | **observability** | TypeScript lib | — | ✅ COMPLETO | 100% |
 | **tenant-idempotency** | TypeScript lib | — | ✅ COMPLETO | 100% |
 | **ui-core** | React lib | — | ✅ COMPLETO | 90% |
-| **app-shell** | React 19 + Vite | 3000 | 🔶 EN PROGRESO | 80% |
-| **compras** | Express + Prisma | 3005 | 🔶 EN PROGRESO | 60% |
+| **app-shell** | React 19 + Vite | 3000 | 🔶 EN PROGRESO | 85% |
+| **compras** | Express + Prisma | 3002 | 🔶 EN PROGRESO | 75% |
 | **seguridad** | Express + Prisma | 3007 | 🔶 EN PROGRESO | 60% |
-| **control-obra** | Express + Prisma | 3006 | 🔶 EN PROGRESO | 60% |
+| **control-obra** | Express + Prisma | 3005 | 🔶 EN PROGRESO | 60% |
 | **ventas** | Express + Prisma | 3012 | 🔶 EN PROGRESO | 50% |
 | **personal** | Express + Prisma | 3009 | 🔶 EN PROGRESO | 50% |
 | **gerencia-tecnica** | Express + Prisma | 3010 | 🔶 EN PROGRESO | 45% |
@@ -84,21 +84,40 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 | Finanzas | Dashboard · Pagos · Movimientos | — |
 | Ventas | Clientes · Cotizaciones · Facturas | Nueva Cotización |
 
+**Sistema de Notificaciones Toast (nuevo — Mayo 2026):**
+- `NotificationContext.tsx`: provider global con `notify()` y `dismiss()` — máx. 4 toasts simultáneos
+- `ToastContainer.tsx`: fixed top-right, z-9999, slide-in + fade-out animado
+- Tipos: `success` / `error` / `warning` / `info` con barra lateral de color y progress bar
+- Disparadores activos: nueva requisición, movimiento almacén, stock bajo/agotado, OCs autorizadas
+- `verbatimModuleSyntax`: importaciones split `import { useNotification }` + `import type { Toast, ToastType }`
+
 **Almacén (nuevo — Mayo 2026):**
 - Sub-vista Inventario: tabla con stock actual/mínimo, semáforo AGOTADO/BAJO/OK, búsqueda
 - Sub-vista Movimientos: filtrable por INGRESO / EGRESO / TRASPASO
 - Banner de alerta automático si hay items bajo mínimo o agotados
 - Slide panel adaptativo: campos cambian según tipo de movimiento
 
-**Comparativa de Cotizaciones (nuevo — Mayo 2026):**
+**Comparativa de Cotizaciones — Flujo Aprobación Dos Etapas (nuevo — Mayo 2026):**
 - Botón "Iniciar comparativa" en tarjetas APROBADAS dentro de Requisiciones
 - Hasta 3 proveedores con colores A=azul / B=violeta / C=teal
 - Tabla: precio por renglón con subtotal automático por proveedor
 - Selección de ganador por renglón (botones A/B/C)
 - Fila de totales por proveedor + total comprometido del ganador
-- Autorizar → OC: agrupa renglones por ganador, genera OC independiente por proveedor
-- Vista de OC generadas con total comprometido consolidado
-- Estado: BORRADOR → EN_PROCESO → AUTORIZADA
+- **Flujo de aprobación en dos etapas:**
+  - `BORRADOR` → Compras envía a evaluación técnica
+  - `EN_EVALUACION_TECNICA` → Residente aprueba/rechaza por renglón (vinculante)
+  - `EVALUADO_TECNICAMENTE` → Residente envía al Gerente Técnico
+  - `EN_APROBACION_GT` → GT aprueba/rechaza (no puede aprobar lo rechazado por Residente)
+  - `APROBADO_GT` → Compras genera OC solo con renglones aprobados por GT
+  - `RECHAZADO_GT` → terminal, requiere nueva cotización
+- Badge de estado visual con colores semánticos por fase
+- Botones de acción condicionales según rol del usuario (procurement / resident / gerencia_tecnica)
+- Formulario de evaluación técnica (Residente): APROBADO/RECHAZADO + comentario por renglón
+- Formulario de revisión GT: muestra evaluación técnica en lectura + controles GT
+- Bandejas de trabajo: tabs "Eval. Técnica" y "Aprob. GT" condicionales por rol en ComprasView
+- Evento `compras.comparativa_aprobada_gt` publicado al bus (best-effort)
+- Backend: 6 nuevos endpoints + 2 bandejas + guard en convertir-oc
+- 5 tests de integración cubriendo happy path y casos de error
 
 **ui-core (90%):**
 - Button, Input, Select, Textarea, FormField, Card, CardHeader, CardContent, CardTitle, CardDescription
@@ -109,7 +128,7 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 **demoData.ts — datos disponibles:**
 - `DEMO_INSUMOS` (15 items: MATERIALES/EQUIPOS/MANO_OBRA/SUBCONTRATOS)
 - `DEMO_REQUISICIONES` (6 items, estados variados)
-- `DEMO_COMPARATIVAS` (2 comparativas: 1 EN_PROCESO con 3 renglones, 1 AUTORIZADA con OC)
+- `DEMO_COMPARATIVAS` (5 comparativas: BORRADOR · EN_EVALUACION_TECNICA · EN_APROBACION_GT · APROBADO_GT · CERRADO — flujo completo)
 - `DEMO_INVENTARIO` (8 items: 2 agotados, 2 bajo mínimo, 4 OK)
 - `DEMO_MOVIMIENTOS_ALMACEN` (10 movimientos: INGRESO/EGRESO/TRASPASO)
 - `DEMO_RESUMEN_FINANCIERO`, `DEMO_PAGOS`
@@ -145,10 +164,19 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 - sat-worker.ts (proceso separado)
 - 12 archivos de tests de integración
 
-### 🔶 compras — Adquisiciones (Puerto 3005) — 60%
-**Tiene:** Endpoints REST: requisiciones, órdenes de compra, proveedores, comparativas. Schema: Requisicion, OrdenCompra, Proveedor, CuadroComparativo. Publicación de eventos al bus.
+### 🔶 compras — Adquisiciones (Puerto 3002) — 75%
+**Tiene:** Endpoints REST: requisiciones, órdenes de compra, proveedores, comparativas, almacén. Schema: Requisicion, OrdenCompra, Proveedor, CuadroComparativo, ComparativaDetalle, AlertaOcError. Publicación de eventos al bus.
 
-**Falta:** Endpoints de almacén (`/api/v1/compras/almacen/inventario`, `/api/v1/compras/almacen/movimientos`) — el frontend ya los llama, el backend no los tiene aún. Flujo completo de comparativa vía API (el frontend tiene `/api/v1/compras/comparativas/:id/convertir-oc`).
+**Flujo de aprobación en dos etapas (implementado 2026-05-26):**
+- `PATCH /comparativas/:id/enviar-evaluacion` (procurement) → EN_EVALUACION_TECNICA
+- `PATCH /comparativas/:id/evaluar` (resident/control_obra) → EVALUADO_TECNICAMENTE
+- `PATCH /comparativas/:id/enviar-gt` → EN_APROBACION_GT
+- `PATCH /comparativas/:id/revisar-gt` (gerencia_tecnica) → APROBADO_GT / RECHAZADO_GT
+- `GET /comparativas/pendientes-evaluacion` + `GET /comparativas/pendientes-gt` (bandejas)
+- `POST /comparativas/:id/convertir-oc` guard: requiere estado APROBADO_GT
+- Migración aplicada en VPS: `cuadro_comparativo_aprobacion_dos_etapas`
+
+**Falta:** Motor de cálculo IVA configurable (actualmente hardcodeado al 16%). Flujo de devoluciones/rechazos post-OC.
 
 ### 🔶 control-obra — Bitácora y Avance Físico (Puerto 3006) — 60%
 **Tiene:** Schema bien definido, endpoints de bitácoras, avances, estimaciones. Publicación avances→finanzas.
@@ -198,15 +226,13 @@ Deploy manual al VPS. No hay GitHub Actions configurado.
 
 ## Phase 2 — Plan de Continuación (Frontend UI)
 
-**✅ Completado:**
+**✅ Phase 2 — 100% Completado:**
 - [x] Catálogo de Insumos en Compras (Tab Catálogo)
 - [x] Almacén en Compras (Tab Almacén: Inventario + Movimientos INGRESO/EGRESO/TRASPASO)
 - [x] Tab EPP en Seguridad HSE
 - [x] Comparativa de cotizaciones (dentro de Requisiciones → tarjetas APROBADAS)
 - [x] Demo mode completamente funcional
-
-**🔶 Pendiente Phase 2:**
-- [ ] Sistema de notificaciones (visual + auditivo)
+- [x] Sistema de notificaciones Toast global (success/error/warning/info)
 
 **🔶 Phase 3:**
 - [ ] RESIDENCIA module: estimaciones, aprobación nómina, asistencia QR móvil
@@ -261,7 +287,7 @@ docker logs bocam-vps-auth --tail 50
   - Tab Catálogo con chips de categoría + búsqueda en tiempo real
 - Git sync: VPS → GitHub → local (HEAD.lock resueltos)
 
-### Sesión 2026-05-20
+### Sesión 2026-05-20 (Parte 1 — UI Almacén + Comparativa)
 - **Tab Almacén en Compras**: Inventario + Movimientos (INGRESO/EGRESO/TRASPASO)
   - Banner de alerta stock, semáforo AGOTADO/BAJO/OK
   - Slide panel adaptativo por tipo de movimiento
@@ -273,5 +299,35 @@ docker logs bocam-vps-auth --tail 50
   - Autorizar → OC: genera OC por proveedor ganador
   - `DEMO_COMPARATIVAS`: 2 comparativas (EN_PROCESO + AUTORIZADA)
 - `SlidePanel.tsx`: soporte para colores red y blue
-- `Icons.tsx`: IconArrowLeft agregado
+- `Icons.tsx`: IconArrowLeft, IconInfo, IconBell, IconAlertTriangle agregados
+- Fix TS6133 en `ComparativaDetail.tsx` (variable `c` e `i` sin usar)
 - 11/11 contenedores Docker en VPS healthy
+
+### Sesión 2026-05-20 (Parte 2 — Sistema de Notificaciones Toast)
+- **Phase 2 completada al 100%**
+- `NotificationContext.tsx` (nuevo): provider global con `notify()`, `dismiss()`, límite 4 toasts
+- `ToastContainer.tsx` (nuevo): fixed top-right, slide-in/fade-out, progress bar animado
+- `App.tsx`: `NotificationProvider` wrapping toda la app (fuera de `TenantProvider`)
+- `ComprasView.tsx`: toasts en requisición, movimiento almacén (+ alertas stock), OCs autorizadas
+- Fix TS1484: `import type { Toast, ToastType }` (verbatimModuleSyntax)
+- VPS deploy exitoso vía Hostinger browser console (SSH password issue)
+
+### Sesión 2026-05-21
+- Actualización de documentación (ESTADO_DEL_SISTEMA, activeContext, checkpoints)
+- Phase 3 planning + inicio de implementación
+
+### Sesión 2026-05-26
+- **Diagnóstico brownfield** de iretum.com (evaluación de readiness para datos reales)
+- **DT-001 resuelta:** Saga OC distribuida — alerta automática `AlertaOcError` cuando Finanzas falla al comprometer fondos. 5 tests integración, migración en VPS.
+- **Módulo Residencia de Obra** implementado: Estimaciones, Nómina de cuadrilla, Asistencia QR (backend + frontend completo)
+
+### Sesión 2026-05-27
+- **Flujo de aprobación en dos etapas para Cuadro Comparativo** (OpenSpec: `cuadro-comparativo-aprobacion-dos-etapas`, 37 tareas)
+  - Backend: 6 endpoints nuevos (`enviar-evaluacion`, `evaluar`, `enviar-gt`, `revisar-gt`, 2 bandejas)
+  - Backend: guard en `convertir-oc` (requiere `APROBADO_GT`), OC solo con renglones `aprobacion_gt=APROBADO`
+  - Migración Prisma aplicada en VPS (columnas evaluación técnica + GT en cuadros y detalles)
+  - Frontend: `ComparativaDetail.tsx` reescrito con estado visual, formularios por rol, acciones condicionales
+  - Frontend: `ComprasView.tsx` con bandejas de trabajo (tabs condicionales por rol)
+  - Demo mode: `DEMO_COMPARATIVAS` cubre todos los estados del flujo (5 cuadros)
+  - 5 tests de integración: happy path completo, rechazo vinculante, RECHAZADO_GT, guard 400, OC parcial
+  - VPS deploy: compras + app-shell rebuildeados y corriendo en producción
