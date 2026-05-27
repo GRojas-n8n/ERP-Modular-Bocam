@@ -60,8 +60,16 @@ tmp/
 bocam_deploy_key
 bocam_deploy_key.pub
 
-# SSH Deploy keys (never commit private keys)
+# SSH keys (never commit private keys)
 bocam_deploy_key
 bocam_deploy_key.pub
+bocam_vps_key
+bocam_vps_key.pub
 *_deploy_key
 *_deploy_key.pub
+*_vps_key
+*_vps_key.pub
+
+# Editor / AI tool local configs
+.claude/
+.cursor/

@@ -1,6 +1,6 @@
 # Active Context — Iretum ERP (BocamOS)
 
-**Fecha:** 2026-05-27  
+**Fecha:** 2026-05-28  
 **Producto:** Iretum ERP — SaaS Multi-Tenant para constructoras  
 **VPS:** `72.60.114.12` | Proyecto: `/root/ERP-Modular-Bocam`  
 **GitHub:** `https://github.com/GRojas-n8n/ERP-Modular-Bocam`
@@ -50,6 +50,21 @@ Artefactos por ciclo en `docs/openspec/<nombre-ciclo>/`:
 - `spec-delta.md` — decisiones técnicas documentadas (D1–Dn)
 - `ARCHIVE.md` — inventario completo al cerrar el ciclo
 - `specs/` — specs formales
+
+---
+
+## Sesión 2026-05-28 — Archivos Modificados (gerencia-tecnica importador OPUS)
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/app-shell/src/views/InsumosView.tsx` | Reescritura completa — importador Excel/CSV funcional con SheetJS, vista previa, guía exportación |
+| `apps/app-shell/src/components/SlidePanel.tsx` | +prop `maxWidthClassName` pasada a SideSheet |
+| `apps/app-shell/package.json` | +dependencia `xlsx: ^0.18.5` |
+| `.gitignore` | +bocam_vps_key*, +.claude/, +.cursor/ |
+
+**Commit:** `dd8df87` · Deploy: `app-shell` reconstruido y activo en iretum.com
+
+**Aclaración arquitectónica:** El `codigo_centro_costos` se define al crear el Proyecto en Administración (módulo Auth). El `PresupuestoBase` hereda el centro de costos implícitamente a través del `proyecto_id` del JWT activo — no se captura de nuevo en la importación.
 
 ---
 
