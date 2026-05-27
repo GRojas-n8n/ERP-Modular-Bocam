@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
+import { useTenant } from '../context/TenantContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -253,6 +254,7 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
 
 // ─── AdminView ────────────────────────────────────────────────────────────────
 export const AdminView: React.FC = () => {
+  const { refreshUser } = useTenant();
   const [activeTab, setActiveTab] = useState<'usuarios' | 'proyectos'>('usuarios');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -392,7 +394,7 @@ export const AdminView: React.FC = () => {
       {showProyectoModal && (
         <ProyectoModal proyecto={editingProyecto}
           onClose={() => { setShowProyectoModal(false); setEditingProyecto(undefined); }}
-          onSaved={loadAll} />
+          onSaved={async () => { await loadAll(); await refreshUser(); }} />
       )}
     </div>
   );

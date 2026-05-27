@@ -18,6 +18,7 @@ interface TenantContextType extends AppState {
   loginDemo: () => void;
   logout: () => void;
   setCurrentProjectId: (projectId: string) => void;
+  refreshUser: () => Promise<void>;
   loginError: string | null;
 }
 
@@ -199,6 +200,34 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setState(prev => ({ ...prev, currentProjectId: projectId }));
   }, []);
 
+  // ─── Refresh User (recargar proyectos y datos sin logout) ──────────────
+  // Usar después de crear/modificar proyectos en AdminView para que el
+  // selector de proyectos refleje los cambios sin necesidad de re-login.
+  const refreshUser = useCallback(async () => {
+    try {
+      const result = await fetchMe();
+      const data = result.data;
+      const updatedUser: UserContext = {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.roles,
+        projects: data.projects as ProjectAccess[],
+        limiteAprobacion: data.limite_aprobacion,
+      };
+      setState(prev => ({
+        ...prev,
+        user: updatedUser,
+        // Conservar el proyecto activo si aún existe; si no, usar el primero disponible
+        currentProjectId: data.projects.some((p: ProjectAccess) => p.id === prev.currentProjectId)
+          ? prev.currentProjectId
+          : data.projects[0]?.id || null,
+      }));
+    } catch {
+      // Silencioso — si la sesión expiró, el interceptor de api.ts maneja el logout
+    }
+  }, []);
+
   // ─── Render ────────────────────────────────────────────────────────────
   // IMPORTANTE: El Provider SIEMPRE se renderiza para que el contexto esté
   // disponible antes de que React monte los hijos. El spinner se muestra
@@ -206,7 +235,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // que en React 19 concurrent mode puede pre-renderizar hijos antes de
   // que el contexto quede establecido (causa del Error #525).
   return (
-    <TenantContext.Provider value={{ ...state, login, loginDemo, logout, setCurrentProjectId, loginError }}>
+    <TenantContext.Provider value={{ ...state, login, loginDemo, logout, setCurrentProjectId, refreshUser, loginError }}>
       {state.isLoading ? (
         <div className="h-screen w-screen flex items-center justify-center bg-background">
           <div className="animate-pulse flex flex-col items-center">

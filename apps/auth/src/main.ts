@@ -737,16 +737,36 @@ app.post('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHand
       res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'codigo_centro_costos y nombre_oficial son obligatorios.' } });
       return;
     }
-    const proyecto = await createTenantContext({ tenantId }, async (prisma) =>
-      prisma.proyecto.create({
+    const proyecto = await createTenantContext({ tenantId }, async (prisma) => {
+      // 1. Crear el proyecto
+      const nuevo = await prisma.proyecto.create({
         data: {
           tenant_id: tenantId, codigo_centro_costos, nombre_oficial,
           tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
           moneda_base: moneda_base || 'MXN',
           estatus: estatus || 'CONSTRUCCION',
         },
-      })
-    );
+      });
+
+      // 2. Auto-asignar todos los usuarios admin/superintendent del tenant
+      //    para que el proyecto aparezca de inmediato en su selector de proyectos
+      const admins = await prisma.user.findMany({
+        where: { tenant_id: tenantId, activo: true },
+        select: { id_usuario: true, rol_global: true },
+      });
+      const adminIds = admins
+        .filter(u => (u.rol_global as string[]).some(r => ['admin', 'superintendent'].includes(r)))
+        .map(u => u.id_usuario);
+
+      if (adminIds.length > 0) {
+        await prisma.userProjectAccess.createMany({
+          data: adminIds.map(uid => ({ user_id: uid, proyecto_id: nuevo.id_proyecto })),
+          skipDuplicates: true,
+        });
+      }
+
+      return nuevo;
+    });
     res.status(201).json({ success: true, data: proyecto });
   } catch (err) {
     res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
