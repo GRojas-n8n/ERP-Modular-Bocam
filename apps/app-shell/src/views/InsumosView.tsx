@@ -77,17 +77,27 @@ const ESTADO_BADGE: Record<string, string> = {
 };
 
 /**
- * Parsea un número que puede venir en formato mexicano (1.234,56) o americano (1,234.56)
+ * Parsea un número que puede venir en varios formatos de exportación OPUS:
+ *   - Con símbolo de moneda: "$5,325.85"  → 5325.85
+ *   - Americano con comas:   "5,325.85"   → 5325.85
+ *   - Europeo con puntos:    "1.234,56"   → 1234.56
+ *   - Sin separadores:       "5325.85"    → 5325.85
  */
 function parsearNumero(valor: string | number | undefined): number {
   if (valor === undefined || valor === null || valor === '') return 0;
   if (typeof valor === 'number') return isNaN(valor) ? 0 : valor;
-  const s = String(valor).trim();
-  // Si tiene coma como separador decimal (1.234,56)
+
+  // Eliminar símbolo de moneda ($), espacios y cualquier carácter no numérico
+  // excepto coma, punto y signo negativo
+  const s = String(valor).trim().replace(/[$€£¥\s%]/g, '');
+  if (s === '' || s === '-') return 0;
+
+  // Formato europeo: separador de miles = punto, decimal = coma  (1.234,56)
   if (/^\d{1,3}(\.\d{3})*(,\d+)?$/.test(s)) {
-    return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+    return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
   }
-  // Formato americano o sin separadores
+
+  // Formato americano / OPUS: separador de miles = coma, decimal = punto  ($5,325.85 → 5325.85)
   return parseFloat(s.replace(/,/g, '')) || 0;
 }
 
