@@ -222,117 +222,129 @@ function esCapituloNormalizado(c: ConceptoPreview): boolean {
 // Extrae insumos únicos (por clave) de todas las secciones.
 // ─────────────────────────────────────────────────────────────────────────────
 function parsearArchivoAPU(rawRows: (string | number)[][]): InsumoPreview[] {
-  type EstadoAPU = 'fuera' | 'en_tabla';
+  // Infiere tipo de insumo a partir del prefijo de clave OPUS (usado en sección "Auxiliar")
+  function inferirTipoAPU(clave: string): TipoInsumo {
+    const c = clave.toUpperCase();
+    if (/^(CAM|EQ|MAQ|EXCAV|BOMB|GRUA|COMP|VIBR|SOLD|TORNO|RETRO)/.test(c)) return 'EQUIPO';
+    if (/^(CFAP|JOR|MO|OFIC|PEO|ALB|ELEC|PLOM|PINT|CARP|HERR|AYU)/.test(c)) return 'MANO_DE_OBRA';
+    if (/^(HH|HS|HER|HERRA)/.test(c)) return 'INDIRECTO';
+    // CFM, CIM, etc. → MATERIAL por defecto
+    return 'MATERIAL';
+  }
 
   const insumoMap = new Map<string, InsumoPreview>();
   let tipoActual: TipoInsumo | null = null;
-  let estado: EstadoAPU = 'fuera';
+  let enAuxiliar = false; // sección "Auxiliar": inferir tipo desde la clave
+  let headerDetectado = false; // se resetea en cada concepto nuevo ("ANALISIS DEL TOTAL" / "Clave:")
 
-  // Posiciones de columna detectadas del encabezado de la tabla de insumos
-  let colClave = 0;
-  let colDescripcion = 1;
-  let colUnidad = 2;
-  let colCostoUnitario = 5;
+  // Defaults con col 0 vacía en OPUS Excel (CLAVE suele estar en col 1)
+  let colClave         = 1;
+  let colDescripcion   = 2;
+  let colUnidad        = 3;
+  let colCostoUnitario = 6;
 
   for (const fila of rawRows) {
     const celdas = fila.map(c => String(c ?? '').trim());
     const noVacias = celdas.filter(c => c !== '');
     if (noVacias.length === 0) continue;
 
-    const c0 = celdas[0] ?? '';
+    // Primera celda no vacía → detectar secciones aunque haya columnas vacías al inicio
+    const firstNonEmpty = noVacias[0] ?? '';
 
-    // ── Detectar inicio de sección de tipo ─────────────────────────────────
-    if (/^material(es)?$/i.test(c0)) {
-      tipoActual = 'MATERIAL';
-      estado = 'fuera';
-      continue;
-    }
-    if (/^mano\s+de\s+obra$/i.test(c0)) {
-      tipoActual = 'MANO_DE_OBRA';
-      estado = 'fuera';
-      continue;
-    }
-    if (/^herramienta(s)?$/i.test(c0)) {
-      tipoActual = 'INDIRECTO';
-      estado = 'fuera';
-      continue;
-    }
-    if (/^equipo/i.test(c0)) {
-      tipoActual = 'EQUIPO';
-      estado = 'fuera';
-      continue;
-    }
-    if (/^subcontrat/i.test(c0)) {
-      tipoActual = 'SUBCONTRATO';
-      estado = 'fuera';
+    // ── Inicio de nuevo concepto → resetear estado por concepto ──────────────
+    if (/^analisis\s+del\s+total/i.test(firstNonEmpty) || /^clave\s*:/i.test(firstNonEmpty)) {
+      headerDetectado = false;
+      tipoActual = null;
+      enAuxiliar = false;
       continue;
     }
 
-    // ── Detectar fin de sección ─────────────────────────────────────────────
-    if (/^total\s+de\s+/i.test(c0)) {
-      estado = 'fuera';
-      continue;
-    }
+    // ── Skip filas de metadatos del encabezado del concepto ──────────────────
+    if (/^descripci/i.test(firstNonEmpty)) continue;    // "Descripción"
+    if (/^unidad\s*:/i.test(firstNonEmpty)) continue;   // "Unidad: M3 / Cantidad: ..."
 
-    // ── Detectar encabezado de tabla de insumos ─────────────────────────────
-    // La fila tiene "CLAVE" y "DESCRIPCION" (u otras formas)
-    const norm = celdas.map(c => c.toUpperCase().replace(/\s+/g, '').replace(/[^A-Z]/g, ''));
-    const idxClave = norm.findIndex(c => c === 'CLAVE');
-    const idxDesc  = norm.findIndex(c => c === 'DESCRIPCION' || c === 'DESC');
-    if (idxClave >= 0 && idxDesc >= 0) {
-      colClave = idxClave;
-      colDescripcion = idxDesc;
-      const iU = norm.findIndex(c => c === 'UNIDAD' || c === 'UM' || c === 'UNIDADMEDIDA');
-      if (iU >= 0) colUnidad = iU;
-      // Buscar "COSTO UNITARIO" en las celdas originales (puede ser multi-celda)
-      const iCosto = celdas.findIndex(c => /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
-      if (iCosto >= 0) colCostoUnitario = iCosto;
-      estado = 'en_tabla';
-      continue;
-    }
-
-    // ── Procesar filas de datos de insumos ──────────────────────────────────
-    if (estado === 'en_tabla' && tipoActual) {
-      // Skip sub-filas de Mano de Obra ("Rendimiento / JOR X Total Y")
-      if (/^rendimiento/i.test(c0)) continue;
-
-      const clave = celdas[colClave] ?? '';
-      const desc  = celdas[colDescripcion] ?? '';
-      const unidad = celdas[colUnidad] ?? '';
-
-      // La columna de costo puede estar a la derecha de la posición detectada
-      // OPUS a veces la desplaza; buscar el primer valor numérico >= col 4
-      let costoBase = parsearNumero(celdas[colCostoUnitario]);
-      if (costoBase === 0) {
-        // Fallback: buscar el primer número > 0 a partir de la columna 4
-        for (let i = 4; i < celdas.length; i++) {
-          const v = parsearNumero(celdas[i]);
-          if (v > 0) { costoBase = v; break; }
-        }
+    // ── Detectar encabezado de tabla (CLAVE + DESCRIPCION en misma fila) ─────
+    if (!headerDetectado) {
+      const norm = celdas.map(c => c.toUpperCase().replace(/\s+/g, '').replace(/[^A-Z]/g, ''));
+      const idxClave = norm.findIndex(c => c === 'CLAVE' || c === 'CODIGO');
+      const idxDesc  = norm.findIndex(c => c.startsWith('DESCRIPCION') || c === 'DESC');
+      if (idxClave >= 0 && idxDesc >= 0) {
+        colClave       = idxClave;
+        colDescripcion = idxDesc;
+        const iU = norm.findIndex(c => c === 'UNIDAD' || c === 'UM' || c === 'UNIDADMEDIDA');
+        if (iU >= 0) colUnidad = iU;
+        const iCosto = celdas.findIndex(c => /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
+        if (iCosto >= 0) colCostoUnitario = iCosto;
+        headerDetectado = true;
       }
+      continue; // antes del primer encabezado de tabla, saltar todo
+    }
 
-      // Validar que la clave parece un código de insumo real
-      if (!clave) continue;
-      if (/^\d+(\.\d+)*$/.test(clave)) continue; // clave numérica pura → capítulo
-      if (/^(total|suma|sub)/i.test(clave)) continue;
+    // ── Detectar secciones de tipo (solo actualizar tipoActual, nunca resetear) ──
+    if (/^material(es)?$/i.test(firstNonEmpty))   { tipoActual = 'MATERIAL';    enAuxiliar = false; continue; }
+    if (/^mano\s+de\s+obra$/i.test(firstNonEmpty)) { tipoActual = 'MANO_DE_OBRA'; enAuxiliar = false; continue; }
+    if (/^herramienta(s)?$/i.test(firstNonEmpty)) { tipoActual = 'INDIRECTO';   enAuxiliar = false; continue; }
+    if (/^equipo/i.test(firstNonEmpty))           { tipoActual = 'EQUIPO';      enAuxiliar = false; continue; }
+    if (/^subcontrat/i.test(firstNonEmpty))       { tipoActual = 'SUBCONTRATO'; enAuxiliar = false; continue; }
+    if (/^auxiliar/i.test(firstNonEmpty))         { tipoActual = null; enAuxiliar = true; continue; }
 
-      const claveNorm = clave.toUpperCase().trim();
-      if (!insumoMap.has(claveNorm)) {
-        const errores: string[] = [];
-        if (!desc)     errores.push('sin descripción');
-        if (!unidad)   errores.push('sin unidad');
-        if (costoBase === 0) errores.push('sin costo unitario');
+    // ── Skip filas de totales y resumen ──────────────────────────────────────
+    if (/^total\s+de\s+/i.test(firstNonEmpty))         continue; // "Total de Material X"
+    if (/^rendimiento\s*\//i.test(firstNonEmpty))       continue; // "Rendimiento / JOR 10 Total X"
+    if (/^costo\s+(directo|unitario)/i.test(firstNonEmpty)) continue;
+    if (/^precio\s+unitario/i.test(firstNonEmpty))      continue;
+    if (/^indirectos/i.test(firstNonEmpty))             continue;
+    if (/^subtotal/i.test(firstNonEmpty))               continue;
+    if (/^financiamiento/i.test(firstNonEmpty))         continue;
+    if (/^utilidad/i.test(firstNonEmpty))               continue;
+    if (/^cargos\s+adicionales/i.test(firstNonEmpty))   continue;
+    if (/^\*\*/.test(firstNonEmpty))                    continue; // "** CINCO MIL... **"
+    if (/^cantidad\s+\S/i.test(firstNonEmpty))          continue; // "Cantidad 1.2000 Total 53.14"
 
-        insumoMap.set(claveNorm, {
-          clave: claveNorm,
-          descripcion: desc || '(sin descripción)',
-          unidad_medida: (unidad || 'PZA').toUpperCase(),
-          tipo_insumo: tipoActual,
-          costo_base: costoBase,
-          _valido: Boolean(clave && desc && unidad),
-          _error: errores.length ? errores.join(', ') : undefined,
-        });
+    // ── Procesar fila de insumo ───────────────────────────────────────────────
+    const clave = celdas[colClave] ?? '';
+    const desc  = celdas[colDescripcion] ?? '';
+    let unidad  = celdas[colUnidad] ?? '';
+
+    // Validar clave real de insumo
+    if (!clave) continue;
+    if (/^\d+(\.\d+)*$/.test(clave)) continue;          // clave numérica → capítulo
+    if (/^(total|suma|sub)/i.test(clave)) continue;
+    if (clave.length < 2) continue;
+
+    // Inferir tipo para sección Auxiliar (sub-APUs: BN001, RA001, etc.)
+    const tipo: TipoInsumo = enAuxiliar ? inferirTipoAPU(clave) : (tipoActual ?? 'MATERIAL');
+
+    // Costo: columna detectada, con fallback al primer número > 0 desde col 4
+    let costoBase = parsearNumero(celdas[colCostoUnitario]);
+    if (costoBase === 0) {
+      for (let i = 4; i < celdas.length; i++) {
+        const v = parsearNumero(celdas[i]);
+        if (v > 0) { costoBase = v; break; }
       }
+    }
+
+    // Default de unidad según tipo (M.O. no tiene unidad explícita en APU)
+    if (!unidad) {
+      if (tipo === 'MANO_DE_OBRA') unidad = 'JOR';
+      else if (tipo === 'EQUIPO')  unidad = 'HORA';
+    }
+
+    const claveNorm = clave.toUpperCase().trim();
+    if (!insumoMap.has(claveNorm)) {
+      const errores: string[] = [];
+      if (!desc)           errores.push('sin descripción');
+      if (costoBase === 0) errores.push('sin costo unitario');
+
+      insumoMap.set(claveNorm, {
+        clave:         claveNorm,
+        descripcion:   desc || '(sin descripción)',
+        unidad_medida: (unidad || 'PZA').toUpperCase(),
+        tipo_insumo:   tipo,
+        costo_base:    costoBase,
+        _valido:       Boolean(clave && desc), // unidad tiene default, no se exige
+        _error:        errores.length ? errores.join(', ') : undefined,
+      });
     }
   }
 
