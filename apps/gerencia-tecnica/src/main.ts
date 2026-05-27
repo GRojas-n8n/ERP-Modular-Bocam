@@ -157,6 +157,127 @@ app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintende
 });
 
 /**
+ * POST /api/v1/gerencia-tecnica/insumos/importar-lote
+ * Importación masiva de insumos desde OPUS (APU o Explosión de Insumos).
+ * Upsert semántico: crea si no existe (por clave), actualiza si ya existe.
+ * Retorna { creados, actualizados, omitidos }.
+ */
+app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin', 'superintendent', 'gerencia_tecnica'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+    const { insumos } = req.body;
+
+    if (!Array.isArray(insumos) || insumos.length === 0) {
+      return res.status(400).json(
+        createApiError('VALIDATION_ERROR', 'Se requiere un array de insumos no vacío.')
+      );
+    }
+
+    if (insumos.length > 5000) {
+      return res.status(400).json(
+        createApiError('VALIDATION_ERROR', 'Máximo 5 000 insumos por lote.')
+      );
+    }
+
+    const TIPOS_VALIDOS = ['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'];
+
+    // ── Validar y normalizar ────────────────────────────────────────────────────
+    const validos: Array<{
+      clave: string;
+      descripcion: string;
+      unidad_medida: string;
+      tipo_insumo: string;
+      costo_base: number;
+    }> = [];
+    let omitidos = 0;
+
+    for (const item of insumos) {
+      const { clave, descripcion, unidad_medida, tipo_insumo, costo_base } = item ?? {};
+      if (
+        !clave || typeof clave !== 'string' ||
+        !descripcion || typeof descripcion !== 'string' ||
+        !unidad_medida || typeof unidad_medida !== 'string' ||
+        !TIPOS_VALIDOS.includes(tipo_insumo)
+      ) {
+        omitidos++;
+        continue;
+      }
+      validos.push({
+        clave: String(clave).trim().toUpperCase(),
+        descripcion: String(descripcion).trim(),
+        unidad_medida: String(unidad_medida).trim().toUpperCase(),
+        tipo_insumo,
+        costo_base: Math.max(0, parseFloat(String(costo_base ?? 0)) || 0),
+      });
+    }
+
+    if (validos.length === 0) {
+      return res.status(400).json(
+        createApiError('VALIDATION_ERROR', `Ningún insumo válido en el lote. Omitidos: ${omitidos}.`)
+      );
+    }
+
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    // ── Obtener existentes en una sola consulta ─────────────────────────────────
+    const existentes = await db.insumo.findMany({
+      select: { id: true, clave: true },
+    });
+    const claveAId = new Map(existentes.map(i => [i.clave.toUpperCase(), i.id]));
+
+    const nuevos  = validos.filter(i => !claveAId.has(i.clave));
+    const aActualizar = validos.filter(i =>  claveAId.has(i.clave));
+
+    // ── Crear nuevos en lote ────────────────────────────────────────────────────
+    let creados = 0;
+    if (nuevos.length > 0) {
+      const result = await db.insumo.createMany({
+        data: nuevos.map(i => ({
+          tenant_id: tenantId,
+          clave: i.clave,
+          descripcion: i.descripcion,
+          unidad_medida: i.unidad_medida,
+          tipo_insumo: i.tipo_insumo as any,
+          costo_base: i.costo_base,
+          activo: true,
+        })),
+        skipDuplicates: true,
+      });
+      creados = result.count;
+    }
+
+    // ── Actualizar existentes ───────────────────────────────────────────────────
+    let actualizados = 0;
+    for (const item of aActualizar) {
+      const id = claveAId.get(item.clave)!;
+      try {
+        await db.insumo.update({
+          where: { id },
+          data: {
+            descripcion: item.descripcion,
+            unidad_medida: item.unidad_medida,
+            tipo_insumo: item.tipo_insumo as any,
+            costo_base: item.costo_base,
+            activo: true,
+          },
+        });
+        actualizados++;
+      } catch (_) {
+        omitidos++;
+      }
+    }
+
+    console.log(`[Gerencia Técnica] Importación lote: +${creados} nuevos, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
+    res.json(createApiResponse({ creados, actualizados, omitidos }, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en POST /insumos/importar-lote:', error.message);
+    res.status(500).json(
+      createApiError('INTERNAL_ERROR', 'Error al importar lote de insumos.', error.message)
+    );
+  }
+});
+
+/**
  * PATCH /api/v1/gerencia-tecnica/insumos/:id
  * Actualiza un insumo existente (precio, descripción, unidad).
  */

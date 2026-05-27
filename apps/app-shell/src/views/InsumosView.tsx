@@ -1,13 +1,17 @@
 /**
  * ---------------------------------------------------------------------------
  * Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
- * Vista: Gerencia Técnica — Catálogo de Obra (Presupuesto Base)
+ * Vista: Gerencia Técnica — Catálogo de Obra + Catálogo de Insumos
  *
- * Importación desde OPUS:
- *   - Acepta Excel (.xlsx, .xls) y CSV (.csv, .txt)
- *   - Mapeo automático de columnas (CLAVE, DESCRIPCION, UNIDAD, CANTIDAD, P.U., IMPORTE)
- *   - Vista previa antes de confirmar
- *   - POST a /api/v1/gerencia-tecnica/presupuestos
+ * Tab 1 — Catálogo de Obra:
+ *   Importación del PRESUPUESTO OPUS (Excel/CSV). Vista previa + POST.
+ *
+ * Tab 2 — Insumos:
+ *   Visualización y carga masiva del catálogo de insumos unitarios.
+ *   Soporta dos fuentes de OPUS:
+ *     a) ANÁLISIS DE PRECIOS UNITARIOS (APU) — extrae insumos por sección.
+ *     b) EXPLOSIÓN DE INSUMOS — importación tabular directa.
+ *   → POST /api/v1/gerencia-tecnica/insumos/importar-lote
  * ---------------------------------------------------------------------------
  */
 
@@ -32,6 +36,10 @@ import {
 import { cn } from '../lib/utils';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
+
+type ActiveTab = 'catalogo' | 'insumos';
+
+type TipoInsumo = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
 
 interface Concepto {
   id: string;
@@ -64,10 +72,43 @@ interface ConceptoPreview {
   _error?: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+interface InsumoData {
+  id: string;
+  clave: string;
+  descripcion: string;
+  unidad_medida: string;
+  tipo_insumo: TipoInsumo;
+  costo_base: number;
+  activo: boolean;
+}
 
-const formatMXN = (n: number) =>
-  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
+interface InsumoPreview {
+  clave: string;
+  descripcion: string;
+  unidad_medida: string;
+  tipo_insumo: TipoInsumo;
+  costo_base: number;
+  _valido: boolean;
+  _error?: string;
+}
+
+// ─── Constantes de UI ─────────────────────────────────────────────────────────
+
+const TIPO_LABEL: Record<TipoInsumo, string> = {
+  MATERIAL:    'Material',
+  MANO_DE_OBRA:'Mano de Obra',
+  EQUIPO:      'Equipo',
+  SUBCONTRATO: 'Subcontrato',
+  INDIRECTO:   'Indirecto',
+};
+
+const TIPO_COLOR: Record<TipoInsumo, string> = {
+  MATERIAL:    'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+  MANO_DE_OBRA:'bg-blue-500/10   text-blue-700   border-blue-500/20',
+  EQUIPO:      'bg-amber-500/10  text-amber-700  border-amber-500/20',
+  SUBCONTRATO: 'bg-violet-500/10 text-violet-700 border-violet-500/20',
+  INDIRECTO:   'bg-slate-500/10  text-slate-600  border-slate-500/20',
+};
 
 const ESTADO_BADGE: Record<string, string> = {
   BORRADOR:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -75,6 +116,11 @@ const ESTADO_BADGE: Record<string, string> = {
   LIBERADO:    'bg-green-500/10 text-green-600 border-green-500/20',
   CONGELADO:   'bg-slate-500/10 text-slate-500 border-slate-500/20',
 };
+
+// ─── Helpers compartidos ──────────────────────────────────────────────────────
+
+const formatMXN = (n: number) =>
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
 
 /**
  * Parsea un número que puede venir en varios formatos de exportación OPUS:
@@ -86,29 +132,22 @@ const ESTADO_BADGE: Record<string, string> = {
 function parsearNumero(valor: string | number | undefined): number {
   if (valor === undefined || valor === null || valor === '') return 0;
   if (typeof valor === 'number') return isNaN(valor) ? 0 : valor;
-
-  // Eliminar símbolo de moneda ($), espacios y cualquier carácter no numérico
-  // excepto coma, punto y signo negativo
   const s = String(valor).trim().replace(/[$€£¥\s%]/g, '');
   if (s === '' || s === '-') return 0;
-
-  // Formato europeo: separador de miles = punto, decimal = coma  (1.234,56)
   if (/^\d{1,3}(\.\d{3})*(,\d+)?$/.test(s)) {
     return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
   }
-
-  // Formato americano / OPUS: separador de miles = coma, decimal = punto  ($5,325.85 → 5325.85)
   return parseFloat(s.replace(/,/g, '')) || 0;
 }
 
 /**
- * Normaliza nombres de columna a una clave interna
- * Mapea variaciones de OPUS: CLAVE/CONCEPTO, DESCRIPCION/NOMBRE, UNIDAD/U.M., P.U./PRECIO UNITARIO
+ * Normaliza nombres de columna a clave interna.
+ * Mapea variaciones de OPUS: CLAVE/CONCEPTO, DESCRIPCION, UNIDAD, P.U., IMPORTE…
  */
 function mapearColumna(nombre: string): string | null {
   const n = nombre.toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
   if (['CLAVE', 'CONCEPTO', 'CODIGO', 'COD', 'PARTIDA', 'CLAVECONT'].includes(n)) return 'clave';
-  if (['DESCRIPCION', 'DESCRIPCION', 'NOMBRE', 'CONCEPTO', 'DESC', 'TRABAJOS'].includes(n)) return 'descripcion';
+  if (['DESCRIPCION', 'NOMBRE', 'DESC', 'TRABAJOS'].includes(n)) return 'descripcion';
   if (['UNIDAD', 'UM', 'UNIDADMEDIDA', 'UNID', 'UDM', 'UNIDADDEMEDIDA'].includes(n)) return 'unidad_medida';
   if (['CANTIDAD', 'CANT', 'VOLUMEN', 'QUANT'].includes(n)) return 'cantidad';
   if (['PU', 'PRECIOUNITARIO', 'PRECIO', 'COSTODIRECTO', 'COSTOUNITARIO', 'TARIFA'].includes(n)) return 'precio_unitario';
@@ -116,28 +155,19 @@ function mapearColumna(nombre: string): string | null {
   return null;
 }
 
-/**
- * Convierte filas de datos brutos (objeto clave→valor) a ConceptoPreview
- */
 function normalizarFila(row: Record<string, string | number>): ConceptoPreview {
   const mapeado: Record<string, string | number> = {};
   for (const [col, val] of Object.entries(row)) {
     const clave = mapearColumna(col);
     if (clave && !(clave in mapeado)) mapeado[clave] = val;
   }
-
   const clave = String(mapeado.clave ?? '').trim();
   const descripcion = String(mapeado.descripcion ?? '').trim();
   const unidad_medida = String(mapeado.unidad_medida ?? '').trim().toUpperCase();
   const cantidad = parsearNumero(mapeado.cantidad as string);
   const precio_unitario = parsearNumero(mapeado.precio_unitario as string);
   let importe = parsearNumero(mapeado.importe as string);
-
-  // Si el importe no viene o es 0 pero hay cantidad y precio, calcularlo
-  if (importe === 0 && cantidad > 0 && precio_unitario > 0) {
-    importe = cantidad * precio_unitario;
-  }
-
+  if (importe === 0 && cantidad > 0 && precio_unitario > 0) importe = cantidad * precio_unitario;
   const _valido = Boolean(clave && descripcion && unidad_medida && cantidad > 0 && precio_unitario > 0);
   const errores: string[] = [];
   if (!clave) errores.push('sin clave');
@@ -145,106 +175,358 @@ function normalizarFila(row: Record<string, string | number>): ConceptoPreview {
   if (!unidad_medida) errores.push('sin unidad');
   if (cantidad <= 0) errores.push('cantidad inválida');
   if (precio_unitario <= 0) errores.push('precio inválido');
-
   return {
-    clave,
-    descripcion,
-    unidad_medida: unidad_medida || 'PZA',
-    cantidad,
-    precio_unitario,
-    importe,
+    clave, descripcion, unidad_medida: unidad_medida || 'PZA',
+    cantidad, precio_unitario, importe,
     _valido,
     _error: errores.length ? errores.join(', ') : undefined,
   };
 }
 
-/**
- * Detecta si una fila es de encabezado o de estructura (títulos de partida, totales, etc.)
- * OPUS incluye filas de nivel que no son conceptos individuales:
- *   - Capítulos/partidas: clave numérica ("1", "1.1", "2.3.4") sin unidad de medida
- *   - Filas casi vacías: <= 1 celda con datos
- *
- * El indicador más fiable de un capítulo OPUS es clave numérica + sin unidad.
- * Los conceptos facturables SIEMPRE tienen unidad (m², m³, kg, pza…).
- * Algunas exportaciones ponen el subtotal del capítulo en P.U. o IMPORTE,
- * por eso no se usa el precio como criterio.
- */
 function esFilaEstructural(row: Record<string, string | number>): boolean {
   const values = Object.values(row).map(v => String(v ?? '').trim());
   const textos = values.filter(v => v.length > 0);
-  if (textos.length <= 1) return true; // Filas casi vacías
-
-  // Detectar filas de partida/capítulo OPUS:
-  //   clave numérica pura ("1" / "1.1" / "2.3.4") + sin unidad de medida
+  if (textos.length <= 1) return true;
   const clavePar  = Object.entries(row).find(([k]) => mapearColumna(k) === 'clave');
   const unidadPar = Object.entries(row).find(([k]) => mapearColumna(k) === 'unidad_medida');
-
   if (clavePar) {
     const claveVal  = String(clavePar[1]    ?? '').trim();
     const unidadVal = String(unidadPar?.[1] ?? '').trim();
-
-    // Clave solo dígitos (con niveles separados por punto) y sin unidad de medida
     if (/^\d+(\.\d+)*$/.test(claveVal) && unidadVal === '') return true;
   }
-
   return false;
 }
 
-/**
- * Descarta filas de capítulo/partida que pasaron el filtro pre-normalización.
- * Segunda capa de defensa para exportaciones OPUS donde la unidad no está vacía
- * pero la clave es numérica y no hay cantidad (p.ej. cantidad = 0).
- */
 function esCapituloNormalizado(c: ConceptoPreview): boolean {
-  // Clave numérica pura + cantidad 0 + precio 0 → capítulo sin duda
   if (/^\d+(\.\d+)*$/.test(c.clave) && c.cantidad === 0 && c.precio_unitario === 0) return true;
   return false;
 }
 
-// ─── Componente ──────────────────────────────────────────────────────────────
+// ─── Parser: APU — Análisis de Precios Unitarios ─────────────────────────────
+//
+// El APU de OPUS tiene una estructura jerárquica:
+//   [Encabezados de empresa - saltar]
+//   "ANALISIS DEL TOTAL DE LOS PRECIOS UNITARIOS"
+//   "Clave: X" → inicio de concepto
+//     "Material" → inicio de sección
+//       "CLAVE DESCRIPCION UNIDAD CANTIDAD Rendimiento COSTO UNITARIO TOTAL"
+//       [filas de insumos]
+//       "Total de Material: X"
+//     "Mano de obra" → siguiente sección
+//       [filas de insumos — con sub-filas "Rendimiento / JOR"]
+//       "Total de Mano de obra: Y"
+//     "Herramienta" → INDIRECTO
+//     "Equipo costo horario" → EQUIPO
+//   "Clave: X+1" → siguiente concepto
+//
+// Extrae insumos únicos (por clave) de todas las secciones.
+// ─────────────────────────────────────────────────────────────────────────────
+function parsearArchivoAPU(rawRows: (string | number)[][]): InsumoPreview[] {
+  type EstadoAPU = 'fuera' | 'en_tabla';
+
+  const insumoMap = new Map<string, InsumoPreview>();
+  let tipoActual: TipoInsumo | null = null;
+  let estado: EstadoAPU = 'fuera';
+
+  // Posiciones de columna detectadas del encabezado de la tabla de insumos
+  let colClave = 0;
+  let colDescripcion = 1;
+  let colUnidad = 2;
+  let colCostoUnitario = 5;
+
+  for (const fila of rawRows) {
+    const celdas = fila.map(c => String(c ?? '').trim());
+    const noVacias = celdas.filter(c => c !== '');
+    if (noVacias.length === 0) continue;
+
+    const c0 = celdas[0] ?? '';
+
+    // ── Detectar inicio de sección de tipo ─────────────────────────────────
+    if (/^material(es)?$/i.test(c0)) {
+      tipoActual = 'MATERIAL';
+      estado = 'fuera';
+      continue;
+    }
+    if (/^mano\s+de\s+obra$/i.test(c0)) {
+      tipoActual = 'MANO_DE_OBRA';
+      estado = 'fuera';
+      continue;
+    }
+    if (/^herramienta(s)?$/i.test(c0)) {
+      tipoActual = 'INDIRECTO';
+      estado = 'fuera';
+      continue;
+    }
+    if (/^equipo/i.test(c0)) {
+      tipoActual = 'EQUIPO';
+      estado = 'fuera';
+      continue;
+    }
+    if (/^subcontrat/i.test(c0)) {
+      tipoActual = 'SUBCONTRATO';
+      estado = 'fuera';
+      continue;
+    }
+
+    // ── Detectar fin de sección ─────────────────────────────────────────────
+    if (/^total\s+de\s+/i.test(c0)) {
+      estado = 'fuera';
+      continue;
+    }
+
+    // ── Detectar encabezado de tabla de insumos ─────────────────────────────
+    // La fila tiene "CLAVE" y "DESCRIPCION" (u otras formas)
+    const norm = celdas.map(c => c.toUpperCase().replace(/\s+/g, '').replace(/[^A-Z]/g, ''));
+    const idxClave = norm.findIndex(c => c === 'CLAVE');
+    const idxDesc  = norm.findIndex(c => c === 'DESCRIPCION' || c === 'DESC');
+    if (idxClave >= 0 && idxDesc >= 0) {
+      colClave = idxClave;
+      colDescripcion = idxDesc;
+      const iU = norm.findIndex(c => c === 'UNIDAD' || c === 'UM' || c === 'UNIDADMEDIDA');
+      if (iU >= 0) colUnidad = iU;
+      // Buscar "COSTO UNITARIO" en las celdas originales (puede ser multi-celda)
+      const iCosto = celdas.findIndex(c => /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
+      if (iCosto >= 0) colCostoUnitario = iCosto;
+      estado = 'en_tabla';
+      continue;
+    }
+
+    // ── Procesar filas de datos de insumos ──────────────────────────────────
+    if (estado === 'en_tabla' && tipoActual) {
+      // Skip sub-filas de Mano de Obra ("Rendimiento / JOR X Total Y")
+      if (/^rendimiento/i.test(c0)) continue;
+
+      const clave = celdas[colClave] ?? '';
+      const desc  = celdas[colDescripcion] ?? '';
+      const unidad = celdas[colUnidad] ?? '';
+
+      // La columna de costo puede estar a la derecha de la posición detectada
+      // OPUS a veces la desplaza; buscar el primer valor numérico >= col 4
+      let costoBase = parsearNumero(celdas[colCostoUnitario]);
+      if (costoBase === 0) {
+        // Fallback: buscar el primer número > 0 a partir de la columna 4
+        for (let i = 4; i < celdas.length; i++) {
+          const v = parsearNumero(celdas[i]);
+          if (v > 0) { costoBase = v; break; }
+        }
+      }
+
+      // Validar que la clave parece un código de insumo real
+      if (!clave) continue;
+      if (/^\d+(\.\d+)*$/.test(clave)) continue; // clave numérica pura → capítulo
+      if (/^(total|suma|sub)/i.test(clave)) continue;
+
+      const claveNorm = clave.toUpperCase().trim();
+      if (!insumoMap.has(claveNorm)) {
+        const errores: string[] = [];
+        if (!desc)     errores.push('sin descripción');
+        if (!unidad)   errores.push('sin unidad');
+        if (costoBase === 0) errores.push('sin costo unitario');
+
+        insumoMap.set(claveNorm, {
+          clave: claveNorm,
+          descripcion: desc || '(sin descripción)',
+          unidad_medida: (unidad || 'PZA').toUpperCase(),
+          tipo_insumo: tipoActual,
+          costo_base: costoBase,
+          _valido: Boolean(clave && desc && unidad),
+          _error: errores.length ? errores.join(', ') : undefined,
+        });
+      }
+    }
+  }
+
+  return Array.from(insumoMap.values());
+}
+
+// ─── Parser: Explosión de Insumos ─────────────────────────────────────────────
+//
+// La Explosión de Insumos de OPUS es una lista tabular con secciones:
+//   "MATERIALES" / "MANO DE OBRA" / "HERRAMIENTA Y EQUIPO" / "SUBCONTRATOS"
+//   Encabezado: CLAVE, DESCRIPCION, UNIDAD, CANTIDAD, PRECIO UNITARIO, IMPORTE
+//   [filas de insumos]
+//
+// A diferencia del APU, no hay jerarquía de conceptos.
+// ─────────────────────────────────────────────────────────────────────────────
+function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[] {
+  const insumoMap = new Map<string, InsumoPreview>();
+  let tipoActual: TipoInsumo = 'MATERIAL';
+  type EstadoExp = 'buscando_header' | 'en_datos';
+  let estado: EstadoExp = 'buscando_header';
+
+  let colClave = 0;
+  let colDescripcion = 1;
+  let colUnidad = 2;
+  let colPrecioUnitario = 4;
+
+  for (const fila of rawRows) {
+    const celdas = fila.map(c => String(c ?? '').trim());
+    const noVacias = celdas.filter(c => c !== '');
+    if (noVacias.length === 0) continue;
+
+    const c0 = celdas[0] ?? '';
+    const c0Up = c0.toUpperCase();
+
+    // ── Detectar sección de tipo ────────────────────────────────────────────
+    if (/^material(es)?$/i.test(c0)) {
+      tipoActual = 'MATERIAL';
+      estado = 'buscando_header';
+      continue;
+    }
+    if (/^mano\s+de\s+obra$/i.test(c0)) {
+      tipoActual = 'MANO_DE_OBRA';
+      estado = 'buscando_header';
+      continue;
+    }
+    if (/^herramienta/i.test(c0) || /^equipo/i.test(c0)) {
+      tipoActual = 'EQUIPO';
+      estado = 'buscando_header';
+      continue;
+    }
+    if (/^subcontrat/i.test(c0)) {
+      tipoActual = 'SUBCONTRATO';
+      estado = 'buscando_header';
+      continue;
+    }
+
+    // ── Detectar encabezado de tabla ────────────────────────────────────────
+    const norm = celdas.map(c => c.toUpperCase().replace(/\s+/g, '').replace(/[^A-Z]/g, ''));
+    const idxClave = norm.findIndex(c => c === 'CLAVE' || c === 'CODIGO');
+    const idxDesc  = norm.findIndex(c => c === 'DESCRIPCION' || c === 'DESC');
+    if (idxClave >= 0 && idxDesc >= 0) {
+      colClave = idxClave;
+      colDescripcion = idxDesc;
+      const iU = norm.findIndex(c => c === 'UNIDAD' || c === 'UM');
+      if (iU >= 0) colUnidad = iU;
+      // Buscar "PRECIO UNITARIO" o "COSTO UNITARIO"
+      const iP = celdas.findIndex(c => /precio\s*unit/i.test(c) || /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
+      if (iP >= 0) colPrecioUnitario = iP;
+      estado = 'en_datos';
+      continue;
+    }
+
+    // ── Detectar fin de sección ("Total" / "Importe Total" etc.) ───────────
+    if (/^total/i.test(c0) && noVacias.length <= 3) {
+      continue; // skip totals row
+    }
+
+    // ── Procesar fila de datos ──────────────────────────────────────────────
+    if (estado === 'en_datos') {
+      const clave = celdas[colClave] ?? '';
+      const desc  = celdas[colDescripcion] ?? '';
+      const unidad = celdas[colUnidad] ?? '';
+      const precio = parsearNumero(celdas[colPrecioUnitario]);
+
+      if (!clave || /^\d+(\.\d+)*$/.test(clave)) continue;
+      if (/^(total|suma|importe|resumen)/i.test(clave)) continue;
+
+      // Inferir tipo desde prefijo si no hay sección declarada
+      const tipo = tipoActual || inferirTipoDesdeClaveOPUS(clave);
+      const claveNorm = clave.toUpperCase().trim();
+
+      if (!insumoMap.has(claveNorm)) {
+        const errores: string[] = [];
+        if (!desc)    errores.push('sin descripción');
+        if (!unidad)  errores.push('sin unidad');
+        if (precio === 0) errores.push('sin precio unitario');
+
+        insumoMap.set(claveNorm, {
+          clave: claveNorm,
+          descripcion: desc || '(sin descripción)',
+          unidad_medida: (unidad || 'PZA').toUpperCase(),
+          tipo_insumo: tipo,
+          costo_base: precio,
+          _valido: Boolean(clave && desc && unidad),
+          _error: errores.length ? errores.join(', ') : undefined,
+        });
+      }
+    }
+  }
+
+  return Array.from(insumoMap.values());
+}
+
+/** Heurística de tipo_insumo desde prefijo de clave OPUS */
+function inferirTipoDesdeClaveOPUS(clave: string): TipoInsumo {
+  const c = clave.toUpperCase();
+  if (/^J(OR)?[0-9A-Z]/.test(c) || /^MO[0-9]/.test(c)) return 'MANO_DE_OBRA';
+  if (/^(H|EQ|MAQ|EQP|HER)[0-9A-Z]/.test(c))           return 'EQUIPO';
+  if (/^S(UB)?[0-9A-Z]/.test(c))                        return 'SUBCONTRATO';
+  return 'MATERIAL';
+}
+
+// ─── Leer archivo Excel/CSV como array de arrays ──────────────────────────────
+function leerArchivoComoRawRows(
+  file: File,
+  onSuccess: (rows: (string | number)[][]) => void,
+  onError: (msg: string) => void
+): void {
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = evt.target?.result;
+      const ext  = file.name.split('.').pop()?.toLowerCase();
+      const wb   = ext === 'csv' || ext === 'txt'
+        ? XLSX.read(data as string, { type: 'string' })
+        : XLSX.read(data as ArrayBuffer, { type: 'array' });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<(string | number)[]>(ws, {
+        header: 1,
+        defval: '',
+        raw: false,
+      });
+      onSuccess(rows as (string | number)[][]);
+    } catch (e: any) {
+      onError(`Error al leer el archivo: ${e.message}`);
+    }
+  };
+  if (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')) {
+    reader.readAsText(file, 'UTF-8');
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+// ─── Componente Principal ─────────────────────────────────────────────────────
 
 export const InsumosView: React.FC = () => {
   const { tenant, currentProjectId } = useTenant();
   const { notify } = useNotification();
 
+  const [activeTab, setActiveTab] = useState<ActiveTab>('catalogo');
+
+  // ── Estado Tab 1: Catálogo de Obra ────────────────────────────────────────
+  const fileInputRef  = useRef<HTMLInputElement>(null);
   const [presupuesto, setPresupuesto] = useState<Presupuesto | null>(null);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
   const [search, setSearch]           = useState('');
-
-  // Import state
-  const fileInputRef  = useRef<HTMLInputElement>(null);
   const [panelImport, setPanelImport] = useState(false);
   const [panelGuia,   setPanelGuia]   = useState(false);
   const [importando,  setImportando]  = useState(false);
   const [archivoNombre, setArchivoNombre] = useState('');
-  const [preview, setPreview] = useState<ConceptoPreview[]>([]);
-  const [parseError, setParseError] = useState<string | null>(null);
+  const [preview, setPreview]         = useState<ConceptoPreview[]>([]);
+  const [parseError, setParseError]   = useState<string | null>(null);
 
-  const validRows   = useMemo(() => preview.filter(r => r._valido), [preview]);
-  const invalidRows = useMemo(() => preview.filter(r => !r._valido), [preview]);
+  // ── Estado Tab 2: Insumos ─────────────────────────────────────────────────
+  const fileInputAPURef       = useRef<HTMLInputElement>(null);
+  const fileInputExplosionRef = useRef<HTMLInputElement>(null);
+  const [insumos, setInsumos]             = useState<InsumoData[]>([]);
+  const [loadingInsumos, setLoadingInsumos] = useState(false);
+  const [errorInsumos, setErrorInsumos]   = useState<string | null>(null);
+  const [searchInsumos, setSearchInsumos] = useState('');
+  const [filtroTipo, setFiltroTipo]       = useState<TipoInsumo | ''>('');
+  const [panelAPU,       setPanelAPU]     = useState(false);
+  const [panelExplosion, setPanelExplosion] = useState(false);
+  const [importandoInsumos, setImportandoInsumos] = useState(false);
+  const [archivoNombreInsumo, setArchivoNombreInsumo] = useState('');
+  const [previewInsumos, setPreviewInsumos] = useState<InsumoPreview[]>([]);
+  const [parseErrorInsumos, setParseErrorInsumos] = useState<string | null>(null);
+
+  // ── Derivados Tab 1 ───────────────────────────────────────────────────────
+  const validRows    = useMemo(() => preview.filter(r => r._valido), [preview]);
+  const invalidRows  = useMemo(() => preview.filter(r => !r._valido), [preview]);
   const totalImporte = useMemo(() => validRows.reduce((s, r) => s + r.importe, 0), [validRows]);
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (tenant?.id === 'iretum-demo') {
-        setPresupuesto(null);
-        return;
-      }
-      const res = await api.get('/api/v1/gerencia-tecnica/presupuestos');
-      const lista: Presupuesto[] = res.data.data || [];
-      setPresupuesto(lista.length > 0 ? lista[0] : null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error de conexión con el módulo de Gerencia Técnica.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { void fetchData(); }, []);
 
   const conceptosFiltrados = useMemo(() => {
     if (!presupuesto) return [];
@@ -262,42 +544,81 @@ export const InsumosView: React.FC = () => {
     [conceptosFiltrados]
   );
 
-  // ── Leer y parsear archivo ─────────────────────────────────────────────────
+  // ── Derivados Tab 2 ───────────────────────────────────────────────────────
+  const insumosFiltrados = useMemo(() => {
+    let lista = insumos;
+    if (filtroTipo) lista = lista.filter(i => i.tipo_insumo === filtroTipo);
+    if (searchInsumos.trim()) {
+      const q = searchInsumos.toLowerCase();
+      lista = lista.filter(i =>
+        i.clave.toLowerCase().includes(q) ||
+        i.descripcion.toLowerCase().includes(q)
+      );
+    }
+    return lista;
+  }, [insumos, filtroTipo, searchInsumos]);
+
+  const insumosPorTipo = useMemo(() => {
+    const counts: Partial<Record<TipoInsumo, number>> = {};
+    for (const i of insumos) counts[i.tipo_insumo] = (counts[i.tipo_insumo] ?? 0) + 1;
+    return counts;
+  }, [insumos]);
+
+  const validPreviewInsumos   = useMemo(() => previewInsumos.filter(r => r._valido), [previewInsumos]);
+  const invalidPreviewInsumos = useMemo(() => previewInsumos.filter(r => !r._valido), [previewInsumos]);
+
+  // ── Fetch Tab 1 ───────────────────────────────────────────────────────────
+  const fetchPresupuesto = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (tenant?.id === 'iretum-demo') { setPresupuesto(null); return; }
+      const res = await api.get('/api/v1/gerencia-tecnica/presupuestos');
+      const lista: Presupuesto[] = res.data.data || [];
+      setPresupuesto(lista.length > 0 ? lista[0] : null);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error de conexión con Gerencia Técnica.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Fetch Tab 2 ───────────────────────────────────────────────────────────
+  const fetchInsumos = async () => {
+    setLoadingInsumos(true);
+    setErrorInsumos(null);
+    try {
+      if (tenant?.id === 'iretum-demo') { setInsumos([]); return; }
+      const res = await api.get('/api/v1/gerencia-tecnica/insumos');
+      setInsumos(res.data.data || []);
+    } catch (err: any) {
+      setErrorInsumos(err.response?.data?.message || 'Error al obtener catálogo de insumos.');
+    } finally {
+      setLoadingInsumos(false);
+    }
+  };
+
+  useEffect(() => { void fetchPresupuesto(); }, []);
+  useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
+
+  // ── Leer Catálogo de Obra (Tab 1) ─────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setArchivoNombre(file.name);
     setParseError(null);
-
     const reader = new FileReader();
-
     reader.onload = (evt) => {
       try {
         const data = evt.target?.result;
-        let wb: XLSX.WorkBook;
-
         const ext = file.name.split('.').pop()?.toLowerCase();
+        const wb  = (ext === 'csv' || ext === 'txt')
+          ? XLSX.read(data as string, { type: 'string' })
+          : XLSX.read(data as ArrayBuffer, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
 
-        if (ext === 'csv' || ext === 'txt') {
-          // CSV: leer como texto y convertir con XLSX
-          wb = XLSX.read(data as string, { type: 'string' });
-        } else {
-          // Excel: leer como ArrayBuffer
-          wb = XLSX.read(data as ArrayBuffer, { type: 'array' });
-        }
-
-        const sheetName = wb.SheetNames[0];
-        const ws = wb.Sheets[sheetName];
-
-        // ── Detectar fila de encabezados reales ───────────────────────────────
-        // Los archivos OPUS incluyen filas de título (nombre de empresa, fecha,
-        // etc.) antes de los encabezados de datos. Escanear las primeras 30 filas
-        // en modo array para encontrar la que contiene al menos 2 columnas
-        // reconocidas (CLAVE, DESCRIPCION, UNIDAD, CANTIDAD, P.U., IMPORTE…).
         const allRowsRaw: (string | number)[][] = XLSX.utils.sheet_to_json(ws, {
-          header: 1,
-          defval: '',
-          raw: false,
+          header: 1, defval: '', raw: false,
         });
 
         let headerRowIndex = -1;
@@ -306,10 +627,7 @@ export const InsumosView: React.FC = () => {
           const reconocidas = fila.filter(
             cell => typeof cell === 'string' && mapearColumna(cell) !== null
           );
-          if (reconocidas.length >= 2) {
-            headerRowIndex = i;
-            break;
-          }
+          if (reconocidas.length >= 2) { headerRowIndex = i; break; }
         }
 
         if (headerRowIndex === -1) {
@@ -322,11 +640,8 @@ export const InsumosView: React.FC = () => {
           return;
         }
 
-        // Convertir a array de objetos usando la fila detectada como encabezados
         const rawRows: Record<string, string | number>[] = XLSX.utils.sheet_to_json(ws, {
-          defval: '',
-          raw: false,
-          range: headerRowIndex,  // sheet_to_json usa esta fila como headers
+          defval: '', raw: false, range: headerRowIndex,
         });
 
         if (rawRows.length === 0) {
@@ -334,24 +649,21 @@ export const InsumosView: React.FC = () => {
           return;
         }
 
-        // Verificar columnas reconocidas (segunda pasada de seguridad)
         const primeraFila = rawRows[0];
         const columnasReconocidas = Object.keys(primeraFila).filter(k => mapearColumna(k) !== null);
         if (columnasReconocidas.length < 2) {
           setParseError(
             `No se reconocieron columnas del formato OPUS.\n` +
-            `Columnas detectadas: ${Object.keys(primeraFila).join(', ')}\n` +
-            `Columnas esperadas: CLAVE, DESCRIPCION, UNIDAD, CANTIDAD, P.U., IMPORTE`
+            `Columnas: ${Object.keys(primeraFila).join(', ')}`
           );
           return;
         }
 
-        // Normalizar filas (dos capas de filtrado para capítulos OPUS)
         const conceptos = rawRows
-          .filter(row => !esFilaEstructural(row))           // capa 1: pre-normalización (clave numérica + sin unidad)
+          .filter(row => !esFilaEstructural(row))
           .map(row => normalizarFila(row))
-          .filter(c => c.clave !== '' || c.descripcion !== '') // quitar filas completamente vacías
-          .filter(c => !esCapituloNormalizado(c));             // capa 2: post-normalización (clave numérica + sin qty + sin precio)
+          .filter(c => c.clave !== '' || c.descripcion !== '')
+          .filter(c => !esCapituloNormalizado(c));
 
         if (conceptos.length === 0) {
           setParseError('No se encontraron conceptos válidos en el archivo.');
@@ -364,106 +676,139 @@ export const InsumosView: React.FC = () => {
         setParseError(`Error al leer el archivo: ${err.message}`);
       }
     };
-
     if (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')) {
       reader.readAsText(file, 'UTF-8');
     } else {
       reader.readAsArrayBuffer(file);
     }
-
-    // Reset input para poder re-seleccionar el mismo archivo
     e.target.value = '';
   };
 
-  // ── Confirmar importación → POST ───────────────────────────────────────────
+  // ── Confirmar Importación Catálogo (Tab 1) ────────────────────────────────
   const handleConfirmarImport = async () => {
     if (validRows.length === 0) return;
     if (!currentProjectId) {
       notify({ type: 'error', title: 'Sin proyecto activo', message: 'Selecciona un proyecto antes de importar.' });
       return;
     }
-
     setImportando(true);
     try {
       const payload = {
         proyecto_id: currentProjectId,
         version: presupuesto ? presupuesto.version + 1 : 1,
         conceptos: validRows.map(c => ({
-          clave: c.clave,
-          descripcion: c.descripcion,
-          unidad_medida: c.unidad_medida,
-          cantidad: c.cantidad,
-          precio_unitario: c.precio_unitario,
+          clave: c.clave, descripcion: c.descripcion, unidad_medida: c.unidad_medida,
+          cantidad: c.cantidad, precio_unitario: c.precio_unitario,
         })),
       };
-
       await api.post('/api/v1/gerencia-tecnica/presupuestos', payload);
-
-      notify({
-        type: 'success',
-        title: 'Catálogo importado',
-        message: `${validRows.length} conceptos importados correctamente.`,
-        duration: 5000,
-      });
-
+      notify({ type: 'success', title: 'Catálogo importado', message: `${validRows.length} conceptos importados.`, duration: 5000 });
       setPanelImport(false);
       setPreview([]);
       setArchivoNombre('');
-      void fetchData();
+      void fetchPresupuesto();
     } catch (err: any) {
-      notify({
-        type: 'error',
-        title: 'Error al importar',
-        message: err.response?.data?.message || err.message,
-        duration: 6000,
-      });
+      notify({ type: 'error', title: 'Error al importar', message: err.response?.data?.message || err.message, duration: 6000 });
     } finally {
       setImportando(false);
     }
   };
 
-  // ── Estado vacío ──────────────────────────────────────────────────────────
-  const renderVacio = () => (
-    <div className="flex flex-col items-center justify-center h-[500px] gap-6 text-center px-8">
-      <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center">
-        <IconFileText className="h-10 w-10 text-primary opacity-60" />
-      </div>
-      <div>
-        <p className="text-sm font-black uppercase tracking-widest text-foreground">Sin catálogo cargado</p>
-        <p className="mt-2 text-xs text-muted-foreground max-w-xs leading-relaxed">
-          Exporta el <strong>PRESUPUESTO</strong> desde OPUS en formato Excel (.xlsx) o CSV y súbelo aquí.
-        </p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="px-6 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
-        >
-          <IconDownload className="h-4 w-4" />
-          Importar desde OPUS
-        </button>
-        <button
-          onClick={() => setPanelGuia(true)}
-          className="px-6 py-3 bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/80 active:scale-95 transition-all flex items-center gap-2"
-        >
-          <IconInfo className="h-4 w-4" />
-          ¿Cómo exportar?
-        </button>
-      </div>
-    </div>
-  );
+  // ── Leer archivo APU (Tab 2) ──────────────────────────────────────────────
+  const handleFileAPU = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setArchivoNombreInsumo(file.name);
+    setParseErrorInsumos(null);
+    leerArchivoComoRawRows(
+      file,
+      (rows) => {
+        const extraidos = parsearArchivoAPU(rows);
+        if (extraidos.length === 0) {
+          setParseErrorInsumos(
+            'No se encontraron insumos en el archivo APU.\n' +
+            'Verifica que el archivo sea la exportación "ANÁLISIS DE PRECIOS UNITARIOS" de OPUS.'
+          );
+          return;
+        }
+        setPreviewInsumos(extraidos);
+        setPanelAPU(true);
+      },
+      (msg) => setParseErrorInsumos(msg)
+    );
+    e.target.value = '';
+  };
+
+  // ── Leer archivo Explosión de Insumos (Tab 2) ─────────────────────────────
+  const handleFileExplosion = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setArchivoNombreInsumo(file.name);
+    setParseErrorInsumos(null);
+    leerArchivoComoRawRows(
+      file,
+      (rows) => {
+        const extraidos = parsearArchivoExplosion(rows);
+        if (extraidos.length === 0) {
+          setParseErrorInsumos(
+            'No se encontraron insumos en el archivo.\n' +
+            'Verifica que el archivo sea la "EXPLOSIÓN DE INSUMOS" de OPUS.'
+          );
+          return;
+        }
+        setPreviewInsumos(extraidos);
+        setPanelExplosion(true);
+      },
+      (msg) => setParseErrorInsumos(msg)
+    );
+    e.target.value = '';
+  };
+
+  // ── Confirmar Importación de Insumos (Tab 2) ──────────────────────────────
+  const handleConfirmarInsumos = async () => {
+    if (validPreviewInsumos.length === 0) return;
+    setImportandoInsumos(true);
+    try {
+      const res = await api.post('/api/v1/gerencia-tecnica/insumos/importar-lote', {
+        insumos: validPreviewInsumos.map(i => ({
+          clave: i.clave,
+          descripcion: i.descripcion,
+          unidad_medida: i.unidad_medida,
+          tipo_insumo: i.tipo_insumo,
+          costo_base: i.costo_base,
+        })),
+      });
+      const { creados, actualizados, omitidos } = res.data.data;
+      notify({
+        type: 'success',
+        title: 'Insumos importados',
+        message: `${creados} nuevos · ${actualizados} actualizados${omitidos > 0 ? ` · ${omitidos} omitidos` : ''}`,
+        duration: 6000,
+      });
+      setPanelAPU(false);
+      setPanelExplosion(false);
+      setPreviewInsumos([]);
+      setArchivoNombreInsumo('');
+      void fetchInsumos();
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error al importar insumos',
+        message: err.response?.data?.message || err.message,
+        duration: 6000,
+      });
+    } finally {
+      setImportandoInsumos(false);
+    }
+  };
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Input oculto para selección de archivo */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls,.csv,.txt"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+      {/* Inputs ocultos */}
+      <input ref={fileInputRef}       type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileChange} />
+      <input ref={fileInputAPURef}    type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileAPU} />
+      <input ref={fileInputExplosionRef} type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileExplosion} />
 
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
@@ -480,10 +825,12 @@ export const InsumosView: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
-                  Catálogo de Obra
+                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : 'Insumos'}
                 </h1>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Conceptos de obra · Presupuesto base del proyecto
+                  {activeTab === 'catalogo'
+                    ? 'Conceptos de obra · Presupuesto base del proyecto'
+                    : 'Catálogo maestro de insumos · Materiales, M.O., Equipo'}
                 </p>
               </div>
             </div>
@@ -491,179 +838,409 @@ export const InsumosView: React.FC = () => {
 
           <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={fetchData}
+              onClick={() => activeTab === 'catalogo' ? fetchPresupuesto() : fetchInsumos()}
               className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/60 transition-all shadow-sm active:scale-90"
               title="Refrescar"
             >
-              <IconRefreshCw className={cn('h-4 w-4 text-muted-foreground', loading && 'animate-spin')} />
+              <IconRefreshCw className={cn('h-4 w-4 text-muted-foreground', (loading || loadingInsumos) && 'animate-spin')} />
             </button>
-            <button
-              onClick={() => setPanelGuia(true)}
-              className="flex items-center gap-2 px-4 py-3 border border-border/60 bg-card text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/60 active:scale-95 transition-all"
-            >
-              <IconInfo className="h-4 w-4" />
-              ¿Cómo exportar?
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
-            >
-              <IconDownload className="h-4 w-4" />
-              Importar OPUS
-            </button>
+
+            {activeTab === 'catalogo' && (
+              <>
+                <button
+                  onClick={() => setPanelGuia(true)}
+                  className="flex items-center gap-2 px-4 py-3 border border-border/60 bg-card text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/60 active:scale-95 transition-all"
+                >
+                  <IconInfo className="h-4 w-4" />
+                  ¿Cómo exportar?
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <IconDownload className="h-4 w-4" />
+                  Importar OPUS
+                </button>
+              </>
+            )}
+
+            {activeTab === 'insumos' && (
+              <>
+                <button
+                  onClick={() => fileInputExplosionRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-3 border border-border/60 bg-card text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/60 active:scale-95 transition-all"
+                >
+                  <IconLayers className="h-4 w-4" />
+                  Explosión
+                </button>
+                <button
+                  onClick={() => fileInputAPURef.current?.click()}
+                  className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <IconDownload className="h-4 w-4" />
+                  Importar APU
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* ── Error de parseo (mensaje inline) ── */}
-        {parseError && (
+        {/* ── Tabs ── */}
+        <div className="flex gap-1 p-1 bg-muted/40 rounded-2xl border border-border/40 w-fit">
+          {([
+            { id: 'catalogo' as const, label: 'Catálogo de Obra', Icon: IconFileText },
+            { id: 'insumos'  as const, label: 'Insumos',          Icon: IconLayers   },
+          ] as const).map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={cn(
+                'flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                activeTab === id
+                  ? 'bg-background text-foreground shadow-sm border border-border/40'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Error de parseo ── */}
+        {(parseError || parseErrorInsumos) && (
           <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 flex items-start gap-3">
             <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-bold text-destructive">Error al leer el archivo</p>
-              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{parseError}</p>
+              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+                {parseError || parseErrorInsumos}
+              </p>
             </div>
-            <button onClick={() => setParseError(null)} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => { setParseError(null); setParseErrorInsumos(null); }} className="text-muted-foreground hover:text-foreground">
               <IconX className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        {/* ── Stats del presupuesto ── */}
-        {presupuesto && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Conceptos', value: presupuesto.conceptos.length.toString(), color: 'text-foreground' },
-              { label: 'Importe Total',   value: formatMXN(Number(presupuesto.importe_total)), color: 'text-primary' },
-              { label: 'Versión',         value: `v${presupuesto.version}`,               color: 'text-foreground' },
-              { label: 'Estado',          value: presupuesto.estado,                       color: 'text-foreground', badge: true },
-            ].map(stat => (
-              <div key={stat.label} className="rounded-2xl border border-border/40 bg-card p-5 shadow-sm">
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</p>
-                {stat.badge ? (
-                  <span className={cn('mt-2 inline-block rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider', ESTADO_BADGE[stat.value] || ESTADO_BADGE.BORRADOR)}>
-                    {stat.value}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TAB 1: CATÁLOGO DE OBRA                                            */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'catalogo' && (
+          <>
+            {presupuesto && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Total Conceptos', value: presupuesto.conceptos.length.toString(), color: 'text-foreground' },
+                  { label: 'Importe Total',   value: formatMXN(Number(presupuesto.importe_total)), color: 'text-primary' },
+                  { label: 'Versión',         value: `v${presupuesto.version}`, color: 'text-foreground' },
+                  { label: 'Estado',          value: presupuesto.estado, color: 'text-foreground', badge: true },
+                ].map(stat => (
+                  <div key={stat.label} className="rounded-2xl border border-border/40 bg-card p-5 shadow-sm">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                    {stat.badge ? (
+                      <span className={cn('mt-2 inline-block rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider', ESTADO_BADGE[stat.value] || ESTADO_BADGE.BORRADOR)}>
+                        {stat.value}
+                      </span>
+                    ) : (
+                      <p className={cn('mt-1 text-xl font-black tracking-tighter truncate', stat.color)}>{stat.value}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {presupuesto && (
+              <div className="flex flex-col sm:flex-row gap-3 bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+                <div className="relative flex-1 group">
+                  <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <input
+                    type="text" value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Buscar por clave, descripción o unidad..."
+                    className="w-full pl-11 pr-4 py-3 bg-muted/30 border border-transparent rounded-xl text-xs font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary/40 focus:bg-background transition-all"
+                  />
+                </div>
+                <div className="flex items-center justify-between sm:justify-end gap-4 px-2">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                    {conceptosFiltrados.length} conceptos
                   </span>
-                ) : (
-                  <p className={cn('mt-1 text-xl font-black tracking-tighter truncate', stat.color)}>{stat.value}</p>
-                )}
+                  <span className="text-sm font-black text-primary tracking-tighter">{formatMXN(importeFiltrado)}</span>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+
+            <div className="bg-card rounded-3xl border border-border/40 shadow-xl overflow-hidden min-h-[400px]">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center h-[400px] gap-6">
+                  <div className="h-12 w-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] animate-pulse">Cargando catálogo...</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center h-[400px] p-8 text-center max-w-md mx-auto gap-6">
+                  <div className="h-16 w-16 bg-destructive/10 rounded-2xl flex items-center justify-center">
+                    <IconAlertCircle className="h-8 w-8 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base text-foreground uppercase tracking-tighter">Error de conexión</h3>
+                    <p className="text-muted-foreground mt-2 text-xs leading-relaxed">{error}</p>
+                  </div>
+                  <button onClick={fetchPresupuesto} className="px-6 py-3 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+                    Reintentar
+                  </button>
+                </div>
+              ) : !presupuesto ? (
+                <div className="flex flex-col items-center justify-center h-[500px] gap-6 text-center px-8">
+                  <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+                    <IconFileText className="h-10 w-10 text-primary opacity-60" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest text-foreground">Sin catálogo cargado</p>
+                    <p className="mt-2 text-xs text-muted-foreground max-w-xs leading-relaxed">
+                      Exporta el <strong>PRESUPUESTO</strong> desde OPUS en formato Excel (.xlsx) o CSV y súbelo aquí.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-6 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      <IconDownload className="h-4 w-4" />
+                      Importar desde OPUS
+                    </button>
+                    <button
+                      onClick={() => setPanelGuia(true)}
+                      className="px-6 py-3 bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/80 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      <IconInfo className="h-4 w-4" />
+                      ¿Cómo exportar?
+                    </button>
+                  </div>
+                </div>
+              ) : conceptosFiltrados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+                  <IconLayers className="h-16 w-16 text-muted-foreground opacity-20" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">
+                    Sin resultados para "{search}"
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-border/40 bg-muted/30">
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Clave</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Descripción</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Unidad</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Cantidad</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">P.U.</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Importe</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {conceptosFiltrados.map((c) => (
+                        <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors">
+                          <td className="px-6 py-4 font-black text-primary tracking-tighter text-sm whitespace-nowrap">{c.clave}</td>
+                          <td className="px-6 py-4 max-w-sm">
+                            <span className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{c.descripcion}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="inline-block rounded-lg bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-tight text-muted-foreground">
+                              {c.unidad_medida}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right font-mono font-bold text-sm text-foreground">
+                            {Number(c.cantidad).toLocaleString('es-MX', { maximumFractionDigits: 4 })}
+                          </td>
+                          <td className="px-6 py-4 text-right font-mono font-bold text-sm text-foreground">
+                            {formatMXN(Number(c.precio_unitario))}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className="font-mono font-black text-sm text-primary">{formatMXN(Number(c.importe))}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-border/60 bg-muted/20">
+                        <td colSpan={5} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                          Total {search ? `(filtrado)` : `(${conceptosFiltrados.length} conceptos)`}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="font-mono font-black text-base text-primary">{formatMXN(importeFiltrado)}</span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
-        {/* ── Barra de búsqueda ── */}
-        {presupuesto && (
-          <div className="flex flex-col sm:flex-row gap-3 bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
-            <div className="relative flex-1 group">
-              <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar por clave, descripción o unidad..."
-                className="w-full pl-11 pr-4 py-3 bg-muted/30 border border-transparent rounded-xl text-xs font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary/40 focus:bg-background transition-all"
-              />
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-4 px-2">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                {conceptosFiltrados.length} conceptos
-              </span>
-              <span className="text-sm font-black text-primary tracking-tighter">
-                {formatMXN(importeFiltrado)}
-              </span>
-            </div>
-          </div>
-        )}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TAB 2: INSUMOS                                                      */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'insumos' && (
+          <>
+            {/* Stats por tipo */}
+            {insumos.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {(['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'] as TipoInsumo[]).map(tipo => (
+                  <button
+                    key={tipo}
+                    onClick={() => setFiltroTipo(filtroTipo === tipo ? '' : tipo)}
+                    className={cn(
+                      'rounded-2xl border p-4 text-left transition-all active:scale-95',
+                      filtroTipo === tipo
+                        ? TIPO_COLOR[tipo] + ' shadow-sm'
+                        : 'border-border/40 bg-card hover:bg-muted/40'
+                    )}
+                  >
+                    <p className="text-lg font-black text-foreground">{insumosPorTipo[tipo] ?? 0}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mt-0.5">{TIPO_LABEL[tipo]}</p>
+                  </button>
+                ))}
+              </div>
+            )}
 
-        {/* ── Tabla principal ── */}
-        <div className="bg-card rounded-3xl border border-border/40 shadow-xl overflow-hidden min-h-[400px]">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-[400px] gap-6">
-              <div className="h-12 w-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] animate-pulse">
-                Cargando catálogo...
-              </p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-[400px] p-8 text-center max-w-md mx-auto gap-6">
-              <div className="h-16 w-16 bg-destructive/10 rounded-2xl flex items-center justify-center">
-                <IconAlertCircle className="h-8 w-8 text-destructive" />
+            {/* Barra de búsqueda + total */}
+            {insumos.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-3 bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+                <div className="relative flex-1 group">
+                  <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <input
+                    type="text" value={searchInsumos} onChange={e => setSearchInsumos(e.target.value)}
+                    placeholder="Buscar por clave o descripción..."
+                    className="w-full pl-11 pr-4 py-3 bg-muted/30 border border-transparent rounded-xl text-xs font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary/40 focus:bg-background transition-all"
+                  />
+                </div>
+                <div className="flex items-center gap-3 px-2">
+                  {filtroTipo && (
+                    <button
+                      onClick={() => setFiltroTipo('')}
+                      className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground hover:text-foreground"
+                    >
+                      <IconX className="h-3.5 w-3.5" />
+                      {TIPO_LABEL[filtroTipo]}
+                    </button>
+                  )}
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                    {insumosFiltrados.length} insumos
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="font-black text-base text-foreground uppercase tracking-tighter">Error de conexión</h3>
-                <p className="text-muted-foreground mt-2 text-xs leading-relaxed">{error}</p>
-              </div>
-              <button
-                onClick={fetchData}
-                className="px-6 py-3 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all"
-              >
-                Reintentar
-              </button>
+            )}
+
+            {/* Tabla de insumos */}
+            <div className="bg-card rounded-3xl border border-border/40 shadow-xl overflow-hidden min-h-[400px]">
+              {loadingInsumos ? (
+                <div className="flex flex-col items-center justify-center h-[400px] gap-6">
+                  <div className="h-12 w-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] animate-pulse">Cargando insumos...</p>
+                </div>
+              ) : errorInsumos ? (
+                <div className="flex flex-col items-center justify-center h-[400px] p-8 text-center gap-6">
+                  <IconAlertCircle className="h-16 w-16 text-destructive opacity-30" />
+                  <div>
+                    <h3 className="font-black text-base text-foreground uppercase tracking-tighter">Error de conexión</h3>
+                    <p className="text-muted-foreground mt-2 text-xs">{errorInsumos}</p>
+                  </div>
+                  <button onClick={fetchInsumos} className="px-6 py-3 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+                    Reintentar
+                  </button>
+                </div>
+              ) : insumos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[500px] gap-6 text-center px-8">
+                  <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+                    <IconLayers className="h-10 w-10 text-primary opacity-60" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest text-foreground">Catálogo de insumos vacío</p>
+                    <p className="mt-2 text-xs text-muted-foreground max-w-sm leading-relaxed">
+                      Importa el <strong>APU</strong> (Análisis de Precios Unitarios) o la <strong>Explosión de Insumos</strong> desde OPUS para poblar este catálogo.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => fileInputAPURef.current?.click()}
+                      className="px-6 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      <IconDownload className="h-4 w-4" />
+                      Importar APU
+                    </button>
+                    <button
+                      onClick={() => fileInputExplosionRef.current?.click()}
+                      className="px-6 py-3 bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/80 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      <IconLayers className="h-4 w-4" />
+                      Importar Explosión
+                    </button>
+                  </div>
+                </div>
+              ) : insumosFiltrados.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+                  <IconSearch className="h-16 w-16 text-muted-foreground opacity-20" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">
+                    Sin resultados para "{searchInsumos}"
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-border/40 bg-muted/30">
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Clave</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Descripción</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Unidad</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tipo</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Costo Base</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {insumosFiltrados.map((ins) => (
+                        <tr key={ins.id} className="hover:bg-primary/[0.02] transition-colors">
+                          <td className="px-6 py-3.5 font-black text-primary tracking-tighter text-sm whitespace-nowrap">{ins.clave}</td>
+                          <td className="px-6 py-3.5 max-w-sm">
+                            <span className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{ins.descripcion}</span>
+                          </td>
+                          <td className="px-6 py-3.5 text-center">
+                            <span className="inline-block rounded-lg bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-tight text-muted-foreground">
+                              {ins.unidad_medida}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className={cn('inline-block rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-wider', TIPO_COLOR[ins.tipo_insumo])}>
+                              {TIPO_LABEL[ins.tipo_insumo]}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5 text-right font-mono font-black text-sm text-primary">
+                            {formatMXN(Number(ins.costo_base))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-border/60 bg-muted/20">
+                        <td colSpan={4} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                          {filtroTipo || searchInsumos ? `Filtrado: ${insumosFiltrados.length}` : `Total: ${insumos.length} insumos`}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            {Object.entries(insumosPorTipo).map(([t, n]) => `${n} ${TIPO_LABEL[t as TipoInsumo]}`).join(' · ')}
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
-          ) : !presupuesto ? (
-            renderVacio()
-          ) : conceptosFiltrados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[400px] gap-4">
-              <IconLayers className="h-16 w-16 text-muted-foreground opacity-20" />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-50">
-                Sin resultados para "{search}"
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-border/40 bg-muted/30">
-                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Clave</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Descripción</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Unidad</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Cantidad</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">P.U.</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Importe</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/20">
-                  {conceptosFiltrados.map((c) => (
-                    <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors group">
-                      <td className="px-6 py-4 font-black text-primary tracking-tighter text-sm whitespace-nowrap">{c.clave}</td>
-                      <td className="px-6 py-4 max-w-sm">
-                        <span className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{c.descripcion}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-block rounded-lg bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-tight text-muted-foreground">
-                          {c.unidad_medida}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-mono font-bold text-sm text-foreground">
-                        {Number(c.cantidad).toLocaleString('es-MX', { maximumFractionDigits: 4 })}
-                      </td>
-                      <td className="px-6 py-4 text-right font-mono font-bold text-sm text-foreground">
-                        {formatMXN(Number(c.precio_unitario))}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-mono font-black text-sm text-primary">{formatMXN(Number(c.importe))}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-border/60 bg-muted/20">
-                    <td colSpan={5} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
-                      Total {search ? `(filtrado)` : `(${conceptosFiltrados.length} conceptos)`}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-mono font-black text-base text-primary">{formatMXN(importeFiltrado)}</span>
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* PANEL: Vista previa de importación                                  */}
+      {/* PANEL: Vista previa — Importación de Catálogo de Obra              */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <SlidePanel
         isOpen={panelImport}
@@ -674,8 +1251,6 @@ export const InsumosView: React.FC = () => {
         maxWidthClassName="max-w-5xl"
       >
         <div className="space-y-6 pb-28">
-
-          {/* Resumen */}
           <div className="grid grid-cols-3 gap-4">
             <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
               <p className="text-2xl font-black text-emerald-600">{validRows.length}</p>
@@ -691,7 +1266,6 @@ export const InsumosView: React.FC = () => {
             </div>
           </div>
 
-          {/* Advertencia de filas con error */}
           {invalidRows.length > 0 && (
             <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-4 flex gap-3">
               <IconAlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
@@ -705,7 +1279,6 @@ export const InsumosView: React.FC = () => {
             </div>
           )}
 
-          {/* Tabla de vista previa */}
           <div className="rounded-2xl border border-border/40 overflow-hidden">
             <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
               <table className="w-full text-left text-xs">
@@ -722,12 +1295,7 @@ export const InsumosView: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-border/20">
                   {preview.map((row, i) => (
-                    <tr key={i} className={cn(
-                      'transition-colors',
-                      row._valido
-                        ? 'hover:bg-emerald-500/[0.03]'
-                        : 'bg-amber-500/5 opacity-60'
-                    )}>
+                    <tr key={i} className={cn('transition-colors', row._valido ? 'hover:bg-emerald-500/[0.03]' : 'bg-amber-500/5 opacity-60')}>
                       <td className="px-4 py-2.5 text-center">
                         {row._valido
                           ? <IconCheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
@@ -735,13 +1303,9 @@ export const InsumosView: React.FC = () => {
                         }
                       </td>
                       <td className="px-4 py-2.5 font-black text-primary whitespace-nowrap">{row.clave || '—'}</td>
-                      <td className="px-4 py-2.5 max-w-xs">
-                        <span className="font-semibold text-foreground line-clamp-1">{row.descripcion || '—'}</span>
-                      </td>
+                      <td className="px-4 py-2.5 max-w-xs"><span className="font-semibold text-foreground line-clamp-1">{row.descripcion || '—'}</span></td>
                       <td className="px-4 py-2.5 text-center">
-                        <span className="rounded-md bg-muted px-2 py-0.5 text-[9px] font-black uppercase text-muted-foreground">
-                          {row.unidad_medida || '?'}
-                        </span>
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[9px] font-black uppercase text-muted-foreground">{row.unidad_medida || '?'}</span>
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono text-foreground">
                         {row.cantidad > 0 ? row.cantidad.toLocaleString('es-MX', { maximumFractionDigits: 4 }) : <span className="text-amber-500">?</span>}
@@ -760,7 +1324,6 @@ export const InsumosView: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer fijo */}
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
             Se importarán <strong className="text-foreground">{validRows.length}</strong> conceptos · Total <strong className="text-primary">{formatMXN(totalImporte)}</strong>
@@ -772,15 +1335,140 @@ export const InsumosView: React.FC = () => {
             >
               Cancelar
             </button>
-            <SubmitButton
-              label={`Confirmar importación (${validRows.length} conceptos)`}
-              loading={importando}
-              color="emerald"
-              onClick={handleConfirmarImport}
-            />
+            <SubmitButton label={`Confirmar (${validRows.length} conceptos)`} loading={importando} color="emerald" onClick={handleConfirmarImport} />
           </div>
         </div>
       </SlidePanel>
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* PANEL: Vista previa — Importación APU / Explosión de Insumos       */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {[
+        { isOpen: panelAPU,       onClose: () => { setPanelAPU(false);       setPreviewInsumos([]); setArchivoNombreInsumo(''); }, title: 'Vista previa — Importación APU',              subtitle: 'Análisis de Precios Unitarios · OPUS' },
+        { isOpen: panelExplosion, onClose: () => { setPanelExplosion(false); setPreviewInsumos([]); setArchivoNombreInsumo(''); }, title: 'Vista previa — Explosión de Insumos',       subtitle: 'Catálogo consolidado de insumos · OPUS' },
+      ].map(({ isOpen, onClose, title, subtitle }) => (
+        <SlidePanel
+          key={title}
+          isOpen={isOpen}
+          onClose={onClose}
+          title={title}
+          subtitle={archivoNombreInsumo || subtitle}
+          accentColor="emerald"
+          maxWidthClassName="max-w-5xl"
+        >
+          <div className="space-y-6 pb-28">
+            {/* Resumen por tipo */}
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+              {(['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'] as TipoInsumo[]).map(tipo => {
+                const n = previewInsumos.filter(i => i.tipo_insumo === tipo).length;
+                if (n === 0) return null;
+                return (
+                  <div key={tipo} className={cn('rounded-2xl border p-3 text-center', TIPO_COLOR[tipo])}>
+                    <p className="text-xl font-black">{n}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest mt-0.5 opacity-70">{TIPO_LABEL[tipo]}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Resumen válidos / omitidos */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                <p className="text-2xl font-black text-emerald-600">{validPreviewInsumos.length}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Listos para importar</p>
+              </div>
+              <div className={cn('rounded-2xl p-4 text-center border', invalidPreviewInsumos.length > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                <p className={cn('text-2xl font-black', invalidPreviewInsumos.length > 0 ? 'text-amber-600' : 'text-muted-foreground')}>{invalidPreviewInsumos.length}</p>
+                <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', invalidPreviewInsumos.length > 0 ? 'text-amber-600/70' : 'text-muted-foreground')}>Se omitirán</p>
+              </div>
+            </div>
+
+            {invalidPreviewInsumos.length > 0 && (
+              <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-4 flex gap-3">
+                <IconAlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-amber-700">{invalidPreviewInsumos.length} insumos con datos incompletos serán ignorados</p>
+                  <p className="text-[10px] text-amber-600/80 mt-1">
+                    {invalidPreviewInsumos.slice(0, 3).map(r => `"${r.clave}" (${r._error})`).join(' · ')}
+                    {invalidPreviewInsumos.length > 3 && ` · y ${invalidPreviewInsumos.length - 3} más`}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Tabla de vista previa */}
+            <div className="rounded-2xl border border-border/40 overflow-hidden">
+              <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                    <tr className="border-b border-border/40">
+                      <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
+                      <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Clave</th>
+                      <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Descripción</th>
+                      <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">Unidad</th>
+                      <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Tipo</th>
+                      <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest text-right">Costo Base</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/20">
+                    {previewInsumos.map((row, i) => (
+                      <tr key={i} className={cn('transition-colors', row._valido ? 'hover:bg-emerald-500/[0.03]' : 'bg-amber-500/5 opacity-60')}>
+                        <td className="px-4 py-2.5 text-center">
+                          {row._valido
+                            ? <IconCheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                            : <span className="text-[9px] text-amber-600 font-bold" title={row._error}>omitir</span>
+                          }
+                        </td>
+                        <td className="px-4 py-2.5 font-black text-primary whitespace-nowrap">{row.clave}</td>
+                        <td className="px-4 py-2.5 max-w-xs"><span className="font-semibold text-foreground line-clamp-1">{row.descripcion}</span></td>
+                        <td className="px-4 py-2.5 text-center">
+                          <span className="rounded-md bg-muted px-2 py-0.5 text-[9px] font-black uppercase text-muted-foreground">{row.unidad_medida}</span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={cn('inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider', TIPO_COLOR[row.tipo_insumo])}>
+                            {TIPO_LABEL[row.tipo_insumo]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono font-black text-primary">
+                          {row.costo_base > 0 ? formatMXN(row.costo_base) : <span className="text-amber-500">?</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex gap-3">
+              <IconInfo className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-sky-700 leading-relaxed">
+                <strong>Insumos duplicados</strong>: si ya existe un insumo con la misma clave, se actualizarán sus datos (descripción, unidad, costo). No se crean duplicados.
+              </p>
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">{validPreviewInsumos.length}</strong> insumos a importar
+              {invalidPreviewInsumos.length > 0 && <> · <span className="text-amber-600">{invalidPreviewInsumos.length} se omitirán</span></>}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+              >
+                Cancelar
+              </button>
+              <SubmitButton
+                label={`Confirmar (${validPreviewInsumos.length} insumos)`}
+                loading={importandoInsumos}
+                color="emerald"
+                onClick={handleConfirmarInsumos}
+              />
+            </div>
+          </div>
+        </SlidePanel>
+      ))}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* PANEL: Guía de exportación desde OPUS                              */}
@@ -794,44 +1482,29 @@ export const InsumosView: React.FC = () => {
         maxWidthClassName="max-w-2xl"
       >
         <div className="space-y-8 pb-10 text-sm">
-
-          {/* Qué archivo usar */}
           <section>
-            <h3 className="font-black text-xs uppercase tracking-widest text-foreground mb-4">
-              ¿Cuál de los 3 archivos de OPUS debo usar?
-            </h3>
+            <h3 className="font-black text-xs uppercase tracking-widest text-foreground mb-4">¿Cuál de los 3 archivos de OPUS debo usar?</h3>
             <div className="space-y-3">
               {[
                 {
-                  nombre: '1. PRESUPUESTO',
+                  nombre: '1. PRESUPUESTO → pestaña "Catálogo de Obra"',
                   usar: true,
-                  desc: 'Contiene todos los conceptos de obra con clave, descripción, unidad, cantidad y precio unitario. Es el archivo que necesitas para cargar el catálogo.',
+                  desc: 'Contiene todos los conceptos de obra con clave, descripción, unidad, cantidad y precio unitario.',
                 },
                 {
-                  nombre: '2. ANÁLISIS DE PRECIOS UNITARIOS (APU)',
-                  usar: false,
-                  desc: 'Desglosa el costo de cada precio unitario en materiales, mano de obra y equipo. No es necesario para la carga inicial del catálogo.',
+                  nombre: '2. ANÁLISIS DE PRECIOS UNITARIOS (APU) → pestaña "Insumos"',
+                  usar: true,
+                  desc: 'Desglosa el costo de cada precio unitario en materiales, mano de obra y equipo. Se usa para poblar el catálogo de insumos.',
                 },
                 {
-                  nombre: '3. EXPLOSIÓN DE INSUMOS',
-                  usar: false,
-                  desc: 'Lista consolidada de todos los materiales, mano de obra y equipo con sus cantidades totales. Se usará en el futuro para el catálogo de insumos.',
+                  nombre: '3. EXPLOSIÓN DE INSUMOS → pestaña "Insumos"',
+                  usar: true,
+                  desc: 'Lista consolidada de todos los materiales, mano de obra y equipo. Alternativa más simple al APU para poblar el catálogo de insumos.',
                 },
               ].map(f => (
-                <div key={f.nombre} className={cn(
-                  'rounded-xl border p-4 flex gap-3',
-                  f.usar
-                    ? 'border-emerald-500/30 bg-emerald-500/5'
-                    : 'border-border/30 bg-muted/20 opacity-70'
-                )}>
-                  <div className={cn(
-                    'h-6 w-6 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-                    f.usar ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'
-                  )}>
-                    {f.usar
-                      ? <IconCheckCircle2 className="h-4 w-4" />
-                      : <IconX className="h-4 w-4" />
-                    }
+                <div key={f.nombre} className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex gap-3">
+                  <div className="h-6 w-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                    <IconCheckCircle2 className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="font-black text-xs text-foreground">{f.nombre}</p>
@@ -842,91 +1515,33 @@ export const InsumosView: React.FC = () => {
             </div>
           </section>
 
-          {/* Pasos para exportar */}
           <section>
-            <h3 className="font-black text-xs uppercase tracking-widest text-foreground mb-4">
-              Pasos para exportar el PRESUPUESTO desde OPUS
-            </h3>
+            <h3 className="font-black text-xs uppercase tracking-widest text-foreground mb-4">Pasos para exportar desde OPUS</h3>
             <ol className="space-y-3">
               {[
                 'Abre tu proyecto en OPUS.',
-                'Ve al menú: Archivo → Exportar (o desde la barra de herramientas).',
-                'Selecciona el reporte "Presupuesto".',
-                'En el formato de salida, elige Excel (.xlsx) o CSV — NO imprimir a PDF.',
-                'Guarda el archivo en tu computadora.',
-                'Regresa aquí y haz clic en "Importar OPUS" para seleccionar el archivo.',
+                'Ve al menú: Archivo → Exportar (o barra de herramientas).',
+                'Selecciona el reporte: Presupuesto, APU, o Explosión de Insumos.',
+                'En formato de salida, elige Excel (.xlsx) — NO PDF.',
+                'Guarda el archivo y súbelo en la pestaña correspondiente.',
               ].map((paso, i) => (
                 <li key={i} className="flex gap-3 items-start">
-                  <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
+                  <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
                   <span className="text-xs text-muted-foreground leading-relaxed">{paso}</span>
                 </li>
               ))}
             </ol>
           </section>
 
-          {/* Formato esperado */}
-          <section>
-            <h3 className="font-black text-xs uppercase tracking-widest text-foreground mb-4">
-              Formato de columnas esperado
-            </h3>
-            <div className="rounded-xl bg-muted/40 border border-border/30 overflow-hidden">
-              <table className="w-full text-left text-[11px]">
-                <thead>
-                  <tr className="border-b border-border/30 bg-muted/60">
-                    <th className="px-4 py-2.5 font-black text-muted-foreground">Columna en OPUS</th>
-                    <th className="px-4 py-2.5 font-black text-muted-foreground">Alternativas reconocidas</th>
-                    <th className="px-4 py-2.5 font-black text-muted-foreground">¿Requerida?</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/20">
-                  {[
-                    { col: 'CLAVE', alts: 'CONCEPTO, CODIGO, PARTIDA', req: 'Sí' },
-                    { col: 'DESCRIPCION', alts: 'NOMBRE, TRABAJOS', req: 'Sí' },
-                    { col: 'UNIDAD', alts: 'U.M., UNIDAD DE MEDIDA', req: 'Sí' },
-                    { col: 'CANTIDAD', alts: 'CANT, VOLUMEN', req: 'Sí' },
-                    { col: 'P.U.', alts: 'PRECIO UNITARIO, COSTO DIRECTO', req: 'Sí' },
-                    { col: 'IMPORTE', alts: 'TOTAL, MONTO', req: 'No (se calcula)' },
-                  ].map(row => (
-                    <tr key={row.col}>
-                      <td className="px-4 py-2.5 font-black text-foreground">{row.col}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{row.alts}</td>
-                      <td className="px-4 py-2.5">
-                        <span className={cn(
-                          'text-[9px] font-black uppercase px-2 py-0.5 rounded-full',
-                          row.req === 'Sí'
-                            ? 'bg-emerald-500/10 text-emerald-600'
-                            : 'bg-muted text-muted-foreground'
-                        )}>
-                          {row.req}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Nota sobre PDFs */}
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3">
             <IconInfo className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-bold text-amber-700">Los archivos PDF no son importables</p>
               <p className="text-[11px] text-amber-600/80 mt-1 leading-relaxed">
-                Los PDFs son reportes impresos que no contienen datos estructurados. Para importar el catálogo debes exportar desde OPUS directamente a Excel (.xlsx) o CSV — no a PDF.
+                Los PDFs son reportes impresos sin datos estructurados. Exporta siempre a Excel (.xlsx) o CSV desde OPUS.
               </p>
             </div>
           </div>
-
-          <button
-            onClick={() => { setPanelGuia(false); fileInputRef.current?.click(); }}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          >
-            <IconDownload className="h-4 w-4" />
-            Seleccionar archivo para importar
-          </button>
         </div>
       </SlidePanel>
     </>
