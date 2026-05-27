@@ -151,9 +151,13 @@ function normalizarFila(row: Record<string, string | number>): ConceptoPreview {
 /**
  * Detecta si una fila es de encabezado o de estructura (títulos de partida, totales, etc.)
  * OPUS incluye filas de nivel que no son conceptos individuales:
- *   - Capítulos/partidas: clave numérica ("1", "1.1", "2.3.4") sin precio ni cantidad
- *   - Filas de totales/subtotales: sin clave, solo importe
+ *   - Capítulos/partidas: clave numérica ("1", "1.1", "2.3.4") sin unidad de medida
  *   - Filas casi vacías: <= 1 celda con datos
+ *
+ * El indicador más fiable de un capítulo OPUS es clave numérica + sin unidad.
+ * Los conceptos facturables SIEMPRE tienen unidad (m², m³, kg, pza…).
+ * Algunas exportaciones ponen el subtotal del capítulo en P.U. o IMPORTE,
+ * por eso no se usa el precio como criterio.
  */
 function esFilaEstructural(row: Record<string, string | number>): boolean {
   const values = Object.values(row).map(v => String(v ?? '').trim());
@@ -161,21 +165,29 @@ function esFilaEstructural(row: Record<string, string | number>): boolean {
   if (textos.length <= 1) return true; // Filas casi vacías
 
   // Detectar filas de partida/capítulo OPUS:
-  //   clave numérica pura ("1" / "1.1" / "2.3.4") + precio = 0 + cantidad = 0
-  //   → son encabezados de sección, no conceptos facturables
+  //   clave numérica pura ("1" / "1.1" / "2.3.4") + sin unidad de medida
   const clavePar  = Object.entries(row).find(([k]) => mapearColumna(k) === 'clave');
-  const precioPar = Object.entries(row).find(([k]) => mapearColumna(k) === 'precio_unitario');
-  const cantPar   = Object.entries(row).find(([k]) => mapearColumna(k) === 'cantidad');
+  const unidadPar = Object.entries(row).find(([k]) => mapearColumna(k) === 'unidad_medida');
 
   if (clavePar) {
-    const claveVal    = String(clavePar[1]  ?? '').trim();
-    const precioVal   = parsearNumero(String(precioPar?.[1] ?? ''));
-    const cantidadVal = parsearNumero(String(cantPar?.[1]   ?? ''));
+    const claveVal  = String(clavePar[1]    ?? '').trim();
+    const unidadVal = String(unidadPar?.[1] ?? '').trim();
 
-    // Clave solo números (con o sin puntos decimales de nivel) y sin precio ni cantidad
-    if (/^\d+(\.\d+)*$/.test(claveVal) && precioVal === 0 && cantidadVal === 0) return true;
+    // Clave solo dígitos (con niveles separados por punto) y sin unidad de medida
+    if (/^\d+(\.\d+)*$/.test(claveVal) && unidadVal === '') return true;
   }
 
+  return false;
+}
+
+/**
+ * Descarta filas de capítulo/partida que pasaron el filtro pre-normalización.
+ * Segunda capa de defensa para exportaciones OPUS donde la unidad no está vacía
+ * pero la clave es numérica y no hay cantidad (p.ej. cantidad = 0).
+ */
+function esCapituloNormalizado(c: ConceptoPreview): boolean {
+  // Clave numérica pura + cantidad 0 + precio 0 → capítulo sin duda
+  if (/^\d+(\.\d+)*$/.test(c.clave) && c.cantidad === 0 && c.precio_unitario === 0) return true;
   return false;
 }
 
@@ -324,11 +336,12 @@ export const InsumosView: React.FC = () => {
           return;
         }
 
-        // Normalizar filas
+        // Normalizar filas (dos capas de filtrado para capítulos OPUS)
         const conceptos = rawRows
-          .filter(row => !esFilaEstructural(row))
+          .filter(row => !esFilaEstructural(row))           // capa 1: pre-normalización (clave numérica + sin unidad)
           .map(row => normalizarFila(row))
-          .filter(c => c.clave !== '' || c.descripcion !== ''); // quitar filas completamente vacías
+          .filter(c => c.clave !== '' || c.descripcion !== '') // quitar filas completamente vacías
+          .filter(c => !esCapituloNormalizado(c));             // capa 2: post-normalización (clave numérica + sin qty + sin precio)
 
         if (conceptos.length === 0) {
           setParseError('No se encontraron conceptos válidos en el archivo.');
