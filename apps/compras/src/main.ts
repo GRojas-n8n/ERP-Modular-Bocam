@@ -59,25 +59,36 @@ app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => 
 app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const { codigo, items, observaciones, prioridad } = req.body;
+    const { codigo, items, observaciones, prioridad, tipo } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la requisición.' });
+    }
+
+    const tipoReq: string = tipo === 'IMPREVISTO' ? 'IMPREVISTO' : 'NORMAL';
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => prisma.requisicion.create({
         data: {
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
-          codigo: codigo || `REQ-${Date.now()}`,
+          tenant_id:     tenantId,
+          proyecto_id:   proyectoId,
+          codigo:        codigo || `REQ-${Date.now()}`,
           solicitante_id: userId,
-          prioridad: prioridad || 'NORMAL',
+          prioridad:     prioridad || 'NORMAL',
+          estado:        'PENDIENTE', // siempre inicia PENDIENTE — requiere aprobación de procurement
+          tipo:          tipoReq,
           observaciones,
           items: {
             create: items.map((item: any) => ({
-              tenant_id: tenantId,
-              proyecto_id: proyectoId,
-              insumo_id: item.insumo_id,
-              cantidad: item.cantidad,
-              notas: item.notas
+              tenant_id:         tenantId,
+              proyecto_id:       proyectoId,
+              insumo_id:         item.insumo_id   || null,
+              cantidad:          item.cantidad,
+              notas:             item.notas        || null,
+              descripcion_libre: item.descripcion_libre || null,
+              unidad_libre:      item.unidad_libre       || null,
+              es_imprevisto:     Boolean(item.es_imprevisto),
             }))
           }
         },
@@ -85,11 +96,80 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
       })
     );
 
+    logInfo(req, 'compras', 'compras.requisicion_creada', `Requisición ${data.codigo} creada`, {
+      tipo: tipoReq, items: items.length,
+    });
     res.status(201).json({ success: true, data });
   } catch (error: any) {
+    logError(req, 'compras', 'compras.requisicion_create_error', 'Error al crear requisición', { error_message: error.message });
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * PATCH /api/v1/compras/requisiciones/:id/aprobar
+ * Procurement o Admin aprueba una requisición PENDIENTE → APROBADA.
+ * Sólo cambia el estado — no modifica ítems ni prioridad.
+ */
+app.patch(
+  '/api/v1/compras/requisiciones/:id/aprobar',
+  requireRoles('procurement', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const req_obj = await prisma.requisicion.findUnique({
+            where: { id_requisicion: id },
+          });
+          if (!req_obj) {
+            return null;
+          }
+          if (req_obj.estado === 'APROBADA') {
+            return req_obj; // idempotente: ya estaba aprobada
+          }
+          if (!['PENDIENTE', 'BORRADOR'].includes(req_obj.estado)) {
+            throw new Error(`La requisición está en estado ${req_obj.estado} y no puede aprobarse.`);
+          }
+          return prisma.requisicion.update({
+            where: { id_requisicion: id },
+            data: { estado: 'APROBADA' },
+            include: { items: true },
+          });
+        }
+      );
+
+      if (!data) {
+        return res.status(404).json({ success: false, message: 'Requisición no encontrada.' });
+      }
+
+      logInfo(req, 'compras', 'compras.requisicion_aprobada', `Requisición ${(data as any).codigo} aprobada por ${userId}`);
+
+      try {
+        await eventBus.publish({
+          event_type:  'compras.requisicion_aprobada',
+          timestamp:   new Date().toISOString(),
+          context:     buildEventContext(req),
+          payload: {
+            requisicion_id: id,
+            codigo:         (data as any).codigo,
+            tipo:           (data as any).tipo,
+            prioridad:      (data as any).prioridad,
+            aprobado_por:   userId,
+          },
+        });
+      } catch (_) { /* EventBus offline — degradación elegante */ }
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.requisicion_aprobar_error', 'Error al aprobar requisición', { error_message: error.message });
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+);
 
 app.get('/api/v1/compras/ordenes-compra', async (req: Request, res: Response) => {
   try {

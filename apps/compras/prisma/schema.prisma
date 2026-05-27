@@ -40,13 +40,16 @@ model Requisicion {
   fecha_solicitud DateTime @default(now())
   solicitante_id String   @db.Uuid // Referencia a Usuario_Identidad
   prioridad      String   @default("NORMAL") // BAJA, NORMAL, URGENTE
-  estado         String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, RECHAZADA, COMPRADA
+  estado         String   @default("PENDIENTE") // PENDIENTE, APROBADA, RECHAZADA, COMPRADA
+  /// Tipo de requisición: NORMAL (con catálogo) | IMPREVISTO (texto libre, sin insumo_id)
+  tipo           String   @default("NORMAL") @db.VarChar(20)
   observaciones  String?  @db.Text
 
   items          RequisicionItem[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, tipo])
   @@map("requisiciones")
 }
 
@@ -55,9 +58,16 @@ model RequisicionItem {
   tenant_id      String   @db.Uuid
   proyecto_id    String   @db.Uuid
   requisicion_id String   @db.Uuid
-  insumo_id      String   @db.Uuid // Referencia a MDM: Insumo_Catalogo (Propiedad de Gerencia Técnica)
+  /// Nullable para ítems IMPREVISTO que no tienen entrada en el catálogo
+  insumo_id      String?  @db.Uuid
   cantidad       Decimal  @db.Decimal(18, 4)
   notas          String?  @db.Text
+  /// Para ítems de requisición IMPREVISTO: descripción libre sin catálogo
+  descripcion_libre String? @db.Text
+  /// Unidad de medida libre para ítems IMPREVISTO
+  unidad_libre      String? @db.VarChar(20)
+  /// Marcador de ítem imprevisto (sin insumo_id en catálogo)
+  es_imprevisto     Boolean @default(false)
 
   requisicion    Requisicion @relation(fields: [requisicion_id], references: [id_requisicion], onDelete: Cascade)
 

@@ -58,6 +58,7 @@ interface Requisicion {
   solicitante: string;
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
   estado: string;
+  tipo?: string; // 'NORMAL' | 'IMPREVISTO'
 }
 
 interface Insumo {
@@ -145,6 +146,7 @@ export const ComprasView: React.FC = () => {
   const roles: string[] = (tenant as any)?.roles ?? [];
   const isResident    = roles.some(r => ['resident', 'control_obra'].includes(r));
   const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
+  const isProcurement = roles.some(r => ['procurement', 'admin', 'superintendent'].includes(r));
 
   // ─── State ────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabId>('requisiciones');
@@ -158,6 +160,7 @@ export const ComprasView: React.FC = () => {
   const [activeReqId, setActiveReqId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [aprobando, setAprobando] = useState<string | null>(null);
 
   // Almacén sub-vistas y filtros
   const [almacenSubView, setAlmacenSubView] = useState<AlmacenSubView>('inventario');
@@ -176,10 +179,11 @@ export const ComprasView: React.FC = () => {
 
   // Requisición form
   const [reqForm, setReqForm] = useState({
+    tipo: 'NORMAL',
     prioridad: 'MEDIA',
     fecha_requerida: '',
     notas: '',
-    items: [{ insumo_id: '', insumo_label: '', cantidad: '', notas: '' }],
+    items: [{ insumo_id: '', insumo_label: '', cantidad: '', notas: '', descripcion_libre: '', unidad_libre: 'PZA' }],
   });
 
   // Insumo form
@@ -238,7 +242,19 @@ export const ComprasView: React.FC = () => {
         api.get('/api/v1/compras/comparativas/pendientes-evaluacion').catch(() => null),
         api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
       ]);
-      if (reqRes.status === 'fulfilled') setRequisiciones(reqRes.value.data?.data || []);
+      if (reqRes.status === 'fulfilled') {
+        // Normaliza campos de la API Prisma → interfaz local
+        const rawReqs: any[] = reqRes.value.data?.data || [];
+        setRequisiciones(rawReqs.map(r => ({
+          id:          r.id_requisicion ?? r.id,
+          folio:       r.codigo ?? r.folio,
+          fecha:       r.fecha_solicitud ?? r.fecha,
+          solicitante: r.solicitante_id ?? r.solicitante ?? '—',
+          prioridad:   r.prioridad ?? 'NORMAL',
+          estado:      r.estado,
+          tipo:        r.tipo,
+        })));
+      }
       if (insRes.status === 'fulfilled') {
         // Normalizar campos de gerencia-tecnica → interfaz Insumo local
         const raw: any[] = insRes.value.data?.data || [];
@@ -344,14 +360,20 @@ export const ComprasView: React.FC = () => {
 
   // ─── Handlers requisición ─────────────────────────────────────────────────
   const handleSubmitRequisicion = async () => {
-    const validItems = reqForm.items.filter(i => i.insumo_id && i.cantidad);
-    if (validItems.length === 0) { alert('Agrega al menos un insumo con cantidad.'); return; }
+    const isImprevisto = reqForm.tipo === 'IMPREVISTO';
+    const validItems = isImprevisto
+      ? reqForm.items.filter(i => i.descripcion_libre.trim() && i.cantidad)
+      : reqForm.items.filter(i => i.insumo_id && i.cantidad);
+    if (validItems.length === 0) {
+      alert(isImprevisto ? 'Agrega al menos un ítem con descripción y cantidad.' : 'Agrega al menos un insumo con cantidad.');
+      return;
+    }
     if (isDemo) {
       const folio = `REQ-${new Date().getFullYear()}-${String(requisiciones.length + 41).padStart(3, '0')}`;
       notify({
         type: 'success',
         title: 'Requisición creada',
-        message: `${folio} · ${validItems.length} insumo${validItems.length !== 1 ? 's' : ''} · Prioridad ${reqForm.prioridad}`,
+        message: `${folio} · ${validItems.length} ítem${validItems.length !== 1 ? 's' : ''} · ${isImprevisto ? 'Imprevisto' : 'Normal'} · Prioridad ${reqForm.prioridad}`,
       });
       setShowReqForm(false);
       resetReqForm();
@@ -360,10 +382,22 @@ export const ComprasView: React.FC = () => {
     try {
       setFormLoading(true);
       await api.post('/api/v1/compras/requisiciones', {
-        prioridad: reqForm.prioridad,
-        fecha_requerida: reqForm.fecha_requerida || undefined,
-        notas: reqForm.notas || undefined,
-        items: validItems.map(i => ({ insumo_id: i.insumo_id, cantidad: Number(i.cantidad), notas: i.notas || undefined })),
+        tipo:            reqForm.tipo,
+        prioridad:       reqForm.prioridad,
+        observaciones:   reqForm.notas || undefined,
+        items: isImprevisto
+          ? validItems.map(i => ({
+              descripcion_libre: i.descripcion_libre,
+              unidad_libre:      i.unidad_libre || 'PZA',
+              cantidad:          Number(i.cantidad),
+              notas:             i.notas || undefined,
+              es_imprevisto:     true,
+            }))
+          : validItems.map(i => ({
+              insumo_id: i.insumo_id,
+              cantidad:  Number(i.cantidad),
+              notas:     i.notas || undefined,
+            })),
       });
       setShowReqForm(false);
       resetReqForm();
@@ -376,13 +410,13 @@ export const ComprasView: React.FC = () => {
   };
 
   const resetReqForm = () => {
-    setReqForm({ prioridad: 'MEDIA', fecha_requerida: '', notas: '', items: [{ insumo_id: '', insumo_label: '', cantidad: '', notas: '' }] });
+    setReqForm({ tipo: 'NORMAL', prioridad: 'MEDIA', fecha_requerida: '', notas: '', items: [{ insumo_id: '', insumo_label: '', cantidad: '', notas: '', descripcion_libre: '', unidad_libre: 'PZA' }] });
     setItemSearch([]);
     setItemDropdown(null);
   };
 
   const addItem = () => {
-    setReqForm(f => ({ ...f, items: [...f.items, { insumo_id: '', insumo_label: '', cantidad: '', notas: '' }] }));
+    setReqForm(f => ({ ...f, items: [...f.items, { insumo_id: '', insumo_label: '', cantidad: '', notas: '', descripcion_libre: '', unidad_libre: 'PZA' }] }));
     setItemSearch(s => [...s, '']);
   };
 
@@ -565,6 +599,25 @@ export const ComprasView: React.FC = () => {
         message: `Total comprometido: $${total.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
         duration: 6000,
       });
+    }
+  };
+
+  // ── Aprobación de requisición (Procurement / Admin / Superintendent) ─────────
+  const handleAprobar = async (reqId: string) => {
+    if (isDemo) {
+      setRequisiciones(prev => prev.map(r => r.id === reqId ? { ...r, estado: 'APROBADA' } : r));
+      notify({ type: 'success', title: 'Requisición aprobada', message: 'Procuración puede iniciar el cuadro comparativo.' });
+      return;
+    }
+    try {
+      setAprobando(reqId);
+      await api.patch(`/api/v1/compras/requisiciones/${reqId}/aprobar`);
+      await fetchData();
+      notify({ type: 'success', title: 'Requisición aprobada', message: 'Ya puedes iniciar el cuadro comparativo.' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al aprobar', message: err.response?.data?.message || err.message });
+    } finally {
+      setAprobando(null);
     }
   };
 
@@ -834,10 +887,28 @@ export const ComprasView: React.FC = () => {
                       <CardContent className="space-y-3 border-t border-border/40 pt-4">
                         <div className="flex items-center justify-between">
                           {estadoBadge(req.estado)}
-                          <div className="text-[10px] font-bold uppercase text-muted-foreground">
-                            {new Date(req.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                          <div className="flex items-center gap-2">
+                            {req.tipo === 'IMPREVISTO' && (
+                              <span className="rounded-md border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-orange-700">
+                                Imprevisto
+                              </span>
+                            )}
+                            <div className="text-[10px] font-bold uppercase text-muted-foreground">
+                              {new Date(req.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                            </div>
                           </div>
                         </div>
+                        {/* Botón "Aprobar" para Procurement en requisiciones PENDIENTE/BORRADOR */}
+                        {isProcurement && ['PENDIENTE', 'BORRADOR'].includes(req.estado) && (
+                          <Button
+                            onClick={() => handleAprobar(req.id)}
+                            disabled={aprobando === req.id}
+                            className="w-full rounded-xl bg-emerald-600 text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-500 disabled:opacity-60"
+                          >
+                            <IconCheckCircle2 className="h-3.5 w-3.5" />
+                            {aprobando === req.id ? 'Aprobando…' : 'Aprobar Requisición'}
+                          </Button>
+                        )}
                         {/* Botón comparativa para APROBADAS */}
                         {req.estado === 'APROBADA' && (
                           <Button
@@ -1319,10 +1390,57 @@ export const ComprasView: React.FC = () => {
         isOpen={showReqForm}
         onClose={() => { setShowReqForm(false); resetReqForm(); }}
         title="Nueva Requisición"
-        subtitle="Solicitud de compra de insumos"
-        accentColor="emerald"
+        subtitle={reqForm.tipo === 'IMPREVISTO' ? 'Imprevisto de obra — texto libre' : 'Solicitud de compra de insumos'}
+        accentColor={reqForm.tipo === 'IMPREVISTO' ? 'amber' : 'emerald'}
       >
         <div className="space-y-5">
+
+          {/* ── Selector tipo: NORMAL / IMPREVISTO ── */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de requisición</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'NORMAL',     label: '📋 Normal',     sub: 'Insumos del catálogo APU' },
+                { value: 'IMPREVISTO', label: '⚠️ Imprevisto', sub: 'Material sin código de catálogo' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setReqForm(f => ({ ...f, tipo: opt.value }))}
+                  className={cn(
+                    'flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all',
+                    reqForm.tipo === opt.value
+                      ? opt.value === 'IMPREVISTO'
+                        ? 'border-orange-500/40 bg-orange-500/10 shadow-sm'
+                        : 'border-emerald-500/40 bg-emerald-500/10 shadow-sm'
+                      : 'border-border/30 bg-muted/20 hover:bg-muted/40'
+                  )}
+                >
+                  <span className={cn(
+                    'text-xs font-black',
+                    reqForm.tipo === opt.value
+                      ? opt.value === 'IMPREVISTO' ? 'text-orange-700' : 'text-emerald-700'
+                      : 'text-foreground'
+                  )}>
+                    {opt.label}
+                  </span>
+                  <span className="mt-0.5 text-[10px] text-muted-foreground">{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Imprevisto: banner informativo */}
+          {reqForm.tipo === 'IMPREVISTO' && (
+            <div className="flex items-start gap-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
+              <span className="text-orange-500 text-sm mt-0.5">⚠️</span>
+              <p className="text-[10px] text-orange-700 leading-relaxed">
+                Los imprevistos no requieren código de catálogo. Se registrarán como desviación en los reportes presupuestales.
+                Procurement los revisará antes de cotizar.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Prioridad" required>
               <Select value={reqForm.prioridad} onChange={e => setReqForm({ ...reqForm, prioridad: e.target.value })}>
@@ -1337,13 +1455,17 @@ export const ComprasView: React.FC = () => {
           </div>
 
           <FormField label="Notas / Justificación">
-            <Textarea className="min-h-[80px]" placeholder="Justificación de la solicitud..." value={reqForm.notas} onChange={e => setReqForm({ ...reqForm, notas: e.target.value })} />
+            <Textarea className="min-h-[80px]"
+              placeholder={reqForm.tipo === 'IMPREVISTO' ? 'Describe el motivo del imprevisto...' : 'Justificación de la solicitud...'}
+              value={reqForm.notas}
+              onChange={e => setReqForm({ ...reqForm, notas: e.target.value })}
+            />
           </FormField>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Insumos solicitados <span className="text-red-500">*</span>
+                {reqForm.tipo === 'IMPREVISTO' ? 'Materiales imprevistos' : 'Insumos solicitados'} <span className="text-red-500">*</span>
               </label>
               <Button onClick={addItem} variant="ghost" className="h-auto px-0 py-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-transparent hover:text-emerald-500">
                 <IconPlus className="h-3 w-3" /> Agregar
@@ -1359,71 +1481,110 @@ export const ComprasView: React.FC = () => {
                       <IconX className="h-3 w-3" />
                     </Button>
                   )}
-                  <SectionBadge className="w-fit rounded-md border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] text-emerald-600">
+                  <SectionBadge className={cn(
+                    'w-fit rounded-md px-2 py-0.5 text-[9px]',
+                    reqForm.tipo === 'IMPREVISTO'
+                      ? 'border-orange-500/20 bg-orange-500/10 text-orange-700'
+                      : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
+                  )}>
                     #{idx + 1}
                   </SectionBadge>
 
-                  {/* Insumo seleccionado */}
-                  {item.insumo_id && !itemSearch[idx] ? (
-                    <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
-                      <span className="text-xs font-bold text-emerald-700">{item.insumo_label}</span>
-                      <button type="button" onClick={() => { updateItem(idx, 'insumo_id', ''); updateItem(idx, 'insumo_label', ''); }}
-                        className="ml-2 text-muted-foreground hover:text-foreground">
-                        <IconX className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div ref={itemDropdown === idx ? dropdownRef : undefined} className="relative">
-                      <div className="relative">
-                        <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  {/* ── IMPREVISTO: campos de texto libre ── */}
+                  {reqForm.tipo === 'IMPREVISTO' ? (
+                    <>
+                      <FormField label="Descripción del material" required>
                         <Input
-                          className="pl-9 text-xs"
-                          placeholder="Buscar insumo por clave o nombre..."
-                          value={itemSearch[idx] || ''}
-                          onFocus={() => setItemDropdown(idx)}
-                          onChange={e => {
-                            setItemDropdown(idx);
-                            setItemSearch(s => { const ns = [...s]; ns[idx] = e.target.value; return ns; });
-                          }}
+                          placeholder="Ej: Tabique rojo recocido 7x14x28 cm"
+                          value={item.descripcion_libre}
+                          onChange={e => updateItem(idx, 'descripcion_libre', e.target.value)}
                         />
+                      </FormField>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField label="Unidad" required>
+                          <Select value={item.unidad_libre} onChange={e => updateItem(idx, 'unidad_libre', e.target.value)}>
+                            {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+                          </Select>
+                        </FormField>
+                        <FormField label="Cantidad" required>
+                          <Input type="number" placeholder="0" value={item.cantidad} onChange={e => updateItem(idx, 'cantidad', e.target.value)} />
+                        </FormField>
                       </div>
-                      {itemDropdown === idx && (
-                        <div className="absolute z-50 mt-1 w-full rounded-xl border border-border/40 bg-card shadow-xl">
-                          {getInsumoSuggestions(idx).map(ins => (
-                            <button
-                              key={ins.id}
-                              type="button"
-                              onMouseDown={() => selectInsumo(idx, ins)}
-                              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/60 first:rounded-t-xl last:rounded-b-xl"
-                            >
-                              <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{ins.clave}</span>
-                              <span className="flex-1 truncate text-xs text-foreground">{ins.descripcion}</span>
-                              <span className="shrink-0 text-[9px] text-muted-foreground">{ins.unidad}</span>
-                            </button>
-                          ))}
-                          {getInsumoSuggestions(idx).length === 0 && (
-                            <div className="px-4 py-3 text-xs text-muted-foreground">Sin resultados</div>
+                      <FormField label="Notas">
+                        <Input className="text-xs" placeholder="Frente de trabajo, área, etc." value={item.notas} onChange={e => updateItem(idx, 'notas', e.target.value)} />
+                      </FormField>
+                    </>
+                  ) : (
+                    /* ── NORMAL: búsqueda en catálogo ── */
+                    <>
+                      {/* Insumo seleccionado */}
+                      {item.insumo_id && !itemSearch[idx] ? (
+                        <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+                          <span className="text-xs font-bold text-emerald-700">{item.insumo_label}</span>
+                          <button type="button" onClick={() => { updateItem(idx, 'insumo_id', ''); updateItem(idx, 'insumo_label', ''); }}
+                            className="ml-2 text-muted-foreground hover:text-foreground">
+                            <IconX className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div ref={itemDropdown === idx ? dropdownRef : undefined} className="relative">
+                          <div className="relative">
+                            <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              className="pl-9 text-xs"
+                              placeholder="Buscar insumo por clave o nombre..."
+                              value={itemSearch[idx] || ''}
+                              onFocus={() => setItemDropdown(idx)}
+                              onChange={e => {
+                                setItemDropdown(idx);
+                                setItemSearch(s => { const ns = [...s]; ns[idx] = e.target.value; return ns; });
+                              }}
+                            />
+                          </div>
+                          {itemDropdown === idx && (
+                            <div className="absolute z-50 mt-1 w-full rounded-xl border border-border/40 bg-card shadow-xl">
+                              {getInsumoSuggestions(idx).map(ins => (
+                                <button
+                                  key={ins.id}
+                                  type="button"
+                                  onMouseDown={() => selectInsumo(idx, ins)}
+                                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/60 first:rounded-t-xl last:rounded-b-xl"
+                                >
+                                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{ins.clave}</span>
+                                  <span className="flex-1 truncate text-xs text-foreground">{ins.descripcion}</span>
+                                  <span className="shrink-0 text-[9px] text-muted-foreground">{ins.unidad}</span>
+                                </button>
+                              ))}
+                              {getInsumoSuggestions(idx).length === 0 && (
+                                <div className="px-4 py-3 text-xs text-muted-foreground">Sin resultados</div>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
-                    </div>
-                  )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Cantidad" required>
-                      <Input type="number" placeholder="Cant." value={item.cantidad} onChange={e => updateItem(idx, 'cantidad', e.target.value)} />
-                    </FormField>
-                    <FormField label="Notas">
-                      <Input className="text-xs" placeholder="Opcional" value={item.notas} onChange={e => updateItem(idx, 'notas', e.target.value)} />
-                    </FormField>
-                  </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField label="Cantidad" required>
+                          <Input type="number" placeholder="Cant." value={item.cantidad} onChange={e => updateItem(idx, 'cantidad', e.target.value)} />
+                        </FormField>
+                        <FormField label="Notas">
+                          <Input className="text-xs" placeholder="Opcional" value={item.notas} onChange={e => updateItem(idx, 'notas', e.target.value)} />
+                        </FormField>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
 
           <div className="border-t border-border/40 pt-4">
-            <SubmitButton label="Crear Requisición" loading={formLoading} color="emerald" onClick={handleSubmitRequisicion} />
+            <SubmitButton
+              label={reqForm.tipo === 'IMPREVISTO' ? 'Crear Req. Imprevisto' : 'Crear Requisición'}
+              loading={formLoading}
+              color={reqForm.tipo === 'IMPREVISTO' ? 'amber' : 'emerald'}
+              onClick={handleSubmitRequisicion}
+            />
           </div>
         </div>
       </SlidePanel>
