@@ -59,7 +59,7 @@ function useTheme() {
 const ALL_NAV_ITEMS = [
   { name: 'Dashboard',       icon: IconDashboard,   id: 'dashboard',    roles: [] },
   { name: 'Gerencia Tecnica',icon: IconBriefcase,   id: 'insumos',      roles: ['gerencia_tecnica'] },
-  { name: 'Compras',         icon: IconShoppingCart,id: 'compras',      roles: ['compras'] },
+  { name: 'Compras',         icon: IconShoppingCart,id: 'compras',      roles: ['compras', 'procurement'] },
   { name: 'Finanzas',        icon: IconWallet,      id: 'finanzas',     roles: ['finanzas'] },
   { name: 'Contabilidad',    icon: IconFileText,    id: 'contabilidad', roles: ['contabilidad'] },
   { name: 'Control de Obra', icon: IconFileText,       id: 'control-obra', roles: ['control_obra'] },

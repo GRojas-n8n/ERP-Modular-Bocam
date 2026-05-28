@@ -15,13 +15,16 @@ interface Proyecto {
 }
 
 // ─── Role catalog ─────────────────────────────────────────────────────────────
+// IMPORTANTE: Mantener sincronizado con CLAUDE.md §11 y Layout.tsx ALL_NAV_ITEMS.
 const ROLES = [
   { value: 'admin',            label: 'Administrador' },
+  { value: 'superintendent',   label: 'Superintendencia' },
+  { value: 'procurement',      label: 'Compras / Procurement' },
   { value: 'gerencia_tecnica', label: 'Gerencia Técnica' },
-  { value: 'compras',          label: 'Compras' },
+  { value: 'residencia',       label: 'Residencia de Obra' },
+  { value: 'control_obra',     label: 'Control de Obra' },
   { value: 'finanzas',         label: 'Finanzas' },
   { value: 'contabilidad',     label: 'Contabilidad' },
-  { value: 'control_obra',     label: 'Control de Obra' },
   { value: 'personal_rh',      label: 'Personal / RH' },
   { value: 'seguridad_hse',    label: 'Seguridad HSE' },
   { value: 'ventas',           label: 'Ventas' },
