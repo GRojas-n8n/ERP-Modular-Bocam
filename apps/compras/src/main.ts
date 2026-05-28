@@ -510,6 +510,134 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
   }
 });
 
+// ── Crear cuadro comparativo ──────────────────────────────────────────────────
+
+// POST /comparativas — crea un cuadro comparativo para una requisición (idempotente)
+app.post('/api/v1/compras/comparativas',
+  requireRoles('procurement', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { requisicion_id } = req.body;
+
+      if (!requisicion_id) {
+        return res.status(400).json({ success: false, message: 'Se requiere requisicion_id.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          // Idempotente: si ya existe, devolver el existente
+          const existing = await prisma.cuadroComparativo.findFirst({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, requisicion_id },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+          if (existing) return existing;
+
+          return prisma.cuadroComparativo.create({
+            data: {
+              tenant_id:      tenantId,
+              proyecto_id:    proyectoId,
+              requisicion_id,
+              codigo:         `CC-${Date.now()}`,
+              estado:         'BORRADOR',
+            },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.comparativa.creada', `Cuadro comparativo ${(data as any).codigo} creado`, { requisicion_id });
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.crear.error', 'Error al crear cuadro comparativo', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// PUT /comparativas/:id/cotizaciones — guarda proveedores y precios de cotización (batch upsert)
+// Body: { proveedores: [{ nombre: string, precios: [{ insumo_id, precio, tiempo_entrega? }] }] }
+app.put('/api/v1/compras/comparativas/:id/cotizaciones',
+  requireRoles('procurement', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { proveedores } = req.body as {
+        proveedores: Array<{
+          nombre: string;
+          precios: Array<{ insumo_id: string; precio: number; tiempo_entrega?: string }>;
+        }>;
+      };
+
+      if (!Array.isArray(proveedores)) {
+        return res.status(400).json({ success: false, message: 'proveedores debe ser un array.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          // Verificar que el cuadro existe
+          const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id } });
+          if (!cuadro) throw new Error('Cuadro comparativo no encontrado.');
+          if (cuadro.estado !== 'BORRADOR') throw new Error(`El cuadro está en estado ${cuadro.estado} y no puede modificarse.`);
+
+          // Eliminar detalles anteriores para hacer un reemplazo limpio
+          await prisma.comparativaDetalle.deleteMany({ where: { cuadro_id: id } });
+
+          // Crear/encontrar proveedores y sus detalles
+          for (const prov of proveedores) {
+            if (!prov.nombre?.trim()) continue;
+            // Buscar o crear proveedor por nombre (dentro del tenant)
+            let proveedor = await prisma.proveedor.findFirst({
+              where: { tenant_id: tenantId, razon_social: prov.nombre.trim() },
+            });
+            if (!proveedor) {
+              proveedor = await prisma.proveedor.create({
+                data: {
+                  tenant_id:      tenantId,
+                  rfc_tax_id:     `RFC-${Date.now()}`, // placeholder hasta tener RFC real
+                  razon_social:   prov.nombre.trim(),
+                  estatus:        'ACTIVO',
+                },
+              });
+            }
+
+            // Crear detalles (un detalle por insumo por proveedor)
+            for (const p of prov.precios || []) {
+              if (!p.insumo_id || p.precio === undefined) continue;
+              await prisma.comparativaDetalle.create({
+                data: {
+                  tenant_id:      tenantId,
+                  proyecto_id:    proyectoId,
+                  cuadro_id:      id,
+                  proveedor_id:   proveedor.id_proveedor,
+                  insumo_id:      p.insumo_id,
+                  precio_ofertado: p.precio,
+                  tiempo_entrega: p.tiempo_entrega || null,
+                },
+              });
+            }
+          }
+
+          // Devolver cuadro actualizado
+          return prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.comparativa.cotizaciones.guardadas', `Cotizaciones guardadas para cuadro ${id}`, { proveedores: proveedores.length });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.cotizaciones.error', 'Error al guardar cotizaciones', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // ── Flujo de aprobación en dos etapas del Cuadro Comparativo ─────────────────
 
 // 2.1 PATCH enviar-evaluacion — Compras envía al Residente

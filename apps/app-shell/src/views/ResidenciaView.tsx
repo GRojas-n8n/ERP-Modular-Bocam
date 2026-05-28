@@ -98,12 +98,14 @@ interface InsumoReq {
   descripcion: string;
   tipo_insumo: 'MATERIAL' | 'EQUIPO' | 'MANO_DE_OBRA' | 'SUBCONTRATO' | 'INDIRECTO';
   unidad_medida: string;
+  cantidad_presupuestada?: number; // del endpoint explosión GT
 }
 
 /** Insumo seleccionado con cantidad ingresada por el Residente */
 interface InsumoSeleccionado extends InsumoReq {
   cantidad: number;
   notas: string;
+  es_excedente?: boolean; // true si cantidad > cantidad_presupuestada
 }
 
 const UNIDADES_REQ = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
@@ -294,13 +296,10 @@ export const ResidenciaView: React.FC = () => {
   // Take-off APU (tipo NORMAL)
   const [conceptos, setConceptos] = useState<ConceptoSimple[]>([]);
   const [conceptoSearch, setConceptoSearch] = useState('');
-  const [conceptoDropdownOpen, setConceptoDropdownOpen] = useState(false);
   const [conceptoSeleccionado, setConceptoSeleccionado] = useState<ConceptoSimple | null>(null);
   const [cantidadTakeoff, setCantidadTakeoff] = useState('');
   const [materialesTakeoff, setMaterialesTakeoff] = useState<MaterialTakeoff[]>([]);
   const [loadingComposicion, setLoadingComposicion] = useState(false);
-  const conceptoDropdownRef = useRef<HTMLDivElement>(null);
-
   // IMPREVISTO items
   const [itemsImprevisto, setItemsImprevisto] = useState<ImprevistoItem[]>([
     { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' },
@@ -335,7 +334,7 @@ export const ResidenciaView: React.FC = () => {
         const [reqRes, presRes, insumosRes] = await Promise.allSettled([
           api.get('/api/v1/compras/requisiciones'),
           api.get('/api/v1/gerencia-tecnica/presupuesto/activo'),
-          api.get('/api/v1/gerencia-tecnica/insumos'),
+          api.get('/api/v1/gerencia-tecnica/insumos/explosion'),
         ]);
         if (reqRes.status === 'fulfilled') {
           const raw: any[] = reqRes.value.data?.data || [];
@@ -364,11 +363,12 @@ export const ResidenciaView: React.FC = () => {
           setInsumosAll(raw
             .filter((i: any) => i.activo !== false)
             .map((i: any) => ({
-              insumo_id:   i.id,
-              clave:       i.clave,
-              descripcion: i.descripcion,
-              tipo_insumo: i.tipo_insumo,
-              unidad_medida: i.unidad_medida,
+              insumo_id:              i.id,
+              clave:                  i.clave,
+              descripcion:            i.descripcion,
+              tipo_insumo:            i.tipo_insumo,
+              unidad_medida:          i.unidad_medida,
+              cantidad_presupuestada: i.cantidad_presupuestada != null ? Number(i.cantidad_presupuestada) : undefined,
             }))
           );
         }
@@ -377,18 +377,6 @@ export const ResidenciaView: React.FC = () => {
     };
     loadReqs();
   }, [activeTab, isDemo]);
-
-  // ── Cerrar dropdown de conceptos al click afuera ─────────────────────────
-  useEffect(() => {
-    if (!conceptoDropdownOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (conceptoDropdownRef.current && !conceptoDropdownRef.current.contains(e.target as Node)) {
-        setConceptoDropdownOpen(false);
-      }
-    };
-    setTimeout(() => window.addEventListener('mousedown', handler), 0);
-    return () => window.removeEventListener('mousedown', handler);
-  }, [conceptoDropdownOpen]);
 
   // ── Cargar composición al seleccionar concepto ────────────────────────────
   useEffect(() => {
@@ -512,8 +500,8 @@ export const ResidenciaView: React.FC = () => {
     ? conceptos.filter(c =>
         c.clave.toLowerCase().includes(conceptoSearch.toLowerCase()) ||
         c.descripcion.toLowerCase().includes(conceptoSearch.toLowerCase())
-      ).slice(0, 10)
-    : conceptos.slice(0, 10);
+      )
+    : conceptos;
 
   const handleGenerarRequisicion = async () => {
     if (reqTipo === 'INSUMO') {
@@ -533,14 +521,23 @@ export const ResidenciaView: React.FC = () => {
       }
       try {
         setGenerandoReq(true);
+        const itemsConExcedente = insumosSeleccionados.filter(
+          i => i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada
+        );
+        const observacionesBase = reqNotas || undefined;
+        const observacionesFinal = itemsConExcedente.length > 0
+          ? `${observacionesBase ? observacionesBase + ' · ' : ''}⚠ EXCEDENTE en ${itemsConExcedente.length} ítem(s): ${itemsConExcedente.map(i => `${i.clave} (pres: ${i.cantidad_presupuestada} → sol: ${i.cantidad})`).join(', ')}`
+          : observacionesBase;
         const res = await api.post('/api/v1/compras/requisiciones', {
           tipo: 'NORMAL',
           prioridad: reqPrioridad,
-          observaciones: reqNotas || undefined,
+          observaciones: observacionesFinal,
           items: insumosSeleccionados.map(i => ({
             insumo_id: i.insumo_id,
             cantidad:  i.cantidad,
-            notas:     i.notas || undefined,
+            notas:     i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada
+              ? `EXCEDENTE: presupuesto ${i.cantidad_presupuestada} ${i.unidad_medida}, solicitado ${i.cantidad} ${i.unidad_medida}`
+              : (i.notas || undefined),
           })),
         });
         const r = res.data.data;
@@ -1414,7 +1411,8 @@ export const ResidenciaView: React.FC = () => {
                         key={insumo.insumo_id}
                         type="button"
                         onClick={() => {
-                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: 0, notas: '' }]);
+                          const cantDefault = insumo.cantidad_presupuestada ?? 0;
+                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: cantDefault, notas: '' }]);
                           setInsumoSearch('');
                         }}
                         className={cn(
@@ -1424,6 +1422,11 @@ export const ResidenciaView: React.FC = () => {
                       >
                         <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-black text-indigo-700 shrink-0">{insumo.clave}</span>
                         <span className="flex-1 text-xs text-foreground leading-snug">{insumo.descripcion}</span>
+                        {(insumo.cantidad_presupuestada ?? 0) > 0 && (
+                          <span className="text-[9px] text-emerald-600 font-bold shrink-0">
+                            Pres: {insumo.cantidad_presupuestada} {insumo.unidad_medida}
+                          </span>
+                        )}
                         <span className="text-[9px] text-muted-foreground shrink-0">{insumo.unidad_medida}</span>
                         <span className="text-[9px] text-indigo-500 font-black shrink-0">+ Agregar</span>
                       </button>
@@ -1438,31 +1441,60 @@ export const ResidenciaView: React.FC = () => {
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                     Ítems a requisitar ({insumosSeleccionados.length})
                   </p>
-                  {insumosSeleccionados.map((item, idx) => (
-                    <div key={item.insumo_id} className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-2.5">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-mono text-muted-foreground">{item.clave}</p>
-                        <p className="text-xs font-semibold text-foreground truncate">{item.descripcion}</p>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        placeholder="Cant."
-                        value={item.cantidad || ''}
-                        onChange={e => setInsumosSeleccionados(prev => prev.map((p, i) => i === idx ? { ...p, cantidad: Number(e.target.value) } : p))}
-                        className="w-20 text-right text-xs font-bold bg-background border border-border/60 rounded-lg px-2 py-1 focus:border-indigo-400 outline-none"
-                      />
-                      <span className="text-[9px] text-muted-foreground shrink-0 w-8">{item.unidad_medida}</span>
-                      <button
-                        type="button"
-                        onClick={() => setInsumosSeleccionados(prev => prev.filter((_, i) => i !== idx))}
-                        className="text-muted-foreground hover:text-red-500 shrink-0"
+                  {insumosSeleccionados.map((item, idx) => {
+                    const excedente = item.cantidad_presupuestada != null && item.cantidad > item.cantidad_presupuestada;
+                    const pctExcedente = excedente
+                      ? ((item.cantidad - item.cantidad_presupuestada!) / item.cantidad_presupuestada! * 100).toFixed(0)
+                      : null;
+                    return (
+                      <div
+                        key={item.insumo_id}
+                        className={cn(
+                          'flex items-start gap-3 rounded-xl border px-4 py-2.5',
+                          excedente
+                            ? 'border-amber-500/40 bg-amber-500/5'
+                            : 'border-indigo-500/20 bg-indigo-500/5'
+                        )}
                       >
-                        <IconX className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-mono text-muted-foreground">{item.clave}</p>
+                          <p className="text-xs font-semibold text-foreground truncate">{item.descripcion}</p>
+                          {excedente && (
+                            <p className="text-[9px] text-amber-600 mt-0.5">
+                              ⚠ Excede presupuesto — pres: {item.cantidad_presupuestada} {item.unidad_medida}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end shrink-0 gap-0.5">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            placeholder="Cant."
+                            value={item.cantidad || ''}
+                            onChange={e => setInsumosSeleccionados(prev => prev.map((p, i) => i === idx ? { ...p, cantidad: Number(e.target.value) } : p))}
+                            className={cn(
+                              'w-20 text-right text-xs font-bold bg-background border rounded-lg px-2 py-1 focus:border-indigo-400 outline-none',
+                              excedente ? 'border-amber-500/60' : 'border-border/60'
+                            )}
+                          />
+                          <span className="text-[9px] text-muted-foreground">{item.unidad_medida}</span>
+                          {pctExcedente && (
+                            <span className="text-[8px] font-black text-amber-600 bg-amber-500/10 rounded px-1.5 py-0.5 whitespace-nowrap">
+                              ↑ {pctExcedente}% sobre pres.
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setInsumosSeleccionados(prev => prev.filter((_, i) => i !== idx))}
+                          className="text-muted-foreground hover:text-red-500 shrink-0 mt-0.5"
+                        >
+                          <IconX className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -1478,54 +1510,82 @@ export const ResidenciaView: React.FC = () => {
           {reqTipo === 'APU' && (
             <div className="space-y-4">
               {/* Concepto seleccionado */}
-              {conceptoSeleccionado ? (
-                <div className="flex items-center justify-between rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3">
+              {/* Concepto seleccionado — chip compacto */}
+              {conceptoSeleccionado && (
+                <div className="flex items-center justify-between rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
                   <div>
-                    <p className="text-xs font-black text-indigo-700">{conceptoSeleccionado.clave} — {conceptoSeleccionado.descripcion}</p>
+                    <p className="text-[10px] font-mono text-indigo-600 uppercase tracking-wider mb-0.5">Concepto seleccionado</p>
+                    <p className="text-xs font-black text-indigo-800">{conceptoSeleccionado.clave} — {conceptoSeleccionado.descripcion}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{conceptoSeleccionado.unidad_medida}</p>
                   </div>
                   <button type="button" onClick={() => { setConceptoSeleccionado(null); setMaterialesTakeoff([]); setCantidadTakeoff(''); }}
-                    className="ml-3 text-muted-foreground hover:text-foreground">
+                    className="ml-3 text-muted-foreground hover:text-red-500 shrink-0">
                     <IconX className="h-4 w-4" />
                   </button>
                 </div>
-              ) : (
-                <FormField label="Concepto APU" required hint="Busca por clave o descripción">
-                  <div ref={conceptoDropdownRef} className="relative">
-                    <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-9 text-xs"
-                      placeholder="Ej: 1.3 — Cimentación corrida..."
-                      value={conceptoSearch}
-                      onFocus={() => setConceptoDropdownOpen(true)}
-                      onChange={e => { setConceptoSearch(e.target.value); setConceptoDropdownOpen(true); }}
-                    />
-                    {conceptoDropdownOpen && conceptosFiltrados.length > 0 && (
-                      <div className="absolute z-50 mt-1 w-full rounded-xl border border-border/40 bg-card shadow-xl max-h-56 overflow-y-auto">
-                        {conceptosFiltrados.map(c => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onMouseDown={() => {
-                              setConceptoSeleccionado(c);
-                              setConceptoSearch('');
-                              setConceptoDropdownOpen(false);
-                            }}
-                            className="flex w-full items-start gap-3 px-4 py-2.5 text-left hover:bg-muted/60 first:rounded-t-xl last:rounded-b-xl"
-                          >
-                            <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-black text-indigo-700 shrink-0">{c.clave}</span>
-                            <span className="flex-1 text-xs text-foreground leading-snug">{c.descripcion}</span>
-                            <span className="shrink-0 text-[9px] text-muted-foreground">{c.unidad_medida}</span>
-                          </button>
-                        ))}
-                        {conceptosFiltrados.length === 0 && conceptoSearch && (
-                          <div className="px-4 py-3 text-xs text-muted-foreground">Sin conceptos en el presupuesto activo</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </FormField>
               )}
+
+              {/* Lista de partidas APU — siempre visible */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Partidas del presupuesto ({conceptos.length})
+                  </p>
+                  {conceptoSeleccionado && (
+                    <span className="text-[9px] text-indigo-600 font-semibold">Seleccionado ↑</span>
+                  )}
+                </div>
+                {/* Buscador */}
+                <div className="relative">
+                  <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9 text-xs"
+                    placeholder="Filtrar por clave o descripción..."
+                    value={conceptoSearch}
+                    onChange={e => setConceptoSearch(e.target.value)}
+                  />
+                </div>
+                {/* Listado scrollable */}
+                <div className="rounded-xl border border-border/40 overflow-hidden max-h-52 overflow-y-auto">
+                  {conceptosFiltrados.length === 0 ? (
+                    <div className="px-4 py-4 text-center text-xs text-muted-foreground">
+                      {conceptoSearch ? 'Sin partidas que coincidan con la búsqueda' : 'No hay partidas en el presupuesto activo'}
+                    </div>
+                  ) : (
+                    conceptosFiltrados.map((c, ci) => {
+                      const isSelected = conceptoSeleccionado?.id === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setConceptoSeleccionado(null); setMaterialesTakeoff([]); setCantidadTakeoff('');
+                            } else {
+                              setConceptoSeleccionado(c); setConceptoSearch('');
+                            }
+                          }}
+                          className={cn(
+                            'flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors',
+                            ci % 2 === 0 ? 'bg-muted/20' : 'bg-transparent',
+                            isSelected
+                              ? 'bg-indigo-500/15 border-l-2 border-indigo-500'
+                              : 'hover:bg-muted/60'
+                          )}
+                        >
+                          <span className={cn(
+                            'rounded px-1.5 py-0.5 text-[9px] font-black shrink-0',
+                            isSelected ? 'bg-indigo-500/20 text-indigo-700' : 'bg-indigo-500/10 text-indigo-600'
+                          )}>{c.clave}</span>
+                          <span className="flex-1 text-xs text-foreground leading-snug">{c.descripcion}</span>
+                          <span className="shrink-0 text-[9px] text-muted-foreground">{c.unidad_medida}</span>
+                          {isSelected && <span className="shrink-0 text-[9px] font-black text-indigo-600">✓</span>}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
 
               {/* Cantidad a ejecutar */}
               {conceptoSeleccionado && (

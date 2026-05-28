@@ -322,13 +322,40 @@ export const ComparativaDetail: React.FC<Props> = ({
   };
 
   // Enviar a evaluación técnica (Compras → Residente)
+  // Primero guarda los proveedores+precios en el backend, luego cambia estado.
   const handleEnviarEvaluacion = async () => {
+    if (comp.lineas.length === 0) {
+      notify({ type: 'error', title: 'Sin líneas de cotización', message: 'Agrega al menos un ítem con precio antes de enviar.' });
+      return;
+    }
+    const lineasSinPrecio = comp.lineas.filter(l =>
+      Object.values(l.precios).every(p => !p || p === '0' || p === '')
+    );
+    if (lineasSinPrecio.length > 0) {
+      notify({ type: 'error', title: 'Precios incompletos', message: `${lineasSinPrecio.length} ítem(s) sin precio de ningún proveedor.` });
+      return;
+    }
+
     setAccionando(true);
     try {
       if (isDemo) {
         onUpdate({ ...comp, estado: 'EN_EVALUACION_TECNICA' });
         notify({ type: 'success', title: 'Enviado a evaluación técnica', message: 'El Residente puede ahora evaluar las cotizaciones.' });
       } else {
+        // 1. Guardar cotizaciones (proveedores + precios) en el backend
+        const proveedoresPayload = comp.proveedores.map(prov => ({
+          nombre: prov.nombre,
+          precios: comp.lineas.map(l => ({
+            insumo_id: l.insumo_id,
+            precio:    Number(l.precios[prov.id] ?? 0),
+          })).filter(p => p.precio > 0),
+        }));
+
+        await api.put(`/api/v1/compras/comparativas/${comp.id}/cotizaciones`, {
+          proveedores: proveedoresPayload,
+        });
+
+        // 2. Enviar a evaluación
         const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/enviar-evaluacion`);
         onUpdate({ ...comp, estado: 'EN_EVALUACION_TECNICA', ...resp.data.data });
         notify({ type: 'success', title: 'Enviado a evaluación técnica', message: 'El Residente puede ahora evaluar las cotizaciones.' });

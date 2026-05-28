@@ -119,9 +119,10 @@ interface PreReqItem {
   descripcion: string;
   tipo_insumo: TipoInsumo;
   unidad: string;
-  cantidad: number;       // editable por el GT
+  cantidad: number;          // editable por el GT
+  cantidad_original: number; // cantidad calculada por el take-off — referencia para señalar excedente
   notas: string;
-  incluido: boolean;      // checkbox — default true si cantidad_total > 0
+  incluido: boolean;         // checkbox — default true si cantidad_total > 0
 }
 
 type PreReqFiltroTipo = 'TODOS' | 'MATERIAL' | 'EQUIPO' | 'SERVICIO' | 'MANO_OBRA';
@@ -850,16 +851,20 @@ export const InsumosView: React.FC = () => {
     // Poblar preReqItems desde takeoffItems — solo ítems con insumo_id vinculado
     const items: PreReqItem[] = takeoffItems
       .filter(item => item.insumo_id)
-      .map(item => ({
-        insumo_id:   item.insumo_id,
-        clave:       item.insumo.clave,
-        descripcion: item.insumo.descripcion,
-        tipo_insumo: item.tipo_insumo,
-        unidad:      item.insumo.unidad_medida,
-        cantidad:    Number(item.cantidad_total.toFixed(4)),
-        notas:       `APU ${conceptoTakeoff!.clave}: ${item.cantidad} × ${cantidadTakeoff} ${conceptoTakeoff!.unidad_medida}`,
-        incluido:    item.cantidad_total > 0,
-      }));
+      .map(item => {
+        const cantOrig = Number(item.cantidad_total.toFixed(4));
+        return {
+          insumo_id:         item.insumo_id,
+          clave:             item.insumo.clave,
+          descripcion:       item.insumo.descripcion,
+          tipo_insumo:       item.tipo_insumo,
+          unidad:            item.insumo.unidad_medida,
+          cantidad:          cantOrig,
+          cantidad_original: cantOrig,
+          notas:             `APU ${conceptoTakeoff!.clave}: ${item.cantidad} × ${cantidadTakeoff} ${conceptoTakeoff!.unidad_medida}`,
+          incluido:          item.cantidad_total > 0,
+        };
+      });
 
     setPreReqItems(items);
     setPreReqFiltroTipo('TODOS');
@@ -2224,6 +2229,29 @@ export const InsumosView: React.FC = () => {
       >
         <div className="flex flex-col gap-6 pb-36">
 
+          {/* ── Acciones masivas ── */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPreReqItems(prev => prev.map(p => ({ ...p, incluido: true })))}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-violet-500/40 text-violet-700 bg-violet-500/10 hover:bg-violet-500/20 transition-all"
+              >
+                ✓ Seleccionar todo
+              </button>
+              <button
+                onClick={() => setPreReqItems(prev => prev.map(p => ({ ...p, incluido: false })))}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-border/60 text-muted-foreground hover:bg-muted transition-all"
+              >
+                ✗ Deseleccionar todo
+              </button>
+            </div>
+            {preReqItems.some(i => i.incluido && i.cantidad > i.cantidad_original) && (
+              <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-full px-2.5 py-0.5">
+                ⚠ {preReqItems.filter(i => i.incluido && i.cantidad > i.cantidad_original).length} excedente(s)
+              </span>
+            )}
+          </div>
+
           {/* ── Filtro por tipo ── */}
           <div className="flex gap-2 flex-wrap">
             {(['TODOS', 'MATERIAL', 'EQUIPO', 'SERVICIO', 'MANO_OBRA'] as PreReqFiltroTipo[]).map(tab => {
@@ -2295,7 +2323,7 @@ export const InsumosView: React.FC = () => {
                       className="mt-2 w-full text-[10px] bg-transparent border-b border-border/40 focus:border-violet-400 outline-none text-muted-foreground placeholder:text-muted-foreground/50 py-0.5 disabled:cursor-not-allowed"
                     />
                   </div>
-                  {/* Cantidad */}
+                  {/* Cantidad + indicador excedente */}
                   <div className="flex flex-col items-end shrink-0 gap-1">
                     <input
                       type="number"
@@ -2304,9 +2332,22 @@ export const InsumosView: React.FC = () => {
                       value={item.cantidad}
                       disabled={!item.incluido}
                       onChange={e => setPreReqItems(prev => prev.map((p, i) => i === globalIdx ? { ...p, cantidad: Number(e.target.value) } : p))}
-                      className="w-24 text-right text-xs font-bold bg-background border border-border/60 rounded-lg px-2 py-1 focus:border-violet-400 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                      className={cn(
+                        'w-24 text-right text-xs font-bold bg-background border rounded-lg px-2 py-1 outline-none disabled:opacity-40 disabled:cursor-not-allowed',
+                        item.incluido && item.cantidad > item.cantidad_original
+                          ? 'border-amber-500/60 focus:border-amber-500'
+                          : 'border-border/60 focus:border-violet-400'
+                      )}
                     />
                     <span className="text-[9px] text-muted-foreground uppercase">{item.unidad}</span>
+                    {item.incluido && item.cantidad > item.cantidad_original && (
+                      <span className="text-[8px] font-black text-amber-600 bg-amber-500/10 rounded px-1.5 py-0.5 whitespace-nowrap">
+                        ↑ {((item.cantidad - item.cantidad_original) / item.cantidad_original * 100).toFixed(0)}% sobre APU
+                      </span>
+                    )}
+                    {item.incluido && item.cantidad_original > 0 && (
+                      <span className="text-[8px] text-muted-foreground/60">orig: {item.cantidad_original}</span>
+                    )}
                   </div>
                 </div>
               );

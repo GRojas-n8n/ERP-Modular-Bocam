@@ -141,6 +141,7 @@ exports.Prisma.RequisicionScalarFieldEnum = {
   solicitante_id: 'solicitante_id',
   prioridad: 'prioridad',
   estado: 'estado',
+  tipo: 'tipo',
   observaciones: 'observaciones'
 };
 
@@ -151,7 +152,10 @@ exports.Prisma.RequisicionItemScalarFieldEnum = {
   requisicion_id: 'requisicion_id',
   insumo_id: 'insumo_id',
   cantidad: 'cantidad',
-  notas: 'notas'
+  notas: 'notas',
+  descripcion_libre: 'descripcion_libre',
+  unidad_libre: 'unidad_libre',
+  es_imprevisto: 'es_imprevisto'
 };
 
 exports.Prisma.OrdenCompraScalarFieldEnum = {

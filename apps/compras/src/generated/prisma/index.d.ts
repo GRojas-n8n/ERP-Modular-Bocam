@@ -2795,6 +2795,7 @@ export namespace Prisma {
     solicitante_id: string | null
     prioridad: string | null
     estado: string | null
+    tipo: string | null
     observaciones: string | null
   }
 
@@ -2807,6 +2808,7 @@ export namespace Prisma {
     solicitante_id: string | null
     prioridad: string | null
     estado: string | null
+    tipo: string | null
     observaciones: string | null
   }
 
@@ -2819,6 +2821,7 @@ export namespace Prisma {
     solicitante_id: number
     prioridad: number
     estado: number
+    tipo: number
     observaciones: number
     _all: number
   }
@@ -2833,6 +2836,7 @@ export namespace Prisma {
     solicitante_id?: true
     prioridad?: true
     estado?: true
+    tipo?: true
     observaciones?: true
   }
 
@@ -2845,6 +2849,7 @@ export namespace Prisma {
     solicitante_id?: true
     prioridad?: true
     estado?: true
+    tipo?: true
     observaciones?: true
   }
 
@@ -2857,6 +2862,7 @@ export namespace Prisma {
     solicitante_id?: true
     prioridad?: true
     estado?: true
+    tipo?: true
     observaciones?: true
     _all?: true
   }
@@ -2942,6 +2948,7 @@ export namespace Prisma {
     solicitante_id: string
     prioridad: string
     estado: string
+    tipo: string
     observaciones: string | null
     _count: RequisicionCountAggregateOutputType | null
     _min: RequisicionMinAggregateOutputType | null
@@ -2971,6 +2978,7 @@ export namespace Prisma {
     solicitante_id?: boolean
     prioridad?: boolean
     estado?: boolean
+    tipo?: boolean
     observaciones?: boolean
     items?: boolean | Requisicion$itemsArgs<ExtArgs>
     _count?: boolean | RequisicionCountOutputTypeDefaultArgs<ExtArgs>
@@ -2985,6 +2993,7 @@ export namespace Prisma {
     solicitante_id?: boolean
     prioridad?: boolean
     estado?: boolean
+    tipo?: boolean
     observaciones?: boolean
   }, ExtArgs["result"]["requisicion"]>
 
@@ -2997,6 +3006,7 @@ export namespace Prisma {
     solicitante_id?: boolean
     prioridad?: boolean
     estado?: boolean
+    tipo?: boolean
     observaciones?: boolean
   }
 
@@ -3020,6 +3030,10 @@ export namespace Prisma {
       solicitante_id: string
       prioridad: string
       estado: string
+      /**
+       * Tipo de requisición: NORMAL (con catálogo) | IMPREVISTO (texto libre, sin insumo_id)
+       */
+      tipo: string
       observaciones: string | null
     }, ExtArgs["result"]["requisicion"]>
     composites: {}
@@ -3423,6 +3437,7 @@ export namespace Prisma {
     readonly solicitante_id: FieldRef<"Requisicion", 'String'>
     readonly prioridad: FieldRef<"Requisicion", 'String'>
     readonly estado: FieldRef<"Requisicion", 'String'>
+    readonly tipo: FieldRef<"Requisicion", 'String'>
     readonly observaciones: FieldRef<"Requisicion", 'String'>
   }
     
@@ -3800,6 +3815,9 @@ export namespace Prisma {
     insumo_id: string | null
     cantidad: Decimal | null
     notas: string | null
+    descripcion_libre: string | null
+    unidad_libre: string | null
+    es_imprevisto: boolean | null
   }
 
   export type RequisicionItemMaxAggregateOutputType = {
@@ -3810,6 +3828,9 @@ export namespace Prisma {
     insumo_id: string | null
     cantidad: Decimal | null
     notas: string | null
+    descripcion_libre: string | null
+    unidad_libre: string | null
+    es_imprevisto: boolean | null
   }
 
   export type RequisicionItemCountAggregateOutputType = {
@@ -3820,6 +3841,9 @@ export namespace Prisma {
     insumo_id: number
     cantidad: number
     notas: number
+    descripcion_libre: number
+    unidad_libre: number
+    es_imprevisto: number
     _all: number
   }
 
@@ -3840,6 +3864,9 @@ export namespace Prisma {
     insumo_id?: true
     cantidad?: true
     notas?: true
+    descripcion_libre?: true
+    unidad_libre?: true
+    es_imprevisto?: true
   }
 
   export type RequisicionItemMaxAggregateInputType = {
@@ -3850,6 +3877,9 @@ export namespace Prisma {
     insumo_id?: true
     cantidad?: true
     notas?: true
+    descripcion_libre?: true
+    unidad_libre?: true
+    es_imprevisto?: true
   }
 
   export type RequisicionItemCountAggregateInputType = {
@@ -3860,6 +3890,9 @@ export namespace Prisma {
     insumo_id?: true
     cantidad?: true
     notas?: true
+    descripcion_libre?: true
+    unidad_libre?: true
+    es_imprevisto?: true
     _all?: true
   }
 
@@ -3954,9 +3987,12 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     requisicion_id: string
-    insumo_id: string
+    insumo_id: string | null
     cantidad: Decimal
     notas: string | null
+    descripcion_libre: string | null
+    unidad_libre: string | null
+    es_imprevisto: boolean
     _count: RequisicionItemCountAggregateOutputType | null
     _avg: RequisicionItemAvgAggregateOutputType | null
     _sum: RequisicionItemSumAggregateOutputType | null
@@ -3986,6 +4022,9 @@ export namespace Prisma {
     insumo_id?: boolean
     cantidad?: boolean
     notas?: boolean
+    descripcion_libre?: boolean
+    unidad_libre?: boolean
+    es_imprevisto?: boolean
     requisicion?: boolean | RequisicionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["requisicionItem"]>
 
@@ -3997,6 +4036,9 @@ export namespace Prisma {
     insumo_id?: boolean
     cantidad?: boolean
     notas?: boolean
+    descripcion_libre?: boolean
+    unidad_libre?: boolean
+    es_imprevisto?: boolean
     requisicion?: boolean | RequisicionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["requisicionItem"]>
 
@@ -4008,6 +4050,9 @@ export namespace Prisma {
     insumo_id?: boolean
     cantidad?: boolean
     notas?: boolean
+    descripcion_libre?: boolean
+    unidad_libre?: boolean
+    es_imprevisto?: boolean
   }
 
   export type RequisicionItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4027,9 +4072,24 @@ export namespace Prisma {
       tenant_id: string
       proyecto_id: string
       requisicion_id: string
-      insumo_id: string
+      /**
+       * Nullable para ítems IMPREVISTO que no tienen entrada en el catálogo
+       */
+      insumo_id: string | null
       cantidad: Prisma.Decimal
       notas: string | null
+      /**
+       * Para ítems de requisición IMPREVISTO: descripción libre sin catálogo
+       */
+      descripcion_libre: string | null
+      /**
+       * Unidad de medida libre para ítems IMPREVISTO
+       */
+      unidad_libre: string | null
+      /**
+       * Marcador de ítem imprevisto (sin insumo_id en catálogo)
+       */
+      es_imprevisto: boolean
     }, ExtArgs["result"]["requisicionItem"]>
     composites: {}
   }
@@ -4431,6 +4491,9 @@ export namespace Prisma {
     readonly insumo_id: FieldRef<"RequisicionItem", 'String'>
     readonly cantidad: FieldRef<"RequisicionItem", 'Decimal'>
     readonly notas: FieldRef<"RequisicionItem", 'String'>
+    readonly descripcion_libre: FieldRef<"RequisicionItem", 'String'>
+    readonly unidad_libre: FieldRef<"RequisicionItem", 'String'>
+    readonly es_imprevisto: FieldRef<"RequisicionItem", 'Boolean'>
   }
     
 
@@ -12095,6 +12158,7 @@ export namespace Prisma {
     solicitante_id: 'solicitante_id',
     prioridad: 'prioridad',
     estado: 'estado',
+    tipo: 'tipo',
     observaciones: 'observaciones'
   };
 
@@ -12108,7 +12172,10 @@ export namespace Prisma {
     requisicion_id: 'requisicion_id',
     insumo_id: 'insumo_id',
     cantidad: 'cantidad',
-    notas: 'notas'
+    notas: 'notas',
+    descripcion_libre: 'descripcion_libre',
+    unidad_libre: 'unidad_libre',
+    es_imprevisto: 'es_imprevisto'
   };
 
   export type RequisicionItemScalarFieldEnum = (typeof RequisicionItemScalarFieldEnum)[keyof typeof RequisicionItemScalarFieldEnum]
@@ -12414,6 +12481,7 @@ export namespace Prisma {
     solicitante_id?: UuidFilter<"Requisicion"> | string
     prioridad?: StringFilter<"Requisicion"> | string
     estado?: StringFilter<"Requisicion"> | string
+    tipo?: StringFilter<"Requisicion"> | string
     observaciones?: StringNullableFilter<"Requisicion"> | string | null
     items?: RequisicionItemListRelationFilter
   }
@@ -12427,6 +12495,7 @@ export namespace Prisma {
     solicitante_id?: SortOrder
     prioridad?: SortOrder
     estado?: SortOrder
+    tipo?: SortOrder
     observaciones?: SortOrderInput | SortOrder
     items?: RequisicionItemOrderByRelationAggregateInput
   }
@@ -12444,6 +12513,7 @@ export namespace Prisma {
     solicitante_id?: UuidFilter<"Requisicion"> | string
     prioridad?: StringFilter<"Requisicion"> | string
     estado?: StringFilter<"Requisicion"> | string
+    tipo?: StringFilter<"Requisicion"> | string
     observaciones?: StringNullableFilter<"Requisicion"> | string | null
     items?: RequisicionItemListRelationFilter
   }, "id_requisicion" | "tenant_id_codigo">
@@ -12457,6 +12527,7 @@ export namespace Prisma {
     solicitante_id?: SortOrder
     prioridad?: SortOrder
     estado?: SortOrder
+    tipo?: SortOrder
     observaciones?: SortOrderInput | SortOrder
     _count?: RequisicionCountOrderByAggregateInput
     _max?: RequisicionMaxOrderByAggregateInput
@@ -12475,6 +12546,7 @@ export namespace Prisma {
     solicitante_id?: UuidWithAggregatesFilter<"Requisicion"> | string
     prioridad?: StringWithAggregatesFilter<"Requisicion"> | string
     estado?: StringWithAggregatesFilter<"Requisicion"> | string
+    tipo?: StringWithAggregatesFilter<"Requisicion"> | string
     observaciones?: StringNullableWithAggregatesFilter<"Requisicion"> | string | null
   }
 
@@ -12486,9 +12558,12 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"RequisicionItem"> | string
     proyecto_id?: UuidFilter<"RequisicionItem"> | string
     requisicion_id?: UuidFilter<"RequisicionItem"> | string
-    insumo_id?: UuidFilter<"RequisicionItem"> | string
+    insumo_id?: UuidNullableFilter<"RequisicionItem"> | string | null
     cantidad?: DecimalFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string
     notas?: StringNullableFilter<"RequisicionItem"> | string | null
+    descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
+    unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
+    es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
     requisicion?: XOR<RequisicionRelationFilter, RequisicionWhereInput>
   }
 
@@ -12497,9 +12572,12 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     requisicion_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
     cantidad?: SortOrder
     notas?: SortOrderInput | SortOrder
+    descripcion_libre?: SortOrderInput | SortOrder
+    unidad_libre?: SortOrderInput | SortOrder
+    es_imprevisto?: SortOrder
     requisicion?: RequisicionOrderByWithRelationInput
   }
 
@@ -12511,9 +12589,12 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"RequisicionItem"> | string
     proyecto_id?: UuidFilter<"RequisicionItem"> | string
     requisicion_id?: UuidFilter<"RequisicionItem"> | string
-    insumo_id?: UuidFilter<"RequisicionItem"> | string
+    insumo_id?: UuidNullableFilter<"RequisicionItem"> | string | null
     cantidad?: DecimalFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string
     notas?: StringNullableFilter<"RequisicionItem"> | string | null
+    descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
+    unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
+    es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
     requisicion?: XOR<RequisicionRelationFilter, RequisicionWhereInput>
   }, "id_item">
 
@@ -12522,9 +12603,12 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     requisicion_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
     cantidad?: SortOrder
     notas?: SortOrderInput | SortOrder
+    descripcion_libre?: SortOrderInput | SortOrder
+    unidad_libre?: SortOrderInput | SortOrder
+    es_imprevisto?: SortOrder
     _count?: RequisicionItemCountOrderByAggregateInput
     _avg?: RequisicionItemAvgOrderByAggregateInput
     _max?: RequisicionItemMaxOrderByAggregateInput
@@ -12540,9 +12624,12 @@ export namespace Prisma {
     tenant_id?: UuidWithAggregatesFilter<"RequisicionItem"> | string
     proyecto_id?: UuidWithAggregatesFilter<"RequisicionItem"> | string
     requisicion_id?: UuidWithAggregatesFilter<"RequisicionItem"> | string
-    insumo_id?: UuidWithAggregatesFilter<"RequisicionItem"> | string
+    insumo_id?: UuidNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     cantidad?: DecimalWithAggregatesFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string
     notas?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
+    descripcion_libre?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
+    unidad_libre?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
+    es_imprevisto?: BoolWithAggregatesFilter<"RequisicionItem"> | boolean
   }
 
   export type OrdenCompraWhereInput = {
@@ -13268,6 +13355,7 @@ export namespace Prisma {
     solicitante_id: string
     prioridad?: string
     estado?: string
+    tipo?: string
     observaciones?: string | null
     items?: RequisicionItemCreateNestedManyWithoutRequisicionInput
   }
@@ -13281,6 +13369,7 @@ export namespace Prisma {
     solicitante_id: string
     prioridad?: string
     estado?: string
+    tipo?: string
     observaciones?: string | null
     items?: RequisicionItemUncheckedCreateNestedManyWithoutRequisicionInput
   }
@@ -13294,6 +13383,7 @@ export namespace Prisma {
     solicitante_id?: StringFieldUpdateOperationsInput | string
     prioridad?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     items?: RequisicionItemUpdateManyWithoutRequisicionNestedInput
   }
@@ -13307,6 +13397,7 @@ export namespace Prisma {
     solicitante_id?: StringFieldUpdateOperationsInput | string
     prioridad?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     items?: RequisicionItemUncheckedUpdateManyWithoutRequisicionNestedInput
   }
@@ -13320,6 +13411,7 @@ export namespace Prisma {
     solicitante_id: string
     prioridad?: string
     estado?: string
+    tipo?: string
     observaciones?: string | null
   }
 
@@ -13332,6 +13424,7 @@ export namespace Prisma {
     solicitante_id?: StringFieldUpdateOperationsInput | string
     prioridad?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -13344,6 +13437,7 @@ export namespace Prisma {
     solicitante_id?: StringFieldUpdateOperationsInput | string
     prioridad?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -13351,9 +13445,12 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     notas?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
+    es_imprevisto?: boolean
     requisicion: RequisicionCreateNestedOneWithoutItemsInput
   }
 
@@ -13362,18 +13459,24 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     requisicion_id: string
-    insumo_id: string
+    insumo_id?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     notas?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
+    es_imprevisto?: boolean
   }
 
   export type RequisicionItemUpdateInput = {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
     requisicion?: RequisicionUpdateOneRequiredWithoutItemsNestedInput
   }
 
@@ -13382,9 +13485,12 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     requisicion_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RequisicionItemCreateManyInput = {
@@ -13392,18 +13498,24 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     requisicion_id: string
-    insumo_id: string
+    insumo_id?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     notas?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
+    es_imprevisto?: boolean
   }
 
   export type RequisicionItemUpdateManyMutationInput = {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RequisicionItemUncheckedUpdateManyInput = {
@@ -13411,9 +13523,12 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     requisicion_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrdenCompraCreateInput = {
@@ -14332,6 +14447,7 @@ export namespace Prisma {
     solicitante_id?: SortOrder
     prioridad?: SortOrder
     estado?: SortOrder
+    tipo?: SortOrder
     observaciones?: SortOrder
   }
 
@@ -14344,6 +14460,7 @@ export namespace Prisma {
     solicitante_id?: SortOrder
     prioridad?: SortOrder
     estado?: SortOrder
+    tipo?: SortOrder
     observaciones?: SortOrder
   }
 
@@ -14356,6 +14473,7 @@ export namespace Prisma {
     solicitante_id?: SortOrder
     prioridad?: SortOrder
     estado?: SortOrder
+    tipo?: SortOrder
     observaciones?: SortOrder
   }
 
@@ -14373,6 +14491,18 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type DecimalFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
@@ -14382,6 +14512,11 @@ export namespace Prisma {
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type RequisicionRelationFilter = {
@@ -14397,6 +14532,9 @@ export namespace Prisma {
     insumo_id?: SortOrder
     cantidad?: SortOrder
     notas?: SortOrder
+    descripcion_libre?: SortOrder
+    unidad_libre?: SortOrder
+    es_imprevisto?: SortOrder
   }
 
   export type RequisicionItemAvgOrderByAggregateInput = {
@@ -14411,6 +14549,9 @@ export namespace Prisma {
     insumo_id?: SortOrder
     cantidad?: SortOrder
     notas?: SortOrder
+    descripcion_libre?: SortOrder
+    unidad_libre?: SortOrder
+    es_imprevisto?: SortOrder
   }
 
   export type RequisicionItemMinOrderByAggregateInput = {
@@ -14421,10 +14562,28 @@ export namespace Prisma {
     insumo_id?: SortOrder
     cantidad?: SortOrder
     notas?: SortOrder
+    descripcion_libre?: SortOrder
+    unidad_libre?: SortOrder
+    es_imprevisto?: SortOrder
   }
 
   export type RequisicionItemSumOrderByAggregateInput = {
     cantidad?: SortOrder
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
@@ -14443,16 +14602,12 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ProveedorRelationFilter = {
@@ -14535,21 +14690,6 @@ export namespace Prisma {
     subtotal?: SortOrder
     iva?: SortOrder
     total?: SortOrder
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type OrdenCompraRelationFilter = {
@@ -14680,11 +14820,6 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type CuadroComparativoRelationFilter = {
     is?: CuadroComparativoWhereInput
     isNot?: CuadroComparativoWhereInput
@@ -14744,14 +14879,6 @@ export namespace Prisma {
 
   export type ComparativaDetalleSumOrderByAggregateInput = {
     precio_ofertado?: SortOrder
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type AlertaOcErrorTenant_idOc_idCompoundUniqueInput = {
@@ -15076,6 +15203,10 @@ export namespace Prisma {
     divide?: Decimal | DecimalJsLike | number | string
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type RequisicionUpdateOneRequiredWithoutItemsNestedInput = {
     create?: XOR<RequisicionCreateWithoutItemsInput, RequisicionUncheckedCreateWithoutItemsInput>
     connectOrCreate?: RequisicionCreateOrConnectWithoutItemsInput
@@ -15210,10 +15341,6 @@ export namespace Prisma {
     create?: XOR<ProveedorCreateWithoutComparativasInput, ProveedorUncheckedCreateWithoutComparativasInput>
     connectOrCreate?: ProveedorCreateOrConnectWithoutComparativasInput
     connect?: ProveedorWhereUniqueInput
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput = {
@@ -15422,6 +15549,17 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type NestedDecimalFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
@@ -15431,6 +15569,25 @@ export namespace Prisma {
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
@@ -15449,29 +15606,12 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
-  export type NestedUuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
@@ -15497,19 +15637,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type OrdenCompraCreateWithoutProveedorInput = {
@@ -15668,18 +15795,24 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     notas?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
+    es_imprevisto?: boolean
   }
 
   export type RequisicionItemUncheckedCreateWithoutRequisicionInput = {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     notas?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
+    es_imprevisto?: boolean
   }
 
   export type RequisicionItemCreateOrConnectWithoutRequisicionInput = {
@@ -15716,9 +15849,12 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"RequisicionItem"> | string
     proyecto_id?: UuidFilter<"RequisicionItem"> | string
     requisicion_id?: UuidFilter<"RequisicionItem"> | string
-    insumo_id?: UuidFilter<"RequisicionItem"> | string
+    insumo_id?: UuidNullableFilter<"RequisicionItem"> | string | null
     cantidad?: DecimalFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string
     notas?: StringNullableFilter<"RequisicionItem"> | string | null
+    descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
+    unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
+    es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
   }
 
   export type RequisicionCreateWithoutItemsInput = {
@@ -15730,6 +15866,7 @@ export namespace Prisma {
     solicitante_id: string
     prioridad?: string
     estado?: string
+    tipo?: string
     observaciones?: string | null
   }
 
@@ -15742,6 +15879,7 @@ export namespace Prisma {
     solicitante_id: string
     prioridad?: string
     estado?: string
+    tipo?: string
     observaciones?: string | null
   }
 
@@ -15770,6 +15908,7 @@ export namespace Prisma {
     solicitante_id?: StringFieldUpdateOperationsInput | string
     prioridad?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -15782,6 +15921,7 @@ export namespace Prisma {
     solicitante_id?: StringFieldUpdateOperationsInput | string
     prioridad?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -16459,36 +16599,48 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     notas?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
+    es_imprevisto?: boolean
   }
 
   export type RequisicionItemUpdateWithoutRequisicionInput = {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RequisicionItemUncheckedUpdateWithoutRequisicionInput = {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RequisicionItemUncheckedUpdateManyWithoutRequisicionInput = {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrdenCompraItemCreateManyOrdenInput = {

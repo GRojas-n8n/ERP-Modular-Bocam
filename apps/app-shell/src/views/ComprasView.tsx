@@ -51,6 +51,16 @@ import { SlidePanel, SubmitButton } from '../components/SlidePanel';
  * ---------------------------------------------------------------------------
  */
 
+interface RequisicionItem {
+  id: string;
+  insumo_id: string | null;
+  cantidad: number;
+  notas: string | null;
+  descripcion_libre: string | null;
+  unidad_libre: string | null;
+  es_imprevisto: boolean;
+}
+
 interface Requisicion {
   id: string;
   folio: string;
@@ -59,6 +69,7 @@ interface Requisicion {
   prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
   estado: string;
   tipo?: string; // 'NORMAL' | 'IMPREVISTO'
+  items?: RequisicionItem[];
 }
 
 interface Insumo {
@@ -242,23 +253,13 @@ export const ComprasView: React.FC = () => {
         api.get('/api/v1/compras/comparativas/pendientes-evaluacion').catch(() => null),
         api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
       ]);
-      if (reqRes.status === 'fulfilled') {
-        // Normaliza campos de la API Prisma → interfaz local
-        const rawReqs: any[] = reqRes.value.data?.data || [];
-        setRequisiciones(rawReqs.map(r => ({
-          id:          r.id_requisicion ?? r.id,
-          folio:       r.codigo ?? r.folio,
-          fecha:       r.fecha_solicitud ?? r.fecha,
-          solicitante: r.solicitante_id ?? r.solicitante ?? '—',
-          prioridad:   r.prioridad ?? 'NORMAL',
-          estado:      r.estado,
-          tipo:        r.tipo,
-        })));
-      }
+      // Colectar datos normalizados para las dependencias entre entidades
+      let insumosNormalizados: Insumo[] = [];
+      let requisicionesNormalizadas: Requisicion[] = [];
+
       if (insRes.status === 'fulfilled') {
-        // Normalizar campos de gerencia-tecnica → interfaz Insumo local
         const raw: any[] = insRes.value.data?.data || [];
-        setInsumos(raw.map((i) => ({
+        insumosNormalizados = raw.map((i) => ({
           id:          i.id,
           clave:       i.clave,
           descripcion: i.descripcion,
@@ -266,13 +267,89 @@ export const ComprasView: React.FC = () => {
           costo:       Number(i.costo_base ?? i.costo ?? 0),
           clase:       GT_TIPO_TO_CLASE[i.tipo_insumo] ?? i.tipo_insumo ?? '',
           activo:      i.activo,
-        })));
+        }));
+        setInsumos(insumosNormalizados);
       }
+
+      if (reqRes.status === 'fulfilled') {
+        const rawReqs: any[] = reqRes.value.data?.data || [];
+        requisicionesNormalizadas = rawReqs.map(r => ({
+          id:          r.id_requisicion ?? r.id,
+          folio:       r.codigo ?? r.folio,
+          fecha:       r.fecha_solicitud ?? r.fecha,
+          solicitante: r.solicitante_id ?? r.solicitante ?? '—',
+          prioridad:   r.prioridad ?? 'NORMAL',
+          estado:      r.estado,
+          tipo:        r.tipo,
+          items:       (r.items || []).map((it: any) => ({
+            id:               it.id_item ?? it.id,
+            insumo_id:        it.insumo_id,
+            cantidad:         Number(it.cantidad),
+            notas:            it.notas,
+            descripcion_libre: it.descripcion_libre,
+            unidad_libre:     it.unidad_libre,
+            es_imprevisto:    Boolean(it.es_imprevisto),
+          })),
+        }));
+        setRequisiciones(requisicionesNormalizadas);
+      }
+
       if (invRes.status === 'fulfilled') setInventario(invRes.value.data?.data || []);
       if (movRes.status === 'fulfilled') setMovimientosAlmacen(movRes.value.data?.data || []);
-      if (compRes.status === 'fulfilled') setComparativas(compRes.value.data?.data || []);
-      if (evalRes.status === 'fulfilled' && evalRes.value) setPendientesEval(evalRes.value.data?.data || []);
-      if (gtRes.status === 'fulfilled' && gtRes.value) setPendientesGT(gtRes.value.data?.data || []);
+
+      // Normalizar comparativas: backend usa id_cuadro + detalles, frontend usa id + lineas
+      const normalizeComp = (c: any): ComparativaLocal => {
+        const detalles: any[] = c.detalles ?? [];
+        // Extraer proveedores únicos
+        const provMap = new Map<string, string>();
+        detalles.forEach(d => provMap.set(d.proveedor_id, d.proveedor?.razon_social ?? '—'));
+        const proveedores = Array.from(provMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+        // Agrupar por insumo_id para obtener lineas
+        const lineaMap = new Map<string, import('../components/ComparativaDetail').CotizacionLinea>();
+        detalles.forEach(d => {
+          const info = insumosNormalizados.find(i => i.id === d.insumo_id);
+          if (!lineaMap.has(d.insumo_id)) {
+            lineaMap.set(d.insumo_id, {
+              id:                  d.id_detalle,
+              insumo_id:           d.insumo_id,
+              insumo_clave:        info?.clave ?? '—',
+              insumo_descripcion:  info?.descripcion ?? '—',
+              insumo_unidad:       info?.unidad ?? '—',
+              cantidad:            Number(d.cantidad ?? 0),
+              precios:             {},
+              ganador:             d.es_ganador ? d.proveedor_id : null,
+              evaluacion_tecnica:  d.evaluacion_tecnica ?? 'PENDIENTE',
+              comentario_tecnico:  d.comentario_tecnico ?? undefined,
+              aprobacion_gt:       d.aprobacion_gt ?? 'PENDIENTE',
+              comentario_gt:       d.comentario_gt ?? undefined,
+            });
+          }
+          const linea = lineaMap.get(d.insumo_id)!;
+          linea.precios[d.proveedor_id] = String(d.precio_ofertado);
+          if (d.es_ganador) linea.ganador = d.proveedor_id;
+        });
+        return {
+          id:             c.id_cuadro ?? c.id,
+          requisicion_id: c.requisicion_id,
+          estado:         c.estado,
+          proveedores,
+          lineas:         Array.from(lineaMap.values()),
+          ordenes_compra: [],
+        };
+      };
+
+      if (compRes.status === 'fulfilled') {
+        const raw: any[] = compRes.value.data?.data || [];
+        setComparativas(raw.map(normalizeComp));
+      }
+      if (evalRes.status === 'fulfilled' && evalRes.value) {
+        const raw: any[] = evalRes.value.data?.data || [];
+        setPendientesEval(raw.map(normalizeComp));
+      }
+      if (gtRes.status === 'fulfilled' && gtRes.value) {
+        const raw: any[] = gtRes.value.data?.data || [];
+        setPendientesGT(raw.map(normalizeComp));
+      }
     } catch {
       setError('Error al conectar con el modulo de Compras.');
     } finally {
@@ -568,21 +645,59 @@ export const ComprasView: React.FC = () => {
   };
 
   // ─── Handlers comparativa ────────────────────────────────────────────────────
-  const openComparativa = (req: Requisicion) => {
-    // Si no existe comparativa para esta req, crear una en blanco
+  const openComparativa = async (req: Requisicion) => {
     const existing = comparativas.find(c => c.requisicion_id === req.id);
-    if (!existing) {
-      const blank: ComparativaLocal = {
-        id: `comp-new-${Date.now()}`,
+
+    if (existing) {
+      // La comparativa ya existe en estado local — abrir directamente
+      // Si las lineas están vacías pero la req tiene items (posible si el cuadro existe en BD sin detalles),
+      // pre-poblar con los items de la req para que Compras sepa qué cotizar
+      if (existing.lineas.length === 0 && (req.items?.length ?? 0) > 0) {
+        const lineasFromReq = buildLineasFromReq(req);
+        setComparativas(prev => prev.map(c =>
+          c.requisicion_id === req.id ? { ...c, lineas: lineasFromReq } : c
+        ));
+      }
+    } else {
+      // Crear en backend y pre-poblar lineas desde los items de la requisición
+      let backendId = `comp-new-${Date.now()}`;
+      if (!isDemo) {
+        try {
+          const res = await api.post('/api/v1/compras/comparativas', { requisicion_id: req.id });
+          backendId = res.data.data?.id_cuadro ?? res.data.data?.id ?? backendId;
+        } catch { /* si falla, usar ID local */ }
+      }
+
+      const lineasFromReq = buildLineasFromReq(req);
+      const newComp: ComparativaLocal = {
+        id: backendId,
         requisicion_id: req.id,
         estado: 'BORRADOR',
         proveedores: [],
-        lineas: [],
+        lineas: lineasFromReq,
         ordenes_compra: [],
       };
-      setComparativas(prev => [...prev, blank]);
+      setComparativas(prev => [...prev, newComp]);
     }
     setActiveReqId(req.id);
+  };
+
+  /** Construye CotizacionLineas a partir de los items de una requisición */
+  const buildLineasFromReq = (req: Requisicion): import('../components/ComparativaDetail').CotizacionLinea[] => {
+    return (req.items ?? []).map(item => {
+      const info = insumos.find(i => i.id === item.insumo_id);
+      return {
+        id:                 item.id,
+        insumo_id:          item.insumo_id ?? '',
+        insumo_clave:       info?.clave ?? item.descripcion_libre ?? '—',
+        insumo_descripcion: info?.descripcion ?? item.descripcion_libre ?? '—',
+        insumo_unidad:      info?.unidad ?? item.unidad_libre ?? '—',
+        cantidad:           item.cantidad,
+        precios:            {},
+        ganador:            null,
+        evaluacion_tecnica: 'PENDIENTE' as const,
+      };
+    });
   };
 
   const updateComparativa = (updated: ComparativaLocal) => {

@@ -75,6 +75,54 @@ app.get('/api/v1/gerencia-tecnica/insumos', async (req: Request, res: Response) 
 });
 
 /**
+ * GET /api/v1/gerencia-tecnica/insumos/explosion
+ * Devuelve cada insumo activo con su cantidad_presupuestada total:
+ * suma de (concepto.cantidad × composicion.cantidad) para todos los conceptos del presupuesto activo.
+ * Usado por ResidenciaView para mostrar las cantidades del presupuesto al crear una requisición Por Insumo.
+ * DEBE estar antes de /insumos/:id para que Express no lo capture como un :id.
+ */
+app.get('/api/v1/gerencia-tecnica/insumos/explosion', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    // Cargar todos los insumos activos
+    const insumos = await db.insumo.findMany({ where: { activo: true }, orderBy: { clave: 'asc' } });
+
+    // Cargar la composición APU de todos los conceptos del presupuesto activo del proyecto
+    const conceptosConComp = await db.concepto.findMany({
+      include: { insumos: true },
+    });
+
+    // Calcular la explosión: suma de (concepto.cantidad × ci.cantidad) por insumo
+    const explosion = new Map<string, number>();
+    for (const c of conceptosConComp) {
+      const cantConcepto = Number((c as any).cantidad ?? 1);
+      for (const ci of c.insumos ?? []) {
+        const prev = explosion.get(ci.insumo_id) ?? 0;
+        explosion.set(ci.insumo_id, prev + (Number(ci.cantidad) * cantConcepto));
+      }
+    }
+
+    const result = insumos.map((i: any) => ({
+      id: i.id,
+      clave: i.clave,
+      descripcion: i.descripcion,
+      tipo_insumo: i.tipo_insumo,
+      unidad_medida: i.unidad_medida,
+      costo_base: Number(i.costo_base),
+      activo: i.activo,
+      cantidad_presupuestada: Math.round((explosion.get(i.id) ?? 0) * 10000) / 10000,
+    }));
+
+    res.json(createApiResponse(result, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en GET /insumos/explosion:', error.message);
+    res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al calcular explosión de insumos.', error.message));
+  }
+});
+
+/**
  * GET /api/v1/gerencia-tecnica/presupuestos
  * Lista los presupuestos del tenant, opcionalmente filtrados por proyecto.
  */
