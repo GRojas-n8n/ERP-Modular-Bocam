@@ -226,7 +226,7 @@ app.get('/api/v1/compras/comparativas', async (req: Request, res: Response) => {
 
 // GET pendientes-evaluacion — bandeja del Residente
 app.get('/api/v1/compras/comparativas/pendientes-evaluacion',
-  requireRoles('resident', 'control_obra', 'superintendent'),
+  requireRoles('resident', 'residencia', 'control_obra', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -695,7 +695,7 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-evaluacion',
 
 // 2.2 PATCH evaluar — Residente registra evaluación técnica por renglón
 app.patch('/api/v1/compras/comparativas/:id/evaluar',
-  requireRoles('resident', 'control_obra', 'superintendent'),
+  requireRoles('resident', 'residencia', 'control_obra', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -772,7 +772,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
 
 // 2.3 PATCH enviar-gt — Residente/Compras envía al Gerente Técnico
 app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
-  requireRoles('resident', 'control_obra', 'procurement', 'superintendent'),
+  requireRoles('resident', 'residencia', 'control_obra', 'procurement', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -1871,7 +1871,7 @@ app.get('/api/v1/compras/almacen/movimientos', async (req: Request, res: Respons
 // POST movimientos — registra INGRESO/EGRESO/TRASPASO con actualización atómica de stock.
 // Acepta insumo_id (referencia al catálogo). Auto-crea el ítem en inventario en el primer INGRESO.
 app.post('/api/v1/compras/almacen/movimientos',
-  requireRoles('admin', 'superintendent', 'procurement', 'resident', 'control_obra'),
+  requireRoles('admin', 'superintendent', 'procurement', 'resident', 'residencia', 'control_obra'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
