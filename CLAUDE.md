@@ -3,7 +3,59 @@
 > **Propiedad Intelectual:** Constructora Bocam, S. A. de C.V.  
 > **Clasificación:** Estrictamente Confidencial — Uso Interno Exclusivo.  
 > **Propósito:** Este archivo es la fuente de verdad para el asistente de IA sobre cómo está construido el sistema y cómo debe extenderse.  
-> **Última revisión:** 2026-05-26 — Puertos verificados contra `docker-compose.vps.yml`, `@bocam/ui-core` documentado desde código real, RLS detallado, integraciones externas, reglas de negocio de iretum.com.
+> **Última revisión:** 2026-05-28 — AdminView ROLES completo (residencia, procurement, superintendent); usuarios de prueba creados en producción.
+
+---
+
+## 0. Proceso de Desarrollo — Spec-Driven Development (NO SALTARSE)
+
+**Todo cambio no trivial requiere spec escrito y aprobado ANTES de tocar código.**
+
+### Umbral: ¿cuándo aplica?
+
+Aplica si el cambio toca **2 o más** de los siguientes:
+- Migración de schema Prisma (nueva tabla, campo, índice)
+- Endpoint nuevo o modificado en cualquier módulo backend
+- Cambio de RBAC (nuevos roles, nuevos `requireRoles`, nuevas reglas de autorización)
+- Nueva sección/vista/tab en el frontend
+- Cambio en el bus de eventos (nuevo tipo de evento, nuevo subscriber)
+
+No aplica para: correcciones de bug táctico, fix de typo, cambio de un color o label, hotfix urgente de producción.
+
+### Estructura del spec (en `openspec/changes/<nombre-kebab>/`)
+
+```
+proposal.md   — Why · What Changes · Capabilities (new/modified) · Impact
+design.md     — Context · Goals/Non-Goals · Decisions (Dx) · Risks · Migration Plan
+tasks.md      — Checklist exhaustivo: schema → backend → frontend → tests → deploy
+specs/<cap>/
+  spec.md     — Comportamiento esperado de esa capacidad (criterios de aceptación)
+.openspec.yaml — status: draft | in_progress | archived; production_verified
+```
+
+### Flujo obligatorio en cada sesión
+
+```
+1. Usuario describe el feature
+2. Claude escribe proposal.md + design.md + tasks.md (SIN tocar código)
+3. Usuario revisa y aprueba (o pide cambios)
+4. Claude implementa siguiendo el tasks.md como checklist
+5. Al terminar: actualizar .openspec.yaml con status: archived + commits + production_verified
+```
+
+**Si el usuario pide implementar algo directamente sin spec, Claude debe responder:**
+> "Esto aplica el umbral de spec-first. Antes de codificar, necesito escribir el spec en `openspec/changes/`. ¿Apruebas que lo haga ahora?"
+
+### Ejemplos de cambios pasados con su openspec
+
+| Cambio | Archivo |
+|---|---|
+| Alertas de OC con error financiero | `openspec/changes/oc-error-finanzas-alert/` |
+| Flujo de aprobación dos etapas (Residente + GT) | `openspec/changes/cuadro-comparativo-aprobacion-dos-etapas/` |
+| Aprobación de req + tipo IMPREVISTO | `openspec/changes/flujo-cotizacion-req-imprevisto/` |
+| Tab Requisiciones del Residente | `openspec/changes/requisiciones-desde-residencia/` |
+
+---
 
 ---
 
