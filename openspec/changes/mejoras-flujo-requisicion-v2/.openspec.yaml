@@ -1,0 +1,16 @@
+status: draft
+created: "2026-05-28"
+author: German + Claude Sonnet 4.6
+capabilities:
+  - pre-req-gt
+  - residente-seleccion-insumos
+  - cotizacion-compras-ux
+tasks_total: 40
+tasks_done: 0
+tasks_pending: 40
+commits: []
+production_verified: false
+notes: >
+  Spec escrito después de prueba con usuarios reales de producción.
+  Bug bloqueante (roles always empty) ya corregido y deployado (commit c6c19f3).
+  Este spec cubre los cambios de flujo que quedan.
