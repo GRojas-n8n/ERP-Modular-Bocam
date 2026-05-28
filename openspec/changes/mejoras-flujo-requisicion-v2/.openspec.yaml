@@ -1,4 +1,4 @@
-status: draft
+status: in_progress
 created: "2026-05-28"
 author: German + Claude Sonnet 4.6
 capabilities:
@@ -6,11 +6,15 @@ capabilities:
   - residente-seleccion-insumos
   - cotizacion-compras-ux
 tasks_total: 40
-tasks_done: 0
-tasks_pending: 40
-commits: []
+tasks_done: 34
+tasks_pending: 6
+commits:
+  - c074ef8  # feat(flujos): pre-req GT, seleccion insumos residente, UX cotizacion compras
+  - 3c4476e  # fix(flujos): remove unused vars for strict tsc -b in Docker
 production_verified: false
 notes: >
   Spec escrito después de prueba con usuarios reales de producción.
   Bug bloqueante (roles always empty) ya corregido y deployado (commit c6c19f3).
-  Este spec cubre los cambios de flujo que quedan.
+  Módulos 1 (pre-req GT), 2 (seleccion insumos residente) y 3 (fix roles
+  ComparativaDetail) implementados y deployados 2026-05-28.
+  Pendiente: verificación E2E con usuarios reales + cerrar tasks 4.x y actualizar memory.
