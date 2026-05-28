@@ -138,12 +138,12 @@ const MOV_STYLE: Record<MovTipo, { badge: string; label: string; Icon: React.FC<
 };
 
 export const ComprasView: React.FC = () => {
-  const { tenant } = useTenant();
+  const { tenant, user } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
   const { notify } = useNotification();
 
-  // Roles del usuario actual
-  const roles: string[] = (tenant as any)?.roles ?? [];
+  // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
+  const roles: string[] = user?.role ?? [];
   const isResident    = roles.some(r => ['resident', 'control_obra'].includes(r));
   const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
   const isProcurement = roles.some(r => ['procurement', 'admin', 'superintendent'].includes(r));
