@@ -689,8 +689,6 @@ export const InsumosView: React.FC = () => {
   const [composicionItems,     setComposicionItems]     = useState<ComposicionItemData[]>([]);
   const [loadingComposicion,   setLoadingComposicion]   = useState(false);
   const [cantidadTakeoff,      setCantidadTakeoff]      = useState<number>(0);
-  const [generandoReq,         setGenerandoReq]         = useState(false);
-
   // ── Estado: Panel Pre-Requisición GT ─────────────────────────────────────
   const [showPreReqPanel,      setShowPreReqPanel]      = useState(false);
   const [preReqItems,          setPreReqItems]          = useState<PreReqItem[]>([]);
@@ -2261,7 +2259,7 @@ export const InsumosView: React.FC = () => {
             {preReqItemsFiltrados.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-6">No hay ítems de este tipo en el take-off.</p>
             )}
-            {preReqItemsFiltrados.map((item, idx) => {
+            {preReqItemsFiltrados.map((item) => {
               const globalIdx = preReqItems.findIndex(i => i.insumo_id === item.insumo_id);
               return (
                 <div

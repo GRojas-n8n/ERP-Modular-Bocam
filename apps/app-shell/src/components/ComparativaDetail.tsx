@@ -121,7 +121,7 @@ interface Props {
 export const ComparativaDetail: React.FC<Props> = ({
   requisicionFolio, comparativa: comp, insumos, isDemo, onBack, onUpdate,
 }) => {
-  const { tenant, user } = useTenant();
+  const { user } = useTenant();
   const { notify } = useNotification();
   const roles: string[] = user?.role ?? [];
 
