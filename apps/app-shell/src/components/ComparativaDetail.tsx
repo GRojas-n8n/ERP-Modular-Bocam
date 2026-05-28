@@ -121,9 +121,9 @@ interface Props {
 export const ComparativaDetail: React.FC<Props> = ({
   requisicionFolio, comparativa: comp, insumos, isDemo, onBack, onUpdate,
 }) => {
-  const { tenant } = useTenant();
+  const { tenant, user } = useTenant();
   const { notify } = useNotification();
-  const roles: string[] = (tenant as any)?.roles ?? [];
+  const roles: string[] = user?.role ?? [];
 
   // ── Local state ─────────────────────────────────────────────────────────────
   const [newProvNombre, setNewProvNombre] = useState('');

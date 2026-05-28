@@ -112,6 +112,20 @@ interface ComposicionItemData {
   };
 }
 
+/** Ítem del panel Pre-Requisición GT — copia editable de un ítem de take-off */
+interface PreReqItem {
+  insumo_id: string;
+  clave: string;
+  descripcion: string;
+  tipo_insumo: TipoInsumo;
+  unidad: string;
+  cantidad: number;       // editable por el GT
+  notas: string;
+  incluido: boolean;      // checkbox — default true si cantidad_total > 0
+}
+
+type PreReqFiltroTipo = 'TODOS' | 'MATERIAL' | 'EQUIPO' | 'SERVICIO' | 'MANO_OBRA';
+
 /** Un insumo dentro de la composición APU de un concepto. */
 interface InsumoComposicion {
   clave_insumo: string;
@@ -677,6 +691,14 @@ export const InsumosView: React.FC = () => {
   const [cantidadTakeoff,      setCantidadTakeoff]      = useState<number>(0);
   const [generandoReq,         setGenerandoReq]         = useState(false);
 
+  // ── Estado: Panel Pre-Requisición GT ─────────────────────────────────────
+  const [showPreReqPanel,      setShowPreReqPanel]      = useState(false);
+  const [preReqItems,          setPreReqItems]          = useState<PreReqItem[]>([]);
+  const [preReqFiltroTipo,     setPreReqFiltroTipo]     = useState<PreReqFiltroTipo>('TODOS');
+  const [preReqPrioridad,      setPreReqPrioridad]      = useState<'NORMAL' | 'ALTA' | 'URGENTE'>('ALTA');
+  const [preReqObservaciones,  setPreReqObservaciones]  = useState('');
+  const [enviandoPreReq,       setEnviandoPreReq]       = useState(false);
+
   // ── Derivados Tab 1 ───────────────────────────────────────────────────────
   const validRows    = useMemo(() => preview.filter(r => r._valido), [preview]);
   const invalidRows  = useMemo(() => preview.filter(r => !r._valido), [preview]);
@@ -752,6 +774,26 @@ export const InsumosView: React.FC = () => {
     [composicionItems]
   );
 
+  /** Ítems del panel Pre-Req filtrados por tipo */
+  const preReqItemsFiltrados = useMemo(() => {
+    if (preReqFiltroTipo === 'TODOS') return preReqItems;
+    const mapFiltro: Record<PreReqFiltroTipo, TipoInsumo | null> = {
+      TODOS: null,
+      MATERIAL: 'MATERIAL',
+      EQUIPO:   'EQUIPO',
+      SERVICIO: 'SUBCONTRATO',
+      MANO_OBRA:'MANO_DE_OBRA',
+    };
+    const tipoTarget = mapFiltro[preReqFiltroTipo];
+    if (!tipoTarget) return preReqItems;
+    return preReqItems.filter(i => i.tipo_insumo === tipoTarget);
+  }, [preReqItems, preReqFiltroTipo]);
+
+  const preReqIncludedCount = useMemo(
+    () => preReqItems.filter(i => i.incluido).length,
+    [preReqItems]
+  );
+
   // ── Fetch Tab 1 ───────────────────────────────────────────────────────────
   const fetchPresupuesto = async () => {
     setLoading(true);
@@ -803,56 +845,96 @@ export const InsumosView: React.FC = () => {
     }
   };
 
-  // ── Generar Requisición de Compra desde el Take-off ──────────────────────
-  const handleGenerarRequisicion = async () => {
-    if (!conceptoTakeoff || cantidadTakeoff <= 0) return;
+  // ── Preparar Pre-Requisición GT: abrir panel de revisión ─────────────────
+  const handlePrepararRequisicion = () => {
+    if (!conceptoTakeoff || cantidadTakeoff <= 0 || takeoffItems.length === 0) return;
 
-    // Solo materiales: Mano de Obra y Equipo se contratan por separado
-    const materialesReq = takeoffItems.filter(
-      item => item.tipo_insumo === 'MATERIAL' && item.cantidad_total > 0 && item.insumo_id
+    // Poblar preReqItems desde takeoffItems — solo ítems con insumo_id vinculado
+    const items: PreReqItem[] = takeoffItems
+      .filter(item => item.insumo_id)
+      .map(item => ({
+        insumo_id:   item.insumo_id,
+        clave:       item.insumo.clave,
+        descripcion: item.insumo.descripcion,
+        tipo_insumo: item.tipo_insumo,
+        unidad:      item.insumo.unidad_medida,
+        cantidad:    Number(item.cantidad_total.toFixed(4)),
+        notas:       `APU ${conceptoTakeoff!.clave}: ${item.cantidad} × ${cantidadTakeoff} ${conceptoTakeoff!.unidad_medida}`,
+        incluido:    item.cantidad_total > 0,
+      }));
+
+    setPreReqItems(items);
+    setPreReqFiltroTipo('TODOS');
+    setPreReqPrioridad('ALTA');
+    setPreReqObservaciones(
+      `Take-off APU · ${conceptoTakeoff.clave} · ${conceptoTakeoff.descripcion} · ${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}`
     );
+    // Cerrar panel take-off y abrir pre-req (clean swap)
+    setPanelTakeoff(false);
+    setShowPreReqPanel(true);
+  };
 
-    if (materialesReq.length === 0) {
-      notify({
-        type: 'error',
-        title: 'Sin materiales a requisitar',
-        message: 'Este concepto no tiene insumos tipo MATERIAL con cantidad > 0.',
-        duration: 5000,
-      });
+  // ── Enviar Pre-Requisición a Compras ──────────────────────────────────────
+  const handleEnviarPreReq = async () => {
+    const itemsIncluidos = preReqItems.filter(i => i.incluido);
+
+    if (itemsIncluidos.length === 0) {
+      notify({ type: 'error', title: 'Sin ítems seleccionados', message: 'Selecciona al menos un ítem para continuar.', duration: 5000 });
+      return;
+    }
+    const itemsSinCantidad = itemsIncluidos.filter(i => i.cantidad <= 0);
+    if (itemsSinCantidad.length > 0) {
+      notify({ type: 'error', title: 'Cantidades inválidas', message: 'Ajusta la cantidad de todos los ítems seleccionados.', duration: 5000 });
       return;
     }
 
-    setGenerandoReq(true);
+    // Demo mode — simulación
+    if (tenant?.id === 'iretum-demo') {
+      notify({
+        type: 'success',
+        title: 'Pre-requisición enviada (demo)',
+        message: `REQ-DEMO-001 · ${itemsIncluidos.length} ítem${itemsIncluidos.length !== 1 ? 's' : ''} · Compras la recibirá para cotizar.`,
+        duration: 8000,
+      });
+      setShowPreReqPanel(false);
+      setPreReqItems([]);
+      setComposicionItems([]);
+      setConceptoTakeoff(null);
+      return;
+    }
+
+    setEnviandoPreReq(true);
     try {
       const res = await api.post('/api/v1/compras/requisiciones', {
-        observaciones: `Take-off APU · ${conceptoTakeoff.clave} · ${conceptoTakeoff.descripcion} · ${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}`,
-        prioridad: 'NORMAL',
-        items: materialesReq.map(item => ({
+        tipo: 'NORMAL',
+        prioridad: preReqPrioridad,
+        observaciones: preReqObservaciones,
+        items: itemsIncluidos.map(item => ({
           insumo_id: item.insumo_id,
-          cantidad: Number(item.cantidad_total.toFixed(4)),
-          notas: `APU ${conceptoTakeoff.clave}: ${item.cantidad} × ${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}`,
+          cantidad: item.cantidad,
+          notas: item.notas || undefined,
         })),
       });
       const reqGenerada = res.data.data;
       notify({
         type: 'success',
-        title: 'Requisición generada',
-        message: `${reqGenerada.codigo} · ${materialesReq.length} material${materialesReq.length !== 1 ? 'es' : ''} · Ve a Compras para cotizar.`,
+        title: 'Requisición enviada a Compras',
+        message: `${reqGenerada.codigo} · ${itemsIncluidos.length} ítem${itemsIncluidos.length !== 1 ? 's' : ''} · Compras la recibirá para cotizar.`,
         duration: 8000,
       });
-      // Cerrar el panel después de generar la requisición
-      setPanelTakeoff(false);
+      setShowPreReqPanel(false);
+      setPreReqItems([]);
       setComposicionItems([]);
       setConceptoTakeoff(null);
     } catch (err: any) {
       notify({
         type: 'error',
-        title: 'Error al generar requisición',
+        title: 'Error al enviar requisición',
         message: err.response?.data?.message || err.message,
         duration: 6000,
       });
     } finally {
-      setGenerandoReq(false);
+      setEnviandoPreReq(false);
     }
   };
 
@@ -2012,22 +2094,22 @@ export const InsumosView: React.FC = () => {
               <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex gap-3">
                 <IconInfo className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-sky-700 leading-relaxed">
-                  <strong>Take-off de materiales:</strong> la columna "Cant Total" es la cantidad de cada insumo necesaria para ejecutar {cantidadTakeoff > 0 ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}` : 'la cantidad indicada'}. Usa el botón <strong>Generar Requisición</strong> para enviar los materiales directo a Compras.
+                  <strong>Take-off de insumos:</strong> la columna "Cant Total" es la cantidad de cada insumo necesaria para ejecutar {cantidadTakeoff > 0 ? `${cantidadTakeoff} ${conceptoTakeoff.unidad_medida}` : 'la cantidad indicada'}. Usa <strong>Preparar Requisición →</strong> para revisar ítems, ajustar cantidades y enviar a Compras.
                 </p>
               </div>
             )}
           </div>
 
-          {/* ── Barra inferior: Generar Requisición ── */}
+          {/* ── Barra inferior: Preparar Requisición → ── */}
           {composicionItems.length > 0 && (
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-bold text-foreground">
-                  {takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length} material
-                  {takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length !== 1 ? 'es' : ''}
+                  {takeoffItems.filter(i => i.insumo_id).length} ítem
+                  {takeoffItems.filter(i => i.insumo_id).length !== 1 ? 's' : ''} en take-off
                   {' · '}
                   {cantidadTakeoff > 0
-                    ? formatMXN(takeoffPorTipo.MATERIAL ?? 0)
+                    ? formatMXN(takeoffTotal)
                     : '—'}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
@@ -2044,10 +2126,10 @@ export const InsumosView: React.FC = () => {
                   Cerrar
                 </button>
                 <SubmitButton
-                  label={`Generar Requisición (${takeoffItems.filter(i => i.tipo_insumo === 'MATERIAL').length} mat.)`}
-                  loading={generandoReq}
-                  color="sky"
-                  onClick={handleGenerarRequisicion}
+                  label={`Preparar Requisición (${takeoffItems.filter(i => i.insumo_id).length} ítems) →`}
+                  loading={false}
+                  color="violet"
+                  onClick={handlePrepararRequisicion}
                 />
               </div>
             </div>
@@ -2127,6 +2209,170 @@ export const InsumosView: React.FC = () => {
                 Los PDFs son reportes impresos sin datos estructurados. Exporta siempre a Excel (.xlsx) o CSV desde OPUS.
               </p>
             </div>
+          </div>
+        </div>
+      </SlidePanel>
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* PANEL: Pre-Requisición — Revisar y Enviar                          */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <SlidePanel
+        isOpen={showPreReqPanel}
+        onClose={() => { setShowPreReqPanel(false); setPreReqItems([]); }}
+        title="Pre-Requisición — Revisar y Enviar"
+        subtitle={conceptoTakeoff ? `${conceptoTakeoff.clave} · ${conceptoTakeoff.descripcion}` : 'Take-off GT'}
+        accentColor="violet"
+        maxWidthClassName="max-w-3xl"
+      >
+        <div className="flex flex-col gap-6 pb-36">
+
+          {/* ── Filtro por tipo ── */}
+          <div className="flex gap-2 flex-wrap">
+            {(['TODOS', 'MATERIAL', 'EQUIPO', 'SERVICIO', 'MANO_OBRA'] as PreReqFiltroTipo[]).map(tab => {
+              const labels: Record<PreReqFiltroTipo, string> = {
+                TODOS: 'Todos', MATERIAL: 'Material', EQUIPO: 'Equipo', SERVICIO: 'Servicio', MANO_OBRA: 'Mano Obra',
+              };
+              const counts: Record<PreReqFiltroTipo, number> = {
+                TODOS: preReqItems.length,
+                MATERIAL: preReqItems.filter(i => i.tipo_insumo === 'MATERIAL').length,
+                EQUIPO:   preReqItems.filter(i => i.tipo_insumo === 'EQUIPO').length,
+                SERVICIO: preReqItems.filter(i => i.tipo_insumo === 'SUBCONTRATO').length,
+                MANO_OBRA:preReqItems.filter(i => i.tipo_insumo === 'MANO_DE_OBRA').length,
+              };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setPreReqFiltroTipo(tab)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all',
+                    preReqFiltroTipo === tab
+                      ? 'bg-violet-500 text-white border-violet-500'
+                      : 'border-border/60 text-muted-foreground hover:bg-muted'
+                  )}
+                >
+                  {labels[tab]} {counts[tab] > 0 && <span className="ml-1 opacity-70">({counts[tab]})</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── Lista de ítems ── */}
+          <div className="space-y-2">
+            {preReqItemsFiltrados.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-6">No hay ítems de este tipo en el take-off.</p>
+            )}
+            {preReqItemsFiltrados.map((item, idx) => {
+              const globalIdx = preReqItems.findIndex(i => i.insumo_id === item.insumo_id);
+              return (
+                <div
+                  key={item.insumo_id}
+                  className={cn(
+                    'rounded-xl border p-4 flex gap-3 items-start transition-all',
+                    item.incluido ? 'border-violet-500/30 bg-violet-500/5' : 'border-border/40 bg-muted/30 opacity-50'
+                  )}
+                >
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={item.incluido}
+                    onChange={() => setPreReqItems(prev => prev.map((p, i) => i === globalIdx ? { ...p, incluido: !p.incluido } : p))}
+                    className="mt-1 h-4 w-4 rounded border-border accent-violet-500 cursor-pointer shrink-0"
+                  />
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-[10px] font-mono text-muted-foreground">{item.clave}</span>
+                      <span className={cn('text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border', TIPO_COLOR[item.tipo_insumo])}>
+                        {TIPO_LABEL[item.tipo_insumo]}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-foreground leading-snug">{item.descripcion}</p>
+                    {/* Notas */}
+                    <input
+                      type="text"
+                      placeholder="Notas (opcional)"
+                      value={item.notas}
+                      disabled={!item.incluido}
+                      onChange={e => setPreReqItems(prev => prev.map((p, i) => i === globalIdx ? { ...p, notas: e.target.value } : p))}
+                      className="mt-2 w-full text-[10px] bg-transparent border-b border-border/40 focus:border-violet-400 outline-none text-muted-foreground placeholder:text-muted-foreground/50 py-0.5 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                  {/* Cantidad */}
+                  <div className="flex flex-col items-end shrink-0 gap-1">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={item.cantidad}
+                      disabled={!item.incluido}
+                      onChange={e => setPreReqItems(prev => prev.map((p, i) => i === globalIdx ? { ...p, cantidad: Number(e.target.value) } : p))}
+                      className="w-24 text-right text-xs font-bold bg-background border border-border/60 rounded-lg px-2 py-1 focus:border-violet-400 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-[9px] text-muted-foreground uppercase">{item.unidad}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Prioridad y observaciones ── */}
+          <div className="space-y-4 rounded-xl border border-border/40 p-4 bg-muted/20">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Prioridad</p>
+              <div className="flex gap-2">
+                {(['NORMAL', 'ALTA', 'URGENTE'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPreReqPrioridad(p)}
+                    className={cn(
+                      'px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all',
+                      preReqPrioridad === p
+                        ? p === 'URGENTE' ? 'bg-red-500 text-white border-red-500'
+                          : p === 'ALTA' ? 'bg-amber-500 text-white border-amber-500'
+                          : 'bg-emerald-500 text-white border-emerald-500'
+                        : 'border-border/60 text-muted-foreground hover:bg-muted'
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Observaciones</p>
+              <textarea
+                rows={3}
+                value={preReqObservaciones}
+                onChange={e => setPreReqObservaciones(e.target.value)}
+                className="w-full text-xs bg-background border border-border/60 rounded-lg px-3 py-2 focus:border-violet-400 outline-none resize-none text-foreground"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Footer fijo ── */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold text-foreground">
+              {preReqIncludedCount} de {preReqItems.length} ítems incluidos
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
+              {preReqIncludedCount === 0 ? 'Selecciona al menos un ítem' : `Prioridad: ${preReqPrioridad}`}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setShowPreReqPanel(false); setPreReqItems([]); }}
+              className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+            >
+              Cancelar
+            </button>
+            <SubmitButton
+              label={preReqIncludedCount === 0 ? 'Selecciona al menos un ítem' : `Enviar Requisición a Compras (${preReqIncludedCount})`}
+              loading={enviandoPreReq}
+              color="emerald"
+              onClick={handleEnviarPreReq}
+            />
           </div>
         </div>
       </SlidePanel>

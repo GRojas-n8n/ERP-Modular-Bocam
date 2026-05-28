@@ -91,6 +91,21 @@ interface ImprevistoItem {
   notas: string;
 }
 
+/** Insumo del catálogo GT — para flujo "Por Insumo" */
+interface InsumoReq {
+  insumo_id: string;
+  clave: string;
+  descripcion: string;
+  tipo_insumo: 'MATERIAL' | 'EQUIPO' | 'MANO_DE_OBRA' | 'SUBCONTRATO' | 'INDIRECTO';
+  unidad_medida: string;
+}
+
+/** Insumo seleccionado con cantidad ingresada por el Residente */
+interface InsumoSeleccionado extends InsumoReq {
+  cantidad: number;
+  notas: string;
+}
+
 const UNIDADES_REQ = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
 
 const REQ_ESTADO_BADGE: Record<string, { cls: string; label: string }> = {
@@ -271,7 +286,7 @@ export const ResidenciaView: React.FC = () => {
   // ─ Requisiciones del Residente ─────────────────────────────────────────────
   const [reqsResidente, setReqsResidente] = useState<ReqResidente[]>([]);
   const [showReqPanel, setShowReqPanel] = useState(false);
-  const [reqTipo, setReqTipo] = useState<'NORMAL' | 'IMPREVISTO'>('NORMAL');
+  const [reqTipo, setReqTipo] = useState<'INSUMO' | 'APU' | 'IMPREVISTO'>('INSUMO');
   const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
   const [reqNotas, setReqNotas] = useState('');
   const [generandoReq, setGenerandoReq] = useState(false);
@@ -291,6 +306,13 @@ export const ResidenciaView: React.FC = () => {
     { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' },
   ]);
 
+  // Por Insumo state
+  const [insumosAll,           setInsumosAll]           = useState<InsumoReq[]>([]);
+  const [insumoSearch,         setInsumoSearch]         = useState('');
+  const [insumoTabTipo,        setInsumoTabTipo]        = useState<'MATERIAL' | 'EQUIPO' | 'SERVICIO'>('MATERIAL');
+  const [insumosSeleccionados, setInsumosSeleccionados] = useState<InsumoSeleccionado[]>([]);
+  const [loadingInsumos,       setLoadingInsumos]       = useState(false);
+
   // ── Carga inicial ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (isDemo) {
@@ -304,14 +326,16 @@ export const ResidenciaView: React.FC = () => {
     setLoading(false);
   }, [isDemo]);
 
-  // ── Carga de requisiciones y conceptos (cuando se activa el tab) ──────────
+  // ── Carga de requisiciones, conceptos e insumos (cuando se activa el tab) ─
   useEffect(() => {
     if (activeTab !== 'requisiciones' || isDemo) return;
     const loadReqs = async () => {
+      setLoadingInsumos(true);
       try {
-        const [reqRes, presRes] = await Promise.allSettled([
+        const [reqRes, presRes, insumosRes] = await Promise.allSettled([
           api.get('/api/v1/compras/requisiciones'),
           api.get('/api/v1/gerencia-tecnica/presupuesto/activo'),
+          api.get('/api/v1/gerencia-tecnica/insumos'),
         ]);
         if (reqRes.status === 'fulfilled') {
           const raw: any[] = reqRes.value.data?.data || [];
@@ -335,7 +359,21 @@ export const ResidenciaView: React.FC = () => {
             unidad_medida: c.unidad_medida,
           })));
         }
+        if (insumosRes.status === 'fulfilled') {
+          const raw: any[] = insumosRes.value.data?.data || [];
+          setInsumosAll(raw
+            .filter((i: any) => i.activo !== false)
+            .map((i: any) => ({
+              insumo_id:   i.id,
+              clave:       i.clave,
+              descripcion: i.descripcion,
+              tipo_insumo: i.tipo_insumo,
+              unidad_medida: i.unidad_medida,
+            }))
+          );
+        }
       } catch { /* silencioso */ }
+      finally { setLoadingInsumos(false); }
     };
     loadReqs();
   }, [activeTab, isDemo]);
@@ -457,7 +495,7 @@ export const ResidenciaView: React.FC = () => {
 
   // ── Requisiciones ─────────────────────────────────────────────────────────
   const resetReqPanel = () => {
-    setReqTipo('NORMAL');
+    setReqTipo('INSUMO');
     setReqPrioridad('MEDIA');
     setReqNotas('');
     setConceptoSearch('');
@@ -465,6 +503,9 @@ export const ResidenciaView: React.FC = () => {
     setCantidadTakeoff('');
     setMaterialesTakeoff([]);
     setItemsImprevisto([{ descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' }]);
+    setInsumoSearch('');
+    setInsumoTabTipo('MATERIAL');
+    setInsumosSeleccionados([]);
   };
 
   const conceptosFiltrados = conceptoSearch.trim()
@@ -475,7 +516,51 @@ export const ResidenciaView: React.FC = () => {
     : conceptos.slice(0, 10);
 
   const handleGenerarRequisicion = async () => {
-    if (reqTipo === 'NORMAL') {
+    if (reqTipo === 'INSUMO') {
+      // ── Flujo Por Insumo ──────────────────────────────────────────────────
+      if (insumosSeleccionados.length === 0) {
+        notify({ type: 'error', title: 'Sin ítems seleccionados', message: 'Agrega al menos un insumo del catálogo.' }); return;
+      }
+      const sinCantidad = insumosSeleccionados.filter(i => !(i.cantidad > 0));
+      if (sinCantidad.length > 0) {
+        notify({ type: 'error', title: 'Cantidades inválidas', message: 'Ingresa la cantidad de todos los ítems.' }); return;
+      }
+      if (isDemo) {
+        notify({ type: 'success', title: 'Requisición creada (demo)',
+          message: `${insumosSeleccionados.length} ítem${insumosSeleccionados.length !== 1 ? 's' : ''} · Prioridad ${reqPrioridad}`,
+          duration: 6000 });
+        setShowReqPanel(false); resetReqPanel(); return;
+      }
+      try {
+        setGenerandoReq(true);
+        const res = await api.post('/api/v1/compras/requisiciones', {
+          tipo: 'NORMAL',
+          prioridad: reqPrioridad,
+          observaciones: reqNotas || undefined,
+          items: insumosSeleccionados.map(i => ({
+            insumo_id: i.insumo_id,
+            cantidad:  i.cantidad,
+            notas:     i.notas || undefined,
+          })),
+        });
+        const r = res.data.data;
+        notify({ type: 'success', title: 'Requisición creada',
+          message: `${r.codigo ?? r.id} · ${insumosSeleccionados.length} ítem${insumosSeleccionados.length !== 1 ? 's' : ''} · Procurement la revisará.`,
+          duration: 7000 });
+        setShowReqPanel(false); resetReqPanel();
+        const fresh = await api.get('/api/v1/compras/requisiciones');
+        const raw: any[] = fresh.data?.data || [];
+        setReqsResidente(raw.map(r2 => ({
+          id: r2.id_requisicion ?? r2.id, folio: r2.codigo ?? r2.folio,
+          fecha: r2.fecha_solicitud ?? r2.fecha, estado: r2.estado,
+          tipo: r2.tipo, prioridad: r2.prioridad, observaciones: r2.observaciones,
+        })));
+      } catch (err: any) {
+        notify({ type: 'error', title: 'Error al crear requisición', message: err.response?.data?.message || err.message });
+      } finally { setGenerandoReq(false); }
+
+    } else if (reqTipo === 'APU') {
+      // ── Flujo Desde APU ───────────────────────────────────────────────────
       if (!conceptoSeleccionado) {
         notify({ type: 'error', title: 'Selecciona un concepto APU', message: '' }); return;
       }
@@ -524,6 +609,7 @@ export const ResidenciaView: React.FC = () => {
       } finally { setGenerandoReq(false); }
 
     } else {
+      // ── Flujo IMPREVISTO ──────────────────────────────────────────────────
       // IMPREVISTO
       const validos = itemsImprevisto.filter(i => i.descripcion_libre.trim() && i.cantidad);
       if (validos.length === 0) {
@@ -1212,44 +1298,184 @@ export const ResidenciaView: React.FC = () => {
         isOpen={showReqPanel}
         onClose={() => { setShowReqPanel(false); resetReqPanel(); }}
         title="Nueva Requisición"
-        subtitle={reqTipo === 'IMPREVISTO' ? 'Imprevisto de obra — texto libre' : 'Solicitud desde APU'}
+        subtitle={
+          reqTipo === 'IMPREVISTO' ? 'Imprevisto de obra — texto libre'
+          : reqTipo === 'APU' ? 'Desde APU — take-off de composición'
+          : 'Por Insumo — selección del catálogo'
+        }
         accentColor={reqTipo === 'IMPREVISTO' ? 'amber' : 'indigo'}
       >
         <div className="space-y-5">
 
-          {/* Selector tipo */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Selector tipo — 3 opciones */}
+          <div className="grid grid-cols-3 gap-2">
             {[
-              { value: 'NORMAL',     label: '📋 Desde APU',    sub: 'Calcula materiales desde el catálogo de obra' },
-              { value: 'IMPREVISTO', label: '⚠️ Imprevisto',   sub: 'Material que no está en el presupuesto APU'   },
-            ].map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setReqTipo(opt.value as 'NORMAL' | 'IMPREVISTO')}
-                className={cn(
-                  'flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-all',
-                  reqTipo === opt.value
-                    ? opt.value === 'IMPREVISTO'
-                      ? 'border-orange-500/40 bg-orange-500/10 shadow-sm'
-                      : 'border-indigo-500/40 bg-indigo-500/10 shadow-sm'
-                    : 'border-border/30 bg-muted/20 hover:bg-muted/40'
-                )}
-              >
-                <span className={cn('text-xs font-black',
-                  reqTipo === opt.value
-                    ? opt.value === 'IMPREVISTO' ? 'text-orange-700' : 'text-indigo-700'
-                    : 'text-foreground'
-                )}>
-                  {opt.label}
-                </span>
-                <span className="mt-0.5 text-[10px] text-muted-foreground leading-snug">{opt.sub}</span>
-              </button>
-            ))}
+              { value: 'INSUMO',    label: '📦 Por Insumo',  sub: 'Del catálogo de materiales, equipo y servicios' },
+              { value: 'APU',       label: '📋 Desde APU',   sub: 'Calcula materiales desde el catálogo de obra'   },
+              { value: 'IMPREVISTO',label: '⚠️ Imprevisto',  sub: 'Material fuera del presupuesto APU'             },
+            ].map(opt => {
+              const isActive = reqTipo === opt.value;
+              const activeClass = opt.value === 'IMPREVISTO'
+                ? 'border-orange-500/40 bg-orange-500/10 shadow-sm'
+                : 'border-indigo-500/40 bg-indigo-500/10 shadow-sm';
+              const activeTextClass = opt.value === 'IMPREVISTO' ? 'text-orange-700' : 'text-indigo-700';
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setReqTipo(opt.value as 'INSUMO' | 'APU' | 'IMPREVISTO')}
+                  className={cn(
+                    'flex flex-col items-start rounded-xl border px-3 py-3 text-left transition-all',
+                    isActive ? activeClass : 'border-border/30 bg-muted/20 hover:bg-muted/40'
+                  )}
+                >
+                  <span className={cn('text-xs font-black', isActive ? activeTextClass : 'text-foreground')}>
+                    {opt.label}
+                  </span>
+                  <span className="mt-0.5 text-[10px] text-muted-foreground leading-snug">{opt.sub}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* ── NORMAL: búsqueda de concepto APU ── */}
-          {reqTipo === 'NORMAL' && (
+          {/* ── Por Insumo: catálogo filtrado ── */}
+          {reqTipo === 'INSUMO' && (
+            <div className="space-y-4">
+              {/* Tabs de tipo */}
+              <div className="flex gap-2">
+                {(['MATERIAL', 'EQUIPO', 'SERVICIO'] as const).map(tab => {
+                  const tabLabels = { MATERIAL: '🧱 Material', EQUIPO: '🏗 Equipo', SERVICIO: '🔧 Servicio' };
+                  const typeMap = { MATERIAL: 'MATERIAL', EQUIPO: 'EQUIPO', SERVICIO: 'SUBCONTRATO' };
+                  const count = insumosAll.filter(i => i.tipo_insumo === typeMap[tab]).length;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => { setInsumoTabTipo(tab); setInsumoSearch(''); }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all',
+                        insumoTabTipo === tab
+                          ? 'bg-indigo-500 text-white border-indigo-500'
+                          : 'border-border/60 text-muted-foreground hover:bg-muted'
+                      )}
+                    >
+                      {tabLabels[tab]}
+                      {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Búsqueda */}
+              <div className="relative">
+                <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar por clave o descripción..."
+                  value={insumoSearch}
+                  onChange={e => setInsumoSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border/60 rounded-lg focus:border-indigo-400 outline-none"
+                />
+              </div>
+
+              {/* Catálogo filtrado */}
+              {loadingInsumos ? (
+                <div className="text-center py-4">
+                  <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-600" />
+                  <p className="mt-2 text-[10px] text-muted-foreground">Cargando catálogo...</p>
+                </div>
+              ) : (() => {
+                const typeMap: Record<'MATERIAL' | 'EQUIPO' | 'SERVICIO', string> = {
+                  MATERIAL: 'MATERIAL', EQUIPO: 'EQUIPO', SERVICIO: 'SUBCONTRATO',
+                };
+                const tipoTarget = typeMap[insumoTabTipo];
+                const filtrados = insumosAll
+                  .filter(i => i.tipo_insumo === tipoTarget)
+                  .filter(i => {
+                    if (!insumoSearch.trim()) return true;
+                    const q = insumoSearch.toLowerCase();
+                    return i.clave.toLowerCase().includes(q) || i.descripcion.toLowerCase().includes(q);
+                  })
+                  .filter(i => !insumosSeleccionados.find(s => s.insumo_id === i.insumo_id))
+                  .slice(0, 15);
+                if (insumosAll.filter(i => i.tipo_insumo === tipoTarget).length === 0) {
+                  return (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[10px] text-amber-700">
+                      Este proyecto no tiene insumos de tipo {insumoTabTipo} en el catálogo. Usa la opción <strong>Imprevisto</strong>.
+                    </div>
+                  );
+                }
+                if (filtrados.length === 0 && insumoSearch) {
+                  return <p className="text-[10px] text-muted-foreground text-center py-3">Sin coincidencias en el catálogo.</p>;
+                }
+                return (
+                  <div className="rounded-xl border border-border/40 overflow-hidden max-h-48 overflow-y-auto">
+                    {filtrados.map((insumo, i) => (
+                      <button
+                        key={insumo.insumo_id}
+                        type="button"
+                        onClick={() => {
+                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: 0, notas: '' }]);
+                          setInsumoSearch('');
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-indigo-500/5 transition-colors',
+                          i % 2 === 0 ? 'bg-muted/10' : 'bg-transparent'
+                        )}
+                      >
+                        <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-black text-indigo-700 shrink-0">{insumo.clave}</span>
+                        <span className="flex-1 text-xs text-foreground leading-snug">{insumo.descripcion}</span>
+                        <span className="text-[9px] text-muted-foreground shrink-0">{insumo.unidad_medida}</span>
+                        <span className="text-[9px] text-indigo-500 font-black shrink-0">+ Agregar</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Ítems seleccionados */}
+              {insumosSeleccionados.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Ítems a requisitar ({insumosSeleccionados.length})
+                  </p>
+                  {insumosSeleccionados.map((item, idx) => (
+                    <div key={item.insumo_id} className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-mono text-muted-foreground">{item.clave}</p>
+                        <p className="text-xs font-semibold text-foreground truncate">{item.descripcion}</p>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="Cant."
+                        value={item.cantidad || ''}
+                        onChange={e => setInsumosSeleccionados(prev => prev.map((p, i) => i === idx ? { ...p, cantidad: Number(e.target.value) } : p))}
+                        className="w-20 text-right text-xs font-bold bg-background border border-border/60 rounded-lg px-2 py-1 focus:border-indigo-400 outline-none"
+                      />
+                      <span className="text-[9px] text-muted-foreground shrink-0 w-8">{item.unidad_medida}</span>
+                      <button
+                        type="button"
+                        onClick={() => setInsumosSeleccionados(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-muted-foreground hover:text-red-500 shrink-0"
+                      >
+                        <IconX className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {insumosAll.length === 0 && !loadingInsumos && (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[10px] text-amber-700">
+                  Este proyecto no tiene insumos en el catálogo. Usa la opción <strong>Imprevisto</strong>.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── APU: búsqueda de concepto APU ── */}
+          {reqTipo === 'APU' && (
             <div className="space-y-4">
               {/* Concepto seleccionado */}
               {conceptoSeleccionado ? (
@@ -1454,7 +1680,12 @@ export const ResidenciaView: React.FC = () => {
 
           <div className="border-t border-border/40 pt-4">
             <SubmitButton
-              label={reqTipo === 'IMPREVISTO' ? 'Enviar Imprevisto a Compras' : 'Generar Requisición APU'}
+              label={
+                reqTipo === 'IMPREVISTO' ? 'Enviar Imprevisto a Compras'
+                : reqTipo === 'APU' ? 'Generar Requisición APU'
+                : insumosSeleccionados.length === 0 ? 'Selecciona al menos un insumo'
+                : `Generar Requisición (${insumosSeleccionados.length} ítem${insumosSeleccionados.length !== 1 ? 's' : ''})`
+              }
               loading={generandoReq}
               color={reqTipo === 'IMPREVISTO' ? 'amber' : 'indigo'}
               onClick={handleGenerarRequisicion}
