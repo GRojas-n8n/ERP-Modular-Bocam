@@ -6,15 +6,37 @@ capabilities:
   - residente-seleccion-insumos
   - cotizacion-compras-ux
 tasks_total: 40
-tasks_done: 34
-tasks_pending: 6
+tasks_done: 40
+tasks_pending: 0
 commits:
   - c074ef8  # feat(flujos): pre-req GT, seleccion insumos residente, UX cotizacion compras
   - 3c4476e  # fix(flujos): remove unused vars for strict tsc -b in Docker
+  - 67b9cd7  # feat(mejoras-req-v2): excedentes presupuestales, APU listado, Comparativa con items
+  - d353fc6  # fix(residencia): remove unused useRef import after dropdown refactor
 production_verified: false
 notes: >
-  Spec escrito después de prueba con usuarios reales de producción.
-  Bug bloqueante (roles always empty) ya corregido y deployado (commit c6c19f3).
-  Módulos 1 (pre-req GT), 2 (seleccion insumos residente) y 3 (fix roles
-  ComparativaDetail) implementados y deployados 2026-05-28.
-  Pendiente: verificación E2E con usuarios reales + cerrar tasks 4.x y actualizar memory.
+  Sesion 2026-05-28 — todas las tareas implementadas y deployadas.
+
+  Modulo 1 (InsumosView Pre-Req GT):
+  - Botones Seleccionar todo / Deseleccionar todo
+  - Badge de excedentes sobre cantidad original APU
+  - Borde ambar + badge porcentaje por item en excedente
+
+  Modulo 2 (ResidenciaView):
+  - Por Insumo: cantidad presupuestada desde GET /insumos/explosion
+  - Por Insumo: indicador de excedente en lista de seleccionados
+  - Por Insumo: notas y observaciones llevan detalle del excedente al GT
+  - Desde APU: lista scrollable siempre visible en lugar de dropdown oculto
+
+  Modulo 3 (ComprasView + ComparativaDetail):
+  - openComparativa llama POST /comparativas (idempotente)
+  - buildLineasFromReq construye lineas desde items de requisicion
+  - normalizeComp mapea backend a frontend (id_cuadro->id, detalles->lineas)
+  - handleEnviarEvaluacion: PUT /cotizaciones luego PATCH /enviar-evaluacion
+
+  Backends deployados:
+  - gerencia-tecnica: GET /insumos/explosion (fix include insumos)
+  - compras: POST /comparativas, PUT /comparativas/:id/cotizaciones
+  - Prisma client regenerado (campo tipo en RequisicionCreateInput)
+
+  Pendiente: verificacion E2E con usuarios reales en produccion.
