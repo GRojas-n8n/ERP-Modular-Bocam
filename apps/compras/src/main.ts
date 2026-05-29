@@ -23,6 +23,7 @@ app.use(createObservabilityMiddleware('compras'));
 const PORT = process.env.PORT || 3002;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
+const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
 
 const OC_STATUS = {
   PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
@@ -327,7 +328,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
 
         const ganador = comparativa.detalles[0];
         const subtotal = ganador.precio_ofertado.toNumber();
-        const montoTotal = subtotal * 1.16;
+        const montoTotal = subtotal * (1 + IVA_RATE);
 
         return {
           comparativaId: comparativa.id_cuadro,
@@ -362,7 +363,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           proveedor_id: orderSeed.proveedorId,
           codigo: `OC-AUTO-${Date.now()}`,
           subtotal: orderSeed.subtotal,
-          iva: orderSeed.subtotal * 0.16,
+          iva: orderSeed.subtotal * IVA_RATE,
           total: orderSeed.montoTotal,
           estado: OC_STATUS.PENDIENTE_FINANZAS,
           presupuesto_id,
