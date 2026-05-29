@@ -755,27 +755,7 @@ export const ComprasView: React.FC = () => {
     return <SectionBadge className={cn('rounded-lg px-2.5 py-1 text-[9px]', map[p] || '')}>{p}</SectionBadge>;
   };
 
-  const estadoBadge = (estado: string) => {
-    const map: Record<string, string> = {
-      PENDIENTE: 'text-amber-600',
-      APROBADA:  'text-green-600',
-      COMPRADA:  'text-sky-600',
-      BORRADOR:  'text-slate-400',
-      CANCELADA: 'text-red-500',
-    };
-    const icons: Record<string, React.ReactNode> = {
-      PENDIENTE: <IconClock className="h-3.5 w-3.5" />,
-      APROBADA:  <IconCheckCircle2 className="h-3.5 w-3.5" />,
-      COMPRADA:  <IconShoppingCart className="h-3.5 w-3.5" />,
-      BORRADOR:  <IconAlertCircle className="h-3.5 w-3.5" />,
-    };
-    return (
-      <span className={cn('flex items-center gap-1 text-[10px] font-black uppercase tracking-wider', map[estado] || 'text-slate-500')}>
-        {icons[estado] || <IconAlertCircle className="h-3.5 w-3.5" />}
-        {estado}
-      </span>
-    );
-  };
+
 
   const getReqCycleStep = (req: Requisicion, comp?: ComparativaLocal) => {
     if (['PENDIENTE', 'BORRADOR'].includes(req.estado))
