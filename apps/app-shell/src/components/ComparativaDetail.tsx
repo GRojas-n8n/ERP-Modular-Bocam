@@ -519,6 +519,45 @@ export const ComparativaDetail: React.FC<Props> = ({
         </SectionBadge>
       </div>
 
+      {/* Stepper visual — 4 pasos del ciclo de cotización */}
+      {(() => {
+        const STEPS = [
+          { n: 1, label: 'Cotizando' },
+          { n: 2, label: 'Evaluación' },
+          { n: 3, label: 'Aprob. GT' },
+          { n: 4, label: 'OC Emitida' },
+        ] as const;
+        const currentStep =
+          comp.estado === 'BORRADOR'               ? 1 :
+          comp.estado === 'EN_EVALUACION_TECNICA'  ? 2 :
+          comp.estado === 'EVALUADO_TECNICAMENTE'  ? 2 :
+          comp.estado === 'EN_APROBACION_GT'       ? 3 :
+          ['APROBADO_GT', 'AUTORIZADA', 'CERRADO'].includes(comp.estado) ? 4 : 1;
+        return (
+          <div className="flex flex-wrap items-center gap-1">
+            {STEPS.map((s, i) => {
+              const done   = s.n < currentStep;
+              const active = s.n === currentStep;
+              return (
+                <React.Fragment key={s.n}>
+                  {i > 0 && (
+                    <span className={cn('h-px w-5 shrink-0', done ? 'bg-emerald-400' : 'bg-border/50')} />
+                  )}
+                  <span className={cn(
+                    'rounded-lg px-2 py-0.5 text-[9px] font-black',
+                    done   ? 'bg-emerald-500/10 text-emerald-700' :
+                    active ? 'bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/30' :
+                             'text-muted-foreground/40'
+                  )}>
+                    {done ? '✓' : s.n}. {s.label}
+                  </span>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       {/* 6.2 Barra de acciones según rol y estado */}
       {(showEnviarEvalBtn || showEvalTecnicaBtn || showEnviarGTBtn || showRevisarGTBtn || showGenerarOCBtn) && (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/40 bg-muted/30 px-4 py-3">

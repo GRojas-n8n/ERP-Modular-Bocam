@@ -155,7 +155,7 @@ export const ComprasView: React.FC = () => {
 
   // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
   const roles: string[] = user?.role ?? [];
-  const isResident    = roles.some(r => ['resident', 'control_obra'].includes(r));
+  const isResident    = roles.some(r => ['resident', 'residencia', 'control_obra'].includes(r));
   const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
   const isProcurement = roles.some(r => ['procurement', 'admin', 'superintendent'].includes(r));
 
@@ -777,6 +777,31 @@ export const ComprasView: React.FC = () => {
     );
   };
 
+  const getReqCycleStep = (req: Requisicion, comp?: ComparativaLocal) => {
+    if (['PENDIENTE', 'BORRADOR'].includes(req.estado))
+      return { label: '🟡 Pendiente de aprobación', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/20' };
+    if (req.estado === 'APROBADA') {
+      if (!comp)
+        return { label: '🔵 Lista para cotizar', cls: 'bg-blue-500/10 text-blue-700 border-blue-500/20' };
+      const s = comp.estado;
+      if (s === 'BORRADOR')
+        return { label: '🔵 Cotizando proveedores', cls: 'bg-blue-500/10 text-blue-700 border-blue-500/20' };
+      if (s === 'EN_EVALUACION_TECNICA')
+        return { label: '🟠 En evaluación técnica', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/20' };
+      if (s === 'EVALUADO_TECNICAMENTE')
+        return { label: '🟣 Evaluado · pendiente GT', cls: 'bg-violet-500/10 text-violet-700 border-violet-500/20' };
+      if (s === 'EN_APROBACION_GT')
+        return { label: '🟣 En aprobación GT', cls: 'bg-violet-500/10 text-violet-700 border-violet-500/20' };
+      if (['APROBADO_GT', 'AUTORIZADA'].includes(s))
+        return { label: '🟢 Autorizado', cls: 'bg-green-500/10 text-green-700 border-green-500/20' };
+      if (s === 'CERRADO')
+        return { label: '⬜ Cerrado', cls: 'bg-slate-500/10 text-slate-600 border-slate-500/20' };
+    }
+    if (req.estado === 'COMPRADA')
+      return { label: '🟢 OC Emitida', cls: 'bg-green-500/10 text-green-700 border-green-500/20' };
+    return { label: req.estado, cls: 'bg-slate-500/10 text-slate-500 border-slate-500/20' };
+  };
+
   const movBadge = (tipo: MovTipo) => {
     const s = MOV_STYLE[tipo];
     const Icon = s.Icon;
@@ -1000,9 +1025,17 @@ export const ComprasView: React.FC = () => {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3 border-t border-border/40 pt-4">
-                        <div className="flex items-center justify-between">
-                          {estadoBadge(req.estado)}
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          {(() => {
+                            const comp = comparativas.find(c => c.requisicion_id === req.id);
+                            const step = getReqCycleStep(req, comp);
+                            return (
+                              <span className={cn('rounded-lg border px-2.5 py-1 text-[9px] font-black', step.cls)}>
+                                {step.label}
+                              </span>
+                            );
+                          })()}
+                          <div className="flex shrink-0 items-center gap-2">
                             {req.tipo === 'IMPREVISTO' && (
                               <span className="rounded-md border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-orange-700">
                                 Imprevisto
@@ -1443,9 +1476,27 @@ export const ComprasView: React.FC = () => {
                 pendientesEval.map(cc => (
                   <Card key={cc.id} className="rounded-2xl border-amber-500/20 bg-amber-500/5 shadow-none">
                     <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-                      <div>
-                        <span className="text-xs font-black text-amber-700">{(cc as any).codigo ?? cc.id}</span>
-                        <p className="text-[11px] text-muted-foreground">{(cc as any).detalles?.length ?? 0} renglones · Enviado por Compras</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-amber-700">{(cc as any).codigo ?? cc.id.slice(0, 8)}</span>
+                          {(() => {
+                            const req = requisiciones.find(r => r.id === cc.requisicion_id);
+                            return req ? <span className="text-[10px] text-muted-foreground">· Req {req.folio}</span> : null;
+                          })()}
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {cc.proveedores.map(prov => {
+                            const total = cc.lineas.reduce((s, l) => s + l.cantidad * parseFloat(l.precios[prov.id] || '0'), 0);
+                            return (
+                              <span key={prov.id} className="rounded border border-amber-500/20 bg-background px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                                {prov.nombre} · ${total.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+                              </span>
+                            );
+                          })}
+                          {cc.proveedores.length === 0 && (
+                            <span className="text-[10px] text-muted-foreground">{cc.lineas.length} renglones · sin cotizaciones</span>
+                          )}
+                        </div>
                       </div>
                       <Button
                         onClick={() => { setActiveTab('requisiciones'); setActiveReqId(cc.requisicion_id); }}
@@ -1480,15 +1531,34 @@ export const ComprasView: React.FC = () => {
                 pendientesGT.map(cc => (
                   <Card key={cc.id} className="rounded-2xl border-violet-500/20 bg-violet-500/5 shadow-none">
                     <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-                      <div>
-                        <span className="text-xs font-black text-violet-700">{(cc as any).codigo ?? cc.id}</span>
-                        <p className="text-[11px] text-muted-foreground">{(cc as any).detalles?.length ?? 0} renglones · Evaluado por Residente</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-violet-700">{(cc as any).codigo ?? cc.id.slice(0, 8)}</span>
+                          {(() => {
+                            const req = requisiciones.find(r => r.id === cc.requisicion_id);
+                            return req ? <span className="text-[10px] text-muted-foreground">· Req {req.folio}</span> : null;
+                          })()}
+                        </div>
+                        {(() => {
+                          const ganadorMap = new Map<string, number>();
+                          cc.lineas.forEach(l => { if (l.ganador) ganadorMap.set(l.ganador, (ganadorMap.get(l.ganador) ?? 0) + 1); });
+                          const top = [...ganadorMap.entries()].sort((a, b) => b[1] - a[1])[0];
+                          if (!top) return <p className="mt-0.5 text-[11px] text-muted-foreground">{cc.lineas.length} renglones evaluados por Residente</p>;
+                          const prov = cc.proveedores.find(p => p.id === top[0]);
+                          const total = cc.lineas.reduce((s, l) => s + l.cantidad * parseFloat(l.precios[top[0]] || '0'), 0);
+                          return (
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              Rec. Residente: <span className="font-black text-violet-700">{prov?.nombre ?? '—'}</span>
+                              {total > 0 && <span> · ${total.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</span>}
+                            </p>
+                          );
+                        })()}
                       </div>
                       <Button
                         onClick={() => { setActiveTab('requisiciones'); setActiveReqId(cc.requisicion_id); }}
                         className="rounded-xl bg-violet-600 px-4 text-xs font-black text-white hover:bg-violet-500"
                       >
-                        Revisar y Aprobar →
+                        Revisar y Autorizar →
                       </Button>
                     </CardContent>
                   </Card>
