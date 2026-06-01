@@ -27,6 +27,7 @@ import {
   IconUsers,
   IconWallet,
 } from '../components/Icons';
+import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 
 /**
  * ---------------------------------------------------------------------------
@@ -86,6 +87,14 @@ interface PreNominaDetalle {
   empleado?: { nombre: string; apellido_paterno: string; numero_empleado: string };
 }
 
+interface ConfigDeducciones {
+  aplica_imss: boolean;
+  aplica_isr: boolean;
+  aplica_infonavit: boolean;
+  infonavit_num: string | null;
+  infonavit_monto: number | null;
+}
+
 interface PaseAcceso {
   id: string;
   numero_pase: string;
@@ -133,6 +142,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [generandoComplemento, setGenerandoComplemento] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [configPanel, setConfigPanel] = useState<{ empleado: Empleado; config: ConfigDeducciones } | null>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -208,6 +219,35 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       const d = (r.data as any)?.data;
       setNominaDetalle({ pn, detalles: d?.detalles ?? [] });
     } catch { /* silencioso */ } finally { setLoadingDetalle(false); }
+  };
+
+  const handleAbrirConfigDeducciones = async (empleado: Empleado) => {
+    if (tenant?.id === 'iretum-demo') return;
+    try {
+      const r = await api.get(`/api/v1/personal/empleados/${empleado.id_empleado}/config-deducciones`);
+      const raw = (r.data as any)?.data ?? {};
+      setConfigPanel({
+        empleado,
+        config: {
+          aplica_imss: raw.aplica_imss ?? true,
+          aplica_isr: raw.aplica_isr ?? true,
+          aplica_infonavit: raw.aplica_infonavit ?? false,
+          infonavit_num: raw.infonavit_num ?? null,
+          infonavit_monto: raw.infonavit_monto != null ? Number(raw.infonavit_monto) : null,
+        },
+      });
+    } catch { /* silencioso */ }
+  };
+
+  const handleSaveConfigDeducciones = async () => {
+    if (!configPanel) return;
+    setSavingConfig(true);
+    try {
+      await api.put(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/config-deducciones`, configPanel.config);
+      setConfigPanel(null);
+    } catch { /* silencioso */ } finally {
+      setSavingConfig(false);
+    }
   };
 
   const handleGenerarComplemento = async (pn: PreNomina) => {
@@ -332,6 +372,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                       <TableHead>Cuadrilla</TableHead>
                       <TableHead className="text-right">S. Diario</TableHead>
                       <TableHead className="text-center">Estado</TableHead>
+                      <TableHead className="text-center">Config.</TableHead>
                     </tr>
                   </TableHeader>
                   <TableBody>
@@ -372,6 +413,15 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                           {formatCurrency(Number(empleado.salario_diario))}
                         </TableCell>
                         <TableCell className="text-center">{estadoBadge(empleado.estado)}</TableCell>
+                        <TableCell className="text-center">
+                          <button
+                            onClick={() => handleAbrirConfigDeducciones(empleado)}
+                            className="text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 hover:underline"
+                            title="Configurar deducciones IMSS/ISR/INFONAVIT"
+                          >
+                            Deducciones
+                          </button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -619,6 +669,119 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           )}
         </>
       )}
+      {/* ── Panel Config. Deducciones ───────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={!!configPanel}
+        onClose={() => setConfigPanel(null)}
+        title={configPanel ? `Deducciones — ${configPanel.empleado.nombre} ${configPanel.empleado.apellido_paterno}` : ''}
+        subtitle={configPanel?.empleado.puesto}
+        accentColor="indigo"
+      >
+        {configPanel && (
+          <div className="space-y-6">
+            <p className="text-xs text-muted-foreground">
+              Configura qué deducciones aplican a este empleado. Los cambios afectan el próximo cálculo de pre-nómina.
+            </p>
+            <div className="space-y-4">
+              {/* IMSS */}
+              <div className="flex items-center justify-between rounded-xl border border-border/40 px-4 py-3">
+                <div>
+                  <p className="text-sm font-bold text-foreground">IMSS</p>
+                  <p className="text-[10px] text-muted-foreground">Cuotas obreras: Enf. Mat. · Inv. Vida · CEV</p>
+                </div>
+                <button
+                  onClick={() => setConfigPanel(prev => prev ? { ...prev, config: { ...prev.config, aplica_imss: !prev.config.aplica_imss } } : prev)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    configPanel.config.aplica_imss ? 'bg-indigo-600' : 'bg-muted'
+                  )}
+                >
+                  <span className={cn(
+                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                    configPanel.config.aplica_imss ? 'translate-x-6' : 'translate-x-1'
+                  )} />
+                </button>
+              </div>
+              {/* ISR */}
+              <div className="flex items-center justify-between rounded-xl border border-border/40 px-4 py-3">
+                <div>
+                  <p className="text-sm font-bold text-foreground">ISR</p>
+                  <p className="text-[10px] text-muted-foreground">Impuesto Sobre la Renta (Art. 96 LISR)</p>
+                </div>
+                <button
+                  onClick={() => setConfigPanel(prev => prev ? { ...prev, config: { ...prev.config, aplica_isr: !prev.config.aplica_isr } } : prev)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    configPanel.config.aplica_isr ? 'bg-indigo-600' : 'bg-muted'
+                  )}
+                >
+                  <span className={cn(
+                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                    configPanel.config.aplica_isr ? 'translate-x-6' : 'translate-x-1'
+                  )} />
+                </button>
+              </div>
+              {/* INFONAVIT */}
+              <div className="rounded-xl border border-border/40 px-4 py-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-foreground">INFONAVIT</p>
+                    <p className="text-[10px] text-muted-foreground">Descuento por crédito hipotecario</p>
+                  </div>
+                  <button
+                    onClick={() => setConfigPanel(prev => prev ? {
+                      ...prev,
+                      config: { ...prev.config, aplica_infonavit: !prev.config.aplica_infonavit, infonavit_num: null, infonavit_monto: null }
+                    } : prev)}
+                    className={cn(
+                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                      configPanel.config.aplica_infonavit ? 'bg-indigo-600' : 'bg-muted'
+                    )}
+                  >
+                    <span className={cn(
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                      configPanel.config.aplica_infonavit ? 'translate-x-6' : 'translate-x-1'
+                    )} />
+                  </button>
+                </div>
+                {configPanel.config.aplica_infonavit && (
+                  <div className="space-y-2 pt-1">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Número de crédito</label>
+                      <input
+                        type="text"
+                        value={configPanel.config.infonavit_num ?? ''}
+                        onChange={e => setConfigPanel(prev => prev ? { ...prev, config: { ...prev.config, infonavit_num: e.target.value } } : prev)}
+                        className="mt-1 w-full rounded-lg border border-border/40 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        placeholder="Ej. 1234567890"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monto por período ($)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={configPanel.config.infonavit_monto ?? ''}
+                        onChange={e => setConfigPanel(prev => prev ? { ...prev, config: { ...prev.config, infonavit_monto: parseFloat(e.target.value) || null } } : prev)}
+                        className="mt-1 w-full rounded-lg border border-border/40 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <SubmitButton
+              label={savingConfig ? 'Guardando…' : 'Guardar configuración'}
+              loading={savingConfig}
+              color="indigo"
+              onClick={handleSaveConfigDeducciones}
+            />
+          </div>
+        )}
+      </SlidePanel>
+
       {/* ── Modal Detalle de Pre-Nómina ─────────────────────────────────────── */}
       {nominaDetalle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

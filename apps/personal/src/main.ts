@@ -603,7 +603,7 @@ app.get('/api/v1/personal/asistencia', requireRoles('residencia', 'control_obra'
       return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'fecha_inicio y fecha_fin son obligatorios.'));
     }
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      return prisma.registroAsistencia.findMany({
+      const registros = await prisma.registroAsistencia.findMany({
         where: {
           tenant_id: tenantId, proyecto_id: proyectoId,
           fecha: { gte: new Date(fecha_inicio), lte: new Date(fecha_fin) },
@@ -611,6 +611,31 @@ app.get('/api/v1/personal/asistencia', requireRoles('residencia', 'control_obra'
           ...(empleado_id  ? { empleado_id  } : {}),
         },
         orderBy: [{ fecha: 'asc' }, { empleado_id: 'asc' }],
+      });
+      if (registros.length === 0) return [];
+      const empIds = [...new Set(registros.map(r => r.empleado_id))];
+      const empleados = await prisma.empleado.findMany({
+        where: { id_empleado: { in: empIds } },
+        select: { id_empleado: true, nombre: true, apellido_paterno: true, puesto: true },
+      });
+      const empMap = new Map(empleados.map(e => [e.id_empleado, e]));
+      return registros.map(r => {
+        const emp = empMap.get(r.empleado_id);
+        return {
+          id: r.id_registro,
+          id_registro: r.id_registro,
+          empleado_id: r.empleado_id,
+          cuadrilla_id: r.cuadrilla_id ?? null,
+          fecha: r.fecha instanceof Date ? r.fecha.toISOString().slice(0, 10) : String(r.fecha).slice(0, 10),
+          estado: r.estado,
+          tipo_registro: r.tipo_registro,
+          horas_extra: Number(r.horas_extra),
+          hora_entrada: null,
+          hora_salida: null,
+          empleado_nombre: emp ? `${emp.nombre} ${emp.apellido_paterno}` : r.empleado_id.slice(0, 8),
+          puesto: emp?.puesto ?? '',
+          cuadrilla_nombre: r.cuadrilla_id ?? '',
+        };
       });
     });
     res.json(createApiResponse(data, tenantId, proyectoId));

@@ -151,8 +151,10 @@ interface Prenomina {
 
 interface RegistroAsistencia {
   id: string;
+  id_registro?: string;
+  empleado_id: string;
   fecha: string;
-  cuadrilla_id: string;
+  cuadrilla_id: string | null;
   cuadrilla_nombre: string;
   empleado_nombre: string;
   puesto: string;
@@ -160,6 +162,22 @@ interface RegistroAsistencia {
   hora_salida: string | null;
   estado: AsistenciaEstado;
   tipo_registro: 'QR' | 'MANUAL' | null;
+  horas_extra?: number;
+}
+
+interface CuadrillaReal {
+  id_cuadrilla: string;
+  nombre: string;
+  codigo: string;
+  miembros: { id_empleado: string; nombre: string; apellido_paterno: string; puesto: string }[];
+}
+
+interface BulkCheck {
+  empleado_id: string;
+  nombre: string;
+  puesto: string;
+  estado: 'PRESENTE' | 'AUSENTE';
+  horas_extra: string;
 }
 
 // ── Badges de estado ─────────────────────────────────────────────────────────
@@ -280,9 +298,13 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
 
   // ─ Asistencia
   const [asistencia, setAsistencia] = useState<RegistroAsistencia[]>([]);
-  const [fechaFiltro, setFechaFiltro] = useState('2024-05-21');
+  const [fechaFiltro, setFechaFiltro] = useState(new Date().toISOString().slice(0, 10));
   const [cuadrillaFiltro, setCuadrillaFiltro] = useState('all');
+  const [cuadrillas, setCuadrillas] = useState<CuadrillaReal[]>([]);
   const [qrModal, setQrModal] = useState<{ id: string; nombre: string } | null>(null);
+  const [qrTab, setQrTab] = useState<'qr' | 'manual'>('qr');
+  const [bulkChecks, setBulkChecks] = useState<BulkCheck[]>([]);
+  const [guardandoBulk, setGuardandoBulk] = useState(false);
 
   // ─ Requisiciones del Residente ─────────────────────────────────────────────
   const [reqsResidente, setReqsResidente] = useState<ReqResidente[]>([]);
@@ -336,17 +358,19 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     void fetchData();
   }, [isDemo]);
 
-  // ── Carga de asistencia cuando se activa el tab ──────────────────────────
+  // ── Carga de asistencia + cuadrillas cuando se activa el tab ────────────
   useEffect(() => {
     if (activeTab !== 'asistencia' || isDemo) return;
     const fechaHoy = new Date().toISOString().slice(0, 10);
     const hace7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const fetchAsistencia = async () => {
       try {
-        const r = await api.get('/api/v1/personal/asistencia', {
-          params: { fecha_inicio: hace7, fecha_fin: fechaHoy },
-        });
-        setAsistencia((r.data as any)?.data ?? []);
+        const [asisRes, cuaRes] = await Promise.allSettled([
+          api.get('/api/v1/personal/asistencia', { params: { fecha_inicio: hace7, fecha_fin: fechaHoy } }),
+          api.get('/api/v1/personal/cuadrillas'),
+        ]);
+        if (asisRes.status === 'fulfilled') setAsistencia((asisRes.value.data as any)?.data ?? []);
+        if (cuaRes.status === 'fulfilled') setCuadrillas((cuaRes.value.data as any)?.data ?? []);
       } catch { /* silencioso */ }
     };
     void fetchAsistencia();
@@ -699,6 +723,52 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     }
   };
 
+  const handleAbrirManualQR = (cuadrilla: CuadrillaReal) => {
+    const checks: BulkCheck[] = cuadrilla.miembros
+      .filter(m => m)
+      .map(m => ({
+        empleado_id: m.id_empleado,
+        nombre: `${m.nombre} ${m.apellido_paterno}`,
+        puesto: m.puesto,
+        estado: 'PRESENTE',
+        horas_extra: '0',
+      }));
+    setBulkChecks(checks);
+    setQrTab('manual');
+    setQrModal({ id: cuadrilla.id_cuadrilla, nombre: cuadrilla.nombre });
+  };
+
+  const handleGuardarBulk = async () => {
+    if (!qrModal || bulkChecks.length === 0) return;
+    setGuardandoBulk(true);
+    try {
+      await api.post('/api/v1/personal/asistencia/bulk', {
+        fecha: fechaFiltro,
+        cuadrilla_id: qrModal.id,
+        registros: bulkChecks.map(b => ({
+          empleado_id: b.empleado_id,
+          estado: b.estado,
+          horas_extra: parseFloat(b.horas_extra) || 0,
+        })),
+      });
+      // Refrescar asistencia del día
+      const r = await api.get('/api/v1/personal/asistencia', {
+        params: { fecha_inicio: fechaFiltro, fecha_fin: fechaFiltro, cuadrilla_id: qrModal.id },
+      });
+      setAsistencia(prev => {
+        const nuevos: RegistroAsistencia[] = (r.data as any)?.data ?? [];
+        const otrosDias = prev.filter(a => a.fecha !== fechaFiltro || a.cuadrilla_id !== qrModal.id);
+        return [...otrosDias, ...nuevos];
+      });
+      notify({ type: 'success', title: 'Asistencia registrada', message: `${bulkChecks.length} empleados · ${fechaFiltro}` });
+      setQrModal(null);
+    } catch (e: any) {
+      notify({ type: 'error', title: 'Error al guardar asistencia', message: e.response?.data?.message || e.message });
+    } finally {
+      setGuardandoBulk(false);
+    }
+  };
+
   // ── Tabs ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -983,24 +1053,41 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
               <FormField label="Cuadrilla">
                 <Select value={cuadrillaFiltro} onChange={e => setCuadrillaFiltro(e.target.value)} className="w-56">
                   <option value="all">Todas las cuadrillas</option>
-                  {DEMO_CUADRILLAS.map(c => (
+                  {(isDemo ? DEMO_CUADRILLAS : cuadrillas).map(c => (
                     <option key={c.id_cuadrilla} value={c.id_cuadrilla}>{c.nombre}</option>
                   ))}
                 </Select>
               </FormField>
-              <div className="flex gap-2">
-                {DEMO_CUADRILLAS.filter(c => cuadrillaFiltro === 'all' || c.id_cuadrilla === cuadrillaFiltro).map(c => (
-                  <Button
-                    key={c.id_cuadrilla}
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setQrModal({ id: c.id_cuadrilla, nombre: c.nombre })}
-                    className="text-[10px] gap-1"
-                  >
-                    <IconQrCode className="h-3 w-3" />
-                    QR {c.codigo}
-                  </Button>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {(isDemo ? DEMO_CUADRILLAS : cuadrillas)
+                  .filter(c => cuadrillaFiltro === 'all' || c.id_cuadrilla === cuadrillaFiltro)
+                  .map(c => (
+                    <Button
+                      key={c.id_cuadrilla}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setQrTab('qr'); setQrModal({ id: c.id_cuadrilla, nombre: c.nombre }); }}
+                      className="text-[10px] gap-1"
+                    >
+                      <IconQrCode className="h-3 w-3" />
+                      QR {(c as any).codigo}
+                    </Button>
+                  ))
+                }
+                {!isDemo && cuadrillas
+                  .filter(c => cuadrillaFiltro === 'all' || c.id_cuadrilla === cuadrillaFiltro)
+                  .map(c => (
+                    <Button
+                      key={`manual-${c.id_cuadrilla}`}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAbrirManualQR(c)}
+                      className="text-[10px] gap-1 border-indigo-500/30 text-indigo-600 hover:bg-indigo-500/5"
+                    >
+                      ✏ Manual {(c as any).codigo}
+                    </Button>
+                  ))
+                }
               </div>
             </CardContent>
           </Card>
@@ -1764,33 +1851,121 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* MODAL — QR de asistencia                                        */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <Modal open={!!qrModal} onClose={() => setQrModal(null)} title="Código QR de Asistencia">
+      <Modal open={!!qrModal} onClose={() => { setQrModal(null); setQrTab('qr'); }} title="Asistencia de Cuadrilla">
         {qrModal && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="rounded-2xl border-2 border-border bg-white p-4 shadow-inner">
-              <QrVisual seed={qrModal.id + fechaFiltro} />
+          <div className="flex flex-col gap-4">
+            {/* Tabs QR / Manual */}
+            <div className="flex rounded-xl border border-border/40 overflow-hidden">
+              {(['qr', 'manual'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setQrTab(tab)}
+                  className={cn(
+                    'flex-1 py-2 text-[11px] font-black uppercase tracking-widest transition-colors',
+                    qrTab === tab
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-muted-foreground hover:bg-muted/40'
+                  )}
+                >
+                  {tab === 'qr' ? 'Código QR' : 'Registro Manual'}
+                </button>
+              ))}
             </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-foreground">{qrModal.nombre}</p>
-              <p className="text-xs text-muted-foreground">{fmtDate(fechaFiltro)}</p>
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                Los trabajadores escanean este código al ingresar para registrar su asistencia automáticamente.
-              </p>
-            </div>
-            <div className="flex gap-2 w-full">
-              <Button variant="outline" className="flex-1 text-xs" onClick={() => {
-                notify({ type: 'info', title: 'QR enviado a impresora', message: `${qrModal.nombre} · ${fmtDate(fechaFiltro)}` });
-                setQrModal(null);
-              }}>
-                Imprimir QR
-              </Button>
-              <Button className="flex-1 text-xs" onClick={() => {
-                notify({ type: 'success', title: 'QR compartido', message: `Enlace de asistencia enviado a ${qrModal.nombre}` });
-                setQrModal(null);
-              }}>
-                Compartir enlace
-              </Button>
-            </div>
+
+            {qrTab === 'qr' ? (
+              <>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="rounded-2xl border-2 border-border bg-white p-4 shadow-inner">
+                    <QrVisual seed={qrModal.id + fechaFiltro} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-foreground">{qrModal.nombre}</p>
+                    <p className="text-xs text-muted-foreground">{fmtDate(fechaFiltro)}</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Los trabajadores escanean este código al ingresar para registrar su asistencia automáticamente.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 w-full">
+                    <Button variant="outline" className="flex-1 text-xs" onClick={() => {
+                      notify({ type: 'info', title: 'QR enviado a impresora', message: `${qrModal.nombre} · ${fmtDate(fechaFiltro)}` });
+                      setQrModal(null);
+                    }}>
+                      Imprimir QR
+                    </Button>
+                    <Button className="flex-1 text-xs" onClick={() => {
+                      notify({ type: 'success', title: 'QR compartido', message: `Enlace de asistencia enviado a ${qrModal.nombre}` });
+                      setQrModal(null);
+                    }}>
+                      Compartir enlace
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center pb-1">
+                  <p className="text-xs font-bold text-foreground">{qrModal.nombre} — {fmtDate(fechaFiltro)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Marca la asistencia de cada integrante y guarda</p>
+                </div>
+                {bulkChecks.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-muted-foreground">Esta cuadrilla no tiene miembros asignados.</p>
+                ) : (
+                  <div className="max-h-[50vh] overflow-y-auto space-y-2 pr-1">
+                    {bulkChecks.map((bc, idx) => (
+                      <div key={bc.empleado_id} className="flex items-center gap-3 rounded-xl border border-border/40 px-3 py-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-black text-indigo-600">
+                          {bc.nombre.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-foreground truncate">{bc.nombre}</div>
+                          <div className="text-[10px] text-muted-foreground">{bc.puesto}</div>
+                        </div>
+                        {/* Toggle PRESENTE/AUSENTE */}
+                        <button
+                          onClick={() => setBulkChecks(prev => prev.map((b, i) =>
+                            i === idx ? { ...b, estado: b.estado === 'PRESENTE' ? 'AUSENTE' : 'PRESENTE' } : b
+                          ))}
+                          className={cn(
+                            'rounded-full px-3 py-1 text-[10px] font-black transition-colors',
+                            bc.estado === 'PRESENTE'
+                              ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
+                              : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
+                          )}
+                        >
+                          {bc.estado}
+                        </button>
+                        {/* Horas extra */}
+                        <input
+                          type="number"
+                          min="0"
+                          max="12"
+                          step="0.5"
+                          value={bc.horas_extra}
+                          onChange={e => setBulkChecks(prev => prev.map((b, i) =>
+                            i === idx ? { ...b, horas_extra: e.target.value } : b
+                          ))}
+                          className="w-16 rounded-lg border border-border/40 px-2 py-1 text-center text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder="HE"
+                          title="Horas extra"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-1 border-t border-border/30">
+                  <span className="text-[10px] text-muted-foreground">
+                    {bulkChecks.filter(b => b.estado === 'PRESENTE').length}/{bulkChecks.length} presentes
+                  </span>
+                  <Button
+                    className="text-xs bg-indigo-600 hover:bg-indigo-500"
+                    onClick={handleGuardarBulk}
+                    disabled={guardandoBulk || bulkChecks.length === 0}
+                  >
+                    {guardandoBulk ? 'Guardando…' : 'Guardar asistencia'}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </Modal>
