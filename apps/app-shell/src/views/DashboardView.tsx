@@ -287,7 +287,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         title={`${tenant?.name || 'ERP Bocam'} — Centro de Control Operativo`}
         tone="dark"
         badge={
-          <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+          <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/90">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
             {modules.length} módulos activos · Sistema operativo
           </span>
@@ -314,7 +314,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <SectionBadge className="border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px] text-primary">
+          <SectionBadge className="border-primary/30 bg-primary/10 px-3 py-1.5 text-[10px] font-black text-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             {user?.projects?.[0]?.code || 'Sin Proyecto'}
           </SectionBadge>
