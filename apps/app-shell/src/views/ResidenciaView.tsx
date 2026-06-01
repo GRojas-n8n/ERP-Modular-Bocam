@@ -320,9 +320,37 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       setLoading(false);
       return;
     }
-    // TODO: fetch real estimaciones, nómina, asistencia
-    setLoading(false);
+    const fetchData = async () => {
+      try {
+        const [estRes, nomRes] = await Promise.allSettled([
+          api.get('/api/v1/personal/prenominas'),
+          api.get('/api/v1/personal/prenominas'),
+        ]);
+        // Estimaciones (módulo residencia pendiente de backend real)
+        setEstimaciones([]);
+        if (nomRes.status === 'fulfilled') {
+          setPrenominas((nomRes.value.data as any)?.data ?? []);
+        }
+      } catch { /* silencioso */ } finally { setLoading(false); }
+    };
+    void fetchData();
   }, [isDemo]);
+
+  // ── Carga de asistencia cuando se activa el tab ──────────────────────────
+  useEffect(() => {
+    if (activeTab !== 'asistencia' || isDemo) return;
+    const fechaHoy = new Date().toISOString().slice(0, 10);
+    const hace7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const fetchAsistencia = async () => {
+      try {
+        const r = await api.get('/api/v1/personal/asistencia', {
+          params: { fecha_inicio: hace7, fecha_fin: fechaHoy },
+        });
+        setAsistencia((r.data as any)?.data ?? []);
+      } catch { /* silencioso */ }
+    };
+    void fetchAsistencia();
+  }, [activeTab, isDemo]);
 
   // ── Carga de requisiciones, conceptos e insumos (cuando se activa el tab) ─
   useEffect(() => {
@@ -648,13 +676,24 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     }
   };
 
-  const handleRegistrarManual = (registro: RegistroAsistencia) => {
+  const handleRegistrarManual = async (registro: RegistroAsistencia) => {
     const nuevoEstado: AsistenciaEstado = registro.estado === 'AUSENTE' ? 'PRESENTE' : 'AUSENTE';
+    // Actualizar UI optimista
     setAsistencia(prev => prev.map(a =>
       a.id === registro.id
         ? { ...a, estado: nuevoEstado, hora_entrada: nuevoEstado === 'PRESENTE' ? new Date().toTimeString().slice(0, 5) : null, tipo_registro: 'MANUAL' }
         : a
     ));
+    if (!isDemo) {
+      try {
+        await api.post('/api/v1/personal/asistencia/registro', {
+          empleado_id: registro.empleado_id ?? registro.id,
+          fecha: fechaFiltro || new Date().toISOString().slice(0, 10),
+          estado: nuevoEstado,
+          tipo_registro: 'MANUAL',
+        });
+      } catch { /* silencioso — UI ya actualizada */ }
+    }
     if (nuevoEstado === 'PRESENTE') {
       notify({ type: 'success', title: 'Asistencia registrada', message: `${registro.empleado_nombre} — registro manual` });
     }

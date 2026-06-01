@@ -67,6 +67,23 @@ interface PreNomina {
   total_neto: number;
   total_empleados: number;
   estado: string;
+  requiere_recalculo?: boolean;
+}
+
+interface PreNominaDetalle {
+  id_detalle: string;
+  empleado_id: string;
+  origen_dias: string;
+  dias_trabajados: number;
+  salario_base: number;
+  monto_horas_extra: number;
+  deduccion_imss: number;
+  deduccion_isr: number;
+  otras_deducciones: number;
+  total_percepciones: number;
+  total_deducciones: number;
+  neto_a_pagar: number;
+  empleado?: { nombre: string; apellido_paterno: string; numero_empleado: string };
 }
 
 interface PaseAcceso {
@@ -111,6 +128,9 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [cuadrillas, setCuadrillas] = useState<Cuadrilla[]>([]);
   const [prenominas, setPrenominas] = useState<PreNomina[]>([]);
   const [pases, setPases] = useState<PaseAcceso[]>([]);
+  const [nominaDetalle, setNominaDetalle] = useState<{ pn: PreNomina; detalles: PreNominaDetalle[] } | null>(null);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [generandoComplemento, setGenerandoComplemento] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -179,6 +199,26 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
 
   const pasesAlerta = pases.filter(p => diasRestantes(p.fecha_vencimiento) <= ALERTA_DIAS);
   const pasesVencidos = pases.filter(p => diasRestantes(p.fecha_vencimiento) < 0);
+
+  const handleVerDetalle = async (pn: PreNomina) => {
+    if (tenant?.id === 'iretum-demo') return;
+    setLoadingDetalle(true);
+    try {
+      const r = await api.get(`/api/v1/personal/prenominas/${pn.id_prenomina}/detalle`);
+      const d = (r.data as any)?.data;
+      setNominaDetalle({ pn, detalles: d?.detalles ?? [] });
+    } catch { /* silencioso */ } finally { setLoadingDetalle(false); }
+  };
+
+  const handleGenerarComplemento = async (pn: PreNomina) => {
+    setGenerandoComplemento(true);
+    try {
+      await api.post('/api/v1/personal/complementos/calcular', { prenomina_id: pn.id_prenomina });
+      // notify success handled below
+    } catch (e: any) {
+      console.warn('Complemento:', e.response?.data?.message);
+    } finally { setGenerandoComplemento(false); }
+  };
 
   const activos = empleados.filter((empleado) => empleado.estado === 'ACTIVO').length;
   const certs = empleados.filter(
@@ -558,6 +598,19 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                           </p>
                         </div>
                       </div>
+                      {prenomina.requiere_recalculo && (
+                        <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                            ⚠ Requiere recálculo — tasas desactualizadas
+                          </p>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => handleVerDetalle(prenomina)}
+                        className="mt-2 w-full rounded-lg border border-border/40 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/40 transition-colors"
+                      >
+                        Ver desglose por empleado →
+                      </button>
                     </CardContent>
                   </Card>
                 ))
@@ -565,6 +618,71 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             </div>
           )}
         </>
+      )}
+      {/* ── Modal Detalle de Pre-Nómina ─────────────────────────────────────── */}
+      {nominaDetalle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border/40 bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/30 px-6 py-4">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-tighter">Desglose — {nominaDetalle.pn.codigo}</h3>
+                <p className="text-[10px] text-muted-foreground">{nominaDetalle.detalles.length} empleados · {nominaDetalle.pn.periodo_tipo}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleGenerarComplemento(nominaDetalle.pn)}
+                  disabled={generandoComplemento}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {generandoComplemento ? 'Generando…' : 'Generar Complemento Salarial'}
+                </button>
+                <button onClick={() => setNominaDetalle(null)} className="rounded-lg px-3 py-1.5 text-[10px] font-black uppercase text-muted-foreground hover:bg-muted">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+            {loadingDetalle ? (
+              <div className="flex h-40 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-500/10 border-t-violet-600" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border/30 bg-muted/30">
+                      {['Empleado', 'Origen', 'Días', 'Sueldo Base', 'H.Extra', 'IMSS', 'ISR', 'Otro', 'Percepciones', 'Deducciones', 'Neto'].map(h => (
+                        <th key={h} className="px-3 py-2 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nominaDetalle.detalles.map((d) => (
+                      <tr key={d.id_detalle} className="border-b border-border/20 hover:bg-muted/20">
+                        <td className="px-3 py-2 font-medium">
+                          {d.empleado ? `${d.empleado.nombre} ${d.empleado.apellido_paterno}` : d.empleado_id.slice(0, 8)}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-black', d.origen_dias === 'ASISTENCIA' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700')}>
+                            {d.origen_dias}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-center">{d.dias_trabajados}</td>
+                        <td className="px-3 py-2 text-right">${d.salario_base.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right">${d.monto_horas_extra.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right text-red-600">${d.deduccion_imss.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right text-red-600">${d.deduccion_isr.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right text-red-600">${d.otras_deducciones.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right font-semibold">${d.total_percepciones.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right text-red-600 font-semibold">${d.total_deducciones.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                        <td className="px-3 py-2 text-right font-black text-emerald-700">${d.neto_a_pagar.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

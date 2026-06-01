@@ -45,6 +45,7 @@ model Empleado {
   fecha_baja        DateTime? @db.Date
   salario_diario    Decimal  @db.Decimal(10, 2)
   salario_integrado Decimal? @db.Decimal(10, 2)     // Para cálculo IMSS
+  salario_acordado  Decimal? @db.Decimal(10, 2)     // Salario real total acordado (para Complemento Salarial)
 
   // Contacto
   telefono          String?  @db.VarChar(20)
@@ -149,6 +150,7 @@ model PreNomina {
   total_neto         Decimal @db.Decimal(18, 2) @default(0)
   total_empleados    Int     @default(0)
   estado           String   @default("BORRADOR")    // BORRADOR, CALCULADA, AUTORIZADA, PAGADA
+  requiere_recalculo Boolean @default(false)        // true = calculado con tasas antiguas
   elaborado_por    String   @db.Uuid
   autorizado_por   String?  @db.Uuid
   fecha_autorizacion DateTime?
@@ -172,6 +174,7 @@ model PreNominaDetalle {
   empleado_id      String   @db.Uuid
 
   // Cálculo
+  origen_dias      String   @default("ASISTENCIA") // ASISTENCIA | ESTIMADO
   dias_trabajados  Decimal  @db.Decimal(4, 1)
   horas_extra      Decimal  @db.Decimal(6, 2) @default(0)
   salario_base     Decimal  @db.Decimal(10, 2)      // salario_diario × días
@@ -189,4 +192,93 @@ model PreNominaDetalle {
 
   @@index([tenant_id, prenomina_id])
   @@map("pre_nomina_detalles")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 5: Registro de Asistencia
+// Registro diario de asistencia por empleado. Alimenta el motor de nómina.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model RegistroAsistencia {
+  id_registro    String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  proyecto_id    String   @db.Uuid
+  empleado_id    String   @db.Uuid
+  cuadrilla_id   String?  @db.Uuid
+  fecha          DateTime @db.Date
+  estado         String   // PRESENTE | AUSENTE | INCAPACIDAD | JUSTIFICADA | FALTA
+  tipo_registro  String   @default("MANUAL") // QR | MANUAL
+  horas_extra    Decimal  @default(0) @db.Decimal(4, 1)
+  registrado_por String   @db.Uuid
+
+  created_at     DateTime @default(now())
+
+  @@unique([tenant_id, empleado_id, fecha])
+  @@index([tenant_id, proyecto_id, fecha])
+  @@index([tenant_id, empleado_id])
+  @@map("registros_asistencia")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 6: Configuración de Deducciones por Empleado
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model ConfigDeduccionEmpleado {
+  id_config        String   @id @default(uuid()) @db.Uuid
+  tenant_id        String   @db.Uuid
+  empleado_id      String   @db.Uuid
+  aplica_imss      Boolean  @default(true)
+  aplica_isr       Boolean  @default(true)
+  aplica_infonavit Boolean  @default(false)
+  infonavit_num    String?  @db.VarChar(30)
+  infonavit_monto  Decimal? @db.Decimal(10, 2)
+
+  updated_at       DateTime @updatedAt
+
+  @@unique([tenant_id, empleado_id])
+  @@index([tenant_id])
+  @@map("config_deducciones_empleados")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 7: Complemento Salarial
+// Segunda nómina sin deducciones: diferencia entre salario acordado y IMSS.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model NominaComplementaria {
+  id_complemento    String   @id @default(uuid()) @db.Uuid
+  tenant_id         String   @db.Uuid
+  proyecto_id       String   @db.Uuid
+  prenomina_id      String   @db.Uuid
+  codigo            String   @db.VarChar(30)  // CS-2026-S01
+  periodo_inicio    DateTime @db.Date
+  periodo_fin       DateTime @db.Date
+  periodo_tipo      String   // SEMANAL | QUINCENAL
+  total_complemento Decimal  @db.Decimal(12, 2)
+  estado            String   @default("BORRADOR") // BORRADOR | AUTORIZADA
+  elaborado_por     String   @db.Uuid
+  autorizado_por    String?  @db.Uuid
+
+  created_at        DateTime @default(now())
+  detalles          NominaComplementariaDetalle[]
+
+  @@index([tenant_id, proyecto_id])
+  @@map("nominas_complementarias")
+}
+
+model NominaComplementariaDetalle {
+  id_detalle        String   @id @default(uuid()) @db.Uuid
+  tenant_id         String   @db.Uuid
+  complemento_id    String   @db.Uuid
+  empleado_id       String   @db.Uuid
+  dias_trabajados   Decimal  @db.Decimal(4, 1)
+  salario_acordado  Decimal  @db.Decimal(10, 2)
+  salario_imss_dia  Decimal  @db.Decimal(10, 2)
+  complemento_dia   Decimal  @db.Decimal(10, 2)
+  monto_complemento Decimal  @db.Decimal(10, 2)
+
+  complemento       NominaComplementaria @relation(fields: [complemento_id], references: [id_complemento], onDelete: Cascade)
+
+  @@index([tenant_id, complemento_id])
+  @@map("nominas_complementarias_detalle")
 }

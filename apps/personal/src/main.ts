@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createApiResponse, createApiError, EstadoPreNomina } from './types';
-import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra } from './tablas-fiscales';
 
 /**
  * ---------------------------------------------------------------------------
@@ -331,46 +332,107 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
       let totalPercepciones = 0;
       let totalDeducciones = 0;
 
-      const detallesData = empleados.map((emp: any) => {
-        const salarioBase = Number(emp.salario_diario) * diasPeriodo;
-        const imss = salarioBase * 0.025;
-        const isr = salarioBase > 5000 ? salarioBase * 0.09 : salarioBase * 0.04;
-        const totalDed = imss + isr;
-        const neto = salarioBase - totalDed;
+      // Leer resumen de asistencia del período
+      const asistenciaRecs = await prisma.registroAsistencia.findMany({
+        where: {
+          tenant_id: tenantId, proyecto_id: proyectoId,
+          fecha: { gte: inicio, lte: fin },
+        },
+      });
+      const asistenciaPorEmp: Record<string, { dias_trabajados: number; total_horas_extra: number; origen: string }> = {};
+      for (const r of asistenciaRecs) {
+        if (!asistenciaPorEmp[r.empleado_id]) {
+          asistenciaPorEmp[r.empleado_id] = { dias_trabajados: 0, total_horas_extra: 0, origen: 'ASISTENCIA' };
+        }
+        if (r.estado === 'PRESENTE') {
+          asistenciaPorEmp[r.empleado_id].dias_trabajados++;
+          asistenciaPorEmp[r.empleado_id].total_horas_extra += Number(r.horas_extra);
+        }
+      }
 
-        totalPercepciones += salarioBase;
-        totalDeducciones += totalDed;
+      const detallesData: object[] = [];
+      for (const emp of empleados as any[]) {
+        if (emp.tipo_contrato === 'SUBCONTRATO') continue;
 
-        return {
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
+        const asistencia = asistenciaPorEmp[emp.id_empleado];
+        let diasTrabajados: number;
+        let origenDias: string;
+        if (asistencia) {
+          if (asistencia.dias_trabajados === 0) continue; // ausente todo el período
+          diasTrabajados = asistencia.dias_trabajados;
+          origenDias = 'ASISTENCIA';
+        } else {
+          diasTrabajados = diasPeriodo; // fallback estimado
+          origenDias = 'ESTIMADO';
+        }
+        const totalHorasExtra = asistencia?.total_horas_extra ?? 0;
+
+        // Leer config de deducciones
+        const cfg = await prisma.configDeduccionEmpleado.findFirst({
+          where: { tenant_id: tenantId, empleado_id: emp.id_empleado },
+        });
+        const aplicaIMSS     = cfg?.aplica_imss      ?? true;
+        const aplicaISR      = cfg?.aplica_isr       ?? true;
+        const aplicaInfonavit= cfg?.aplica_infonavit  ?? false;
+        const infonavitMonto = aplicaInfonavit ? Number(cfg?.infonavit_monto ?? 0) : 0;
+
+        const salarioBase = parseFloat((Number(emp.salario_diario) * diasTrabajados).toFixed(2));
+        const { monto: montoHE, exento: exentoHE } = calcularHorasExtra(totalHorasExtra, diasTrabajados, Number(emp.salario_diario));
+        const percepciones = salarioBase + montoHE;
+        const baseISR = parseFloat((percepciones - exentoHE).toFixed(2));
+
+        let dedIMSS = 0;
+        if (aplicaIMSS && emp.nss) {
+          const sbc = Number(emp.salario_integrado ?? emp.salario_diario);
+          dedIMSS = calcularIMSS(sbc, diasTrabajados).total;
+        }
+
+        let dedISR = 0;
+        if (aplicaISR) {
+          const isrBruto = calcularISR(baseISR, periodo_tipo || 'SEMANAL');
+          const subsidio = calcularSubsidio(percepciones, periodo_tipo || 'SEMANAL');
+          dedISR = Math.max(0, parseFloat((isrBruto - subsidio).toFixed(2)));
+        }
+
+        const totalDed  = parseFloat((dedIMSS + dedISR + infonavitMonto).toFixed(2));
+        const neto      = parseFloat((percepciones - totalDed).toFixed(2));
+
+        totalPercepciones += percepciones;
+        totalDeducciones  += totalDed;
+
+        detallesData.push({
+          tenant_id: tenantId, proyecto_id: proyectoId,
           empleado_id: emp.id_empleado,
-          dias_trabajados: diasPeriodo,
-          horas_extra: 0,
+          origen_dias: origenDias,
+          dias_trabajados: diasTrabajados,
+          horas_extra: totalHorasExtra,
           salario_base: salarioBase,
-          monto_horas_extra: 0,
+          monto_horas_extra: montoHE,
           bonos: 0,
-          total_percepciones: salarioBase,
-          deduccion_imss: imss,
-          deduccion_isr: isr,
-          otras_deducciones: 0,
+          total_percepciones: percepciones,
+          deduccion_imss: dedIMSS,
+          deduccion_isr: dedISR,
+          otras_deducciones: infonavitMonto,
           total_deducciones: totalDed,
           neto_a_pagar: neto,
-        };
-      });
+        });
+      }
+
+      if (detallesData.length === 0) throw new Error('No hay empleados elegibles para calcular nómina (todos son SUBCONTRATO o sin días trabajados).');
 
       const prenomina = await prisma.preNomina.create({
         data: {
           tenant_id: tenantId, proyecto_id: proyectoId,
           codigo, periodo_tipo: periodo_tipo || 'SEMANAL',
           periodo_inicio: inicio, periodo_fin: fin,
-          total_percepciones: totalPercepciones,
-          total_deducciones: totalDeducciones,
-          total_neto: totalPercepciones - totalDeducciones,
-          total_empleados: empleados.length,
+          total_percepciones: parseFloat(totalPercepciones.toFixed(2)),
+          total_deducciones:  parseFloat(totalDeducciones.toFixed(2)),
+          total_neto: parseFloat((totalPercepciones - totalDeducciones).toFixed(2)),
+          total_empleados: detallesData.length,
+          requiere_recalculo: false,
           estado: EstadoPreNomina.CALCULADA,
           elaborado_por: userId,
-          detalles: { createMany: { data: detallesData } },
+          detalles: { createMany: { data: detallesData as any[] } },
         },
         include: { _count: { select: { detalles: true } } },
       });
@@ -453,6 +515,365 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
       };
     });
 
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ASISTENCIA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// POST /asistencia/registro
+app.post('/api/v1/personal/asistencia/registro', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { empleado_id, fecha, estado, tipo_registro, horas_extra, cuadrilla_id } = req.body;
+    if (!empleado_id || !fecha || !estado) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'empleado_id, fecha y estado son obligatorios.'));
+    }
+    const ESTADOS_VALIDOS = ['PRESENTE', 'AUSENTE', 'INCAPACIDAD', 'JUSTIFICADA', 'FALTA'];
+    if (!ESTADOS_VALIDOS.includes(estado)) {
+      return res.status(400).json(createApiError('PER_INVALID_STATE', `Estado inválido. Valores: ${ESTADOS_VALIDOS.join(', ')}`));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.registroAsistencia.upsert({
+        where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
+        create: {
+          tenant_id: tenantId, proyecto_id: proyectoId, empleado_id,
+          cuadrilla_id: cuadrilla_id ?? null,
+          fecha: new Date(fecha), estado,
+          tipo_registro: tipo_registro ?? 'MANUAL',
+          horas_extra: horas_extra ?? 0,
+          registrado_por: userId,
+        },
+        update: {
+          estado,
+          horas_extra: horas_extra ?? 0,
+          tipo_registro: tipo_registro ?? 'MANUAL',
+          registrado_por: userId,
+        },
+      });
+    });
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// POST /asistencia/bulk
+app.post('/api/v1/personal/asistencia/bulk', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { fecha, registros, cuadrilla_id } = req.body;
+    if (!fecha || !Array.isArray(registros) || registros.length === 0) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'fecha y registros son obligatorios.'));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const results = [];
+      for (const r of registros) {
+        const rec = await prisma.registroAsistencia.upsert({
+          where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: r.empleado_id, fecha: new Date(fecha) } },
+          create: {
+            tenant_id: tenantId, proyecto_id: proyectoId,
+            empleado_id: r.empleado_id, cuadrilla_id: cuadrilla_id ?? null,
+            fecha: new Date(fecha), estado: r.estado ?? 'PRESENTE',
+            tipo_registro: 'MANUAL', horas_extra: r.horas_extra ?? 0,
+            registrado_por: userId,
+          },
+          update: { estado: r.estado ?? 'PRESENTE', horas_extra: r.horas_extra ?? 0, registrado_por: userId },
+        });
+        results.push(rec);
+      }
+      return results;
+    });
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// GET /asistencia
+app.get('/api/v1/personal/asistencia', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { fecha_inicio, fecha_fin, cuadrilla_id, empleado_id } = req.query as Record<string, string>;
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'fecha_inicio y fecha_fin son obligatorios.'));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.registroAsistencia.findMany({
+        where: {
+          tenant_id: tenantId, proyecto_id: proyectoId,
+          fecha: { gte: new Date(fecha_inicio), lte: new Date(fecha_fin) },
+          ...(cuadrilla_id ? { cuadrilla_id } : {}),
+          ...(empleado_id  ? { empleado_id  } : {}),
+        },
+        orderBy: [{ fecha: 'asc' }, { empleado_id: 'asc' }],
+      });
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// PATCH /asistencia/:id
+app.patch('/api/v1/personal/asistencia/:id', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const { estado, horas_extra } = req.body;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const reg = await prisma.registroAsistencia.findFirst({ where: { id_registro: id, tenant_id: tenantId } });
+      if (!reg) return null;
+      return prisma.registroAsistencia.update({
+        where: { id_registro: id },
+        data: {
+          ...(estado      !== undefined ? { estado }      : {}),
+          ...(horas_extra !== undefined ? { horas_extra } : {}),
+          registrado_por: userId,
+        },
+      });
+    });
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Registro no encontrado.'));
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// GET /asistencia/resumen
+app.get('/api/v1/personal/asistencia/resumen', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { fecha_inicio, fecha_fin } = req.query as Record<string, string>;
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'fecha_inicio y fecha_fin son obligatorios.'));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const registros = await prisma.registroAsistencia.findMany({
+        where: {
+          tenant_id: tenantId, proyecto_id: proyectoId,
+          fecha: { gte: new Date(fecha_inicio), lte: new Date(fecha_fin) },
+        },
+      });
+      const byEmp: Record<string, { dias_trabajados: number; dias_ausente: number; dias_incapacidad: number; total_horas_extra: number }> = {};
+      for (const r of registros) {
+        if (!byEmp[r.empleado_id]) {
+          byEmp[r.empleado_id] = { dias_trabajados: 0, dias_ausente: 0, dias_incapacidad: 0, total_horas_extra: 0 };
+        }
+        const e = byEmp[r.empleado_id];
+        if (r.estado === 'PRESENTE') { e.dias_trabajados++; e.total_horas_extra += Number(r.horas_extra); }
+        else if (r.estado === 'AUSENTE' || r.estado === 'FALTA') e.dias_ausente++;
+        else if (r.estado === 'INCAPACIDAD') e.dias_incapacidad++;
+      }
+      return Object.entries(byEmp).map(([empleado_id, stats]) => ({
+        empleado_id,
+        ...stats,
+        total_horas_extra: parseFloat(stats.total_horas_extra.toFixed(1)),
+        origen: 'ASISTENCIA',
+      }));
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONFIGURACIÓN DE DEDUCCIONES POR EMPLEADO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/personal/empleados/:id/config-deducciones', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.configDeduccionEmpleado.findFirst({ where: { tenant_id: tenantId, empleado_id: id } });
+    });
+    // Defaults si no existe config
+    const result = data ?? { aplica_imss: true, aplica_isr: true, aplica_infonavit: false, infonavit_num: null, infonavit_monto: null };
+    res.json(createApiResponse(result, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.put('/api/v1/personal/empleados/:id/config-deducciones', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const { aplica_imss, aplica_isr, aplica_infonavit, infonavit_num, infonavit_monto } = req.body;
+    if (aplica_infonavit && (!infonavit_num || infonavit_monto === undefined)) {
+      return res.status(400).json(createApiError('PER_VALIDATION', 'infonavit_num e infonavit_monto son requeridos cuando aplica_infonavit es true.'));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.configDeduccionEmpleado.upsert({
+        where: { tenant_id_empleado_id: { tenant_id: tenantId, empleado_id: id } },
+        create: {
+          tenant_id: tenantId, empleado_id: id,
+          aplica_imss: aplica_imss ?? true,
+          aplica_isr: aplica_isr ?? true,
+          aplica_infonavit: aplica_infonavit ?? false,
+          infonavit_num: infonavit_num ?? null,
+          infonavit_monto: infonavit_monto ?? null,
+        },
+        update: {
+          aplica_imss: aplica_imss ?? true,
+          aplica_isr: aplica_isr ?? true,
+          aplica_infonavit: aplica_infonavit ?? false,
+          infonavit_num: infonavit_num ?? null,
+          infonavit_monto: infonavit_monto ?? null,
+        },
+      });
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// COMPLEMENTO SALARIAL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/personal/complementos', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.nominaComplementaria.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId },
+        include: { _count: { select: { detalles: true } } },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.post('/api/v1/personal/complementos/calcular', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { prenomina_id } = req.body;
+    if (!prenomina_id) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'prenomina_id es obligatorio.'));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const pn = await prisma.preNomina.findFirst({
+        where: { id_prenomina: prenomina_id, tenant_id: tenantId },
+        include: { detalles: true },
+      });
+      if (!pn) return { notFound: true };
+
+      const existe = await prisma.nominaComplementaria.findFirst({ where: { tenant_id: tenantId, prenomina_id } });
+      if (existe) return { yaExiste: true };
+
+      const detallesComp: { empleado_id: string; dias_trabajados: number; salario_acordado: number; salario_imss_dia: number; complemento_dia: number; monto_complemento: number }[] = [];
+      let totalComp = 0;
+
+      for (const det of pn.detalles) {
+        const emp = await prisma.empleado.findFirst({ where: { id_empleado: det.empleado_id, tenant_id: tenantId } });
+        if (!emp?.salario_acordado) continue;
+        const sAcordado = Number(emp.salario_acordado);
+        const sImss = Number(emp.salario_integrado ?? emp.salario_diario);
+        if (sAcordado <= sImss) continue;
+        const compDia = sAcordado - sImss;
+        const dias = Number(det.dias_trabajados);
+        const monto = parseFloat((compDia * dias).toFixed(2));
+        totalComp += monto;
+        detallesComp.push({ empleado_id: det.empleado_id, dias_trabajados: dias, salario_acordado: sAcordado, salario_imss_dia: sImss, complemento_dia: compDia, monto_complemento: monto });
+      }
+
+      if (detallesComp.length === 0) return { sinEmpleados: true };
+
+      const count = await prisma.nominaComplementaria.count({ where: { tenant_id: tenantId } });
+      const tipoStr = pn.periodo_tipo === 'QUINCENAL' ? 'Q' : 'S';
+      const codigo = `CS-${new Date().getFullYear()}-${tipoStr}${String(count + 1).padStart(2, '0')}`;
+
+      const comp = await prisma.nominaComplementaria.create({
+        data: {
+          tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id,
+          codigo, periodo_inicio: pn.periodo_inicio, periodo_fin: pn.periodo_fin,
+          periodo_tipo: pn.periodo_tipo, total_complemento: totalComp,
+          elaborado_por: userId,
+          detalles: {
+            createMany: { data: detallesComp.map(d => ({ ...d, tenant_id: tenantId })) },
+          },
+        },
+        include: { _count: { select: { detalles: true } } },
+      });
+      return { comp };
+    });
+
+    if ((data as any).notFound)     return res.status(404).json(createApiError('PER_NOT_FOUND', 'Pre-nómina no encontrada.'));
+    if ((data as any).yaExiste)     return res.status(409).json(createApiError('PER_CONFLICT', 'Ya existe un Complemento Salarial para esta pre-nómina.'));
+    if ((data as any).sinEmpleados) return res.status(422).json(createApiError('PER_NO_COMPLEMENT', 'Ningún empleado tiene Complemento Salarial configurado (salario_acordado > salario_integrado).'));
+
+    res.status(201).json(createApiResponse((data as any).comp, '', ''));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.patch('/api/v1/personal/complementos/:id/autorizar', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const comp = await prisma.nominaComplementaria.findFirst({ where: { id_complemento: id, tenant_id: tenantId } });
+      if (!comp) return null;
+      if (comp.estado !== 'BORRADOR') return { estadoInvalido: true, estado: comp.estado };
+      return prisma.nominaComplementaria.update({
+        where: { id_complemento: id },
+        data: { estado: 'AUTORIZADA', autorizado_por: userId },
+      });
+    });
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Complemento no encontrado.'));
+    if ((data as any).estadoInvalido) return res.status(409).json(createApiError('PER_INVALID_STATE', `Solo se puede autorizar en BORRADOR. Estado actual: ${(data as any).estado}`));
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DETALLE DE PRE-NÓMINA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/personal/prenominas/:id/detalle', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const pn = await prisma.preNomina.findFirst({
+        where: { id_prenomina: id, tenant_id: tenantId },
+        include: {
+          detalles: {
+            include: { empleado: { select: { nombre: true, apellido_paterno: true, numero_empleado: true } } },
+          },
+        },
+      });
+      if (!pn) return null;
+      return {
+        ...pn,
+        detalles: pn.detalles.map(d => ({
+          ...d,
+          salario_base:       Number(d.salario_base),
+          monto_horas_extra:  Number(d.monto_horas_extra),
+          deduccion_imss:     Number(d.deduccion_imss),
+          deduccion_isr:      Number(d.deduccion_isr),
+          otras_deducciones:  Number(d.otras_deducciones),
+          total_percepciones: Number(d.total_percepciones),
+          total_deducciones:  Number(d.total_deducciones),
+          neto_a_pagar:       Number(d.neto_a_pagar),
+        })),
+      };
+    });
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Pre-nómina no encontrada.'));
     res.json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));

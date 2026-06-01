@@ -139,6 +139,7 @@ exports.Prisma.EmpleadoScalarFieldEnum = {
   fecha_baja: 'fecha_baja',
   salario_diario: 'salario_diario',
   salario_integrado: 'salario_integrado',
+  salario_acordado: 'salario_acordado',
   telefono: 'telefono',
   email: 'email',
   contacto_emergencia: 'contacto_emergencia',
@@ -191,6 +192,7 @@ exports.Prisma.PreNominaScalarFieldEnum = {
   total_neto: 'total_neto',
   total_empleados: 'total_empleados',
   estado: 'estado',
+  requiere_recalculo: 'requiere_recalculo',
   elaborado_por: 'elaborado_por',
   autorizado_por: 'autorizado_por',
   fecha_autorizacion: 'fecha_autorizacion',
@@ -205,6 +207,7 @@ exports.Prisma.PreNominaDetalleScalarFieldEnum = {
   proyecto_id: 'proyecto_id',
   prenomina_id: 'prenomina_id',
   empleado_id: 'empleado_id',
+  origen_dias: 'origen_dias',
   dias_trabajados: 'dias_trabajados',
   horas_extra: 'horas_extra',
   salario_base: 'salario_base',
@@ -216,6 +219,60 @@ exports.Prisma.PreNominaDetalleScalarFieldEnum = {
   otras_deducciones: 'otras_deducciones',
   total_deducciones: 'total_deducciones',
   neto_a_pagar: 'neto_a_pagar'
+};
+
+exports.Prisma.RegistroAsistenciaScalarFieldEnum = {
+  id_registro: 'id_registro',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  empleado_id: 'empleado_id',
+  cuadrilla_id: 'cuadrilla_id',
+  fecha: 'fecha',
+  estado: 'estado',
+  tipo_registro: 'tipo_registro',
+  horas_extra: 'horas_extra',
+  registrado_por: 'registrado_por',
+  created_at: 'created_at'
+};
+
+exports.Prisma.ConfigDeduccionEmpleadoScalarFieldEnum = {
+  id_config: 'id_config',
+  tenant_id: 'tenant_id',
+  empleado_id: 'empleado_id',
+  aplica_imss: 'aplica_imss',
+  aplica_isr: 'aplica_isr',
+  aplica_infonavit: 'aplica_infonavit',
+  infonavit_num: 'infonavit_num',
+  infonavit_monto: 'infonavit_monto',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.NominaComplementariaScalarFieldEnum = {
+  id_complemento: 'id_complemento',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  prenomina_id: 'prenomina_id',
+  codigo: 'codigo',
+  periodo_inicio: 'periodo_inicio',
+  periodo_fin: 'periodo_fin',
+  periodo_tipo: 'periodo_tipo',
+  total_complemento: 'total_complemento',
+  estado: 'estado',
+  elaborado_por: 'elaborado_por',
+  autorizado_por: 'autorizado_por',
+  created_at: 'created_at'
+};
+
+exports.Prisma.NominaComplementariaDetalleScalarFieldEnum = {
+  id_detalle: 'id_detalle',
+  tenant_id: 'tenant_id',
+  complemento_id: 'complemento_id',
+  empleado_id: 'empleado_id',
+  dias_trabajados: 'dias_trabajados',
+  salario_acordado: 'salario_acordado',
+  salario_imss_dia: 'salario_imss_dia',
+  complemento_dia: 'complemento_dia',
+  monto_complemento: 'monto_complemento'
 };
 
 exports.Prisma.SortOrder = {
@@ -239,7 +296,11 @@ exports.Prisma.ModelName = {
   Cuadrilla: 'Cuadrilla',
   AsignacionFrente: 'AsignacionFrente',
   PreNomina: 'PreNomina',
-  PreNominaDetalle: 'PreNominaDetalle'
+  PreNominaDetalle: 'PreNominaDetalle',
+  RegistroAsistencia: 'RegistroAsistencia',
+  ConfigDeduccionEmpleado: 'ConfigDeduccionEmpleado',
+  NominaComplementaria: 'NominaComplementaria',
+  NominaComplementariaDetalle: 'NominaComplementariaDetalle'
 };
 
 /**

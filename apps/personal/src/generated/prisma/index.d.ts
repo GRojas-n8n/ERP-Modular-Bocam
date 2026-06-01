@@ -38,6 +38,26 @@ export type PreNomina = $Result.DefaultSelection<Prisma.$PreNominaPayload>
  * 
  */
 export type PreNominaDetalle = $Result.DefaultSelection<Prisma.$PreNominaDetallePayload>
+/**
+ * Model RegistroAsistencia
+ * 
+ */
+export type RegistroAsistencia = $Result.DefaultSelection<Prisma.$RegistroAsistenciaPayload>
+/**
+ * Model ConfigDeduccionEmpleado
+ * 
+ */
+export type ConfigDeduccionEmpleado = $Result.DefaultSelection<Prisma.$ConfigDeduccionEmpleadoPayload>
+/**
+ * Model NominaComplementaria
+ * 
+ */
+export type NominaComplementaria = $Result.DefaultSelection<Prisma.$NominaComplementariaPayload>
+/**
+ * Model NominaComplementariaDetalle
+ * 
+ */
+export type NominaComplementariaDetalle = $Result.DefaultSelection<Prisma.$NominaComplementariaDetallePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -211,6 +231,46 @@ export class PrismaClient<
     * ```
     */
   get preNominaDetalle(): Prisma.PreNominaDetalleDelegate<ExtArgs>;
+
+  /**
+   * `prisma.registroAsistencia`: Exposes CRUD operations for the **RegistroAsistencia** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RegistroAsistencias
+    * const registroAsistencias = await prisma.registroAsistencia.findMany()
+    * ```
+    */
+  get registroAsistencia(): Prisma.RegistroAsistenciaDelegate<ExtArgs>;
+
+  /**
+   * `prisma.configDeduccionEmpleado`: Exposes CRUD operations for the **ConfigDeduccionEmpleado** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ConfigDeduccionEmpleados
+    * const configDeduccionEmpleados = await prisma.configDeduccionEmpleado.findMany()
+    * ```
+    */
+  get configDeduccionEmpleado(): Prisma.ConfigDeduccionEmpleadoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.nominaComplementaria`: Exposes CRUD operations for the **NominaComplementaria** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NominaComplementarias
+    * const nominaComplementarias = await prisma.nominaComplementaria.findMany()
+    * ```
+    */
+  get nominaComplementaria(): Prisma.NominaComplementariaDelegate<ExtArgs>;
+
+  /**
+   * `prisma.nominaComplementariaDetalle`: Exposes CRUD operations for the **NominaComplementariaDetalle** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NominaComplementariaDetalles
+    * const nominaComplementariaDetalles = await prisma.nominaComplementariaDetalle.findMany()
+    * ```
+    */
+  get nominaComplementariaDetalle(): Prisma.NominaComplementariaDetalleDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -656,7 +716,11 @@ export namespace Prisma {
     Cuadrilla: 'Cuadrilla',
     AsignacionFrente: 'AsignacionFrente',
     PreNomina: 'PreNomina',
-    PreNominaDetalle: 'PreNominaDetalle'
+    PreNominaDetalle: 'PreNominaDetalle',
+    RegistroAsistencia: 'RegistroAsistencia',
+    ConfigDeduccionEmpleado: 'ConfigDeduccionEmpleado',
+    NominaComplementaria: 'NominaComplementaria',
+    NominaComplementariaDetalle: 'NominaComplementariaDetalle'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -672,7 +736,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "empleado" | "cuadrilla" | "asignacionFrente" | "preNomina" | "preNominaDetalle"
+      modelProps: "empleado" | "cuadrilla" | "asignacionFrente" | "preNomina" | "preNominaDetalle" | "registroAsistencia" | "configDeduccionEmpleado" | "nominaComplementaria" | "nominaComplementariaDetalle"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1026,6 +1090,286 @@ export namespace Prisma {
           }
         }
       }
+      RegistroAsistencia: {
+        payload: Prisma.$RegistroAsistenciaPayload<ExtArgs>
+        fields: Prisma.RegistroAsistenciaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RegistroAsistenciaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RegistroAsistenciaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>
+          }
+          findFirst: {
+            args: Prisma.RegistroAsistenciaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RegistroAsistenciaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>
+          }
+          findMany: {
+            args: Prisma.RegistroAsistenciaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>[]
+          }
+          create: {
+            args: Prisma.RegistroAsistenciaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>
+          }
+          createMany: {
+            args: Prisma.RegistroAsistenciaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RegistroAsistenciaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>[]
+          }
+          delete: {
+            args: Prisma.RegistroAsistenciaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>
+          }
+          update: {
+            args: Prisma.RegistroAsistenciaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>
+          }
+          deleteMany: {
+            args: Prisma.RegistroAsistenciaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RegistroAsistenciaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RegistroAsistenciaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistroAsistenciaPayload>
+          }
+          aggregate: {
+            args: Prisma.RegistroAsistenciaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRegistroAsistencia>
+          }
+          groupBy: {
+            args: Prisma.RegistroAsistenciaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RegistroAsistenciaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RegistroAsistenciaCountArgs<ExtArgs>
+            result: $Utils.Optional<RegistroAsistenciaCountAggregateOutputType> | number
+          }
+        }
+      }
+      ConfigDeduccionEmpleado: {
+        payload: Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>
+        fields: Prisma.ConfigDeduccionEmpleadoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ConfigDeduccionEmpleadoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ConfigDeduccionEmpleadoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>
+          }
+          findFirst: {
+            args: Prisma.ConfigDeduccionEmpleadoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ConfigDeduccionEmpleadoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>
+          }
+          findMany: {
+            args: Prisma.ConfigDeduccionEmpleadoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>[]
+          }
+          create: {
+            args: Prisma.ConfigDeduccionEmpleadoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>
+          }
+          createMany: {
+            args: Prisma.ConfigDeduccionEmpleadoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ConfigDeduccionEmpleadoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>[]
+          }
+          delete: {
+            args: Prisma.ConfigDeduccionEmpleadoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>
+          }
+          update: {
+            args: Prisma.ConfigDeduccionEmpleadoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>
+          }
+          deleteMany: {
+            args: Prisma.ConfigDeduccionEmpleadoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ConfigDeduccionEmpleadoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ConfigDeduccionEmpleadoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConfigDeduccionEmpleadoPayload>
+          }
+          aggregate: {
+            args: Prisma.ConfigDeduccionEmpleadoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateConfigDeduccionEmpleado>
+          }
+          groupBy: {
+            args: Prisma.ConfigDeduccionEmpleadoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ConfigDeduccionEmpleadoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ConfigDeduccionEmpleadoCountArgs<ExtArgs>
+            result: $Utils.Optional<ConfigDeduccionEmpleadoCountAggregateOutputType> | number
+          }
+        }
+      }
+      NominaComplementaria: {
+        payload: Prisma.$NominaComplementariaPayload<ExtArgs>
+        fields: Prisma.NominaComplementariaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NominaComplementariaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NominaComplementariaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>
+          }
+          findFirst: {
+            args: Prisma.NominaComplementariaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NominaComplementariaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>
+          }
+          findMany: {
+            args: Prisma.NominaComplementariaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>[]
+          }
+          create: {
+            args: Prisma.NominaComplementariaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>
+          }
+          createMany: {
+            args: Prisma.NominaComplementariaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NominaComplementariaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>[]
+          }
+          delete: {
+            args: Prisma.NominaComplementariaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>
+          }
+          update: {
+            args: Prisma.NominaComplementariaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>
+          }
+          deleteMany: {
+            args: Prisma.NominaComplementariaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NominaComplementariaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.NominaComplementariaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaPayload>
+          }
+          aggregate: {
+            args: Prisma.NominaComplementariaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNominaComplementaria>
+          }
+          groupBy: {
+            args: Prisma.NominaComplementariaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NominaComplementariaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NominaComplementariaCountArgs<ExtArgs>
+            result: $Utils.Optional<NominaComplementariaCountAggregateOutputType> | number
+          }
+        }
+      }
+      NominaComplementariaDetalle: {
+        payload: Prisma.$NominaComplementariaDetallePayload<ExtArgs>
+        fields: Prisma.NominaComplementariaDetalleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NominaComplementariaDetalleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NominaComplementariaDetalleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>
+          }
+          findFirst: {
+            args: Prisma.NominaComplementariaDetalleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NominaComplementariaDetalleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>
+          }
+          findMany: {
+            args: Prisma.NominaComplementariaDetalleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>[]
+          }
+          create: {
+            args: Prisma.NominaComplementariaDetalleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>
+          }
+          createMany: {
+            args: Prisma.NominaComplementariaDetalleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NominaComplementariaDetalleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>[]
+          }
+          delete: {
+            args: Prisma.NominaComplementariaDetalleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>
+          }
+          update: {
+            args: Prisma.NominaComplementariaDetalleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>
+          }
+          deleteMany: {
+            args: Prisma.NominaComplementariaDetalleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NominaComplementariaDetalleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.NominaComplementariaDetalleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NominaComplementariaDetallePayload>
+          }
+          aggregate: {
+            args: Prisma.NominaComplementariaDetalleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNominaComplementariaDetalle>
+          }
+          groupBy: {
+            args: Prisma.NominaComplementariaDetalleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NominaComplementariaDetalleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NominaComplementariaDetalleCountArgs<ExtArgs>
+            result: $Utils.Optional<NominaComplementariaDetalleCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1294,6 +1638,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type NominaComplementariaCountOutputType
+   */
+
+  export type NominaComplementariaCountOutputType = {
+    detalles: number
+  }
+
+  export type NominaComplementariaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    detalles?: boolean | NominaComplementariaCountOutputTypeCountDetallesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * NominaComplementariaCountOutputType without action
+   */
+  export type NominaComplementariaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaCountOutputType
+     */
+    select?: NominaComplementariaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * NominaComplementariaCountOutputType without action
+   */
+  export type NominaComplementariaCountOutputTypeCountDetallesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NominaComplementariaDetalleWhereInput
+  }
+
+
+  /**
    * Models
    */
 
@@ -1312,11 +1687,13 @@ export namespace Prisma {
   export type EmpleadoAvgAggregateOutputType = {
     salario_diario: Decimal | null
     salario_integrado: Decimal | null
+    salario_acordado: Decimal | null
   }
 
   export type EmpleadoSumAggregateOutputType = {
     salario_diario: Decimal | null
     salario_integrado: Decimal | null
+    salario_acordado: Decimal | null
   }
 
   export type EmpleadoMinAggregateOutputType = {
@@ -1336,6 +1713,7 @@ export namespace Prisma {
     fecha_baja: Date | null
     salario_diario: Decimal | null
     salario_integrado: Decimal | null
+    salario_acordado: Decimal | null
     telefono: string | null
     email: string | null
     contacto_emergencia: string | null
@@ -1363,6 +1741,7 @@ export namespace Prisma {
     fecha_baja: Date | null
     salario_diario: Decimal | null
     salario_integrado: Decimal | null
+    salario_acordado: Decimal | null
     telefono: string | null
     email: string | null
     contacto_emergencia: string | null
@@ -1390,6 +1769,7 @@ export namespace Prisma {
     fecha_baja: number
     salario_diario: number
     salario_integrado: number
+    salario_acordado: number
     telefono: number
     email: number
     contacto_emergencia: number
@@ -1405,11 +1785,13 @@ export namespace Prisma {
   export type EmpleadoAvgAggregateInputType = {
     salario_diario?: true
     salario_integrado?: true
+    salario_acordado?: true
   }
 
   export type EmpleadoSumAggregateInputType = {
     salario_diario?: true
     salario_integrado?: true
+    salario_acordado?: true
   }
 
   export type EmpleadoMinAggregateInputType = {
@@ -1429,6 +1811,7 @@ export namespace Prisma {
     fecha_baja?: true
     salario_diario?: true
     salario_integrado?: true
+    salario_acordado?: true
     telefono?: true
     email?: true
     contacto_emergencia?: true
@@ -1456,6 +1839,7 @@ export namespace Prisma {
     fecha_baja?: true
     salario_diario?: true
     salario_integrado?: true
+    salario_acordado?: true
     telefono?: true
     email?: true
     contacto_emergencia?: true
@@ -1483,6 +1867,7 @@ export namespace Prisma {
     fecha_baja?: true
     salario_diario?: true
     salario_integrado?: true
+    salario_acordado?: true
     telefono?: true
     email?: true
     contacto_emergencia?: true
@@ -1597,6 +1982,7 @@ export namespace Prisma {
     fecha_baja: Date | null
     salario_diario: Decimal
     salario_integrado: Decimal | null
+    salario_acordado: Decimal | null
     telefono: string | null
     email: string | null
     contacto_emergencia: string | null
@@ -1643,6 +2029,7 @@ export namespace Prisma {
     fecha_baja?: boolean
     salario_diario?: boolean
     salario_integrado?: boolean
+    salario_acordado?: boolean
     telefono?: boolean
     email?: boolean
     contacto_emergencia?: boolean
@@ -1674,6 +2061,7 @@ export namespace Prisma {
     fecha_baja?: boolean
     salario_diario?: boolean
     salario_integrado?: boolean
+    salario_acordado?: boolean
     telefono?: boolean
     email?: boolean
     contacto_emergencia?: boolean
@@ -1702,6 +2090,7 @@ export namespace Prisma {
     fecha_baja?: boolean
     salario_diario?: boolean
     salario_integrado?: boolean
+    salario_acordado?: boolean
     telefono?: boolean
     email?: boolean
     contacto_emergencia?: boolean
@@ -1746,6 +2135,7 @@ export namespace Prisma {
       fecha_baja: Date | null
       salario_diario: Prisma.Decimal
       salario_integrado: Prisma.Decimal | null
+      salario_acordado: Prisma.Decimal | null
       telefono: string | null
       email: string | null
       contacto_emergencia: string | null
@@ -2166,6 +2556,7 @@ export namespace Prisma {
     readonly fecha_baja: FieldRef<"Empleado", 'DateTime'>
     readonly salario_diario: FieldRef<"Empleado", 'Decimal'>
     readonly salario_integrado: FieldRef<"Empleado", 'Decimal'>
+    readonly salario_acordado: FieldRef<"Empleado", 'Decimal'>
     readonly telefono: FieldRef<"Empleado", 'String'>
     readonly email: FieldRef<"Empleado", 'String'>
     readonly contacto_emergencia: FieldRef<"Empleado", 'String'>
@@ -4716,6 +5107,7 @@ export namespace Prisma {
     total_neto: Decimal | null
     total_empleados: number | null
     estado: string | null
+    requiere_recalculo: boolean | null
     elaborado_por: string | null
     autorizado_por: string | null
     fecha_autorizacion: Date | null
@@ -4737,6 +5129,7 @@ export namespace Prisma {
     total_neto: Decimal | null
     total_empleados: number | null
     estado: string | null
+    requiere_recalculo: boolean | null
     elaborado_por: string | null
     autorizado_por: string | null
     fecha_autorizacion: Date | null
@@ -4758,6 +5151,7 @@ export namespace Prisma {
     total_neto: number
     total_empleados: number
     estado: number
+    requiere_recalculo: number
     elaborado_por: number
     autorizado_por: number
     fecha_autorizacion: number
@@ -4795,6 +5189,7 @@ export namespace Prisma {
     total_neto?: true
     total_empleados?: true
     estado?: true
+    requiere_recalculo?: true
     elaborado_por?: true
     autorizado_por?: true
     fecha_autorizacion?: true
@@ -4816,6 +5211,7 @@ export namespace Prisma {
     total_neto?: true
     total_empleados?: true
     estado?: true
+    requiere_recalculo?: true
     elaborado_por?: true
     autorizado_por?: true
     fecha_autorizacion?: true
@@ -4837,6 +5233,7 @@ export namespace Prisma {
     total_neto?: true
     total_empleados?: true
     estado?: true
+    requiere_recalculo?: true
     elaborado_por?: true
     autorizado_por?: true
     fecha_autorizacion?: true
@@ -4945,6 +5342,7 @@ export namespace Prisma {
     total_neto: Decimal
     total_empleados: number
     estado: string
+    requiere_recalculo: boolean
     elaborado_por: string
     autorizado_por: string | null
     fecha_autorizacion: Date | null
@@ -4985,6 +5383,7 @@ export namespace Prisma {
     total_neto?: boolean
     total_empleados?: boolean
     estado?: boolean
+    requiere_recalculo?: boolean
     elaborado_por?: boolean
     autorizado_por?: boolean
     fecha_autorizacion?: boolean
@@ -5008,6 +5407,7 @@ export namespace Prisma {
     total_neto?: boolean
     total_empleados?: boolean
     estado?: boolean
+    requiere_recalculo?: boolean
     elaborado_por?: boolean
     autorizado_por?: boolean
     fecha_autorizacion?: boolean
@@ -5029,6 +5429,7 @@ export namespace Prisma {
     total_neto?: boolean
     total_empleados?: boolean
     estado?: boolean
+    requiere_recalculo?: boolean
     elaborado_por?: boolean
     autorizado_por?: boolean
     fecha_autorizacion?: boolean
@@ -5061,6 +5462,7 @@ export namespace Prisma {
       total_neto: Prisma.Decimal
       total_empleados: number
       estado: string
+      requiere_recalculo: boolean
       elaborado_por: string
       autorizado_por: string | null
       fecha_autorizacion: Date | null
@@ -5473,6 +5875,7 @@ export namespace Prisma {
     readonly total_neto: FieldRef<"PreNomina", 'Decimal'>
     readonly total_empleados: FieldRef<"PreNomina", 'Int'>
     readonly estado: FieldRef<"PreNomina", 'String'>
+    readonly requiere_recalculo: FieldRef<"PreNomina", 'Boolean'>
     readonly elaborado_por: FieldRef<"PreNomina", 'String'>
     readonly autorizado_por: FieldRef<"PreNomina", 'String'>
     readonly fecha_autorizacion: FieldRef<"PreNomina", 'DateTime'>
@@ -5873,6 +6276,7 @@ export namespace Prisma {
     proyecto_id: string | null
     prenomina_id: string | null
     empleado_id: string | null
+    origen_dias: string | null
     dias_trabajados: Decimal | null
     horas_extra: Decimal | null
     salario_base: Decimal | null
@@ -5892,6 +6296,7 @@ export namespace Prisma {
     proyecto_id: string | null
     prenomina_id: string | null
     empleado_id: string | null
+    origen_dias: string | null
     dias_trabajados: Decimal | null
     horas_extra: Decimal | null
     salario_base: Decimal | null
@@ -5911,6 +6316,7 @@ export namespace Prisma {
     proyecto_id: number
     prenomina_id: number
     empleado_id: number
+    origen_dias: number
     dias_trabajados: number
     horas_extra: number
     salario_base: number
@@ -5960,6 +6366,7 @@ export namespace Prisma {
     proyecto_id?: true
     prenomina_id?: true
     empleado_id?: true
+    origen_dias?: true
     dias_trabajados?: true
     horas_extra?: true
     salario_base?: true
@@ -5979,6 +6386,7 @@ export namespace Prisma {
     proyecto_id?: true
     prenomina_id?: true
     empleado_id?: true
+    origen_dias?: true
     dias_trabajados?: true
     horas_extra?: true
     salario_base?: true
@@ -5998,6 +6406,7 @@ export namespace Prisma {
     proyecto_id?: true
     prenomina_id?: true
     empleado_id?: true
+    origen_dias?: true
     dias_trabajados?: true
     horas_extra?: true
     salario_base?: true
@@ -6104,6 +6513,7 @@ export namespace Prisma {
     proyecto_id: string
     prenomina_id: string
     empleado_id: string
+    origen_dias: string
     dias_trabajados: Decimal
     horas_extra: Decimal
     salario_base: Decimal
@@ -6142,6 +6552,7 @@ export namespace Prisma {
     proyecto_id?: boolean
     prenomina_id?: boolean
     empleado_id?: boolean
+    origen_dias?: boolean
     dias_trabajados?: boolean
     horas_extra?: boolean
     salario_base?: boolean
@@ -6163,6 +6574,7 @@ export namespace Prisma {
     proyecto_id?: boolean
     prenomina_id?: boolean
     empleado_id?: boolean
+    origen_dias?: boolean
     dias_trabajados?: boolean
     horas_extra?: boolean
     salario_base?: boolean
@@ -6184,6 +6596,7 @@ export namespace Prisma {
     proyecto_id?: boolean
     prenomina_id?: boolean
     empleado_id?: boolean
+    origen_dias?: boolean
     dias_trabajados?: boolean
     horas_extra?: boolean
     salario_base?: boolean
@@ -6218,6 +6631,7 @@ export namespace Prisma {
       proyecto_id: string
       prenomina_id: string
       empleado_id: string
+      origen_dias: string
       dias_trabajados: Prisma.Decimal
       horas_extra: Prisma.Decimal
       salario_base: Prisma.Decimal
@@ -6629,6 +7043,7 @@ export namespace Prisma {
     readonly proyecto_id: FieldRef<"PreNominaDetalle", 'String'>
     readonly prenomina_id: FieldRef<"PreNominaDetalle", 'String'>
     readonly empleado_id: FieldRef<"PreNominaDetalle", 'String'>
+    readonly origen_dias: FieldRef<"PreNominaDetalle", 'String'>
     readonly dias_trabajados: FieldRef<"PreNominaDetalle", 'Decimal'>
     readonly horas_extra: FieldRef<"PreNominaDetalle", 'Decimal'>
     readonly salario_base: FieldRef<"PreNominaDetalle", 'Decimal'>
@@ -6973,6 +7388,4059 @@ export namespace Prisma {
 
 
   /**
+   * Model RegistroAsistencia
+   */
+
+  export type AggregateRegistroAsistencia = {
+    _count: RegistroAsistenciaCountAggregateOutputType | null
+    _avg: RegistroAsistenciaAvgAggregateOutputType | null
+    _sum: RegistroAsistenciaSumAggregateOutputType | null
+    _min: RegistroAsistenciaMinAggregateOutputType | null
+    _max: RegistroAsistenciaMaxAggregateOutputType | null
+  }
+
+  export type RegistroAsistenciaAvgAggregateOutputType = {
+    horas_extra: Decimal | null
+  }
+
+  export type RegistroAsistenciaSumAggregateOutputType = {
+    horas_extra: Decimal | null
+  }
+
+  export type RegistroAsistenciaMinAggregateOutputType = {
+    id_registro: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    empleado_id: string | null
+    cuadrilla_id: string | null
+    fecha: Date | null
+    estado: string | null
+    tipo_registro: string | null
+    horas_extra: Decimal | null
+    registrado_por: string | null
+    created_at: Date | null
+  }
+
+  export type RegistroAsistenciaMaxAggregateOutputType = {
+    id_registro: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    empleado_id: string | null
+    cuadrilla_id: string | null
+    fecha: Date | null
+    estado: string | null
+    tipo_registro: string | null
+    horas_extra: Decimal | null
+    registrado_por: string | null
+    created_at: Date | null
+  }
+
+  export type RegistroAsistenciaCountAggregateOutputType = {
+    id_registro: number
+    tenant_id: number
+    proyecto_id: number
+    empleado_id: number
+    cuadrilla_id: number
+    fecha: number
+    estado: number
+    tipo_registro: number
+    horas_extra: number
+    registrado_por: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type RegistroAsistenciaAvgAggregateInputType = {
+    horas_extra?: true
+  }
+
+  export type RegistroAsistenciaSumAggregateInputType = {
+    horas_extra?: true
+  }
+
+  export type RegistroAsistenciaMinAggregateInputType = {
+    id_registro?: true
+    tenant_id?: true
+    proyecto_id?: true
+    empleado_id?: true
+    cuadrilla_id?: true
+    fecha?: true
+    estado?: true
+    tipo_registro?: true
+    horas_extra?: true
+    registrado_por?: true
+    created_at?: true
+  }
+
+  export type RegistroAsistenciaMaxAggregateInputType = {
+    id_registro?: true
+    tenant_id?: true
+    proyecto_id?: true
+    empleado_id?: true
+    cuadrilla_id?: true
+    fecha?: true
+    estado?: true
+    tipo_registro?: true
+    horas_extra?: true
+    registrado_por?: true
+    created_at?: true
+  }
+
+  export type RegistroAsistenciaCountAggregateInputType = {
+    id_registro?: true
+    tenant_id?: true
+    proyecto_id?: true
+    empleado_id?: true
+    cuadrilla_id?: true
+    fecha?: true
+    estado?: true
+    tipo_registro?: true
+    horas_extra?: true
+    registrado_por?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type RegistroAsistenciaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RegistroAsistencia to aggregate.
+     */
+    where?: RegistroAsistenciaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistroAsistencias to fetch.
+     */
+    orderBy?: RegistroAsistenciaOrderByWithRelationInput | RegistroAsistenciaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RegistroAsistenciaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistroAsistencias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistroAsistencias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RegistroAsistencias
+    **/
+    _count?: true | RegistroAsistenciaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RegistroAsistenciaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RegistroAsistenciaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RegistroAsistenciaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RegistroAsistenciaMaxAggregateInputType
+  }
+
+  export type GetRegistroAsistenciaAggregateType<T extends RegistroAsistenciaAggregateArgs> = {
+        [P in keyof T & keyof AggregateRegistroAsistencia]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRegistroAsistencia[P]>
+      : GetScalarType<T[P], AggregateRegistroAsistencia[P]>
+  }
+
+
+
+
+  export type RegistroAsistenciaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistroAsistenciaWhereInput
+    orderBy?: RegistroAsistenciaOrderByWithAggregationInput | RegistroAsistenciaOrderByWithAggregationInput[]
+    by: RegistroAsistenciaScalarFieldEnum[] | RegistroAsistenciaScalarFieldEnum
+    having?: RegistroAsistenciaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RegistroAsistenciaCountAggregateInputType | true
+    _avg?: RegistroAsistenciaAvgAggregateInputType
+    _sum?: RegistroAsistenciaSumAggregateInputType
+    _min?: RegistroAsistenciaMinAggregateInputType
+    _max?: RegistroAsistenciaMaxAggregateInputType
+  }
+
+  export type RegistroAsistenciaGroupByOutputType = {
+    id_registro: string
+    tenant_id: string
+    proyecto_id: string
+    empleado_id: string
+    cuadrilla_id: string | null
+    fecha: Date
+    estado: string
+    tipo_registro: string
+    horas_extra: Decimal
+    registrado_por: string
+    created_at: Date
+    _count: RegistroAsistenciaCountAggregateOutputType | null
+    _avg: RegistroAsistenciaAvgAggregateOutputType | null
+    _sum: RegistroAsistenciaSumAggregateOutputType | null
+    _min: RegistroAsistenciaMinAggregateOutputType | null
+    _max: RegistroAsistenciaMaxAggregateOutputType | null
+  }
+
+  type GetRegistroAsistenciaGroupByPayload<T extends RegistroAsistenciaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RegistroAsistenciaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RegistroAsistenciaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RegistroAsistenciaGroupByOutputType[P]>
+            : GetScalarType<T[P], RegistroAsistenciaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RegistroAsistenciaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_registro?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    empleado_id?: boolean
+    cuadrilla_id?: boolean
+    fecha?: boolean
+    estado?: boolean
+    tipo_registro?: boolean
+    horas_extra?: boolean
+    registrado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["registroAsistencia"]>
+
+  export type RegistroAsistenciaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_registro?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    empleado_id?: boolean
+    cuadrilla_id?: boolean
+    fecha?: boolean
+    estado?: boolean
+    tipo_registro?: boolean
+    horas_extra?: boolean
+    registrado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["registroAsistencia"]>
+
+  export type RegistroAsistenciaSelectScalar = {
+    id_registro?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    empleado_id?: boolean
+    cuadrilla_id?: boolean
+    fecha?: boolean
+    estado?: boolean
+    tipo_registro?: boolean
+    horas_extra?: boolean
+    registrado_por?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $RegistroAsistenciaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RegistroAsistencia"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_registro: string
+      tenant_id: string
+      proyecto_id: string
+      empleado_id: string
+      cuadrilla_id: string | null
+      fecha: Date
+      estado: string
+      tipo_registro: string
+      horas_extra: Prisma.Decimal
+      registrado_por: string
+      created_at: Date
+    }, ExtArgs["result"]["registroAsistencia"]>
+    composites: {}
+  }
+
+  type RegistroAsistenciaGetPayload<S extends boolean | null | undefined | RegistroAsistenciaDefaultArgs> = $Result.GetResult<Prisma.$RegistroAsistenciaPayload, S>
+
+  type RegistroAsistenciaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RegistroAsistenciaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RegistroAsistenciaCountAggregateInputType | true
+    }
+
+  export interface RegistroAsistenciaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RegistroAsistencia'], meta: { name: 'RegistroAsistencia' } }
+    /**
+     * Find zero or one RegistroAsistencia that matches the filter.
+     * @param {RegistroAsistenciaFindUniqueArgs} args - Arguments to find a RegistroAsistencia
+     * @example
+     * // Get one RegistroAsistencia
+     * const registroAsistencia = await prisma.registroAsistencia.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RegistroAsistenciaFindUniqueArgs>(args: SelectSubset<T, RegistroAsistenciaFindUniqueArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RegistroAsistencia that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RegistroAsistenciaFindUniqueOrThrowArgs} args - Arguments to find a RegistroAsistencia
+     * @example
+     * // Get one RegistroAsistencia
+     * const registroAsistencia = await prisma.registroAsistencia.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RegistroAsistenciaFindUniqueOrThrowArgs>(args: SelectSubset<T, RegistroAsistenciaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RegistroAsistencia that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaFindFirstArgs} args - Arguments to find a RegistroAsistencia
+     * @example
+     * // Get one RegistroAsistencia
+     * const registroAsistencia = await prisma.registroAsistencia.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RegistroAsistenciaFindFirstArgs>(args?: SelectSubset<T, RegistroAsistenciaFindFirstArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RegistroAsistencia that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaFindFirstOrThrowArgs} args - Arguments to find a RegistroAsistencia
+     * @example
+     * // Get one RegistroAsistencia
+     * const registroAsistencia = await prisma.registroAsistencia.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RegistroAsistenciaFindFirstOrThrowArgs>(args?: SelectSubset<T, RegistroAsistenciaFindFirstOrThrowArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RegistroAsistencias that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RegistroAsistencias
+     * const registroAsistencias = await prisma.registroAsistencia.findMany()
+     * 
+     * // Get first 10 RegistroAsistencias
+     * const registroAsistencias = await prisma.registroAsistencia.findMany({ take: 10 })
+     * 
+     * // Only select the `id_registro`
+     * const registroAsistenciaWithId_registroOnly = await prisma.registroAsistencia.findMany({ select: { id_registro: true } })
+     * 
+     */
+    findMany<T extends RegistroAsistenciaFindManyArgs>(args?: SelectSubset<T, RegistroAsistenciaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RegistroAsistencia.
+     * @param {RegistroAsistenciaCreateArgs} args - Arguments to create a RegistroAsistencia.
+     * @example
+     * // Create one RegistroAsistencia
+     * const RegistroAsistencia = await prisma.registroAsistencia.create({
+     *   data: {
+     *     // ... data to create a RegistroAsistencia
+     *   }
+     * })
+     * 
+     */
+    create<T extends RegistroAsistenciaCreateArgs>(args: SelectSubset<T, RegistroAsistenciaCreateArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RegistroAsistencias.
+     * @param {RegistroAsistenciaCreateManyArgs} args - Arguments to create many RegistroAsistencias.
+     * @example
+     * // Create many RegistroAsistencias
+     * const registroAsistencia = await prisma.registroAsistencia.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RegistroAsistenciaCreateManyArgs>(args?: SelectSubset<T, RegistroAsistenciaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RegistroAsistencias and returns the data saved in the database.
+     * @param {RegistroAsistenciaCreateManyAndReturnArgs} args - Arguments to create many RegistroAsistencias.
+     * @example
+     * // Create many RegistroAsistencias
+     * const registroAsistencia = await prisma.registroAsistencia.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RegistroAsistencias and only return the `id_registro`
+     * const registroAsistenciaWithId_registroOnly = await prisma.registroAsistencia.createManyAndReturn({ 
+     *   select: { id_registro: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RegistroAsistenciaCreateManyAndReturnArgs>(args?: SelectSubset<T, RegistroAsistenciaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RegistroAsistencia.
+     * @param {RegistroAsistenciaDeleteArgs} args - Arguments to delete one RegistroAsistencia.
+     * @example
+     * // Delete one RegistroAsistencia
+     * const RegistroAsistencia = await prisma.registroAsistencia.delete({
+     *   where: {
+     *     // ... filter to delete one RegistroAsistencia
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RegistroAsistenciaDeleteArgs>(args: SelectSubset<T, RegistroAsistenciaDeleteArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RegistroAsistencia.
+     * @param {RegistroAsistenciaUpdateArgs} args - Arguments to update one RegistroAsistencia.
+     * @example
+     * // Update one RegistroAsistencia
+     * const registroAsistencia = await prisma.registroAsistencia.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RegistroAsistenciaUpdateArgs>(args: SelectSubset<T, RegistroAsistenciaUpdateArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RegistroAsistencias.
+     * @param {RegistroAsistenciaDeleteManyArgs} args - Arguments to filter RegistroAsistencias to delete.
+     * @example
+     * // Delete a few RegistroAsistencias
+     * const { count } = await prisma.registroAsistencia.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RegistroAsistenciaDeleteManyArgs>(args?: SelectSubset<T, RegistroAsistenciaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RegistroAsistencias.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RegistroAsistencias
+     * const registroAsistencia = await prisma.registroAsistencia.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RegistroAsistenciaUpdateManyArgs>(args: SelectSubset<T, RegistroAsistenciaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RegistroAsistencia.
+     * @param {RegistroAsistenciaUpsertArgs} args - Arguments to update or create a RegistroAsistencia.
+     * @example
+     * // Update or create a RegistroAsistencia
+     * const registroAsistencia = await prisma.registroAsistencia.upsert({
+     *   create: {
+     *     // ... data to create a RegistroAsistencia
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RegistroAsistencia we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RegistroAsistenciaUpsertArgs>(args: SelectSubset<T, RegistroAsistenciaUpsertArgs<ExtArgs>>): Prisma__RegistroAsistenciaClient<$Result.GetResult<Prisma.$RegistroAsistenciaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RegistroAsistencias.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaCountArgs} args - Arguments to filter RegistroAsistencias to count.
+     * @example
+     * // Count the number of RegistroAsistencias
+     * const count = await prisma.registroAsistencia.count({
+     *   where: {
+     *     // ... the filter for the RegistroAsistencias we want to count
+     *   }
+     * })
+    **/
+    count<T extends RegistroAsistenciaCountArgs>(
+      args?: Subset<T, RegistroAsistenciaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RegistroAsistenciaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RegistroAsistencia.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RegistroAsistenciaAggregateArgs>(args: Subset<T, RegistroAsistenciaAggregateArgs>): Prisma.PrismaPromise<GetRegistroAsistenciaAggregateType<T>>
+
+    /**
+     * Group by RegistroAsistencia.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistroAsistenciaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RegistroAsistenciaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RegistroAsistenciaGroupByArgs['orderBy'] }
+        : { orderBy?: RegistroAsistenciaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RegistroAsistenciaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRegistroAsistenciaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RegistroAsistencia model
+   */
+  readonly fields: RegistroAsistenciaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RegistroAsistencia.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RegistroAsistenciaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RegistroAsistencia model
+   */ 
+  interface RegistroAsistenciaFieldRefs {
+    readonly id_registro: FieldRef<"RegistroAsistencia", 'String'>
+    readonly tenant_id: FieldRef<"RegistroAsistencia", 'String'>
+    readonly proyecto_id: FieldRef<"RegistroAsistencia", 'String'>
+    readonly empleado_id: FieldRef<"RegistroAsistencia", 'String'>
+    readonly cuadrilla_id: FieldRef<"RegistroAsistencia", 'String'>
+    readonly fecha: FieldRef<"RegistroAsistencia", 'DateTime'>
+    readonly estado: FieldRef<"RegistroAsistencia", 'String'>
+    readonly tipo_registro: FieldRef<"RegistroAsistencia", 'String'>
+    readonly horas_extra: FieldRef<"RegistroAsistencia", 'Decimal'>
+    readonly registrado_por: FieldRef<"RegistroAsistencia", 'String'>
+    readonly created_at: FieldRef<"RegistroAsistencia", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RegistroAsistencia findUnique
+   */
+  export type RegistroAsistenciaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * Filter, which RegistroAsistencia to fetch.
+     */
+    where: RegistroAsistenciaWhereUniqueInput
+  }
+
+  /**
+   * RegistroAsistencia findUniqueOrThrow
+   */
+  export type RegistroAsistenciaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * Filter, which RegistroAsistencia to fetch.
+     */
+    where: RegistroAsistenciaWhereUniqueInput
+  }
+
+  /**
+   * RegistroAsistencia findFirst
+   */
+  export type RegistroAsistenciaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * Filter, which RegistroAsistencia to fetch.
+     */
+    where?: RegistroAsistenciaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistroAsistencias to fetch.
+     */
+    orderBy?: RegistroAsistenciaOrderByWithRelationInput | RegistroAsistenciaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RegistroAsistencias.
+     */
+    cursor?: RegistroAsistenciaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistroAsistencias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistroAsistencias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RegistroAsistencias.
+     */
+    distinct?: RegistroAsistenciaScalarFieldEnum | RegistroAsistenciaScalarFieldEnum[]
+  }
+
+  /**
+   * RegistroAsistencia findFirstOrThrow
+   */
+  export type RegistroAsistenciaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * Filter, which RegistroAsistencia to fetch.
+     */
+    where?: RegistroAsistenciaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistroAsistencias to fetch.
+     */
+    orderBy?: RegistroAsistenciaOrderByWithRelationInput | RegistroAsistenciaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RegistroAsistencias.
+     */
+    cursor?: RegistroAsistenciaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistroAsistencias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistroAsistencias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RegistroAsistencias.
+     */
+    distinct?: RegistroAsistenciaScalarFieldEnum | RegistroAsistenciaScalarFieldEnum[]
+  }
+
+  /**
+   * RegistroAsistencia findMany
+   */
+  export type RegistroAsistenciaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * Filter, which RegistroAsistencias to fetch.
+     */
+    where?: RegistroAsistenciaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistroAsistencias to fetch.
+     */
+    orderBy?: RegistroAsistenciaOrderByWithRelationInput | RegistroAsistenciaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RegistroAsistencias.
+     */
+    cursor?: RegistroAsistenciaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistroAsistencias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistroAsistencias.
+     */
+    skip?: number
+    distinct?: RegistroAsistenciaScalarFieldEnum | RegistroAsistenciaScalarFieldEnum[]
+  }
+
+  /**
+   * RegistroAsistencia create
+   */
+  export type RegistroAsistenciaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * The data needed to create a RegistroAsistencia.
+     */
+    data: XOR<RegistroAsistenciaCreateInput, RegistroAsistenciaUncheckedCreateInput>
+  }
+
+  /**
+   * RegistroAsistencia createMany
+   */
+  export type RegistroAsistenciaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RegistroAsistencias.
+     */
+    data: RegistroAsistenciaCreateManyInput | RegistroAsistenciaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RegistroAsistencia createManyAndReturn
+   */
+  export type RegistroAsistenciaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RegistroAsistencias.
+     */
+    data: RegistroAsistenciaCreateManyInput | RegistroAsistenciaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RegistroAsistencia update
+   */
+  export type RegistroAsistenciaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * The data needed to update a RegistroAsistencia.
+     */
+    data: XOR<RegistroAsistenciaUpdateInput, RegistroAsistenciaUncheckedUpdateInput>
+    /**
+     * Choose, which RegistroAsistencia to update.
+     */
+    where: RegistroAsistenciaWhereUniqueInput
+  }
+
+  /**
+   * RegistroAsistencia updateMany
+   */
+  export type RegistroAsistenciaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RegistroAsistencias.
+     */
+    data: XOR<RegistroAsistenciaUpdateManyMutationInput, RegistroAsistenciaUncheckedUpdateManyInput>
+    /**
+     * Filter which RegistroAsistencias to update
+     */
+    where?: RegistroAsistenciaWhereInput
+  }
+
+  /**
+   * RegistroAsistencia upsert
+   */
+  export type RegistroAsistenciaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * The filter to search for the RegistroAsistencia to update in case it exists.
+     */
+    where: RegistroAsistenciaWhereUniqueInput
+    /**
+     * In case the RegistroAsistencia found by the `where` argument doesn't exist, create a new RegistroAsistencia with this data.
+     */
+    create: XOR<RegistroAsistenciaCreateInput, RegistroAsistenciaUncheckedCreateInput>
+    /**
+     * In case the RegistroAsistencia was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RegistroAsistenciaUpdateInput, RegistroAsistenciaUncheckedUpdateInput>
+  }
+
+  /**
+   * RegistroAsistencia delete
+   */
+  export type RegistroAsistenciaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+    /**
+     * Filter which RegistroAsistencia to delete.
+     */
+    where: RegistroAsistenciaWhereUniqueInput
+  }
+
+  /**
+   * RegistroAsistencia deleteMany
+   */
+  export type RegistroAsistenciaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RegistroAsistencias to delete
+     */
+    where?: RegistroAsistenciaWhereInput
+  }
+
+  /**
+   * RegistroAsistencia without action
+   */
+  export type RegistroAsistenciaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistroAsistencia
+     */
+    select?: RegistroAsistenciaSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ConfigDeduccionEmpleado
+   */
+
+  export type AggregateConfigDeduccionEmpleado = {
+    _count: ConfigDeduccionEmpleadoCountAggregateOutputType | null
+    _avg: ConfigDeduccionEmpleadoAvgAggregateOutputType | null
+    _sum: ConfigDeduccionEmpleadoSumAggregateOutputType | null
+    _min: ConfigDeduccionEmpleadoMinAggregateOutputType | null
+    _max: ConfigDeduccionEmpleadoMaxAggregateOutputType | null
+  }
+
+  export type ConfigDeduccionEmpleadoAvgAggregateOutputType = {
+    infonavit_monto: Decimal | null
+  }
+
+  export type ConfigDeduccionEmpleadoSumAggregateOutputType = {
+    infonavit_monto: Decimal | null
+  }
+
+  export type ConfigDeduccionEmpleadoMinAggregateOutputType = {
+    id_config: string | null
+    tenant_id: string | null
+    empleado_id: string | null
+    aplica_imss: boolean | null
+    aplica_isr: boolean | null
+    aplica_infonavit: boolean | null
+    infonavit_num: string | null
+    infonavit_monto: Decimal | null
+    updated_at: Date | null
+  }
+
+  export type ConfigDeduccionEmpleadoMaxAggregateOutputType = {
+    id_config: string | null
+    tenant_id: string | null
+    empleado_id: string | null
+    aplica_imss: boolean | null
+    aplica_isr: boolean | null
+    aplica_infonavit: boolean | null
+    infonavit_num: string | null
+    infonavit_monto: Decimal | null
+    updated_at: Date | null
+  }
+
+  export type ConfigDeduccionEmpleadoCountAggregateOutputType = {
+    id_config: number
+    tenant_id: number
+    empleado_id: number
+    aplica_imss: number
+    aplica_isr: number
+    aplica_infonavit: number
+    infonavit_num: number
+    infonavit_monto: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ConfigDeduccionEmpleadoAvgAggregateInputType = {
+    infonavit_monto?: true
+  }
+
+  export type ConfigDeduccionEmpleadoSumAggregateInputType = {
+    infonavit_monto?: true
+  }
+
+  export type ConfigDeduccionEmpleadoMinAggregateInputType = {
+    id_config?: true
+    tenant_id?: true
+    empleado_id?: true
+    aplica_imss?: true
+    aplica_isr?: true
+    aplica_infonavit?: true
+    infonavit_num?: true
+    infonavit_monto?: true
+    updated_at?: true
+  }
+
+  export type ConfigDeduccionEmpleadoMaxAggregateInputType = {
+    id_config?: true
+    tenant_id?: true
+    empleado_id?: true
+    aplica_imss?: true
+    aplica_isr?: true
+    aplica_infonavit?: true
+    infonavit_num?: true
+    infonavit_monto?: true
+    updated_at?: true
+  }
+
+  export type ConfigDeduccionEmpleadoCountAggregateInputType = {
+    id_config?: true
+    tenant_id?: true
+    empleado_id?: true
+    aplica_imss?: true
+    aplica_isr?: true
+    aplica_infonavit?: true
+    infonavit_num?: true
+    infonavit_monto?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ConfigDeduccionEmpleadoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConfigDeduccionEmpleado to aggregate.
+     */
+    where?: ConfigDeduccionEmpleadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConfigDeduccionEmpleados to fetch.
+     */
+    orderBy?: ConfigDeduccionEmpleadoOrderByWithRelationInput | ConfigDeduccionEmpleadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ConfigDeduccionEmpleadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConfigDeduccionEmpleados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConfigDeduccionEmpleados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ConfigDeduccionEmpleados
+    **/
+    _count?: true | ConfigDeduccionEmpleadoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ConfigDeduccionEmpleadoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ConfigDeduccionEmpleadoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ConfigDeduccionEmpleadoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ConfigDeduccionEmpleadoMaxAggregateInputType
+  }
+
+  export type GetConfigDeduccionEmpleadoAggregateType<T extends ConfigDeduccionEmpleadoAggregateArgs> = {
+        [P in keyof T & keyof AggregateConfigDeduccionEmpleado]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateConfigDeduccionEmpleado[P]>
+      : GetScalarType<T[P], AggregateConfigDeduccionEmpleado[P]>
+  }
+
+
+
+
+  export type ConfigDeduccionEmpleadoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConfigDeduccionEmpleadoWhereInput
+    orderBy?: ConfigDeduccionEmpleadoOrderByWithAggregationInput | ConfigDeduccionEmpleadoOrderByWithAggregationInput[]
+    by: ConfigDeduccionEmpleadoScalarFieldEnum[] | ConfigDeduccionEmpleadoScalarFieldEnum
+    having?: ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ConfigDeduccionEmpleadoCountAggregateInputType | true
+    _avg?: ConfigDeduccionEmpleadoAvgAggregateInputType
+    _sum?: ConfigDeduccionEmpleadoSumAggregateInputType
+    _min?: ConfigDeduccionEmpleadoMinAggregateInputType
+    _max?: ConfigDeduccionEmpleadoMaxAggregateInputType
+  }
+
+  export type ConfigDeduccionEmpleadoGroupByOutputType = {
+    id_config: string
+    tenant_id: string
+    empleado_id: string
+    aplica_imss: boolean
+    aplica_isr: boolean
+    aplica_infonavit: boolean
+    infonavit_num: string | null
+    infonavit_monto: Decimal | null
+    updated_at: Date
+    _count: ConfigDeduccionEmpleadoCountAggregateOutputType | null
+    _avg: ConfigDeduccionEmpleadoAvgAggregateOutputType | null
+    _sum: ConfigDeduccionEmpleadoSumAggregateOutputType | null
+    _min: ConfigDeduccionEmpleadoMinAggregateOutputType | null
+    _max: ConfigDeduccionEmpleadoMaxAggregateOutputType | null
+  }
+
+  type GetConfigDeduccionEmpleadoGroupByPayload<T extends ConfigDeduccionEmpleadoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ConfigDeduccionEmpleadoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ConfigDeduccionEmpleadoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ConfigDeduccionEmpleadoGroupByOutputType[P]>
+            : GetScalarType<T[P], ConfigDeduccionEmpleadoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ConfigDeduccionEmpleadoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_config?: boolean
+    tenant_id?: boolean
+    empleado_id?: boolean
+    aplica_imss?: boolean
+    aplica_isr?: boolean
+    aplica_infonavit?: boolean
+    infonavit_num?: boolean
+    infonavit_monto?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["configDeduccionEmpleado"]>
+
+  export type ConfigDeduccionEmpleadoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_config?: boolean
+    tenant_id?: boolean
+    empleado_id?: boolean
+    aplica_imss?: boolean
+    aplica_isr?: boolean
+    aplica_infonavit?: boolean
+    infonavit_num?: boolean
+    infonavit_monto?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["configDeduccionEmpleado"]>
+
+  export type ConfigDeduccionEmpleadoSelectScalar = {
+    id_config?: boolean
+    tenant_id?: boolean
+    empleado_id?: boolean
+    aplica_imss?: boolean
+    aplica_isr?: boolean
+    aplica_infonavit?: boolean
+    infonavit_num?: boolean
+    infonavit_monto?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $ConfigDeduccionEmpleadoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ConfigDeduccionEmpleado"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_config: string
+      tenant_id: string
+      empleado_id: string
+      aplica_imss: boolean
+      aplica_isr: boolean
+      aplica_infonavit: boolean
+      infonavit_num: string | null
+      infonavit_monto: Prisma.Decimal | null
+      updated_at: Date
+    }, ExtArgs["result"]["configDeduccionEmpleado"]>
+    composites: {}
+  }
+
+  type ConfigDeduccionEmpleadoGetPayload<S extends boolean | null | undefined | ConfigDeduccionEmpleadoDefaultArgs> = $Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload, S>
+
+  type ConfigDeduccionEmpleadoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ConfigDeduccionEmpleadoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ConfigDeduccionEmpleadoCountAggregateInputType | true
+    }
+
+  export interface ConfigDeduccionEmpleadoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ConfigDeduccionEmpleado'], meta: { name: 'ConfigDeduccionEmpleado' } }
+    /**
+     * Find zero or one ConfigDeduccionEmpleado that matches the filter.
+     * @param {ConfigDeduccionEmpleadoFindUniqueArgs} args - Arguments to find a ConfigDeduccionEmpleado
+     * @example
+     * // Get one ConfigDeduccionEmpleado
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ConfigDeduccionEmpleadoFindUniqueArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoFindUniqueArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ConfigDeduccionEmpleado that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ConfigDeduccionEmpleadoFindUniqueOrThrowArgs} args - Arguments to find a ConfigDeduccionEmpleado
+     * @example
+     * // Get one ConfigDeduccionEmpleado
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ConfigDeduccionEmpleadoFindUniqueOrThrowArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ConfigDeduccionEmpleado that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoFindFirstArgs} args - Arguments to find a ConfigDeduccionEmpleado
+     * @example
+     * // Get one ConfigDeduccionEmpleado
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ConfigDeduccionEmpleadoFindFirstArgs>(args?: SelectSubset<T, ConfigDeduccionEmpleadoFindFirstArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ConfigDeduccionEmpleado that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoFindFirstOrThrowArgs} args - Arguments to find a ConfigDeduccionEmpleado
+     * @example
+     * // Get one ConfigDeduccionEmpleado
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ConfigDeduccionEmpleadoFindFirstOrThrowArgs>(args?: SelectSubset<T, ConfigDeduccionEmpleadoFindFirstOrThrowArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ConfigDeduccionEmpleados that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ConfigDeduccionEmpleados
+     * const configDeduccionEmpleados = await prisma.configDeduccionEmpleado.findMany()
+     * 
+     * // Get first 10 ConfigDeduccionEmpleados
+     * const configDeduccionEmpleados = await prisma.configDeduccionEmpleado.findMany({ take: 10 })
+     * 
+     * // Only select the `id_config`
+     * const configDeduccionEmpleadoWithId_configOnly = await prisma.configDeduccionEmpleado.findMany({ select: { id_config: true } })
+     * 
+     */
+    findMany<T extends ConfigDeduccionEmpleadoFindManyArgs>(args?: SelectSubset<T, ConfigDeduccionEmpleadoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ConfigDeduccionEmpleado.
+     * @param {ConfigDeduccionEmpleadoCreateArgs} args - Arguments to create a ConfigDeduccionEmpleado.
+     * @example
+     * // Create one ConfigDeduccionEmpleado
+     * const ConfigDeduccionEmpleado = await prisma.configDeduccionEmpleado.create({
+     *   data: {
+     *     // ... data to create a ConfigDeduccionEmpleado
+     *   }
+     * })
+     * 
+     */
+    create<T extends ConfigDeduccionEmpleadoCreateArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoCreateArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ConfigDeduccionEmpleados.
+     * @param {ConfigDeduccionEmpleadoCreateManyArgs} args - Arguments to create many ConfigDeduccionEmpleados.
+     * @example
+     * // Create many ConfigDeduccionEmpleados
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ConfigDeduccionEmpleadoCreateManyArgs>(args?: SelectSubset<T, ConfigDeduccionEmpleadoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ConfigDeduccionEmpleados and returns the data saved in the database.
+     * @param {ConfigDeduccionEmpleadoCreateManyAndReturnArgs} args - Arguments to create many ConfigDeduccionEmpleados.
+     * @example
+     * // Create many ConfigDeduccionEmpleados
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ConfigDeduccionEmpleados and only return the `id_config`
+     * const configDeduccionEmpleadoWithId_configOnly = await prisma.configDeduccionEmpleado.createManyAndReturn({ 
+     *   select: { id_config: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ConfigDeduccionEmpleadoCreateManyAndReturnArgs>(args?: SelectSubset<T, ConfigDeduccionEmpleadoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ConfigDeduccionEmpleado.
+     * @param {ConfigDeduccionEmpleadoDeleteArgs} args - Arguments to delete one ConfigDeduccionEmpleado.
+     * @example
+     * // Delete one ConfigDeduccionEmpleado
+     * const ConfigDeduccionEmpleado = await prisma.configDeduccionEmpleado.delete({
+     *   where: {
+     *     // ... filter to delete one ConfigDeduccionEmpleado
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ConfigDeduccionEmpleadoDeleteArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoDeleteArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ConfigDeduccionEmpleado.
+     * @param {ConfigDeduccionEmpleadoUpdateArgs} args - Arguments to update one ConfigDeduccionEmpleado.
+     * @example
+     * // Update one ConfigDeduccionEmpleado
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ConfigDeduccionEmpleadoUpdateArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoUpdateArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ConfigDeduccionEmpleados.
+     * @param {ConfigDeduccionEmpleadoDeleteManyArgs} args - Arguments to filter ConfigDeduccionEmpleados to delete.
+     * @example
+     * // Delete a few ConfigDeduccionEmpleados
+     * const { count } = await prisma.configDeduccionEmpleado.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ConfigDeduccionEmpleadoDeleteManyArgs>(args?: SelectSubset<T, ConfigDeduccionEmpleadoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ConfigDeduccionEmpleados.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ConfigDeduccionEmpleados
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ConfigDeduccionEmpleadoUpdateManyArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ConfigDeduccionEmpleado.
+     * @param {ConfigDeduccionEmpleadoUpsertArgs} args - Arguments to update or create a ConfigDeduccionEmpleado.
+     * @example
+     * // Update or create a ConfigDeduccionEmpleado
+     * const configDeduccionEmpleado = await prisma.configDeduccionEmpleado.upsert({
+     *   create: {
+     *     // ... data to create a ConfigDeduccionEmpleado
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ConfigDeduccionEmpleado we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ConfigDeduccionEmpleadoUpsertArgs>(args: SelectSubset<T, ConfigDeduccionEmpleadoUpsertArgs<ExtArgs>>): Prisma__ConfigDeduccionEmpleadoClient<$Result.GetResult<Prisma.$ConfigDeduccionEmpleadoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ConfigDeduccionEmpleados.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoCountArgs} args - Arguments to filter ConfigDeduccionEmpleados to count.
+     * @example
+     * // Count the number of ConfigDeduccionEmpleados
+     * const count = await prisma.configDeduccionEmpleado.count({
+     *   where: {
+     *     // ... the filter for the ConfigDeduccionEmpleados we want to count
+     *   }
+     * })
+    **/
+    count<T extends ConfigDeduccionEmpleadoCountArgs>(
+      args?: Subset<T, ConfigDeduccionEmpleadoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ConfigDeduccionEmpleadoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ConfigDeduccionEmpleado.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ConfigDeduccionEmpleadoAggregateArgs>(args: Subset<T, ConfigDeduccionEmpleadoAggregateArgs>): Prisma.PrismaPromise<GetConfigDeduccionEmpleadoAggregateType<T>>
+
+    /**
+     * Group by ConfigDeduccionEmpleado.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConfigDeduccionEmpleadoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ConfigDeduccionEmpleadoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ConfigDeduccionEmpleadoGroupByArgs['orderBy'] }
+        : { orderBy?: ConfigDeduccionEmpleadoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ConfigDeduccionEmpleadoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetConfigDeduccionEmpleadoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ConfigDeduccionEmpleado model
+   */
+  readonly fields: ConfigDeduccionEmpleadoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ConfigDeduccionEmpleado.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ConfigDeduccionEmpleadoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ConfigDeduccionEmpleado model
+   */ 
+  interface ConfigDeduccionEmpleadoFieldRefs {
+    readonly id_config: FieldRef<"ConfigDeduccionEmpleado", 'String'>
+    readonly tenant_id: FieldRef<"ConfigDeduccionEmpleado", 'String'>
+    readonly empleado_id: FieldRef<"ConfigDeduccionEmpleado", 'String'>
+    readonly aplica_imss: FieldRef<"ConfigDeduccionEmpleado", 'Boolean'>
+    readonly aplica_isr: FieldRef<"ConfigDeduccionEmpleado", 'Boolean'>
+    readonly aplica_infonavit: FieldRef<"ConfigDeduccionEmpleado", 'Boolean'>
+    readonly infonavit_num: FieldRef<"ConfigDeduccionEmpleado", 'String'>
+    readonly infonavit_monto: FieldRef<"ConfigDeduccionEmpleado", 'Decimal'>
+    readonly updated_at: FieldRef<"ConfigDeduccionEmpleado", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ConfigDeduccionEmpleado findUnique
+   */
+  export type ConfigDeduccionEmpleadoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConfigDeduccionEmpleado to fetch.
+     */
+    where: ConfigDeduccionEmpleadoWhereUniqueInput
+  }
+
+  /**
+   * ConfigDeduccionEmpleado findUniqueOrThrow
+   */
+  export type ConfigDeduccionEmpleadoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConfigDeduccionEmpleado to fetch.
+     */
+    where: ConfigDeduccionEmpleadoWhereUniqueInput
+  }
+
+  /**
+   * ConfigDeduccionEmpleado findFirst
+   */
+  export type ConfigDeduccionEmpleadoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConfigDeduccionEmpleado to fetch.
+     */
+    where?: ConfigDeduccionEmpleadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConfigDeduccionEmpleados to fetch.
+     */
+    orderBy?: ConfigDeduccionEmpleadoOrderByWithRelationInput | ConfigDeduccionEmpleadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConfigDeduccionEmpleados.
+     */
+    cursor?: ConfigDeduccionEmpleadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConfigDeduccionEmpleados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConfigDeduccionEmpleados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConfigDeduccionEmpleados.
+     */
+    distinct?: ConfigDeduccionEmpleadoScalarFieldEnum | ConfigDeduccionEmpleadoScalarFieldEnum[]
+  }
+
+  /**
+   * ConfigDeduccionEmpleado findFirstOrThrow
+   */
+  export type ConfigDeduccionEmpleadoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConfigDeduccionEmpleado to fetch.
+     */
+    where?: ConfigDeduccionEmpleadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConfigDeduccionEmpleados to fetch.
+     */
+    orderBy?: ConfigDeduccionEmpleadoOrderByWithRelationInput | ConfigDeduccionEmpleadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConfigDeduccionEmpleados.
+     */
+    cursor?: ConfigDeduccionEmpleadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConfigDeduccionEmpleados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConfigDeduccionEmpleados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConfigDeduccionEmpleados.
+     */
+    distinct?: ConfigDeduccionEmpleadoScalarFieldEnum | ConfigDeduccionEmpleadoScalarFieldEnum[]
+  }
+
+  /**
+   * ConfigDeduccionEmpleado findMany
+   */
+  export type ConfigDeduccionEmpleadoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConfigDeduccionEmpleados to fetch.
+     */
+    where?: ConfigDeduccionEmpleadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConfigDeduccionEmpleados to fetch.
+     */
+    orderBy?: ConfigDeduccionEmpleadoOrderByWithRelationInput | ConfigDeduccionEmpleadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ConfigDeduccionEmpleados.
+     */
+    cursor?: ConfigDeduccionEmpleadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConfigDeduccionEmpleados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConfigDeduccionEmpleados.
+     */
+    skip?: number
+    distinct?: ConfigDeduccionEmpleadoScalarFieldEnum | ConfigDeduccionEmpleadoScalarFieldEnum[]
+  }
+
+  /**
+   * ConfigDeduccionEmpleado create
+   */
+  export type ConfigDeduccionEmpleadoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a ConfigDeduccionEmpleado.
+     */
+    data: XOR<ConfigDeduccionEmpleadoCreateInput, ConfigDeduccionEmpleadoUncheckedCreateInput>
+  }
+
+  /**
+   * ConfigDeduccionEmpleado createMany
+   */
+  export type ConfigDeduccionEmpleadoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ConfigDeduccionEmpleados.
+     */
+    data: ConfigDeduccionEmpleadoCreateManyInput | ConfigDeduccionEmpleadoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConfigDeduccionEmpleado createManyAndReturn
+   */
+  export type ConfigDeduccionEmpleadoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ConfigDeduccionEmpleados.
+     */
+    data: ConfigDeduccionEmpleadoCreateManyInput | ConfigDeduccionEmpleadoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConfigDeduccionEmpleado update
+   */
+  export type ConfigDeduccionEmpleadoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a ConfigDeduccionEmpleado.
+     */
+    data: XOR<ConfigDeduccionEmpleadoUpdateInput, ConfigDeduccionEmpleadoUncheckedUpdateInput>
+    /**
+     * Choose, which ConfigDeduccionEmpleado to update.
+     */
+    where: ConfigDeduccionEmpleadoWhereUniqueInput
+  }
+
+  /**
+   * ConfigDeduccionEmpleado updateMany
+   */
+  export type ConfigDeduccionEmpleadoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ConfigDeduccionEmpleados.
+     */
+    data: XOR<ConfigDeduccionEmpleadoUpdateManyMutationInput, ConfigDeduccionEmpleadoUncheckedUpdateManyInput>
+    /**
+     * Filter which ConfigDeduccionEmpleados to update
+     */
+    where?: ConfigDeduccionEmpleadoWhereInput
+  }
+
+  /**
+   * ConfigDeduccionEmpleado upsert
+   */
+  export type ConfigDeduccionEmpleadoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the ConfigDeduccionEmpleado to update in case it exists.
+     */
+    where: ConfigDeduccionEmpleadoWhereUniqueInput
+    /**
+     * In case the ConfigDeduccionEmpleado found by the `where` argument doesn't exist, create a new ConfigDeduccionEmpleado with this data.
+     */
+    create: XOR<ConfigDeduccionEmpleadoCreateInput, ConfigDeduccionEmpleadoUncheckedCreateInput>
+    /**
+     * In case the ConfigDeduccionEmpleado was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ConfigDeduccionEmpleadoUpdateInput, ConfigDeduccionEmpleadoUncheckedUpdateInput>
+  }
+
+  /**
+   * ConfigDeduccionEmpleado delete
+   */
+  export type ConfigDeduccionEmpleadoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+    /**
+     * Filter which ConfigDeduccionEmpleado to delete.
+     */
+    where: ConfigDeduccionEmpleadoWhereUniqueInput
+  }
+
+  /**
+   * ConfigDeduccionEmpleado deleteMany
+   */
+  export type ConfigDeduccionEmpleadoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConfigDeduccionEmpleados to delete
+     */
+    where?: ConfigDeduccionEmpleadoWhereInput
+  }
+
+  /**
+   * ConfigDeduccionEmpleado without action
+   */
+  export type ConfigDeduccionEmpleadoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConfigDeduccionEmpleado
+     */
+    select?: ConfigDeduccionEmpleadoSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NominaComplementaria
+   */
+
+  export type AggregateNominaComplementaria = {
+    _count: NominaComplementariaCountAggregateOutputType | null
+    _avg: NominaComplementariaAvgAggregateOutputType | null
+    _sum: NominaComplementariaSumAggregateOutputType | null
+    _min: NominaComplementariaMinAggregateOutputType | null
+    _max: NominaComplementariaMaxAggregateOutputType | null
+  }
+
+  export type NominaComplementariaAvgAggregateOutputType = {
+    total_complemento: Decimal | null
+  }
+
+  export type NominaComplementariaSumAggregateOutputType = {
+    total_complemento: Decimal | null
+  }
+
+  export type NominaComplementariaMinAggregateOutputType = {
+    id_complemento: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    prenomina_id: string | null
+    codigo: string | null
+    periodo_inicio: Date | null
+    periodo_fin: Date | null
+    periodo_tipo: string | null
+    total_complemento: Decimal | null
+    estado: string | null
+    elaborado_por: string | null
+    autorizado_por: string | null
+    created_at: Date | null
+  }
+
+  export type NominaComplementariaMaxAggregateOutputType = {
+    id_complemento: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    prenomina_id: string | null
+    codigo: string | null
+    periodo_inicio: Date | null
+    periodo_fin: Date | null
+    periodo_tipo: string | null
+    total_complemento: Decimal | null
+    estado: string | null
+    elaborado_por: string | null
+    autorizado_por: string | null
+    created_at: Date | null
+  }
+
+  export type NominaComplementariaCountAggregateOutputType = {
+    id_complemento: number
+    tenant_id: number
+    proyecto_id: number
+    prenomina_id: number
+    codigo: number
+    periodo_inicio: number
+    periodo_fin: number
+    periodo_tipo: number
+    total_complemento: number
+    estado: number
+    elaborado_por: number
+    autorizado_por: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type NominaComplementariaAvgAggregateInputType = {
+    total_complemento?: true
+  }
+
+  export type NominaComplementariaSumAggregateInputType = {
+    total_complemento?: true
+  }
+
+  export type NominaComplementariaMinAggregateInputType = {
+    id_complemento?: true
+    tenant_id?: true
+    proyecto_id?: true
+    prenomina_id?: true
+    codigo?: true
+    periodo_inicio?: true
+    periodo_fin?: true
+    periodo_tipo?: true
+    total_complemento?: true
+    estado?: true
+    elaborado_por?: true
+    autorizado_por?: true
+    created_at?: true
+  }
+
+  export type NominaComplementariaMaxAggregateInputType = {
+    id_complemento?: true
+    tenant_id?: true
+    proyecto_id?: true
+    prenomina_id?: true
+    codigo?: true
+    periodo_inicio?: true
+    periodo_fin?: true
+    periodo_tipo?: true
+    total_complemento?: true
+    estado?: true
+    elaborado_por?: true
+    autorizado_por?: true
+    created_at?: true
+  }
+
+  export type NominaComplementariaCountAggregateInputType = {
+    id_complemento?: true
+    tenant_id?: true
+    proyecto_id?: true
+    prenomina_id?: true
+    codigo?: true
+    periodo_inicio?: true
+    periodo_fin?: true
+    periodo_tipo?: true
+    total_complemento?: true
+    estado?: true
+    elaborado_por?: true
+    autorizado_por?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type NominaComplementariaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NominaComplementaria to aggregate.
+     */
+    where?: NominaComplementariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementarias to fetch.
+     */
+    orderBy?: NominaComplementariaOrderByWithRelationInput | NominaComplementariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NominaComplementariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementarias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NominaComplementarias
+    **/
+    _count?: true | NominaComplementariaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: NominaComplementariaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: NominaComplementariaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NominaComplementariaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NominaComplementariaMaxAggregateInputType
+  }
+
+  export type GetNominaComplementariaAggregateType<T extends NominaComplementariaAggregateArgs> = {
+        [P in keyof T & keyof AggregateNominaComplementaria]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNominaComplementaria[P]>
+      : GetScalarType<T[P], AggregateNominaComplementaria[P]>
+  }
+
+
+
+
+  export type NominaComplementariaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NominaComplementariaWhereInput
+    orderBy?: NominaComplementariaOrderByWithAggregationInput | NominaComplementariaOrderByWithAggregationInput[]
+    by: NominaComplementariaScalarFieldEnum[] | NominaComplementariaScalarFieldEnum
+    having?: NominaComplementariaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NominaComplementariaCountAggregateInputType | true
+    _avg?: NominaComplementariaAvgAggregateInputType
+    _sum?: NominaComplementariaSumAggregateInputType
+    _min?: NominaComplementariaMinAggregateInputType
+    _max?: NominaComplementariaMaxAggregateInputType
+  }
+
+  export type NominaComplementariaGroupByOutputType = {
+    id_complemento: string
+    tenant_id: string
+    proyecto_id: string
+    prenomina_id: string
+    codigo: string
+    periodo_inicio: Date
+    periodo_fin: Date
+    periodo_tipo: string
+    total_complemento: Decimal
+    estado: string
+    elaborado_por: string
+    autorizado_por: string | null
+    created_at: Date
+    _count: NominaComplementariaCountAggregateOutputType | null
+    _avg: NominaComplementariaAvgAggregateOutputType | null
+    _sum: NominaComplementariaSumAggregateOutputType | null
+    _min: NominaComplementariaMinAggregateOutputType | null
+    _max: NominaComplementariaMaxAggregateOutputType | null
+  }
+
+  type GetNominaComplementariaGroupByPayload<T extends NominaComplementariaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NominaComplementariaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NominaComplementariaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NominaComplementariaGroupByOutputType[P]>
+            : GetScalarType<T[P], NominaComplementariaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NominaComplementariaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_complemento?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    prenomina_id?: boolean
+    codigo?: boolean
+    periodo_inicio?: boolean
+    periodo_fin?: boolean
+    periodo_tipo?: boolean
+    total_complemento?: boolean
+    estado?: boolean
+    elaborado_por?: boolean
+    autorizado_por?: boolean
+    created_at?: boolean
+    detalles?: boolean | NominaComplementaria$detallesArgs<ExtArgs>
+    _count?: boolean | NominaComplementariaCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["nominaComplementaria"]>
+
+  export type NominaComplementariaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_complemento?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    prenomina_id?: boolean
+    codigo?: boolean
+    periodo_inicio?: boolean
+    periodo_fin?: boolean
+    periodo_tipo?: boolean
+    total_complemento?: boolean
+    estado?: boolean
+    elaborado_por?: boolean
+    autorizado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["nominaComplementaria"]>
+
+  export type NominaComplementariaSelectScalar = {
+    id_complemento?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    prenomina_id?: boolean
+    codigo?: boolean
+    periodo_inicio?: boolean
+    periodo_fin?: boolean
+    periodo_tipo?: boolean
+    total_complemento?: boolean
+    estado?: boolean
+    elaborado_por?: boolean
+    autorizado_por?: boolean
+    created_at?: boolean
+  }
+
+  export type NominaComplementariaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    detalles?: boolean | NominaComplementaria$detallesArgs<ExtArgs>
+    _count?: boolean | NominaComplementariaCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type NominaComplementariaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $NominaComplementariaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NominaComplementaria"
+    objects: {
+      detalles: Prisma.$NominaComplementariaDetallePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_complemento: string
+      tenant_id: string
+      proyecto_id: string
+      prenomina_id: string
+      codigo: string
+      periodo_inicio: Date
+      periodo_fin: Date
+      periodo_tipo: string
+      total_complemento: Prisma.Decimal
+      estado: string
+      elaborado_por: string
+      autorizado_por: string | null
+      created_at: Date
+    }, ExtArgs["result"]["nominaComplementaria"]>
+    composites: {}
+  }
+
+  type NominaComplementariaGetPayload<S extends boolean | null | undefined | NominaComplementariaDefaultArgs> = $Result.GetResult<Prisma.$NominaComplementariaPayload, S>
+
+  type NominaComplementariaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<NominaComplementariaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: NominaComplementariaCountAggregateInputType | true
+    }
+
+  export interface NominaComplementariaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NominaComplementaria'], meta: { name: 'NominaComplementaria' } }
+    /**
+     * Find zero or one NominaComplementaria that matches the filter.
+     * @param {NominaComplementariaFindUniqueArgs} args - Arguments to find a NominaComplementaria
+     * @example
+     * // Get one NominaComplementaria
+     * const nominaComplementaria = await prisma.nominaComplementaria.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NominaComplementariaFindUniqueArgs>(args: SelectSubset<T, NominaComplementariaFindUniqueArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one NominaComplementaria that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {NominaComplementariaFindUniqueOrThrowArgs} args - Arguments to find a NominaComplementaria
+     * @example
+     * // Get one NominaComplementaria
+     * const nominaComplementaria = await prisma.nominaComplementaria.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NominaComplementariaFindUniqueOrThrowArgs>(args: SelectSubset<T, NominaComplementariaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first NominaComplementaria that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaFindFirstArgs} args - Arguments to find a NominaComplementaria
+     * @example
+     * // Get one NominaComplementaria
+     * const nominaComplementaria = await prisma.nominaComplementaria.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NominaComplementariaFindFirstArgs>(args?: SelectSubset<T, NominaComplementariaFindFirstArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first NominaComplementaria that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaFindFirstOrThrowArgs} args - Arguments to find a NominaComplementaria
+     * @example
+     * // Get one NominaComplementaria
+     * const nominaComplementaria = await prisma.nominaComplementaria.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NominaComplementariaFindFirstOrThrowArgs>(args?: SelectSubset<T, NominaComplementariaFindFirstOrThrowArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more NominaComplementarias that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NominaComplementarias
+     * const nominaComplementarias = await prisma.nominaComplementaria.findMany()
+     * 
+     * // Get first 10 NominaComplementarias
+     * const nominaComplementarias = await prisma.nominaComplementaria.findMany({ take: 10 })
+     * 
+     * // Only select the `id_complemento`
+     * const nominaComplementariaWithId_complementoOnly = await prisma.nominaComplementaria.findMany({ select: { id_complemento: true } })
+     * 
+     */
+    findMany<T extends NominaComplementariaFindManyArgs>(args?: SelectSubset<T, NominaComplementariaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a NominaComplementaria.
+     * @param {NominaComplementariaCreateArgs} args - Arguments to create a NominaComplementaria.
+     * @example
+     * // Create one NominaComplementaria
+     * const NominaComplementaria = await prisma.nominaComplementaria.create({
+     *   data: {
+     *     // ... data to create a NominaComplementaria
+     *   }
+     * })
+     * 
+     */
+    create<T extends NominaComplementariaCreateArgs>(args: SelectSubset<T, NominaComplementariaCreateArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many NominaComplementarias.
+     * @param {NominaComplementariaCreateManyArgs} args - Arguments to create many NominaComplementarias.
+     * @example
+     * // Create many NominaComplementarias
+     * const nominaComplementaria = await prisma.nominaComplementaria.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NominaComplementariaCreateManyArgs>(args?: SelectSubset<T, NominaComplementariaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NominaComplementarias and returns the data saved in the database.
+     * @param {NominaComplementariaCreateManyAndReturnArgs} args - Arguments to create many NominaComplementarias.
+     * @example
+     * // Create many NominaComplementarias
+     * const nominaComplementaria = await prisma.nominaComplementaria.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NominaComplementarias and only return the `id_complemento`
+     * const nominaComplementariaWithId_complementoOnly = await prisma.nominaComplementaria.createManyAndReturn({ 
+     *   select: { id_complemento: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NominaComplementariaCreateManyAndReturnArgs>(args?: SelectSubset<T, NominaComplementariaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a NominaComplementaria.
+     * @param {NominaComplementariaDeleteArgs} args - Arguments to delete one NominaComplementaria.
+     * @example
+     * // Delete one NominaComplementaria
+     * const NominaComplementaria = await prisma.nominaComplementaria.delete({
+     *   where: {
+     *     // ... filter to delete one NominaComplementaria
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NominaComplementariaDeleteArgs>(args: SelectSubset<T, NominaComplementariaDeleteArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one NominaComplementaria.
+     * @param {NominaComplementariaUpdateArgs} args - Arguments to update one NominaComplementaria.
+     * @example
+     * // Update one NominaComplementaria
+     * const nominaComplementaria = await prisma.nominaComplementaria.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NominaComplementariaUpdateArgs>(args: SelectSubset<T, NominaComplementariaUpdateArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more NominaComplementarias.
+     * @param {NominaComplementariaDeleteManyArgs} args - Arguments to filter NominaComplementarias to delete.
+     * @example
+     * // Delete a few NominaComplementarias
+     * const { count } = await prisma.nominaComplementaria.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NominaComplementariaDeleteManyArgs>(args?: SelectSubset<T, NominaComplementariaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NominaComplementarias.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NominaComplementarias
+     * const nominaComplementaria = await prisma.nominaComplementaria.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NominaComplementariaUpdateManyArgs>(args: SelectSubset<T, NominaComplementariaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one NominaComplementaria.
+     * @param {NominaComplementariaUpsertArgs} args - Arguments to update or create a NominaComplementaria.
+     * @example
+     * // Update or create a NominaComplementaria
+     * const nominaComplementaria = await prisma.nominaComplementaria.upsert({
+     *   create: {
+     *     // ... data to create a NominaComplementaria
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NominaComplementaria we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NominaComplementariaUpsertArgs>(args: SelectSubset<T, NominaComplementariaUpsertArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of NominaComplementarias.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaCountArgs} args - Arguments to filter NominaComplementarias to count.
+     * @example
+     * // Count the number of NominaComplementarias
+     * const count = await prisma.nominaComplementaria.count({
+     *   where: {
+     *     // ... the filter for the NominaComplementarias we want to count
+     *   }
+     * })
+    **/
+    count<T extends NominaComplementariaCountArgs>(
+      args?: Subset<T, NominaComplementariaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NominaComplementariaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NominaComplementaria.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NominaComplementariaAggregateArgs>(args: Subset<T, NominaComplementariaAggregateArgs>): Prisma.PrismaPromise<GetNominaComplementariaAggregateType<T>>
+
+    /**
+     * Group by NominaComplementaria.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NominaComplementariaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NominaComplementariaGroupByArgs['orderBy'] }
+        : { orderBy?: NominaComplementariaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NominaComplementariaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNominaComplementariaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NominaComplementaria model
+   */
+  readonly fields: NominaComplementariaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NominaComplementaria.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NominaComplementariaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    detalles<T extends NominaComplementaria$detallesArgs<ExtArgs> = {}>(args?: Subset<T, NominaComplementaria$detallesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NominaComplementaria model
+   */ 
+  interface NominaComplementariaFieldRefs {
+    readonly id_complemento: FieldRef<"NominaComplementaria", 'String'>
+    readonly tenant_id: FieldRef<"NominaComplementaria", 'String'>
+    readonly proyecto_id: FieldRef<"NominaComplementaria", 'String'>
+    readonly prenomina_id: FieldRef<"NominaComplementaria", 'String'>
+    readonly codigo: FieldRef<"NominaComplementaria", 'String'>
+    readonly periodo_inicio: FieldRef<"NominaComplementaria", 'DateTime'>
+    readonly periodo_fin: FieldRef<"NominaComplementaria", 'DateTime'>
+    readonly periodo_tipo: FieldRef<"NominaComplementaria", 'String'>
+    readonly total_complemento: FieldRef<"NominaComplementaria", 'Decimal'>
+    readonly estado: FieldRef<"NominaComplementaria", 'String'>
+    readonly elaborado_por: FieldRef<"NominaComplementaria", 'String'>
+    readonly autorizado_por: FieldRef<"NominaComplementaria", 'String'>
+    readonly created_at: FieldRef<"NominaComplementaria", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NominaComplementaria findUnique
+   */
+  export type NominaComplementariaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementaria to fetch.
+     */
+    where: NominaComplementariaWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementaria findUniqueOrThrow
+   */
+  export type NominaComplementariaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementaria to fetch.
+     */
+    where: NominaComplementariaWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementaria findFirst
+   */
+  export type NominaComplementariaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementaria to fetch.
+     */
+    where?: NominaComplementariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementarias to fetch.
+     */
+    orderBy?: NominaComplementariaOrderByWithRelationInput | NominaComplementariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NominaComplementarias.
+     */
+    cursor?: NominaComplementariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementarias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NominaComplementarias.
+     */
+    distinct?: NominaComplementariaScalarFieldEnum | NominaComplementariaScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementaria findFirstOrThrow
+   */
+  export type NominaComplementariaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementaria to fetch.
+     */
+    where?: NominaComplementariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementarias to fetch.
+     */
+    orderBy?: NominaComplementariaOrderByWithRelationInput | NominaComplementariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NominaComplementarias.
+     */
+    cursor?: NominaComplementariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementarias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NominaComplementarias.
+     */
+    distinct?: NominaComplementariaScalarFieldEnum | NominaComplementariaScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementaria findMany
+   */
+  export type NominaComplementariaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementarias to fetch.
+     */
+    where?: NominaComplementariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementarias to fetch.
+     */
+    orderBy?: NominaComplementariaOrderByWithRelationInput | NominaComplementariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NominaComplementarias.
+     */
+    cursor?: NominaComplementariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementarias.
+     */
+    skip?: number
+    distinct?: NominaComplementariaScalarFieldEnum | NominaComplementariaScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementaria create
+   */
+  export type NominaComplementariaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NominaComplementaria.
+     */
+    data: XOR<NominaComplementariaCreateInput, NominaComplementariaUncheckedCreateInput>
+  }
+
+  /**
+   * NominaComplementaria createMany
+   */
+  export type NominaComplementariaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NominaComplementarias.
+     */
+    data: NominaComplementariaCreateManyInput | NominaComplementariaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NominaComplementaria createManyAndReturn
+   */
+  export type NominaComplementariaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many NominaComplementarias.
+     */
+    data: NominaComplementariaCreateManyInput | NominaComplementariaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NominaComplementaria update
+   */
+  export type NominaComplementariaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NominaComplementaria.
+     */
+    data: XOR<NominaComplementariaUpdateInput, NominaComplementariaUncheckedUpdateInput>
+    /**
+     * Choose, which NominaComplementaria to update.
+     */
+    where: NominaComplementariaWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementaria updateMany
+   */
+  export type NominaComplementariaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NominaComplementarias.
+     */
+    data: XOR<NominaComplementariaUpdateManyMutationInput, NominaComplementariaUncheckedUpdateManyInput>
+    /**
+     * Filter which NominaComplementarias to update
+     */
+    where?: NominaComplementariaWhereInput
+  }
+
+  /**
+   * NominaComplementaria upsert
+   */
+  export type NominaComplementariaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NominaComplementaria to update in case it exists.
+     */
+    where: NominaComplementariaWhereUniqueInput
+    /**
+     * In case the NominaComplementaria found by the `where` argument doesn't exist, create a new NominaComplementaria with this data.
+     */
+    create: XOR<NominaComplementariaCreateInput, NominaComplementariaUncheckedCreateInput>
+    /**
+     * In case the NominaComplementaria was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NominaComplementariaUpdateInput, NominaComplementariaUncheckedUpdateInput>
+  }
+
+  /**
+   * NominaComplementaria delete
+   */
+  export type NominaComplementariaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+    /**
+     * Filter which NominaComplementaria to delete.
+     */
+    where: NominaComplementariaWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementaria deleteMany
+   */
+  export type NominaComplementariaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NominaComplementarias to delete
+     */
+    where?: NominaComplementariaWhereInput
+  }
+
+  /**
+   * NominaComplementaria.detalles
+   */
+  export type NominaComplementaria$detallesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    where?: NominaComplementariaDetalleWhereInput
+    orderBy?: NominaComplementariaDetalleOrderByWithRelationInput | NominaComplementariaDetalleOrderByWithRelationInput[]
+    cursor?: NominaComplementariaDetalleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NominaComplementariaDetalleScalarFieldEnum | NominaComplementariaDetalleScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementaria without action
+   */
+  export type NominaComplementariaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementaria
+     */
+    select?: NominaComplementariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NominaComplementariaDetalle
+   */
+
+  export type AggregateNominaComplementariaDetalle = {
+    _count: NominaComplementariaDetalleCountAggregateOutputType | null
+    _avg: NominaComplementariaDetalleAvgAggregateOutputType | null
+    _sum: NominaComplementariaDetalleSumAggregateOutputType | null
+    _min: NominaComplementariaDetalleMinAggregateOutputType | null
+    _max: NominaComplementariaDetalleMaxAggregateOutputType | null
+  }
+
+  export type NominaComplementariaDetalleAvgAggregateOutputType = {
+    dias_trabajados: Decimal | null
+    salario_acordado: Decimal | null
+    salario_imss_dia: Decimal | null
+    complemento_dia: Decimal | null
+    monto_complemento: Decimal | null
+  }
+
+  export type NominaComplementariaDetalleSumAggregateOutputType = {
+    dias_trabajados: Decimal | null
+    salario_acordado: Decimal | null
+    salario_imss_dia: Decimal | null
+    complemento_dia: Decimal | null
+    monto_complemento: Decimal | null
+  }
+
+  export type NominaComplementariaDetalleMinAggregateOutputType = {
+    id_detalle: string | null
+    tenant_id: string | null
+    complemento_id: string | null
+    empleado_id: string | null
+    dias_trabajados: Decimal | null
+    salario_acordado: Decimal | null
+    salario_imss_dia: Decimal | null
+    complemento_dia: Decimal | null
+    monto_complemento: Decimal | null
+  }
+
+  export type NominaComplementariaDetalleMaxAggregateOutputType = {
+    id_detalle: string | null
+    tenant_id: string | null
+    complemento_id: string | null
+    empleado_id: string | null
+    dias_trabajados: Decimal | null
+    salario_acordado: Decimal | null
+    salario_imss_dia: Decimal | null
+    complemento_dia: Decimal | null
+    monto_complemento: Decimal | null
+  }
+
+  export type NominaComplementariaDetalleCountAggregateOutputType = {
+    id_detalle: number
+    tenant_id: number
+    complemento_id: number
+    empleado_id: number
+    dias_trabajados: number
+    salario_acordado: number
+    salario_imss_dia: number
+    complemento_dia: number
+    monto_complemento: number
+    _all: number
+  }
+
+
+  export type NominaComplementariaDetalleAvgAggregateInputType = {
+    dias_trabajados?: true
+    salario_acordado?: true
+    salario_imss_dia?: true
+    complemento_dia?: true
+    monto_complemento?: true
+  }
+
+  export type NominaComplementariaDetalleSumAggregateInputType = {
+    dias_trabajados?: true
+    salario_acordado?: true
+    salario_imss_dia?: true
+    complemento_dia?: true
+    monto_complemento?: true
+  }
+
+  export type NominaComplementariaDetalleMinAggregateInputType = {
+    id_detalle?: true
+    tenant_id?: true
+    complemento_id?: true
+    empleado_id?: true
+    dias_trabajados?: true
+    salario_acordado?: true
+    salario_imss_dia?: true
+    complemento_dia?: true
+    monto_complemento?: true
+  }
+
+  export type NominaComplementariaDetalleMaxAggregateInputType = {
+    id_detalle?: true
+    tenant_id?: true
+    complemento_id?: true
+    empleado_id?: true
+    dias_trabajados?: true
+    salario_acordado?: true
+    salario_imss_dia?: true
+    complemento_dia?: true
+    monto_complemento?: true
+  }
+
+  export type NominaComplementariaDetalleCountAggregateInputType = {
+    id_detalle?: true
+    tenant_id?: true
+    complemento_id?: true
+    empleado_id?: true
+    dias_trabajados?: true
+    salario_acordado?: true
+    salario_imss_dia?: true
+    complemento_dia?: true
+    monto_complemento?: true
+    _all?: true
+  }
+
+  export type NominaComplementariaDetalleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NominaComplementariaDetalle to aggregate.
+     */
+    where?: NominaComplementariaDetalleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementariaDetalles to fetch.
+     */
+    orderBy?: NominaComplementariaDetalleOrderByWithRelationInput | NominaComplementariaDetalleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NominaComplementariaDetalleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementariaDetalles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementariaDetalles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NominaComplementariaDetalles
+    **/
+    _count?: true | NominaComplementariaDetalleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: NominaComplementariaDetalleAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: NominaComplementariaDetalleSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NominaComplementariaDetalleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NominaComplementariaDetalleMaxAggregateInputType
+  }
+
+  export type GetNominaComplementariaDetalleAggregateType<T extends NominaComplementariaDetalleAggregateArgs> = {
+        [P in keyof T & keyof AggregateNominaComplementariaDetalle]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNominaComplementariaDetalle[P]>
+      : GetScalarType<T[P], AggregateNominaComplementariaDetalle[P]>
+  }
+
+
+
+
+  export type NominaComplementariaDetalleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NominaComplementariaDetalleWhereInput
+    orderBy?: NominaComplementariaDetalleOrderByWithAggregationInput | NominaComplementariaDetalleOrderByWithAggregationInput[]
+    by: NominaComplementariaDetalleScalarFieldEnum[] | NominaComplementariaDetalleScalarFieldEnum
+    having?: NominaComplementariaDetalleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NominaComplementariaDetalleCountAggregateInputType | true
+    _avg?: NominaComplementariaDetalleAvgAggregateInputType
+    _sum?: NominaComplementariaDetalleSumAggregateInputType
+    _min?: NominaComplementariaDetalleMinAggregateInputType
+    _max?: NominaComplementariaDetalleMaxAggregateInputType
+  }
+
+  export type NominaComplementariaDetalleGroupByOutputType = {
+    id_detalle: string
+    tenant_id: string
+    complemento_id: string
+    empleado_id: string
+    dias_trabajados: Decimal
+    salario_acordado: Decimal
+    salario_imss_dia: Decimal
+    complemento_dia: Decimal
+    monto_complemento: Decimal
+    _count: NominaComplementariaDetalleCountAggregateOutputType | null
+    _avg: NominaComplementariaDetalleAvgAggregateOutputType | null
+    _sum: NominaComplementariaDetalleSumAggregateOutputType | null
+    _min: NominaComplementariaDetalleMinAggregateOutputType | null
+    _max: NominaComplementariaDetalleMaxAggregateOutputType | null
+  }
+
+  type GetNominaComplementariaDetalleGroupByPayload<T extends NominaComplementariaDetalleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NominaComplementariaDetalleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NominaComplementariaDetalleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NominaComplementariaDetalleGroupByOutputType[P]>
+            : GetScalarType<T[P], NominaComplementariaDetalleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NominaComplementariaDetalleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_detalle?: boolean
+    tenant_id?: boolean
+    complemento_id?: boolean
+    empleado_id?: boolean
+    dias_trabajados?: boolean
+    salario_acordado?: boolean
+    salario_imss_dia?: boolean
+    complemento_dia?: boolean
+    monto_complemento?: boolean
+    complemento?: boolean | NominaComplementariaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["nominaComplementariaDetalle"]>
+
+  export type NominaComplementariaDetalleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_detalle?: boolean
+    tenant_id?: boolean
+    complemento_id?: boolean
+    empleado_id?: boolean
+    dias_trabajados?: boolean
+    salario_acordado?: boolean
+    salario_imss_dia?: boolean
+    complemento_dia?: boolean
+    monto_complemento?: boolean
+    complemento?: boolean | NominaComplementariaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["nominaComplementariaDetalle"]>
+
+  export type NominaComplementariaDetalleSelectScalar = {
+    id_detalle?: boolean
+    tenant_id?: boolean
+    complemento_id?: boolean
+    empleado_id?: boolean
+    dias_trabajados?: boolean
+    salario_acordado?: boolean
+    salario_imss_dia?: boolean
+    complemento_dia?: boolean
+    monto_complemento?: boolean
+  }
+
+  export type NominaComplementariaDetalleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    complemento?: boolean | NominaComplementariaDefaultArgs<ExtArgs>
+  }
+  export type NominaComplementariaDetalleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    complemento?: boolean | NominaComplementariaDefaultArgs<ExtArgs>
+  }
+
+  export type $NominaComplementariaDetallePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NominaComplementariaDetalle"
+    objects: {
+      complemento: Prisma.$NominaComplementariaPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_detalle: string
+      tenant_id: string
+      complemento_id: string
+      empleado_id: string
+      dias_trabajados: Prisma.Decimal
+      salario_acordado: Prisma.Decimal
+      salario_imss_dia: Prisma.Decimal
+      complemento_dia: Prisma.Decimal
+      monto_complemento: Prisma.Decimal
+    }, ExtArgs["result"]["nominaComplementariaDetalle"]>
+    composites: {}
+  }
+
+  type NominaComplementariaDetalleGetPayload<S extends boolean | null | undefined | NominaComplementariaDetalleDefaultArgs> = $Result.GetResult<Prisma.$NominaComplementariaDetallePayload, S>
+
+  type NominaComplementariaDetalleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<NominaComplementariaDetalleFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: NominaComplementariaDetalleCountAggregateInputType | true
+    }
+
+  export interface NominaComplementariaDetalleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NominaComplementariaDetalle'], meta: { name: 'NominaComplementariaDetalle' } }
+    /**
+     * Find zero or one NominaComplementariaDetalle that matches the filter.
+     * @param {NominaComplementariaDetalleFindUniqueArgs} args - Arguments to find a NominaComplementariaDetalle
+     * @example
+     * // Get one NominaComplementariaDetalle
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NominaComplementariaDetalleFindUniqueArgs>(args: SelectSubset<T, NominaComplementariaDetalleFindUniqueArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one NominaComplementariaDetalle that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {NominaComplementariaDetalleFindUniqueOrThrowArgs} args - Arguments to find a NominaComplementariaDetalle
+     * @example
+     * // Get one NominaComplementariaDetalle
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NominaComplementariaDetalleFindUniqueOrThrowArgs>(args: SelectSubset<T, NominaComplementariaDetalleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first NominaComplementariaDetalle that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleFindFirstArgs} args - Arguments to find a NominaComplementariaDetalle
+     * @example
+     * // Get one NominaComplementariaDetalle
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NominaComplementariaDetalleFindFirstArgs>(args?: SelectSubset<T, NominaComplementariaDetalleFindFirstArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first NominaComplementariaDetalle that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleFindFirstOrThrowArgs} args - Arguments to find a NominaComplementariaDetalle
+     * @example
+     * // Get one NominaComplementariaDetalle
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NominaComplementariaDetalleFindFirstOrThrowArgs>(args?: SelectSubset<T, NominaComplementariaDetalleFindFirstOrThrowArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more NominaComplementariaDetalles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NominaComplementariaDetalles
+     * const nominaComplementariaDetalles = await prisma.nominaComplementariaDetalle.findMany()
+     * 
+     * // Get first 10 NominaComplementariaDetalles
+     * const nominaComplementariaDetalles = await prisma.nominaComplementariaDetalle.findMany({ take: 10 })
+     * 
+     * // Only select the `id_detalle`
+     * const nominaComplementariaDetalleWithId_detalleOnly = await prisma.nominaComplementariaDetalle.findMany({ select: { id_detalle: true } })
+     * 
+     */
+    findMany<T extends NominaComplementariaDetalleFindManyArgs>(args?: SelectSubset<T, NominaComplementariaDetalleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a NominaComplementariaDetalle.
+     * @param {NominaComplementariaDetalleCreateArgs} args - Arguments to create a NominaComplementariaDetalle.
+     * @example
+     * // Create one NominaComplementariaDetalle
+     * const NominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.create({
+     *   data: {
+     *     // ... data to create a NominaComplementariaDetalle
+     *   }
+     * })
+     * 
+     */
+    create<T extends NominaComplementariaDetalleCreateArgs>(args: SelectSubset<T, NominaComplementariaDetalleCreateArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many NominaComplementariaDetalles.
+     * @param {NominaComplementariaDetalleCreateManyArgs} args - Arguments to create many NominaComplementariaDetalles.
+     * @example
+     * // Create many NominaComplementariaDetalles
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NominaComplementariaDetalleCreateManyArgs>(args?: SelectSubset<T, NominaComplementariaDetalleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NominaComplementariaDetalles and returns the data saved in the database.
+     * @param {NominaComplementariaDetalleCreateManyAndReturnArgs} args - Arguments to create many NominaComplementariaDetalles.
+     * @example
+     * // Create many NominaComplementariaDetalles
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NominaComplementariaDetalles and only return the `id_detalle`
+     * const nominaComplementariaDetalleWithId_detalleOnly = await prisma.nominaComplementariaDetalle.createManyAndReturn({ 
+     *   select: { id_detalle: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NominaComplementariaDetalleCreateManyAndReturnArgs>(args?: SelectSubset<T, NominaComplementariaDetalleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a NominaComplementariaDetalle.
+     * @param {NominaComplementariaDetalleDeleteArgs} args - Arguments to delete one NominaComplementariaDetalle.
+     * @example
+     * // Delete one NominaComplementariaDetalle
+     * const NominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.delete({
+     *   where: {
+     *     // ... filter to delete one NominaComplementariaDetalle
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NominaComplementariaDetalleDeleteArgs>(args: SelectSubset<T, NominaComplementariaDetalleDeleteArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one NominaComplementariaDetalle.
+     * @param {NominaComplementariaDetalleUpdateArgs} args - Arguments to update one NominaComplementariaDetalle.
+     * @example
+     * // Update one NominaComplementariaDetalle
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NominaComplementariaDetalleUpdateArgs>(args: SelectSubset<T, NominaComplementariaDetalleUpdateArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more NominaComplementariaDetalles.
+     * @param {NominaComplementariaDetalleDeleteManyArgs} args - Arguments to filter NominaComplementariaDetalles to delete.
+     * @example
+     * // Delete a few NominaComplementariaDetalles
+     * const { count } = await prisma.nominaComplementariaDetalle.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NominaComplementariaDetalleDeleteManyArgs>(args?: SelectSubset<T, NominaComplementariaDetalleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NominaComplementariaDetalles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NominaComplementariaDetalles
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NominaComplementariaDetalleUpdateManyArgs>(args: SelectSubset<T, NominaComplementariaDetalleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one NominaComplementariaDetalle.
+     * @param {NominaComplementariaDetalleUpsertArgs} args - Arguments to update or create a NominaComplementariaDetalle.
+     * @example
+     * // Update or create a NominaComplementariaDetalle
+     * const nominaComplementariaDetalle = await prisma.nominaComplementariaDetalle.upsert({
+     *   create: {
+     *     // ... data to create a NominaComplementariaDetalle
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NominaComplementariaDetalle we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NominaComplementariaDetalleUpsertArgs>(args: SelectSubset<T, NominaComplementariaDetalleUpsertArgs<ExtArgs>>): Prisma__NominaComplementariaDetalleClient<$Result.GetResult<Prisma.$NominaComplementariaDetallePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of NominaComplementariaDetalles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleCountArgs} args - Arguments to filter NominaComplementariaDetalles to count.
+     * @example
+     * // Count the number of NominaComplementariaDetalles
+     * const count = await prisma.nominaComplementariaDetalle.count({
+     *   where: {
+     *     // ... the filter for the NominaComplementariaDetalles we want to count
+     *   }
+     * })
+    **/
+    count<T extends NominaComplementariaDetalleCountArgs>(
+      args?: Subset<T, NominaComplementariaDetalleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NominaComplementariaDetalleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NominaComplementariaDetalle.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NominaComplementariaDetalleAggregateArgs>(args: Subset<T, NominaComplementariaDetalleAggregateArgs>): Prisma.PrismaPromise<GetNominaComplementariaDetalleAggregateType<T>>
+
+    /**
+     * Group by NominaComplementariaDetalle.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NominaComplementariaDetalleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NominaComplementariaDetalleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NominaComplementariaDetalleGroupByArgs['orderBy'] }
+        : { orderBy?: NominaComplementariaDetalleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NominaComplementariaDetalleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNominaComplementariaDetalleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NominaComplementariaDetalle model
+   */
+  readonly fields: NominaComplementariaDetalleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NominaComplementariaDetalle.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NominaComplementariaDetalleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    complemento<T extends NominaComplementariaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, NominaComplementariaDefaultArgs<ExtArgs>>): Prisma__NominaComplementariaClient<$Result.GetResult<Prisma.$NominaComplementariaPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NominaComplementariaDetalle model
+   */ 
+  interface NominaComplementariaDetalleFieldRefs {
+    readonly id_detalle: FieldRef<"NominaComplementariaDetalle", 'String'>
+    readonly tenant_id: FieldRef<"NominaComplementariaDetalle", 'String'>
+    readonly complemento_id: FieldRef<"NominaComplementariaDetalle", 'String'>
+    readonly empleado_id: FieldRef<"NominaComplementariaDetalle", 'String'>
+    readonly dias_trabajados: FieldRef<"NominaComplementariaDetalle", 'Decimal'>
+    readonly salario_acordado: FieldRef<"NominaComplementariaDetalle", 'Decimal'>
+    readonly salario_imss_dia: FieldRef<"NominaComplementariaDetalle", 'Decimal'>
+    readonly complemento_dia: FieldRef<"NominaComplementariaDetalle", 'Decimal'>
+    readonly monto_complemento: FieldRef<"NominaComplementariaDetalle", 'Decimal'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NominaComplementariaDetalle findUnique
+   */
+  export type NominaComplementariaDetalleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementariaDetalle to fetch.
+     */
+    where: NominaComplementariaDetalleWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementariaDetalle findUniqueOrThrow
+   */
+  export type NominaComplementariaDetalleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementariaDetalle to fetch.
+     */
+    where: NominaComplementariaDetalleWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementariaDetalle findFirst
+   */
+  export type NominaComplementariaDetalleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementariaDetalle to fetch.
+     */
+    where?: NominaComplementariaDetalleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementariaDetalles to fetch.
+     */
+    orderBy?: NominaComplementariaDetalleOrderByWithRelationInput | NominaComplementariaDetalleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NominaComplementariaDetalles.
+     */
+    cursor?: NominaComplementariaDetalleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementariaDetalles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementariaDetalles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NominaComplementariaDetalles.
+     */
+    distinct?: NominaComplementariaDetalleScalarFieldEnum | NominaComplementariaDetalleScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementariaDetalle findFirstOrThrow
+   */
+  export type NominaComplementariaDetalleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementariaDetalle to fetch.
+     */
+    where?: NominaComplementariaDetalleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementariaDetalles to fetch.
+     */
+    orderBy?: NominaComplementariaDetalleOrderByWithRelationInput | NominaComplementariaDetalleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NominaComplementariaDetalles.
+     */
+    cursor?: NominaComplementariaDetalleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementariaDetalles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementariaDetalles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NominaComplementariaDetalles.
+     */
+    distinct?: NominaComplementariaDetalleScalarFieldEnum | NominaComplementariaDetalleScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementariaDetalle findMany
+   */
+  export type NominaComplementariaDetalleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * Filter, which NominaComplementariaDetalles to fetch.
+     */
+    where?: NominaComplementariaDetalleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NominaComplementariaDetalles to fetch.
+     */
+    orderBy?: NominaComplementariaDetalleOrderByWithRelationInput | NominaComplementariaDetalleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NominaComplementariaDetalles.
+     */
+    cursor?: NominaComplementariaDetalleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NominaComplementariaDetalles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NominaComplementariaDetalles.
+     */
+    skip?: number
+    distinct?: NominaComplementariaDetalleScalarFieldEnum | NominaComplementariaDetalleScalarFieldEnum[]
+  }
+
+  /**
+   * NominaComplementariaDetalle create
+   */
+  export type NominaComplementariaDetalleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NominaComplementariaDetalle.
+     */
+    data: XOR<NominaComplementariaDetalleCreateInput, NominaComplementariaDetalleUncheckedCreateInput>
+  }
+
+  /**
+   * NominaComplementariaDetalle createMany
+   */
+  export type NominaComplementariaDetalleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NominaComplementariaDetalles.
+     */
+    data: NominaComplementariaDetalleCreateManyInput | NominaComplementariaDetalleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NominaComplementariaDetalle createManyAndReturn
+   */
+  export type NominaComplementariaDetalleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many NominaComplementariaDetalles.
+     */
+    data: NominaComplementariaDetalleCreateManyInput | NominaComplementariaDetalleCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NominaComplementariaDetalle update
+   */
+  export type NominaComplementariaDetalleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NominaComplementariaDetalle.
+     */
+    data: XOR<NominaComplementariaDetalleUpdateInput, NominaComplementariaDetalleUncheckedUpdateInput>
+    /**
+     * Choose, which NominaComplementariaDetalle to update.
+     */
+    where: NominaComplementariaDetalleWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementariaDetalle updateMany
+   */
+  export type NominaComplementariaDetalleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NominaComplementariaDetalles.
+     */
+    data: XOR<NominaComplementariaDetalleUpdateManyMutationInput, NominaComplementariaDetalleUncheckedUpdateManyInput>
+    /**
+     * Filter which NominaComplementariaDetalles to update
+     */
+    where?: NominaComplementariaDetalleWhereInput
+  }
+
+  /**
+   * NominaComplementariaDetalle upsert
+   */
+  export type NominaComplementariaDetalleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NominaComplementariaDetalle to update in case it exists.
+     */
+    where: NominaComplementariaDetalleWhereUniqueInput
+    /**
+     * In case the NominaComplementariaDetalle found by the `where` argument doesn't exist, create a new NominaComplementariaDetalle with this data.
+     */
+    create: XOR<NominaComplementariaDetalleCreateInput, NominaComplementariaDetalleUncheckedCreateInput>
+    /**
+     * In case the NominaComplementariaDetalle was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NominaComplementariaDetalleUpdateInput, NominaComplementariaDetalleUncheckedUpdateInput>
+  }
+
+  /**
+   * NominaComplementariaDetalle delete
+   */
+  export type NominaComplementariaDetalleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+    /**
+     * Filter which NominaComplementariaDetalle to delete.
+     */
+    where: NominaComplementariaDetalleWhereUniqueInput
+  }
+
+  /**
+   * NominaComplementariaDetalle deleteMany
+   */
+  export type NominaComplementariaDetalleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NominaComplementariaDetalles to delete
+     */
+    where?: NominaComplementariaDetalleWhereInput
+  }
+
+  /**
+   * NominaComplementariaDetalle without action
+   */
+  export type NominaComplementariaDetalleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NominaComplementariaDetalle
+     */
+    select?: NominaComplementariaDetalleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NominaComplementariaDetalleInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -7003,6 +11471,7 @@ export namespace Prisma {
     fecha_baja: 'fecha_baja',
     salario_diario: 'salario_diario',
     salario_integrado: 'salario_integrado',
+    salario_acordado: 'salario_acordado',
     telefono: 'telefono',
     email: 'email',
     contacto_emergencia: 'contacto_emergencia',
@@ -7064,6 +11533,7 @@ export namespace Prisma {
     total_neto: 'total_neto',
     total_empleados: 'total_empleados',
     estado: 'estado',
+    requiere_recalculo: 'requiere_recalculo',
     elaborado_por: 'elaborado_por',
     autorizado_por: 'autorizado_por',
     fecha_autorizacion: 'fecha_autorizacion',
@@ -7081,6 +11551,7 @@ export namespace Prisma {
     proyecto_id: 'proyecto_id',
     prenomina_id: 'prenomina_id',
     empleado_id: 'empleado_id',
+    origen_dias: 'origen_dias',
     dias_trabajados: 'dias_trabajados',
     horas_extra: 'horas_extra',
     salario_base: 'salario_base',
@@ -7095,6 +11566,72 @@ export namespace Prisma {
   };
 
   export type PreNominaDetalleScalarFieldEnum = (typeof PreNominaDetalleScalarFieldEnum)[keyof typeof PreNominaDetalleScalarFieldEnum]
+
+
+  export const RegistroAsistenciaScalarFieldEnum: {
+    id_registro: 'id_registro',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    empleado_id: 'empleado_id',
+    cuadrilla_id: 'cuadrilla_id',
+    fecha: 'fecha',
+    estado: 'estado',
+    tipo_registro: 'tipo_registro',
+    horas_extra: 'horas_extra',
+    registrado_por: 'registrado_por',
+    created_at: 'created_at'
+  };
+
+  export type RegistroAsistenciaScalarFieldEnum = (typeof RegistroAsistenciaScalarFieldEnum)[keyof typeof RegistroAsistenciaScalarFieldEnum]
+
+
+  export const ConfigDeduccionEmpleadoScalarFieldEnum: {
+    id_config: 'id_config',
+    tenant_id: 'tenant_id',
+    empleado_id: 'empleado_id',
+    aplica_imss: 'aplica_imss',
+    aplica_isr: 'aplica_isr',
+    aplica_infonavit: 'aplica_infonavit',
+    infonavit_num: 'infonavit_num',
+    infonavit_monto: 'infonavit_monto',
+    updated_at: 'updated_at'
+  };
+
+  export type ConfigDeduccionEmpleadoScalarFieldEnum = (typeof ConfigDeduccionEmpleadoScalarFieldEnum)[keyof typeof ConfigDeduccionEmpleadoScalarFieldEnum]
+
+
+  export const NominaComplementariaScalarFieldEnum: {
+    id_complemento: 'id_complemento',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    prenomina_id: 'prenomina_id',
+    codigo: 'codigo',
+    periodo_inicio: 'periodo_inicio',
+    periodo_fin: 'periodo_fin',
+    periodo_tipo: 'periodo_tipo',
+    total_complemento: 'total_complemento',
+    estado: 'estado',
+    elaborado_por: 'elaborado_por',
+    autorizado_por: 'autorizado_por',
+    created_at: 'created_at'
+  };
+
+  export type NominaComplementariaScalarFieldEnum = (typeof NominaComplementariaScalarFieldEnum)[keyof typeof NominaComplementariaScalarFieldEnum]
+
+
+  export const NominaComplementariaDetalleScalarFieldEnum: {
+    id_detalle: 'id_detalle',
+    tenant_id: 'tenant_id',
+    complemento_id: 'complemento_id',
+    empleado_id: 'empleado_id',
+    dias_trabajados: 'dias_trabajados',
+    salario_acordado: 'salario_acordado',
+    salario_imss_dia: 'salario_imss_dia',
+    complemento_dia: 'complemento_dia',
+    monto_complemento: 'monto_complemento'
+  };
+
+  export type NominaComplementariaDetalleScalarFieldEnum = (typeof NominaComplementariaDetalleScalarFieldEnum)[keyof typeof NominaComplementariaDetalleScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -7183,6 +11720,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -7219,6 +11763,7 @@ export namespace Prisma {
     fecha_baja?: DateTimeNullableFilter<"Empleado"> | Date | string | null
     salario_diario?: DecimalFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     salario_integrado?: DecimalNullableFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: DecimalNullableFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
     telefono?: StringNullableFilter<"Empleado"> | string | null
     email?: StringNullableFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
@@ -7249,6 +11794,7 @@ export namespace Prisma {
     fecha_baja?: SortOrderInput | SortOrder
     salario_diario?: SortOrder
     salario_integrado?: SortOrderInput | SortOrder
+    salario_acordado?: SortOrderInput | SortOrder
     telefono?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     contacto_emergencia?: SortOrderInput | SortOrder
@@ -7284,6 +11830,7 @@ export namespace Prisma {
     fecha_baja?: DateTimeNullableFilter<"Empleado"> | Date | string | null
     salario_diario?: DecimalFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     salario_integrado?: DecimalNullableFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: DecimalNullableFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
     telefono?: StringNullableFilter<"Empleado"> | string | null
     email?: StringNullableFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
@@ -7314,6 +11861,7 @@ export namespace Prisma {
     fecha_baja?: SortOrderInput | SortOrder
     salario_diario?: SortOrder
     salario_integrado?: SortOrderInput | SortOrder
+    salario_acordado?: SortOrderInput | SortOrder
     telefono?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     contacto_emergencia?: SortOrderInput | SortOrder
@@ -7349,6 +11897,7 @@ export namespace Prisma {
     fecha_baja?: DateTimeNullableWithAggregatesFilter<"Empleado"> | Date | string | null
     salario_diario?: DecimalWithAggregatesFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     salario_integrado?: DecimalNullableWithAggregatesFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: DecimalNullableWithAggregatesFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
     telefono?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     email?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
@@ -7559,6 +12108,7 @@ export namespace Prisma {
     total_neto?: DecimalFilter<"PreNomina"> | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFilter<"PreNomina"> | number
     estado?: StringFilter<"PreNomina"> | string
+    requiere_recalculo?: BoolFilter<"PreNomina"> | boolean
     elaborado_por?: UuidFilter<"PreNomina"> | string
     autorizado_por?: UuidNullableFilter<"PreNomina"> | string | null
     fecha_autorizacion?: DateTimeNullableFilter<"PreNomina"> | Date | string | null
@@ -7581,6 +12131,7 @@ export namespace Prisma {
     total_neto?: SortOrder
     total_empleados?: SortOrder
     estado?: SortOrder
+    requiere_recalculo?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrderInput | SortOrder
     fecha_autorizacion?: SortOrderInput | SortOrder
@@ -7607,6 +12158,7 @@ export namespace Prisma {
     total_neto?: DecimalFilter<"PreNomina"> | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFilter<"PreNomina"> | number
     estado?: StringFilter<"PreNomina"> | string
+    requiere_recalculo?: BoolFilter<"PreNomina"> | boolean
     elaborado_por?: UuidFilter<"PreNomina"> | string
     autorizado_por?: UuidNullableFilter<"PreNomina"> | string | null
     fecha_autorizacion?: DateTimeNullableFilter<"PreNomina"> | Date | string | null
@@ -7629,6 +12181,7 @@ export namespace Prisma {
     total_neto?: SortOrder
     total_empleados?: SortOrder
     estado?: SortOrder
+    requiere_recalculo?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrderInput | SortOrder
     fecha_autorizacion?: SortOrderInput | SortOrder
@@ -7658,6 +12211,7 @@ export namespace Prisma {
     total_neto?: DecimalWithAggregatesFilter<"PreNomina"> | Decimal | DecimalJsLike | number | string
     total_empleados?: IntWithAggregatesFilter<"PreNomina"> | number
     estado?: StringWithAggregatesFilter<"PreNomina"> | string
+    requiere_recalculo?: BoolWithAggregatesFilter<"PreNomina"> | boolean
     elaborado_por?: UuidWithAggregatesFilter<"PreNomina"> | string
     autorizado_por?: UuidNullableWithAggregatesFilter<"PreNomina"> | string | null
     fecha_autorizacion?: DateTimeNullableWithAggregatesFilter<"PreNomina"> | Date | string | null
@@ -7675,6 +12229,7 @@ export namespace Prisma {
     proyecto_id?: UuidFilter<"PreNominaDetalle"> | string
     prenomina_id?: UuidFilter<"PreNominaDetalle"> | string
     empleado_id?: UuidFilter<"PreNominaDetalle"> | string
+    origen_dias?: StringFilter<"PreNominaDetalle"> | string
     dias_trabajados?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
@@ -7696,6 +12251,7 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     prenomina_id?: SortOrder
     empleado_id?: SortOrder
+    origen_dias?: SortOrder
     dias_trabajados?: SortOrder
     horas_extra?: SortOrder
     salario_base?: SortOrder
@@ -7720,6 +12276,7 @@ export namespace Prisma {
     proyecto_id?: UuidFilter<"PreNominaDetalle"> | string
     prenomina_id?: UuidFilter<"PreNominaDetalle"> | string
     empleado_id?: UuidFilter<"PreNominaDetalle"> | string
+    origen_dias?: StringFilter<"PreNominaDetalle"> | string
     dias_trabajados?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
@@ -7741,6 +12298,7 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     prenomina_id?: SortOrder
     empleado_id?: SortOrder
+    origen_dias?: SortOrder
     dias_trabajados?: SortOrder
     horas_extra?: SortOrder
     salario_base?: SortOrder
@@ -7768,6 +12326,7 @@ export namespace Prisma {
     proyecto_id?: UuidWithAggregatesFilter<"PreNominaDetalle"> | string
     prenomina_id?: UuidWithAggregatesFilter<"PreNominaDetalle"> | string
     empleado_id?: UuidWithAggregatesFilter<"PreNominaDetalle"> | string
+    origen_dias?: StringWithAggregatesFilter<"PreNominaDetalle"> | string
     dias_trabajados?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
@@ -7779,6 +12338,340 @@ export namespace Prisma {
     otras_deducciones?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type RegistroAsistenciaWhereInput = {
+    AND?: RegistroAsistenciaWhereInput | RegistroAsistenciaWhereInput[]
+    OR?: RegistroAsistenciaWhereInput[]
+    NOT?: RegistroAsistenciaWhereInput | RegistroAsistenciaWhereInput[]
+    id_registro?: UuidFilter<"RegistroAsistencia"> | string
+    tenant_id?: UuidFilter<"RegistroAsistencia"> | string
+    proyecto_id?: UuidFilter<"RegistroAsistencia"> | string
+    empleado_id?: UuidFilter<"RegistroAsistencia"> | string
+    cuadrilla_id?: UuidNullableFilter<"RegistroAsistencia"> | string | null
+    fecha?: DateTimeFilter<"RegistroAsistencia"> | Date | string
+    estado?: StringFilter<"RegistroAsistencia"> | string
+    tipo_registro?: StringFilter<"RegistroAsistencia"> | string
+    horas_extra?: DecimalFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string
+    registrado_por?: UuidFilter<"RegistroAsistencia"> | string
+    created_at?: DateTimeFilter<"RegistroAsistencia"> | Date | string
+  }
+
+  export type RegistroAsistenciaOrderByWithRelationInput = {
+    id_registro?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    empleado_id?: SortOrder
+    cuadrilla_id?: SortOrderInput | SortOrder
+    fecha?: SortOrder
+    estado?: SortOrder
+    tipo_registro?: SortOrder
+    horas_extra?: SortOrder
+    registrado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RegistroAsistenciaWhereUniqueInput = Prisma.AtLeast<{
+    id_registro?: string
+    tenant_id_empleado_id_fecha?: RegistroAsistenciaTenant_idEmpleado_idFechaCompoundUniqueInput
+    AND?: RegistroAsistenciaWhereInput | RegistroAsistenciaWhereInput[]
+    OR?: RegistroAsistenciaWhereInput[]
+    NOT?: RegistroAsistenciaWhereInput | RegistroAsistenciaWhereInput[]
+    tenant_id?: UuidFilter<"RegistroAsistencia"> | string
+    proyecto_id?: UuidFilter<"RegistroAsistencia"> | string
+    empleado_id?: UuidFilter<"RegistroAsistencia"> | string
+    cuadrilla_id?: UuidNullableFilter<"RegistroAsistencia"> | string | null
+    fecha?: DateTimeFilter<"RegistroAsistencia"> | Date | string
+    estado?: StringFilter<"RegistroAsistencia"> | string
+    tipo_registro?: StringFilter<"RegistroAsistencia"> | string
+    horas_extra?: DecimalFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string
+    registrado_por?: UuidFilter<"RegistroAsistencia"> | string
+    created_at?: DateTimeFilter<"RegistroAsistencia"> | Date | string
+  }, "id_registro" | "tenant_id_empleado_id_fecha">
+
+  export type RegistroAsistenciaOrderByWithAggregationInput = {
+    id_registro?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    empleado_id?: SortOrder
+    cuadrilla_id?: SortOrderInput | SortOrder
+    fecha?: SortOrder
+    estado?: SortOrder
+    tipo_registro?: SortOrder
+    horas_extra?: SortOrder
+    registrado_por?: SortOrder
+    created_at?: SortOrder
+    _count?: RegistroAsistenciaCountOrderByAggregateInput
+    _avg?: RegistroAsistenciaAvgOrderByAggregateInput
+    _max?: RegistroAsistenciaMaxOrderByAggregateInput
+    _min?: RegistroAsistenciaMinOrderByAggregateInput
+    _sum?: RegistroAsistenciaSumOrderByAggregateInput
+  }
+
+  export type RegistroAsistenciaScalarWhereWithAggregatesInput = {
+    AND?: RegistroAsistenciaScalarWhereWithAggregatesInput | RegistroAsistenciaScalarWhereWithAggregatesInput[]
+    OR?: RegistroAsistenciaScalarWhereWithAggregatesInput[]
+    NOT?: RegistroAsistenciaScalarWhereWithAggregatesInput | RegistroAsistenciaScalarWhereWithAggregatesInput[]
+    id_registro?: UuidWithAggregatesFilter<"RegistroAsistencia"> | string
+    tenant_id?: UuidWithAggregatesFilter<"RegistroAsistencia"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"RegistroAsistencia"> | string
+    empleado_id?: UuidWithAggregatesFilter<"RegistroAsistencia"> | string
+    cuadrilla_id?: UuidNullableWithAggregatesFilter<"RegistroAsistencia"> | string | null
+    fecha?: DateTimeWithAggregatesFilter<"RegistroAsistencia"> | Date | string
+    estado?: StringWithAggregatesFilter<"RegistroAsistencia"> | string
+    tipo_registro?: StringWithAggregatesFilter<"RegistroAsistencia"> | string
+    horas_extra?: DecimalWithAggregatesFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string
+    registrado_por?: UuidWithAggregatesFilter<"RegistroAsistencia"> | string
+    created_at?: DateTimeWithAggregatesFilter<"RegistroAsistencia"> | Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoWhereInput = {
+    AND?: ConfigDeduccionEmpleadoWhereInput | ConfigDeduccionEmpleadoWhereInput[]
+    OR?: ConfigDeduccionEmpleadoWhereInput[]
+    NOT?: ConfigDeduccionEmpleadoWhereInput | ConfigDeduccionEmpleadoWhereInput[]
+    id_config?: UuidFilter<"ConfigDeduccionEmpleado"> | string
+    tenant_id?: UuidFilter<"ConfigDeduccionEmpleado"> | string
+    empleado_id?: UuidFilter<"ConfigDeduccionEmpleado"> | string
+    aplica_imss?: BoolFilter<"ConfigDeduccionEmpleado"> | boolean
+    aplica_isr?: BoolFilter<"ConfigDeduccionEmpleado"> | boolean
+    aplica_infonavit?: BoolFilter<"ConfigDeduccionEmpleado"> | boolean
+    infonavit_num?: StringNullableFilter<"ConfigDeduccionEmpleado"> | string | null
+    infonavit_monto?: DecimalNullableFilter<"ConfigDeduccionEmpleado"> | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeFilter<"ConfigDeduccionEmpleado"> | Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoOrderByWithRelationInput = {
+    id_config?: SortOrder
+    tenant_id?: SortOrder
+    empleado_id?: SortOrder
+    aplica_imss?: SortOrder
+    aplica_isr?: SortOrder
+    aplica_infonavit?: SortOrder
+    infonavit_num?: SortOrderInput | SortOrder
+    infonavit_monto?: SortOrderInput | SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConfigDeduccionEmpleadoWhereUniqueInput = Prisma.AtLeast<{
+    id_config?: string
+    tenant_id_empleado_id?: ConfigDeduccionEmpleadoTenant_idEmpleado_idCompoundUniqueInput
+    AND?: ConfigDeduccionEmpleadoWhereInput | ConfigDeduccionEmpleadoWhereInput[]
+    OR?: ConfigDeduccionEmpleadoWhereInput[]
+    NOT?: ConfigDeduccionEmpleadoWhereInput | ConfigDeduccionEmpleadoWhereInput[]
+    tenant_id?: UuidFilter<"ConfigDeduccionEmpleado"> | string
+    empleado_id?: UuidFilter<"ConfigDeduccionEmpleado"> | string
+    aplica_imss?: BoolFilter<"ConfigDeduccionEmpleado"> | boolean
+    aplica_isr?: BoolFilter<"ConfigDeduccionEmpleado"> | boolean
+    aplica_infonavit?: BoolFilter<"ConfigDeduccionEmpleado"> | boolean
+    infonavit_num?: StringNullableFilter<"ConfigDeduccionEmpleado"> | string | null
+    infonavit_monto?: DecimalNullableFilter<"ConfigDeduccionEmpleado"> | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeFilter<"ConfigDeduccionEmpleado"> | Date | string
+  }, "id_config" | "tenant_id_empleado_id">
+
+  export type ConfigDeduccionEmpleadoOrderByWithAggregationInput = {
+    id_config?: SortOrder
+    tenant_id?: SortOrder
+    empleado_id?: SortOrder
+    aplica_imss?: SortOrder
+    aplica_isr?: SortOrder
+    aplica_infonavit?: SortOrder
+    infonavit_num?: SortOrderInput | SortOrder
+    infonavit_monto?: SortOrderInput | SortOrder
+    updated_at?: SortOrder
+    _count?: ConfigDeduccionEmpleadoCountOrderByAggregateInput
+    _avg?: ConfigDeduccionEmpleadoAvgOrderByAggregateInput
+    _max?: ConfigDeduccionEmpleadoMaxOrderByAggregateInput
+    _min?: ConfigDeduccionEmpleadoMinOrderByAggregateInput
+    _sum?: ConfigDeduccionEmpleadoSumOrderByAggregateInput
+  }
+
+  export type ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput = {
+    AND?: ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput | ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput[]
+    OR?: ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput[]
+    NOT?: ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput | ConfigDeduccionEmpleadoScalarWhereWithAggregatesInput[]
+    id_config?: UuidWithAggregatesFilter<"ConfigDeduccionEmpleado"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ConfigDeduccionEmpleado"> | string
+    empleado_id?: UuidWithAggregatesFilter<"ConfigDeduccionEmpleado"> | string
+    aplica_imss?: BoolWithAggregatesFilter<"ConfigDeduccionEmpleado"> | boolean
+    aplica_isr?: BoolWithAggregatesFilter<"ConfigDeduccionEmpleado"> | boolean
+    aplica_infonavit?: BoolWithAggregatesFilter<"ConfigDeduccionEmpleado"> | boolean
+    infonavit_num?: StringNullableWithAggregatesFilter<"ConfigDeduccionEmpleado"> | string | null
+    infonavit_monto?: DecimalNullableWithAggregatesFilter<"ConfigDeduccionEmpleado"> | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeWithAggregatesFilter<"ConfigDeduccionEmpleado"> | Date | string
+  }
+
+  export type NominaComplementariaWhereInput = {
+    AND?: NominaComplementariaWhereInput | NominaComplementariaWhereInput[]
+    OR?: NominaComplementariaWhereInput[]
+    NOT?: NominaComplementariaWhereInput | NominaComplementariaWhereInput[]
+    id_complemento?: UuidFilter<"NominaComplementaria"> | string
+    tenant_id?: UuidFilter<"NominaComplementaria"> | string
+    proyecto_id?: UuidFilter<"NominaComplementaria"> | string
+    prenomina_id?: UuidFilter<"NominaComplementaria"> | string
+    codigo?: StringFilter<"NominaComplementaria"> | string
+    periodo_inicio?: DateTimeFilter<"NominaComplementaria"> | Date | string
+    periodo_fin?: DateTimeFilter<"NominaComplementaria"> | Date | string
+    periodo_tipo?: StringFilter<"NominaComplementaria"> | string
+    total_complemento?: DecimalFilter<"NominaComplementaria"> | Decimal | DecimalJsLike | number | string
+    estado?: StringFilter<"NominaComplementaria"> | string
+    elaborado_por?: UuidFilter<"NominaComplementaria"> | string
+    autorizado_por?: UuidNullableFilter<"NominaComplementaria"> | string | null
+    created_at?: DateTimeFilter<"NominaComplementaria"> | Date | string
+    detalles?: NominaComplementariaDetalleListRelationFilter
+  }
+
+  export type NominaComplementariaOrderByWithRelationInput = {
+    id_complemento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    prenomina_id?: SortOrder
+    codigo?: SortOrder
+    periodo_inicio?: SortOrder
+    periodo_fin?: SortOrder
+    periodo_tipo?: SortOrder
+    total_complemento?: SortOrder
+    estado?: SortOrder
+    elaborado_por?: SortOrder
+    autorizado_por?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    detalles?: NominaComplementariaDetalleOrderByRelationAggregateInput
+  }
+
+  export type NominaComplementariaWhereUniqueInput = Prisma.AtLeast<{
+    id_complemento?: string
+    AND?: NominaComplementariaWhereInput | NominaComplementariaWhereInput[]
+    OR?: NominaComplementariaWhereInput[]
+    NOT?: NominaComplementariaWhereInput | NominaComplementariaWhereInput[]
+    tenant_id?: UuidFilter<"NominaComplementaria"> | string
+    proyecto_id?: UuidFilter<"NominaComplementaria"> | string
+    prenomina_id?: UuidFilter<"NominaComplementaria"> | string
+    codigo?: StringFilter<"NominaComplementaria"> | string
+    periodo_inicio?: DateTimeFilter<"NominaComplementaria"> | Date | string
+    periodo_fin?: DateTimeFilter<"NominaComplementaria"> | Date | string
+    periodo_tipo?: StringFilter<"NominaComplementaria"> | string
+    total_complemento?: DecimalFilter<"NominaComplementaria"> | Decimal | DecimalJsLike | number | string
+    estado?: StringFilter<"NominaComplementaria"> | string
+    elaborado_por?: UuidFilter<"NominaComplementaria"> | string
+    autorizado_por?: UuidNullableFilter<"NominaComplementaria"> | string | null
+    created_at?: DateTimeFilter<"NominaComplementaria"> | Date | string
+    detalles?: NominaComplementariaDetalleListRelationFilter
+  }, "id_complemento">
+
+  export type NominaComplementariaOrderByWithAggregationInput = {
+    id_complemento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    prenomina_id?: SortOrder
+    codigo?: SortOrder
+    periodo_inicio?: SortOrder
+    periodo_fin?: SortOrder
+    periodo_tipo?: SortOrder
+    total_complemento?: SortOrder
+    estado?: SortOrder
+    elaborado_por?: SortOrder
+    autorizado_por?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    _count?: NominaComplementariaCountOrderByAggregateInput
+    _avg?: NominaComplementariaAvgOrderByAggregateInput
+    _max?: NominaComplementariaMaxOrderByAggregateInput
+    _min?: NominaComplementariaMinOrderByAggregateInput
+    _sum?: NominaComplementariaSumOrderByAggregateInput
+  }
+
+  export type NominaComplementariaScalarWhereWithAggregatesInput = {
+    AND?: NominaComplementariaScalarWhereWithAggregatesInput | NominaComplementariaScalarWhereWithAggregatesInput[]
+    OR?: NominaComplementariaScalarWhereWithAggregatesInput[]
+    NOT?: NominaComplementariaScalarWhereWithAggregatesInput | NominaComplementariaScalarWhereWithAggregatesInput[]
+    id_complemento?: UuidWithAggregatesFilter<"NominaComplementaria"> | string
+    tenant_id?: UuidWithAggregatesFilter<"NominaComplementaria"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"NominaComplementaria"> | string
+    prenomina_id?: UuidWithAggregatesFilter<"NominaComplementaria"> | string
+    codigo?: StringWithAggregatesFilter<"NominaComplementaria"> | string
+    periodo_inicio?: DateTimeWithAggregatesFilter<"NominaComplementaria"> | Date | string
+    periodo_fin?: DateTimeWithAggregatesFilter<"NominaComplementaria"> | Date | string
+    periodo_tipo?: StringWithAggregatesFilter<"NominaComplementaria"> | string
+    total_complemento?: DecimalWithAggregatesFilter<"NominaComplementaria"> | Decimal | DecimalJsLike | number | string
+    estado?: StringWithAggregatesFilter<"NominaComplementaria"> | string
+    elaborado_por?: UuidWithAggregatesFilter<"NominaComplementaria"> | string
+    autorizado_por?: UuidNullableWithAggregatesFilter<"NominaComplementaria"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"NominaComplementaria"> | Date | string
+  }
+
+  export type NominaComplementariaDetalleWhereInput = {
+    AND?: NominaComplementariaDetalleWhereInput | NominaComplementariaDetalleWhereInput[]
+    OR?: NominaComplementariaDetalleWhereInput[]
+    NOT?: NominaComplementariaDetalleWhereInput | NominaComplementariaDetalleWhereInput[]
+    id_detalle?: UuidFilter<"NominaComplementariaDetalle"> | string
+    tenant_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    complemento_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    empleado_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    dias_trabajados?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    complemento?: XOR<NominaComplementariaRelationFilter, NominaComplementariaWhereInput>
+  }
+
+  export type NominaComplementariaDetalleOrderByWithRelationInput = {
+    id_detalle?: SortOrder
+    tenant_id?: SortOrder
+    complemento_id?: SortOrder
+    empleado_id?: SortOrder
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
+    complemento?: NominaComplementariaOrderByWithRelationInput
+  }
+
+  export type NominaComplementariaDetalleWhereUniqueInput = Prisma.AtLeast<{
+    id_detalle?: string
+    AND?: NominaComplementariaDetalleWhereInput | NominaComplementariaDetalleWhereInput[]
+    OR?: NominaComplementariaDetalleWhereInput[]
+    NOT?: NominaComplementariaDetalleWhereInput | NominaComplementariaDetalleWhereInput[]
+    tenant_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    complemento_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    empleado_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    dias_trabajados?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    complemento?: XOR<NominaComplementariaRelationFilter, NominaComplementariaWhereInput>
+  }, "id_detalle">
+
+  export type NominaComplementariaDetalleOrderByWithAggregationInput = {
+    id_detalle?: SortOrder
+    tenant_id?: SortOrder
+    complemento_id?: SortOrder
+    empleado_id?: SortOrder
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
+    _count?: NominaComplementariaDetalleCountOrderByAggregateInput
+    _avg?: NominaComplementariaDetalleAvgOrderByAggregateInput
+    _max?: NominaComplementariaDetalleMaxOrderByAggregateInput
+    _min?: NominaComplementariaDetalleMinOrderByAggregateInput
+    _sum?: NominaComplementariaDetalleSumOrderByAggregateInput
+  }
+
+  export type NominaComplementariaDetalleScalarWhereWithAggregatesInput = {
+    AND?: NominaComplementariaDetalleScalarWhereWithAggregatesInput | NominaComplementariaDetalleScalarWhereWithAggregatesInput[]
+    OR?: NominaComplementariaDetalleScalarWhereWithAggregatesInput[]
+    NOT?: NominaComplementariaDetalleScalarWhereWithAggregatesInput | NominaComplementariaDetalleScalarWhereWithAggregatesInput[]
+    id_detalle?: UuidWithAggregatesFilter<"NominaComplementariaDetalle"> | string
+    tenant_id?: UuidWithAggregatesFilter<"NominaComplementariaDetalle"> | string
+    complemento_id?: UuidWithAggregatesFilter<"NominaComplementariaDetalle"> | string
+    empleado_id?: UuidWithAggregatesFilter<"NominaComplementariaDetalle"> | string
+    dias_trabajados?: DecimalWithAggregatesFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalWithAggregatesFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalWithAggregatesFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalWithAggregatesFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalWithAggregatesFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
   }
 
   export type EmpleadoCreateInput = {
@@ -7798,6 +12691,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -7827,6 +12721,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -7856,6 +12751,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7885,6 +12781,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7914,6 +12811,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -7941,6 +12839,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -7967,6 +12866,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -8199,6 +13099,7 @@ export namespace Prisma {
     total_neto?: Decimal | DecimalJsLike | number | string
     total_empleados?: number
     estado?: string
+    requiere_recalculo?: boolean
     elaborado_por: string
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
@@ -8221,6 +13122,7 @@ export namespace Prisma {
     total_neto?: Decimal | DecimalJsLike | number | string
     total_empleados?: number
     estado?: string
+    requiere_recalculo?: boolean
     elaborado_por: string
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
@@ -8243,6 +13145,7 @@ export namespace Prisma {
     total_neto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFieldUpdateOperationsInput | number
     estado?: StringFieldUpdateOperationsInput | string
+    requiere_recalculo?: BoolFieldUpdateOperationsInput | boolean
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8265,6 +13168,7 @@ export namespace Prisma {
     total_neto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFieldUpdateOperationsInput | number
     estado?: StringFieldUpdateOperationsInput | string
+    requiere_recalculo?: BoolFieldUpdateOperationsInput | boolean
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8287,6 +13191,7 @@ export namespace Prisma {
     total_neto?: Decimal | DecimalJsLike | number | string
     total_empleados?: number
     estado?: string
+    requiere_recalculo?: boolean
     elaborado_por: string
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
@@ -8308,6 +13213,7 @@ export namespace Prisma {
     total_neto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFieldUpdateOperationsInput | number
     estado?: StringFieldUpdateOperationsInput | string
+    requiere_recalculo?: BoolFieldUpdateOperationsInput | boolean
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8329,6 +13235,7 @@ export namespace Prisma {
     total_neto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFieldUpdateOperationsInput | number
     estado?: StringFieldUpdateOperationsInput | string
+    requiere_recalculo?: BoolFieldUpdateOperationsInput | boolean
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -8341,6 +13248,7 @@ export namespace Prisma {
     id_detalle?: string
     tenant_id: string
     proyecto_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -8362,6 +13270,7 @@ export namespace Prisma {
     proyecto_id: string
     prenomina_id: string
     empleado_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -8379,6 +13288,7 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -8400,6 +13310,7 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     prenomina_id?: StringFieldUpdateOperationsInput | string
     empleado_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -8419,6 +13330,7 @@ export namespace Prisma {
     proyecto_id: string
     prenomina_id: string
     empleado_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -8436,6 +13348,7 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -8455,6 +13368,7 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     prenomina_id?: StringFieldUpdateOperationsInput | string
     empleado_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -8466,6 +13380,387 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type RegistroAsistenciaCreateInput = {
+    id_registro?: string
+    tenant_id: string
+    proyecto_id: string
+    empleado_id: string
+    cuadrilla_id?: string | null
+    fecha: Date | string
+    estado: string
+    tipo_registro?: string
+    horas_extra?: Decimal | DecimalJsLike | number | string
+    registrado_por: string
+    created_at?: Date | string
+  }
+
+  export type RegistroAsistenciaUncheckedCreateInput = {
+    id_registro?: string
+    tenant_id: string
+    proyecto_id: string
+    empleado_id: string
+    cuadrilla_id?: string | null
+    fecha: Date | string
+    estado: string
+    tipo_registro?: string
+    horas_extra?: Decimal | DecimalJsLike | number | string
+    registrado_por: string
+    created_at?: Date | string
+  }
+
+  export type RegistroAsistenciaUpdateInput = {
+    id_registro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipo_registro?: StringFieldUpdateOperationsInput | string
+    horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    registrado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistroAsistenciaUncheckedUpdateInput = {
+    id_registro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipo_registro?: StringFieldUpdateOperationsInput | string
+    horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    registrado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistroAsistenciaCreateManyInput = {
+    id_registro?: string
+    tenant_id: string
+    proyecto_id: string
+    empleado_id: string
+    cuadrilla_id?: string | null
+    fecha: Date | string
+    estado: string
+    tipo_registro?: string
+    horas_extra?: Decimal | DecimalJsLike | number | string
+    registrado_por: string
+    created_at?: Date | string
+  }
+
+  export type RegistroAsistenciaUpdateManyMutationInput = {
+    id_registro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipo_registro?: StringFieldUpdateOperationsInput | string
+    horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    registrado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistroAsistenciaUncheckedUpdateManyInput = {
+    id_registro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipo_registro?: StringFieldUpdateOperationsInput | string
+    horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    registrado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoCreateInput = {
+    id_config?: string
+    tenant_id: string
+    empleado_id: string
+    aplica_imss?: boolean
+    aplica_isr?: boolean
+    aplica_infonavit?: boolean
+    infonavit_num?: string | null
+    infonavit_monto?: Decimal | DecimalJsLike | number | string | null
+    updated_at?: Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoUncheckedCreateInput = {
+    id_config?: string
+    tenant_id: string
+    empleado_id: string
+    aplica_imss?: boolean
+    aplica_isr?: boolean
+    aplica_infonavit?: boolean
+    infonavit_num?: string | null
+    infonavit_monto?: Decimal | DecimalJsLike | number | string | null
+    updated_at?: Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoUpdateInput = {
+    id_config?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    aplica_imss?: BoolFieldUpdateOperationsInput | boolean
+    aplica_isr?: BoolFieldUpdateOperationsInput | boolean
+    aplica_infonavit?: BoolFieldUpdateOperationsInput | boolean
+    infonavit_num?: NullableStringFieldUpdateOperationsInput | string | null
+    infonavit_monto?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoUncheckedUpdateInput = {
+    id_config?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    aplica_imss?: BoolFieldUpdateOperationsInput | boolean
+    aplica_isr?: BoolFieldUpdateOperationsInput | boolean
+    aplica_infonavit?: BoolFieldUpdateOperationsInput | boolean
+    infonavit_num?: NullableStringFieldUpdateOperationsInput | string | null
+    infonavit_monto?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoCreateManyInput = {
+    id_config?: string
+    tenant_id: string
+    empleado_id: string
+    aplica_imss?: boolean
+    aplica_isr?: boolean
+    aplica_infonavit?: boolean
+    infonavit_num?: string | null
+    infonavit_monto?: Decimal | DecimalJsLike | number | string | null
+    updated_at?: Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoUpdateManyMutationInput = {
+    id_config?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    aplica_imss?: BoolFieldUpdateOperationsInput | boolean
+    aplica_isr?: BoolFieldUpdateOperationsInput | boolean
+    aplica_infonavit?: BoolFieldUpdateOperationsInput | boolean
+    infonavit_num?: NullableStringFieldUpdateOperationsInput | string | null
+    infonavit_monto?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConfigDeduccionEmpleadoUncheckedUpdateManyInput = {
+    id_config?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    aplica_imss?: BoolFieldUpdateOperationsInput | boolean
+    aplica_isr?: BoolFieldUpdateOperationsInput | boolean
+    aplica_infonavit?: BoolFieldUpdateOperationsInput | boolean
+    infonavit_num?: NullableStringFieldUpdateOperationsInput | string | null
+    infonavit_monto?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NominaComplementariaCreateInput = {
+    id_complemento?: string
+    tenant_id: string
+    proyecto_id: string
+    prenomina_id: string
+    codigo: string
+    periodo_inicio: Date | string
+    periodo_fin: Date | string
+    periodo_tipo: string
+    total_complemento: Decimal | DecimalJsLike | number | string
+    estado?: string
+    elaborado_por: string
+    autorizado_por?: string | null
+    created_at?: Date | string
+    detalles?: NominaComplementariaDetalleCreateNestedManyWithoutComplementoInput
+  }
+
+  export type NominaComplementariaUncheckedCreateInput = {
+    id_complemento?: string
+    tenant_id: string
+    proyecto_id: string
+    prenomina_id: string
+    codigo: string
+    periodo_inicio: Date | string
+    periodo_fin: Date | string
+    periodo_tipo: string
+    total_complemento: Decimal | DecimalJsLike | number | string
+    estado?: string
+    elaborado_por: string
+    autorizado_por?: string | null
+    created_at?: Date | string
+    detalles?: NominaComplementariaDetalleUncheckedCreateNestedManyWithoutComplementoInput
+  }
+
+  export type NominaComplementariaUpdateInput = {
+    id_complemento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    prenomina_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    periodo_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_fin?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_tipo?: StringFieldUpdateOperationsInput | string
+    total_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado?: StringFieldUpdateOperationsInput | string
+    elaborado_por?: StringFieldUpdateOperationsInput | string
+    autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    detalles?: NominaComplementariaDetalleUpdateManyWithoutComplementoNestedInput
+  }
+
+  export type NominaComplementariaUncheckedUpdateInput = {
+    id_complemento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    prenomina_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    periodo_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_fin?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_tipo?: StringFieldUpdateOperationsInput | string
+    total_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado?: StringFieldUpdateOperationsInput | string
+    elaborado_por?: StringFieldUpdateOperationsInput | string
+    autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    detalles?: NominaComplementariaDetalleUncheckedUpdateManyWithoutComplementoNestedInput
+  }
+
+  export type NominaComplementariaCreateManyInput = {
+    id_complemento?: string
+    tenant_id: string
+    proyecto_id: string
+    prenomina_id: string
+    codigo: string
+    periodo_inicio: Date | string
+    periodo_fin: Date | string
+    periodo_tipo: string
+    total_complemento: Decimal | DecimalJsLike | number | string
+    estado?: string
+    elaborado_por: string
+    autorizado_por?: string | null
+    created_at?: Date | string
+  }
+
+  export type NominaComplementariaUpdateManyMutationInput = {
+    id_complemento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    prenomina_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    periodo_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_fin?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_tipo?: StringFieldUpdateOperationsInput | string
+    total_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado?: StringFieldUpdateOperationsInput | string
+    elaborado_por?: StringFieldUpdateOperationsInput | string
+    autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NominaComplementariaUncheckedUpdateManyInput = {
+    id_complemento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    prenomina_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    periodo_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_fin?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_tipo?: StringFieldUpdateOperationsInput | string
+    total_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado?: StringFieldUpdateOperationsInput | string
+    elaborado_por?: StringFieldUpdateOperationsInput | string
+    autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NominaComplementariaDetalleCreateInput = {
+    id_detalle?: string
+    tenant_id: string
+    empleado_id: string
+    dias_trabajados: Decimal | DecimalJsLike | number | string
+    salario_acordado: Decimal | DecimalJsLike | number | string
+    salario_imss_dia: Decimal | DecimalJsLike | number | string
+    complemento_dia: Decimal | DecimalJsLike | number | string
+    monto_complemento: Decimal | DecimalJsLike | number | string
+    complemento: NominaComplementariaCreateNestedOneWithoutDetallesInput
+  }
+
+  export type NominaComplementariaDetalleUncheckedCreateInput = {
+    id_detalle?: string
+    tenant_id: string
+    complemento_id: string
+    empleado_id: string
+    dias_trabajados: Decimal | DecimalJsLike | number | string
+    salario_acordado: Decimal | DecimalJsLike | number | string
+    salario_imss_dia: Decimal | DecimalJsLike | number | string
+    complemento_dia: Decimal | DecimalJsLike | number | string
+    monto_complemento: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUpdateInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento?: NominaComplementariaUpdateOneRequiredWithoutDetallesNestedInput
+  }
+
+  export type NominaComplementariaDetalleUncheckedUpdateInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    complemento_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleCreateManyInput = {
+    id_detalle?: string
+    tenant_id: string
+    complemento_id: string
+    empleado_id: string
+    dias_trabajados: Decimal | DecimalJsLike | number | string
+    salario_acordado: Decimal | DecimalJsLike | number | string
+    salario_imss_dia: Decimal | DecimalJsLike | number | string
+    complemento_dia: Decimal | DecimalJsLike | number | string
+    monto_complemento: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUpdateManyMutationInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUncheckedUpdateManyInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    complemento_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -8623,6 +13918,7 @@ export namespace Prisma {
     fecha_baja?: SortOrder
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
+    salario_acordado?: SortOrder
     telefono?: SortOrder
     email?: SortOrder
     contacto_emergencia?: SortOrder
@@ -8636,6 +13932,7 @@ export namespace Prisma {
   export type EmpleadoAvgOrderByAggregateInput = {
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
+    salario_acordado?: SortOrder
   }
 
   export type EmpleadoMaxOrderByAggregateInput = {
@@ -8655,6 +13952,7 @@ export namespace Prisma {
     fecha_baja?: SortOrder
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
+    salario_acordado?: SortOrder
     telefono?: SortOrder
     email?: SortOrder
     contacto_emergencia?: SortOrder
@@ -8682,6 +13980,7 @@ export namespace Prisma {
     fecha_baja?: SortOrder
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
+    salario_acordado?: SortOrder
     telefono?: SortOrder
     email?: SortOrder
     contacto_emergencia?: SortOrder
@@ -8695,6 +13994,7 @@ export namespace Prisma {
   export type EmpleadoSumOrderByAggregateInput = {
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
+    salario_acordado?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -8950,6 +14250,11 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type PreNominaTenant_idCodigoCompoundUniqueInput = {
     tenant_id: string
     codigo: string
@@ -8968,6 +14273,7 @@ export namespace Prisma {
     total_neto?: SortOrder
     total_empleados?: SortOrder
     estado?: SortOrder
+    requiere_recalculo?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrder
     fecha_autorizacion?: SortOrder
@@ -8996,6 +14302,7 @@ export namespace Prisma {
     total_neto?: SortOrder
     total_empleados?: SortOrder
     estado?: SortOrder
+    requiere_recalculo?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrder
     fecha_autorizacion?: SortOrder
@@ -9017,6 +14324,7 @@ export namespace Prisma {
     total_neto?: SortOrder
     total_empleados?: SortOrder
     estado?: SortOrder
+    requiere_recalculo?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrder
     fecha_autorizacion?: SortOrder
@@ -9048,6 +14356,14 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type PreNominaRelationFilter = {
     is?: PreNominaWhereInput
     isNot?: PreNominaWhereInput
@@ -9059,6 +14375,7 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     prenomina_id?: SortOrder
     empleado_id?: SortOrder
+    origen_dias?: SortOrder
     dias_trabajados?: SortOrder
     horas_extra?: SortOrder
     salario_base?: SortOrder
@@ -9092,6 +14409,7 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     prenomina_id?: SortOrder
     empleado_id?: SortOrder
+    origen_dias?: SortOrder
     dias_trabajados?: SortOrder
     horas_extra?: SortOrder
     salario_base?: SortOrder
@@ -9111,6 +14429,7 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     prenomina_id?: SortOrder
     empleado_id?: SortOrder
+    origen_dias?: SortOrder
     dias_trabajados?: SortOrder
     horas_extra?: SortOrder
     salario_base?: SortOrder
@@ -9136,6 +14455,234 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+  }
+
+  export type RegistroAsistenciaTenant_idEmpleado_idFechaCompoundUniqueInput = {
+    tenant_id: string
+    empleado_id: string
+    fecha: Date | string
+  }
+
+  export type RegistroAsistenciaCountOrderByAggregateInput = {
+    id_registro?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    empleado_id?: SortOrder
+    cuadrilla_id?: SortOrder
+    fecha?: SortOrder
+    estado?: SortOrder
+    tipo_registro?: SortOrder
+    horas_extra?: SortOrder
+    registrado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RegistroAsistenciaAvgOrderByAggregateInput = {
+    horas_extra?: SortOrder
+  }
+
+  export type RegistroAsistenciaMaxOrderByAggregateInput = {
+    id_registro?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    empleado_id?: SortOrder
+    cuadrilla_id?: SortOrder
+    fecha?: SortOrder
+    estado?: SortOrder
+    tipo_registro?: SortOrder
+    horas_extra?: SortOrder
+    registrado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RegistroAsistenciaMinOrderByAggregateInput = {
+    id_registro?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    empleado_id?: SortOrder
+    cuadrilla_id?: SortOrder
+    fecha?: SortOrder
+    estado?: SortOrder
+    tipo_registro?: SortOrder
+    horas_extra?: SortOrder
+    registrado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RegistroAsistenciaSumOrderByAggregateInput = {
+    horas_extra?: SortOrder
+  }
+
+  export type ConfigDeduccionEmpleadoTenant_idEmpleado_idCompoundUniqueInput = {
+    tenant_id: string
+    empleado_id: string
+  }
+
+  export type ConfigDeduccionEmpleadoCountOrderByAggregateInput = {
+    id_config?: SortOrder
+    tenant_id?: SortOrder
+    empleado_id?: SortOrder
+    aplica_imss?: SortOrder
+    aplica_isr?: SortOrder
+    aplica_infonavit?: SortOrder
+    infonavit_num?: SortOrder
+    infonavit_monto?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConfigDeduccionEmpleadoAvgOrderByAggregateInput = {
+    infonavit_monto?: SortOrder
+  }
+
+  export type ConfigDeduccionEmpleadoMaxOrderByAggregateInput = {
+    id_config?: SortOrder
+    tenant_id?: SortOrder
+    empleado_id?: SortOrder
+    aplica_imss?: SortOrder
+    aplica_isr?: SortOrder
+    aplica_infonavit?: SortOrder
+    infonavit_num?: SortOrder
+    infonavit_monto?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConfigDeduccionEmpleadoMinOrderByAggregateInput = {
+    id_config?: SortOrder
+    tenant_id?: SortOrder
+    empleado_id?: SortOrder
+    aplica_imss?: SortOrder
+    aplica_isr?: SortOrder
+    aplica_infonavit?: SortOrder
+    infonavit_num?: SortOrder
+    infonavit_monto?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConfigDeduccionEmpleadoSumOrderByAggregateInput = {
+    infonavit_monto?: SortOrder
+  }
+
+  export type NominaComplementariaDetalleListRelationFilter = {
+    every?: NominaComplementariaDetalleWhereInput
+    some?: NominaComplementariaDetalleWhereInput
+    none?: NominaComplementariaDetalleWhereInput
+  }
+
+  export type NominaComplementariaDetalleOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NominaComplementariaCountOrderByAggregateInput = {
+    id_complemento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    prenomina_id?: SortOrder
+    codigo?: SortOrder
+    periodo_inicio?: SortOrder
+    periodo_fin?: SortOrder
+    periodo_tipo?: SortOrder
+    total_complemento?: SortOrder
+    estado?: SortOrder
+    elaborado_por?: SortOrder
+    autorizado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type NominaComplementariaAvgOrderByAggregateInput = {
+    total_complemento?: SortOrder
+  }
+
+  export type NominaComplementariaMaxOrderByAggregateInput = {
+    id_complemento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    prenomina_id?: SortOrder
+    codigo?: SortOrder
+    periodo_inicio?: SortOrder
+    periodo_fin?: SortOrder
+    periodo_tipo?: SortOrder
+    total_complemento?: SortOrder
+    estado?: SortOrder
+    elaborado_por?: SortOrder
+    autorizado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type NominaComplementariaMinOrderByAggregateInput = {
+    id_complemento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    prenomina_id?: SortOrder
+    codigo?: SortOrder
+    periodo_inicio?: SortOrder
+    periodo_fin?: SortOrder
+    periodo_tipo?: SortOrder
+    total_complemento?: SortOrder
+    estado?: SortOrder
+    elaborado_por?: SortOrder
+    autorizado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type NominaComplementariaSumOrderByAggregateInput = {
+    total_complemento?: SortOrder
+  }
+
+  export type NominaComplementariaRelationFilter = {
+    is?: NominaComplementariaWhereInput
+    isNot?: NominaComplementariaWhereInput
+  }
+
+  export type NominaComplementariaDetalleCountOrderByAggregateInput = {
+    id_detalle?: SortOrder
+    tenant_id?: SortOrder
+    complemento_id?: SortOrder
+    empleado_id?: SortOrder
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
+  }
+
+  export type NominaComplementariaDetalleAvgOrderByAggregateInput = {
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
+  }
+
+  export type NominaComplementariaDetalleMaxOrderByAggregateInput = {
+    id_detalle?: SortOrder
+    tenant_id?: SortOrder
+    complemento_id?: SortOrder
+    empleado_id?: SortOrder
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
+  }
+
+  export type NominaComplementariaDetalleMinOrderByAggregateInput = {
+    id_detalle?: SortOrder
+    tenant_id?: SortOrder
+    complemento_id?: SortOrder
+    empleado_id?: SortOrder
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
+  }
+
+  export type NominaComplementariaDetalleSumOrderByAggregateInput = {
+    dias_trabajados?: SortOrder
+    salario_acordado?: SortOrder
+    salario_imss_dia?: SortOrder
+    complemento_dia?: SortOrder
+    monto_complemento?: SortOrder
   }
 
   export type CuadrillaCreateNestedOneWithoutMiembrosInput = {
@@ -9406,6 +14953,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type PreNominaDetalleUpdateManyWithoutPrenominaNestedInput = {
     create?: XOR<PreNominaDetalleCreateWithoutPrenominaInput, PreNominaDetalleUncheckedCreateWithoutPrenominaInput> | PreNominaDetalleCreateWithoutPrenominaInput[] | PreNominaDetalleUncheckedCreateWithoutPrenominaInput[]
     connectOrCreate?: PreNominaDetalleCreateOrConnectWithoutPrenominaInput | PreNominaDetalleCreateOrConnectWithoutPrenominaInput[]
@@ -9460,6 +15011,62 @@ export namespace Prisma {
     upsert?: EmpleadoUpsertWithoutPrenominasInput
     connect?: EmpleadoWhereUniqueInput
     update?: XOR<XOR<EmpleadoUpdateToOneWithWhereWithoutPrenominasInput, EmpleadoUpdateWithoutPrenominasInput>, EmpleadoUncheckedUpdateWithoutPrenominasInput>
+  }
+
+  export type NominaComplementariaDetalleCreateNestedManyWithoutComplementoInput = {
+    create?: XOR<NominaComplementariaDetalleCreateWithoutComplementoInput, NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput> | NominaComplementariaDetalleCreateWithoutComplementoInput[] | NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput[]
+    connectOrCreate?: NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput | NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput[]
+    createMany?: NominaComplementariaDetalleCreateManyComplementoInputEnvelope
+    connect?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+  }
+
+  export type NominaComplementariaDetalleUncheckedCreateNestedManyWithoutComplementoInput = {
+    create?: XOR<NominaComplementariaDetalleCreateWithoutComplementoInput, NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput> | NominaComplementariaDetalleCreateWithoutComplementoInput[] | NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput[]
+    connectOrCreate?: NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput | NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput[]
+    createMany?: NominaComplementariaDetalleCreateManyComplementoInputEnvelope
+    connect?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+  }
+
+  export type NominaComplementariaDetalleUpdateManyWithoutComplementoNestedInput = {
+    create?: XOR<NominaComplementariaDetalleCreateWithoutComplementoInput, NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput> | NominaComplementariaDetalleCreateWithoutComplementoInput[] | NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput[]
+    connectOrCreate?: NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput | NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput[]
+    upsert?: NominaComplementariaDetalleUpsertWithWhereUniqueWithoutComplementoInput | NominaComplementariaDetalleUpsertWithWhereUniqueWithoutComplementoInput[]
+    createMany?: NominaComplementariaDetalleCreateManyComplementoInputEnvelope
+    set?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    disconnect?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    delete?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    connect?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    update?: NominaComplementariaDetalleUpdateWithWhereUniqueWithoutComplementoInput | NominaComplementariaDetalleUpdateWithWhereUniqueWithoutComplementoInput[]
+    updateMany?: NominaComplementariaDetalleUpdateManyWithWhereWithoutComplementoInput | NominaComplementariaDetalleUpdateManyWithWhereWithoutComplementoInput[]
+    deleteMany?: NominaComplementariaDetalleScalarWhereInput | NominaComplementariaDetalleScalarWhereInput[]
+  }
+
+  export type NominaComplementariaDetalleUncheckedUpdateManyWithoutComplementoNestedInput = {
+    create?: XOR<NominaComplementariaDetalleCreateWithoutComplementoInput, NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput> | NominaComplementariaDetalleCreateWithoutComplementoInput[] | NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput[]
+    connectOrCreate?: NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput | NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput[]
+    upsert?: NominaComplementariaDetalleUpsertWithWhereUniqueWithoutComplementoInput | NominaComplementariaDetalleUpsertWithWhereUniqueWithoutComplementoInput[]
+    createMany?: NominaComplementariaDetalleCreateManyComplementoInputEnvelope
+    set?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    disconnect?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    delete?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    connect?: NominaComplementariaDetalleWhereUniqueInput | NominaComplementariaDetalleWhereUniqueInput[]
+    update?: NominaComplementariaDetalleUpdateWithWhereUniqueWithoutComplementoInput | NominaComplementariaDetalleUpdateWithWhereUniqueWithoutComplementoInput[]
+    updateMany?: NominaComplementariaDetalleUpdateManyWithWhereWithoutComplementoInput | NominaComplementariaDetalleUpdateManyWithWhereWithoutComplementoInput[]
+    deleteMany?: NominaComplementariaDetalleScalarWhereInput | NominaComplementariaDetalleScalarWhereInput[]
+  }
+
+  export type NominaComplementariaCreateNestedOneWithoutDetallesInput = {
+    create?: XOR<NominaComplementariaCreateWithoutDetallesInput, NominaComplementariaUncheckedCreateWithoutDetallesInput>
+    connectOrCreate?: NominaComplementariaCreateOrConnectWithoutDetallesInput
+    connect?: NominaComplementariaWhereUniqueInput
+  }
+
+  export type NominaComplementariaUpdateOneRequiredWithoutDetallesNestedInput = {
+    create?: XOR<NominaComplementariaCreateWithoutDetallesInput, NominaComplementariaUncheckedCreateWithoutDetallesInput>
+    connectOrCreate?: NominaComplementariaCreateOrConnectWithoutDetallesInput
+    upsert?: NominaComplementariaUpsertWithoutDetallesInput
+    connect?: NominaComplementariaWhereUniqueInput
+    update?: XOR<XOR<NominaComplementariaUpdateToOneWithWhereWithoutDetallesInput, NominaComplementariaUpdateWithoutDetallesInput>, NominaComplementariaUncheckedUpdateWithoutDetallesInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -9700,6 +15307,11 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -9725,6 +15337,14 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type CuadrillaCreateWithoutMiembrosInput = {
@@ -9804,6 +15424,7 @@ export namespace Prisma {
     id_detalle?: string
     tenant_id: string
     proyecto_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -9823,6 +15444,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     prenomina_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -9946,6 +15568,7 @@ export namespace Prisma {
     proyecto_id?: UuidFilter<"PreNominaDetalle"> | string
     prenomina_id?: UuidFilter<"PreNominaDetalle"> | string
     empleado_id?: UuidFilter<"PreNominaDetalle"> | string
+    origen_dias?: StringFilter<"PreNominaDetalle"> | string
     dias_trabajados?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
@@ -9976,6 +15599,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10004,6 +15628,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10099,6 +15724,7 @@ export namespace Prisma {
     fecha_baja?: DateTimeNullableFilter<"Empleado"> | Date | string | null
     salario_diario?: DecimalFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     salario_integrado?: DecimalNullableFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: DecimalNullableFilter<"Empleado"> | Decimal | DecimalJsLike | number | string | null
     telefono?: StringNullableFilter<"Empleado"> | string | null
     email?: StringNullableFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
@@ -10142,6 +15768,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10170,6 +15797,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10249,6 +15877,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10277,6 +15906,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10333,6 +15963,7 @@ export namespace Prisma {
     id_detalle?: string
     tenant_id: string
     proyecto_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -10352,6 +15983,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     empleado_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -10404,6 +16036,7 @@ export namespace Prisma {
     total_neto?: Decimal | DecimalJsLike | number | string
     total_empleados?: number
     estado?: string
+    requiere_recalculo?: boolean
     elaborado_por: string
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
@@ -10425,6 +16058,7 @@ export namespace Prisma {
     total_neto?: Decimal | DecimalJsLike | number | string
     total_empleados?: number
     estado?: string
+    requiere_recalculo?: boolean
     elaborado_por: string
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
@@ -10455,6 +16089,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10483,6 +16118,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10523,6 +16159,7 @@ export namespace Prisma {
     total_neto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFieldUpdateOperationsInput | number
     estado?: StringFieldUpdateOperationsInput | string
+    requiere_recalculo?: BoolFieldUpdateOperationsInput | boolean
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10544,6 +16181,7 @@ export namespace Prisma {
     total_neto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_empleados?: IntFieldUpdateOperationsInput | number
     estado?: StringFieldUpdateOperationsInput | string
+    requiere_recalculo?: BoolFieldUpdateOperationsInput | boolean
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -10580,6 +16218,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10608,6 +16247,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10617,6 +16257,149 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     asignaciones?: AsignacionFrenteUncheckedUpdateManyWithoutEmpleadoNestedInput
+  }
+
+  export type NominaComplementariaDetalleCreateWithoutComplementoInput = {
+    id_detalle?: string
+    tenant_id: string
+    empleado_id: string
+    dias_trabajados: Decimal | DecimalJsLike | number | string
+    salario_acordado: Decimal | DecimalJsLike | number | string
+    salario_imss_dia: Decimal | DecimalJsLike | number | string
+    complemento_dia: Decimal | DecimalJsLike | number | string
+    monto_complemento: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput = {
+    id_detalle?: string
+    tenant_id: string
+    empleado_id: string
+    dias_trabajados: Decimal | DecimalJsLike | number | string
+    salario_acordado: Decimal | DecimalJsLike | number | string
+    salario_imss_dia: Decimal | DecimalJsLike | number | string
+    complemento_dia: Decimal | DecimalJsLike | number | string
+    monto_complemento: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleCreateOrConnectWithoutComplementoInput = {
+    where: NominaComplementariaDetalleWhereUniqueInput
+    create: XOR<NominaComplementariaDetalleCreateWithoutComplementoInput, NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput>
+  }
+
+  export type NominaComplementariaDetalleCreateManyComplementoInputEnvelope = {
+    data: NominaComplementariaDetalleCreateManyComplementoInput | NominaComplementariaDetalleCreateManyComplementoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type NominaComplementariaDetalleUpsertWithWhereUniqueWithoutComplementoInput = {
+    where: NominaComplementariaDetalleWhereUniqueInput
+    update: XOR<NominaComplementariaDetalleUpdateWithoutComplementoInput, NominaComplementariaDetalleUncheckedUpdateWithoutComplementoInput>
+    create: XOR<NominaComplementariaDetalleCreateWithoutComplementoInput, NominaComplementariaDetalleUncheckedCreateWithoutComplementoInput>
+  }
+
+  export type NominaComplementariaDetalleUpdateWithWhereUniqueWithoutComplementoInput = {
+    where: NominaComplementariaDetalleWhereUniqueInput
+    data: XOR<NominaComplementariaDetalleUpdateWithoutComplementoInput, NominaComplementariaDetalleUncheckedUpdateWithoutComplementoInput>
+  }
+
+  export type NominaComplementariaDetalleUpdateManyWithWhereWithoutComplementoInput = {
+    where: NominaComplementariaDetalleScalarWhereInput
+    data: XOR<NominaComplementariaDetalleUpdateManyMutationInput, NominaComplementariaDetalleUncheckedUpdateManyWithoutComplementoInput>
+  }
+
+  export type NominaComplementariaDetalleScalarWhereInput = {
+    AND?: NominaComplementariaDetalleScalarWhereInput | NominaComplementariaDetalleScalarWhereInput[]
+    OR?: NominaComplementariaDetalleScalarWhereInput[]
+    NOT?: NominaComplementariaDetalleScalarWhereInput | NominaComplementariaDetalleScalarWhereInput[]
+    id_detalle?: UuidFilter<"NominaComplementariaDetalle"> | string
+    tenant_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    complemento_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    empleado_id?: UuidFilter<"NominaComplementariaDetalle"> | string
+    dias_trabajados?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFilter<"NominaComplementariaDetalle"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaCreateWithoutDetallesInput = {
+    id_complemento?: string
+    tenant_id: string
+    proyecto_id: string
+    prenomina_id: string
+    codigo: string
+    periodo_inicio: Date | string
+    periodo_fin: Date | string
+    periodo_tipo: string
+    total_complemento: Decimal | DecimalJsLike | number | string
+    estado?: string
+    elaborado_por: string
+    autorizado_por?: string | null
+    created_at?: Date | string
+  }
+
+  export type NominaComplementariaUncheckedCreateWithoutDetallesInput = {
+    id_complemento?: string
+    tenant_id: string
+    proyecto_id: string
+    prenomina_id: string
+    codigo: string
+    periodo_inicio: Date | string
+    periodo_fin: Date | string
+    periodo_tipo: string
+    total_complemento: Decimal | DecimalJsLike | number | string
+    estado?: string
+    elaborado_por: string
+    autorizado_por?: string | null
+    created_at?: Date | string
+  }
+
+  export type NominaComplementariaCreateOrConnectWithoutDetallesInput = {
+    where: NominaComplementariaWhereUniqueInput
+    create: XOR<NominaComplementariaCreateWithoutDetallesInput, NominaComplementariaUncheckedCreateWithoutDetallesInput>
+  }
+
+  export type NominaComplementariaUpsertWithoutDetallesInput = {
+    update: XOR<NominaComplementariaUpdateWithoutDetallesInput, NominaComplementariaUncheckedUpdateWithoutDetallesInput>
+    create: XOR<NominaComplementariaCreateWithoutDetallesInput, NominaComplementariaUncheckedCreateWithoutDetallesInput>
+    where?: NominaComplementariaWhereInput
+  }
+
+  export type NominaComplementariaUpdateToOneWithWhereWithoutDetallesInput = {
+    where?: NominaComplementariaWhereInput
+    data: XOR<NominaComplementariaUpdateWithoutDetallesInput, NominaComplementariaUncheckedUpdateWithoutDetallesInput>
+  }
+
+  export type NominaComplementariaUpdateWithoutDetallesInput = {
+    id_complemento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    prenomina_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    periodo_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_fin?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_tipo?: StringFieldUpdateOperationsInput | string
+    total_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado?: StringFieldUpdateOperationsInput | string
+    elaborado_por?: StringFieldUpdateOperationsInput | string
+    autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NominaComplementariaUncheckedUpdateWithoutDetallesInput = {
+    id_complemento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    prenomina_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    periodo_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_fin?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo_tipo?: StringFieldUpdateOperationsInput | string
+    total_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado?: StringFieldUpdateOperationsInput | string
+    elaborado_por?: StringFieldUpdateOperationsInput | string
+    autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AsignacionFrenteCreateManyEmpleadoInput = {
@@ -10638,6 +16421,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     prenomina_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -10697,6 +16481,7 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10716,6 +16501,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     prenomina_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10734,6 +16520,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     prenomina_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10764,6 +16551,7 @@ export namespace Prisma {
     fecha_baja?: Date | string | null
     salario_diario: Decimal | DecimalJsLike | number | string
     salario_integrado?: Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: Decimal | DecimalJsLike | number | string | null
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
@@ -10804,6 +16592,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10832,6 +16621,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10860,6 +16650,7 @@ export namespace Prisma {
     fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     salario_diario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_integrado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    salario_acordado?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
@@ -10916,6 +16707,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     empleado_id: string
+    origen_dias?: string
     dias_trabajados: Decimal | DecimalJsLike | number | string
     horas_extra?: Decimal | DecimalJsLike | number | string
     salario_base: Decimal | DecimalJsLike | number | string
@@ -10933,6 +16725,7 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10952,6 +16745,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     empleado_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10970,6 +16764,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     empleado_id?: StringFieldUpdateOperationsInput | string
+    origen_dias?: StringFieldUpdateOperationsInput | string
     dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     salario_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -10981,6 +16776,50 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleCreateManyComplementoInput = {
+    id_detalle?: string
+    tenant_id: string
+    empleado_id: string
+    dias_trabajados: Decimal | DecimalJsLike | number | string
+    salario_acordado: Decimal | DecimalJsLike | number | string
+    salario_imss_dia: Decimal | DecimalJsLike | number | string
+    complemento_dia: Decimal | DecimalJsLike | number | string
+    monto_complemento: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUpdateWithoutComplementoInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUncheckedUpdateWithoutComplementoInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NominaComplementariaDetalleUncheckedUpdateManyWithoutComplementoInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    empleado_id?: StringFieldUpdateOperationsInput | string
+    dias_trabajados?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_acordado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    salario_imss_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    complemento_dia?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_complemento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
 
@@ -11001,6 +16840,10 @@ export namespace Prisma {
      */
     export type PreNominaCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PreNominaCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use NominaComplementariaCountOutputTypeDefaultArgs instead
+     */
+    export type NominaComplementariaCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = NominaComplementariaCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use EmpleadoDefaultArgs instead
      */
     export type EmpleadoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = EmpleadoDefaultArgs<ExtArgs>
@@ -11020,6 +16863,22 @@ export namespace Prisma {
      * @deprecated Use PreNominaDetalleDefaultArgs instead
      */
     export type PreNominaDetalleArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PreNominaDetalleDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RegistroAsistenciaDefaultArgs instead
+     */
+    export type RegistroAsistenciaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RegistroAsistenciaDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ConfigDeduccionEmpleadoDefaultArgs instead
+     */
+    export type ConfigDeduccionEmpleadoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConfigDeduccionEmpleadoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use NominaComplementariaDefaultArgs instead
+     */
+    export type NominaComplementariaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = NominaComplementariaDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use NominaComplementariaDetalleDefaultArgs instead
+     */
+    export type NominaComplementariaDetalleArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = NominaComplementariaDetalleDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany
