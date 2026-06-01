@@ -171,25 +171,25 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       const r = await api.get(`${CALIDAD_URL}/documentos/${id}`);
       setDocDetalle((r.data as { data: DocumentoDetalle }).data);
     } catch (e: any) {
-      notify('error', e.response?.data?.message ?? 'Error al cargar detalle');
+      notify({ type: 'error', title: e.response?.data?.message ?? 'Error al cargar detalle' });
     } finally { setLoadingDetalle(false); }
   };
 
   // ── Crear documento ───────────────────────────────────────────────────────
   const handleCrearDocumento = async () => {
     if (!formDoc.codigo || !formDoc.titulo || !formDoc.responsable_id) {
-      return notify('error', 'Código, título y responsable son obligatorios');
+      return notify({ type: 'error', title: 'Código, título y responsable son obligatorios' });
     }
     setSavingDoc(true);
     try {
       await api.post(`${CALIDAD_URL}/documentos`, { ...formDoc, responsable_id: user?.id ?? formDoc.responsable_id });
-      notify('success', `Documento ${formDoc.codigo} creado`);
+      notify({ type: 'success', title: `Documento ${formDoc.codigo} creado` });
       setShowNuevoDoc(false);
       setFormDoc({ codigo: '', titulo: '', tipo: 'PROCEDIMIENTO', descripcion: '', responsable_id: '' });
       await fetchDocumentos();
       await fetchDashboard();
     } catch (e: any) {
-      notify('error', e.response?.data?.message ?? 'Error al crear documento');
+      notify({ type: 'error', title: e.response?.data?.message ?? 'Error al crear documento' });
     } finally { setSavingDoc(false); }
   };
 
@@ -197,7 +197,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const handleCrearVersion = async () => {
     if (!docDetalle) return;
     if (!formVersion.numero_version || !formVersion.cambios) {
-      return notify('error', 'Número de versión y cambios son obligatorios');
+      return notify({ type: 'error', title: 'Número de versión y cambios son obligatorios' });
     }
     setSavingVersion(true);
     try {
@@ -208,7 +208,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       await api.post(`${CALIDAD_URL}/documentos/${docDetalle.id_documento}/versiones`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      notify('success', `Versión ${formVersion.numero_version} creada`);
+      notify({ type: 'success', title: `Versión ${formVersion.numero_version} creada` });
       setShowNuevaVersion(false);
       setFormVersion({ numero_version: '', cambios: '' });
       setArchivoVersion(null);
@@ -216,7 +216,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       await fetchDocumentos();
       await fetchDashboard();
     } catch (e: any) {
-      notify('error', e.response?.data?.message ?? 'Error al crear versión');
+      notify({ type: 'error', title: e.response?.data?.message ?? 'Error al crear versión' });
     } finally { setSavingVersion(false); }
   };
 
@@ -225,12 +225,12 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     setAccionLoading(vidId + accion);
     try {
       await api.patch(`${CALIDAD_URL}/documentos/${docId}/versiones/${vidId}/estado`, { accion });
-      notify('success', `Versión actualizada`);
+      notify({ type: 'success', title: `Versión actualizada` });
       await fetchDetalle(docId);
       await fetchDocumentos();
       await fetchDashboard();
     } catch (e: any) {
-      notify('error', e.response?.data?.message ?? 'Error al actualizar versión');
+      notify({ type: 'error', title: e.response?.data?.message ?? 'Error al actualizar versión' });
     } finally { setAccionLoading(null); }
   };
 
@@ -245,7 +245,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       a.click();
       URL.revokeObjectURL(url);
     } catch (_) {
-      notify('error', 'No se pudo descargar el archivo');
+      notify({ type: 'error', title: 'No se pudo descargar el archivo' });
     }
   };
 
@@ -371,7 +371,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         </Card>
       ) : documentos.length === 0 ? (
         <EmptyStatePanel
-          icon={IconFileText}
+          icon={<IconFileText className="h-10 w-10" />}
           title="Sin documentos registrados"
           description="Crea el primer documento del SGC para comenzar el control de versiones."
           action={canEdit ? <Button onClick={() => setShowNuevoDoc(true)} className="bg-teal-600 text-white hover:bg-teal-500"><IconPlus className="h-4 w-4" />Nuevo Documento</Button> : undefined}
@@ -642,7 +642,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     onChange={e => {
                       const f = e.target.files?.[0];
                       if (!f) return;
-                      if (f.size > 50 * 1024 * 1024) { notify('error', 'El archivo supera 50 MB'); return; }
+                      if (f.size > 50 * 1024 * 1024) { notify({ type: 'error', title: 'El archivo supera 50 MB' }); return; }
                       setArchivoVersion(f);
                     }}
                   />
