@@ -404,8 +404,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 font-bold truncate max-w-[180px] transition-all hover:opacity-80"
-                  style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 font-bold truncate max-w-[180px] transition-all hover:opacity-80 bg-primary/10 text-foreground"
                 >
                   <span className="truncate">{currentProject?.code || 'Sin Proyecto'}</span>
                   {projects.length > 1 && (
