@@ -262,36 +262,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
       <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
         <div className="brand-logo-wrap relative shrink-0 cursor-default" style={{ width: 36, height: 36 }}>
 
-          {/* Halo 1 — anillo exterior difuso grande */}
+          {/* Halo 1 — exterior 64px: offset = (64-36)/2 = 14px */}
           <div className="brand-halo-outer" style={{
             position: 'absolute',
-            top: '50%', left: '50%',
+            top: -14, left: -14,
             width: 64, height: 64,
-            transform: 'translate(-50%, -50%)',
             borderRadius: '50%',
             background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.55) 0%, hsl(var(--primary) / 0.15) 50%, transparent 75%)',
             filter: 'blur(6px)',
             pointerEvents: 'none',
           }} />
 
-          {/* Halo 2 — anillo medio */}
+          {/* Halo 2 — medio 48px: offset = (48-36)/2 = 6px */}
           <div className="brand-halo-mid" style={{
             position: 'absolute',
-            top: '50%', left: '50%',
+            top: -6, left: -6,
             width: 48, height: 48,
-            transform: 'translate(-50%, -50%)',
             borderRadius: '50%',
             background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.7) 0%, hsl(var(--primary) / 0.25) 55%, transparent 80%)',
             filter: 'blur(3px)',
             pointerEvents: 'none',
           }} />
 
-          {/* Halo 3 — corona inmediata al ícono */}
+          {/* Halo 3 — corona 42px: offset = (42-36)/2 = 3px */}
           <div className="brand-halo-inner" style={{
             position: 'absolute',
-            top: '50%', left: '50%',
+            top: -3, left: -3,
             width: 42, height: 42,
-            transform: 'translate(-50%, -50%)',
             borderRadius: '50%',
             background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.5) 0%, transparent 65%)',
             pointerEvents: 'none',
