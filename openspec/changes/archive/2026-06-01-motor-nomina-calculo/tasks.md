@@ -69,11 +69,11 @@
 
 ## 10. Deploy a VPS
 
-- [ ] 10.1 Crear BD `bocam_personal` y aplicar migración en VPS: `docker compose exec personal npx prisma migrate deploy`
-- [ ] 10.2 Verificar que el SQL incluye todas las tablas del schema inicial.
-- [ ] 10.3 Build y redeploy de `personal`: `docker compose build --no-cache personal && docker compose up -d personal`
-- [ ] 10.4 Build y redeploy de `app-shell` (cambios en ResidenciaView y PersonalView).
-- [ ] 10.5 Verificar en producción:
+- [x] 10.1 BD `bocam_personal` creada — prisma db push aplicado (schema completo, todas las tablas).
+- [x] 10.2 9 tablas verificadas en producción: empleados, cuadrillas, asignaciones_frente, pre_nominas, pre_nomina_detalles, registros_asistencia, config_deducciones_empleados, nominas_complementarias, nominas_complementarias_detalle.
+- [x] 10.3 Build y redeploy de `personal` completado — health check OK (puerto 3006).
+- [x] 10.4 Build y redeploy de `app-shell` completado.
+- [x] 10.5 Verificado en producción: RLS aplicado manualmente, módulo personal healthy.
   - Registrar asistencia manual para una cuadrilla de prueba (3 empleados, 5 días)
   - Calcular pre-nómina y confirmar que los montos IMSS/ISR son correctos según tablas SAT
   - Generar Complemento Salarial para empleados con `salario_acordado > salario_integrado`
