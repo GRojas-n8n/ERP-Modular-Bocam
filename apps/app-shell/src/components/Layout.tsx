@@ -219,42 +219,102 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
       {/* ── Logo ───────────────────────────────────────────────────────── */}
       <style>{`
-        @keyframes brand-glow {
-          0%, 100% { opacity: 0.18; transform: scale(1); }
-          50%       { opacity: 0.38; transform: scale(1.12); }
+        @keyframes brand-halo-outer {
+          0%, 100% { opacity: 0.45; transform: scale(1);    }
+          50%       { opacity: 0.85; transform: scale(1.35); }
         }
-        .brand-logo-wrap { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-        .brand-logo-wrap:hover { transform: scale(1.07); }
-        .brand-logo-wrap:hover .brand-glow { opacity: 0.55 !important; }
-        .brand-glow { animation: brand-glow 3.5s ease-in-out infinite; }
+        @keyframes brand-halo-mid {
+          0%, 100% { opacity: 0.55; transform: scale(1);    }
+          50%       { opacity: 1;    transform: scale(1.18); }
+        }
+        @keyframes brand-halo-inner {
+          0%, 100% { opacity: 0.7;  transform: scale(1);    }
+          50%       { opacity: 1;    transform: scale(1.08); }
+        }
+        @keyframes brand-shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position:  200% center; }
+        }
+        .brand-logo-wrap {
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .brand-logo-wrap:hover { transform: scale(1.1); }
+        .brand-logo-wrap:hover .brand-halo-outer { opacity: 1    !important; transform: scale(1.5) !important; }
+        .brand-logo-wrap:hover .brand-halo-mid   { opacity: 1    !important; transform: scale(1.28) !important; }
+        .brand-logo-wrap:hover .brand-halo-inner { opacity: 1    !important; }
+        .brand-halo-outer { animation: brand-halo-outer 3s ease-in-out infinite; }
+        .brand-halo-mid   { animation: brand-halo-mid   3s ease-in-out infinite 0.4s; }
+        .brand-halo-inner { animation: brand-halo-inner 3s ease-in-out infinite 0.8s; }
+        .brand-mark-text {
+          background: linear-gradient(120deg,
+            hsl(var(--primary)) 0%,
+            hsl(var(--primary) / 0.75) 40%,
+            hsl(var(--primary)) 60%,
+            hsl(var(--primary) / 0.9) 100%
+          );
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: brand-shimmer 3.5s linear infinite;
+        }
       `}</style>
       <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
-        <div className="brand-logo-wrap relative shrink-0 cursor-default">
-          {/* Glow pulsante */}
-          <div className="brand-glow" style={{
-            position: 'absolute', inset: -8, borderRadius: '50%',
-            background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.28) 0%, transparent 70%)',
+        <div className="brand-logo-wrap relative shrink-0 cursor-default" style={{ width: 36, height: 36 }}>
+
+          {/* Halo 1 — anillo exterior difuso grande */}
+          <div className="brand-halo-outer" style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            width: 64, height: 64,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.55) 0%, hsl(var(--primary) / 0.15) 50%, transparent 75%)',
+            filter: 'blur(6px)',
             pointerEvents: 'none',
-            opacity: isDark ? 0.9 : 0.55,
           }} />
+
+          {/* Halo 2 — anillo medio */}
+          <div className="brand-halo-mid" style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            width: 48, height: 48,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.7) 0%, hsl(var(--primary) / 0.25) 55%, transparent 80%)',
+            filter: 'blur(3px)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Halo 3 — corona inmediata al ícono */}
+          <div className="brand-halo-inner" style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            width: 42, height: 42,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.5) 0%, transparent 65%)',
+            pointerEvents: 'none',
+          }} />
+
           {/* Monograma del tenant */}
           <div style={{
-            position: 'relative', zIndex: 1,
-            width: 30, height: 30, borderRadius: 8,
-            background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 100%)',
+            position: 'relative', zIndex: 2,
+            width: 36, height: 36, borderRadius: 10,
+            background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.75) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'hsl(var(--primary-foreground))',
-            fontSize: 13, fontWeight: 900,
+            fontSize: 15, fontWeight: 900,
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             letterSpacing: '-0.02em',
-            boxShadow: `0 2px 8px hsl(var(--primary) / ${isDark ? '0.45' : '0.25'})`,
+            boxShadow: `0 0 0 1px hsl(var(--primary) / 0.35), 0 4px 14px hsl(var(--primary) / ${isDark ? '0.6' : '0.35'})`,
           }}>
             {(tenant?.name || 'E')[0].toUpperCase()}
           </div>
         </div>
         <div className="flex min-w-0 flex-col">
           <span
-            className="text-base font-black leading-tight text-foreground truncate"
+            className="brand-mark-text text-base font-black leading-tight truncate"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.03em' }}
           >
             {tenant?.name || 'ERP Industrial'}
