@@ -217,21 +217,58 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
   const renderSidebarContent = () => (
     <div className="flex h-full flex-col" style={{ background: 'hsl(var(--card))' }}>
 
-      {/* Logo */}
+      {/* ── Logo ───────────────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes iretum-glow {
+          0%, 100% { opacity: 0.18; transform: scale(1); }
+          50%       { opacity: 0.38; transform: scale(1.12); }
+        }
+        @keyframes iretum-shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position:  200% center; }
+        }
+        .iretum-logo-wrap { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .iretum-logo-wrap:hover { transform: scale(1.07); }
+        .iretum-logo-wrap:hover .iretum-glow { opacity: 0.55 !important; }
+        .iretum-glow {
+          animation: iretum-glow 3.5s ease-in-out infinite;
+        }
+        .iretum-text {
+          background: linear-gradient(120deg,
+            hsl(var(--primary)) 0%,
+            hsl(var(--primary) / 0.7) 40%,
+            hsl(var(--primary)) 60%,
+            hsl(var(--primary) / 0.85) 100%
+          );
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: iretum-shimmer 4s linear infinite;
+        }
+      `}</style>
       <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
-        <div className="relative shrink-0">
-          {isDark && (
-            <div style={{
-              position: 'absolute', inset: -6, borderRadius: '50%',
-              background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }} />
-          )}
+        <div className="iretum-logo-wrap relative shrink-0 cursor-default">
+          {/* Glow — siempre activo, más intenso en dark */}
+          <div className="iretum-glow" style={{
+            position: 'absolute', inset: -8, borderRadius: '50%',
+            background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.28) 0%, transparent 70%)',
+            pointerEvents: 'none',
+            opacity: isDark ? 0.9 : 0.55,
+          }} />
+          {/* Anillo exterior sutil */}
+          <div style={{
+            position: 'absolute', inset: -3, borderRadius: '50%',
+            border: '1px solid hsl(var(--primary) / 0.2)',
+            pointerEvents: 'none',
+          }} />
           <img src="/favicon.svg" alt="Iretum" width={30} height={29} style={{ position: 'relative', zIndex: 1 }} />
         </div>
         <div className="flex min-w-0 flex-col">
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.03em' }}
-            className="text-base font-bold text-foreground leading-tight">
+          <span
+            className="iretum-text text-base font-black leading-tight"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.04em' }}
+          >
             iretum
           </span>
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground opacity-60 truncate">
