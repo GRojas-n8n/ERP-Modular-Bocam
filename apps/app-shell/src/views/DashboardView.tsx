@@ -511,7 +511,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         <div className="mb-5 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Plataforma Modular · iretum
+            Plataforma Modular
           </h3>
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-600">

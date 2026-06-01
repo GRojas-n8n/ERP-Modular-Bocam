@@ -208,18 +208,25 @@ export const LoginView: React.FC = () => {
           {/* Contenido del panel */}
           <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', padding: '52px 56px' }}>
 
-            {/* Logo arriba */}
+            {/* Marca — neutral, sin nombre de producto */}
             <div className="lr-logo" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <picture>
-                <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-                <img src="/favicon.svg" alt="Iretum" width={34} height={33} />
-              </picture>
+              <div style={{
+                width: 34, height: 34, borderRadius: 10,
+                background: 'linear-gradient(135deg, #00D1FF 0%, #0088AA 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 16px hsl(192 100% 50% / 0.4)',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="hsl(218 43% 9%)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
               <span style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 fontSize: 20, fontWeight: 700,
                 letterSpacing: '-0.04em',
                 color: 'hsl(210 40% 96%)',
-              }}>iretum</span>
+              }}>ERP Industrial</span>
             </div>
 
             {/* Tagline central */}
@@ -324,16 +331,24 @@ export const LoginView: React.FC = () => {
                 background: 'radial-gradient(ellipse, hsl(192 100% 50% / 0.2) 0%, transparent 70%)',
                 animation: 'glow-pulse 3s ease-in-out infinite',
               }} />
-              <picture>
-                <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-                <img src="/favicon.svg" alt="Iretum" width={56} height={54} style={{ position: 'relative', zIndex: 1 }} />
-              </picture>
+              <div style={{
+                position: 'relative', zIndex: 1,
+                width: 56, height: 56, borderRadius: 16,
+                background: 'linear-gradient(135deg, #00D1FF 0%, #0088AA 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 24px hsl(192 100% 50% / 0.5)',
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="hsl(218 43% 9%)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
             </div>
             <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: 'hsl(210 40% 96%)' }}>
-              iretum
+              ERP Industrial
             </span>
             <span style={{ fontSize: 11, color: 'hsl(215 20% 45%)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
-              ERP Industrial · SaaS
+              Plataforma de Gestión
             </span>
           </div>
 
@@ -443,8 +458,8 @@ export const LoginView: React.FC = () => {
               fontSize: 10, color: 'hsl(215 20% 28%)',
               lineHeight: 1.7, fontFamily: "'Inter', sans-serif",
             }}>
-              Iretum® · ERP Industrial SaaS<br />
-              Todos los derechos reservados
+              Sistema ERP Industrial · Plataforma de Gestión<br />
+              Uso interno exclusivo
             </p>
 
           </div>

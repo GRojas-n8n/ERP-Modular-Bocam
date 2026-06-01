@@ -277,7 +277,7 @@ export const MasterView: React.FC = () => {
               </svg>
             </div>
             <h1 className="text-xl font-black uppercase tracking-tighter">Master Dashboard</h1>
-            <p className="mt-1 text-xs font-medium text-muted-foreground">Gestion de Tenants — Iretum</p>
+            <p className="mt-1 text-xs font-medium text-muted-foreground">Gestión de Tenants</p>
           </div>
           <div className="rounded-2xl border border-border/40 bg-card p-6 shadow-xl">
             {authError && (
@@ -328,7 +328,7 @@ export const MasterView: React.FC = () => {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div>
             <h1 className="text-sm font-black uppercase tracking-widest">Master Dashboard</h1>
-            <p className="text-[10px] text-muted-foreground font-medium">Iretum — Gestion de Tenants</p>
+            <p className="text-[10px] text-muted-foreground font-medium">Gestión de Tenants</p>
           </div>
           <div className="flex items-center gap-3">
             <button

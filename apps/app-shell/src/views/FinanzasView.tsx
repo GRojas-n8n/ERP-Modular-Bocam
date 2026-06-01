@@ -160,7 +160,7 @@ function exportarPDF(resumen: ResumenFinanciero | null, pagos: PagoProgramado[],
     @media print { body { padding: 20px; } }
   </style></head><body>
   <div class="header">
-    <div><h1>Flujo de Caja</h1><p>Módulo de Finanzas · Iretum ERP Industrial</p></div>
+    <div><h1>Flujo de Caja</h1><p>Módulo de Finanzas · ERP Industrial</p></div>
     <div style="text-align:right"><p style="font-weight:700">Fecha de generación</p><p>${fecha}</p></div>
   </div>
   ${resumen ? `
@@ -174,7 +174,7 @@ function exportarPDF(resumen: ResumenFinanciero | null, pagos: PagoProgramado[],
   <p class="section-title">Egresos Programados (${pagos.length} registros)</p>
   <table><thead><tr><th>Fecha</th><th>Concepto / Beneficiario</th><th>Módulo</th><th class="right">Monto</th><th>Estado</th></tr></thead>
   <tbody>${filasPagos || '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">Sin egresos registrados</td></tr>'}</tbody></table>
-  <div class="footer"><span>Iretum® ERP Industrial SaaS</span><span>Reporte confidencial — uso interno</span></div>
+  <div class="footer"><span>ERP Industrial SaaS</span><span>Reporte confidencial — uso interno</span></div>
   </body></html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
@@ -422,7 +422,7 @@ export const FinanzasView: React.FC = () => {
                 Sincronizando Core Financiero
               </p>
               <p className="mt-2 text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
-                Iretum Cloud Hub v1.0
+                ERP Industrial
               </p>
             </div>
           </CardContent>

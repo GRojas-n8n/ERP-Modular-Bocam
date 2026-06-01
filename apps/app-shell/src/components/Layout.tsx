@@ -219,60 +219,48 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
       {/* ── Logo ───────────────────────────────────────────────────────── */}
       <style>{`
-        @keyframes iretum-glow {
+        @keyframes brand-glow {
           0%, 100% { opacity: 0.18; transform: scale(1); }
           50%       { opacity: 0.38; transform: scale(1.12); }
         }
-        @keyframes iretum-shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
-        .iretum-logo-wrap { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-        .iretum-logo-wrap:hover { transform: scale(1.07); }
-        .iretum-logo-wrap:hover .iretum-glow { opacity: 0.55 !important; }
-        .iretum-glow {
-          animation: iretum-glow 3.5s ease-in-out infinite;
-        }
-        .iretum-text {
-          background: linear-gradient(120deg,
-            hsl(var(--primary)) 0%,
-            hsl(var(--primary) / 0.7) 40%,
-            hsl(var(--primary)) 60%,
-            hsl(var(--primary) / 0.85) 100%
-          );
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: iretum-shimmer 4s linear infinite;
-        }
+        .brand-logo-wrap { transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .brand-logo-wrap:hover { transform: scale(1.07); }
+        .brand-logo-wrap:hover .brand-glow { opacity: 0.55 !important; }
+        .brand-glow { animation: brand-glow 3.5s ease-in-out infinite; }
       `}</style>
       <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
-        <div className="iretum-logo-wrap relative shrink-0 cursor-default">
-          {/* Glow — siempre activo, más intenso en dark */}
-          <div className="iretum-glow" style={{
+        <div className="brand-logo-wrap relative shrink-0 cursor-default">
+          {/* Glow pulsante */}
+          <div className="brand-glow" style={{
             position: 'absolute', inset: -8, borderRadius: '50%',
             background: 'radial-gradient(ellipse, hsl(var(--primary) / 0.28) 0%, transparent 70%)',
             pointerEvents: 'none',
             opacity: isDark ? 0.9 : 0.55,
           }} />
-          {/* Anillo exterior sutil */}
+          {/* Monograma del tenant */}
           <div style={{
-            position: 'absolute', inset: -3, borderRadius: '50%',
-            border: '1px solid hsl(var(--primary) / 0.2)',
-            pointerEvents: 'none',
-          }} />
-          <img src="/favicon.svg" alt="Iretum" width={30} height={29} style={{ position: 'relative', zIndex: 1 }} />
+            position: 'relative', zIndex: 1,
+            width: 30, height: 30, borderRadius: 8,
+            background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'hsl(var(--primary-foreground))',
+            fontSize: 13, fontWeight: 900,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            letterSpacing: '-0.02em',
+            boxShadow: `0 2px 8px hsl(var(--primary) / ${isDark ? '0.45' : '0.25'})`,
+          }}>
+            {(tenant?.name || 'E')[0].toUpperCase()}
+          </div>
         </div>
         <div className="flex min-w-0 flex-col">
           <span
-            className="iretum-text text-base font-black leading-tight"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.04em' }}
+            className="text-base font-black leading-tight text-foreground truncate"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.03em' }}
           >
-            iretum
-          </span>
-          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground opacity-60 truncate">
             {tenant?.name || 'ERP Industrial'}
+          </span>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-muted-foreground opacity-60 truncate">
+            ERP Industrial
           </span>
         </div>
       </div>
