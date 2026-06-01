@@ -1,2 +1,13 @@
 schema: spec-driven
 created: 2026-06-01
+status: archived
+commits:
+  - 4c29399  # feat(personal): motor nómina IMSS/ISR tablas SAT 2025
+  - 5e660c3  # feat(personal): asistencia enriquecida + bulk QR manual + config deducciones UI
+  - d4a3c38  # fix(residencia): remove unused estRes var
+production_verified: true
+production_date: 2026-06-01
+notes: |
+  Schema aplicado via prisma db push (DB ya existía con proyectos/tenants).
+  RLS aplicado manualmente post-push.
+  Módulo personal puerto 3006, BD bocam_personal.
