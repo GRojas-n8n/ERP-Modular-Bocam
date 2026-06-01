@@ -145,6 +145,13 @@ const ALL_NAV_ITEMS: NavItem[] = [
   },
   { name: 'Ventas',       icon: IconShoppingCart, id: 'ventas', roles: ['ventas'] },
   {
+    name: 'Calidad', icon: IconShieldCheck, id: 'calidad',
+    roles: ['calidad', 'admin'],
+    subItems: [
+      { id: 'documentos', label: 'Documentos', icon: IconFileText },
+    ],
+  },
+  {
     name: 'Administración', icon: IconSettings, id: 'admin',
     roles: ['admin'],
     subItems: [

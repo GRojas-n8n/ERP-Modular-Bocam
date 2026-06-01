@@ -423,6 +423,7 @@ Los roles viven en el JWT (`req.securityContext.roles: string[]`).
 | `gerencia_tecnica` | Gerencia Técnica — insumos, presupuestos maestros |
 | `ventas` | Ventas — clientes, cotizaciones, facturas |
 | `seguridad_hse` | Seguridad HSE — incidentes, inspecciones, EPP, capacitaciones |
+| `calidad` | Gestión de Calidad — control de documentos, versiones, SGC ISO 9001:2015 |
 
 ### Límites de Autoridad Financiera
 
@@ -545,6 +546,7 @@ Excluir `/health` del middleware de autenticación vía `excludePaths`.
 | `personal` | 3006 | |
 | `seguridad` | 3007 | |
 | `contabilidad` | 3008 | incluye `contabilidad-sat-worker` (profile `sat`) |
+| `calidad` | 3009 | módulo SGC ISO 9001:2015 — control de documentos y versiones |
 | `ventas` | 3012 | skeleton funcional; sin lógica de negocio ni integraciones aún |
 | `app-shell` | 80 (interno) | expuesto en producción vía Caddy en 443 |
 

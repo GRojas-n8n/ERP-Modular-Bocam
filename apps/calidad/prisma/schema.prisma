@@ -1,0 +1,66 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Calidad — Control de Documentos ISO 9001:2015
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Documentos del SGC ---
+// Alcance corporativo (tenant_id). proyecto_id opcional para planos de obra específica.
+model Documento {
+  id_documento   String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  codigo         String   @db.VarChar(30)
+  titulo         String   @db.VarChar(255)
+  tipo           String   @db.VarChar(30)   // PLANO|PROCEDIMIENTO|INSTRUCTIVO|ESPECIFICACION|MANUAL|REGISTRO|OTRO
+  descripcion    String?  @db.Text
+  proyecto_id    String?  @db.Uuid          // Opcional: plano de obra específica
+  responsable_id String   @db.Uuid          // userId del responsable
+  estado_actual  String   @default("BORRADOR") // BORRADOR|EN_REVISION|VIGENTE|OBSOLETO
+  version_actual String?  @db.VarChar(10)   // "1.0", "2.3" — null hasta tener versión
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  versiones      VersionDocumento[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id])
+  @@index([tenant_id, tipo])
+  @@index([tenant_id, estado_actual])
+  @@map("documentos")
+}
+
+// --- Versiones de Documentos ---
+model VersionDocumento {
+  id_version     String    @id @default(uuid()) @db.Uuid
+  tenant_id      String    @db.Uuid
+  documento_id   String    @db.Uuid
+  numero_version String    @db.VarChar(10)  // "1.0", "1.1", "2.0"
+  estado         String    @default("BORRADOR") // BORRADOR|EN_REVISION|VIGENTE|OBSOLETO
+  cambios        String?   @db.Text         // Descripción de cambios respecto a versión anterior
+  archivo_nombre String?   @db.VarChar(255) // Nombre original del archivo
+  archivo_ruta   String?   @db.VarChar(500) // Ruta relativa en volumen
+  archivo_mime   String?   @db.VarChar(100) // MIME type
+  archivo_tamano Int?                        // Bytes
+  creado_por     String    @db.Uuid
+  revisado_por   String?   @db.Uuid
+  aprobado_por   String?   @db.Uuid
+  fecha_emision  DateTime?                   // Cuando pasó a VIGENTE
+  fecha_obsoleto DateTime?                   // Cuando pasó a OBSOLETO
+  created_at     DateTime  @default(now())
+
+  documento      Documento @relation(fields: [documento_id], references: [id_documento], onDelete: Cascade)
+
+  @@unique([documento_id, numero_version])
+  @@index([tenant_id, estado])
+  @@index([documento_id])
+  @@map("versiones_documento")
+}

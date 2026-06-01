@@ -394,6 +394,36 @@ services:
     networks:
       - bocam-vps-network
     restart: unless-stopped
+  calidad:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/calidad"
+        APP_PATH: "apps/calidad"
+    container_name: bocam-vps-calidad
+    environment:
+      PORT: 3009
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${CALIDAD_DATABASE_URL}
+      CALIDAD_DATABASE_URL: ${CALIDAD_DATABASE_URL}
+      UPLOAD_DIR: /data/calidad/uploads
+    volumes:
+      - vps_calidad_uploads:/data/calidad/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bocam-vps-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
   app-shell:
     profiles: ["core", "full", "staging"]
     build:
@@ -437,3 +467,4 @@ volumes:
   vps_rabbitmq_data:
   vps_caddy_data:
   vps_caddy_config:
+  vps_calidad_uploads:

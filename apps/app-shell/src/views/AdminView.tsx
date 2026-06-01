@@ -27,6 +27,7 @@ const ROLES = [
   { value: 'contabilidad',     label: 'Contabilidad' },
   { value: 'personal_rh',      label: 'Personal / RH' },
   { value: 'seguridad_hse',    label: 'Seguridad HSE' },
+  { value: 'calidad',          label: 'Calidad / SGC' },
   { value: 'ventas',           label: 'Ventas' },
 ];
 
