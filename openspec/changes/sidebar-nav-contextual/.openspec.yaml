@@ -1,0 +1,7 @@
+schema: spec-driven
+created: 2026-06-01
+status: in_progress
+tasks_status:
+  completed: 37
+  pending: 6
+  pending_note: "11.1-11.6 — verificación operacional en producción (pendiente deploy)"

@@ -131,9 +131,9 @@ const DEMO_EPP: EntregaEPP[] = [
 
 type TabId = 'incidentes' | 'inspecciones' | 'permisos' | 'capacitaciones' | 'epp';
 
-export const SeguridadView: React.FC = () => {
+export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant } = useTenant();
-  const [activeTab, setActiveTab] = useState<TabId>('incidentes');
+  const activeTab: TabId = (activeSubView as TabId) || 'incidentes';
   const [incidentes, setIncidentes] = useState<Incidente[]>([]);
   const [inspecciones, setInspecciones] = useState<Inspeccion[]>([]);
   const [permisos, setPermisos] = useState<Permiso[]>([]);
@@ -248,13 +248,6 @@ export const SeguridadView: React.FC = () => {
   const eppAlerta = epp.filter(e => diasParaRenovar(e.proxima_renovacion) <= EPP_ALERTA_DIAS);
   const eppVencidos = epp.filter(e => diasParaRenovar(e.proxima_renovacion) < 0);
 
-const tabs = [
-    { id: 'incidentes' as TabId, label: 'Incidentes', count: incidentes.length, icon: IconAlertCircle },
-    { id: 'inspecciones' as TabId, label: 'Inspecciones', count: inspecciones.length, icon: IconCheckCircle2 },
-    { id: 'permisos' as TabId, label: 'Permisos', count: permisos.length, icon: IconFileText },
-    { id: 'capacitaciones' as TabId, label: 'Capacitaciones', count: capacitaciones.length, icon: IconUsers },
-    { id: 'epp' as TabId, label: 'EPP', count: epp.length, icon: IconActivity, alertCount: eppAlerta.length },
-  ];
   const avgCumplimiento = inspecciones.length
     ? (
         inspecciones.reduce(
@@ -368,9 +361,7 @@ const tabs = [
       </div>
 
       {eppAlerta.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setActiveTab('epp')}
+        <div
           className={cn(
             'w-full rounded-2xl border px-5 py-4 text-left transition-all hover:shadow-md',
             eppVencidos.length > 0
@@ -420,42 +411,8 @@ const tabs = [
               Ver EPP →
             </span>
           </div>
-        </button>
+        </div>
       )}
-
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            variant={activeTab === tab.id ? 'outline' : 'ghost'}
-            className={cn(
-              'flex-1 justify-center rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest',
-              activeTab === tab.id
-                ? 'border-border/40 bg-card text-rose-600 shadow-lg'
-                : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-            <span
-              className={cn(
-                'rounded-full px-2 py-0.5 text-[10px] font-black',
-                activeTab === tab.id
-                  ? 'bg-rose-500/10 text-rose-600'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              {tab.count}
-            </span>
-            {'alertCount' in tab && (tab.alertCount as number) > 0 && (
-              <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-black text-white">
-                {tab.alertCount as number}
-              </span>
-            )}
-          </Button>
-        ))}
-      </div>
 
       {loading ? (
         <Card className="border-border/40">

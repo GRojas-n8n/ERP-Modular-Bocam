@@ -14,6 +14,15 @@ import {
   IconMenu,
   IconX,
   IconClipboardCheck,
+  IconPackage,
+  IconLayers,
+  IconClock,
+  IconCheckCircle2,
+  IconAlertCircle,
+  IconTrendingUp,
+  IconActivity,
+  IconQrCode,
+  IconUserCheck,
 } from './Icons';
 import { useTenant } from '../context/TenantContext';
 
@@ -56,27 +65,104 @@ function useTheme() {
 }
 
 // ─── Nav items ───────────────────────────────────────────────────────────────
-const ALL_NAV_ITEMS = [
-  { name: 'Dashboard',       icon: IconDashboard,   id: 'dashboard',    roles: [] },
-  { name: 'Gerencia Tecnica',icon: IconBriefcase,   id: 'insumos',      roles: ['gerencia_tecnica'] },
-  { name: 'Compras',         icon: IconShoppingCart,id: 'compras',      roles: ['compras', 'procurement'] },
-  { name: 'Finanzas',        icon: IconWallet,      id: 'finanzas',     roles: ['finanzas'] },
-  { name: 'Contabilidad',    icon: IconFileText,    id: 'contabilidad', roles: ['contabilidad'] },
-  { name: 'Control de Obra', icon: IconFileText,       id: 'control-obra', roles: ['control_obra'] },
-  { name: 'Residencia',      icon: IconClipboardCheck, id: 'residencia',   roles: ['residencia', 'control_obra'] },
-  { name: 'Personal',        icon: IconUsers,          id: 'personal',     roles: ['personal_rh'] },
-  { name: 'Seguridad HSE',   icon: IconShieldCheck, id: 'seguridad',    roles: ['seguridad_hse'] },
-  { name: 'Ventas',          icon: IconShoppingCart,id: 'ventas',       roles: ['ventas'] },
-  { name: 'Administracion',  icon: IconSettings,    id: 'admin',        roles: ['admin'] },
+type SubItem = {
+  id: string;
+  label: string;
+  icon: React.FC<{ className?: string }>;
+  roles?: string[];
+};
+
+type NavItem = {
+  name: string;
+  icon: React.FC<{ className?: string }>;
+  id: string;
+  roles: string[];
+  subItems?: SubItem[];
+};
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  { name: 'Dashboard', icon: IconDashboard, id: 'dashboard', roles: [] },
+  {
+    name: 'Gerencia Técnica', icon: IconBriefcase, id: 'insumos',
+    roles: ['gerencia_tecnica'],
+    subItems: [
+      { id: 'catalogo', label: 'Catálogo de Obra', icon: IconBriefcase },
+      { id: 'insumos',  label: 'Insumos',          icon: IconPackage },
+    ],
+  },
+  {
+    name: 'Compras', icon: IconShoppingCart, id: 'compras',
+    roles: ['compras', 'procurement', 'residencia', 'resident', 'gerencia_tecnica', 'superintendent'],
+    subItems: [
+      { id: 'requisiciones',   label: 'Requisiciones', icon: IconShoppingCart, roles: ['compras', 'procurement', 'superintendent'] },
+      { id: 'catalogo',        label: 'Catálogo',       icon: IconPackage,      roles: ['compras', 'procurement', 'superintendent'] },
+      { id: 'almacen',         label: 'Almacén',        icon: IconLayers,       roles: ['compras', 'procurement', 'superintendent'] },
+      { id: 'pendientes-eval', label: 'Eval. Técnica',  icon: IconClock,        roles: ['resident', 'residencia', 'superintendent'] },
+      { id: 'pendientes-gt',   label: 'Aprob. GT',      icon: IconCheckCircle2, roles: ['gerencia_tecnica', 'superintendent'] },
+    ],
+  },
+  { name: 'Finanzas',     icon: IconWallet,         id: 'finanzas',     roles: ['finanzas'] },
+  { name: 'Contabilidad', icon: IconFileText,        id: 'contabilidad', roles: ['contabilidad'] },
+  {
+    name: 'Control de Obra', icon: IconFileText, id: 'control-obra',
+    roles: ['control_obra'],
+    subItems: [
+      { id: 'bitacoras',    label: 'Bitácoras',       icon: IconFileText },
+      { id: 'avances',      label: 'Avances Físicos', icon: IconTrendingUp },
+      { id: 'estimaciones', label: 'Estimaciones',    icon: IconActivity },
+    ],
+  },
+  {
+    name: 'Residencia', icon: IconClipboardCheck, id: 'residencia',
+    roles: ['residencia', 'control_obra'],
+    subItems: [
+      { id: 'estimaciones',  label: 'Estimaciones',    icon: IconFileText },
+      { id: 'nomina',        label: 'Nómina Cuadrilla', icon: IconUsers },
+      { id: 'asistencia',    label: 'Asistencia QR',   icon: IconQrCode },
+      { id: 'requisiciones', label: 'Requisiciones',   icon: IconShoppingCart },
+    ],
+  },
+  {
+    name: 'Personal', icon: IconUsers, id: 'personal',
+    roles: ['personal_rh'],
+    subItems: [
+      { id: 'empleados',  label: 'Empleados',       icon: IconUsers },
+      { id: 'cuadrillas', label: 'Cuadrillas',      icon: IconBriefcase },
+      { id: 'prenomina',  label: 'Pre-Nómina',      icon: IconWallet },
+      { id: 'pases',      label: 'Pases de Acceso', icon: IconUserCheck },
+    ],
+  },
+  {
+    name: 'Seguridad HSE', icon: IconShieldCheck, id: 'seguridad',
+    roles: ['seguridad_hse'],
+    subItems: [
+      { id: 'incidentes',     label: 'Incidentes',     icon: IconAlertCircle },
+      { id: 'inspecciones',   label: 'Inspecciones',   icon: IconCheckCircle2 },
+      { id: 'permisos',       label: 'Permisos',       icon: IconFileText },
+      { id: 'capacitaciones', label: 'Capacitaciones', icon: IconUsers },
+      { id: 'epp',            label: 'EPP',            icon: IconShieldCheck },
+    ],
+  },
+  { name: 'Ventas',       icon: IconShoppingCart, id: 'ventas', roles: ['ventas'] },
+  {
+    name: 'Administración', icon: IconSettings, id: 'admin',
+    roles: ['admin'],
+    subItems: [
+      { id: 'usuarios',  label: 'Usuarios',  icon: IconUsers },
+      { id: 'proyectos', label: 'Proyectos', icon: IconBriefcase },
+    ],
+  },
 ];
 
 interface LayoutProps {
   children: React.ReactNode;
   onNavigate: (view: string) => void;
   currentView: string;
+  currentSubView: string;
+  onSubNavigate: (sub: string) => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentView, currentSubView, onSubNavigate }) => {
   const { tenant, user, logout, currentProjectId, setCurrentProjectId } = useTenant();
   const { isDark, toggle: toggleTheme } = useTheme();
   const userRoles: string[] = user?.role ?? [];
@@ -106,7 +192,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     return () => { window.removeEventListener('click', onClickOutside); window.removeEventListener('keydown', onEsc); };
   }, [isProjectDropdownOpen]);
 
-  const handleNavigate = (view: string) => { onNavigate(view); setIsMobileNavOpen(false); };
+  const handleNavigate = (view: string) => {
+    const item = ALL_NAV_ITEMS.find(i => i.id === view);
+    const firstSub = item?.subItems?.find(s =>
+      !s.roles?.length || isAdmin || s.roles.some(r => userRoles.includes(r))
+    );
+    onSubNavigate(firstSub?.id ?? '');
+    onNavigate(view);
+    setIsMobileNavOpen(false);
+  };
   const handleLogout   = () => { setIsMobileNavOpen(false); logout(); };
   const projects       = user?.projects || [];
   const currentProject = projects.find(p => p.id === currentProjectId) || projects[0];
@@ -143,27 +237,70 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
       <nav className="flex-1 overflow-y-auto px-3 py-5" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {navItems.map((item) => {
           const active = currentView === item.id;
+          const visibleSubItems = (item.subItems ?? []).filter(s =>
+            !s.roles?.length || isAdmin || s.roles.some(r => userRoles.includes(r))
+          );
+          const hasSubItems = visibleSubItems.length > 0;
+
           return (
-            <button
-              key={item.id}
-              onClick={() => handleNavigate(item.id)}
-              className={cn(
-                'group relative flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200',
-                active
-                  ? 'text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+            <div key={item.id}>
+              <button
+                onClick={() => handleNavigate(item.id)}
+                className={cn(
+                  'group relative flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200',
+                  active
+                    ? 'text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                )}
+                style={active ? {
+                  background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%)',
+                  boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)',
+                } : {}}
+              >
+                <item.icon className={cn('h-4 w-4 shrink-0', active ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all')} />
+                <span className="truncate">{item.name}</span>
+                {active && !hasSubItems && (
+                  <div className="absolute right-3 h-1.5 w-1.5 rounded-full bg-white/60" />
+                )}
+              </button>
+
+              {/* Sub-items: visibles cuando el módulo padre está activo */}
+              {active && hasSubItems && (
+                <div className="relative mt-0.5 mb-1 ml-4">
+                  {/* Línea vertical conectora */}
+                  <div
+                    className="absolute left-3 top-1 bottom-1 w-px"
+                    style={{ background: 'hsl(var(--border))' }}
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    {visibleSubItems.map(sub => {
+                      const subActive = currentSubView === sub.id;
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => onSubNavigate(sub.id)}
+                          className={cn(
+                            'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
+                            subActive
+                              ? 'bg-muted/80 text-primary'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                          )}
+                        >
+                          {subActive && (
+                            <div
+                              className="absolute left-[10px] top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full"
+                              style={{ background: 'hsl(var(--primary))' }}
+                            />
+                          )}
+                          <sub.icon className={cn('h-3.5 w-3.5 shrink-0', subActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-80')} />
+                          <span className="truncate">{sub.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
-              style={active ? {
-                background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%)',
-                boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)',
-              } : {}}
-            >
-              <item.icon className={cn('h-4 w-4 shrink-0', active ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all')} />
-              <span className="truncate">{item.name}</span>
-              {active && (
-                <div className="absolute right-3 h-1.5 w-1.5 rounded-full bg-white/60" />
-              )}
-            </button>
+            </div>
           );
         })}
       </nav>

@@ -648,11 +648,11 @@ function leerArchivoComoRawRows(
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
-export const InsumosView: React.FC = () => {
+export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant, currentProjectId } = useTenant();
   const { notify } = useNotification();
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('catalogo');
+  const activeTab: ActiveTab = (activeSubView as ActiveTab) || 'catalogo';
 
   // ── Estado Tab 1: Catálogo de Obra ────────────────────────────────────────
   const fileInputRef  = useRef<HTMLInputElement>(null);
@@ -1256,27 +1256,6 @@ export const InsumosView: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="flex gap-1 p-1 bg-muted/40 rounded-2xl border border-border/40 w-fit">
-          {([
-            { id: 'catalogo' as const, label: 'Catálogo de Obra', Icon: IconFileText },
-            { id: 'insumos'  as const, label: 'Insumos',          Icon: IconLayers   },
-          ] as const).map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={cn(
-                'flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
-                activeTab === id
-                  ? 'bg-background text-foreground shadow-sm border border-border/40'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {label}
-            </button>
-          ))}
-        </div>
 
         {/* ── Error de parseo ── */}
         {(parseError || parseErrorInsumos) && (

@@ -261,12 +261,12 @@ const Modal: React.FC<{ open: boolean; onClose: () => void; title: string; child
 
 // ── Componente principal ─────────────────────────────────────────────────────
 
-export const ResidenciaView: React.FC = () => {
+export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
 
-  const [activeTab, setActiveTab] = useState<TabId>('estimaciones');
+  const activeTab: TabId = (activeSubView as TabId) || 'estimaciones';
   const [loading, setLoading] = useState(true);
 
   // ─ Estimaciones
@@ -662,14 +662,6 @@ export const ResidenciaView: React.FC = () => {
   };
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
-  const TABS: { id: TabId; label: string; icon: React.FC<{ className?: string }>; count?: number }[] = [
-    { id: 'estimaciones',  label: 'Estimaciones',   icon: IconClipboardCheck },
-    { id: 'nomina',        label: 'Nómina',          icon: IconUserCheck      },
-    { id: 'asistencia',   label: 'Asistencia QR',   icon: IconQrCode         },
-    { id: 'requisiciones', label: 'Requisiciones',   icon: IconShoppingCart,
-      count: isDemo ? 0 : reqsResidente.filter(r => r.estado === 'PENDIENTE').length },
-  ];
-
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -764,29 +756,6 @@ export const ResidenciaView: React.FC = () => {
         </div>
       )}
 
-      {/* ── Tab bar ────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted/30 p-1 w-fit">
-        {TABS.map(({ id, label, icon: Icon, count }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={cn(
-              'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold transition-all',
-              activeTab === id
-                ? 'bg-card shadow text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-            {typeof count === 'number' && count > 0 && (
-              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black text-amber-600">
-                {count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* TAB: ESTIMACIONES                                               */}

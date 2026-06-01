@@ -104,9 +104,9 @@ const DEMO_PASES: PaseAcceso[] = [
 
 type TabId = 'empleados' | 'cuadrillas' | 'prenomina' | 'pases';
 
-export const PersonalView: React.FC = () => {
+export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant } = useTenant();
-  const [activeTab, setActiveTab] = useState<TabId>('empleados');
+  const activeTab: TabId = (activeSubView as TabId) || 'empleados';
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cuadrillas, setCuadrillas] = useState<Cuadrilla[]>([]);
   const [prenominas, setPrenominas] = useState<PreNomina[]>([]);
@@ -180,13 +180,6 @@ export const PersonalView: React.FC = () => {
   const pasesAlerta = pases.filter(p => diasRestantes(p.fecha_vencimiento) <= ALERTA_DIAS);
   const pasesVencidos = pases.filter(p => diasRestantes(p.fecha_vencimiento) < 0);
 
-  const tabs = [
-    { id: 'empleados' as TabId, label: 'Empleados', count: empleados.length, icon: IconUsers },
-    { id: 'cuadrillas' as TabId, label: 'Cuadrillas', count: cuadrillas.length, icon: IconBriefcase },
-    { id: 'prenomina' as TabId, label: 'Pre-Nomina', count: prenominas.length, icon: IconWallet },
-    { id: 'pases' as TabId, label: 'Pases de Acceso', count: pases.length, icon: IconShieldCheck, alert: pasesAlerta.length },
-  ];
-
   const activos = empleados.filter((empleado) => empleado.estado === 'ACTIVO').length;
   const certs = empleados.filter(
     (empleado) => empleado.certificaciones && empleado.certificaciones !== 'null'
@@ -238,10 +231,8 @@ export const PersonalView: React.FC = () => {
 
       {/* ── Banner de alertas de pases ── */}
       {pasesAlerta.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setActiveTab('pases')}
-          className="w-full rounded-2xl border text-left transition-all hover:opacity-90 active:scale-[0.99]"
+        <div
+          className="w-full rounded-2xl border text-left"
           style={{
             borderColor: pasesVencidos.length > 0 ? 'hsl(0 72% 51% / 0.3)' : 'hsl(38 92% 50% / 0.3)',
             background: pasesVencidos.length > 0 ? 'hsl(0 72% 51% / 0.06)' : 'hsl(38 92% 50% / 0.06)',
@@ -259,47 +250,14 @@ export const PersonalView: React.FC = () => {
                 }
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
-                {pasesAlerta.map(p => p.empleado_nombre.split(' ')[0]).join(', ')} — Click para ver detalles
+                {pasesAlerta.map(p => p.empleado_nombre.split(' ')[0]).join(', ')} — Ver en «Pases de Acceso»
               </p>
             </div>
             <IconShieldCheck className={`h-4 w-4 shrink-0 ${pasesVencidos.length > 0 ? 'text-red-400' : 'text-amber-400'}`} />
           </div>
-        </button>
+        </div>
       )}
 
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            variant={activeTab === tab.id ? 'outline' : 'ghost'}
-            className={cn(
-              'flex-1 justify-center rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest',
-              activeTab === tab.id
-                ? 'border-border/40 bg-card text-violet-600 shadow-lg'
-                : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            <span className="hidden sm:inline">{tab.label}</span>
-            <span
-              className={cn(
-                'rounded-full px-2 py-0.5 text-[10px] font-black',
-                activeTab === tab.id
-                  ? 'bg-violet-500/10 text-violet-600'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              {tab.count}
-            </span>
-            {'alert' in tab && (tab as any).alert > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white">
-                {(tab as any).alert}
-              </span>
-            )}
-          </Button>
-        ))}
-      </div>
 
       {loading ? (
         <Card className="border-border/40">

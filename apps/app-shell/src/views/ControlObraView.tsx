@@ -79,10 +79,10 @@ interface Estimacion {
 
 type TabId = 'bitacoras' | 'avances' | 'estimaciones';
 
-export const ControlObraView: React.FC = () => {
+export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
-  const [activeTab, setActiveTab] = useState<TabId>('bitacoras');
+  const activeTab: TabId = (activeSubView as TabId) || 'bitacoras';
   const [bitacoras, setBitacoras] = useState<Bitacora[]>([]);
   const [avances, setAvances] = useState<AvanceFisico[]>([]);
   const [estimaciones, setEstimaciones] = useState<Estimacion[]>([]);
@@ -226,12 +226,6 @@ export const ControlObraView: React.FC = () => {
     );
   };
 
-  const tabs = [
-    { id: 'bitacoras' as TabId, label: 'Bitacoras', count: bitacoras.length, icon: IconFileText },
-    { id: 'avances' as TabId, label: 'Avances Fisicos', count: avances.length, icon: IconTrendingUp },
-    { id: 'estimaciones' as TabId, label: 'Estimaciones', count: estimaciones.length, icon: IconActivity },
-  ];
-
   const handleCreateClick = () => {
     if (activeTab === 'bitacoras') setShowBitacoraForm(true);
     else if (activeTab === 'avances') setShowAvanceForm(true);
@@ -282,34 +276,6 @@ export const ControlObraView: React.FC = () => {
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            variant={activeTab === tab.id ? 'outline' : 'ghost'}
-            className={cn(
-              'flex-1 justify-center rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest',
-              activeTab === tab.id
-                ? 'border-border/40 bg-card text-sky-600 shadow-lg'
-                : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-            <span
-              className={cn(
-                'rounded-full px-2 py-0.5 text-[10px] font-black',
-                activeTab === tab.id
-                  ? 'bg-sky-500/10 text-sky-600'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              {tab.count}
-            </span>
-          </Button>
-        ))}
-      </div>
 
       {loading ? (
         <Card className="border-border/40">

@@ -262,9 +262,9 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
 };
 
 // ─── AdminView ────────────────────────────────────────────────────────────────
-export const AdminView: React.FC = () => {
+export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { refreshUser } = useTenant();
-  const [activeTab, setActiveTab] = useState<'usuarios' | 'proyectos'>('usuarios');
+  const activeTab = (activeSubView as 'usuarios' | 'proyectos') || 'usuarios';
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -289,11 +289,6 @@ export const AdminView: React.FC = () => {
 
   useEffect(() => { void loadAll(); }, [loadAll]);
 
-  const tabs = [
-    { id: 'usuarios' as const, label: `Usuarios (${users.length})` },
-    { id: 'proyectos' as const, label: `Proyectos (${proyectos.length})` },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -312,17 +307,6 @@ export const AdminView: React.FC = () => {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
-            className={`flex-1 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-colors ${
-              activeTab === t.id ? 'bg-card border border-border/40 text-primary shadow-lg' : 'text-muted-foreground hover:text-foreground'
-            }`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
 
       {loading ? (
         <div className="flex h-40 items-center justify-center">

@@ -73,38 +73,44 @@ class AppErrorBoundary extends Component<{ children: React.ReactNode }, EBState>
 
 const AuthenticatedApp: React.FC = () => {
   const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [currentSubView, setCurrentSubView] = useState<string>('');
 
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return <DashboardView onNavigate={setCurrentView} />;
       case 'insumos':
-        return <InsumosView />;
+        return <InsumosView activeSubView={currentSubView} />;
       case 'compras':
-        return <ComprasView />;
+        return <ComprasView activeSubView={currentSubView} />;
       case 'comparativa':
         return <ComparativaPrecios />;
       case 'finanzas':
         return <FinanzasView />;
       case 'residencia':
-        return <ResidenciaView />;
+        return <ResidenciaView activeSubView={currentSubView} />;
       case 'control-obra':
-        return <ControlObraView />;
+        return <ControlObraView activeSubView={currentSubView} />;
       case 'personal':
-        return <PersonalView />;
+        return <PersonalView activeSubView={currentSubView} />;
       case 'seguridad':
-        return <SeguridadView />;
+        return <SeguridadView activeSubView={currentSubView} />;
       case 'ventas':
         return <VentasView />;
       case 'admin':
-        return <AdminView />;
+        return <AdminView activeSubView={currentSubView} />;
       default:
         return <DashboardView onNavigate={setCurrentView} />;
     }
   };
 
   return (
-    <Layout onNavigate={(view) => setCurrentView(view)} currentView={currentView}>
+    <Layout
+      onNavigate={setCurrentView}
+      currentView={currentView}
+      currentSubView={currentSubView}
+      onSubNavigate={setCurrentSubView}
+    >
       <Suspense fallback={<ViewLoader />}>
         {renderView()}
       </Suspense>

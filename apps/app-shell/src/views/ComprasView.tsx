@@ -148,7 +148,7 @@ const MOV_STYLE: Record<MovTipo, { badge: string; label: string; Icon: React.FC<
   TRASPASO: { badge: 'border-blue-500/20 bg-blue-500/10 text-blue-700',     label: 'Traspaso', Icon: IconRefreshCw,      bg: 'bg-blue-500/10' },
 };
 
-export const ComprasView: React.FC = () => {
+export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant, user } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
   const { notify } = useNotification();
@@ -160,7 +160,7 @@ export const ComprasView: React.FC = () => {
   const isProcurement = roles.some(r => ['procurement', 'admin', 'superintendent'].includes(r));
 
   // ─── State ────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<TabId>('requisiciones');
+  const activeTab: TabId = (activeSubView as TabId) || 'requisiciones';
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
   const [insumos, setInsumos] = useState<Insumo[]>([]);
   const [inventario, setInventario] = useState<ItemInventario[]>([]);
@@ -894,40 +894,6 @@ export const ComprasView: React.FC = () => {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border/30 bg-muted/30 p-1.5">
-        {([
-          { id: 'requisiciones'   as TabId, label: 'Requisiciones', icon: IconShoppingCart, count: requisiciones.length, show: true },
-          { id: 'catalogo'        as TabId, label: 'Catálogo',      icon: IconPackage,      count: insumos.length,       show: true },
-          { id: 'almacen'         as TabId, label: 'Almacén',       icon: IconLayers,       count: inventario.length,    show: true },
-          // 9.1 Bandeja Residente
-          { id: 'pendientes-eval' as TabId, label: 'Eval. Técnica', icon: IconClock,        count: pendientesEval.length, show: isResident || roles.includes('superintendent') },
-          // 9.2 Bandeja GT
-          { id: 'pendientes-gt'   as TabId, label: 'Aprob. GT',    icon: IconCheckCircle2, count: pendientesGT.length,   show: isGT },
-        ] as { id: TabId; label: string; icon: React.FC<{className?: string}>; count: number; show: boolean }[])
-         .filter(t => t.show)
-         .map(tab => (
-          <Button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            variant={activeTab === tab.id ? 'outline' : 'ghost'}
-            className={cn(
-              'flex-1 justify-center rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest',
-              activeTab === tab.id
-                ? 'border-border/40 bg-card text-emerald-600 shadow-lg'
-                : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'
-            )}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-black',
-              activeTab === tab.id ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'
-            )}>
-              {tab.count}
-            </span>
-          </Button>
-        ))}
-      </div>
 
       {/* Content */}
       {loading ? (
@@ -947,28 +913,28 @@ export const ComprasView: React.FC = () => {
             <p className="mx-auto max-w-sm text-xs font-medium text-muted-foreground">{error}</p>
           </CardContent>
         </Card>
+      ) : activeReqId ? (
+        /* ── Vista de detalle de comparativa (accesible desde cualquier sub-view) ── */
+        (() => {
+          const req = requisiciones.find(r => r.id === activeReqId);
+          const comp = comparativas.find(c => c.requisicion_id === activeReqId);
+          if (!req || !comp) return null;
+          return (
+            <ComparativaDetail
+              requisicionFolio={req.folio}
+              comparativa={comp}
+              insumos={insumos}
+              isDemo={isDemo}
+              onBack={() => setActiveReqId(null)}
+              onUpdate={updateComparativa}
+            />
+          );
+        })()
       ) : (
         <>
           {/* ── TAB: Requisiciones ───────────────────────────────────────────── */}
           {activeTab === 'requisiciones' && (
-            // Vista detalle: ComparativaDetail
-            activeReqId ? (
-              (() => {
-                const req = requisiciones.find(r => r.id === activeReqId);
-                const comp = comparativas.find(c => c.requisicion_id === activeReqId);
-                if (!req || !comp) return null;
-                return (
-                  <ComparativaDetail
-                    requisicionFolio={req.folio}
-                    comparativa={comp}
-                    insumos={insumos}
-                    isDemo={isDemo}
-                    onBack={() => setActiveReqId(null)}
-                    onUpdate={updateComparativa}
-                  />
-                );
-              })()
-            ) : requisiciones.length === 0 ? (
+            requisiciones.length === 0 ? (
               <Card className="border-dashed border-border/60">
                 <CardContent className="space-y-4 p-16 text-center">
                   <IconSearch className="mx-auto h-12 w-12 text-muted-foreground/20" />
@@ -1479,7 +1445,7 @@ export const ComprasView: React.FC = () => {
                         </div>
                       </div>
                       <Button
-                        onClick={() => { setActiveTab('requisiciones'); setActiveReqId(cc.requisicion_id); }}
+                        onClick={() => setActiveReqId(cc.requisicion_id)}
                         className="rounded-xl bg-amber-500 px-4 text-xs font-black text-white hover:bg-amber-400"
                       >
                         Evaluar →
@@ -1535,7 +1501,7 @@ export const ComprasView: React.FC = () => {
                         })()}
                       </div>
                       <Button
-                        onClick={() => { setActiveTab('requisiciones'); setActiveReqId(cc.requisicion_id); }}
+                        onClick={() => setActiveReqId(cc.requisicion_id)}
                         className="rounded-xl bg-violet-600 px-4 text-xs font-black text-white hover:bg-violet-500"
                       >
                         Revisar y Autorizar →
