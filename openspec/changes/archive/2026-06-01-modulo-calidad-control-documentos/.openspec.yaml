@@ -1,0 +1,16 @@
+schema: spec-driven
+created: 2026-06-01
+status: archived
+archived_at: 2026-06-01
+commits:
+  - hash: de881e1
+    message: "feat(calidad): nuevo módulo SGC ISO 9001:2015 — control de documentos y versiones"
+    scope: implementation
+  - hash: 1817552
+    message: "fix(calidad): notify object syntax + EmptyStatePanel icon as ReactNode"
+    scope: fix
+tasks_status:
+  completed: 46
+  pending: 0
+production_verified: true
+specs_synced: true
