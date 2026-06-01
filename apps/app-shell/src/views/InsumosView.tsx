@@ -163,14 +163,14 @@ const TIPO_COLOR: Record<TipoInsumo, string> = {
   MANO_DE_OBRA:'bg-blue-500/10   text-blue-700   border-blue-500/20',
   EQUIPO:      'bg-amber-500/10  text-amber-700  border-amber-500/20',
   SUBCONTRATO: 'bg-violet-500/10 text-violet-700 border-violet-500/20',
-  INDIRECTO:   'bg-slate-500/10  text-slate-600  border-slate-500/20',
+  INDIRECTO:   'bg-muted/500/10  text-muted-foreground  border-slate-500/20',
 };
 
 const ESTADO_BADGE: Record<string, string> = {
   BORRADOR:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
   EN_REVISION: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   LIBERADO:    'bg-green-500/10 text-green-600 border-green-500/20',
-  CONGELADO:   'bg-slate-500/10 text-slate-500 border-slate-500/20',
+  CONGELADO:   'bg-muted/500/10 text-muted-foreground border-slate-500/20',
 };
 
 // ─── Helpers compartidos ──────────────────────────────────────────────────────

@@ -192,7 +192,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
       ACCION_CORRECTIVA: 'border-blue-500/20 bg-blue-500/10 text-blue-600',
       CERRADO: 'border-green-500/20 bg-green-500/10 text-green-600',
       VIGENTE: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600',
-      EXPIRADO: 'border-slate-200 bg-slate-100 text-slate-500',
+      EXPIRADO: 'border-border bg-muted text-muted-foreground',
       CANCELADO: 'border-red-500/20 bg-red-500/10 text-red-600',
       APROBADA: 'border-green-500/20 bg-green-500/10 text-green-600',
       OBSERVACIONES: 'border-amber-500/20 bg-amber-500/10 text-amber-600',
@@ -229,7 +229,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
     };
 
     return (
-      <SectionBadge className={cn('rounded-md px-2 py-0.5 text-[9px]', map[tipo] || 'bg-slate-100 text-slate-600')}>
+      <SectionBadge className={cn('rounded-md px-2 py-0.5 text-[9px]', map[tipo] || 'bg-muted text-muted-foreground')}>
         {tipo.replace(/_/g, ' ')}
       </SectionBadge>
     );
@@ -472,7 +472,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
                             {severidadBadge(incidente.severidad)}
                             {estadoBadge(incidente.estado)}
                           </div>
-                          <p className="mt-2 line-clamp-2 text-sm font-medium text-slate-700">
+                          <p className="mt-2 line-clamp-2 text-sm font-medium text-foreground/80">
                             {incidente.descripcion}
                           </p>
                         </div>
@@ -523,19 +523,19 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
                     {inspecciones.map((inspeccion) => (
                       <TableRow key={inspeccion.id_inspeccion}>
                         <TableCell>
-                          <div className="text-sm font-bold text-slate-800">{inspeccion.codigo}</div>
+                          <div className="text-sm font-bold text-foreground">{inspeccion.codigo}</div>
                           <div className="mt-0.5 text-[10px] font-bold text-muted-foreground">
                             {formatDate(inspeccion.fecha_inspeccion)} · {inspeccion.inspector_nombre}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-slate-700">
+                        <TableCell className="text-sm font-medium text-foreground/80">
                           {inspeccion.tipo_inspeccion}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate text-sm font-medium text-slate-700">
+                        <TableCell className="max-w-[200px] truncate text-sm font-medium text-foreground/80">
                           {inspeccion.area_inspeccionada}
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="text-sm font-bold text-slate-800">
+                          <span className="text-sm font-bold text-foreground">
                             {inspeccion.items_conformes}
                           </span>
                           <span className="text-[10px] text-muted-foreground">
@@ -549,7 +549,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
                               <div
                                 className={cn(
                                   'h-full rounded-full',
@@ -564,7 +564,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
                                 }}
                               />
                             </div>
-                            <span className="text-[10px] font-black text-slate-700">
+                            <span className="text-[10px] font-black text-foreground/80">
                               {Number(inspeccion.porcentaje_cumplimiento).toFixed(0)}%
                             </span>
                           </div>
@@ -617,7 +617,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
                           <span className="text-[10px] font-black uppercase tracking-widest text-rose-600">
                             {permiso.codigo}
                           </span>
-                          <h3 className="mt-0.5 text-sm font-bold text-slate-800">
+                          <h3 className="mt-0.5 text-sm font-bold text-foreground">
                             {permiso.descripcion_trabajo}
                           </h3>
                         </div>
@@ -784,7 +784,7 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
                             {tipoBadge(capacitacion.tipo)}
                             {estadoBadge(capacitacion.estado)}
                           </div>
-                          <h3 className="mt-2 text-sm font-bold text-slate-800">
+                          <h3 className="mt-2 text-sm font-bold text-foreground">
                             {capacitacion.titulo}
                           </h3>
                           <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] font-medium text-muted-foreground">

@@ -199,7 +199,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       ACTIVA: 'border-green-500/20 bg-green-500/10 text-green-600',
       BAJA: 'border-red-500/20 bg-red-500/10 text-red-600',
       SUSPENDIDO: 'border-amber-500/20 bg-amber-500/10 text-amber-600',
-      BORRADOR: 'border-slate-200 bg-slate-100 text-slate-600',
+      BORRADOR: 'border-border bg-muted text-muted-foreground',
       CALCULADA: 'border-blue-500/20 bg-blue-500/10 text-blue-600',
       AUTORIZADA: 'border-indigo-500/20 bg-indigo-500/10 text-indigo-600',
       PAGADA: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600',
@@ -221,7 +221,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     };
 
     return (
-      <SectionBadge className={cn('rounded-md px-2 py-0.5 text-[9px]', map[categoria] || 'bg-slate-100 text-slate-600')}>
+      <SectionBadge className={cn('rounded-md px-2 py-0.5 text-[9px]', map[categoria] || 'bg-muted text-muted-foreground')}>
         {categoria}
       </SectionBadge>
     );
@@ -433,7 +433,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                               {empleado.apellido_paterno.charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-slate-800">
+                              <div className="text-sm font-bold text-foreground">
                                 {empleado.nombre} {empleado.apellido_paterno}
                               </div>
                               <div className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
@@ -442,13 +442,13 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-slate-700">
+                        <TableCell className="text-sm font-medium text-foreground/80">
                           {empleado.puesto}
                         </TableCell>
                         <TableCell>{catBadge(empleado.categoria)}</TableCell>
                         <TableCell>
                           {empleado.cuadrilla ? (
-                            <SectionBadge className="rounded-md bg-slate-100 px-2 py-1 text-[10px] text-slate-600">
+                            <SectionBadge className="rounded-md bg-muted px-2 py-1 text-[10px] text-muted-foreground">
                               {empleado.cuadrilla.codigo}
                             </SectionBadge>
                           ) : (
@@ -457,7 +457,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-mono text-sm font-bold text-slate-900">
+                        <TableCell className="text-right font-mono text-sm font-bold text-foreground">
                           {formatCurrency(Number(empleado.salario_diario))}
                         </TableCell>
                         <TableCell className="text-center">{estadoBadge(empleado.estado)}</TableCell>
@@ -519,7 +519,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                           <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">
                             {cuadrilla.codigo}
                           </span>
-                          <h3 className="mt-0.5 text-sm font-bold text-slate-800">
+                          <h3 className="mt-0.5 text-sm font-bold text-foreground">
                             {cuadrilla.nombre}
                           </h3>
                         </div>
@@ -697,7 +697,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-black tracking-tighter text-slate-900">
+                          <div className="text-2xl font-black tracking-tighter text-foreground">
                             {formatCurrency(Number(prenomina.total_neto))}
                           </div>
                           <p className="mt-0.5 text-[10px] font-bold text-muted-foreground">
@@ -1004,7 +1004,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                         <td className="px-3 py-2 text-right text-violet-700">
                           {d.monto_he_doble ? `$${d.monto_he_doble.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : '—'}
                         </td>
-                        <td className="px-3 py-2 text-right text-violet-900">
+                        <td className="px-3 py-2 text-right text-violet-700">
                           {d.monto_he_triple ? `$${d.monto_he_triple.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : '—'}
                         </td>
                         <td className="px-3 py-2 text-right">${d.salario_base.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>

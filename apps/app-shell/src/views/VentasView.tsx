@@ -70,19 +70,19 @@ type TabKey = 'clientes' | 'cotizaciones' | 'facturas';
 // ─── Badge de estatus ─────────────────────────────────────────────────────────
 const EstatusBadge: React.FC<{ estatus: string }> = ({ estatus }) => {
   const colores: Record<string, string> = {
-    BORRADOR:   'bg-slate-100 text-slate-600 border-slate-200',
-    ENVIADA:    'bg-blue-50 text-blue-600 border-blue-200',
-    ACEPTADA:   'bg-emerald-50 text-emerald-600 border-emerald-200',
-    RECHAZADA:  'bg-red-50 text-red-600 border-red-200',
-    EMITIDA:    'bg-indigo-50 text-indigo-600 border-indigo-200',
-    PAGADA:     'bg-emerald-50 text-emerald-600 border-emerald-200',
-    CANCELADA:  'bg-red-50 text-red-600 border-red-200',
-    VENCIDA:    'bg-amber-50 text-amber-600 border-amber-200',
+    BORRADOR:   'bg-muted text-muted-foreground border-border',
+    ENVIADA:    'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    ACEPTADA:   'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    RECHAZADA:  'bg-red-500/10 text-red-600 border-red-500/20',
+    EMITIDA:    'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
+    PAGADA:     'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    CANCELADA:  'bg-red-500/10 text-red-600 border-red-500/20',
+    VENCIDA:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
   };
   return (
     <span className={cn(
       'px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-tighter',
-      colores[estatus] ?? 'bg-slate-100 text-slate-600 border-slate-200'
+      colores[estatus] ?? 'bg-muted text-muted-foreground border-border'
     )}>
       {estatus}
     </span>
@@ -170,7 +170,7 @@ export const VentasView: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => fetchData()}
-            className="p-3 rounded-xl border border-border/60 bg-card hover:bg-slate-50 transition-all shadow-sm active:scale-90"
+            className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/50 transition-all shadow-sm active:scale-90"
             title="Refrescar datos"
           >
             <IconRefreshCw className={cn('h-5 w-5 text-muted-foreground', loading && 'animate-spin')} />
@@ -231,7 +231,7 @@ export const VentasView: React.FC = () => {
             <div className="h-20 w-20 bg-destructive/10 rounded-2xl flex items-center justify-center mb-6">
               <IconAlertCircle className="h-10 w-10 text-destructive" />
             </div>
-            <h3 className="font-black text-lg text-slate-900 uppercase tracking-tighter">Error de Conexion</h3>
+            <h3 className="font-black text-lg text-foreground uppercase tracking-tighter">Error de Conexion</h3>
             <p className="text-muted-foreground mt-4 text-xs font-medium leading-relaxed">{error}</p>
             <button
               onClick={() => fetchData()}
@@ -264,12 +264,12 @@ export const VentasView: React.FC = () => {
                     <tbody className="divide-y divide-border/20">
                       {clientesFiltrados.map(c => (
                         <tr key={c.id} className="hover:bg-emerald-500/[0.02] transition-colors">
-                          <td className="px-8 py-5 font-black text-sm text-slate-800 tracking-tight">{c.nombre}</td>
-                          <td className="px-8 py-5 font-mono text-xs text-slate-600">{c.rfc || '—'}</td>
+                          <td className="px-8 py-5 font-black text-sm text-foreground tracking-tight">{c.nombre}</td>
+                          <td className="px-8 py-5 font-mono text-xs text-muted-foreground">{c.rfc || '—'}</td>
                           <td className="px-8 py-5 text-xs text-muted-foreground">{c.email || '—'}</td>
                           <td className="px-8 py-5 text-xs text-muted-foreground">{c.telefono || '—'}</td>
                           <td className="px-8 py-5">
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-black uppercase tracking-tighter">
+                            <span className="px-2.5 py-1 rounded-lg bg-muted text-muted-foreground border border-border text-[9px] font-black uppercase tracking-tighter">
                               {c.tipo || 'CLIENTE'}
                             </span>
                           </td>
@@ -304,11 +304,11 @@ export const VentasView: React.FC = () => {
                       {cotizacionesFiltradas.map(c => (
                         <tr key={c.id} className="hover:bg-emerald-500/[0.02] transition-colors">
                           <td className="px-8 py-5 font-black text-emerald-600 tracking-tighter text-sm">{c.folio || c.id.slice(0, 8).toUpperCase()}</td>
-                          <td className="px-8 py-5 font-bold text-sm text-slate-800">{c.cliente?.nombre || '—'}</td>
+                          <td className="px-8 py-5 font-bold text-sm text-foreground">{c.cliente?.nombre || '—'}</td>
                           <td className="px-8 py-5 text-xs text-muted-foreground max-w-xs truncate">{c.descripcion || '—'}</td>
                           <td className="px-8 py-5"><EstatusBadge estatus={c.estatus} /></td>
                           <td className="px-8 py-5 text-right">
-                            <span className="font-mono font-black text-base text-slate-900">
+                            <span className="font-mono font-black text-base text-foreground">
                               {c.monto_total !== undefined
                                 ? `$${c.monto_total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
                                 : '—'}
@@ -345,13 +345,13 @@ export const VentasView: React.FC = () => {
                       {facturasFiltradas.map(f => (
                         <tr key={f.id} className="hover:bg-emerald-500/[0.02] transition-colors">
                           <td className="px-8 py-5 font-black text-emerald-600 tracking-tighter text-sm">{f.folio || f.id.slice(0, 8).toUpperCase()}</td>
-                          <td className="px-8 py-5 font-bold text-sm text-slate-800">{f.cliente?.nombre || '—'}</td>
+                          <td className="px-8 py-5 font-bold text-sm text-foreground">{f.cliente?.nombre || '—'}</td>
                           <td className="px-8 py-5 text-xs text-muted-foreground">
                             {f.fecha_emision ? new Date(f.fecha_emision).toLocaleDateString('es-MX') : '—'}
                           </td>
                           <td className="px-8 py-5"><EstatusBadge estatus={f.estatus} /></td>
                           <td className="px-8 py-5 text-right">
-                            <span className="font-mono font-black text-base text-slate-900">
+                            <span className="font-mono font-black text-base text-foreground">
                               {f.monto_total !== undefined
                                 ? `$${f.monto_total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
                                 : '—'}

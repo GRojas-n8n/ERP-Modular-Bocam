@@ -208,7 +208,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
 
   const getEstadoBadge = (estado: string) => {
     const map: Record<string, string> = {
-      BORRADOR: 'border-slate-200 bg-slate-100 text-slate-600',
+      BORRADOR: 'border-border bg-muted text-muted-foreground',
       FIRMADA: 'border-green-500/20 bg-green-500/10 text-green-600',
       PENDIENTE: 'border-amber-500/20 bg-amber-500/10 text-amber-600',
       VALIDADO: 'border-green-500/20 bg-green-500/10 text-green-600',
@@ -329,7 +329,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                             #{bitacora.numero_entrada}
                           </div>
                           <div>
-                            <h3 className="text-sm font-bold tracking-tight text-slate-800">
+                            <h3 className="text-sm font-bold tracking-tight text-foreground">
                               {bitacora.frente_trabajo}
                             </h3>
                             <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -343,13 +343,13 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <SectionBadge className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600">
+                          <SectionBadge className="rounded-lg bg-muted px-2.5 py-1 text-muted-foreground">
                             {bitacora.personal_en_sitio} personas
                           </SectionBadge>
                           {getEstadoBadge(bitacora.estado)}
                         </div>
                       </div>
-                      <p className="text-sm leading-relaxed text-slate-600">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
                         {bitacora.actividades_realizadas}
                       </p>
                     </CardContent>
@@ -385,16 +385,16 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                             <div className="text-xs font-black uppercase tracking-tighter text-sky-600">
                               {avance.concepto_presupuesto}
                             </div>
-                            <div className="mt-0.5 max-w-[250px] truncate text-sm font-medium text-slate-700">
+                            <div className="mt-0.5 max-w-[250px] truncate text-sm font-medium text-foreground/80">
                               {avance.descripcion_concepto}
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex flex-col items-center gap-1.5">
-                              <span className="text-lg font-black text-slate-900">
+                              <span className="text-lg font-black text-foreground">
                                 {Number(avance.porcentaje_avance).toFixed(1)}%
                               </span>
-                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                                 <div
                                   className="h-full rounded-full bg-sky-500 transition-all"
                                   style={{
@@ -408,7 +408,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className="font-mono text-base font-black text-slate-900">
+                            <span className="font-mono text-base font-black text-foreground">
                               {formatCurrency(Number(avance.importe_periodo))}
                             </span>
                           </TableCell>
@@ -424,7 +424,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                     Total periodo ({avances.length} conceptos)
                   </span>
-                  <span className="font-mono text-lg font-black text-slate-900">
+                  <span className="font-mono text-lg font-black text-foreground">
                     {formatCurrency(avances.reduce((sum, avance) => sum + Number(avance.importe_periodo), 0))}
                   </span>
                 </TableFooterBar>
@@ -461,7 +461,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-black tracking-tighter text-slate-900">
+                          <div className="text-2xl font-black tracking-tighter text-foreground">
                             {formatCurrency(Number(estimacion.total_neto))}
                           </div>
                           <p className="mt-0.5 text-[10px] font-bold text-muted-foreground">
@@ -701,18 +701,18 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm font-medium text-slate-700">
+                <div className="flex justify-between text-sm font-medium text-foreground/80">
                   <span>Importe periodo</span>
                   <span className="font-mono font-black">{formatCurrency(previewImporte)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-medium text-slate-700">
+                <div className="flex justify-between text-sm font-medium text-foreground/80">
                   <span>Avance acumulado</span>
                   <span className="font-mono font-bold">
                     {previewAcumulado} {avForm.unidad}
                   </span>
                 </div>
                 {previewPorcentaje ? (
-                  <div className="flex justify-between text-sm font-medium text-slate-700">
+                  <div className="flex justify-between text-sm font-medium text-foreground/80">
                     <span>% Avance</span>
                     <span className="font-mono font-bold text-sky-600">{previewPorcentaje}%</span>
                   </div>

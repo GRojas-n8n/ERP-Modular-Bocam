@@ -60,7 +60,7 @@ const CAPITULO_COLOR: Record<string, string> = {
   MANO_OBRA:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
   SUBCONTRATOS: 'bg-violet-500/10 text-violet-600 border-violet-500/20',
   EQUIPOS:      'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-  INDIRECTOS:   'bg-slate-500/10 text-slate-500 border-slate-500/20',
+  INDIRECTOS:   'bg-muted/500/10 text-muted-foreground border-slate-500/20',
 };
 
 interface PagoProgramado {
@@ -280,7 +280,7 @@ export const FinanzasView: React.FC = () => {
     };
 
     return (
-      <SectionBadge className={cn('rounded-full px-3 py-1 text-[10px]', styles[estado] || 'bg-slate-100 text-slate-600 border-slate-200')}>
+      <SectionBadge className={cn('rounded-full px-3 py-1 text-[10px]', styles[estado] || 'bg-muted text-muted-foreground border-border')}>
         {estado}
       </SectionBadge>
     );
@@ -304,30 +304,30 @@ export const FinanzasView: React.FC = () => {
     {
       label: 'Autorizado Total',
       value: resumen?.total_autorizado || 0,
-      color: 'text-slate-900',
+      color: 'text-foreground',
       icon: IconCheckCircle2,
-      bg: 'bg-slate-50',
+      bg: 'bg-muted/50',
     },
     {
       label: 'Comprometido (OC)',
       value: resumen?.total_comprometido || 0,
       color: 'text-amber-600',
       icon: IconClock,
-      bg: 'bg-amber-50/50',
+      bg: 'bg-amber-500/8',
     },
     {
       label: 'Ejercido (Pagado)',
       value: resumen?.total_ejercido || 0,
       color: 'text-indigo-600',
       icon: IconArrowDownRight,
-      bg: 'bg-indigo-50/50',
+      bg: 'bg-indigo-500/8',
     },
     {
       label: 'Disponible Real',
       value: resumen?.total_disponible || 0,
       color: 'text-green-600',
       icon: IconTrendingUp,
-      bg: 'bg-green-50/50',
+      bg: 'bg-green-500/8',
     },
   ];
 
@@ -418,7 +418,7 @@ export const FinanzasView: React.FC = () => {
               <div className="absolute inset-0 animate-spin rounded-full border-4 border-t-primary" />
             </div>
             <div className="flex flex-col items-center">
-              <p className="text-sm font-black uppercase tracking-widest text-slate-900 animate-pulse">
+              <p className="text-sm font-black uppercase tracking-widest text-foreground animate-pulse">
                 Sincronizando Core Financiero
               </p>
               <p className="mt-2 text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
@@ -486,7 +486,7 @@ export const FinanzasView: React.FC = () => {
             <div className="space-y-6 lg:col-span-2">
               <div className="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-xl font-black uppercase tracking-tighter text-slate-900">
+                  <h3 className="text-xl font-black uppercase tracking-tighter text-foreground">
                     Egresos Programados
                   </h3>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -533,7 +533,7 @@ export const FinanzasView: React.FC = () => {
                           <TableRow key={pago.id_pago} className="group">
                             <TableCell className="md:px-8 md:py-6">
                               <div className="flex flex-col">
-                                <span className="text-base font-black tracking-tighter text-slate-900">
+                                <span className="text-base font-black tracking-tighter text-foreground">
                                   {new Date(pago.fecha_programada).toLocaleDateString('es-MX', {
                                     day: '2-digit',
                                     month: 'short',
@@ -546,11 +546,11 @@ export const FinanzasView: React.FC = () => {
                             </TableCell>
                             <TableCell className="md:px-8 md:py-6">
                               <div className="flex flex-col gap-1">
-                                <span className="max-w-[280px] truncate text-sm font-bold tracking-tight text-slate-800">
+                                <span className="max-w-[280px] truncate text-sm font-bold tracking-tight text-foreground">
                                   {pago.concepto}
                                 </span>
                                 <div className="flex items-center gap-2">
-                                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[8px] font-black">
+                                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[8px] font-black">
                                     B
                                   </div>
                                   <span className="max-w-[250px] truncate text-[11px] font-medium uppercase tracking-tighter text-muted-foreground">
@@ -560,7 +560,7 @@ export const FinanzasView: React.FC = () => {
                               </div>
                             </TableCell>
                             <TableCell className="text-right md:px-8 md:py-6">
-                              <span className="font-mono text-lg font-black text-slate-900">
+                              <span className="font-mono text-lg font-black text-foreground">
                                 {formatCurrency(pago.monto_programado)}
                               </span>
                             </TableCell>
@@ -644,26 +644,26 @@ export const FinanzasView: React.FC = () => {
               <Card className="relative overflow-hidden rounded-3xl border-border/40 p-8 shadow-sm">
                 <div className="absolute right-0 top-0 h-1 w-full bg-amber-500/20" />
                 <div className="space-y-6">
-                  <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-800">
+                  <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-foreground">
                     <IconAlertCircle className="h-4 w-4 text-amber-500" />
                     Inteligencia Financiera
                   </h4>
                   <div className="space-y-4">
-                    <div className="flex gap-4 rounded-2xl border border-amber-100/50 bg-amber-50 p-4 transition-all hover:translate-x-1">
+                    <div className="flex gap-4 rounded-2xl border border-amber-500/20 bg-amber-500/8 p-4 transition-all hover:translate-x-1">
                       <div className="mt-2 h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-500" />
-                      <p className="text-[11px] font-bold uppercase tracking-tighter leading-tight text-amber-900">
+                      <p className="text-[11px] font-bold uppercase tracking-tighter leading-tight text-amber-700">
                         El presupuesto de{' '}
-                        <span className="rounded border border-amber-200 bg-white px-1 py-0.5">
+                        <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1 py-0.5">
                           MATERIALES
                         </span>{' '}
                         alcanzo el punto critico del 85%.
                       </p>
                     </div>
-                    <div className="flex gap-4 rounded-2xl border border-green-100/50 bg-green-50 p-4 transition-all hover:translate-x-1">
+                    <div className="flex gap-4 rounded-2xl border border-green-500/20 bg-green-500/8 p-4 transition-all hover:translate-x-1">
                       <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                      <p className="text-[11px] font-bold uppercase tracking-tighter leading-tight text-green-900">
+                      <p className="text-[11px] font-bold uppercase tracking-tighter leading-tight text-green-700">
                         Recuperacion de{' '}
-                        <span className="rounded border border-green-200 bg-white px-1.5 py-0.5 text-green-600">
+                        <span className="rounded border border-green-500/30 bg-green-500/10 px-1.5 py-0.5 text-green-700">
                           $3,712.58
                         </span>{' '}
                         via cancelacion de OC exitosa.

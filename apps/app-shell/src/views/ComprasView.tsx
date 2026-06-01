@@ -120,7 +120,7 @@ const CLASE_STYLE: Record<string, { badge: string; chip: string; label: string }
   MANO_OBRA:    { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-700',    chip: 'bg-amber-500/10 text-amber-700',    label: 'Mano de Obra' },
   SUBCONTRATOS: { badge: 'border-teal-500/20 bg-teal-500/10 text-teal-700',       chip: 'bg-teal-500/10 text-teal-700',      label: 'Subcontratos' },
 };
-const DEFAULT_CLASE = { badge: 'border-slate-200 bg-slate-100 text-slate-600', chip: 'bg-slate-100 text-slate-600', label: 'Otro' };
+const DEFAULT_CLASE = { badge: 'border-border bg-muted text-muted-foreground', chip: 'bg-muted text-muted-foreground', label: 'Otro' };
 
 const CLASES = Object.keys(CLASE_STYLE);
 
@@ -773,11 +773,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       if (['APROBADO_GT', 'AUTORIZADA'].includes(s))
         return { label: '🟢 Autorizado', cls: 'bg-green-500/10 text-green-700 border-green-500/20' };
       if (s === 'CERRADO')
-        return { label: '⬜ Cerrado', cls: 'bg-slate-500/10 text-slate-600 border-slate-500/20' };
+        return { label: '⬜ Cerrado', cls: 'bg-muted/500/10 text-muted-foreground border-slate-500/20' };
     }
     if (req.estado === 'COMPRADA')
       return { label: '🟢 OC Emitida', cls: 'bg-green-500/10 text-green-700 border-green-500/20' };
-    return { label: req.estado, cls: 'bg-slate-500/10 text-slate-500 border-slate-500/20' };
+    return { label: req.estado, cls: 'bg-muted/500/10 text-muted-foreground border-slate-500/20' };
   };
 
   const movBadge = (tipo: MovTipo) => {

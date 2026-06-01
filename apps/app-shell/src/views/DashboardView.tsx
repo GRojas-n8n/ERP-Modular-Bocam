@@ -269,7 +269,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             <div className="absolute inset-0 animate-spin rounded-full border-4 border-t-primary" />
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-sm font-black uppercase tracking-widest text-slate-900 animate-pulse">Sincronizando Modulos</p>
+            <p className="text-sm font-black uppercase tracking-widest text-foreground animate-pulse">Sincronizando Modulos</p>
             <p className="mt-2 text-[10px] font-medium uppercase tracking-tighter text-muted-foreground">
               Finanzas · Compras · Gerencia Tecnica
             </p>
@@ -486,7 +486,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                         <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Avance General</span>
                         <span className="text-[10px] font-black text-foreground">{progress}%</span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-out"
                           style={{ width: visibleItems >= 10 ? `${progress}%` : '0%' }}

@@ -120,17 +120,17 @@ export const ComparativaPrecios: React.FC = () => {
                     <tr key={comp.id} className="group transition-colors hover:bg-amber-500/[0.02]">
                       <td className="px-4 py-5 md:px-8 md:py-6">
                         <div className="flex flex-col">
-                          <span className="font-black tracking-tighter text-slate-900">{comp.folio}</span>
+                          <span className="font-black tracking-tighter text-foreground">{comp.folio}</span>
                           <span className="text-[10px] font-bold text-muted-foreground">
                             {new Date(comp.fecha).toLocaleDateString()}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-5 md:px-8 md:py-6">
-                        <span className="text-sm font-bold text-slate-800">{comp.titulo}</span>
+                        <span className="text-sm font-bold text-foreground">{comp.titulo}</span>
                       </td>
                       <td className="px-4 py-5 md:px-8 md:py-6">
-                        <span className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                        <span className="rounded-lg border border-border bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                           REQ: {comp.requisicion_folio}
                         </span>
                       </td>
@@ -144,7 +144,7 @@ export const ComparativaPrecios: React.FC = () => {
                                 : 'bg-amber-500'
                             )}
                           />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                             {comp.estado}
                           </span>
                         </div>

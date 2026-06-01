@@ -68,10 +68,10 @@ interface DashboardData {
 
 // ── Estilos por estado/tipo ───────────────────────────────────────────────────
 const ESTADO_STYLE: Record<EstadoDoc, { badge: string; label: string }> = {
-  BORRADOR:    { badge: 'border-slate-200 bg-slate-100 text-slate-600',        label: 'Borrador' },
+  BORRADOR:    { badge: 'border-border bg-muted text-muted-foreground',        label: 'Borrador' },
   EN_REVISION: { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-700',  label: 'En Revisión' },
   VIGENTE:     { badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700', label: 'Vigente' },
-  OBSOLETO:    { badge: 'border-slate-300 bg-slate-200 text-slate-500',        label: 'Obsoleto' },
+  OBSOLETO:    { badge: 'border-border bg-slate-200 text-muted-foreground',        label: 'Obsoleto' },
 };
 
 const TIPO_STYLE: Record<TipoDoc, { badge: string }> = {
@@ -81,7 +81,7 @@ const TIPO_STYLE: Record<TipoDoc, { badge: string }> = {
   ESPECIFICACION: { badge: 'border-teal-500/20 bg-teal-500/10 text-teal-700' },
   MANUAL:         { badge: 'border-indigo-500/20 bg-indigo-500/10 text-indigo-700' },
   REGISTRO:       { badge: 'border-orange-500/20 bg-orange-500/10 text-orange-700' },
-  OTRO:           { badge: 'border-slate-200 bg-slate-100 text-slate-600' },
+  OTRO:           { badge: 'border-border bg-muted text-muted-foreground' },
 };
 
 const SectionBadgeLocal: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => (
@@ -254,7 +254,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     { label: 'Total Documentos', value: dashboard?.total_documentos ?? 0,                          color: 'text-sky-600',     bg: 'bg-sky-500/10',     icon: IconFileText },
     { label: 'Vigentes',         value: dashboard?.documentos_por_estado.VIGENTE ?? 0,              color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: IconCheckCircle2 },
     { label: 'En Revisión',      value: dashboard?.documentos_por_estado.EN_REVISION ?? 0,          color: 'text-amber-600',   bg: 'bg-amber-500/10',   icon: IconClock },
-    { label: 'Borradores',       value: (dashboard?.documentos_por_estado.BORRADOR ?? 0),           color: 'text-slate-600',   bg: 'bg-slate-100',      icon: IconFileText },
+    { label: 'Borradores',       value: (dashboard?.documentos_por_estado.BORRADOR ?? 0),           color: 'text-muted-foreground',   bg: 'bg-muted',      icon: IconFileText },
   ];
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -575,7 +575,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         {v.estado === 'VIGENTE' && (
                           <button
                             onClick={() => setConfirmObsoleto({ docId: docDetalle.id_documento, vidId: v.id_version })}
-                            className="rounded-lg border border-slate-300 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100"
+                            className="rounded-lg border border-border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted"
                           >
                             Marcar Obsoleto
                           </button>
