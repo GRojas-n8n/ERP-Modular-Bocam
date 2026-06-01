@@ -18,7 +18,9 @@ import {
   IconBriefcase,
   IconCheckCircle2,
   IconClock,
+  IconClipboardCheck,
   IconFileText,
+  IconScale,
   IconShieldCheck,
   IconShoppingCart,
   IconTrendingUp,
@@ -231,21 +233,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   });
 
   const modules = [
-    { name: 'Gerencia Tecnica', desc: `${dashboard.totalInsumos} Insumos`, icon: IconBriefcase, id: 'insumos', color: 'indigo' },
-    { name: 'Compras', desc: `${ocCount} OC Registradas`, icon: IconShoppingCart, id: 'compras', color: 'emerald' },
-    { name: 'Finanzas', desc: 'Flujo de Caja', icon: IconWallet, id: 'finanzas', color: 'amber' },
-    { name: 'Control de Obra', desc: 'Avances y Estimaciones', icon: IconFileText, id: 'control-obra', color: 'sky' },
-    { name: 'Personal', desc: 'RRHH y Nomina', icon: IconUsers, id: 'personal', color: 'violet' },
-    { name: 'Seguridad', desc: 'HSE y Certificaciones', icon: IconShieldCheck, id: 'seguridad', color: 'rose' },
+    { name: 'Gerencia Técnica', desc: `${dashboard.totalInsumos} insumos catalogados`, icon: IconBriefcase, id: 'insumos', color: 'indigo' },
+    { name: 'Compras', desc: `${ocCount} órdenes registradas`, icon: IconShoppingCart, id: 'compras', color: 'emerald' },
+    { name: 'Finanzas', desc: 'Flujo de caja · CFDI', icon: IconWallet, id: 'finanzas', color: 'amber' },
+    { name: 'Control de Obra', desc: 'Avances y estimaciones', icon: IconFileText, id: 'control-obra', color: 'sky' },
+    { name: 'Personal / RRHH', desc: 'Nómina · IMSS · ISR 2025', icon: IconUsers, id: 'personal', color: 'violet' },
+    { name: 'Seguridad HSE', desc: 'Incidentes · EPP · STPS', icon: IconShieldCheck, id: 'seguridad', color: 'rose' },
+    { name: 'Calidad ISO', desc: 'SGC ISO 9001:2015', icon: IconCheckCircle2, id: 'calidad', color: 'teal' },
+    { name: 'Residencia', desc: 'Estimaciones · Asistencia QR', icon: IconClipboardCheck, id: 'residencia', color: 'blue' },
+    { name: 'Contabilidad', desc: 'Asientos · Timbrado SAT', icon: IconScale, id: 'contabilidad', color: 'cyan' },
   ];
 
   const colorMap: Record<string, { bg: string; icon: string; ring: string }> = {
     indigo: { bg: 'bg-indigo-500/10', icon: 'text-indigo-500', ring: 'hover:ring-indigo-500/30' },
     emerald: { bg: 'bg-emerald-500/10', icon: 'text-emerald-500', ring: 'hover:ring-emerald-500/30' },
-    amber: { bg: 'bg-amber-500/10', icon: 'text-amber-500', ring: 'hover:ring-amber-500/30' },
-    sky: { bg: 'bg-sky-500/10', icon: 'text-sky-500', ring: 'hover:ring-sky-500/30' },
-    violet: { bg: 'bg-violet-500/10', icon: 'text-violet-500', ring: 'hover:ring-violet-500/30' },
-    rose: { bg: 'bg-rose-500/10', icon: 'text-rose-500', ring: 'hover:ring-rose-500/30' },
+    amber:   { bg: 'bg-amber-500/10',   icon: 'text-amber-500',   ring: 'hover:ring-amber-500/30'   },
+    sky:     { bg: 'bg-sky-500/10',     icon: 'text-sky-500',     ring: 'hover:ring-sky-500/30'     },
+    violet:  { bg: 'bg-violet-500/10',  icon: 'text-violet-500',  ring: 'hover:ring-violet-500/30'  },
+    rose:    { bg: 'bg-rose-500/10',    icon: 'text-rose-500',    ring: 'hover:ring-rose-500/30'    },
+    teal:    { bg: 'bg-teal-500/10',    icon: 'text-teal-500',    ring: 'hover:ring-teal-500/30'    },
+    blue:    { bg: 'bg-blue-500/10',    icon: 'text-blue-500',    ring: 'hover:ring-blue-500/30'    },
+    cyan:    { bg: 'bg-cyan-500/10',    icon: 'text-cyan-500',    ring: 'hover:ring-cyan-500/30'    },
   };
 
   const pctComprometido = totalAutorizado > 0 ? Math.round((totalComprometido / totalAutorizado) * 100) : 0;
@@ -273,6 +281,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-8">
+
+      {/* ── Banner de estado del sistema ────────────────────────────────────── */}
+      <OperationalBanner
+        title={`${tenant?.name || 'ERP Bocam'} — Centro de Control Operativo`}
+        tone="dark"
+        badge={
+          <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            {modules.length} módulos activos · Sistema operativo
+          </span>
+        }
+      />
+
       <div className={cn('flex flex-col justify-between gap-6 md:flex-row md:items-end', visibleItems >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4')}>
         <div>
           <p className="mb-1 text-sm font-semibold capitalize text-muted-foreground">{currentDate}</p>
@@ -283,7 +304,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             </span>
           </h1>
           <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Centro de control operativo - <span className="font-bold text-foreground">{tenant?.name}</span>
+            Centro de control operativo ·{' '}
+            <span className="font-bold text-foreground">{tenant?.name}</span>
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-600">
+              <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+              En línea
+            </span>
           </p>
         </div>
 
@@ -461,7 +487,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                         <span className="text-[10px] font-black text-foreground">{progress}%</span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${progress}%` }} />
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-out"
+                          style={{ width: visibleItems >= 10 ? `${progress}%` : '0%' }}
+                        />
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -481,10 +510,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       <div className={cn(visibleItems >= 11 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6', 'transition-all duration-700')}>
         <div className="mb-5 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest">
-            <div className="h-2 w-2 rounded-full bg-primary" />
-            Ecosistema de Modulos
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            Plataforma Modular · iretum
           </h3>
-          <span className="text-[10px] font-bold text-muted-foreground">{modules.length} Activos</span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-600">
+              {modules.length} servicios online
+            </span>
+          </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {modules.map((module) => {

@@ -234,7 +234,7 @@ export const LoginView: React.FC = () => {
               }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D1FF', display: 'inline-block', animation: 'glow-pulse 2s ease-in-out infinite' }} />
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#00D1FF', fontFamily: "'Inter', sans-serif" }}>
-                  ERP Industrial · SaaS
+                  ERP Industrial · 10 Módulos
                 </span>
               </div>
 
@@ -263,7 +263,7 @@ export const LoginView: React.FC = () => {
                 maxWidth: 360,
                 fontFamily: "'Inter', sans-serif",
               }}>
-                Gestiona proyectos, compras, finanzas y control de avance — todo integrado, con timbrado SAT incluido.
+                Gerencia técnica, compras, finanzas, nómina IMSS/ISR, control de calidad ISO 9001 y más — todo integrado en una plataforma construida para la industria de la construcción.
               </p>
             </div>
 
@@ -278,9 +278,9 @@ export const LoginView: React.FC = () => {
               background: 'hsl(218 30% 20%)',
             }}>
               {[
-                { value: '9',   label: 'Módulos' },
-                { value: 'SAT', label: 'Certificado' },
-                { value: 'RLS', label: 'Multi-tenant' },
+                { value: '10',        label: 'Módulos' },
+                { value: 'SAT·IMSS', label: 'Integrado' },
+                { value: 'ISO 9001',  label: 'Calidad' },
               ].map((s) => (
                 <div key={s.label} style={{ background: 'hsl(218 38% 12%)', padding: '18px 16px', textAlign: 'center' }}>
                   <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 22, fontWeight: 700, color: '#00D1FF', letterSpacing: '-0.02em' }}>
