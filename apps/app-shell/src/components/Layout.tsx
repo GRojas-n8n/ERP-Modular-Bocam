@@ -294,20 +294,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
             pointerEvents: 'none',
           }} />
 
-          {/* Monograma del tenant */}
-          <div style={{
-            position: 'relative', zIndex: 2,
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.75) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'hsl(var(--primary-foreground))',
-            fontSize: 15, fontWeight: 900,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            letterSpacing: '-0.02em',
-            boxShadow: `0 0 0 1px hsl(var(--primary) / 0.35), 0 4px 14px hsl(var(--primary) / ${isDark ? '0.6' : '0.35'})`,
-          }}>
-            {(tenant?.name || 'E')[0].toUpperCase()}
-          </div>
+          {/* Logo iretum */}
+          <img
+            src="/favicon.svg"
+            alt="Logo"
+            width={36}
+            height={36}
+            style={{ position: 'relative', zIndex: 2, display: 'block' }}
+          />
         </div>
         <div className="flex min-w-0 flex-col">
           <span
