@@ -285,10 +285,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       {/* ── Banner de estado del sistema ────────────────────────────────────── */}
       <OperationalBanner
         title={`${tenant?.name || 'ERP Bocam'} — Centro de Control Operativo`}
-        tone="dark"
+        tone="neutral"
         badge={
-          <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/90">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {modules.length} módulos activos · Sistema operativo
           </span>
         }
