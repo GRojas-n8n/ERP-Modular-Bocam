@@ -344,7 +344,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     }
     const fetchData = async () => {
       try {
-        const [estRes, nomRes] = await Promise.allSettled([
+        const [, nomRes] = await Promise.allSettled([
           api.get('/api/v1/personal/prenominas'),
           api.get('/api/v1/personal/prenominas'),
         ]);
