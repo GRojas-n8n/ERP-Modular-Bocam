@@ -31,7 +31,6 @@ import {
   IconClock,
   IconFileText,
   IconPlus,
-  IconTrendingUp,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 

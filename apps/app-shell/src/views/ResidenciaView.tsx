@@ -36,7 +36,6 @@ import {
   IconQrCode,
   IconSearch,
   IconShoppingCart,
-  IconUserCheck,
   IconPlus,
   IconX,
 } from '../components/Icons';

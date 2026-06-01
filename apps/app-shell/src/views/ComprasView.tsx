@@ -155,8 +155,6 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
   const roles: string[] = user?.role ?? [];
-  const isResident    = roles.some(r => ['resident', 'residencia', 'control_obra'].includes(r));
-  const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
   const isProcurement = roles.some(r => ['procurement', 'admin', 'superintendent'].includes(r));
 
   // ─── State ────────────────────────────────────────────────────────────────
