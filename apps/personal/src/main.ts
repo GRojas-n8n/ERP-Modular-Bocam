@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createApiResponse, createApiError, EstadoPreNomina } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
-import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra } from './tablas-fiscales';
+import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcularHorasTrabajadas, calcularHorasDesglose, calcularMontoHEPorSemana } from './tablas-fiscales';
 
 /**
  * ---------------------------------------------------------------------------
@@ -99,6 +99,43 @@ app.post('/api/v1/personal/empleados', async (req: Request, res: Response) => {
 
     console.log(`[Personal] ✅ Empleado ${data.numero_empleado} registrado: ${data.nombre}`);
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const {
+      modo_asistencia, tipo_jornada,
+      hora_entrada_programada, hora_salida_programada, horas_jornada,
+    } = req.body;
+
+    if (modo_asistencia === 'POR_HORAS' && (!hora_entrada_programada || !hora_salida_programada)) {
+      return res.status(400).json(createApiError('PER_VALIDATION', 'hora_entrada_programada y hora_salida_programada son obligatorios en modo POR_HORAS.'));
+    }
+    if (horas_jornada !== undefined && (Number(horas_jornada) < 1 || Number(horas_jornada) > 24)) {
+      return res.status(400).json(createApiError('PER_VALIDATION', 'horas_jornada debe estar entre 1 y 24.'));
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
+      if (!emp) return null;
+      return prisma.empleado.update({
+        where: { id_empleado: id },
+        data: {
+          ...(modo_asistencia          !== undefined ? { modo_asistencia }          : {}),
+          ...(tipo_jornada             !== undefined ? { tipo_jornada }             : {}),
+          ...(hora_entrada_programada  !== undefined ? { hora_entrada_programada }  : {}),
+          ...(hora_salida_programada   !== undefined ? { hora_salida_programada }   : {}),
+          ...(horas_jornada            !== undefined ? { horas_jornada: Number(horas_jornada) } : {}),
+        },
+      });
+    });
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
+    res.json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
   }
@@ -314,79 +351,121 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
     }
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      // Obtener empleados activos con asignación en el proyecto
-      const empleados = await prisma.empleado.findMany({
-        where: { estado: 'ACTIVO' },
-      });
-
+      const empleados = await prisma.empleado.findMany({ where: { estado: 'ACTIVO' } });
       if (empleados.length === 0) throw new Error('No hay empleados activos en este proyecto.');
 
       const inicio = new Date(periodo_inicio);
-      const fin = new Date(periodo_fin);
+      const fin    = new Date(periodo_fin);
       const diasPeriodo = Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-      // Crear header
-      const count = await prisma.preNomina.count();
+      const count  = await prisma.preNomina.count();
       const codigo = `NOM-${new Date().getFullYear()}-${periodo_tipo === 'QUINCENAL' ? 'Q' : 'S'}${String(count + 1).padStart(2, '0')}`;
 
       let totalPercepciones = 0;
-      let totalDeducciones = 0;
+      let totalDeducciones  = 0;
 
-      // Leer resumen de asistencia del período
       const asistenciaRecs = await prisma.registroAsistencia.findMany({
-        where: {
-          tenant_id: tenantId, proyecto_id: proyectoId,
-          fecha: { gte: inicio, lte: fin },
-        },
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, fecha: { gte: inicio, lte: fin } },
       });
-      const asistenciaPorEmp: Record<string, { dias_trabajados: number; total_horas_extra: number; origen: string }> = {};
+
+      const asistPorEmp: Record<string, { dias: number; he: number }> = {};
+      const recsPorEmp: Record<string, any[]> = {};
       for (const r of asistenciaRecs) {
-        if (!asistenciaPorEmp[r.empleado_id]) {
-          asistenciaPorEmp[r.empleado_id] = { dias_trabajados: 0, total_horas_extra: 0, origen: 'ASISTENCIA' };
-        }
+        if (!recsPorEmp[r.empleado_id]) recsPorEmp[r.empleado_id] = [];
+        recsPorEmp[r.empleado_id].push(r);
+        if (!asistPorEmp[r.empleado_id]) asistPorEmp[r.empleado_id] = { dias: 0, he: 0 };
         if (r.estado === 'PRESENTE') {
-          asistenciaPorEmp[r.empleado_id].dias_trabajados++;
-          asistenciaPorEmp[r.empleado_id].total_horas_extra += Number(r.horas_extra);
+          asistPorEmp[r.empleado_id].dias++;
+          asistPorEmp[r.empleado_id].he += Number(r.horas_extra);
         }
       }
+
+      const getSemana = (fecha: Date) => {
+        const d = new Date(fecha); d.setHours(0,0,0,0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        const y = new Date(d.getFullYear(), 0, 1);
+        return Math.ceil((((d.getTime() - y.getTime()) / 86400000) + 1) / 7);
+      };
 
       const detallesData: object[] = [];
       for (const emp of empleados as any[]) {
         if (emp.tipo_contrato === 'SUBCONTRATO') continue;
 
-        const asistencia = asistenciaPorEmp[emp.id_empleado];
-        let diasTrabajados: number;
-        let origenDias: string;
-        if (asistencia) {
-          if (asistencia.dias_trabajados === 0) continue; // ausente todo el período
-          diasTrabajados = asistencia.dias_trabajados;
-          origenDias = 'ASISTENCIA';
-        } else {
-          diasTrabajados = diasPeriodo; // fallback estimado
-          origenDias = 'ESTIMADO';
-        }
-        const totalHorasExtra = asistencia?.total_horas_extra ?? 0;
-
-        // Leer config de deducciones
         const cfg = await prisma.configDeduccionEmpleado.findFirst({
           where: { tenant_id: tenantId, empleado_id: emp.id_empleado },
         });
-        const aplicaIMSS     = cfg?.aplica_imss      ?? true;
-        const aplicaISR      = cfg?.aplica_isr       ?? true;
-        const aplicaInfonavit= cfg?.aplica_infonavit  ?? false;
-        const infonavitMonto = aplicaInfonavit ? Number(cfg?.infonavit_monto ?? 0) : 0;
+        const aplicaIMSS      = cfg?.aplica_imss      ?? true;
+        const aplicaISR       = cfg?.aplica_isr       ?? true;
+        const aplicaInfonavit = cfg?.aplica_infonavit  ?? false;
+        const infonavitMonto  = aplicaInfonavit ? Number(cfg?.infonavit_monto ?? 0) : 0;
 
-        const salarioBase = parseFloat((Number(emp.salario_diario) * diasTrabajados).toFixed(2));
-        const { monto: montoHE, exento: exentoHE } = calcularHorasExtra(totalHorasExtra, diasTrabajados, Number(emp.salario_diario));
-        const percepciones = salarioBase + montoHE;
-        const baseISR = parseFloat((percepciones - exentoHE).toFixed(2));
+        let salarioBase = 0, montoHE = 0, exentoHE = 0;
+        let diasTrabajados = 0, origenDias = 'ESTIMADO';
+        let horasNormalesTotal: number | null = null;
+        let montoHeDoble = 0, montoHeTriple = 0;
+        let origenHoras = 'REAL';
+
+        if (emp.modo_asistencia === 'POR_HORAS') {
+          const recs = recsPorEmp[emp.id_empleado] ?? [];
+          const horasJornada = Number(emp.horas_jornada ?? 8);
+          const tarifaHora   = parseFloat((Number(emp.salario_diario) / horasJornada).toFixed(4));
+          let totalHorasNormales = 0;
+          let hayEstimado = false;
+          const hePorSemana: Record<number, number> = {};
+
+          for (const r of recs) {
+            const rA = r as any;
+            let hn: number, hed: number;
+            if (rA.horas_normales != null) {
+              hn = Number(rA.horas_normales); hed = Number(rA.horas_extra_dia ?? 0);
+              if (rA.origen_horas === 'ESTIMADO') hayEstimado = true;
+            } else if (rA.hora_entrada && !rA.hora_salida) {
+              hn = horasJornada; hed = 0; hayEstimado = true;
+            } else if (r.estado === 'PRESENTE') {
+              hn = horasJornada; hed = 0; hayEstimado = true;
+            } else { continue; }
+            totalHorasNormales += hn; diasTrabajados++;
+            const sem = getSemana(r.fecha instanceof Date ? r.fecha : new Date(r.fecha));
+            hePorSemana[sem] = (hePorSemana[sem] ?? 0) + hed;
+          }
+
+          if (diasTrabajados === 0 && recs.length === 0) {
+            totalHorasNormales = diasPeriodo * horasJornada;
+            diasTrabajados = diasPeriodo; hayEstimado = true;
+          } else if (diasTrabajados === 0) { continue; }
+
+          salarioBase = parseFloat((totalHorasNormales * tarifaHora).toFixed(2));
+          horasNormalesTotal = parseFloat(totalHorasNormales.toFixed(2));
+          origenDias = 'ASISTENCIA'; origenHoras = hayEstimado ? 'ESTIMADO' : 'REAL';
+
+          for (const heAcum of Object.values(hePorSemana)) {
+            const { monto_doble, monto_triple } = calcularMontoHEPorSemana(heAcum, tarifaHora);
+            montoHeDoble += monto_doble; montoHeTriple += monto_triple;
+          }
+          montoHE  = parseFloat((montoHeDoble + montoHeTriple).toFixed(2));
+          exentoHE = parseFloat((montoHE * 0.50).toFixed(2));
+
+        } else {
+          const asistencia = asistPorEmp[emp.id_empleado];
+          if (asistencia) {
+            if (asistencia.dias === 0) continue;
+            diasTrabajados = asistencia.dias; origenDias = 'ASISTENCIA';
+          } else {
+            diasTrabajados = diasPeriodo; origenDias = 'ESTIMADO';
+          }
+          const totalHE = asistencia?.he ?? 0;
+          salarioBase = parseFloat((Number(emp.salario_diario) * diasTrabajados).toFixed(2));
+          const heCalc = calcularHorasExtra(totalHE, diasTrabajados, Number(emp.salario_diario));
+          montoHE = heCalc.monto; exentoHE = heCalc.exento;
+        }
+
+        const percepciones = parseFloat((salarioBase + montoHE).toFixed(2));
+        const baseISR      = parseFloat((percepciones - exentoHE).toFixed(2));
 
         let dedIMSS = 0;
         if (aplicaIMSS && emp.nss) {
-          const sbc = Number(emp.salario_integrado ?? emp.salario_diario);
-          dedIMSS = calcularIMSS(sbc, diasTrabajados).total;
+          dedIMSS = calcularIMSS(Number(emp.salario_integrado ?? emp.salario_diario), diasTrabajados).total;
         }
-
         let dedISR = 0;
         if (aplicaISR) {
           const isrBruto = calcularISR(baseISR, periodo_tipo || 'SEMANAL');
@@ -394,8 +473,8 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
           dedISR = Math.max(0, parseFloat((isrBruto - subsidio).toFixed(2)));
         }
 
-        const totalDed  = parseFloat((dedIMSS + dedISR + infonavitMonto).toFixed(2));
-        const neto      = parseFloat((percepciones - totalDed).toFixed(2));
+        const totalDed = parseFloat((dedIMSS + dedISR + infonavitMonto).toFixed(2));
+        const neto     = parseFloat((percepciones - totalDed).toFixed(2));
 
         totalPercepciones += percepciones;
         totalDeducciones  += totalDed;
@@ -405,7 +484,7 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
           empleado_id: emp.id_empleado,
           origen_dias: origenDias,
           dias_trabajados: diasTrabajados,
-          horas_extra: totalHorasExtra,
+          horas_extra: montoHE > 0 ? parseFloat((montoHE / (Number(emp.salario_diario) / 8)).toFixed(1)) : 0,
           salario_base: salarioBase,
           monto_horas_extra: montoHE,
           bonos: 0,
@@ -415,6 +494,10 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
           otras_deducciones: infonavitMonto,
           total_deducciones: totalDed,
           neto_a_pagar: neto,
+          horas_normales:  horasNormalesTotal,
+          monto_he_doble:  parseFloat(montoHeDoble.toFixed(2)),
+          monto_he_triple: parseFloat(montoHeTriple.toFixed(2)),
+          origen_horas:    origenHoras,
         });
       }
 
@@ -525,44 +608,105 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
 // ASISTENCIA
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-// POST /asistencia/registro
+// POST /asistencia/registro — soporta JORNADA_COMPLETA y POR_HORAS con doble-scan
 app.post('/api/v1/personal/asistencia/registro', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const { empleado_id, fecha, estado, tipo_registro, horas_extra, cuadrilla_id } = req.body;
-    if (!empleado_id || !fecha || !estado) {
-      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'empleado_id, fecha y estado son obligatorios.'));
+    const { empleado_id, fecha, estado, tipo_registro, horas_extra, cuadrilla_id,
+            hora_entrada, hora_salida, tipo_scan } = req.body;
+    if (!empleado_id || !fecha) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'empleado_id y fecha son obligatorios.'));
     }
-    const ESTADOS_VALIDOS = ['PRESENTE', 'AUSENTE', 'INCAPACIDAD', 'JUSTIFICADA', 'FALTA'];
-    if (!ESTADOS_VALIDOS.includes(estado)) {
-      return res.status(400).json(createApiError('PER_INVALID_STATE', `Estado inválido. Valores: ${ESTADOS_VALIDOS.join(', ')}`));
-    }
+    const scan = tipo_scan ?? 'AUTO';
+
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      return prisma.registroAsistencia.upsert({
-        where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
-        create: {
-          tenant_id: tenantId, proyecto_id: proyectoId, empleado_id,
-          cuadrilla_id: cuadrilla_id ?? null,
-          fecha: new Date(fecha), estado,
-          tipo_registro: tipo_registro ?? 'MANUAL',
-          horas_extra: horas_extra ?? 0,
-          registrado_por: userId,
-        },
-        update: {
-          estado,
-          horas_extra: horas_extra ?? 0,
-          tipo_registro: tipo_registro ?? 'MANUAL',
-          registrado_por: userId,
-        },
+      const emp = await prisma.empleado.findFirst({
+        where: { id_empleado: empleado_id, tenant_id: tenantId },
+        select: { modo_asistencia: true, horas_jornada: true },
       });
+      const esPorHoras = emp?.modo_asistencia === 'POR_HORAS';
+
+      if (!esPorHoras) {
+        // ── JORNADA_COMPLETA: upsert estado (comportamiento original) ──────────
+        const ESTADOS_VALIDOS = ['PRESENTE', 'AUSENTE', 'INCAPACIDAD', 'JUSTIFICADA', 'FALTA'];
+        const estadoFinal = estado ?? 'PRESENTE';
+        if (!ESTADOS_VALIDOS.includes(estadoFinal)) {
+          throw new Error(`Estado inválido: ${estadoFinal}`);
+        }
+        return prisma.registroAsistencia.upsert({
+          where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
+          create: {
+            tenant_id: tenantId, proyecto_id: proyectoId, empleado_id,
+            cuadrilla_id: cuadrilla_id ?? null,
+            fecha: new Date(fecha), estado: estadoFinal,
+            tipo_registro: tipo_registro ?? 'MANUAL',
+            horas_extra: horas_extra ?? 0,
+            registrado_por: userId,
+          },
+          update: {
+            estado: estadoFinal,
+            horas_extra: horas_extra ?? 0,
+            tipo_registro: tipo_registro ?? 'MANUAL',
+            registrado_por: userId,
+          },
+        });
+      }
+
+      // ── POR_HORAS: lógica de doble-scan ──────────────────────────────────────
+      const horaActual = new Date().toTimeString().slice(0, 5); // HH:MM
+      const existente  = await prisma.registroAsistencia.findUnique({
+        where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
+      });
+
+      if (!existente || scan === 'ENTRADA') {
+        // Primer scan o forzar entrada
+        const hE = hora_entrada ?? horaActual;
+        return prisma.registroAsistencia.upsert({
+          where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
+          create: {
+            tenant_id: tenantId, proyecto_id: proyectoId, empleado_id,
+            cuadrilla_id: cuadrilla_id ?? null,
+            fecha: new Date(fecha), estado: 'PRESENTE',
+            tipo_registro: tipo_registro ?? (scan === 'AUTO' ? 'QR' : 'MANUAL'),
+            horas_extra: 0, registrado_por: userId,
+            hora_entrada: hE, origen_horas: 'REAL',
+          },
+          update: { hora_entrada: hE, registrado_por: userId },
+        });
+      }
+
+      if ((existente as any).hora_entrada && !(existente as any).hora_salida && scan !== 'ENTRADA') {
+        // Segundo scan → registrar salida y calcular horas
+        if (scan === 'SALIDA' && !hora_salida && !horaActual) {
+          throw new Error('hora_salida es obligatoria para tipo_scan SALIDA.');
+        }
+        const hS = hora_salida ?? horaActual;
+        const hE = String((existente as any).hora_entrada);
+        const horasJornada = Number((emp as any).horas_jornada ?? 8);
+        const trabajadas = calcularHorasTrabajadas(hE, hS);
+        const { horas_normales, horas_extra_dia } = calcularHorasDesglose(trabajadas, horasJornada);
+        return prisma.registroAsistencia.update({
+          where: { id_registro: existente.id_registro },
+          data: {
+            hora_salida: hS, horas_trabajadas: trabajadas,
+            horas_normales, horas_extra_dia,
+            origen_horas: 'REAL', registrado_por: userId,
+            tipo_registro: tipo_registro ?? (scan === 'AUTO' ? 'QR' : 'MANUAL'),
+          },
+        });
+      }
+
+      // Ya tiene entrada y salida — idempotente
+      return existente;
     });
+
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
   }
 });
 
-// POST /asistencia/bulk
+// POST /asistencia/bulk — soporta JORNADA_COMPLETA y POR_HORAS en la misma cuadrilla
 app.post('/api/v1/personal/asistencia/bulk', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -571,20 +715,72 @@ app.post('/api/v1/personal/asistencia/bulk', requireRoles('residencia', 'control
       return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'fecha y registros son obligatorios.'));
     }
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      // Cargar modo_asistencia de todos los empleados del bulk en una sola query
+      const empIds = registros.map((r: any) => r.empleado_id);
+      const empleados = await prisma.empleado.findMany({
+        where: { id_empleado: { in: empIds }, tenant_id: tenantId },
+        select: { id_empleado: true, modo_asistencia: true, horas_jornada: true },
+      });
+      const empMap = new Map(empleados.map(e => [e.id_empleado, e]));
+
       const results = [];
       for (const r of registros) {
-        const rec = await prisma.registroAsistencia.upsert({
-          where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: r.empleado_id, fecha: new Date(fecha) } },
-          create: {
-            tenant_id: tenantId, proyecto_id: proyectoId,
-            empleado_id: r.empleado_id, cuadrilla_id: cuadrilla_id ?? null,
-            fecha: new Date(fecha), estado: r.estado ?? 'PRESENTE',
-            tipo_registro: 'MANUAL', horas_extra: r.horas_extra ?? 0,
-            registrado_por: userId,
-          },
-          update: { estado: r.estado ?? 'PRESENTE', horas_extra: r.horas_extra ?? 0, registrado_por: userId },
-        });
-        results.push(rec);
+        const emp = empMap.get(r.empleado_id);
+        const esPorHoras = emp?.modo_asistencia === 'POR_HORAS';
+
+        if (esPorHoras && r.hora_entrada && r.hora_salida) {
+          // POR_HORAS con horas completas → calcular
+          const horasJornada = Number(emp?.horas_jornada ?? 8);
+          const trabajadas = calcularHorasTrabajadas(r.hora_entrada, r.hora_salida);
+          const { horas_normales, horas_extra_dia } = calcularHorasDesglose(trabajadas, horasJornada);
+          const rec = await prisma.registroAsistencia.upsert({
+            where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: r.empleado_id, fecha: new Date(fecha) } },
+            create: {
+              tenant_id: tenantId, proyecto_id: proyectoId,
+              empleado_id: r.empleado_id, cuadrilla_id: cuadrilla_id ?? null,
+              fecha: new Date(fecha), estado: 'PRESENTE',
+              tipo_registro: 'MANUAL', horas_extra: horas_extra_dia,
+              registrado_por: userId,
+              hora_entrada: r.hora_entrada, hora_salida: r.hora_salida,
+              horas_trabajadas: trabajadas, horas_normales, horas_extra_dia,
+              origen_horas: 'REAL',
+            },
+            update: {
+              hora_entrada: r.hora_entrada, hora_salida: r.hora_salida,
+              horas_trabajadas: trabajadas, horas_normales, horas_extra_dia,
+              horas_extra: horas_extra_dia, registrado_por: userId,
+            },
+          });
+          results.push(rec);
+        } else if (esPorHoras && r.hora_entrada && !r.hora_salida) {
+          // POR_HORAS solo entrada
+          const rec = await prisma.registroAsistencia.upsert({
+            where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: r.empleado_id, fecha: new Date(fecha) } },
+            create: {
+              tenant_id: tenantId, proyecto_id: proyectoId,
+              empleado_id: r.empleado_id, cuadrilla_id: cuadrilla_id ?? null,
+              fecha: new Date(fecha), estado: 'PRESENTE',
+              tipo_registro: 'MANUAL', horas_extra: 0,
+              registrado_por: userId, hora_entrada: r.hora_entrada, origen_horas: 'REAL',
+            },
+            update: { hora_entrada: r.hora_entrada, registrado_por: userId },
+          });
+          results.push(rec);
+        } else {
+          // JORNADA_COMPLETA o POR_HORAS sin horas → upsert estado
+          const rec = await prisma.registroAsistencia.upsert({
+            where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: r.empleado_id, fecha: new Date(fecha) } },
+            create: {
+              tenant_id: tenantId, proyecto_id: proyectoId,
+              empleado_id: r.empleado_id, cuadrilla_id: cuadrilla_id ?? null,
+              fecha: new Date(fecha), estado: r.estado ?? 'PRESENTE',
+              tipo_registro: 'MANUAL', horas_extra: r.horas_extra ?? 0,
+              registrado_por: userId,
+            },
+            update: { estado: r.estado ?? 'PRESENTE', horas_extra: r.horas_extra ?? 0, registrado_por: userId },
+          });
+          results.push(rec);
+        }
       }
       return results;
     });
@@ -616,11 +812,12 @@ app.get('/api/v1/personal/asistencia', requireRoles('residencia', 'control_obra'
       const empIds = [...new Set(registros.map(r => r.empleado_id))];
       const empleados = await prisma.empleado.findMany({
         where: { id_empleado: { in: empIds } },
-        select: { id_empleado: true, nombre: true, apellido_paterno: true, puesto: true },
+        select: { id_empleado: true, nombre: true, apellido_paterno: true, puesto: true, modo_asistencia: true },
       });
       const empMap = new Map(empleados.map(e => [e.id_empleado, e]));
       return registros.map(r => {
         const emp = empMap.get(r.empleado_id);
+        const ra = r as any;
         return {
           id: r.id_registro,
           id_registro: r.id_registro,
@@ -630,11 +827,16 @@ app.get('/api/v1/personal/asistencia', requireRoles('residencia', 'control_obra'
           estado: r.estado,
           tipo_registro: r.tipo_registro,
           horas_extra: Number(r.horas_extra),
-          hora_entrada: null,
-          hora_salida: null,
+          hora_entrada: ra.hora_entrada ?? null,
+          hora_salida: ra.hora_salida ?? null,
+          horas_trabajadas: ra.horas_trabajadas != null ? Number(ra.horas_trabajadas) : null,
+          horas_normales: ra.horas_normales != null ? Number(ra.horas_normales) : null,
+          horas_extra_dia: ra.horas_extra_dia != null ? Number(ra.horas_extra_dia) : null,
+          origen_horas: ra.origen_horas ?? 'REAL',
           empleado_nombre: emp ? `${emp.nombre} ${emp.apellido_paterno}` : r.empleado_id.slice(0, 8),
           puesto: emp?.puesto ?? '',
           cuadrilla_nombre: r.cuadrilla_id ?? '',
+          modo_asistencia: (emp as any)?.modo_asistencia ?? 'JORNADA_COMPLETA',
         };
       });
     });
@@ -644,20 +846,42 @@ app.get('/api/v1/personal/asistencia', requireRoles('residencia', 'control_obra'
   }
 });
 
-// PATCH /asistencia/:id
+// PATCH /asistencia/:id — acepta hora_entrada/hora_salida y recalcula si ambas presentes
 app.patch('/api/v1/personal/asistencia/:id', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { id } = req.params;
-    const { estado, horas_extra } = req.body;
+    const { estado, horas_extra, hora_entrada, hora_salida } = req.body;
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       const reg = await prisma.registroAsistencia.findFirst({ where: { id_registro: id, tenant_id: tenantId } });
       if (!reg) return null;
+
+      // Determinar horas finales para recálculo
+      const hE = hora_entrada ?? (reg as any).hora_entrada ?? null;
+      const hS = hora_salida  ?? (reg as any).hora_salida  ?? null;
+
+      let camposHoras: Record<string, unknown> = {};
+      if (hE && hS) {
+        const emp = await prisma.empleado.findFirst({
+          where: { id_empleado: reg.empleado_id, tenant_id: tenantId },
+          select: { horas_jornada: true },
+        });
+        const horasJornada = Number((emp as any)?.horas_jornada ?? 8);
+        const trabajadas = calcularHorasTrabajadas(hE, hS);
+        const { horas_normales, horas_extra_dia } = calcularHorasDesglose(trabajadas, horasJornada);
+        camposHoras = { hora_entrada: hE, hora_salida: hS, horas_trabajadas: trabajadas, horas_normales, horas_extra_dia, origen_horas: 'REAL' };
+      } else if (hora_entrada !== undefined) {
+        camposHoras = { hora_entrada };
+      } else if (hora_salida !== undefined) {
+        camposHoras = { hora_salida };
+      }
+
       return prisma.registroAsistencia.update({
         where: { id_registro: id },
         data: {
           ...(estado      !== undefined ? { estado }      : {}),
           ...(horas_extra !== undefined ? { horas_extra } : {}),
+          ...camposHoras,
           registrado_por: userId,
         },
       });
@@ -883,9 +1107,10 @@ app.get('/api/v1/personal/prenominas/:id/detalle', requireRoles('personal_rh', '
         },
       });
       if (!pn) return null;
+      const da = pn as any;
       return {
         ...pn,
-        detalles: pn.detalles.map(d => ({
+        detalles: da.detalles.map((d: any) => ({
           ...d,
           salario_base:       Number(d.salario_base),
           monto_horas_extra:  Number(d.monto_horas_extra),
@@ -895,6 +1120,10 @@ app.get('/api/v1/personal/prenominas/:id/detalle', requireRoles('personal_rh', '
           total_percepciones: Number(d.total_percepciones),
           total_deducciones:  Number(d.total_deducciones),
           neto_a_pagar:       Number(d.neto_a_pagar),
+          horas_normales:     d.horas_normales  != null ? Number(d.horas_normales)  : null,
+          monto_he_doble:     Number(d.monto_he_doble  ?? 0),
+          monto_he_triple:    Number(d.monto_he_triple ?? 0),
+          origen_horas:       d.origen_horas ?? 'REAL',
         })),
       };
     });

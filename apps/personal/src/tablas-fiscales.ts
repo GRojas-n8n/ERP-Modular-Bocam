@@ -87,6 +87,38 @@ export function calcularIMSS(
   };
 }
 
+// ── Helpers de jornada POR_HORAS ─────────────────────────────────────────────
+
+export function calcularHorasTrabajadas(horaEntrada: string, horaSalida: string): number {
+  const [hE, mE] = horaEntrada.split(':').map(Number);
+  const [hS, mS] = horaSalida.split(':').map(Number);
+  let minEntrada = hE * 60 + mE;
+  let minSalida  = hS * 60 + mS;
+  if (minSalida <= minEntrada) minSalida += 24 * 60; // turno nocturno
+  return parseFloat(((minSalida - minEntrada) / 60).toFixed(2));
+}
+
+export function calcularHorasDesglose(
+  horasTrabajadas: number,
+  horasJornada: number
+): { horas_normales: number; horas_extra_dia: number } {
+  const horas_normales  = parseFloat(Math.min(horasTrabajadas, horasJornada).toFixed(2));
+  const horas_extra_dia = parseFloat(Math.max(0, horasTrabajadas - horasJornada).toFixed(2));
+  return { horas_normales, horas_extra_dia };
+}
+
+export function calcularMontoHEPorSemana(
+  heAcumSemana: number,
+  tarifaHora: number
+): { monto_doble: number; monto_triple: number } {
+  const heDoble  = Math.min(heAcumSemana, 9);
+  const heTriple = Math.max(0, heAcumSemana - 9);
+  return {
+    monto_doble:  parseFloat((heDoble  * tarifaHora * 2).toFixed(2)),
+    monto_triple: parseFloat((heTriple * tarifaHora * 3).toFixed(2)),
+  };
+}
+
 export function calcularHorasExtra(
   horasExtra: number,
   diasEnSemana: number,

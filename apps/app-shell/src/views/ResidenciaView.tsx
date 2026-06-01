@@ -160,24 +160,32 @@ interface RegistroAsistencia {
   puesto: string;
   hora_entrada: string | null;
   hora_salida: string | null;
+  horas_trabajadas: number | null;
+  horas_normales: number | null;
+  horas_extra_dia: number | null;
+  origen_horas: string;
   estado: AsistenciaEstado;
   tipo_registro: 'QR' | 'MANUAL' | null;
   horas_extra?: number;
+  modo_asistencia?: string;
 }
 
 interface CuadrillaReal {
   id_cuadrilla: string;
   nombre: string;
   codigo: string;
-  miembros: { id_empleado: string; nombre: string; apellido_paterno: string; puesto: string }[];
+  miembros: { id_empleado: string; nombre: string; apellido_paterno: string; puesto: string; modo_asistencia?: string; hora_salida_programada?: string | null }[];
 }
 
 interface BulkCheck {
   empleado_id: string;
   nombre: string;
   puesto: string;
+  modo_asistencia: string;
   estado: 'PRESENTE' | 'AUSENTE';
   horas_extra: string;
+  hora_entrada: string;
+  hora_salida: string;
 }
 
 // ── Badges de estado ─────────────────────────────────────────────────────────
@@ -724,14 +732,18 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   };
 
   const handleAbrirManualQR = (cuadrilla: CuadrillaReal) => {
+    const horaDefEntrada = new Date().toTimeString().slice(0, 5);
     const checks: BulkCheck[] = cuadrilla.miembros
       .filter(m => m)
       .map(m => ({
         empleado_id: m.id_empleado,
         nombre: `${m.nombre} ${m.apellido_paterno}`,
         puesto: m.puesto,
+        modo_asistencia: m.modo_asistencia ?? 'JORNADA_COMPLETA',
         estado: 'PRESENTE',
         horas_extra: '0',
+        hora_entrada: horaDefEntrada,
+        hora_salida: m.hora_salida_programada ?? '',
       }));
     setBulkChecks(checks);
     setQrTab('manual');
@@ -745,11 +757,20 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       await api.post('/api/v1/personal/asistencia/bulk', {
         fecha: fechaFiltro,
         cuadrilla_id: qrModal.id,
-        registros: bulkChecks.map(b => ({
-          empleado_id: b.empleado_id,
-          estado: b.estado,
-          horas_extra: parseFloat(b.horas_extra) || 0,
-        })),
+        registros: bulkChecks.map(b => {
+          if (b.modo_asistencia === 'POR_HORAS') {
+            return {
+              empleado_id: b.empleado_id,
+              hora_entrada: b.hora_entrada || undefined,
+              hora_salida: b.hora_salida  || undefined,
+            };
+          }
+          return {
+            empleado_id: b.empleado_id,
+            estado: b.estado,
+            horas_extra: parseFloat(b.horas_extra) || 0,
+          };
+        }),
       });
       // Refrescar asistencia del día
       const r = await api.get('/api/v1/personal/asistencia', {
@@ -1116,14 +1137,20 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                   </TableHeader>
                   <TableBody>
                     {asistenciaFiltrada.map(reg => {
-                      const badge = ASIS_BADGE[reg.estado];
+                      const badge = ASIS_BADGE[reg.estado] ?? ASIS_BADGE['PRESENTE'];
+                      const sinSalida = reg.modo_asistencia === 'POR_HORAS' && reg.hora_entrada && !reg.hora_salida;
                       return (
                         <TableRow key={reg.id}>
                           <TableCell className="text-xs font-medium">{reg.empleado_nombre}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{reg.puesto}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{reg.cuadrilla_nombre}</TableCell>
                           <TableCell className="font-mono text-xs">{reg.hora_entrada ?? '—'}</TableCell>
-                          <TableCell className="font-mono text-xs">{reg.hora_salida ?? '—'}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {reg.hora_salida ?? (sinSalida
+                              ? <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black text-amber-600">Sin salida</span>
+                              : '—'
+                            )}
+                          </TableCell>
                           <TableCell>
                             {reg.tipo_registro ? (
                               <span className={cn(
@@ -1912,42 +1939,69 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                 ) : (
                   <div className="max-h-[50vh] overflow-y-auto space-y-2 pr-1">
                     {bulkChecks.map((bc, idx) => (
-                      <div key={bc.empleado_id} className="flex items-center gap-3 rounded-xl border border-border/40 px-3 py-2">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-black text-indigo-600">
-                          {bc.nombre.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-bold text-foreground truncate">{bc.nombre}</div>
-                          <div className="text-[10px] text-muted-foreground">{bc.puesto}</div>
-                        </div>
-                        {/* Toggle PRESENTE/AUSENTE */}
-                        <button
-                          onClick={() => setBulkChecks(prev => prev.map((b, i) =>
-                            i === idx ? { ...b, estado: b.estado === 'PRESENTE' ? 'AUSENTE' : 'PRESENTE' } : b
-                          ))}
-                          className={cn(
-                            'rounded-full px-3 py-1 text-[10px] font-black transition-colors',
-                            bc.estado === 'PRESENTE'
-                              ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
-                              : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
+                      <div key={bc.empleado_id} className="rounded-xl border border-border/40 px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-black text-indigo-600">
+                            {bc.nombre.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-bold text-foreground truncate">{bc.nombre}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-muted-foreground">{bc.puesto}</span>
+                              {bc.modo_asistencia === 'POR_HORAS' && (
+                                <span className="rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-black text-violet-600">Por horas</span>
+                              )}
+                            </div>
+                          </div>
+                          {bc.modo_asistencia !== 'POR_HORAS' && (
+                            <>
+                              <button
+                                onClick={() => setBulkChecks(prev => prev.map((b, i) =>
+                                  i === idx ? { ...b, estado: b.estado === 'PRESENTE' ? 'AUSENTE' : 'PRESENTE' } : b
+                                ))}
+                                className={cn(
+                                  'rounded-full px-3 py-1 text-[10px] font-black transition-colors',
+                                  bc.estado === 'PRESENTE'
+                                    ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
+                                    : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
+                                )}
+                              >
+                                {bc.estado}
+                              </button>
+                              <input
+                                type="number" min="0" max="12" step="0.5"
+                                value={bc.horas_extra}
+                                onChange={e => setBulkChecks(prev => prev.map((b, i) =>
+                                  i === idx ? { ...b, horas_extra: e.target.value } : b
+                                ))}
+                                className="w-16 rounded-lg border border-border/40 px-2 py-1 text-center text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                placeholder="HE" title="Horas extra"
+                              />
+                            </>
                           )}
-                        >
-                          {bc.estado}
-                        </button>
-                        {/* Horas extra */}
-                        <input
-                          type="number"
-                          min="0"
-                          max="12"
-                          step="0.5"
-                          value={bc.horas_extra}
-                          onChange={e => setBulkChecks(prev => prev.map((b, i) =>
-                            i === idx ? { ...b, horas_extra: e.target.value } : b
-                          ))}
-                          className="w-16 rounded-lg border border-border/40 px-2 py-1 text-center text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          placeholder="HE"
-                          title="Horas extra"
-                        />
+                        </div>
+                        {bc.modo_asistencia === 'POR_HORAS' && (
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <div className="space-y-0.5">
+                              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Entrada</label>
+                              <input
+                                type="time"
+                                value={bc.hora_entrada}
+                                onChange={e => setBulkChecks(prev => prev.map((b, i) => i === idx ? { ...b, hora_entrada: e.target.value } : b))}
+                                className="w-full rounded-lg border border-border/40 px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-violet-500"
+                              />
+                            </div>
+                            <div className="space-y-0.5">
+                              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Salida</label>
+                              <input
+                                type="time"
+                                value={bc.hora_salida}
+                                onChange={e => setBulkChecks(prev => prev.map((b, i) => i === idx ? { ...b, hora_salida: e.target.value } : b))}
+                                className="w-full rounded-lg border border-border/40 px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-violet-500"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

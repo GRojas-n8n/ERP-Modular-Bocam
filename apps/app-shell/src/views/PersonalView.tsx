@@ -47,6 +47,11 @@ interface Empleado {
   salario_diario: number;
   certificaciones?: string;
   cuadrilla?: { nombre: string; codigo: string } | null;
+  modo_asistencia?: string;
+  tipo_jornada?: string;
+  hora_entrada_programada?: string | null;
+  hora_salida_programada?: string | null;
+  horas_jornada?: number;
 }
 
 interface Cuadrilla {
@@ -80,11 +85,23 @@ interface PreNominaDetalle {
   monto_horas_extra: number;
   deduccion_imss: number;
   deduccion_isr: number;
+  horas_normales?: number | null;
+  monto_he_doble?: number;
+  monto_he_triple?: number;
+  origen_horas?: string;
   otras_deducciones: number;
   total_percepciones: number;
   total_deducciones: number;
   neto_a_pagar: number;
   empleado?: { nombre: string; apellido_paterno: string; numero_empleado: string };
+}
+
+interface ConfigJornada {
+  modo_asistencia: 'JORNADA_COMPLETA' | 'POR_HORAS';
+  tipo_jornada: 'DIURNA' | 'NOCTURNA' | 'MIXTA';
+  hora_entrada_programada: string;
+  hora_salida_programada: string;
+  horas_jornada: number;
 }
 
 interface ConfigDeducciones {
@@ -144,6 +161,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [error, setError] = useState<string | null>(null);
   const [configPanel, setConfigPanel] = useState<{ empleado: Empleado; config: ConfigDeducciones } | null>(null);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [jornadaPanel, setJornadaPanel] = useState<{ empleado: Empleado; config: ConfigJornada } | null>(null);
+  const [savingJornada, setSavingJornada] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -219,6 +238,35 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       const d = (r.data as any)?.data;
       setNominaDetalle({ pn, detalles: d?.detalles ?? [] });
     } catch { /* silencioso */ } finally { setLoadingDetalle(false); }
+  };
+
+  const handleAbrirConfigJornada = (empleado: Empleado) => {
+    setJornadaPanel({
+      empleado,
+      config: {
+        modo_asistencia: (empleado.modo_asistencia as ConfigJornada['modo_asistencia']) ?? 'JORNADA_COMPLETA',
+        tipo_jornada: (empleado.tipo_jornada as ConfigJornada['tipo_jornada']) ?? 'DIURNA',
+        hora_entrada_programada: empleado.hora_entrada_programada ?? '07:00',
+        hora_salida_programada: empleado.hora_salida_programada ?? '15:00',
+        horas_jornada: Number(empleado.horas_jornada ?? 8),
+      },
+    });
+  };
+
+  const handleSaveConfigJornada = async () => {
+    if (!jornadaPanel) return;
+    setSavingJornada(true);
+    try {
+      await api.patch(`/api/v1/personal/empleados/${jornadaPanel.empleado.id_empleado}`, jornadaPanel.config);
+      setEmpleados(prev => prev.map(e =>
+        e.id_empleado === jornadaPanel.empleado.id_empleado
+          ? { ...e, ...jornadaPanel.config }
+          : e
+      ));
+      setJornadaPanel(null);
+    } catch { /* silencioso */ } finally {
+      setSavingJornada(false);
+    }
   };
 
   const handleAbrirConfigDeducciones = async (empleado: Empleado) => {
@@ -414,13 +462,22 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                         </TableCell>
                         <TableCell className="text-center">{estadoBadge(empleado.estado)}</TableCell>
                         <TableCell className="text-center">
-                          <button
-                            onClick={() => handleAbrirConfigDeducciones(empleado)}
-                            className="text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 hover:underline"
-                            title="Configurar deducciones IMSS/ISR/INFONAVIT"
-                          >
-                            Deducciones
-                          </button>
+                          <div className="flex flex-col gap-0.5 items-center">
+                            <button
+                              onClick={() => handleAbrirConfigJornada(empleado)}
+                              className="text-[9px] font-black uppercase tracking-widest text-violet-500 hover:text-violet-700 hover:underline"
+                              title="Configurar jornada laboral"
+                            >
+                              Jornada
+                            </button>
+                            <button
+                              onClick={() => handleAbrirConfigDeducciones(empleado)}
+                              className="text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 hover:underline"
+                              title="Configurar deducciones IMSS/ISR/INFONAVIT"
+                            >
+                              Deducciones
+                            </button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -669,6 +726,110 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           )}
         </>
       )}
+      {/* ── Panel Config. Jornada ───────────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={!!jornadaPanel}
+        onClose={() => setJornadaPanel(null)}
+        title={jornadaPanel ? `Jornada — ${jornadaPanel.empleado.nombre} ${jornadaPanel.empleado.apellido_paterno}` : ''}
+        subtitle={jornadaPanel?.empleado.puesto}
+        accentColor="violet"
+      >
+        {jornadaPanel && (
+          <div className="space-y-5">
+            <p className="text-xs text-muted-foreground">
+              Define cómo se registra y calcula la asistencia de este empleado.
+            </p>
+
+            {/* Modo de asistencia */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Modo de asistencia</label>
+              <div className="flex gap-2">
+                {(['JORNADA_COMPLETA', 'POR_HORAS'] as const).map(modo => (
+                  <button
+                    key={modo}
+                    onClick={() => setJornadaPanel(prev => prev ? { ...prev, config: { ...prev.config, modo_asistencia: modo } } : prev)}
+                    className={cn(
+                      'flex-1 rounded-xl border py-2.5 text-[11px] font-black uppercase tracking-widest transition-colors',
+                      jornadaPanel.config.modo_asistencia === modo
+                        ? 'border-violet-500 bg-violet-500/10 text-violet-700'
+                        : 'border-border/40 text-muted-foreground hover:bg-muted/40'
+                    )}
+                  >
+                    {modo === 'JORNADA_COMPLETA' ? 'Jornada Completa' : 'Por Horas'}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                {jornadaPanel.config.modo_asistencia === 'JORNADA_COMPLETA'
+                  ? 'Pago por día completo. Solo registra Presente/Ausente.'
+                  : 'Registra hora de entrada y salida. Calcula HE automáticamente.'}
+              </p>
+            </div>
+
+            {/* Tipo de jornada (siempre visible) */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de jornada</label>
+              <select
+                value={jornadaPanel.config.tipo_jornada}
+                onChange={e => setJornadaPanel(prev => prev ? { ...prev, config: { ...prev.config, tipo_jornada: e.target.value as ConfigJornada['tipo_jornada'] } } : prev)}
+                className="w-full rounded-xl border border-border/40 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
+              >
+                <option value="DIURNA">Diurna (06:00–20:00)</option>
+                <option value="NOCTURNA">Nocturna (20:00–06:00)</option>
+                <option value="MIXTA">Mixta</option>
+              </select>
+            </div>
+
+            {/* Campos POR_HORAS */}
+            {jornadaPanel.config.modo_asistencia === 'POR_HORAS' && (
+              <div className="space-y-4 rounded-xl border border-border/40 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Horario programado</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Hora de entrada</label>
+                    <input
+                      type="time"
+                      value={jornadaPanel.config.hora_entrada_programada}
+                      onChange={e => setJornadaPanel(prev => prev ? { ...prev, config: { ...prev.config, hora_entrada_programada: e.target.value } } : prev)}
+                      className="w-full rounded-lg border border-border/40 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Hora de salida</label>
+                    <input
+                      type="time"
+                      value={jornadaPanel.config.hora_salida_programada}
+                      onChange={e => setJornadaPanel(prev => prev ? { ...prev, config: { ...prev.config, hora_salida_programada: e.target.value } } : prev)}
+                      className="w-full rounded-lg border border-border/40 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground">Horas de jornada normal</label>
+                  <input
+                    type="number"
+                    min="1" max="24" step="0.5"
+                    value={jornadaPanel.config.horas_jornada}
+                    onChange={e => setJornadaPanel(prev => prev ? { ...prev, config: { ...prev.config, horas_jornada: parseFloat(e.target.value) || 8 } } : prev)}
+                    className="w-full rounded-lg border border-border/40 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Horas extra calculadas a partir de este umbral. Tarifa: ${jornadaPanel.empleado.salario_diario} ÷ {jornadaPanel.config.horas_jornada}h = ${(Number(jornadaPanel.empleado.salario_diario) / jornadaPanel.config.horas_jornada).toFixed(2)}/h
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <SubmitButton
+              label={savingJornada ? 'Guardando…' : 'Guardar configuración'}
+              loading={savingJornada}
+              color="violet"
+              onClick={handleSaveConfigJornada}
+            />
+          </div>
+        )}
+      </SlidePanel>
+
       {/* ── Panel Config. Deducciones ───────────────────────────────────────── */}
       <SlidePanel
         isOpen={!!configPanel}
@@ -813,7 +974,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border/30 bg-muted/30">
-                      {['Empleado', 'Origen', 'Días', 'Sueldo Base', 'H.Extra', 'IMSS', 'ISR', 'Otro', 'Percepciones', 'Deducciones', 'Neto'].map(h => (
+                      {['Empleado', 'Origen', 'Días / Hrs', 'HE Doble', 'HE Triple', 'Sueldo Base', 'H.Extra', 'IMSS', 'ISR', 'Otro', 'Percepciones', 'Deducciones', 'Neto'].map(h => (
                         <th key={h} className="px-3 py-2 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground">{h}</th>
                       ))}
                     </tr>
@@ -825,11 +986,27 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                           {d.empleado ? `${d.empleado.nombre} ${d.empleado.apellido_paterno}` : d.empleado_id.slice(0, 8)}
                         </td>
                         <td className="px-3 py-2">
-                          <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-black', d.origen_dias === 'ASISTENCIA' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700')}>
-                            {d.origen_dias}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-black', d.origen_dias === 'ASISTENCIA' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700')}>
+                              {d.origen_dias}
+                            </span>
+                            {d.origen_horas && d.origen_horas === 'ESTIMADO' && (
+                              <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black text-amber-600">ESTIMADO</span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-3 py-2 text-center">{d.dias_trabajados}</td>
+                        <td className="px-3 py-2 text-center">
+                          {d.horas_normales != null
+                            ? <span>{d.horas_normales}h</span>
+                            : d.dias_trabajados
+                          }
+                        </td>
+                        <td className="px-3 py-2 text-right text-violet-700">
+                          {d.monto_he_doble ? `$${d.monto_he_doble.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-right text-violet-900">
+                          {d.monto_he_triple ? `$${d.monto_he_triple.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
                         <td className="px-3 py-2 text-right">${d.salario_base.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                         <td className="px-3 py-2 text-right">${d.monto_horas_extra.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                         <td className="px-3 py-2 text-right text-red-600">${d.deduccion_imss.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
