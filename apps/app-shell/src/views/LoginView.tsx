@@ -30,20 +30,20 @@ const IconBuilding = () => (
   </svg>
 );
 
-// ─── Partículas flotantes ──────────────────────────────────────────────────────
-const PARTICLES: { top: string; left: string; size: number; dur: number; delay: number; color: string }[] = [
-  { top: '7%',  left: '11%', size: 2, dur: 19, delay: 0,  color: 'rgba(0,209,255,0.55)' },
-  { top: '14%', left: '80%', size: 1, dur: 23, delay: 3,  color: 'rgba(245,158,11,0.50)' },
-  { top: '34%', left: '4%',  size: 2, dur: 16, delay: 7,  color: 'rgba(160,180,255,0.50)' },
-  { top: '21%', left: '57%', size: 1, dur: 26, delay: 1,  color: 'rgba(0,209,255,0.40)' },
-  { top: '63%', left: '91%', size: 2, dur: 21, delay: 5,  color: 'rgba(245,158,11,0.45)' },
-  { top: '77%', left: '28%', size: 1, dur: 18, delay: 9,  color: 'rgba(0,209,255,0.50)' },
-  { top: '46%', left: '73%', size: 2, dur: 24, delay: 2,  color: 'rgba(160,180,255,0.40)' },
-  { top: '89%', left: '14%', size: 1, dur: 20, delay: 6,  color: 'rgba(245,158,11,0.35)' },
-  { top: '54%', left: '44%', size: 2, dur: 17, delay: 11, color: 'rgba(0,209,255,0.45)' },
-  { top: '28%', left: '94%', size: 1, dur: 22, delay: 4,  color: 'rgba(245,158,11,0.40)' },
-  { top: '71%', left: '60%', size: 2, dur: 25, delay: 8,  color: 'rgba(160,180,255,0.55)' },
-  { top: '9%',  left: '40%', size: 1, dur: 15, delay: 13, color: 'rgba(0,209,255,0.35)' },
+// ─── Partículas — más grandes y con glow ─────────────────────────────────────
+const PARTICLES: { top: string; left: string; size: number; dur: number; delay: number; glow: string; color: string }[] = [
+  { top:'8%',  left:'9%',  size:5, dur:18, delay:0,  color:'rgba(0,220,255,1)',   glow:'0 0 8px 3px rgba(0,220,255,0.7)' },
+  { top:'13%', left:'82%', size:4, dur:22, delay:3,  color:'rgba(255,170,30,1)',  glow:'0 0 7px 2px rgba(255,170,30,0.6)' },
+  { top:'35%', left:'5%',  size:5, dur:15, delay:7,  color:'rgba(130,160,255,1)', glow:'0 0 8px 3px rgba(130,160,255,0.6)' },
+  { top:'20%', left:'56%', size:3, dur:25, delay:1,  color:'rgba(0,220,255,1)',   glow:'0 0 6px 2px rgba(0,220,255,0.5)' },
+  { top:'62%', left:'90%', size:5, dur:20, delay:5,  color:'rgba(255,170,30,1)',  glow:'0 0 8px 3px rgba(255,170,30,0.6)' },
+  { top:'76%', left:'27%', size:4, dur:17, delay:9,  color:'rgba(0,220,255,1)',   glow:'0 0 7px 2px rgba(0,220,255,0.6)' },
+  { top:'47%', left:'72%', size:6, dur:23, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 10px 4px rgba(130,160,255,0.5)' },
+  { top:'88%', left:'15%', size:3, dur:19, delay:6,  color:'rgba(255,170,30,1)',  glow:'0 0 6px 2px rgba(255,170,30,0.5)' },
+  { top:'53%', left:'43%', size:5, dur:16, delay:11, color:'rgba(0,220,255,1)',   glow:'0 0 8px 3px rgba(0,220,255,0.6)' },
+  { top:'27%', left:'93%', size:4, dur:21, delay:4,  color:'rgba(255,170,30,1)',  glow:'0 0 7px 2px rgba(255,170,30,0.5)' },
+  { top:'70%', left:'61%', size:5, dur:24, delay:8,  color:'rgba(130,160,255,1)', glow:'0 0 8px 3px rgba(130,160,255,0.6)' },
+  { top:'10%', left:'39%', size:3, dur:14, delay:13, color:'rgba(0,220,255,1)',   glow:'0 0 6px 2px rgba(0,220,255,0.5)' },
 ];
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -72,213 +72,210 @@ export const LoginView: React.FC = () => {
 
   return (
     <>
-      {/* ─── Keyframes ─────────────────────────────────────────────────────── */}
       <style>{`
+        /* ── Orbes ─────────────────────────────────────────────────────── */
         @keyframes orb-1 {
-          0%,100% { transform:translate(0,0) scale(1);   opacity:.30; }
-          33%     { transform:translate(3%,-2%) scale(1.05); opacity:.38; }
-          66%     { transform:translate(-2%,3%) scale(.96); opacity:.24; }
+          0%,100% { transform:translate(0,0) scale(1);      opacity:.65; }
+          33%     { transform:translate(4%,-3%) scale(1.06); opacity:.75; }
+          66%     { transform:translate(-3%,4%) scale(.95);  opacity:.55; }
         }
         @keyframes orb-2 {
-          0%,100% { transform:translate(0,0) scale(1);   opacity:.22; }
-          40%     { transform:translate(-3%,2%) scale(1.06); opacity:.28; }
-          70%     { transform:translate(2%,-3%) scale(.95); opacity:.16; }
+          0%,100% { transform:translate(0,0) scale(1);       opacity:.55; }
+          40%     { transform:translate(-4%,3%) scale(1.07); opacity:.65; }
+          70%     { transform:translate(3%,-4%) scale(.94);  opacity:.45; }
         }
         @keyframes orb-3 {
-          0%,100% { transform:translate(0,0) scale(1);   opacity:.14; }
-          50%     { transform:translate(2%,-2%) scale(1.07); opacity:.20; }
+          0%,100% { transform:translate(0,0) scale(1);      opacity:.42; }
+          50%     { transform:translate(3%,-3%) scale(1.08); opacity:.55; }
         }
+
+        /* ── Partículas ─────────────────────────────────────────────────── */
         @keyframes particle-float {
-          0%,100% { transform:translateY(0)    translateX(0);   opacity:.35; }
-          25%     { transform:translateY(-14px) translateX(7px); opacity:.70; }
-          50%     { transform:translateY(-22px) translateX(-5px);opacity:.50; }
-          75%     { transform:translateY(-9px)  translateX(9px); opacity:.60; }
+          0%,100% { transform:translateY(0)    translateX(0);    opacity:.55; }
+          25%     { transform:translateY(-16px) translateX(8px);  opacity:.95; }
+          50%     { transform:translateY(-26px) translateX(-6px); opacity:.75; }
+          75%     { transform:translateY(-10px) translateX(10px); opacity:.85; }
         }
-        @keyframes scan-line {
-          0%   { transform:translateY(-4px); opacity:0; }
-          5%   { opacity:1; }
-          95%  { opacity:1; }
-          100% { transform:translateY(100vh); opacity:0; }
-        }
+
+        /* ── Card ───────────────────────────────────────────────────────── */
         @keyframes card-in {
-          from { opacity:0; transform:translateY(28px) scale(.97); }
+          from { opacity:0; transform:translateY(30px) scale(.97); }
           to   { opacity:1; transform:translateY(0)    scale(1);   }
         }
         @keyframes card-glow {
-          0%,100% { box-shadow: 0 0 0 1px rgba(0,209,255,.10), 0 32px 80px rgba(0,0,0,.70), 0 0 60px rgba(0,209,255,.06); }
-          50%     { box-shadow: 0 0 0 1px rgba(0,209,255,.25), 0 32px 80px rgba(0,0,0,.70), 0 0 90px rgba(0,209,255,.13); }
+          0%,100% { box-shadow:0 0 0 1px rgba(0,209,255,.12), 0 32px 80px rgba(0,0,0,.72), 0 0 70px rgba(0,209,255,.08); }
+          50%     { box-shadow:0 0 0 1px rgba(0,209,255,.30), 0 32px 80px rgba(0,0,0,.72), 0 0 110px rgba(0,209,255,.18); }
         }
         @keyframes fade-up {
           from { opacity:0; transform:translateY(18px); }
-          to   { opacity:1; transform:translateY(0);    }
+          to   { opacity:1; transform:translateY(0); }
         }
         @keyframes dot-blink {
           0%,100% { opacity:1; }
-          50%     { opacity:.45; }
+          50%     { opacity:.4; }
         }
         @keyframes spin { to { transform:rotate(360deg); } }
-        @keyframes shimmer {
-          0%   { background-position: 250% center; }
-          100% { background-position: -250% center; }
-        }
 
-        /* ── Responsive: reducir espaciado en pantallas bajas ── */
-        @media (max-height: 780px) {
-          .lr-card-inner { padding: 28px 32px 24px !important; }
-          .lr-logo       { margin-bottom: 18px !important; }
-          .lr-sep        { margin-bottom: 16px !important; }
-          .lr-heading    { margin-bottom: 16px !important; animation: none; opacity: 1; transform: none; }
-          .lr-fields     { animation: none; opacity: 1; transform: none; }
-        }
-        @media (max-height: 640px) {
-          .lr-card-inner { padding: 20px 24px 18px !important; }
-          .lr-logo       { margin-bottom: 12px !important; }
-          .lr-tagline    { display: none !important; }
-        }
+        .lr-tagline { animation:fade-up .75s cubic-bezier(.16,1,.3,1) .05s both; }
+        .lr-card    { animation:card-in .85s cubic-bezier(.16,1,.3,1) .18s both,
+                                card-glow 4.5s ease-in-out 1.2s infinite; }
+        .lr-logo    { animation:fade-up .65s cubic-bezier(.16,1,.3,1) .40s both; }
+        .lr-heading { animation:fade-up .60s cubic-bezier(.16,1,.3,1) .52s both; }
+        .lr-fields  { animation:fade-up .60s cubic-bezier(.16,1,.3,1) .62s both; }
 
-        .lr-tagline  { animation: fade-up  .75s cubic-bezier(.16,1,.3,1) .05s both; }
-        .lr-card     { animation: card-in  .85s cubic-bezier(.16,1,.3,1) .18s both,
-                                  card-glow 4.5s ease-in-out 1.2s infinite; }
-        .lr-logo     { animation: fade-up  .65s cubic-bezier(.16,1,.3,1) .40s both; }
-        .lr-heading  { animation: fade-up  .60s cubic-bezier(.16,1,.3,1) .52s both; }
-        .lr-fields   { animation: fade-up  .60s cubic-bezier(.16,1,.3,1) .62s both; }
-
+        /* ── Inputs ─────────────────────────────────────────────────────── */
         .lr-input {
-          width:100%; background:rgba(0,0,0,.28);
-          border:1px solid rgba(255,255,255,.07); border-radius:12px;
+          width:100%; background:rgba(0,0,0,.30);
+          border:1px solid rgba(255,255,255,.08); border-radius:12px;
           padding:13px 13px 13px 42px;
-          color:hsl(210 40% 96%); font-size:14px;
-          outline:none; transition:border-color .22s,background .22s,box-shadow .22s;
-          font-family:'Inter',sans-serif; letter-spacing:.01em;
+          color:hsl(210 40% 96%); font-size:14px; outline:none;
+          transition:border-color .22s, background .22s, box-shadow .22s;
+          font-family:'Inter',sans-serif;
         }
         .lr-input::placeholder { color:rgba(255,255,255,.22); }
         .lr-input:focus {
-          border-color:rgba(0,209,255,.45);
-          background:rgba(0,209,255,.04);
-          box-shadow:0 0 0 3px rgba(0,209,255,.09);
+          border-color:rgba(0,209,255,.50);
+          background:rgba(0,209,255,.05);
+          box-shadow:0 0 0 3px rgba(0,209,255,.10);
         }
         .lr-input-wrap { position:relative; }
         .lr-icon {
           position:absolute; left:14px; top:50%; transform:translateY(-50%);
-          color:rgba(255,255,255,.25); pointer-events:none; transition:color .2s;
+          color:rgba(255,255,255,.26); pointer-events:none; transition:color .2s;
         }
-        .lr-input-wrap:focus-within .lr-icon { color:rgba(0,209,255,.65); }
+        .lr-input-wrap:focus-within .lr-icon { color:rgba(0,209,255,.70); }
         .lr-label {
           display:block; font-size:10px; font-weight:600;
           letter-spacing:.12em; text-transform:uppercase;
-          color:rgba(255,255,255,.35); margin-bottom:8px;
+          color:rgba(255,255,255,.36); margin-bottom:8px;
           font-family:'Inter',sans-serif;
         }
 
+        /* ── Botón principal ─────────────────────────────────────────────── */
         .lr-btn {
           width:100%; height:52px; border-radius:14px; border:none;
-          background:linear-gradient(110deg, #007FAA 0%, #00C8F0 30%, #7CF5FF 50%, #00C8F0 70%, #007FAA 100%);
+          background:linear-gradient(110deg,#007FAA 0%,#00C8F0 30%,#7CF5FF 50%,#00C8F0 70%,#007FAA 100%);
           background-size:300% auto;
           color:#050A12; font-family:'Plus Jakarta Sans',sans-serif;
           font-size:14px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
           cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
           transition:background-position .6s ease, box-shadow .3s ease, transform .15s ease;
-          box-shadow:0 0 28px rgba(0,209,255,.38), 0 4px 16px rgba(0,0,0,.35);
+          box-shadow:0 0 30px rgba(0,209,255,.42), 0 4px 16px rgba(0,0,0,.35);
         }
         .lr-btn:hover:not(:disabled) {
           background-position:right center;
-          box-shadow:0 0 52px rgba(0,209,255,.65), 0 0 100px rgba(0,209,255,.22), 0 4px 16px rgba(0,0,0,.35);
+          box-shadow:0 0 56px rgba(0,209,255,.70), 0 0 110px rgba(0,209,255,.25), 0 4px 16px rgba(0,0,0,.35);
           transform:translateY(-2px);
         }
         .lr-btn:active:not(:disabled) { transform:translateY(0); }
         .lr-btn:disabled { opacity:.55; cursor:not-allowed; }
 
+        /* ── Botón demo ──────────────────────────────────────────────────── */
         .lr-demo {
-          width:100%; padding:13px;
-          border-radius:12px; border:1px solid rgba(0,209,255,.18);
-          background:transparent; color:rgba(0,209,255,.65);
-          font-size:11px; font-weight:700; letter-spacing:.10em; text-transform:uppercase;
-          cursor:pointer; font-family:'Inter',sans-serif;
-          transition:all .22s ease;
+          width:100%; padding:13px; border-radius:12px;
+          border:1px solid rgba(0,209,255,.20); background:transparent;
+          color:rgba(0,209,255,.68); font-size:11px; font-weight:700;
+          letter-spacing:.10em; text-transform:uppercase;
+          cursor:pointer; font-family:'Inter',sans-serif; transition:all .22s;
         }
         .lr-demo:hover {
-          background:rgba(0,209,255,.06); border-color:rgba(0,209,255,.40);
-          color:rgba(0,209,255,.92);
+          background:rgba(0,209,255,.07); border-color:rgba(0,209,255,.44);
+          color:rgba(0,209,255,.95);
+        }
+
+        /* ── Responsive por altura ───────────────────────────────────────── */
+        @media (max-height: 780px) {
+          .lr-card-pad  { padding:28px 32px 22px !important; }
+          .lr-logo-mb   { margin-bottom:16px !important; }
+          .lr-sep-mb    { margin-bottom:14px !important; }
+          .lr-heading   { animation:none; opacity:1; transform:none; margin-bottom:16px !important; }
+          .lr-fields    { animation:none; opacity:1; transform:none; }
+        }
+        @media (max-height: 620px) {
+          .lr-card-pad  { padding:18px 24px 16px !important; }
+          .lr-logo-mb   { margin-bottom:10px !important; }
+          .lr-tagline   { display:none !important; }
+        }
+
+        /* ── Responsive por ancho ────────────────────────────────────────── */
+        @media (max-width: 480px) {
+          .lr-card-pad { padding:28px 24px 24px !important; }
         }
       `}</style>
 
-      {/* ─── Stage ─────────────────────────────────────────────────────────── */}
-      <div style={{
-        position:'fixed', inset:0, background:'#050A12',
-        display:'flex', alignItems:'flex-start', justifyContent:'center',
-        overflowY:'auto', fontFamily:"'Inter',sans-serif",
-        minHeight:'100vh',
-      }}>
+      {/* ── Capa de efectos — FIXED, sin interacción ─────────────────────── */}
+      <div style={{ position:'fixed', inset:0, background:'#050A12', pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
 
-        {/* Orb 1 — cyan, arriba izquierda */}
+        {/* Orb 1 — cian intenso, cuadrante superior izquierdo */}
         <div style={{
-          position:'absolute', top:'-18%', left:'-10%',
-          width:'75vw', height:'75vw', maxWidth:920, maxHeight:920,
+          position:'absolute', top:'-5%', left:'-5%',
+          width:'60vw', height:'60vw', maxWidth:780, maxHeight:780,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at center, rgba(0,175,225,.30) 0%, rgba(0,90,155,.12) 42%, transparent 70%)',
+          background:'radial-gradient(ellipse at 40% 40%, rgba(0,200,255,.62) 0%, rgba(0,120,200,.28) 38%, rgba(0,60,140,.08) 60%, transparent 75%)',
           animation:'orb-1 20s ease-in-out infinite',
-          pointerEvents:'none',
+          filter:'blur(2px)',
         }} />
 
-        {/* Orb 2 — índigo profundo, abajo derecha */}
+        {/* Orb 2 — índigo, cuadrante inferior derecho */}
         <div style={{
-          position:'absolute', bottom:'-28%', right:'-14%',
-          width:'68vw', height:'68vw', maxWidth:860, maxHeight:860,
+          position:'absolute', bottom:'-10%', right:'-8%',
+          width:'58vw', height:'58vw', maxWidth:750, maxHeight:750,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at center, rgba(50,50,210,.22) 0%, rgba(30,15,130,.08) 48%, transparent 72%)',
-          animation:'orb-2 25s ease-in-out infinite 4s',
-          pointerEvents:'none',
+          background:'radial-gradient(ellipse at 60% 60%, rgba(80,70,240,.52) 0%, rgba(50,30,180,.22) 40%, rgba(20,10,100,.07) 62%, transparent 78%)',
+          animation:'orb-2 24s ease-in-out infinite 4s',
+          filter:'blur(2px)',
         }} />
 
-        {/* Orb 3 — ámbar, centro-abajo (luz de obra) */}
+        {/* Orb 3 — ámbar cálido, zona central-inferior */}
         <div style={{
-          position:'absolute', bottom:'-8%', left:'18%',
-          width:'42vw', height:'42vw', maxWidth:580, maxHeight:580,
+          position:'absolute', bottom:'5%', left:'22%',
+          width:'38vw', height:'38vw', maxWidth:520, maxHeight:520,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at center, rgba(245,158,11,.16) 0%, rgba(200,95,0,.06) 48%, transparent 72%)',
+          background:'radial-gradient(ellipse at 50% 50%, rgba(255,155,20,.44) 0%, rgba(220,90,0,.18) 42%, rgba(160,50,0,.05) 64%, transparent 78%)',
           animation:'orb-3 15s ease-in-out infinite 7s',
-          pointerEvents:'none',
+          filter:'blur(1px)',
         }} />
 
         {/* Grid de puntos */}
         <div style={{
-          position:'absolute', inset:0, pointerEvents:'none',
-          backgroundImage:'radial-gradient(rgba(255,255,255,.055) 1px, transparent 1px)',
+          position:'absolute', inset:0,
+          backgroundImage:'radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px)',
           backgroundSize:'32px 32px',
         }} />
 
         {/* Viñeta perimetral */}
         <div style={{
-          position:'absolute', inset:0, pointerEvents:'none',
-          background:'radial-gradient(ellipse at 50% 50%, transparent 38%, rgba(2,4,10,.80) 100%)',
+          position:'absolute', inset:0,
+          background:'radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(2,4,10,.82) 100%)',
         }} />
 
-        {/* Partículas flotantes */}
+        {/* Partículas con glow */}
         {PARTICLES.map((p, i) => (
           <div key={i} style={{
             position:'absolute', top:p.top, left:p.left,
             width:p.size, height:p.size, borderRadius:'50%',
-            background:p.color,
+            background:p.color, boxShadow:p.glow,
             animation:`particle-float ${p.dur}s ease-in-out infinite ${p.delay}s`,
-            pointerEvents:'none',
           }} />
         ))}
 
-        {/* Scan line */}
-        <div style={{
-          position:'absolute', left:0, right:0, height:1, pointerEvents:'none',
-          background:'linear-gradient(90deg, transparent, rgba(0,209,255,.38) 28%, rgba(0,209,255,.70) 50%, rgba(0,209,255,.38) 72%, transparent)',
-          animation:'scan-line 9s linear infinite 1.2s',
-        }} />
+      </div>
 
-        {/* ─── Contenido central ────────────────────────────────────────────── */}
-        <div style={{ position:'relative', zIndex:10, width:'100%', maxWidth:448, padding:'28px 20px 32px', margin:'auto' }}>
+      {/* ── Capa de contenido — flujo normal, scroll si es necesario ─────── */}
+      <div style={{
+        position:'relative', zIndex:10,
+        minHeight:'100vh',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        padding:'28px 20px',
+        boxSizing:'border-box',
+      }}>
+        <div style={{ width:'100%', maxWidth:448 }}>
 
-          {/* Tagline — solo desktop */}
+          {/* Tagline — solo desktop (lg) */}
           <div className="lr-tagline hidden lg:block" style={{ textAlign:'center', marginBottom:26 }}>
             <h1 style={{
               fontFamily:"'Plus Jakarta Sans',sans-serif",
-              fontSize:'clamp(34px,3.8vw,50px)', fontWeight:800,
+              fontSize:'clamp(32px,3.6vw,48px)', fontWeight:800,
               letterSpacing:'-.035em', lineHeight:1.1,
               color:'rgba(255,255,255,.92)', margin:0,
             }}>
@@ -288,31 +285,31 @@ export const LoginView: React.FC = () => {
                 WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
               }}>de tu obra.</span>
             </h1>
-            <p style={{ margin:'10px 0 0', fontSize:12, color:'rgba(255,255,255,.28)', letterSpacing:'.04em' }}>
+            <p style={{ margin:'10px 0 0', fontSize:12, color:'rgba(255,255,255,.30)', letterSpacing:'.04em' }}>
               10 módulos · SAT / IMSS / ISO 9001
             </p>
           </div>
 
-          {/* ─── GLASS CARD ───────────────────────────────────────────────── */}
-          <div className="lr-card lr-card-inner" style={{
+          {/* ── GLASS CARD ──────────────────────────────────────────────── */}
+          <div className="lr-card lr-card-pad" style={{
             backdropFilter:'blur(32px) saturate(180%)',
             WebkitBackdropFilter:'blur(32px) saturate(180%)',
-            background:'rgba(5,10,22,.72)',
+            background:'rgba(5,10,22,.74)',
             borderRadius:28,
-            borderTop:'1px solid rgba(255,255,255,.10)',
-            borderLeft:'1px solid rgba(0,209,255,.12)',
+            borderTop:'1px solid rgba(255,255,255,.11)',
+            borderLeft:'1px solid rgba(0,209,255,.14)',
             borderRight:'1px solid rgba(0,209,255,.08)',
             borderBottom:'1px solid rgba(0,209,255,.06)',
             padding:'42px 40px 34px',
           }}>
 
             {/* Logo + badge */}
-            <div className="lr-logo" style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28, transition:'margin .2s' }}>
+            <div className="lr-logo lr-logo-mb" style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28 }}>
               <div style={{
-                position:'relative', width:42, height:42, borderRadius:13, flexShrink:0,
+                width:42, height:42, borderRadius:13, flexShrink:0,
                 background:'linear-gradient(135deg, #00D1FF 0%, #0077AA 100%)',
                 display:'flex', alignItems:'center', justifyContent:'center',
-                boxShadow:'0 0 22px rgba(0,209,255,.50)',
+                boxShadow:'0 0 24px rgba(0,209,255,.55)',
               }}>
                 <IconBuilding />
               </div>
@@ -320,26 +317,25 @@ export const LoginView: React.FC = () => {
                 <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:17, fontWeight:800, letterSpacing:'-.03em', color:'rgba(255,255,255,.93)', lineHeight:1.2 }}>
                   ERP Industrial
                 </div>
-                <div style={{ fontSize:9.5, color:'rgba(0,209,255,.60)', letterSpacing:'.13em', textTransform:'uppercase', fontWeight:600 }}>
+                <div style={{ fontSize:9.5, color:'rgba(0,209,255,.65)', letterSpacing:'.13em', textTransform:'uppercase', fontWeight:600 }}>
                   Plataforma de Gestión
                 </div>
               </div>
-              {/* Dot live */}
-              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:20, border:'1px solid rgba(0,209,255,.20)', background:'rgba(0,209,255,.05)' }}>
-                <span style={{ width:5, height:5, borderRadius:'50%', background:'#00D1FF', display:'inline-block', animation:'dot-blink 2s ease-in-out infinite' }} />
-                <span style={{ fontSize:9, fontWeight:700, letterSpacing:'.10em', color:'rgba(0,209,255,.65)', textTransform:'uppercase' }}>Live</span>
+              <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:20, border:'1px solid rgba(0,209,255,.22)', background:'rgba(0,209,255,.06)' }}>
+                <span style={{ width:5, height:5, borderRadius:'50%', background:'#00D1FF', display:'inline-block', boxShadow:'0 0 6px rgba(0,209,255,.8)', animation:'dot-blink 2s ease-in-out infinite' }} />
+                <span style={{ fontSize:9, fontWeight:700, letterSpacing:'.10em', color:'rgba(0,209,255,.70)', textTransform:'uppercase' }}>Live</span>
               </div>
             </div>
 
             {/* Separador */}
-            <div className="lr-sep" style={{ height:1, background:'linear-gradient(90deg, transparent, rgba(0,209,255,.15) 30%, rgba(255,255,255,.06) 70%, transparent)', marginBottom:26 }} />
+            <div className="lr-sep-mb" style={{ height:1, background:'linear-gradient(90deg, transparent, rgba(0,209,255,.18) 30%, rgba(255,255,255,.07) 70%, transparent)', marginBottom:26 }} />
 
             {/* Encabezado */}
             <div className="lr-heading" style={{ marginBottom:24 }}>
               <h2 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:22, fontWeight:700, letterSpacing:'-.02em', color:'rgba(255,255,255,.92)', margin:'0 0 5px' }}>
                 Acceso al sistema
               </h2>
-              <p style={{ fontSize:13, color:'rgba(255,255,255,.30)', margin:0 }}>
+              <p style={{ fontSize:13, color:'rgba(255,255,255,.32)', margin:0 }}>
                 Ingresa tus credenciales para continuar
               </p>
             </div>
@@ -349,71 +345,61 @@ export const LoginView: React.FC = () => {
               <div style={{
                 display:'flex', alignItems:'flex-start', gap:10,
                 padding:'12px 14px', borderRadius:12, marginBottom:20,
-                background:'rgba(220,38,38,.09)', border:'1px solid rgba(220,38,38,.22)',
+                background:'rgba(220,38,38,.09)', border:'1px solid rgba(220,38,38,.24)',
               }}>
                 <AlertCircle style={{ width:14, height:14, color:'rgba(248,113,113,.9)', flexShrink:0, marginTop:1 }} />
-                <span style={{ fontSize:12, color:'rgba(248,113,113,.85)', lineHeight:1.55, fontFamily:"'Inter',sans-serif" }}>
+                <span style={{ fontSize:12, color:'rgba(248,113,113,.88)', lineHeight:1.55, fontFamily:"'Inter',sans-serif" }}>
                   {error}
                 </span>
               </div>
             )}
 
-            {/* Formulario */}
+            {/* Form + botones */}
             <div className="lr-fields">
               <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:20 }}>
                 <div>
                   <label className="lr-label">Correo corporativo</label>
                   <div className="lr-input-wrap">
                     <IconMail className="lr-icon" />
-                    <input
-                      type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                       placeholder="usuario@empresa.com" required
-                      id="login-email-input" autoComplete="email"
-                      className="lr-input"
-                    />
+                      id="login-email-input" autoComplete="email" className="lr-input" />
                   </div>
                 </div>
                 <div>
                   <label className="lr-label">Contraseña</label>
                   <div className="lr-input-wrap">
                     <IconLock className="lr-icon" />
-                    <input
-                      type="password" value={password} onChange={e => setPassword(e.target.value)}
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••" required
-                      id="login-password-input" autoComplete="current-password"
-                      className="lr-input"
-                    />
+                      id="login-password-input" autoComplete="current-password" className="lr-input" />
                   </div>
                 </div>
-
                 <button type="submit" disabled={isSubmitting} id="login-submit-btn" className="lr-btn" style={{ marginTop:4 }}>
-                  {isSubmitting ? (
-                    <><Loader2 style={{ width:15, height:15, animation:'spin 1s linear infinite' }} /> Autenticando...</>
-                  ) : 'Ingresar →'}
+                  {isSubmitting
+                    ? <><Loader2 style={{ width:15, height:15, animation:'spin 1s linear infinite' }} /> Autenticando...</>
+                    : 'Ingresar →'}
                 </button>
               </form>
 
-              {/* Separador */}
               <div style={{ display:'flex', alignItems:'center', gap:12, margin:'22px 0' }}>
                 <div style={{ flex:1, height:1, background:'rgba(255,255,255,.06)' }} />
-                <span style={{ fontSize:10, fontWeight:600, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(255,255,255,.20)', fontFamily:"'Inter',sans-serif" }}>o</span>
+                <span style={{ fontSize:10, fontWeight:600, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(255,255,255,.22)', fontFamily:"'Inter',sans-serif" }}>o</span>
                 <div style={{ flex:1, height:1, background:'rgba(255,255,255,.06)' }} />
               </div>
 
-              {/* Demo */}
               <button type="button" onClick={loginDemo} className="lr-demo">
                 ⚡ Explorar en modo demo
               </button>
             </div>
 
-            {/* Footer */}
             <p style={{ marginTop:26, textAlign:'center', fontSize:10, color:'rgba(255,255,255,.14)', lineHeight:1.75, fontFamily:"'Inter',sans-serif" }}>
               Sistema ERP Industrial · Uso interno exclusivo
             </p>
 
-          </div>{/* /glass card */}
-        </div>{/* /content */}
-      </div>{/* /stage */}
+          </div>
+        </div>
+      </div>
     </>
   );
 };
