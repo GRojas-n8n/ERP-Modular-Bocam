@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+import ExcelJS, { Cell } from 'exceljs';
 import type { Response } from 'express';
 import type { EmpleadoPrenomina, PrenominaData } from './prenomina-pdf';
 
@@ -25,7 +25,7 @@ export async function generatePrenominaExcel(data: PrenominaData, res: Response)
     'Nombre', 'Puesto', 'Días', 'Salario Diario',
     'Percepciones', 'IMSS', 'ISR', 'Otras Deducciones', 'Neto a Pagar',
   ]);
-  headerRow.eachCell((cell) => {
+  headerRow.eachCell((cell: Cell) => {
     cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -61,7 +61,7 @@ export async function generatePrenominaExcel(data: PrenominaData, res: Response)
 
     row.height = 16;
     const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF5F5F5';
-    row.eachCell((cell, colNumber) => {
+    row.eachCell((cell: Cell, colNumber: number) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
       if (colNumber >= 4) {
         cell.numFmt = moneyFmt;
@@ -78,7 +78,7 @@ export async function generatePrenominaExcel(data: PrenominaData, res: Response)
     totPerc, totImss, totIsr, totOtras, totNeto,
   ]);
   totRow.height = 18;
-  totRow.eachCell((cell, colNumber) => {
+  totRow.eachCell((cell: Cell, colNumber: number) => {
     cell.font = { bold: true };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECF0F1' } };
     if (colNumber >= 5) {

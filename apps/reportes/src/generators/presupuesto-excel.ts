@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+import ExcelJS, { Cell } from 'exceljs';
 import type { Response } from 'express';
 
 export interface ConceptoPresupuesto {
@@ -84,7 +84,7 @@ export async function generatePresupuestoExcel(data: PresupuestoData, res: Respo
     row.height = 16;
     const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF5F5F5';
 
-    row.eachCell((cell, colNum) => {
+    row.eachCell((cell: Cell, colNum: number) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
       if (colNum === 4) {
         cell.numFmt = '#,##0.00';
@@ -110,7 +110,7 @@ export async function generatePresupuestoExcel(data: PresupuestoData, res: Respo
   // ── Fila de total ─────────────────────────────────────────────────────────────
   const totRow = ws.addRow(['', 'TOTAL', '', '', '', '', '', totalImporte]);
   totRow.height = 18;
-  totRow.eachCell((cell, colNum) => {
+  totRow.eachCell((cell: Cell, colNum: number) => {
     cell.font = { bold: true };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECF0F1' } };
     cell.border = { top: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
