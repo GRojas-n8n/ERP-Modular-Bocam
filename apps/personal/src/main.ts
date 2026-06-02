@@ -1135,6 +1135,30 @@ app.get('/api/v1/personal/prenominas/:id/detalle', requireRoles('personal_rh', '
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get('/api/v1/personal/resumen-dashboard',
+  requireRoles('superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const [empleadosActivos, cuadrillasActivas, prenominasPendientes] = await Promise.all([
+          prisma.empleado.count({ where: { estado: 'ACTIVO' } }),
+          prisma.cuadrilla.count({ where: { estado: 'ACTIVA' } }),
+          prisma.preNomina.count({ where: { estado: { in: ['BORRADOR', 'CALCULADA'] } } }),
+        ]);
+        return {
+          empleados_activos:      empleadosActivos,
+          cuadrillas_activas:     cuadrillasActivas,
+          prenominas_pendientes:  prenominasPendientes,
+        };
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // HEALTH CHECK
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {

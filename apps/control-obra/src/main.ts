@@ -935,6 +935,30 @@ app.get('/api/v1/control-obra/dashboard', async (req: Request, res: Response) =>
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get('/api/v1/control-obra/resumen-dashboard',
+  requireRoles('superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const [enRevision, aprobadas, avancesPendientes] = await Promise.all([
+          prisma.estimacion.count({ where: { estado: 'EN_REVISION' } }),
+          prisma.estimacion.count({ where: { estado: { in: ['APROBADA_TECNICA', 'APROBADA_FINANCIERA'] } } }),
+          prisma.avanceFisico.count({ where: { estado: 'PENDIENTE' } }),
+        ]);
+        return {
+          estimaciones_en_revision: enRevision,
+          estimaciones_aprobadas:   aprobadas,
+          avances_pendientes:       avancesPendientes,
+        };
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // HEALTH CHECK
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {

@@ -46,6 +46,30 @@ app.use(express.json());
 app.use(createObservabilityMiddleware('calidad'));
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
 
+app.get('/api/v1/calidad/resumen-dashboard',
+  requireRoles('superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const [docVigentes, docEnRevision, versionesPendientes] = await Promise.all([
+          prisma.documento.count({ where: { estado_actual: 'VIGENTE' } }),
+          prisma.documento.count({ where: { estado_actual: 'EN_REVISION' } }),
+          prisma.versionDocumento.count({ where: { estado: 'EN_REVISION' } }),
+        ]);
+        return {
+          documentos_vigentes:    docVigentes,
+          documentos_en_revision: docEnRevision,
+          versiones_pendientes:   versionesPendientes,
+        };
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // ── Health ───────────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'calidad', version: '1.0.0', timestamp: new Date().toISOString() });

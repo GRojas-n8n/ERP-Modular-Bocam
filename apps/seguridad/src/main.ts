@@ -4,7 +4,7 @@ import {
   createApiResponse, createApiError,
   SeguridadEvents, EstadoIncidente, ResultadoInspeccion, EstadoPermiso,
 } from './types';
-import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createEventBus, type BocamEvent } from '../../../packages/event-bus/src';
 import { logWarn } from '../../../packages/observability/src';
 
@@ -583,6 +583,31 @@ app.get('/api/v1/seguridad/dashboard', async (req: Request, res: Response) => {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get('/api/v1/seguridad/resumen-dashboard',
+  requireRoles('superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const estadosAbiertos = ['ABIERTO', 'EN_INVESTIGACION', 'ACCION_CORRECTIVA'];
+        const [incidentesAbiertos, incidentesCriticos, permisosVigentes] = await Promise.all([
+          prisma.incidente.count({ where: { estado: { in: estadosAbiertos } } }),
+          prisma.incidente.count({ where: { estado: { in: estadosAbiertos }, severidad: { in: ['ALTA', 'CRITICA'] } } }),
+          prisma.permisoTrabajo.count({ where: { estado: 'VIGENTE' } }),
+        ]);
+        return {
+          incidentes_abiertos:  incidentesAbiertos,
+          incidentes_criticos:  incidentesCriticos,
+          permisos_vigentes:    permisosVigentes,
+        };
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // HEALTH CHECK
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {

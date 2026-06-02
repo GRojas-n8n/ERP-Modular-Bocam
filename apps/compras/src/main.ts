@@ -967,6 +967,35 @@ app.get('/api/v1/compras/ordenes-compra/reconciliacion/pendientes', requireRoles
   }
 });
 
+app.get('/api/v1/compras/resumen-dashboard',
+  requireRoles('superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const [reqPendientes, ocsPorEmitir, ocsEnProceso, montoAgg] = await Promise.all([
+          prisma.requisicion.count({ where: { estado: 'PENDIENTE' } }),
+          prisma.ordenCompra.count({ where: { estado: 'APROBADA' } }),
+          prisma.ordenCompra.count({ where: { estado: 'EMITIDA' } }),
+          prisma.ordenCompra.aggregate({
+            _sum: { total: true },
+            where: { estado: { in: ['EMITIDA', 'RECIBIDA'] } },
+          }),
+        ]);
+        return {
+          requisiciones_pendientes: reqPendientes,
+          ocs_por_emitir:           ocsPorEmitir,
+          ocs_en_proceso:           ocsEnProceso,
+          monto_comprometido:       Number(montoAgg._sum.total ?? 0),
+        };
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'compras', timestamp: new Date().toISOString() });
 });

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useDashboardData } from '../hooks/useDashboardData';
 import {
@@ -27,6 +28,254 @@ import {
   IconUsers,
   IconWallet,
 } from '../components/Icons';
+
+// ─── Tipos del Dashboard Ejecutivo ───────────────────────────────────────────
+
+interface ResumenCompras      { requisiciones_pendientes: number; ocs_por_emitir: number; ocs_en_proceso: number; monto_comprometido: number; }
+interface ResumenControlObra  { estimaciones_en_revision: number; estimaciones_aprobadas: number; avances_pendientes: number; }
+interface ResumenPersonal     { empleados_activos: number; cuadrillas_activas: number; prenominas_pendientes: number; }
+interface ResumenSeguridad    { incidentes_abiertos: number; incidentes_criticos: number; permisos_vigentes: number; }
+interface ResumenCalidad      { documentos_vigentes: number; documentos_en_revision: number; versiones_pendientes: number; }
+
+interface EjecutivoState<T> { data: T | null; loading: boolean; error: boolean; }
+
+const DEMO_EJECUTIVO = {
+  compras:     { requisiciones_pendientes: 4, ocs_por_emitir: 2, ocs_en_proceso: 7, monto_comprometido: 1_450_000 },
+  controlObra: { estimaciones_en_revision: 1, estimaciones_aprobadas: 3, avances_pendientes: 5 },
+  personal:    { empleados_activos: 38, cuadrillas_activas: 4, prenominas_pendientes: 2 },
+  seguridad:   { incidentes_abiertos: 2, incidentes_criticos: 1, permisos_vigentes: 3 },
+  calidad:     { documentos_vigentes: 14, documentos_en_revision: 3, versiones_pendientes: 5 },
+};
+
+const fmtMXN = (n: number) =>
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+
+// ─── Componente Dashboard Ejecutivo ─────────────────────────────────────────
+
+const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: boolean; proyectoNombre?: string }> = ({ onNavigate, isDemo, proyectoNombre }) => {
+  const [compras,     setCompras]     = useState<EjecutivoState<ResumenCompras>>    ({ data: null, loading: true, error: false });
+  const [controlObra, setControlObra] = useState<EjecutivoState<ResumenControlObra>>({ data: null, loading: true, error: false });
+  const [personal,    setPersonal]    = useState<EjecutivoState<ResumenPersonal>>   ({ data: null, loading: true, error: false });
+  const [seguridad,   setSeguridad]   = useState<EjecutivoState<ResumenSeguridad>>  ({ data: null, loading: true, error: false });
+  const [calidad,     setCalidad]     = useState<EjecutivoState<ResumenCalidad>>    ({ data: null, loading: true, error: false });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchAll = useCallback(async () => {
+    if (isDemo) {
+      setCompras    ({ data: DEMO_EJECUTIVO.compras,     loading: false, error: false });
+      setControlObra({ data: DEMO_EJECUTIVO.controlObra, loading: false, error: false });
+      setPersonal   ({ data: DEMO_EJECUTIVO.personal,    loading: false, error: false });
+      setSeguridad  ({ data: DEMO_EJECUTIVO.seguridad,   loading: false, error: false });
+      setCalidad    ({ data: DEMO_EJECUTIVO.calidad,     loading: false, error: false });
+      setLastUpdated(new Date());
+      return;
+    }
+    const setState = <T,>(setter: React.Dispatch<React.SetStateAction<EjecutivoState<T>>>) =>
+      ({ status, value }: PromiseSettledResult<{ data: { data: T } }>) => {
+        if (status === 'fulfilled') setter({ data: value.data.data, loading: false, error: false });
+        else setter({ data: null, loading: false, error: true });
+      };
+
+    [setCompras, setControlObra, setPersonal, setSeguridad, setCalidad].forEach(s =>
+      s(prev => ({ ...prev, loading: true, error: false }))
+    );
+
+    const [r1, r2, r3, r4, r5] = await Promise.allSettled([
+      api.get('/api/v1/compras/resumen-dashboard'),
+      api.get('/api/v1/control-obra/resumen-dashboard'),
+      api.get('/api/v1/personal/resumen-dashboard'),
+      api.get('/api/v1/seguridad/resumen-dashboard'),
+      api.get('/api/v1/calidad/resumen-dashboard'),
+    ]);
+    setState(setCompras)(r1 as PromiseSettledResult<{ data: { data: ResumenCompras } }>);
+    setState(setControlObra)(r2 as PromiseSettledResult<{ data: { data: ResumenControlObra } }>);
+    setState(setPersonal)(r3 as PromiseSettledResult<{ data: { data: ResumenPersonal } }>);
+    setState(setSeguridad)(r4 as PromiseSettledResult<{ data: { data: ResumenSeguridad } }>);
+    setState(setCalidad)(r5 as PromiseSettledResult<{ data: { data: ResumenCalidad } }>);
+    setLastUpdated(new Date());
+  }, [isDemo]);
+
+  useEffect(() => { void fetchAll(); }, [fetchAll]);
+
+  const statusBadge = (s: EjecutivoState<unknown>) =>
+    s.loading ? <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Cargando</span>
+    : s.error  ? <span className="rounded-full bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-red-500">Error</span>
+    :            <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-600">Online</span>;
+
+  const val = (v: number | null | undefined, fmt?: (n: number) => string) =>
+    v == null ? '—' : fmt ? fmt(v) : String(v);
+
+  return (
+    <div className="space-y-6">
+      <OperationalBanner
+        title={`Dashboard Ejecutivo${proyectoNombre ? ` · ${proyectoNombre}` : ''}`}
+        tone="neutral"
+        badge={
+          <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              5 módulos
+            </span>
+            {lastUpdated && (
+              <span className="text-[10px] text-muted-foreground/60">
+                Actualizado {lastUpdated.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </span>
+        }
+        actions={
+          <button
+            onClick={() => void fetchAll()}
+            className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/60 transition-colors"
+          >
+            ↻ Actualizar
+          </button>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+
+        {/* ── Compras ──────────────────────────────────────────────────────── */}
+        <Card className="flex flex-col">
+          <CardContent className="flex-1 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                  <IconShoppingCart className="h-4 w-4 text-emerald-500" />
+                </span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Compras</span>
+              </div>
+              {statusBadge(compras)}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <MetricCard label="Req. pendientes" value={val(compras.data?.requisiciones_pendientes)} />
+              <MetricCard label="OCs por emitir"  value={val(compras.data?.ocs_por_emitir)} />
+              <MetricCard label="OCs en proceso"  value={val(compras.data?.ocs_en_proceso)} />
+            </div>
+            {compras.data && (
+              <div className="mt-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15 px-3 py-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Monto comprometido</p>
+                <p className="text-lg font-black tracking-tighter text-emerald-600">{fmtMXN(compras.data.monto_comprometido)}</p>
+              </div>
+            )}
+          </CardContent>
+          <div className="border-t border-border/30 px-5 py-2.5">
+            <button onClick={() => onNavigate('compras')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+              Ir a Compras →
+            </button>
+          </div>
+        </Card>
+
+        {/* ── Control de Obra ───────────────────────────────────────────────── */}
+        <Card className="flex flex-col">
+          <CardContent className="flex-1 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10">
+                  <IconFileText className="h-4 w-4 text-sky-500" />
+                </span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Control de Obra</span>
+              </div>
+              {statusBadge(controlObra)}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <MetricCard label="En revisión"   value={val(controlObra.data?.estimaciones_en_revision)} />
+              <MetricCard label="Aprobadas"     value={val(controlObra.data?.estimaciones_aprobadas)} />
+              <MetricCard label="Avances pend." value={val(controlObra.data?.avances_pendientes)} />
+            </div>
+          </CardContent>
+          <div className="border-t border-border/30 px-5 py-2.5">
+            <button onClick={() => onNavigate('control-obra')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+              Ir a Control de Obra →
+            </button>
+          </div>
+        </Card>
+
+        {/* ── Personal ─────────────────────────────────────────────────────── */}
+        <Card className="flex flex-col">
+          <CardContent className="flex-1 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                  <IconUsers className="h-4 w-4 text-violet-500" />
+                </span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Personal</span>
+              </div>
+              {statusBadge(personal)}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <MetricCard label="Empleados"       value={val(personal.data?.empleados_activos)} />
+              <MetricCard label="Cuadrillas"      value={val(personal.data?.cuadrillas_activas)} />
+              <MetricCard label="Nóminas pend."   value={val(personal.data?.prenominas_pendientes)} />
+            </div>
+          </CardContent>
+          <div className="border-t border-border/30 px-5 py-2.5">
+            <button onClick={() => onNavigate('personal')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+              Ir a Personal →
+            </button>
+          </div>
+        </Card>
+
+        {/* ── Seguridad HSE ────────────────────────────────────────────────── */}
+        <Card className="flex flex-col">
+          <CardContent className="flex-1 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10">
+                  <IconShieldCheck className="h-4 w-4 text-rose-500" />
+                </span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Seguridad HSE</span>
+              </div>
+              {statusBadge(seguridad)}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <MetricCard label="Incid. abiertos" value={val(seguridad.data?.incidentes_abiertos)} />
+              <MetricCard
+                label="Incid. críticos"
+                value={val(seguridad.data?.incidentes_criticos)}
+                trendTone={(seguridad.data?.incidentes_criticos ?? 0) > 0 ? 'negative' : 'positive'}
+              />
+              <MetricCard label="Permisos vigentes" value={val(seguridad.data?.permisos_vigentes)} />
+            </div>
+          </CardContent>
+          <div className="border-t border-border/30 px-5 py-2.5">
+            <button onClick={() => onNavigate('seguridad')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+              Ir a Seguridad →
+            </button>
+          </div>
+        </Card>
+
+        {/* ── Calidad SGC ──────────────────────────────────────────────────── */}
+        <Card className="flex flex-col">
+          <CardContent className="flex-1 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
+                  <IconCheckCircle2 className="h-4 w-4 text-teal-500" />
+                </span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Calidad SGC</span>
+              </div>
+              {statusBadge(calidad)}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <MetricCard label="Vigentes"       value={val(calidad.data?.documentos_vigentes)} />
+              <MetricCard label="En revisión"    value={val(calidad.data?.documentos_en_revision)} />
+              <MetricCard label="Versiones pend." value={val(calidad.data?.versiones_pendientes)} />
+            </div>
+          </CardContent>
+          <div className="border-t border-border/30 px-5 py-2.5">
+            <button onClick={() => onNavigate('calidad')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+              Ir a Calidad →
+            </button>
+          </div>
+        </Card>
+
+      </div>
+    </div>
+  );
+};
+
+// ─── Animated Number Hook ────────────────────────────────────────────────────
 
 function useAnimatedNumber(target: number, duration = 1200) {
   const [current, setCurrent] = useState(0);
@@ -125,6 +374,15 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const { user, tenant } = useTenant();
+  const isDemo      = tenant?.id === 'iretum-demo';
+  const roles: string[] = user?.role ?? [];
+  const isEjecutivo = roles.some(r => ['superintendent', 'admin'].includes(r));
+
+  // Dashboard ejecutivo para superintendent/admin
+  if (isEjecutivo) {
+    return <DashboardEjecutivo onNavigate={onNavigate} isDemo={isDemo} proyectoNombre={tenant?.name} />;
+  }
+
   const dashboard = useDashboardData();
   const [visibleItems, setVisibleItems] = useState(0);
 
