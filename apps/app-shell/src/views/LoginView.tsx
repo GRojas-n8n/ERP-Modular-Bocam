@@ -31,7 +31,7 @@ const PARTICLES: { top: string; left: string; size: number; dur: number; delay: 
   { top:'20%', left:'56%', size:2, dur:25, delay:1,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
   { top:'62%', left:'90%', size:3, dur:20, delay:5,  color:'rgba(255,170,30,1)',  glow:'0 0 5px 2px rgba(255,170,30,0.50)' },
   { top:'76%', left:'27%', size:2, dur:17, delay:9,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.50)' },
-  { top:'47%', left:'72%', size:4, dur:23, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 6px 2px rgba(130,160,255,0.45)' },
+  { top:'47%', left:'72%', size:3, dur:23, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 5px 1px rgba(130,160,255,0.42)' },
   { top:'88%', left:'15%', size:2, dur:19, delay:6,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
   { top:'53%', left:'43%', size:3, dur:16, delay:11, color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.50)' },
   { top:'27%', left:'93%', size:2, dur:21, delay:4,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
@@ -68,18 +68,18 @@ export const LoginView: React.FC = () => {
       <style>{`
         /* ── Orbes ─────────────────────────────────────────────────────── */
         @keyframes orb-1 {
-          0%,100% { transform:translate(0,0) scale(1);      opacity:.42; }
-          33%     { transform:translate(4%,-3%) scale(1.06); opacity:.50; }
-          66%     { transform:translate(-3%,4%) scale(.95);  opacity:.34; }
+          0%,100% { transform:translate(0,0) scale(1);      opacity:.38; }
+          33%     { transform:translate(4%,-3%) scale(1.06); opacity:.45; }
+          66%     { transform:translate(-3%,4%) scale(.95);  opacity:.30; }
         }
         @keyframes orb-2 {
-          0%,100% { transform:translate(0,0) scale(1);       opacity:.34; }
-          40%     { transform:translate(-4%,3%) scale(1.07); opacity:.42; }
-          70%     { transform:translate(3%,-4%) scale(.94);  opacity:.26; }
+          0%,100% { transform:translate(0,0) scale(1);       opacity:.30; }
+          40%     { transform:translate(-4%,3%) scale(1.07); opacity:.38; }
+          70%     { transform:translate(3%,-4%) scale(.94);  opacity:.22; }
         }
         @keyframes orb-3 {
-          0%,100% { transform:translate(0,0) scale(1);      opacity:.26; }
-          50%     { transform:translate(3%,-3%) scale(1.08); opacity:.34; }
+          0%,100% { transform:translate(0,0) scale(1);      opacity:.22; }
+          50%     { transform:translate(3%,-3%) scale(1.08); opacity:.30; }
         }
 
         /* ── Partículas ─────────────────────────────────────────────────── */
@@ -91,23 +91,31 @@ export const LoginView: React.FC = () => {
         }
 
         /* ── Logo glow ──────────────────────────────────────────────────── */
+        /* Separar pulso (opacity) de hover (transform) para evitar conflictos */
         @keyframes logo-pulse {
-          0%,100% { transform:scale(1);   opacity:.50; }
-          50%     { transform:scale(1.18); opacity:.75; }
+          0%,100% { opacity:.48; }
+          50%     { opacity:.78; }
         }
-        .lr-logo-wrap { position:relative; cursor:default; }
-        .lr-logo-glow {
-          position:absolute; inset:-10px; border-radius:50%;
-          background:radial-gradient(ellipse, rgba(0,209,255,.38) 0%, rgba(0,140,220,.14) 50%, transparent 72%);
-          animation:logo-pulse 3.5s ease-in-out infinite;
-          transition:transform .4s ease, opacity .4s ease;
+        .lr-logo-wrap { position:relative; flex-shrink:0; }
+        /* Capa exterior: solo maneja el scale del hover via transition */
+        .lr-glow-outer {
+          position:absolute; inset:-12px; border-radius:50%;
+          transition:transform .55s cubic-bezier(.16,1,.3,1);
           pointer-events:none;
         }
-        .lr-logo-wrap:hover .lr-logo-glow {
-          transform:scale(1.6) !important;
-          opacity:1 !important;
-          animation-play-state:paused;
+        /* Capa interior: solo maneja el pulso via animation (opacity) */
+        .lr-glow-inner {
+          position:absolute; inset:0; border-radius:50%;
+          background:radial-gradient(ellipse at 50% 50%, rgba(0,209,255,.40) 0%, rgba(0,150,230,.16) 48%, transparent 72%);
+          animation:logo-pulse 3s ease-in-out infinite;
         }
+        /* Logo img: crece suavemente en hover */
+        .lr-logo-img {
+          position:relative; z-index:1; display:block;
+          transition:transform .55s cubic-bezier(.16,1,.3,1);
+        }
+        .lr-logo-wrap:hover .lr-glow-outer { transform:scale(1.55); }
+        .lr-logo-wrap:hover .lr-logo-img   { transform:scale(1.07); }
 
         /* ── Card ───────────────────────────────────────────────────────── */
         @keyframes card-in {
@@ -223,7 +231,7 @@ export const LoginView: React.FC = () => {
           position:'absolute', top:'-5%', left:'-5%',
           width:'60vw', height:'60vw', maxWidth:780, maxHeight:780,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at 40% 40%, rgba(0,200,255,.42) 0%, rgba(0,120,200,.18) 40%, transparent 70%)',
+          background:'radial-gradient(ellipse at 40% 40%, rgba(0,200,255,.38) 0%, rgba(0,120,200,.15) 40%, transparent 70%)',
           animation:'orb-1 20s ease-in-out infinite',
           filter:'blur(4px)',
         }} />
@@ -233,7 +241,7 @@ export const LoginView: React.FC = () => {
           position:'absolute', bottom:'-10%', right:'-8%',
           width:'58vw', height:'58vw', maxWidth:750, maxHeight:750,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at 60% 60%, rgba(80,70,240,.34) 0%, rgba(50,30,180,.14) 42%, transparent 72%)',
+          background:'radial-gradient(ellipse at 60% 60%, rgba(80,70,240,.30) 0%, rgba(50,30,180,.12) 42%, transparent 72%)',
           animation:'orb-2 24s ease-in-out infinite 4s',
           filter:'blur(4px)',
         }} />
@@ -243,7 +251,7 @@ export const LoginView: React.FC = () => {
           position:'absolute', bottom:'5%', left:'22%',
           width:'38vw', height:'38vw', maxWidth:520, maxHeight:520,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at 50% 50%, rgba(255,155,20,.28) 0%, rgba(220,90,0,.11) 44%, transparent 72%)',
+          background:'radial-gradient(ellipse at 50% 50%, rgba(255,155,20,.24) 0%, rgba(220,90,0,.09) 44%, transparent 72%)',
           animation:'orb-3 15s ease-in-out infinite 7s',
           filter:'blur(3px)',
         }} />
@@ -317,19 +325,16 @@ export const LoginView: React.FC = () => {
 
             {/* Logo + badge */}
             <div className="lr-logo lr-logo-mb" style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28 }}>
-              {/* Logo iretum con glow pulsante */}
-              <div className="lr-logo-wrap" style={{ flexShrink:0 }}>
-                <div className="lr-logo-glow" />
+              {/* Logo iretum — glow exterior (escala en hover) + pulso interior (opacity) */}
+              <div className="lr-logo-wrap">
+                <div className="lr-glow-outer">
+                  <div className="lr-glow-inner" />
+                </div>
                 <img
                   src="/favicon.svg"
                   alt="iretum"
-                  style={{
-                    position:'relative', zIndex:1,
-                    width:42, height:42,
-                    borderRadius:10,
-                    objectFit:'contain',
-                    display:'block',
-                  }}
+                  className="lr-logo-img"
+                  style={{ width:42, height:42, borderRadius:10, objectFit:'contain' }}
                 />
               </div>
               <div>
