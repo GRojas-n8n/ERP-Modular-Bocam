@@ -1,0 +1,50 @@
+# syntax=docker/dockerfile:1.7
+# Dockerfile específico para apps/reportes — sin Prisma, sin RabbitMQ.
+# Usa una capa extra de npm install para garantizar que typescript/tsc
+# esté disponible independientemente de NODE_ENV del host.
+
+FROM node:20-bookworm-slim AS builder
+
+WORKDIR /workspace
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY apps/*/package.json ./apps/
+COPY packages/*/package.json ./packages/
+
+# npm ci respeta NODE_ENV=production del VPS y omite devDeps.
+# Una segunda pasada --include=dev para el workspace de reportes garantiza
+# que tsc esté disponible para el build, sin afectar el runner final.
+RUN npm ci && npm install --workspace=apps/reportes --include=dev
+
+COPY . .
+
+ARG WORKSPACE_NAME
+ARG APP_PATH
+
+RUN npm run build -w ${WORKSPACE_NAME}
+
+FROM node:20-bookworm-slim AS runner
+
+WORKDIR /workspace
+
+ENV NODE_ENV=production
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl wget \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/node_modules ./node_modules
+COPY --from=builder /workspace/apps ./apps
+COPY --from=builder /workspace/packages ./packages
+COPY docker/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
+
+ARG APP_PATH
+ENV APP_PATH=${APP_PATH}
+
+CMD ["backend-entrypoint.sh"]
