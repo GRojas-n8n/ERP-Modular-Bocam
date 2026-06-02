@@ -334,6 +334,8 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' },
   ]);
 
+  const [sinPresupuesto, setSinPresupuesto] = useState(false);
+
   // Por Insumo state
   const [insumosAll,           setInsumosAll]           = useState<InsumoReq[]>([]);
   const [insumoSearch,         setInsumoSearch]         = useState('');
@@ -416,6 +418,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             descripcion:  c.descripcion,
             unidad_medida: c.unidad_medida,
           })));
+          setSinPresupuesto(false);
+        } else {
+          setSinPresupuesto(true);
         }
         if (insumosRes.status === 'fulfilled') {
           const raw: any[] = insumosRes.value.data?.data || [];
@@ -1670,7 +1675,11 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                 <div className="rounded-xl border border-border/40 overflow-hidden max-h-52 overflow-y-auto">
                   {conceptosFiltrados.length === 0 ? (
                     <div className="px-4 py-4 text-center text-xs text-muted-foreground">
-                      {conceptoSearch ? 'Sin partidas que coincidan con la búsqueda' : 'No hay partidas en el presupuesto activo'}
+                      {conceptoSearch
+                        ? 'Sin partidas que coincidan con la búsqueda'
+                        : sinPresupuesto
+                          ? 'Sin presupuesto activo — importa el catálogo en Gerencia Técnica'
+                          : 'No hay partidas en el presupuesto activo'}
                     </div>
                   ) : (
                     conceptosFiltrados.map((c, ci) => {

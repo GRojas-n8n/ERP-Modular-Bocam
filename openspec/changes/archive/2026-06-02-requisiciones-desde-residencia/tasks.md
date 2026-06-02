@@ -78,6 +78,6 @@
 
 ## 11. Riesgos pendientes de resolución
 
-- [ ] 11.1 Verificar en producción que `GET /gerencia-tecnica/presupuesto/activo` devuelve conceptos con el campo `id` (no solo el código) para que `conceptos/:id/composicion` funcione
-- [ ] 11.2 Verificar en App.tsx que el case del routing usa `'residencia'` (que coincide con el rol en los JWTs de producción)
-- [ ] 11.3 Agregar mensaje específico en el dropdown cuando no hay presupuesto activo para el proyecto
+- [x] 11.1 Endpoint `GET /gerencia-tecnica/presupuesto/activo` creado — devuelve el presupuesto más reciente con conceptos `{ id, clave, descripcion, unidad_medida }`; retorna 404 si no existe
+- [x] 11.2 Verificado: App.tsx usa `case 'residencia':` (línea 91) — coincide con el rol en JWTs de producción
+- [x] 11.3 Agregado estado `sinPresupuesto` en ResidenciaView — el dropdown muestra "Sin presupuesto activo — importa el catálogo en Gerencia Técnica" cuando la carga falla

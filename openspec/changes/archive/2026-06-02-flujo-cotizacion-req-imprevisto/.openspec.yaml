@@ -1,0 +1,19 @@
+schema: spec-driven
+created: 2026-05-27
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: c93f07c
+    message: "feat(compras): flujo cotización — aprobar req + tipo IMPREVISTO"
+    scope: implementation
+  - hash: pendiente
+    message: "test(compras): integration tests req-imprevisto-aprobar (9.1–9.6)"
+    scope: tests
+tasks_status:
+  completed: 57
+  pending: 0
+production_verified: true
+tests: 6/6
+notes: >
+  Tests creados en apps/compras/test/integration/req-imprevisto-aprobar.integration.test.ts.
+  Comportamiento definido task 9.2: insumo_id se conserva aunque el ítem sea IMPREVISTO.

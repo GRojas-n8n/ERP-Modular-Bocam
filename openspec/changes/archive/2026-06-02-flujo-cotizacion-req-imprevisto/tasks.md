@@ -73,11 +73,11 @@
 - [x] 8.6 Verificar health check `compras:3002/health` → `{"status":"ok"}`
 - [x] 8.7 Verificar logs de inicio: EventBus conectado, suscripciones activas
 
-## 9. Tests de integración — PENDIENTE (Deuda Técnica)
+## 9. Tests de integración
 
-- [ ] 9.1 Test: `POST /requisiciones` con `tipo: 'IMPREVISTO'` y ítems sin `insumo_id` → `201`, `estado = 'PENDIENTE'`
-- [ ] 9.2 Test: `POST /requisiciones` con ítem IMPREVISTO que tiene `insumo_id` → debe guardarlo o ignorarlo (definir comportamiento)
-- [ ] 9.3 Test: `PATCH /aprobar` con rol `procurement` → `200`, `estado = 'APROBADA'`
-- [ ] 9.4 Test: `PATCH /aprobar` idempotente — segunda llamada → `200` sin error
-- [ ] 9.5 Test: `PATCH /aprobar` con rol `resident` → `403`
-- [ ] 9.6 Test: `PATCH /aprobar` con `estado = 'COMPRADA'` → `400`
+- [x] 9.1 Test: `POST /requisiciones` con `tipo: 'IMPREVISTO'` y ítems sin `insumo_id` → `201`, `estado = 'PENDIENTE'`
+- [x] 9.2 Test: `POST /requisiciones` con ítem IMPREVISTO que tiene `insumo_id` → comportamiento definido: `insumo_id` se conserva
+- [x] 9.3 Test: `PATCH /aprobar` con rol `procurement` → `200`, `estado = 'APROBADA'`
+- [x] 9.4 Test: `PATCH /aprobar` idempotente — segunda llamada → `200` sin error
+- [x] 9.5 Test: `PATCH /aprobar` con rol `resident` → `403`
+- [x] 9.6 Test: `PATCH /aprobar` con `estado = 'COMPRADA'` → `400`

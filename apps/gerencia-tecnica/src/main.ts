@@ -160,6 +160,47 @@ app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Respo
 });
 
 /**
+ * GET /api/v1/gerencia-tecnica/presupuesto/activo
+ *
+ * Devuelve el presupuesto más reciente del proyecto activo con sus conceptos.
+ * El frontend de Residencia lo usa para el autocomplete de partidas APU.
+ * Returns: { id, nombre, conceptos: [{ id, clave, descripcion, unidad_medida }] }
+ */
+app.get('/api/v1/gerencia-tecnica/presupuesto/activo', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId } = req.securityContext;
+
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+    const presupuesto = await db.presupuestoBase.findFirst({
+      where: { proyecto_id: proyectoId },
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        version: true,
+        conceptos: {
+          select: { id: true, clave: true, descripcion: true, unidad_medida: true },
+          orderBy: { clave: 'asc' },
+        },
+      },
+    });
+
+    if (!presupuesto) {
+      return res.status(404).json(
+        createApiError('NOT_FOUND', 'No hay presupuesto registrado para el proyecto activo.')
+      );
+    }
+
+    res.json(createApiResponse(presupuesto, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Gerencia Técnica] Error en GET /presupuesto/activo:', error.message);
+    res.status(500).json(
+      createApiError('INTERNAL_ERROR', 'Error al obtener el presupuesto activo.', error.message)
+    );
+  }
+});
+
+/**
  * POST /api/v1/gerencia-tecnica/insumos
  * Crea un nuevo insumo en el catálogo SSOT del tenant.
  */

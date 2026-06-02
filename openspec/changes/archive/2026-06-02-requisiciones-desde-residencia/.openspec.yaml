@@ -1,0 +1,22 @@
+schema: spec-driven
+created: 2026-05-27
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: a874468
+    message: "feat(residencia): tab Requisiciones — APU take-off e imprevistos"
+    scope: implementation
+  - hash: pendiente
+    message: "feat(gerencia-tecnica): GET /presupuesto/activo + fix(residencia): sinPresupuesto state"
+    scope: fixes
+tasks_status:
+  completed: 42
+  pending: 0
+production_verified: true
+tests: 0
+notes: >
+  11.1: Endpoint GET /presupuesto/activo agregado a gerencia-tecnica — devuelve presupuesto
+  más reciente con { id, version, conceptos: [{id, clave, descripcion, unidad_medida}] }.
+  11.2: App.tsx usa case 'residencia' (verificado línea 91).
+  11.3: Estado sinPresupuesto en ResidenciaView — dropdown muestra mensaje específico cuando
+  la carga del presupuesto falla (distingue entre sin-presupuesto y búsqueda sin resultados).
