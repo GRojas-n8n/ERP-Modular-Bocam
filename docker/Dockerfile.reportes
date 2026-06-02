@@ -18,7 +18,7 @@ COPY packages/*/package.json ./packages/
 # npm ci respeta NODE_ENV=production del VPS y puede omitir devDeps.
 # Instalación explícita de typescript asegura que tsc esté disponible
 # para la compilación TypeScript, independiente de NODE_ENV.
-RUN npm ci && npm install --no-save typescript ts-node ts-node-dev
+RUN npm ci && npm install --no-save typescript ts-node ts-node-dev @types/node @types/express @types/pdfkit @types/jsonwebtoken
 
 COPY . .
 
