@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useTenant } from '../context/TenantContext';
 
@@ -25,18 +25,18 @@ const IconLock = ({ className }: { className?: string }) => (
 
 // ─── Partículas — más grandes y con glow ─────────────────────────────────────
 const PARTICLES: { top: string; left: string; size: number; dur: number; delay: number; glow: string; color: string }[] = [
-  { top:'8%',  left:'9%',  size:3, dur:18, delay:0,  color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.55)' },
-  { top:'13%', left:'82%', size:2, dur:22, delay:3,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.50)' },
-  { top:'35%', left:'5%',  size:3, dur:15, delay:7,  color:'rgba(130,160,255,1)', glow:'0 0 5px 2px rgba(130,160,255,0.50)' },
-  { top:'20%', left:'56%', size:2, dur:25, delay:1,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
-  { top:'62%', left:'90%', size:3, dur:20, delay:5,  color:'rgba(255,170,30,1)',  glow:'0 0 5px 2px rgba(255,170,30,0.50)' },
-  { top:'76%', left:'27%', size:2, dur:17, delay:9,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.50)' },
-  { top:'47%', left:'72%', size:3, dur:23, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 5px 1px rgba(130,160,255,0.42)' },
-  { top:'88%', left:'15%', size:2, dur:19, delay:6,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
-  { top:'53%', left:'43%', size:3, dur:16, delay:11, color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.50)' },
-  { top:'27%', left:'93%', size:2, dur:21, delay:4,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
-  { top:'70%', left:'61%', size:3, dur:24, delay:8,  color:'rgba(130,160,255,1)', glow:'0 0 5px 2px rgba(130,160,255,0.50)' },
-  { top:'10%', left:'39%', size:2, dur:14, delay:13, color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
+  { top:'8%',  left:'9%',  size:3, dur:15, delay:0,  color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.55)' },
+  { top:'13%', left:'82%', size:2, dur:19, delay:3,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.50)' },
+  { top:'35%', left:'5%',  size:3, dur:13, delay:7,  color:'rgba(130,160,255,1)', glow:'0 0 5px 2px rgba(130,160,255,0.50)' },
+  { top:'20%', left:'56%', size:2, dur:21, delay:1,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
+  { top:'62%', left:'90%', size:3, dur:17, delay:5,  color:'rgba(255,170,30,1)',  glow:'0 0 5px 2px rgba(255,170,30,0.50)' },
+  { top:'76%', left:'27%', size:2, dur:14, delay:9,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.50)' },
+  { top:'47%', left:'72%', size:3, dur:20, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 5px 1px rgba(130,160,255,0.42)' },
+  { top:'88%', left:'15%', size:2, dur:16, delay:6,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
+  { top:'53%', left:'43%', size:3, dur:14, delay:11, color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.50)' },
+  { top:'27%', left:'93%', size:2, dur:18, delay:4,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
+  { top:'70%', left:'61%', size:3, dur:20, delay:8,  color:'rgba(130,160,255,1)', glow:'0 0 5px 2px rgba(130,160,255,0.50)' },
+  { top:'10%', left:'39%', size:2, dur:12, delay:13, color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
 ];
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -46,6 +46,46 @@ export const LoginView: React.FC = () => {
   const [password, setPassword]     = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // ── Reacción de partículas al mouse ──────────────────────────────────────
+  const mouseRef      = useRef({ x: -9999, y: -9999 });
+  const particleRefs  = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener('mousemove', onMove, { passive: true });
+
+    let raf: number;
+    const RADIUS = 110; // px — radio de influencia
+    const FORCE  = 22;  // px — desplazamiento máximo
+
+    const tick = () => {
+      particleRefs.current.forEach(el => {
+        if (!el) return;
+        const r  = el.getBoundingClientRect();
+        const cx = r.left + r.width  / 2;
+        const cy = r.top  + r.height / 2;
+        const dx = cx - mouseRef.current.x;
+        const dy = cy - mouseRef.current.y;
+        const d  = Math.hypot(dx, dy);
+        if (d < RADIUS && d > 0) {
+          const f  = (1 - d / RADIUS) * FORCE;
+          const ox = (dx / d) * f;
+          const oy = (dy / d) * f;
+          el.style.translate = `${ox}px ${oy}px`;
+        } else {
+          el.style.translate = '0px 0px';
+        }
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -269,14 +309,19 @@ export const LoginView: React.FC = () => {
           background:'radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(2,4,10,.82) 100%)',
         }} />
 
-        {/* Partículas con glow */}
+        {/* Partículas con glow + reacción al mouse */}
         {PARTICLES.map((p, i) => (
-          <div key={i} style={{
-            position:'absolute', top:p.top, left:p.left,
-            width:p.size, height:p.size, borderRadius:'50%',
-            background:p.color, boxShadow:p.glow,
-            animation:`particle-float ${p.dur}s ease-in-out infinite ${p.delay}s`,
-          }} />
+          <div
+            key={i}
+            ref={el => { particleRefs.current[i] = el; }}
+            style={{
+              position:'absolute', top:p.top, left:p.left,
+              width:p.size, height:p.size, borderRadius:'50%',
+              background:p.color, boxShadow:p.glow,
+              animation:`particle-float ${p.dur}s ease-in-out infinite ${p.delay}s`,
+              transition:'translate .35s cubic-bezier(.25,.46,.45,.94)',
+            }}
+          />
         ))}
 
       </div>
