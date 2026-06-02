@@ -35,8 +35,22 @@ const PORT = process.env.PORT || 3003;
 
 // ─── Redis + Rate Limiters ───────────────────────────────────────────────────
 
-const redisClient = createClient({ url: (process.env.REDIS_URL ?? 'redis://localhost:6379').trim() });
-redisClient.on('error', (err) => console.error('[Auth] Redis rate-limit error:', err.message));
+// Solo conectar Redis si REDIS_URL está explícitamente configurado.
+// Sin REDIS_URL los limiters usan MemoryStore sin intentar ninguna conexión.
+const REDIS_URL = process.env.REDIS_URL?.trim();
+const redisClient = REDIS_URL
+  ? createClient({
+      url: REDIS_URL,
+      socket: {
+        // Máximo 3 reintentos con 500ms entre ellos — nunca bloquea el arranque
+        reconnectStrategy: (retries) => (retries >= 3 ? false : 500),
+      },
+    })
+  : null;
+
+if (redisClient) {
+  redisClient.on('error', (err) => console.error('[Auth] Redis rate-limit error:', err.message));
+}
 
 const rateLimitHandler = (_req: Request, res: Response) =>
   void res.status(429).json({
@@ -53,7 +67,7 @@ function makeLimiter(max: number): express.RequestHandler {
   return (req, res, next) => {
     if (!limiter) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const store = redisClient.isReady ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) }) as any : undefined;
+      const store = redisClient?.isReady ? new RedisStore({ sendCommand: (...args: string[]) => redisClient!.sendCommand(args) }) as any : undefined;
       limiter = rateLimit({ windowMs: RL_WINDOW, max, standardHeaders: true, legacyHeaders: false, store, handler: rateLimitHandler });
     }
     limiter(req, res, next);
@@ -1012,11 +1026,15 @@ app.get('/api/v1/master/audit-log',
 );
 
 async function startServer() {
-  try {
-    await redisClient.connect();
-    console.log('[Auth] Redis rate-limit store conectado.');
-  } catch (err) {
-    console.warn('[Auth] Redis no disponible — rate-limiters en MemoryStore (fallback):', String(err));
+  if (redisClient) {
+    try {
+      await redisClient.connect();
+      console.log('[Auth] Redis rate-limit store conectado.');
+    } catch (err) {
+      console.warn('[Auth] Redis no disponible — rate-limiters en MemoryStore (fallback).');
+    }
+  } else {
+    console.log('[Auth] REDIS_URL no configurado — rate-limiters en MemoryStore.');
   }
   return app.listen(PORT, () => {
   console.log('----------------------------------------------------');
