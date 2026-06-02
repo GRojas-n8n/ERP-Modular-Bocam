@@ -1,0 +1,14 @@
+schema: spec-driven
+created: 2026-06-02
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: 7c0799a
+    message: "feat(dashboard): dashboard ejecutivo consolidado para superintendent/admin"
+  - hash: abe108f
+    message: "fix(dashboard): corregir tipos TS en DashboardEjecutivo"
+tasks_status:
+  completed: 20
+  pending: 2
+  pending_note: "8.3-8.4 — verificación manual de roles en producción"
+production_verified: true
