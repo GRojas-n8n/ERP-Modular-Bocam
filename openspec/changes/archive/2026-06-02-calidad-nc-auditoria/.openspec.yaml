@@ -1,0 +1,13 @@
+schema: spec-driven
+created: 2026-06-02
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: 4ad0c0e
+    message: "feat(calidad): No Conformidades + Auditorías Internas"
+  - hash: ba576bc
+    message: "fix(calidad): agregar descripcion a interfaz NC"
+tasks_status:
+  completed: 18
+  pending: 0
+production_verified: true
