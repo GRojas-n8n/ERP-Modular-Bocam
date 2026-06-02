@@ -145,12 +145,33 @@ app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Respo
       include: {
         conceptos: {
           orderBy: { clave: 'asc' },
+          include: {
+            insumos: {
+              select: { cantidad: true, insumo: { select: { costo_base: true } } },
+            },
+          },
         },
       },
       orderBy: { created_at: 'desc' },
     });
 
-    res.json(createApiResponse(presupuestos, tenantId, proyectoId));
+    // Calcular precio_actual y delta_pct por concepto
+    const presupuestosConDelta = presupuestos.map(p => ({
+      ...p,
+      conceptos: p.conceptos.map(c => {
+        const precioPresupuestado = Number(c.precio_unitario);
+        const precioActual = c.insumos.reduce(
+          (sum, ci) => sum + Number(ci.cantidad) * Number(ci.insumo.costo_base), 0
+        );
+        const delta_pct = c.insumos.length > 0 && precioPresupuestado > 0
+          ? Number(((precioActual - precioPresupuestado) / precioPresupuestado * 100).toFixed(1))
+          : null;
+        const { insumos: _insumos, ...concepto } = c;
+        return { ...concepto, precio_actual: c.insumos.length > 0 ? precioActual : null, delta_pct };
+      }),
+    }));
+
+    res.json(createApiResponse(presupuestosConDelta, tenantId, proyectoId));
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en GET /presupuestos:', error.message);
     res.status(500).json(
@@ -536,6 +557,11 @@ app.post(
           createApiError('NOT_FOUND', 'No hay presupuesto registrado para el proyecto activo. Importa el Catálogo de Obra primero.')
         );
       }
+      if (presupuesto.estado === 'APROBADO') {
+        return res.status(409).json(
+          createApiError('PRESUPUESTO_APROBADO', 'El presupuesto está APROBADO y no puede modificarse. Crea una nueva versión si necesitas cambios.')
+        );
+      }
       const presupuesto_id = presupuesto.id;
 
       // Mapa clave (normalizada) → concepto_id
@@ -736,6 +762,48 @@ app.get(
       res.status(500).json(
         createApiError('INTERNAL_ERROR', 'Error al obtener composición del concepto.', error.message)
       );
+    }
+  }
+);
+
+/**
+ * PATCH /api/v1/gerencia-tecnica/presupuestos/:id/aprobar
+ *
+ * Transiciona el presupuesto de BORRADOR → APROBADO. Operación irreversible.
+ * Una vez APROBADO, la composición APU queda bloqueada.
+ * Returns: 409 si ya está APROBADO (idempotente-seguro).
+ */
+app.patch(
+  '/api/v1/gerencia-tecnica/presupuestos/:id/aprobar',
+  requireRoles('gerencia_tecnica', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const presupuesto = await db.presupuestoBase.findUnique({ where: { id } });
+      if (!presupuesto) {
+        return res.status(404).json(createApiError('NOT_FOUND', 'Presupuesto no encontrado.'));
+      }
+      if (presupuesto.estado === 'APROBADO') {
+        return res.status(409).json(createApiError('ALREADY_APROBADO', 'El presupuesto ya está APROBADO.'));
+      }
+
+      const actualizado = await db.presupuestoBase.update({
+        where: { id },
+        data: {
+          estado:           'APROBADO',
+          aprobado_por:     userId,
+          fecha_aprobacion: new Date(),
+        },
+      });
+
+      res.json(createApiResponse(actualizado, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[Gerencia Técnica] Error en PATCH /presupuestos/:id/aprobar:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al aprobar presupuesto.', error.message));
     }
   }
 );

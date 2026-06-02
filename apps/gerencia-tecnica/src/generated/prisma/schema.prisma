@@ -56,6 +56,9 @@ model PresupuestoBase {
   estado        EstadoPresupuesto @default(BORRADOR)
   importe_total Decimal           @default(0.00) @db.Decimal(15, 2)
 
+  aprobado_por     String?   @db.Uuid
+  fecha_aprobacion DateTime?
+
   conceptos Concepto[]
 
   created_at DateTime @default(now()) @db.Timestamptz(6)
@@ -140,6 +143,7 @@ enum TipoInsumo {
 enum EstadoPresupuesto {
   BORRADOR
   EN_REVISION
+  APROBADO
   LIBERADO // Emite evento: PresupuestoBaseLiberado
   CONGELADO
 }

@@ -57,6 +57,7 @@ export type TipoInsumo = (typeof TipoInsumo)[keyof typeof TipoInsumo]
 export const EstadoPresupuesto: {
   BORRADOR: 'BORRADOR',
   EN_REVISION: 'EN_REVISION',
+  APROBADO: 'APROBADO',
   LIBERADO: 'LIBERADO',
   CONGELADO: 'CONGELADO'
 };
@@ -2303,6 +2304,8 @@ export namespace Prisma {
     version: number | null
     estado: $Enums.EstadoPresupuesto | null
     importe_total: Decimal | null
+    aprobado_por: string | null
+    fecha_aprobacion: Date | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -2314,6 +2317,8 @@ export namespace Prisma {
     version: number | null
     estado: $Enums.EstadoPresupuesto | null
     importe_total: Decimal | null
+    aprobado_por: string | null
+    fecha_aprobacion: Date | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -2325,6 +2330,8 @@ export namespace Prisma {
     version: number
     estado: number
     importe_total: number
+    aprobado_por: number
+    fecha_aprobacion: number
     created_at: number
     updated_at: number
     _all: number
@@ -2348,6 +2355,8 @@ export namespace Prisma {
     version?: true
     estado?: true
     importe_total?: true
+    aprobado_por?: true
+    fecha_aprobacion?: true
     created_at?: true
     updated_at?: true
   }
@@ -2359,6 +2368,8 @@ export namespace Prisma {
     version?: true
     estado?: true
     importe_total?: true
+    aprobado_por?: true
+    fecha_aprobacion?: true
     created_at?: true
     updated_at?: true
   }
@@ -2370,6 +2381,8 @@ export namespace Prisma {
     version?: true
     estado?: true
     importe_total?: true
+    aprobado_por?: true
+    fecha_aprobacion?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -2468,6 +2481,8 @@ export namespace Prisma {
     version: number
     estado: $Enums.EstadoPresupuesto
     importe_total: Decimal
+    aprobado_por: string | null
+    fecha_aprobacion: Date | null
     created_at: Date
     updated_at: Date
     _count: PresupuestoBaseCountAggregateOutputType | null
@@ -2498,6 +2513,8 @@ export namespace Prisma {
     version?: boolean
     estado?: boolean
     importe_total?: boolean
+    aprobado_por?: boolean
+    fecha_aprobacion?: boolean
     created_at?: boolean
     updated_at?: boolean
     conceptos?: boolean | PresupuestoBase$conceptosArgs<ExtArgs>
@@ -2511,6 +2528,8 @@ export namespace Prisma {
     version?: boolean
     estado?: boolean
     importe_total?: boolean
+    aprobado_por?: boolean
+    fecha_aprobacion?: boolean
     created_at?: boolean
     updated_at?: boolean
   }, ExtArgs["result"]["presupuestoBase"]>
@@ -2522,6 +2541,8 @@ export namespace Prisma {
     version?: boolean
     estado?: boolean
     importe_total?: boolean
+    aprobado_por?: boolean
+    fecha_aprobacion?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
@@ -2544,6 +2565,8 @@ export namespace Prisma {
       version: number
       estado: $Enums.EstadoPresupuesto
       importe_total: Prisma.Decimal
+      aprobado_por: string | null
+      fecha_aprobacion: Date | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["presupuestoBase"]>
@@ -2946,6 +2969,8 @@ export namespace Prisma {
     readonly version: FieldRef<"PresupuestoBase", 'Int'>
     readonly estado: FieldRef<"PresupuestoBase", 'EstadoPresupuesto'>
     readonly importe_total: FieldRef<"PresupuestoBase", 'Decimal'>
+    readonly aprobado_por: FieldRef<"PresupuestoBase", 'String'>
+    readonly fecha_aprobacion: FieldRef<"PresupuestoBase", 'DateTime'>
     readonly created_at: FieldRef<"PresupuestoBase", 'DateTime'>
     readonly updated_at: FieldRef<"PresupuestoBase", 'DateTime'>
   }
@@ -5480,6 +5505,8 @@ export namespace Prisma {
     version: 'version',
     estado: 'estado',
     importe_total: 'importe_total',
+    aprobado_por: 'aprobado_por',
+    fecha_aprobacion: 'fecha_aprobacion',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -5536,6 +5563,14 @@ export namespace Prisma {
   };
 
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -5744,6 +5779,8 @@ export namespace Prisma {
     version?: IntFilter<"PresupuestoBase"> | number
     estado?: EnumEstadoPresupuestoFilter<"PresupuestoBase"> | $Enums.EstadoPresupuesto
     importe_total?: DecimalFilter<"PresupuestoBase"> | Decimal | DecimalJsLike | number | string
+    aprobado_por?: UuidNullableFilter<"PresupuestoBase"> | string | null
+    fecha_aprobacion?: DateTimeNullableFilter<"PresupuestoBase"> | Date | string | null
     created_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     updated_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     conceptos?: ConceptoListRelationFilter
@@ -5756,6 +5793,8 @@ export namespace Prisma {
     version?: SortOrder
     estado?: SortOrder
     importe_total?: SortOrder
+    aprobado_por?: SortOrderInput | SortOrder
+    fecha_aprobacion?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     conceptos?: ConceptoOrderByRelationAggregateInput
@@ -5771,6 +5810,8 @@ export namespace Prisma {
     version?: IntFilter<"PresupuestoBase"> | number
     estado?: EnumEstadoPresupuestoFilter<"PresupuestoBase"> | $Enums.EstadoPresupuesto
     importe_total?: DecimalFilter<"PresupuestoBase"> | Decimal | DecimalJsLike | number | string
+    aprobado_por?: UuidNullableFilter<"PresupuestoBase"> | string | null
+    fecha_aprobacion?: DateTimeNullableFilter<"PresupuestoBase"> | Date | string | null
     created_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     updated_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     conceptos?: ConceptoListRelationFilter
@@ -5783,6 +5824,8 @@ export namespace Prisma {
     version?: SortOrder
     estado?: SortOrder
     importe_total?: SortOrder
+    aprobado_por?: SortOrderInput | SortOrder
+    fecha_aprobacion?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: PresupuestoBaseCountOrderByAggregateInput
@@ -5802,6 +5845,8 @@ export namespace Prisma {
     version?: IntWithAggregatesFilter<"PresupuestoBase"> | number
     estado?: EnumEstadoPresupuestoWithAggregatesFilter<"PresupuestoBase"> | $Enums.EstadoPresupuesto
     importe_total?: DecimalWithAggregatesFilter<"PresupuestoBase"> | Decimal | DecimalJsLike | number | string
+    aprobado_por?: UuidNullableWithAggregatesFilter<"PresupuestoBase"> | string | null
+    fecha_aprobacion?: DateTimeNullableWithAggregatesFilter<"PresupuestoBase"> | Date | string | null
     created_at?: DateTimeWithAggregatesFilter<"PresupuestoBase"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"PresupuestoBase"> | Date | string
   }
@@ -6094,6 +6139,8 @@ export namespace Prisma {
     version?: number
     estado?: $Enums.EstadoPresupuesto
     importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
     conceptos?: ConceptoCreateNestedManyWithoutPresupuestoInput
@@ -6106,6 +6153,8 @@ export namespace Prisma {
     version?: number
     estado?: $Enums.EstadoPresupuesto
     importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
     conceptos?: ConceptoUncheckedCreateNestedManyWithoutPresupuestoInput
@@ -6118,6 +6167,8 @@ export namespace Prisma {
     version?: IntFieldUpdateOperationsInput | number
     estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     conceptos?: ConceptoUpdateManyWithoutPresupuestoNestedInput
@@ -6130,6 +6181,8 @@ export namespace Prisma {
     version?: IntFieldUpdateOperationsInput | number
     estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     conceptos?: ConceptoUncheckedUpdateManyWithoutPresupuestoNestedInput
@@ -6142,6 +6195,8 @@ export namespace Prisma {
     version?: number
     estado?: $Enums.EstadoPresupuesto
     importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -6153,6 +6208,8 @@ export namespace Prisma {
     version?: IntFieldUpdateOperationsInput | number
     estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6164,6 +6221,8 @@ export namespace Prisma {
     version?: IntFieldUpdateOperationsInput | number
     estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6594,10 +6653,38 @@ export namespace Prisma {
     not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type ConceptoListRelationFilter = {
     every?: ConceptoWhereInput
     some?: ConceptoWhereInput
     none?: ConceptoWhereInput
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
   }
 
   export type ConceptoOrderByRelationAggregateInput = {
@@ -6611,6 +6698,8 @@ export namespace Prisma {
     version?: SortOrder
     estado?: SortOrder
     importe_total?: SortOrder
+    aprobado_por?: SortOrder
+    fecha_aprobacion?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -6627,6 +6716,8 @@ export namespace Prisma {
     version?: SortOrder
     estado?: SortOrder
     importe_total?: SortOrder
+    aprobado_por?: SortOrder
+    fecha_aprobacion?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -6638,6 +6729,8 @@ export namespace Prisma {
     version?: SortOrder
     estado?: SortOrder
     importe_total?: SortOrder
+    aprobado_por?: SortOrder
+    fecha_aprobacion?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -6671,6 +6764,35 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
     _max?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type PresupuestoBaseRelationFilter = {
@@ -6894,6 +7016,14 @@ export namespace Prisma {
 
   export type EnumEstadoPresupuestoFieldUpdateOperationsInput = {
     set?: $Enums.EstadoPresupuesto
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type ConceptoUpdateManyWithoutPresupuestoNestedInput = {
@@ -7164,6 +7294,28 @@ export namespace Prisma {
     not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
   }
 
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -7199,6 +7351,59 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
     _max?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ConceptoInsumoCreateWithoutInsumoInput = {
@@ -7351,6 +7556,8 @@ export namespace Prisma {
     version?: number
     estado?: $Enums.EstadoPresupuesto
     importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -7362,6 +7569,8 @@ export namespace Prisma {
     version?: number
     estado?: $Enums.EstadoPresupuesto
     importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -7425,6 +7634,8 @@ export namespace Prisma {
     version?: IntFieldUpdateOperationsInput | number
     estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7436,6 +7647,8 @@ export namespace Prisma {
     version?: IntFieldUpdateOperationsInput | number
     estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }

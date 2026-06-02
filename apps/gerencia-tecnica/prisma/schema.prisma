@@ -48,18 +48,21 @@ model Insumo {
 /// Presupuesto Base de un proyecto/centro de costos.
 /// Tabla transaccional: requiere OBLIGATORIAMENTE tenant_id + proyecto_id.
 model PresupuestoBase {
-  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenant_id     String            @db.Uuid
-  proyecto_id   String            @db.Uuid
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id        String            @db.Uuid
+  proyecto_id      String            @db.Uuid
 
-  version       Int               @default(1)
-  estado        EstadoPresupuesto @default(BORRADOR)
-  importe_total Decimal           @default(0.00) @db.Decimal(15, 2)
+  version          Int               @default(1)
+  estado           EstadoPresupuesto @default(BORRADOR)
+  importe_total    Decimal           @default(0.00) @db.Decimal(15, 2)
 
-  conceptos     Concepto[]
+  aprobado_por     String?           @db.Uuid
+  fecha_aprobacion DateTime?
 
-  created_at    DateTime          @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime          @updatedAt @db.Timestamptz(6)
+  conceptos        Concepto[]
+
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime          @updatedAt @db.Timestamptz(6)
 
   // Índices de rendimiento Multi-Tenant + Multi-Proyecto
   @@index([tenant_id, proyecto_id], name: "idx_presupuesto_tenant_proyecto")
@@ -140,6 +143,7 @@ enum TipoInsumo {
 enum EstadoPresupuesto {
   BORRADOR
   EN_REVISION
+  APROBADO
   LIBERADO     // Emite evento: PresupuestoBaseLiberado
   CONGELADO
 }

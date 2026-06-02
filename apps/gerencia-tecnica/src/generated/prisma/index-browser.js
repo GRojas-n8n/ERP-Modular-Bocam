@@ -142,6 +142,8 @@ exports.Prisma.PresupuestoBaseScalarFieldEnum = {
   version: 'version',
   estado: 'estado',
   importe_total: 'importe_total',
+  aprobado_por: 'aprobado_por',
+  fecha_aprobacion: 'fecha_aprobacion',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };
@@ -184,6 +186,11 @@ exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
 exports.TipoInsumo = exports.$Enums.TipoInsumo = {
   MATERIAL: 'MATERIAL',
   MANO_DE_OBRA: 'MANO_DE_OBRA',
@@ -195,6 +202,7 @@ exports.TipoInsumo = exports.$Enums.TipoInsumo = {
 exports.EstadoPresupuesto = exports.$Enums.EstadoPresupuesto = {
   BORRADOR: 'BORRADOR',
   EN_REVISION: 'EN_REVISION',
+  APROBADO: 'APROBADO',
   LIBERADO: 'LIBERADO',
   CONGELADO: 'CONGELADO'
 };

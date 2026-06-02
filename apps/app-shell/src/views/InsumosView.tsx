@@ -51,14 +51,18 @@ interface Concepto {
   cantidad: number;
   precio_unitario: number;
   importe: number;
+  precio_actual: number | null;
+  delta_pct: number | null;
 }
 
 interface Presupuesto {
   id: string;
   proyecto_id: string;
   version: number;
-  estado: 'BORRADOR' | 'EN_REVISION' | 'LIBERADO' | 'CONGELADO';
+  estado: 'BORRADOR' | 'EN_REVISION' | 'APROBADO' | 'LIBERADO' | 'CONGELADO';
   importe_total: number;
+  aprobado_por?: string | null;
+  fecha_aprobacion?: string | null;
   conceptos: Concepto[];
   created_at: string;
 }
@@ -169,6 +173,7 @@ const TIPO_COLOR: Record<TipoInsumo, string> = {
 const ESTADO_BADGE: Record<string, string> = {
   BORRADOR:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
   EN_REVISION: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  APROBADO:    'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
   LIBERADO:    'bg-green-500/10 text-green-600 border-green-500/20',
   CONGELADO:   'bg-muted/500/10 text-muted-foreground border-slate-500/20',
 };
@@ -649,8 +654,10 @@ function leerArchivoComoRawRows(
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant, currentProjectId } = useTenant();
+  const { tenant, currentProjectId, user } = useTenant();
   const { notify } = useNotification();
+  const rolesUsuario: string[] = user?.role ?? [];
+  const puedeAprobar = rolesUsuario.some(r => ['gerencia_tecnica', 'admin'].includes(r));
 
   const activeTab: ActiveTab = (activeSubView as ActiveTab) || 'catalogo';
 
@@ -663,6 +670,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [panelImport, setPanelImport] = useState(false);
   const [panelGuia,   setPanelGuia]   = useState(false);
   const [importando,  setImportando]  = useState(false);
+  const [aprobando,   setAprobando]   = useState(false);
   const [archivoNombre, setArchivoNombre] = useState('');
   const [preview, setPreview]         = useState<ConceptoPreview[]>([]);
   const [parseError, setParseError]   = useState<string | null>(null);
@@ -806,6 +814,20 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       setError(err.response?.data?.message || 'Error de conexión con Gerencia Técnica.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAprobarPresupuesto = async () => {
+    if (!presupuesto) return;
+    setAprobando(true);
+    try {
+      await api.patch(`/api/v1/gerencia-tecnica/presupuestos/${presupuesto.id}/aprobar`);
+      notify('Presupuesto aprobado — la composición APU queda bloqueada.', 'success');
+      void fetchPresupuesto();
+    } catch (err: any) {
+      notify(err.response?.data?.message || 'Error al aprobar presupuesto.', 'error');
+    } finally {
+      setAprobando(false);
     }
   };
 
@@ -1300,6 +1322,21 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
             )}
 
+            {presupuesto && presupuesto.estado === 'BORRADOR' && puedeAprobar && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-5 py-3">
+                <p className="text-xs text-amber-700 font-semibold">
+                  Este presupuesto está en <strong>BORRADOR</strong>. Apruébalo para congelar los precios y evitar modificaciones.
+                </p>
+                <button
+                  onClick={handleAprobarPresupuesto}
+                  disabled={aprobando}
+                  className="shrink-0 px-4 py-2 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-700 disabled:opacity-50 active:scale-95 transition-all"
+                >
+                  {aprobando ? 'Aprobando...' : 'Aprobar Presupuesto'}
+                </button>
+              </div>
+            )}
+
             {presupuesto && (
               <div className="flex flex-col sm:flex-row gap-3 bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
                 <div className="relative flex-1 group">
@@ -1383,6 +1420,8 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Unidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Cantidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">P.U.</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">P. Actual</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Δ%</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Importe</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">APU</th>
                       </tr>
@@ -1405,6 +1444,21 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                           <td className="px-6 py-4 text-right font-mono font-bold text-sm text-foreground">
                             {formatMXN(Number(c.precio_unitario))}
                           </td>
+                          <td className="px-6 py-4 text-right font-mono text-sm text-muted-foreground">
+                            {c.precio_actual != null ? formatMXN(c.precio_actual) : '—'}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {c.delta_pct != null ? (
+                              <span className={cn(
+                                'text-xs font-black',
+                                c.delta_pct > 0 ? 'text-red-600' : c.delta_pct < 0 ? 'text-emerald-600' : 'text-muted-foreground'
+                              )}>
+                                {c.delta_pct > 0 ? '+' : ''}{c.delta_pct}%
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/40">—</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-right">
                             <span className="font-mono font-black text-sm text-primary">{formatMXN(Number(c.importe))}</span>
                           </td>
@@ -1423,7 +1477,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-border/60 bg-muted/20">
-                        <td colSpan={6} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                        <td colSpan={8} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
                           Total {search ? `(filtrado)` : `(${conceptosFiltrados.length} conceptos)`}
                         </td>
                         <td className="px-6 py-4 text-right">
