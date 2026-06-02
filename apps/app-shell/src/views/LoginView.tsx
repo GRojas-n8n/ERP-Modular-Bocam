@@ -122,6 +122,20 @@ export const LoginView: React.FC = () => {
           100% { background-position: -250% center; }
         }
 
+        /* ── Responsive: reducir espaciado en pantallas bajas ── */
+        @media (max-height: 780px) {
+          .lr-card-inner { padding: 28px 32px 24px !important; }
+          .lr-logo       { margin-bottom: 18px !important; }
+          .lr-sep        { margin-bottom: 16px !important; }
+          .lr-heading    { margin-bottom: 16px !important; animation: none; opacity: 1; transform: none; }
+          .lr-fields     { animation: none; opacity: 1; transform: none; }
+        }
+        @media (max-height: 640px) {
+          .lr-card-inner { padding: 20px 24px 18px !important; }
+          .lr-logo       { margin-bottom: 12px !important; }
+          .lr-tagline    { display: none !important; }
+        }
+
         .lr-tagline  { animation: fade-up  .75s cubic-bezier(.16,1,.3,1) .05s both; }
         .lr-card     { animation: card-in  .85s cubic-bezier(.16,1,.3,1) .18s both,
                                   card-glow 4.5s ease-in-out 1.2s infinite; }
@@ -191,8 +205,9 @@ export const LoginView: React.FC = () => {
       {/* ─── Stage ─────────────────────────────────────────────────────────── */}
       <div style={{
         position:'fixed', inset:0, background:'#050A12',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        overflow:'hidden', fontFamily:"'Inter',sans-serif",
+        display:'flex', alignItems:'flex-start', justifyContent:'center',
+        overflowY:'auto', fontFamily:"'Inter',sans-serif",
+        minHeight:'100vh',
       }}>
 
         {/* Orb 1 — cyan, arriba izquierda */}
@@ -257,7 +272,7 @@ export const LoginView: React.FC = () => {
         }} />
 
         {/* ─── Contenido central ────────────────────────────────────────────── */}
-        <div style={{ position:'relative', zIndex:10, width:'100%', maxWidth:448, padding:'0 20px' }}>
+        <div style={{ position:'relative', zIndex:10, width:'100%', maxWidth:448, padding:'28px 20px 32px', margin:'auto' }}>
 
           {/* Tagline — solo desktop */}
           <div className="lr-tagline hidden lg:block" style={{ textAlign:'center', marginBottom:26 }}>
@@ -279,7 +294,7 @@ export const LoginView: React.FC = () => {
           </div>
 
           {/* ─── GLASS CARD ───────────────────────────────────────────────── */}
-          <div className="lr-card" style={{
+          <div className="lr-card lr-card-inner" style={{
             backdropFilter:'blur(32px) saturate(180%)',
             WebkitBackdropFilter:'blur(32px) saturate(180%)',
             background:'rgba(5,10,22,.72)',
@@ -292,7 +307,7 @@ export const LoginView: React.FC = () => {
           }}>
 
             {/* Logo + badge */}
-            <div className="lr-logo" style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28 }}>
+            <div className="lr-logo" style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28, transition:'margin .2s' }}>
               <div style={{
                 position:'relative', width:42, height:42, borderRadius:13, flexShrink:0,
                 background:'linear-gradient(135deg, #00D1FF 0%, #0077AA 100%)',
@@ -317,7 +332,7 @@ export const LoginView: React.FC = () => {
             </div>
 
             {/* Separador */}
-            <div style={{ height:1, background:'linear-gradient(90deg, transparent, rgba(0,209,255,.15) 30%, rgba(255,255,255,.06) 70%, transparent)', marginBottom:26 }} />
+            <div className="lr-sep" style={{ height:1, background:'linear-gradient(90deg, transparent, rgba(0,209,255,.15) 30%, rgba(255,255,255,.06) 70%, transparent)', marginBottom:26 }} />
 
             {/* Encabezado */}
             <div className="lr-heading" style={{ marginBottom:24 }}>
