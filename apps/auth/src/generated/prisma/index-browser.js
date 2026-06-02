@@ -177,9 +177,27 @@ exports.Prisma.RefreshTokenScalarFieldEnum = {
   ip_address: 'ip_address'
 };
 
+exports.Prisma.MasterAuditLogScalarFieldEnum = {
+  id: 'id',
+  accion: 'accion',
+  entity_type: 'entity_type',
+  entity_id: 'entity_id',
+  ip_address: 'ip_address',
+  user_agent: 'user_agent',
+  payload: 'payload',
+  status_code: 'status_code',
+  error_msg: 'error_msg',
+  created_at: 'created_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -192,13 +210,20 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
   Tenant: 'Tenant',
   Proyecto: 'Proyecto',
   User: 'User',
   UserProjectAccess: 'UserProjectAccess',
-  RefreshToken: 'RefreshToken'
+  RefreshToken: 'RefreshToken',
+  MasterAuditLog: 'MasterAuditLog'
 };
 
 /**

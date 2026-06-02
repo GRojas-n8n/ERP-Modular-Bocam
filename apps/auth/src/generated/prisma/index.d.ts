@@ -38,6 +38,11 @@ export type UserProjectAccess = $Result.DefaultSelection<Prisma.$UserProjectAcce
  * 
  */
 export type RefreshToken = $Result.DefaultSelection<Prisma.$RefreshTokenPayload>
+/**
+ * Model MasterAuditLog
+ * 
+ */
+export type MasterAuditLog = $Result.DefaultSelection<Prisma.$MasterAuditLogPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -211,6 +216,16 @@ export class PrismaClient<
     * ```
     */
   get refreshToken(): Prisma.RefreshTokenDelegate<ExtArgs>;
+
+  /**
+   * `prisma.masterAuditLog`: Exposes CRUD operations for the **MasterAuditLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MasterAuditLogs
+    * const masterAuditLogs = await prisma.masterAuditLog.findMany()
+    * ```
+    */
+  get masterAuditLog(): Prisma.MasterAuditLogDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -656,7 +671,8 @@ export namespace Prisma {
     Proyecto: 'Proyecto',
     User: 'User',
     UserProjectAccess: 'UserProjectAccess',
-    RefreshToken: 'RefreshToken'
+    RefreshToken: 'RefreshToken',
+    MasterAuditLog: 'MasterAuditLog'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -672,7 +688,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "tenant" | "proyecto" | "user" | "userProjectAccess" | "refreshToken"
+      modelProps: "tenant" | "proyecto" | "user" | "userProjectAccess" | "refreshToken" | "masterAuditLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1023,6 +1039,76 @@ export namespace Prisma {
           count: {
             args: Prisma.RefreshTokenCountArgs<ExtArgs>
             result: $Utils.Optional<RefreshTokenCountAggregateOutputType> | number
+          }
+        }
+      }
+      MasterAuditLog: {
+        payload: Prisma.$MasterAuditLogPayload<ExtArgs>
+        fields: Prisma.MasterAuditLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MasterAuditLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MasterAuditLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>
+          }
+          findFirst: {
+            args: Prisma.MasterAuditLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MasterAuditLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>
+          }
+          findMany: {
+            args: Prisma.MasterAuditLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>[]
+          }
+          create: {
+            args: Prisma.MasterAuditLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>
+          }
+          createMany: {
+            args: Prisma.MasterAuditLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MasterAuditLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>[]
+          }
+          delete: {
+            args: Prisma.MasterAuditLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>
+          }
+          update: {
+            args: Prisma.MasterAuditLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.MasterAuditLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MasterAuditLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.MasterAuditLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MasterAuditLogPayload>
+          }
+          aggregate: {
+            args: Prisma.MasterAuditLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMasterAuditLog>
+          }
+          groupBy: {
+            args: Prisma.MasterAuditLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MasterAuditLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MasterAuditLogCountArgs<ExtArgs>
+            result: $Utils.Optional<MasterAuditLogCountAggregateOutputType> | number
           }
         }
       }
@@ -6294,6 +6380,974 @@ export namespace Prisma {
 
 
   /**
+   * Model MasterAuditLog
+   */
+
+  export type AggregateMasterAuditLog = {
+    _count: MasterAuditLogCountAggregateOutputType | null
+    _avg: MasterAuditLogAvgAggregateOutputType | null
+    _sum: MasterAuditLogSumAggregateOutputType | null
+    _min: MasterAuditLogMinAggregateOutputType | null
+    _max: MasterAuditLogMaxAggregateOutputType | null
+  }
+
+  export type MasterAuditLogAvgAggregateOutputType = {
+    status_code: number | null
+  }
+
+  export type MasterAuditLogSumAggregateOutputType = {
+    status_code: number | null
+  }
+
+  export type MasterAuditLogMinAggregateOutputType = {
+    id: string | null
+    accion: string | null
+    entity_type: string | null
+    entity_id: string | null
+    ip_address: string | null
+    user_agent: string | null
+    status_code: number | null
+    error_msg: string | null
+    created_at: Date | null
+  }
+
+  export type MasterAuditLogMaxAggregateOutputType = {
+    id: string | null
+    accion: string | null
+    entity_type: string | null
+    entity_id: string | null
+    ip_address: string | null
+    user_agent: string | null
+    status_code: number | null
+    error_msg: string | null
+    created_at: Date | null
+  }
+
+  export type MasterAuditLogCountAggregateOutputType = {
+    id: number
+    accion: number
+    entity_type: number
+    entity_id: number
+    ip_address: number
+    user_agent: number
+    payload: number
+    status_code: number
+    error_msg: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type MasterAuditLogAvgAggregateInputType = {
+    status_code?: true
+  }
+
+  export type MasterAuditLogSumAggregateInputType = {
+    status_code?: true
+  }
+
+  export type MasterAuditLogMinAggregateInputType = {
+    id?: true
+    accion?: true
+    entity_type?: true
+    entity_id?: true
+    ip_address?: true
+    user_agent?: true
+    status_code?: true
+    error_msg?: true
+    created_at?: true
+  }
+
+  export type MasterAuditLogMaxAggregateInputType = {
+    id?: true
+    accion?: true
+    entity_type?: true
+    entity_id?: true
+    ip_address?: true
+    user_agent?: true
+    status_code?: true
+    error_msg?: true
+    created_at?: true
+  }
+
+  export type MasterAuditLogCountAggregateInputType = {
+    id?: true
+    accion?: true
+    entity_type?: true
+    entity_id?: true
+    ip_address?: true
+    user_agent?: true
+    payload?: true
+    status_code?: true
+    error_msg?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type MasterAuditLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MasterAuditLog to aggregate.
+     */
+    where?: MasterAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MasterAuditLogs to fetch.
+     */
+    orderBy?: MasterAuditLogOrderByWithRelationInput | MasterAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MasterAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MasterAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MasterAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MasterAuditLogs
+    **/
+    _count?: true | MasterAuditLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MasterAuditLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MasterAuditLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MasterAuditLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MasterAuditLogMaxAggregateInputType
+  }
+
+  export type GetMasterAuditLogAggregateType<T extends MasterAuditLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateMasterAuditLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMasterAuditLog[P]>
+      : GetScalarType<T[P], AggregateMasterAuditLog[P]>
+  }
+
+
+
+
+  export type MasterAuditLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MasterAuditLogWhereInput
+    orderBy?: MasterAuditLogOrderByWithAggregationInput | MasterAuditLogOrderByWithAggregationInput[]
+    by: MasterAuditLogScalarFieldEnum[] | MasterAuditLogScalarFieldEnum
+    having?: MasterAuditLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MasterAuditLogCountAggregateInputType | true
+    _avg?: MasterAuditLogAvgAggregateInputType
+    _sum?: MasterAuditLogSumAggregateInputType
+    _min?: MasterAuditLogMinAggregateInputType
+    _max?: MasterAuditLogMaxAggregateInputType
+  }
+
+  export type MasterAuditLogGroupByOutputType = {
+    id: string
+    accion: string
+    entity_type: string
+    entity_id: string | null
+    ip_address: string | null
+    user_agent: string | null
+    payload: JsonValue | null
+    status_code: number
+    error_msg: string | null
+    created_at: Date
+    _count: MasterAuditLogCountAggregateOutputType | null
+    _avg: MasterAuditLogAvgAggregateOutputType | null
+    _sum: MasterAuditLogSumAggregateOutputType | null
+    _min: MasterAuditLogMinAggregateOutputType | null
+    _max: MasterAuditLogMaxAggregateOutputType | null
+  }
+
+  type GetMasterAuditLogGroupByPayload<T extends MasterAuditLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MasterAuditLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MasterAuditLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MasterAuditLogGroupByOutputType[P]>
+            : GetScalarType<T[P], MasterAuditLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MasterAuditLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accion?: boolean
+    entity_type?: boolean
+    entity_id?: boolean
+    ip_address?: boolean
+    user_agent?: boolean
+    payload?: boolean
+    status_code?: boolean
+    error_msg?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["masterAuditLog"]>
+
+  export type MasterAuditLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accion?: boolean
+    entity_type?: boolean
+    entity_id?: boolean
+    ip_address?: boolean
+    user_agent?: boolean
+    payload?: boolean
+    status_code?: boolean
+    error_msg?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["masterAuditLog"]>
+
+  export type MasterAuditLogSelectScalar = {
+    id?: boolean
+    accion?: boolean
+    entity_type?: boolean
+    entity_id?: boolean
+    ip_address?: boolean
+    user_agent?: boolean
+    payload?: boolean
+    status_code?: boolean
+    error_msg?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $MasterAuditLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MasterAuditLog"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      accion: string
+      entity_type: string
+      entity_id: string | null
+      ip_address: string | null
+      user_agent: string | null
+      payload: Prisma.JsonValue | null
+      status_code: number
+      error_msg: string | null
+      created_at: Date
+    }, ExtArgs["result"]["masterAuditLog"]>
+    composites: {}
+  }
+
+  type MasterAuditLogGetPayload<S extends boolean | null | undefined | MasterAuditLogDefaultArgs> = $Result.GetResult<Prisma.$MasterAuditLogPayload, S>
+
+  type MasterAuditLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<MasterAuditLogFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: MasterAuditLogCountAggregateInputType | true
+    }
+
+  export interface MasterAuditLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MasterAuditLog'], meta: { name: 'MasterAuditLog' } }
+    /**
+     * Find zero or one MasterAuditLog that matches the filter.
+     * @param {MasterAuditLogFindUniqueArgs} args - Arguments to find a MasterAuditLog
+     * @example
+     * // Get one MasterAuditLog
+     * const masterAuditLog = await prisma.masterAuditLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MasterAuditLogFindUniqueArgs>(args: SelectSubset<T, MasterAuditLogFindUniqueArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one MasterAuditLog that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {MasterAuditLogFindUniqueOrThrowArgs} args - Arguments to find a MasterAuditLog
+     * @example
+     * // Get one MasterAuditLog
+     * const masterAuditLog = await prisma.masterAuditLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MasterAuditLogFindUniqueOrThrowArgs>(args: SelectSubset<T, MasterAuditLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first MasterAuditLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogFindFirstArgs} args - Arguments to find a MasterAuditLog
+     * @example
+     * // Get one MasterAuditLog
+     * const masterAuditLog = await prisma.masterAuditLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MasterAuditLogFindFirstArgs>(args?: SelectSubset<T, MasterAuditLogFindFirstArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first MasterAuditLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogFindFirstOrThrowArgs} args - Arguments to find a MasterAuditLog
+     * @example
+     * // Get one MasterAuditLog
+     * const masterAuditLog = await prisma.masterAuditLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MasterAuditLogFindFirstOrThrowArgs>(args?: SelectSubset<T, MasterAuditLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more MasterAuditLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MasterAuditLogs
+     * const masterAuditLogs = await prisma.masterAuditLog.findMany()
+     * 
+     * // Get first 10 MasterAuditLogs
+     * const masterAuditLogs = await prisma.masterAuditLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const masterAuditLogWithIdOnly = await prisma.masterAuditLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MasterAuditLogFindManyArgs>(args?: SelectSubset<T, MasterAuditLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a MasterAuditLog.
+     * @param {MasterAuditLogCreateArgs} args - Arguments to create a MasterAuditLog.
+     * @example
+     * // Create one MasterAuditLog
+     * const MasterAuditLog = await prisma.masterAuditLog.create({
+     *   data: {
+     *     // ... data to create a MasterAuditLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends MasterAuditLogCreateArgs>(args: SelectSubset<T, MasterAuditLogCreateArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many MasterAuditLogs.
+     * @param {MasterAuditLogCreateManyArgs} args - Arguments to create many MasterAuditLogs.
+     * @example
+     * // Create many MasterAuditLogs
+     * const masterAuditLog = await prisma.masterAuditLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MasterAuditLogCreateManyArgs>(args?: SelectSubset<T, MasterAuditLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MasterAuditLogs and returns the data saved in the database.
+     * @param {MasterAuditLogCreateManyAndReturnArgs} args - Arguments to create many MasterAuditLogs.
+     * @example
+     * // Create many MasterAuditLogs
+     * const masterAuditLog = await prisma.masterAuditLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MasterAuditLogs and only return the `id`
+     * const masterAuditLogWithIdOnly = await prisma.masterAuditLog.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MasterAuditLogCreateManyAndReturnArgs>(args?: SelectSubset<T, MasterAuditLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a MasterAuditLog.
+     * @param {MasterAuditLogDeleteArgs} args - Arguments to delete one MasterAuditLog.
+     * @example
+     * // Delete one MasterAuditLog
+     * const MasterAuditLog = await prisma.masterAuditLog.delete({
+     *   where: {
+     *     // ... filter to delete one MasterAuditLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MasterAuditLogDeleteArgs>(args: SelectSubset<T, MasterAuditLogDeleteArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one MasterAuditLog.
+     * @param {MasterAuditLogUpdateArgs} args - Arguments to update one MasterAuditLog.
+     * @example
+     * // Update one MasterAuditLog
+     * const masterAuditLog = await prisma.masterAuditLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MasterAuditLogUpdateArgs>(args: SelectSubset<T, MasterAuditLogUpdateArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more MasterAuditLogs.
+     * @param {MasterAuditLogDeleteManyArgs} args - Arguments to filter MasterAuditLogs to delete.
+     * @example
+     * // Delete a few MasterAuditLogs
+     * const { count } = await prisma.masterAuditLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MasterAuditLogDeleteManyArgs>(args?: SelectSubset<T, MasterAuditLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MasterAuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MasterAuditLogs
+     * const masterAuditLog = await prisma.masterAuditLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MasterAuditLogUpdateManyArgs>(args: SelectSubset<T, MasterAuditLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one MasterAuditLog.
+     * @param {MasterAuditLogUpsertArgs} args - Arguments to update or create a MasterAuditLog.
+     * @example
+     * // Update or create a MasterAuditLog
+     * const masterAuditLog = await prisma.masterAuditLog.upsert({
+     *   create: {
+     *     // ... data to create a MasterAuditLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MasterAuditLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MasterAuditLogUpsertArgs>(args: SelectSubset<T, MasterAuditLogUpsertArgs<ExtArgs>>): Prisma__MasterAuditLogClient<$Result.GetResult<Prisma.$MasterAuditLogPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of MasterAuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogCountArgs} args - Arguments to filter MasterAuditLogs to count.
+     * @example
+     * // Count the number of MasterAuditLogs
+     * const count = await prisma.masterAuditLog.count({
+     *   where: {
+     *     // ... the filter for the MasterAuditLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends MasterAuditLogCountArgs>(
+      args?: Subset<T, MasterAuditLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MasterAuditLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MasterAuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MasterAuditLogAggregateArgs>(args: Subset<T, MasterAuditLogAggregateArgs>): Prisma.PrismaPromise<GetMasterAuditLogAggregateType<T>>
+
+    /**
+     * Group by MasterAuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MasterAuditLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MasterAuditLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MasterAuditLogGroupByArgs['orderBy'] }
+        : { orderBy?: MasterAuditLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MasterAuditLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMasterAuditLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MasterAuditLog model
+   */
+  readonly fields: MasterAuditLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MasterAuditLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MasterAuditLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MasterAuditLog model
+   */ 
+  interface MasterAuditLogFieldRefs {
+    readonly id: FieldRef<"MasterAuditLog", 'String'>
+    readonly accion: FieldRef<"MasterAuditLog", 'String'>
+    readonly entity_type: FieldRef<"MasterAuditLog", 'String'>
+    readonly entity_id: FieldRef<"MasterAuditLog", 'String'>
+    readonly ip_address: FieldRef<"MasterAuditLog", 'String'>
+    readonly user_agent: FieldRef<"MasterAuditLog", 'String'>
+    readonly payload: FieldRef<"MasterAuditLog", 'Json'>
+    readonly status_code: FieldRef<"MasterAuditLog", 'Int'>
+    readonly error_msg: FieldRef<"MasterAuditLog", 'String'>
+    readonly created_at: FieldRef<"MasterAuditLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MasterAuditLog findUnique
+   */
+  export type MasterAuditLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which MasterAuditLog to fetch.
+     */
+    where: MasterAuditLogWhereUniqueInput
+  }
+
+  /**
+   * MasterAuditLog findUniqueOrThrow
+   */
+  export type MasterAuditLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which MasterAuditLog to fetch.
+     */
+    where: MasterAuditLogWhereUniqueInput
+  }
+
+  /**
+   * MasterAuditLog findFirst
+   */
+  export type MasterAuditLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which MasterAuditLog to fetch.
+     */
+    where?: MasterAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MasterAuditLogs to fetch.
+     */
+    orderBy?: MasterAuditLogOrderByWithRelationInput | MasterAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MasterAuditLogs.
+     */
+    cursor?: MasterAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MasterAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MasterAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MasterAuditLogs.
+     */
+    distinct?: MasterAuditLogScalarFieldEnum | MasterAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * MasterAuditLog findFirstOrThrow
+   */
+  export type MasterAuditLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which MasterAuditLog to fetch.
+     */
+    where?: MasterAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MasterAuditLogs to fetch.
+     */
+    orderBy?: MasterAuditLogOrderByWithRelationInput | MasterAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MasterAuditLogs.
+     */
+    cursor?: MasterAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MasterAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MasterAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MasterAuditLogs.
+     */
+    distinct?: MasterAuditLogScalarFieldEnum | MasterAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * MasterAuditLog findMany
+   */
+  export type MasterAuditLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which MasterAuditLogs to fetch.
+     */
+    where?: MasterAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MasterAuditLogs to fetch.
+     */
+    orderBy?: MasterAuditLogOrderByWithRelationInput | MasterAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MasterAuditLogs.
+     */
+    cursor?: MasterAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MasterAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MasterAuditLogs.
+     */
+    skip?: number
+    distinct?: MasterAuditLogScalarFieldEnum | MasterAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * MasterAuditLog create
+   */
+  export type MasterAuditLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * The data needed to create a MasterAuditLog.
+     */
+    data: XOR<MasterAuditLogCreateInput, MasterAuditLogUncheckedCreateInput>
+  }
+
+  /**
+   * MasterAuditLog createMany
+   */
+  export type MasterAuditLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MasterAuditLogs.
+     */
+    data: MasterAuditLogCreateManyInput | MasterAuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MasterAuditLog createManyAndReturn
+   */
+  export type MasterAuditLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many MasterAuditLogs.
+     */
+    data: MasterAuditLogCreateManyInput | MasterAuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MasterAuditLog update
+   */
+  export type MasterAuditLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * The data needed to update a MasterAuditLog.
+     */
+    data: XOR<MasterAuditLogUpdateInput, MasterAuditLogUncheckedUpdateInput>
+    /**
+     * Choose, which MasterAuditLog to update.
+     */
+    where: MasterAuditLogWhereUniqueInput
+  }
+
+  /**
+   * MasterAuditLog updateMany
+   */
+  export type MasterAuditLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MasterAuditLogs.
+     */
+    data: XOR<MasterAuditLogUpdateManyMutationInput, MasterAuditLogUncheckedUpdateManyInput>
+    /**
+     * Filter which MasterAuditLogs to update
+     */
+    where?: MasterAuditLogWhereInput
+  }
+
+  /**
+   * MasterAuditLog upsert
+   */
+  export type MasterAuditLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * The filter to search for the MasterAuditLog to update in case it exists.
+     */
+    where: MasterAuditLogWhereUniqueInput
+    /**
+     * In case the MasterAuditLog found by the `where` argument doesn't exist, create a new MasterAuditLog with this data.
+     */
+    create: XOR<MasterAuditLogCreateInput, MasterAuditLogUncheckedCreateInput>
+    /**
+     * In case the MasterAuditLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MasterAuditLogUpdateInput, MasterAuditLogUncheckedUpdateInput>
+  }
+
+  /**
+   * MasterAuditLog delete
+   */
+  export type MasterAuditLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter which MasterAuditLog to delete.
+     */
+    where: MasterAuditLogWhereUniqueInput
+  }
+
+  /**
+   * MasterAuditLog deleteMany
+   */
+  export type MasterAuditLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MasterAuditLogs to delete
+     */
+    where?: MasterAuditLogWhereInput
+  }
+
+  /**
+   * MasterAuditLog without action
+   */
+  export type MasterAuditLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MasterAuditLog
+     */
+    select?: MasterAuditLogSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -6377,12 +7431,36 @@ export namespace Prisma {
   export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
 
 
+  export const MasterAuditLogScalarFieldEnum: {
+    id: 'id',
+    accion: 'accion',
+    entity_type: 'entity_type',
+    entity_id: 'entity_id',
+    ip_address: 'ip_address',
+    user_agent: 'user_agent',
+    payload: 'payload',
+    status_code: 'status_code',
+    error_msg: 'error_msg',
+    created_at: 'created_at'
+  };
+
+  export type MasterAuditLogScalarFieldEnum = (typeof MasterAuditLogScalarFieldEnum)[keyof typeof MasterAuditLogScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
   };
 
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const QueryMode: {
@@ -6399,6 +7477,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -6456,6 +7543,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -6466,6 +7560,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -6840,6 +7948,85 @@ export namespace Prisma {
     created_at?: DateTimeWithAggregatesFilter<"RefreshToken"> | Date | string
     user_agent?: StringNullableWithAggregatesFilter<"RefreshToken"> | string | null
     ip_address?: StringNullableWithAggregatesFilter<"RefreshToken"> | string | null
+  }
+
+  export type MasterAuditLogWhereInput = {
+    AND?: MasterAuditLogWhereInput | MasterAuditLogWhereInput[]
+    OR?: MasterAuditLogWhereInput[]
+    NOT?: MasterAuditLogWhereInput | MasterAuditLogWhereInput[]
+    id?: UuidFilter<"MasterAuditLog"> | string
+    accion?: StringFilter<"MasterAuditLog"> | string
+    entity_type?: StringFilter<"MasterAuditLog"> | string
+    entity_id?: UuidNullableFilter<"MasterAuditLog"> | string | null
+    ip_address?: StringNullableFilter<"MasterAuditLog"> | string | null
+    user_agent?: StringNullableFilter<"MasterAuditLog"> | string | null
+    payload?: JsonNullableFilter<"MasterAuditLog">
+    status_code?: IntFilter<"MasterAuditLog"> | number
+    error_msg?: StringNullableFilter<"MasterAuditLog"> | string | null
+    created_at?: DateTimeFilter<"MasterAuditLog"> | Date | string
+  }
+
+  export type MasterAuditLogOrderByWithRelationInput = {
+    id?: SortOrder
+    accion?: SortOrder
+    entity_type?: SortOrder
+    entity_id?: SortOrderInput | SortOrder
+    ip_address?: SortOrderInput | SortOrder
+    user_agent?: SortOrderInput | SortOrder
+    payload?: SortOrderInput | SortOrder
+    status_code?: SortOrder
+    error_msg?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MasterAuditLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: MasterAuditLogWhereInput | MasterAuditLogWhereInput[]
+    OR?: MasterAuditLogWhereInput[]
+    NOT?: MasterAuditLogWhereInput | MasterAuditLogWhereInput[]
+    accion?: StringFilter<"MasterAuditLog"> | string
+    entity_type?: StringFilter<"MasterAuditLog"> | string
+    entity_id?: UuidNullableFilter<"MasterAuditLog"> | string | null
+    ip_address?: StringNullableFilter<"MasterAuditLog"> | string | null
+    user_agent?: StringNullableFilter<"MasterAuditLog"> | string | null
+    payload?: JsonNullableFilter<"MasterAuditLog">
+    status_code?: IntFilter<"MasterAuditLog"> | number
+    error_msg?: StringNullableFilter<"MasterAuditLog"> | string | null
+    created_at?: DateTimeFilter<"MasterAuditLog"> | Date | string
+  }, "id">
+
+  export type MasterAuditLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    accion?: SortOrder
+    entity_type?: SortOrder
+    entity_id?: SortOrderInput | SortOrder
+    ip_address?: SortOrderInput | SortOrder
+    user_agent?: SortOrderInput | SortOrder
+    payload?: SortOrderInput | SortOrder
+    status_code?: SortOrder
+    error_msg?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    _count?: MasterAuditLogCountOrderByAggregateInput
+    _avg?: MasterAuditLogAvgOrderByAggregateInput
+    _max?: MasterAuditLogMaxOrderByAggregateInput
+    _min?: MasterAuditLogMinOrderByAggregateInput
+    _sum?: MasterAuditLogSumOrderByAggregateInput
+  }
+
+  export type MasterAuditLogScalarWhereWithAggregatesInput = {
+    AND?: MasterAuditLogScalarWhereWithAggregatesInput | MasterAuditLogScalarWhereWithAggregatesInput[]
+    OR?: MasterAuditLogScalarWhereWithAggregatesInput[]
+    NOT?: MasterAuditLogScalarWhereWithAggregatesInput | MasterAuditLogScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"MasterAuditLog"> | string
+    accion?: StringWithAggregatesFilter<"MasterAuditLog"> | string
+    entity_type?: StringWithAggregatesFilter<"MasterAuditLog"> | string
+    entity_id?: UuidNullableWithAggregatesFilter<"MasterAuditLog"> | string | null
+    ip_address?: StringNullableWithAggregatesFilter<"MasterAuditLog"> | string | null
+    user_agent?: StringNullableWithAggregatesFilter<"MasterAuditLog"> | string | null
+    payload?: JsonNullableWithAggregatesFilter<"MasterAuditLog">
+    status_code?: IntWithAggregatesFilter<"MasterAuditLog"> | number
+    error_msg?: StringNullableWithAggregatesFilter<"MasterAuditLog"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"MasterAuditLog"> | Date | string
   }
 
   export type TenantCreateInput = {
@@ -7240,6 +8427,97 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type MasterAuditLogCreateInput = {
+    id?: string
+    accion: string
+    entity_type: string
+    entity_id?: string | null
+    ip_address?: string | null
+    user_agent?: string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code: number
+    error_msg?: string | null
+    created_at?: Date | string
+  }
+
+  export type MasterAuditLogUncheckedCreateInput = {
+    id?: string
+    accion: string
+    entity_type: string
+    entity_id?: string | null
+    ip_address?: string | null
+    user_agent?: string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code: number
+    error_msg?: string | null
+    created_at?: Date | string
+  }
+
+  export type MasterAuditLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    entity_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code?: IntFieldUpdateOperationsInput | number
+    error_msg?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MasterAuditLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    entity_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code?: IntFieldUpdateOperationsInput | number
+    error_msg?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MasterAuditLogCreateManyInput = {
+    id?: string
+    accion: string
+    entity_type: string
+    entity_id?: string | null
+    ip_address?: string | null
+    user_agent?: string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code: number
+    error_msg?: string | null
+    created_at?: Date | string
+  }
+
+  export type MasterAuditLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    entity_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code?: IntFieldUpdateOperationsInput | number
+    error_msg?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MasterAuditLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    entity_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    user_agent?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    status_code?: IntFieldUpdateOperationsInput | number
+    error_msg?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -7654,6 +8932,152 @@ export namespace Prisma {
     ip_address?: SortOrder
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+  export type JsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type MasterAuditLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    accion?: SortOrder
+    entity_type?: SortOrder
+    entity_id?: SortOrder
+    ip_address?: SortOrder
+    user_agent?: SortOrder
+    payload?: SortOrder
+    status_code?: SortOrder
+    error_msg?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MasterAuditLogAvgOrderByAggregateInput = {
+    status_code?: SortOrder
+  }
+
+  export type MasterAuditLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    accion?: SortOrder
+    entity_type?: SortOrder
+    entity_id?: SortOrder
+    ip_address?: SortOrder
+    user_agent?: SortOrder
+    status_code?: SortOrder
+    error_msg?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MasterAuditLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    accion?: SortOrder
+    entity_type?: SortOrder
+    entity_id?: SortOrder
+    ip_address?: SortOrder
+    user_agent?: SortOrder
+    status_code?: SortOrder
+    error_msg?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MasterAuditLogSumOrderByAggregateInput = {
+    status_code?: SortOrder
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
   export type UserCreateNestedManyWithoutTenantInput = {
     create?: XOR<UserCreateWithoutTenantInput, UserUncheckedCreateWithoutTenantInput> | UserCreateWithoutTenantInput[] | UserUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: UserCreateOrConnectWithoutTenantInput | UserCreateOrConnectWithoutTenantInput[]
@@ -7967,6 +9391,14 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTokensInput, UserUpdateWithoutTokensInput>, UserUncheckedUpdateWithoutTokensInput>
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type NestedUuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -8139,6 +9571,80 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type UserCreateWithoutTenantInput = {
@@ -8994,6 +10500,10 @@ export namespace Prisma {
      * @deprecated Use RefreshTokenDefaultArgs instead
      */
     export type RefreshTokenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RefreshTokenDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use MasterAuditLogDefaultArgs instead
+     */
+    export type MasterAuditLogArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MasterAuditLogDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

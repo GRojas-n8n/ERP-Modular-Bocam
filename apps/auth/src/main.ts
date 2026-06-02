@@ -13,11 +13,15 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import { createClient } from 'redis';
 import { createTenantContext, disconnectDb, runAsSystem } from './db';
 import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(express.json());
 
 // .trim() en secrets: docker-compose .env parser puede colar trailing \n en valores,
@@ -28,6 +32,59 @@ const JWT_ACCESS_EXPIRATION = (process.env.JWT_ACCESS_EXPIRATION || '15m').trim(
 const JWT_REFRESH_EXPIRATION = (process.env.JWT_REFRESH_EXPIRATION || '7d').trim();
 const BCRYPT_ROUNDS = 12;
 const PORT = process.env.PORT || 3003;
+
+// ─── Redis + Rate Limiters ───────────────────────────────────────────────────
+
+const redisClient = createClient({ url: (process.env.REDIS_URL ?? 'redis://localhost:6379').trim() });
+redisClient.on('error', (err) => console.error('[Auth] Redis rate-limit error:', err.message));
+
+const redisStore = new RedisStore({
+  sendCommand: (...args: string[]) => redisClient.sendCommand(args),
+});
+
+const rateLimitHandler = (_req: Request, res: Response) =>
+  void res.status(429).json({
+    success: false,
+    error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.', retry_after_seconds: 900 },
+  });
+
+const RL_WINDOW = 15 * 60 * 1000;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const rl = (max: number) => rateLimit({ windowMs: RL_WINDOW, max, standardHeaders: true, legacyHeaders: false, store: redisStore as any, handler: rateLimitHandler });
+const masterWriteLimiter  = rl(5);
+const masterReadLimiter   = rl(30);
+const masterModifyLimiter = rl(10);
+const loginLimiter        = rl(10);
+const refreshLimiter      = rl(20);
+
+// ─── Audit Log Helper (best-effort — nunca bloquea el flujo) ────────────────
+
+async function logMasterAction(opts: {
+  accion: string;
+  entity_id?: string | null;
+  ip?: string;
+  user_agent?: string;
+  payload?: object;
+  status_code: number;
+  error_msg?: string;
+}) {
+  try {
+    await runAsSystem(async (prisma) =>
+      prisma.masterAuditLog.create({
+        data: {
+          accion:       opts.accion,
+          entity_type:  'tenant',
+          entity_id:    opts.entity_id ?? null,
+          ip_address:   (opts.ip ?? '').slice(0, 50) || null,
+          user_agent:   (opts.user_agent ?? '').slice(0, 500) || null,
+          payload:      (opts.payload as object) ?? null,
+          status_code:  opts.status_code,
+          error_msg:    opts.error_msg ?? null,
+        },
+      })
+    );
+  } catch (_) { /* best-effort */ }
+}
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
@@ -78,7 +135,7 @@ function generateTokenPair(user: AuthUser, activeProyectoId?: string) {
   return { accessToken, refreshToken, refreshTokenHash };
 }
 
-app.post('/api/v1/auth/login', async (req: Request, res: Response) => {
+app.post('/api/v1/auth/login', loginLimiter as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { email, password, tenant_id, proyecto_id } = req.body;
     const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : '';
@@ -330,7 +387,7 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/v1/auth/refresh', async (req: Request, res: Response) => {
+app.post('/api/v1/auth/refresh', refreshLimiter as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { refresh_token } = req.body;
 
@@ -814,6 +871,7 @@ function requireMasterSecret(req: Request, res: Response, next: () => void): voi
   const auth = req.headers.authorization || '';
   const secret = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!MASTER_SECRET || secret !== MASTER_SECRET) {
+    void logMasterAction({ accion: 'UNAUTHORIZED_ATTEMPT', status_code: 401, ip: req.ip, user_agent: req.headers['user-agent'] });
     res.status(401).json({ success: false, error: { code: 'MASTER_UNAUTHORIZED', message: 'Clave maestra invalida.' } });
     return;
   }
@@ -821,74 +879,137 @@ function requireMasterSecret(req: Request, res: Response, next: () => void): voi
 }
 
 // ─── GET /api/v1/master/tenants ───────────────────────────────────────────────
-app.get('/api/v1/master/tenants', requireMasterSecret as express.RequestHandler, async (_req: Request, res: Response) => {
-  try {
-    const tenants = await runAsSystem(async (prisma) =>
-      prisma.tenant.findMany({ orderBy: { created_at: 'desc' } })
-    );
-    res.json({ success: true, data: tenants });
-  } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+app.get('/api/v1/master/tenants',
+  masterReadLimiter as express.RequestHandler,
+  requireMasterSecret as express.RequestHandler,
+  async (req: Request, res: Response) => {
+    try {
+      const tenants = await runAsSystem(async (prisma) =>
+        prisma.tenant.findMany({ orderBy: { created_at: 'desc' } })
+      );
+      void logMasterAction({ accion: 'LIST_TENANTS', status_code: 200, ip: req.ip, user_agent: req.headers['user-agent'] });
+      res.json({ success: true, data: tenants });
+    } catch (err) {
+      void logMasterAction({ accion: 'LIST_TENANTS', status_code: 500, ip: req.ip, error_msg: String(err) });
+      res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    }
   }
-});
+);
 
 // ─── POST /api/v1/master/tenants ─────────────────────────────────────────────
-app.post('/api/v1/master/tenants', requireMasterSecret as express.RequestHandler, async (req: Request, res: Response) => {
-  try {
+app.post('/api/v1/master/tenants',
+  masterWriteLimiter as express.RequestHandler,
+  requireMasterSecret as express.RequestHandler,
+  async (req: Request, res: Response) => {
     const { nombre, rfc, plan, primary_color, logo_url } = req.body;
     if (!nombre) {
+      void logMasterAction({ accion: 'CREATE_TENANT', status_code: 400, ip: req.ip, error_msg: 'nombre requerido' });
       res.status(400).json({ success: false, error: { code: 'MASTER_MISSING_FIELDS', message: 'El campo nombre es obligatorio.' } });
       return;
     }
-    const tenant = await runAsSystem(async (prisma) =>
-      prisma.tenant.create({
-        data: { nombre, rfc: rfc || null, plan: plan || 'BASICO', primary_color: primary_color || null, logo_url: logo_url || null },
-      })
-    );
-    res.status(201).json({ success: true, data: tenant });
-  } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    try {
+      const tenant = await runAsSystem(async (prisma) =>
+        prisma.tenant.create({
+          data: { nombre, rfc: rfc || null, plan: plan || 'BASICO', primary_color: primary_color || null, logo_url: logo_url || null },
+        })
+      );
+      void logMasterAction({ accion: 'CREATE_TENANT', entity_id: tenant.id_tenant, status_code: 201, ip: req.ip, user_agent: req.headers['user-agent'], payload: { nombre, rfc, plan } });
+      res.status(201).json({ success: true, data: tenant });
+    } catch (err) {
+      void logMasterAction({ accion: 'CREATE_TENANT', status_code: 500, ip: req.ip, error_msg: String(err) });
+      res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    }
   }
-});
+);
 
 // ─── PATCH /api/v1/master/tenants/:id ────────────────────────────────────────
-app.patch('/api/v1/master/tenants/:id', requireMasterSecret as express.RequestHandler, async (req: Request, res: Response) => {
-  try {
+app.patch('/api/v1/master/tenants/:id',
+  masterModifyLimiter as express.RequestHandler,
+  requireMasterSecret as express.RequestHandler,
+  async (req: Request, res: Response) => {
     const { id } = req.params;
     const { nombre, rfc, plan, primary_color, logo_url, activo } = req.body;
-    const tenant = await runAsSystem(async (prisma) =>
-      prisma.tenant.update({
-        where: { id_tenant: id },
-        data: {
-          ...(nombre !== undefined && { nombre }),
-          ...(rfc !== undefined && { rfc }),
-          ...(plan !== undefined && { plan }),
-          ...(primary_color !== undefined && { primary_color }),
-          ...(logo_url !== undefined && { logo_url }),
-          ...(activo !== undefined && { activo }),
-        },
-      })
-    );
-    res.json({ success: true, data: tenant });
-  } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    try {
+      const tenant = await runAsSystem(async (prisma) =>
+        prisma.tenant.update({
+          where: { id_tenant: id },
+          data: {
+            ...(nombre !== undefined && { nombre }),
+            ...(rfc !== undefined && { rfc }),
+            ...(plan !== undefined && { plan }),
+            ...(primary_color !== undefined && { primary_color }),
+            ...(logo_url !== undefined && { logo_url }),
+            ...(activo !== undefined && { activo }),
+          },
+        })
+      );
+      const changedFields = { nombre, rfc, plan, activo };
+      void logMasterAction({ accion: 'UPDATE_TENANT', entity_id: id, status_code: 200, ip: req.ip, user_agent: req.headers['user-agent'], payload: changedFields });
+      res.json({ success: true, data: tenant });
+    } catch (err) {
+      void logMasterAction({ accion: 'UPDATE_TENANT', entity_id: id, status_code: 500, ip: req.ip, error_msg: String(err) });
+      res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    }
   }
-});
+);
 
 // ─── DELETE /api/v1/master/tenants/:id (soft-delete) ─────────────────────────
-app.delete('/api/v1/master/tenants/:id', requireMasterSecret as express.RequestHandler, async (req: Request, res: Response) => {
-  try {
+app.delete('/api/v1/master/tenants/:id',
+  masterWriteLimiter as express.RequestHandler,
+  requireMasterSecret as express.RequestHandler,
+  async (req: Request, res: Response) => {
     const { id } = req.params;
-    await runAsSystem(async (prisma) =>
-      prisma.tenant.update({ where: { id_tenant: id }, data: { activo: false } })
-    );
-    res.json({ success: true, data: { message: 'Tenant desactivado.' } });
-  } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    try {
+      await runAsSystem(async (prisma) =>
+        prisma.tenant.update({ where: { id_tenant: id }, data: { activo: false } })
+      );
+      void logMasterAction({ accion: 'DELETE_TENANT', entity_id: id, status_code: 200, ip: req.ip, user_agent: req.headers['user-agent'] });
+      res.json({ success: true, data: { message: 'Tenant desactivado.' } });
+    } catch (err) {
+      void logMasterAction({ accion: 'DELETE_TENANT', entity_id: id, status_code: 500, ip: req.ip, error_msg: String(err) });
+      res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    }
   }
-});
+);
 
-const server = app.listen(PORT, () => {
+// ─── GET /api/v1/master/audit-log ────────────────────────────────────────────
+app.get('/api/v1/master/audit-log',
+  masterReadLimiter as express.RequestHandler,
+  requireMasterSecret as express.RequestHandler,
+  async (req: Request, res: Response) => {
+    try {
+      const { desde, hasta, accion, entity_id } = req.query as Record<string, string | undefined>;
+      const desdeDate = desde ? new Date(desde) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const hastaDate = hasta ? new Date(hasta) : new Date();
+
+      const logs = await runAsSystem(async (prisma) =>
+        prisma.masterAuditLog.findMany({
+          where: {
+            created_at: { gte: desdeDate, lte: hastaDate },
+            ...(accion && { accion }),
+            ...(entity_id && { entity_id }),
+          },
+          orderBy: { created_at: 'desc' },
+          take: 200,
+        })
+      );
+      void logMasterAction({ accion: 'GET_AUDIT_LOG', status_code: 200, ip: req.ip, user_agent: req.headers['user-agent'] });
+      res.json({ success: true, data: logs });
+    } catch (err) {
+      void logMasterAction({ accion: 'GET_AUDIT_LOG', status_code: 500, ip: req.ip, error_msg: String(err) });
+      res.status(500).json({ success: false, error: { code: 'MASTER_ERROR', message: String(err) } });
+    }
+  }
+);
+
+async function startServer() {
+  try {
+    await redisClient.connect();
+    console.log('[Auth] Redis rate-limit store conectado.');
+  } catch (err) {
+    console.warn('[Auth] Redis no disponible — rate-limiters en MemoryStore (fallback):', String(err));
+  }
+  return app.listen(PORT, () => {
   console.log('----------------------------------------------------');
   console.log('  Modulo: AUTH (Identity & Access Management)');
   console.log('  Propiedad: Constructora Bocam, S. A. de C.V.');
@@ -905,20 +1026,16 @@ const server = app.listen(PORT, () => {
   console.log('   POST /api/v1/master/tenants');
   console.log('   PATCH /api/v1/master/tenants/:id');
   console.log('   DELETE /api/v1/master/tenants/:id');
-});
-
-async function shutdown(signal: string) {
-  console.log(`[Auth] Senal ${signal} recibida. Apagando limpiamente...`);
-  server.close(async () => {
-    await disconnectDb();
-    process.exit(0);
+  console.log('   GET  /api/v1/master/audit-log');
   });
 }
 
+const server = startServer();
+
 process.on('SIGINT', () => {
-  void shutdown('SIGINT');
+  void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
 });
 
 process.on('SIGTERM', () => {
-  void shutdown('SIGTERM');
+  void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
 });

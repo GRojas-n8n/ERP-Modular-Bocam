@@ -110,3 +110,23 @@ model RefreshToken {
   @@index([token_hash])
   @@map("refresh_tokens")
 }
+
+// --- Audit Log de Operaciones Master (cross-tenant, sin RLS) ---
+// Solo accesible vía runAsSystem. Registra CREATE/UPDATE/DELETE de tenants
+// y accesos no autorizados. Best-effort: no bloquea el flujo principal.
+model MasterAuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  accion      String   @db.VarChar(50)
+  entity_type String   @db.VarChar(30)
+  entity_id   String?  @db.Uuid
+  ip_address  String?  @db.VarChar(50)
+  user_agent  String?  @db.VarChar(500)
+  payload     Json?
+  status_code Int
+  error_msg   String?  @db.Text
+  created_at  DateTime @default(now())
+
+  @@index([created_at])
+  @@index([entity_id])
+  @@map("master_audit_logs")
+}

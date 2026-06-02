@@ -1,2 +1,12 @@
 schema: spec-driven
 created: 2026-06-01
+status: in_progress
+tasks_status:
+  completed: 21
+  pending: 4
+  pending_note: "8.1–8.4 — deploy y verificación en VPS (requiere acceso SSH)"
+production_verified: false
+notes: >
+  Rate limiting con Redis (5 limiters), audit log MasterAuditLog, endpoint GET /master/audit-log.
+  TypeScript pasa sin errores. Migración SQL lista en prisma/migrations/20260602000000_auth_hardening.
+  Pendiente: aplicar migración en VPS y verificar funcionamiento en producción.
