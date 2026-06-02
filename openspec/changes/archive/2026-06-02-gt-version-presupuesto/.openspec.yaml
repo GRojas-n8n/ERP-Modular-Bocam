@@ -1,0 +1,21 @@
+schema: spec-driven
+created: 2026-06-01
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: 6d9ca30
+    message: "feat(gt): congelación de versiones de presupuesto"
+    scope: implementation
+  - hash: 458aa18
+    message: "fix(gt): Toast usa title no message en notify"
+    scope: fix
+tasks_status:
+  completed: 12
+  pending: 0
+production_verified: true
+notes: >
+  EstadoPresupuesto += APROBADO. Campos aprobado_por + fecha_aprobacion en presupuestos_base.
+  PATCH /aprobar implementado. Guard 409 en composicion-apu cuando APROBADO.
+  GET /presupuestos incluye precio_actual y delta_pct calculados desde ConceptoInsumos.
+  InsumosView: badge emerald, banner+botón Aprobar (solo BORRADOR), columnas P.Actual y Δ%.
+  Migración aplicada en bocam_gerencia_tecnica VPS.
