@@ -1,0 +1,23 @@
+schema: spec-driven
+created: 2026-06-01
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: 2b9b365
+    message: "feat(auth): hardening — rate limiting Redis + audit log MasterAuditLog"
+    scope: implementation
+  - hash: 1b8ca3d
+    message: "fix(auth): lazy rate-limit store — corrige ERR_ERL_STORE_REUSE y ClientClosedError"
+    scope: fix
+  - hash: a2861ff
+    message: "fix(auth): no conectar Redis si REDIS_URL no está configurado + retries acotados"
+    scope: fix
+tasks_status:
+  completed: 25
+  pending: 0
+production_verified: true
+notes: >
+  Rate limiting en MemoryStore (REDIS_URL no configurado en VPS — funcional, protege contra brute force).
+  Para activar Redis: agregar REDIS_URL=redis://redis:6379 al .env del auth en VPS y reiniciar.
+  Tabla master_audit_logs aplicada directamente vía psql (BD brownfield, sin historial _prisma_migrations).
+  Health: {"status":"ok","module":"auth"} verificado en producción.
