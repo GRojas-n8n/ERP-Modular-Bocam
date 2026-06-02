@@ -71,14 +71,16 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
       return;
     }
     const setState = <T,>(setter: React.Dispatch<React.SetStateAction<EjecutivoState<T>>>) =>
-      ({ status, value }: PromiseSettledResult<{ data: { data: T } }>) => {
-        if (status === 'fulfilled') setter({ data: value.data.data, loading: false, error: false });
+      (result: PromiseSettledResult<{ data: { data: T } }>) => {
+        if (result.status === 'fulfilled') setter({ data: result.value.data.data, loading: false, error: false });
         else setter({ data: null, loading: false, error: true });
       };
 
-    [setCompras, setControlObra, setPersonal, setSeguridad, setCalidad].forEach(s =>
-      s(prev => ({ ...prev, loading: true, error: false }))
-    );
+    setCompras    (prev => ({ ...prev, loading: true, error: false }));
+    setControlObra(prev => ({ ...prev, loading: true, error: false }));
+    setPersonal   (prev => ({ ...prev, loading: true, error: false }));
+    setSeguridad  (prev => ({ ...prev, loading: true, error: false }));
+    setCalidad    (prev => ({ ...prev, loading: true, error: false }));
 
     const [r1, r2, r3, r4, r5] = await Promise.allSettled([
       api.get('/api/v1/compras/resumen-dashboard'),
@@ -233,7 +235,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
               <MetricCard
                 label="Incid. críticos"
                 value={val(seguridad.data?.incidentes_criticos)}
-                trendTone={(seguridad.data?.incidentes_criticos ?? 0) > 0 ? 'negative' : 'positive'}
+                trendTone={(seguridad.data?.incidentes_criticos ?? 0) > 0 ? 'warning' : 'positive'}
               />
               <MetricCard label="Permisos vigentes" value={val(seguridad.data?.permisos_vigentes)} />
             </div>
