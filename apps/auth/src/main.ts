@@ -38,10 +38,6 @@ const PORT = process.env.PORT || 3003;
 const redisClient = createClient({ url: (process.env.REDIS_URL ?? 'redis://localhost:6379').trim() });
 redisClient.on('error', (err) => console.error('[Auth] Redis rate-limit error:', err.message));
 
-const redisStore = new RedisStore({
-  sendCommand: (...args: string[]) => redisClient.sendCommand(args),
-});
-
 const rateLimitHandler = (_req: Request, res: Response) =>
   void res.status(429).json({
     success: false,
@@ -49,13 +45,26 @@ const rateLimitHandler = (_req: Request, res: Response) =>
   });
 
 const RL_WINDOW = 15 * 60 * 1000;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const rl = (max: number) => rateLimit({ windowMs: RL_WINDOW, max, standardHeaders: true, legacyHeaders: false, store: redisStore as any, handler: rateLimitHandler });
-const masterWriteLimiter  = rl(5);
-const masterReadLimiter   = rl(30);
-const masterModifyLimiter = rl(10);
-const loginLimiter        = rl(10);
-const refreshLimiter      = rl(20);
+
+// Cada llamada crea su propio closure con su propio store — evita ERR_ERL_STORE_REUSE.
+// El store se instancia en la primera request, cuando Redis ya está conectado (o no).
+function makeLimiter(max: number): express.RequestHandler {
+  let limiter: express.RequestHandler | null = null;
+  return (req, res, next) => {
+    if (!limiter) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const store = redisClient.isReady ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) }) as any : undefined;
+      limiter = rateLimit({ windowMs: RL_WINDOW, max, standardHeaders: true, legacyHeaders: false, store, handler: rateLimitHandler });
+    }
+    limiter(req, res, next);
+  };
+}
+
+const masterWriteLimiter  = makeLimiter(5);
+const masterReadLimiter   = makeLimiter(30);
+const masterModifyLimiter = makeLimiter(10);
+const loginLimiter        = makeLimiter(10);
+const refreshLimiter      = makeLimiter(20);
 
 // ─── Audit Log Helper (best-effort — nunca bloquea el flujo) ────────────────
 
