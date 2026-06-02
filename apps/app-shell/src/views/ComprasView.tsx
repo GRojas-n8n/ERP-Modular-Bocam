@@ -715,6 +715,80 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  // ── Exportación de documentos ─────────────────────────────────────────────────
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 200);
+  };
+
+  const exportarOcPdf = async (
+    oc: ComparativaLocal['ordenes_compra'][number],
+    comp: ComparativaLocal,
+  ) => {
+    try {
+      const prov = comp.proveedores.find(p => p.nombre === oc.proveedor_nombre);
+      const provId = prov?.id;
+      const items = comp.lineas
+        .filter(l => l.ganador === provId)
+        .map(l => ({
+          descripcion: l.insumo_descripcion,
+          unidad: l.insumo_unidad,
+          cantidad: l.cantidad,
+          precio_unitario: parseFloat(l.precios[provId!] || '0'),
+          importe: l.cantidad * parseFloat(l.precios[provId!] || '0'),
+        }));
+      const subtotal = items.reduce((s, i) => s + i.importe, 0);
+      const iva = subtotal * 0.16;
+      const total = subtotal + iva;
+
+      const resp = await api.post(
+        '/api/v1/reportes/oc-pdf',
+        { oc: { numero: oc.codigo, proveedor: oc.proveedor_nombre, items, subtotal, iva, total } },
+        { responseType: 'blob' },
+      );
+      triggerDownload(resp.data as Blob, `${oc.codigo}.pdf`);
+    } catch {
+      notify({ type: 'error', title: 'Error al generar PDF', message: 'No se pudo conectar con el servicio de reportes.' });
+    }
+  };
+
+  const exportarComparativaPdf = async (comp: ComparativaLocal) => {
+    try {
+      const totales: Record<string, number> = {};
+      comp.proveedores.forEach(prov => {
+        totales[prov.id] = comp.lineas.reduce((s, l) => {
+          const p = parseFloat(l.precios[prov.id] || '0');
+          return s + p * l.cantidad;
+        }, 0);
+      });
+      const lineas = comp.lineas.map(l => ({
+        descripcion: l.insumo_descripcion,
+        unidad: l.insumo_unidad,
+        cantidad: l.cantidad,
+        precios: Object.fromEntries(
+          Object.entries(l.precios).map(([k, v]) => [k, parseFloat(v || '0')])
+        ),
+        importes: Object.fromEntries(
+          Object.entries(l.precios).map(([k, v]) => [k, l.cantidad * parseFloat(v || '0')])
+        ),
+      }));
+      const ganador = comp.lineas.find(l => l.ganador)?.ganador ?? null;
+      const resp = await api.post(
+        '/api/v1/reportes/comparativa-pdf',
+        { comparativa: { titulo: `Comparativa REQ-${comp.requisicion_id.slice(-6)}`, proveedores: comp.proveedores, lineas, totales, ganador_id: ganador } },
+        { responseType: 'blob' },
+      );
+      triggerDownload(resp.data as Blob, `Comparativa-${comp.id}.pdf`);
+    } catch {
+      notify({ type: 'error', title: 'Error al generar PDF', message: 'No se pudo conectar con el servicio de reportes.' });
+    }
+  };
+
   // ── Aprobación de requisición (Procurement / Admin / Superintendent) ─────────
   const handleAprobar = async (reqId: string) => {
     if (isDemo) {
@@ -925,6 +999,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               isDemo={isDemo}
               onBack={() => setActiveReqId(null)}
               onUpdate={updateComparativa}
+              onExportOcPdf={oc => exportarOcPdf(oc, comp)}
+              onExportComparativaPdf={() => exportarComparativaPdf(comp)}
             />
           );
         })()

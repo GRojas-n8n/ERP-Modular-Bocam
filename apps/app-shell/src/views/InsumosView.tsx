@@ -831,6 +831,38 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  // ── Exportar Presupuesto Excel ────────────────────────────────────────────
+  const exportarPresupuestoExcel = async () => {
+    if (!presupuesto || presupuesto.conceptos.length === 0) return;
+    try {
+      const body = {
+        version: presupuesto.version,
+        estado: presupuesto.estado,
+        importe_total: Number(presupuesto.importe_total),
+        conceptos: presupuesto.conceptos.map(c => ({
+          clave: c.clave,
+          descripcion: c.descripcion,
+          unidad_medida: c.unidad_medida,
+          cantidad: c.cantidad,
+          precio_unitario: c.precio_unitario,
+          importe: c.importe,
+          precio_actual: c.precio_actual,
+          delta_pct: c.delta_pct,
+        })),
+      };
+      const resp = await api.post('/api/v1/reportes/presupuesto-excel', { presupuesto: body }, { responseType: 'blob' });
+      const url = URL.createObjectURL(resp.data as Blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Presupuesto-v${presupuesto.version}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 200);
+    } catch {
+      notify({ type: 'error', title: 'Error al exportar', message: 'No se pudo conectar con el servicio de reportes.' });
+    }
+  };
+
   // ── Fetch Tab 2 ───────────────────────────────────────────────────────────
   const fetchInsumos = async () => {
     setLoadingInsumos(true);
@@ -1247,6 +1279,16 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   <IconInfo className="h-4 w-4" />
                   ¿Cómo exportar?
                 </button>
+                {presupuesto && presupuesto.conceptos.length > 0 && tenant?.id !== 'iretum-demo' && (
+                  <button
+                    onClick={exportarPresupuestoExcel}
+                    className="flex items-center gap-2 px-4 py-3 border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-500/20 active:scale-95 transition-all"
+                    title="Descargar presupuesto como Excel"
+                  >
+                    <IconDownload className="h-4 w-4" />
+                    Exportar Excel
+                  </button>
+                )}
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"

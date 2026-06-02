@@ -42,6 +42,9 @@ export default defineConfig({
       '/api/v1/control-obra': 'http://localhost:3005',
       '/api/v1/personal': 'http://localhost:3006',
       '/api/v1/seguridad': 'http://localhost:3007',
+      '/api/v1/calidad':   'http://localhost:3009',
+      '/api/v1/reportes':  'http://localhost:3010',
+      '/api/v1/ventas':    'http://localhost:3012',
     }
   },
   preview: {

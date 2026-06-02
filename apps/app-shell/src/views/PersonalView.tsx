@@ -22,6 +22,7 @@ import {
   IconAlertCircle,
   IconBriefcase,
   IconClock,
+  IconDownload,
   IconPlus,
   IconShieldCheck,
   IconUsers,
@@ -306,6 +307,54 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     } catch (e: any) {
       console.warn('Complemento:', e.response?.data?.message);
     } finally { setGenerandoComplemento(false); }
+  };
+
+  // ── Exportación de prenomina ──────────────────────────────────────────────────
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 200);
+  };
+
+  const buildPrenominaBody = (pn: PreNomina, detalles: PreNominaDetalle[]) => ({
+    periodo: `${pn.codigo} (${new Date(pn.periodo_inicio).toLocaleDateString('es-MX')} – ${new Date(pn.periodo_fin).toLocaleDateString('es-MX')})`,
+    empleados: detalles.map(d => ({
+      nombre: d.empleado ? `${d.empleado.nombre} ${d.empleado.apellido_paterno}` : d.empleado_id.slice(0, 8),
+      puesto: undefined,
+      dias: d.dias_trabajados,
+      salario_diario: Number(d.salario_base) / (d.dias_trabajados || 1),
+      percepciones: Number(d.total_percepciones),
+      imss: Number(d.deduccion_imss),
+      isr: Number(d.deduccion_isr),
+      otras_deducciones: Number(d.otras_deducciones),
+      neto: Number(d.neto_a_pagar),
+    })),
+  });
+
+  const exportarPrenominaPdf = async () => {
+    if (!nominaDetalle) return;
+    try {
+      const body = buildPrenominaBody(nominaDetalle.pn, nominaDetalle.detalles);
+      const resp = await api.post('/api/v1/reportes/prenomina-pdf', { prenomina: body }, { responseType: 'blob' });
+      triggerDownload(resp.data as Blob, `${nominaDetalle.pn.codigo}.pdf`);
+    } catch {
+      notify({ type: 'error', title: 'Error al generar PDF', message: 'No se pudo conectar con el servicio de reportes.' });
+    }
+  };
+
+  const exportarPrenominaExcel = async () => {
+    if (!nominaDetalle) return;
+    try {
+      const body = buildPrenominaBody(nominaDetalle.pn, nominaDetalle.detalles);
+      const resp = await api.post('/api/v1/reportes/prenomina-excel', { prenomina: body }, { responseType: 'blob' });
+      triggerDownload(resp.data as Blob, `${nominaDetalle.pn.codigo}.xlsx`);
+    } catch {
+      notify({ type: 'error', title: 'Error al generar Excel', message: 'No se pudo conectar con el servicio de reportes.' });
+    }
   };
 
   const activos = empleados.filter((empleado) => empleado.estado === 'ACTIVO').length;
@@ -960,6 +1009,24 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 >
                   {generandoComplemento ? 'Generando…' : 'Generar Complemento Salarial'}
                 </button>
+                {nominaDetalle.detalles.length > 0 && !isDemo && (
+                  <>
+                    <button
+                      onClick={exportarPrenominaPdf}
+                      className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted"
+                      title="Descargar pre-nómina como PDF"
+                    >
+                      <IconDownload className="h-3 w-3" />PDF
+                    </button>
+                    <button
+                      onClick={exportarPrenominaExcel}
+                      className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted"
+                      title="Descargar pre-nómina como Excel"
+                    >
+                      <IconDownload className="h-3 w-3" />Excel
+                    </button>
+                  </>
+                )}
                 <button onClick={() => setNominaDetalle(null)} className="rounded-lg px-3 py-1.5 text-[10px] font-black uppercase text-muted-foreground hover:bg-muted">
                   Cerrar
                 </button>

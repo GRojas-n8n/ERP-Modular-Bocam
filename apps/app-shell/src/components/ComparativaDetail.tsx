@@ -16,6 +16,7 @@ import {
 import {
   IconArrowLeft,
   IconCheckCircle2,
+  IconDownload,
   IconPackage,
   IconPlus,
   IconScale,
@@ -114,12 +115,15 @@ interface Props {
   isDemo: boolean;
   onBack: () => void;
   onUpdate: (updated: ComparativaLocal) => void;
+  onExportOcPdf?: (oc: ComparativaLocal['ordenes_compra'][number]) => void;
+  onExportComparativaPdf?: () => void;
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export const ComparativaDetail: React.FC<Props> = ({
   requisicionFolio, comparativa: comp, insumos, isDemo, onBack, onUpdate,
+  onExportOcPdf, onExportComparativaPdf,
 }) => {
   const { user } = useTenant();
   const { notify } = useNotification();
@@ -910,16 +914,38 @@ export const ComparativaDetail: React.FC<Props> = ({
                   <div className="text-xs font-black text-green-700">{oc.codigo}</div>
                   <div className="text-[11px] text-muted-foreground">{oc.proveedor_nombre}</div>
                 </div>
-                <div className="text-sm font-black text-foreground">
-                  {oc.total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-black text-foreground">
+                    {oc.total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
+                  </div>
+                  {onExportOcPdf && !isDemo && (
+                    <button
+                      onClick={() => onExportOcPdf(oc)}
+                      title="Exportar OC como PDF"
+                      className="flex items-center gap-1 rounded-lg border border-green-500/30 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-green-700 hover:bg-green-500/10 transition-colors"
+                    >
+                      <IconDownload className="h-3 w-3" />PDF
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
             <div className="flex items-center justify-between rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-green-700">Total comprometido</span>
-              <span className="text-base font-black text-green-700">
-                {comp.ordenes_compra.reduce((s, oc) => s + oc.total, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-base font-black text-green-700">
+                  {comp.ordenes_compra.reduce((s, oc) => s + oc.total, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
+                </span>
+                {onExportComparativaPdf && !isDemo && (
+                  <button
+                    onClick={onExportComparativaPdf}
+                    title="Exportar cuadro comparativo como PDF"
+                    className="flex items-center gap-1 rounded-lg border border-green-500/30 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-green-700 hover:bg-green-500/10 transition-colors"
+                  >
+                    <IconDownload className="h-3 w-3" />Comparativa PDF
+                  </button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
