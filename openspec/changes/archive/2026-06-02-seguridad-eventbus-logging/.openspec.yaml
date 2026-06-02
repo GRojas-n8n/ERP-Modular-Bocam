@@ -1,0 +1,16 @@
+schema: spec-driven
+created: 2026-06-01
+status: archived
+archived_at: 2026-06-02
+commits:
+  - hash: 56e847f
+    message: "feat(seguridad): EventBus logging — visibilidad en fallos de publicación"
+    scope: implementation
+tasks_status:
+  completed: 10
+  pending: 0
+production_verified: true
+notes: >
+  publishConReintento() con backoff [1s,3s,5s] para INCIDENTE_REPORTADO.
+  5 catch vacíos → logWarn(seguridad.eventbus.fallo) para los demás eventos.
+  EventBus conectado a RabbitMQ en producción verificado en logs.
