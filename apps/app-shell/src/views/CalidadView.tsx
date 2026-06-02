@@ -699,7 +699,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface NC {
-  id_nc: string; codigo: string; titulo: string; fuente: string;
+  id_nc: string; codigo: string; titulo: string; descripcion?: string | null; fuente: string;
   estado: string; fecha_deteccion: string; fecha_limite?: string | null;
   responsable_id: string; causa_raiz?: string | null;
   acciones: AC[];
