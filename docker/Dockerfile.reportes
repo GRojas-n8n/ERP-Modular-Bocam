@@ -15,10 +15,10 @@ COPY package*.json ./
 COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 
-# npm ci respeta NODE_ENV=production del VPS y omite devDeps.
-# Una segunda pasada --include=dev para el workspace de reportes garantiza
-# que tsc esté disponible para el build, sin afectar el runner final.
-RUN npm ci && npm install --workspace=apps/reportes --include=dev
+# npm ci respeta NODE_ENV=production del VPS y puede omitir devDeps.
+# Instalación explícita de typescript asegura que tsc esté disponible
+# para la compilación TypeScript, independiente de NODE_ENV.
+RUN npm ci && npm install --no-save typescript ts-node ts-node-dev
 
 COPY . .
 
