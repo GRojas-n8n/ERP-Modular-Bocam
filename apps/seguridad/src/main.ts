@@ -5,7 +5,8 @@ import {
   SeguridadEvents, EstadoIncidente, ResultadoInspeccion, EstadoPermiso,
 } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
-import { createEventBus } from '../../../packages/event-bus/src';
+import { createEventBus, type BocamEvent } from '../../../packages/event-bus/src';
+import { logWarn } from '../../../packages/observability/src';
 
 /**
  * ---------------------------------------------------------------------------
@@ -32,6 +33,24 @@ const JWT_SECRET = requireEnv('JWT_SECRET');
 
 // EventBus
 const eventBus = createEventBus('seguridad');
+
+// Reintento con backoff para el evento más crítico (INCIDENTE_REPORTADO — implicaciones STPS).
+async function publishConReintento(req: Request, evento: BocamEvent) {
+  const delays = [1000, 3000, 5000];
+  for (let i = 0; i < delays.length; i++) {
+    try {
+      await eventBus.publish(evento);
+      return;
+    } catch (err) {
+      if (i < delays.length - 1) {
+        await new Promise(r => setTimeout(r, delays[i]));
+      } else {
+        logWarn(req, 'seguridad', 'seguridad.eventbus.incidente_fallido',
+          'No se pudo publicar INCIDENTE_REPORTADO tras 3 intentos', { error: String(err) });
+      }
+    }
+  }
+}
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
@@ -97,15 +116,13 @@ app.post('/api/v1/seguridad/incidentes', async (req: Request, res: Response) => 
       });
     });
 
-    // Publicar evento
-    try {
-      await eventBus.publish({
-        event_type: SeguridadEvents.INCIDENTE_REPORTADO,
-        timestamp: new Date().toISOString(),
-        context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
-        payload: { id_incidente: data.id_incidente, codigo: data.codigo, tipo, severidad: data.severidad },
-      });
-    } catch (_) { /* EventBus offline — degradación elegante */ }
+    // Publicar evento con reintento — INCIDENTE_REPORTADO tiene implicaciones legales STPS
+    void publishConReintento(req, {
+      event_type: SeguridadEvents.INCIDENTE_REPORTADO,
+      timestamp: new Date().toISOString(),
+      context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+      payload: { id_incidente: data.id_incidente, codigo: data.codigo, tipo, severidad: data.severidad },
+    });
 
     console.log(`[Seguridad] 🚨 Incidente ${data.codigo} reportado: ${tipo} — ${data.severidad}`);
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
@@ -165,7 +182,7 @@ app.patch('/api/v1/seguridad/incidentes/:id/cerrar', async (req: Request, res: R
         context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
         payload: { id_incidente: data.id_incidente, codigo: data.codigo, dias_incapacidad: data.dias_incapacidad },
       });
-    } catch (_) { /* degradación elegante */ }
+    } catch (err: any) { logWarn(req, 'seguridad', 'seguridad.eventbus.fallo', 'No se pudo publicar evento al EventBus', { error: err.message }); }
 
     console.log(`[Seguridad] ✅ Incidente ${data.codigo} CERRADO`);
     res.json(createApiResponse(data, tenantId, proyectoId));
@@ -243,7 +260,7 @@ app.post('/api/v1/seguridad/inspecciones', async (req: Request, res: Response) =
         context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
         payload: { id_inspeccion: data.id_inspeccion, codigo: data.codigo, resultado: data.resultado, porcentaje: Number(data.porcentaje_cumplimiento) },
       });
-    } catch (_) { /* degradación elegante */ }
+    } catch (err: any) { logWarn(req, 'seguridad', 'seguridad.eventbus.fallo', 'No se pudo publicar evento al EventBus', { error: err.message }); }
 
     console.log(`[Seguridad] 📋 Inspección ${data.codigo}: ${data.resultado} (${Number(data.porcentaje_cumplimiento).toFixed(0)}%)`);
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
@@ -325,7 +342,7 @@ app.post('/api/v1/seguridad/permisos', async (req: Request, res: Response) => {
         context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
         payload: { id_permiso: data.id_permiso, codigo: data.codigo, tipo_permiso },
       });
-    } catch (_) { /* degradación elegante */ }
+    } catch (err: any) { logWarn(req, 'seguridad', 'seguridad.eventbus.fallo', 'No se pudo publicar evento al EventBus', { error: err.message }); }
 
     console.log(`[Seguridad] 📝 Permiso ${data.codigo} emitido: ${tipo_permiso}`);
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
@@ -381,7 +398,7 @@ app.patch('/api/v1/seguridad/permisos/:id/cerrar', async (req: Request, res: Res
         context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
         payload: { id_permiso: data.id_permiso, codigo: data.codigo },
       });
-    } catch (_) { /* degradación elegante */ }
+    } catch (err: any) { logWarn(req, 'seguridad', 'seguridad.eventbus.fallo', 'No se pudo publicar evento al EventBus', { error: err.message }); }
 
     console.log(`[Seguridad] 🔒 Permiso ${data.codigo} cerrado/expirado`);
     res.json(createApiResponse(data, tenantId, proyectoId));
@@ -484,7 +501,7 @@ app.patch('/api/v1/seguridad/capacitaciones/:id/completar', async (req: Request,
         context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
         payload: { id_capacitacion: data.id_capacitacion, codigo: data.codigo, titulo: data.titulo, asistentes: data._count.registros },
       });
-    } catch (_) { /* degradación elegante */ }
+    } catch (err: any) { logWarn(req, 'seguridad', 'seguridad.eventbus.fallo', 'No se pudo publicar evento al EventBus', { error: err.message }); }
 
     console.log(`[Seguridad] ✅ Capacitación ${data.codigo} COMPLETADA`);
     res.json(createApiResponse(data, tenantId, proyectoId));
