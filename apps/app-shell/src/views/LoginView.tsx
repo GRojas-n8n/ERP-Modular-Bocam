@@ -23,27 +23,20 @@ const IconLock = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const IconBuilding = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#050A12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-    <polyline points="9 22 9 12 15 12 15 22"/>
-  </svg>
-);
-
 // ─── Partículas — más grandes y con glow ─────────────────────────────────────
 const PARTICLES: { top: string; left: string; size: number; dur: number; delay: number; glow: string; color: string }[] = [
-  { top:'8%',  left:'9%',  size:5, dur:18, delay:0,  color:'rgba(0,220,255,1)',   glow:'0 0 8px 3px rgba(0,220,255,0.7)' },
-  { top:'13%', left:'82%', size:4, dur:22, delay:3,  color:'rgba(255,170,30,1)',  glow:'0 0 7px 2px rgba(255,170,30,0.6)' },
-  { top:'35%', left:'5%',  size:5, dur:15, delay:7,  color:'rgba(130,160,255,1)', glow:'0 0 8px 3px rgba(130,160,255,0.6)' },
-  { top:'20%', left:'56%', size:3, dur:25, delay:1,  color:'rgba(0,220,255,1)',   glow:'0 0 6px 2px rgba(0,220,255,0.5)' },
-  { top:'62%', left:'90%', size:5, dur:20, delay:5,  color:'rgba(255,170,30,1)',  glow:'0 0 8px 3px rgba(255,170,30,0.6)' },
-  { top:'76%', left:'27%', size:4, dur:17, delay:9,  color:'rgba(0,220,255,1)',   glow:'0 0 7px 2px rgba(0,220,255,0.6)' },
-  { top:'47%', left:'72%', size:6, dur:23, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 10px 4px rgba(130,160,255,0.5)' },
-  { top:'88%', left:'15%', size:3, dur:19, delay:6,  color:'rgba(255,170,30,1)',  glow:'0 0 6px 2px rgba(255,170,30,0.5)' },
-  { top:'53%', left:'43%', size:5, dur:16, delay:11, color:'rgba(0,220,255,1)',   glow:'0 0 8px 3px rgba(0,220,255,0.6)' },
-  { top:'27%', left:'93%', size:4, dur:21, delay:4,  color:'rgba(255,170,30,1)',  glow:'0 0 7px 2px rgba(255,170,30,0.5)' },
-  { top:'70%', left:'61%', size:5, dur:24, delay:8,  color:'rgba(130,160,255,1)', glow:'0 0 8px 3px rgba(130,160,255,0.6)' },
-  { top:'10%', left:'39%', size:3, dur:14, delay:13, color:'rgba(0,220,255,1)',   glow:'0 0 6px 2px rgba(0,220,255,0.5)' },
+  { top:'8%',  left:'9%',  size:3, dur:18, delay:0,  color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.55)' },
+  { top:'13%', left:'82%', size:2, dur:22, delay:3,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.50)' },
+  { top:'35%', left:'5%',  size:3, dur:15, delay:7,  color:'rgba(130,160,255,1)', glow:'0 0 5px 2px rgba(130,160,255,0.50)' },
+  { top:'20%', left:'56%', size:2, dur:25, delay:1,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
+  { top:'62%', left:'90%', size:3, dur:20, delay:5,  color:'rgba(255,170,30,1)',  glow:'0 0 5px 2px rgba(255,170,30,0.50)' },
+  { top:'76%', left:'27%', size:2, dur:17, delay:9,  color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.50)' },
+  { top:'47%', left:'72%', size:4, dur:23, delay:2,  color:'rgba(130,160,255,1)', glow:'0 0 6px 2px rgba(130,160,255,0.45)' },
+  { top:'88%', left:'15%', size:2, dur:19, delay:6,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
+  { top:'53%', left:'43%', size:3, dur:16, delay:11, color:'rgba(0,220,255,1)',   glow:'0 0 5px 2px rgba(0,220,255,0.50)' },
+  { top:'27%', left:'93%', size:2, dur:21, delay:4,  color:'rgba(255,170,30,1)',  glow:'0 0 4px 1px rgba(255,170,30,0.45)' },
+  { top:'70%', left:'61%', size:3, dur:24, delay:8,  color:'rgba(130,160,255,1)', glow:'0 0 5px 2px rgba(130,160,255,0.50)' },
+  { top:'10%', left:'39%', size:2, dur:14, delay:13, color:'rgba(0,220,255,1)',   glow:'0 0 4px 1px rgba(0,220,255,0.45)' },
 ];
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -75,26 +68,45 @@ export const LoginView: React.FC = () => {
       <style>{`
         /* ── Orbes ─────────────────────────────────────────────────────── */
         @keyframes orb-1 {
-          0%,100% { transform:translate(0,0) scale(1);      opacity:.65; }
-          33%     { transform:translate(4%,-3%) scale(1.06); opacity:.75; }
-          66%     { transform:translate(-3%,4%) scale(.95);  opacity:.55; }
+          0%,100% { transform:translate(0,0) scale(1);      opacity:.42; }
+          33%     { transform:translate(4%,-3%) scale(1.06); opacity:.50; }
+          66%     { transform:translate(-3%,4%) scale(.95);  opacity:.34; }
         }
         @keyframes orb-2 {
-          0%,100% { transform:translate(0,0) scale(1);       opacity:.55; }
-          40%     { transform:translate(-4%,3%) scale(1.07); opacity:.65; }
-          70%     { transform:translate(3%,-4%) scale(.94);  opacity:.45; }
+          0%,100% { transform:translate(0,0) scale(1);       opacity:.34; }
+          40%     { transform:translate(-4%,3%) scale(1.07); opacity:.42; }
+          70%     { transform:translate(3%,-4%) scale(.94);  opacity:.26; }
         }
         @keyframes orb-3 {
-          0%,100% { transform:translate(0,0) scale(1);      opacity:.42; }
-          50%     { transform:translate(3%,-3%) scale(1.08); opacity:.55; }
+          0%,100% { transform:translate(0,0) scale(1);      opacity:.26; }
+          50%     { transform:translate(3%,-3%) scale(1.08); opacity:.34; }
         }
 
         /* ── Partículas ─────────────────────────────────────────────────── */
         @keyframes particle-float {
-          0%,100% { transform:translateY(0)    translateX(0);    opacity:.55; }
-          25%     { transform:translateY(-16px) translateX(8px);  opacity:.95; }
-          50%     { transform:translateY(-26px) translateX(-6px); opacity:.75; }
-          75%     { transform:translateY(-10px) translateX(10px); opacity:.85; }
+          0%,100% { transform:translateY(0)    translateX(0);    opacity:.45; }
+          25%     { transform:translateY(-14px) translateX(7px);  opacity:.82; }
+          50%     { transform:translateY(-22px) translateX(-5px); opacity:.62; }
+          75%     { transform:translateY(-9px)  translateX(9px);  opacity:.72; }
+        }
+
+        /* ── Logo glow ──────────────────────────────────────────────────── */
+        @keyframes logo-pulse {
+          0%,100% { transform:scale(1);   opacity:.50; }
+          50%     { transform:scale(1.18); opacity:.75; }
+        }
+        .lr-logo-wrap { position:relative; cursor:default; }
+        .lr-logo-glow {
+          position:absolute; inset:-10px; border-radius:50%;
+          background:radial-gradient(ellipse, rgba(0,209,255,.38) 0%, rgba(0,140,220,.14) 50%, transparent 72%);
+          animation:logo-pulse 3.5s ease-in-out infinite;
+          transition:transform .4s ease, opacity .4s ease;
+          pointer-events:none;
+        }
+        .lr-logo-wrap:hover .lr-logo-glow {
+          transform:scale(1.6) !important;
+          opacity:1 !important;
+          animation-play-state:paused;
         }
 
         /* ── Card ───────────────────────────────────────────────────────── */
@@ -206,14 +218,14 @@ export const LoginView: React.FC = () => {
       {/* ── Capa de efectos — FIXED, sin interacción ─────────────────────── */}
       <div style={{ position:'fixed', inset:0, background:'#050A12', pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
 
-        {/* Orb 1 — cian intenso, cuadrante superior izquierdo */}
+        {/* Orb 1 — cian, cuadrante superior izquierdo */}
         <div style={{
           position:'absolute', top:'-5%', left:'-5%',
           width:'60vw', height:'60vw', maxWidth:780, maxHeight:780,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at 40% 40%, rgba(0,200,255,.62) 0%, rgba(0,120,200,.28) 38%, rgba(0,60,140,.08) 60%, transparent 75%)',
+          background:'radial-gradient(ellipse at 40% 40%, rgba(0,200,255,.42) 0%, rgba(0,120,200,.18) 40%, transparent 70%)',
           animation:'orb-1 20s ease-in-out infinite',
-          filter:'blur(2px)',
+          filter:'blur(4px)',
         }} />
 
         {/* Orb 2 — índigo, cuadrante inferior derecho */}
@@ -221,19 +233,19 @@ export const LoginView: React.FC = () => {
           position:'absolute', bottom:'-10%', right:'-8%',
           width:'58vw', height:'58vw', maxWidth:750, maxHeight:750,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at 60% 60%, rgba(80,70,240,.52) 0%, rgba(50,30,180,.22) 40%, rgba(20,10,100,.07) 62%, transparent 78%)',
+          background:'radial-gradient(ellipse at 60% 60%, rgba(80,70,240,.34) 0%, rgba(50,30,180,.14) 42%, transparent 72%)',
           animation:'orb-2 24s ease-in-out infinite 4s',
-          filter:'blur(2px)',
+          filter:'blur(4px)',
         }} />
 
-        {/* Orb 3 — ámbar cálido, zona central-inferior */}
+        {/* Orb 3 — ámbar, zona central-inferior */}
         <div style={{
           position:'absolute', bottom:'5%', left:'22%',
           width:'38vw', height:'38vw', maxWidth:520, maxHeight:520,
           borderRadius:'50%',
-          background:'radial-gradient(ellipse at 50% 50%, rgba(255,155,20,.44) 0%, rgba(220,90,0,.18) 42%, rgba(160,50,0,.05) 64%, transparent 78%)',
+          background:'radial-gradient(ellipse at 50% 50%, rgba(255,155,20,.28) 0%, rgba(220,90,0,.11) 44%, transparent 72%)',
           animation:'orb-3 15s ease-in-out infinite 7s',
-          filter:'blur(1px)',
+          filter:'blur(3px)',
         }} />
 
         {/* Grid de puntos */}
@@ -305,13 +317,20 @@ export const LoginView: React.FC = () => {
 
             {/* Logo + badge */}
             <div className="lr-logo lr-logo-mb" style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28 }}>
-              <div style={{
-                width:42, height:42, borderRadius:13, flexShrink:0,
-                background:'linear-gradient(135deg, #00D1FF 0%, #0077AA 100%)',
-                display:'flex', alignItems:'center', justifyContent:'center',
-                boxShadow:'0 0 24px rgba(0,209,255,.55)',
-              }}>
-                <IconBuilding />
+              {/* Logo iretum con glow pulsante */}
+              <div className="lr-logo-wrap" style={{ flexShrink:0 }}>
+                <div className="lr-logo-glow" />
+                <img
+                  src="/favicon.svg"
+                  alt="iretum"
+                  style={{
+                    position:'relative', zIndex:1,
+                    width:42, height:42,
+                    borderRadius:10,
+                    objectFit:'contain',
+                    display:'block',
+                  }}
+                />
               </div>
               <div>
                 <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:17, fontWeight:800, letterSpacing:'-.03em', color:'rgba(255,255,255,.93)', lineHeight:1.2 }}>
