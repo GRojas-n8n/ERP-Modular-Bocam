@@ -822,10 +822,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     setAprobando(true);
     try {
       await api.patch(`/api/v1/gerencia-tecnica/presupuestos/${presupuesto.id}/aprobar`);
-      notify({ message: 'Presupuesto aprobado — la composición APU queda bloqueada.', type: 'success' });
+      notify({ title: 'Presupuesto aprobado — la composición APU queda bloqueada.', type: 'success' });
       void fetchPresupuesto();
     } catch (err: any) {
-      notify({ message: err.response?.data?.message || 'Error al aprobar presupuesto.', type: 'error' });
+      notify({ title: err.response?.data?.message || 'Error al aprobar presupuesto.', type: 'error' });
     } finally {
       setAprobando(false);
     }
