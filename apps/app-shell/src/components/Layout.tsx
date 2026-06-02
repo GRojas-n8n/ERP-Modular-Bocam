@@ -148,7 +148,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
     name: 'Calidad', icon: IconShieldCheck, id: 'calidad',
     roles: ['calidad', 'admin'],
     subItems: [
-      { id: 'documentos', label: 'Documentos', icon: IconFileText },
+      { id: 'documentos',        label: 'Documentos',        icon: IconFileText },
+      { id: 'no-conformidades',  label: 'No Conformidades',  icon: IconAlertCircle },
+      { id: 'auditorias',        label: 'Auditorías',        icon: IconClipboardCheck },
     ],
   },
   {

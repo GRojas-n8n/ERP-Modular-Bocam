@@ -64,3 +64,93 @@ model VersionDocumento {
   @@index([documento_id])
   @@map("versiones_documento")
 }
+
+// --- No Conformidades (ISO 9001:2015 § 10.2) ---
+model NoConformidad {
+  id_nc           String    @id @default(uuid()) @db.Uuid
+  tenant_id       String    @db.Uuid
+  proyecto_id     String?   @db.Uuid
+  codigo          String    @db.VarChar(30)
+  titulo          String    @db.VarChar(255)
+  descripcion     String?   @db.Text
+  fuente          String    @default("INTERNA") // INTERNA|CLIENTE|PROVEEDOR|AUDITORIA|PROCESO
+  estado          String    @default("ABIERTA") // ABIERTA|EN_ANALISIS|ACCION_CORRECTIVA|EN_VERIFICACION|CERRADA
+  detectado_por   String    @db.Uuid
+  responsable_id  String    @db.Uuid
+  fecha_deteccion DateTime  @default(now())
+  fecha_limite    DateTime?
+  fecha_cierre    DateTime?
+  causa_raiz      String?   @db.Text
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  acciones AccionCorrectiva[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id])
+  @@index([tenant_id, estado])
+  @@map("no_conformidades")
+}
+
+// --- Acciones Correctivas ---
+model AccionCorrectiva {
+  id_accion        String        @id @default(uuid()) @db.Uuid
+  tenant_id        String        @db.Uuid
+  nc_id            String        @db.Uuid
+  nc               NoConformidad @relation(fields: [nc_id], references: [id_nc], onDelete: Cascade)
+  descripcion      String        @db.Text
+  responsable_id   String        @db.Uuid
+  fecha_compromiso DateTime?
+  estado           String        @default("PENDIENTE") // PENDIENTE|EN_PROCESO|COMPLETADA|VERIFICADA|CANCELADA
+  evidencia        String?       @db.Text
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  @@index([nc_id])
+  @@index([tenant_id])
+  @@map("acciones_correctivas")
+}
+
+// --- Auditorías Internas (ISO 9001:2015 § 9.2) ---
+model AuditoriaInterna {
+  id_auditoria     String    @id @default(uuid()) @db.Uuid
+  tenant_id        String    @db.Uuid
+  proyecto_id      String?   @db.Uuid
+  codigo           String    @db.VarChar(30)
+  titulo           String    @db.VarChar(255)
+  alcance          String?   @db.Text
+  criterios        String?   @db.Text
+  auditor_lider_id String    @db.Uuid
+  fecha_inicio     DateTime?
+  fecha_fin        DateTime?
+  estado           String    @default("PROGRAMADA") // PROGRAMADA|EN_CURSO|COMPLETADA|CANCELADA
+  observaciones    String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  hallazgos HallazgoAuditoria[]
+
+  @@unique([tenant_id, codigo])
+  @@index([tenant_id])
+  @@index([tenant_id, estado])
+  @@map("auditorias_internas")
+}
+
+// --- Hallazgos de Auditoría ---
+model HallazgoAuditoria {
+  id_hallazgo      String           @id @default(uuid()) @db.Uuid
+  tenant_id        String           @db.Uuid
+  auditoria_id     String           @db.Uuid
+  auditoria        AuditoriaInterna @relation(fields: [auditoria_id], references: [id_auditoria], onDelete: Cascade)
+  descripcion      String           @db.Text
+  tipo             String           @default("MENOR") // MAYOR|MENOR|OBSERVACION
+  proceso_afectado String?          @db.VarChar(100)
+  evidencia        String?          @db.Text
+  accion_requerida String?          @db.Text
+  estado           String           @default("ABIERTO") // ABIERTO|EN_SEGUIMIENTO|CERRADO
+  created_at       DateTime         @default(now())
+
+  @@index([auditoria_id])
+  @@index([tenant_id])
+  @@map("hallazgos_auditoria")
+}

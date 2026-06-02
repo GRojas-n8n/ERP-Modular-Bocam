@@ -70,6 +70,218 @@ app.get('/api/v1/calidad/resumen-dashboard',
   }
 );
 
+// ── No Conformidades ─────────────────────────────────────────────────────────
+
+app.get('/api/v1/calidad/no-conformidades',
+  requireRoles('calidad', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.noConformidad.findMany({
+          include: { acciones: { orderBy: { created_at: 'asc' } } },
+          orderBy: { created_at: 'desc' },
+        })
+      );
+      res.json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.post('/api/v1/calidad/no-conformidades',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { titulo, descripcion, fuente, responsable_id, fecha_limite, proyecto_id } = req.body;
+      if (!titulo || !fuente) return res.status(400).json({ success: false, message: 'titulo y fuente son requeridos.' });
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const count = await prisma.noConformidad.count({ where: { tenant_id: tenantId } });
+        const year  = new Date().getFullYear();
+        const codigo = `NC-${year}-${String(count + 1).padStart(3, '0')}`;
+        return prisma.noConformidad.create({
+          data: {
+            tenant_id: tenantId, proyecto_id: proyecto_id || null,
+            codigo, titulo, descripcion: descripcion || null,
+            fuente, detectado_por: userId,
+            responsable_id: responsable_id || userId,
+            fecha_limite: fecha_limite ? new Date(fecha_limite) : null,
+          },
+          include: { acciones: true },
+        });
+      });
+      res.status(201).json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.get('/api/v1/calidad/no-conformidades/:id',
+  requireRoles('calidad', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.noConformidad.findUnique({
+          where: { id_nc: req.params.id },
+          include: { acciones: { orderBy: { created_at: 'asc' } } },
+        })
+      );
+      if (!data) return res.status(404).json({ success: false, message: 'NC no encontrada.' });
+      res.json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.patch('/api/v1/calidad/no-conformidades/:id',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { estado, causa_raiz, responsable_id, fecha_limite } = req.body;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.noConformidad.update({
+          where: { id_nc: req.params.id },
+          data: {
+            ...(estado          && { estado }),
+            ...(causa_raiz      !== undefined && { causa_raiz }),
+            ...(responsable_id  && { responsable_id }),
+            ...(fecha_limite    !== undefined && { fecha_limite: fecha_limite ? new Date(fecha_limite) : null }),
+            ...(estado === 'CERRADA' && { fecha_cierre: new Date() }),
+          },
+          include: { acciones: true },
+        })
+      );
+      res.json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.post('/api/v1/calidad/no-conformidades/:id/acciones',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { descripcion, responsable_id, fecha_compromiso } = req.body;
+      if (!descripcion) return res.status(400).json({ success: false, message: 'descripcion es requerida.' });
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.accionCorrectiva.create({
+          data: {
+            tenant_id: tenantId, nc_id: req.params.id,
+            descripcion, responsable_id: responsable_id || userId,
+            fecha_compromiso: fecha_compromiso ? new Date(fecha_compromiso) : null,
+          },
+        })
+      );
+      res.status(201).json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.patch('/api/v1/calidad/no-conformidades/:id/acciones/:aid',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { estado, evidencia } = req.body;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.accionCorrectiva.update({
+          where: { id_accion: req.params.aid },
+          data: {
+            ...(estado    && { estado }),
+            ...(evidencia !== undefined && { evidencia }),
+          },
+        })
+      );
+      res.json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+// ── Auditorías Internas ───────────────────────────────────────────────────────
+
+app.get('/api/v1/calidad/auditorias',
+  requireRoles('calidad', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.auditoriaInterna.findMany({
+          include: { _count: { select: { hallazgos: true } } },
+          orderBy: { created_at: 'desc' },
+        })
+      );
+      res.json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.post('/api/v1/calidad/auditorias',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { titulo, alcance, criterios, auditor_lider_id, fecha_inicio, fecha_fin, proyecto_id } = req.body;
+      if (!titulo) return res.status(400).json({ success: false, message: 'titulo es requerido.' });
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const count  = await prisma.auditoriaInterna.count({ where: { tenant_id: tenantId } });
+        const year   = new Date().getFullYear();
+        const codigo = `AUD-${year}-${String(count + 1).padStart(2, '0')}`;
+        return prisma.auditoriaInterna.create({
+          data: {
+            tenant_id: tenantId, proyecto_id: proyecto_id || null,
+            codigo, titulo,
+            alcance: alcance || null, criterios: criterios || null,
+            auditor_lider_id: auditor_lider_id || userId,
+            fecha_inicio: fecha_inicio ? new Date(fecha_inicio) : null,
+            fecha_fin:    fecha_fin    ? new Date(fecha_fin)    : null,
+          },
+        });
+      });
+      res.status(201).json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.get('/api/v1/calidad/auditorias/:id',
+  requireRoles('calidad', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.auditoriaInterna.findUnique({
+          where: { id_auditoria: req.params.id },
+          include: { hallazgos: { orderBy: { created_at: 'asc' } } },
+        })
+      );
+      if (!data) return res.status(404).json({ success: false, message: 'Auditoría no encontrada.' });
+      res.json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+app.post('/api/v1/calidad/auditorias/:id/hallazgos',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { descripcion, tipo, proceso_afectado, evidencia, accion_requerida } = req.body;
+      if (!descripcion || !tipo) return res.status(400).json({ success: false, message: 'descripcion y tipo son requeridos.' });
+      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
+        prisma.hallazgoAuditoria.create({
+          data: {
+            tenant_id: tenantId, auditoria_id: req.params.id,
+            descripcion, tipo,
+            proceso_afectado: proceso_afectado || null,
+            evidencia: evidencia || null,
+            accion_requerida: accion_requerida || null,
+          },
+        })
+      );
+      res.status(201).json({ success: true, data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
 // ── Health ───────────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'calidad', version: '1.0.0', timestamp: new Date().toISOString() });

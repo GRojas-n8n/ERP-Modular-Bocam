@@ -156,6 +156,68 @@ exports.Prisma.VersionDocumentoScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.NoConformidadScalarFieldEnum = {
+  id_nc: 'id_nc',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  codigo: 'codigo',
+  titulo: 'titulo',
+  descripcion: 'descripcion',
+  fuente: 'fuente',
+  estado: 'estado',
+  detectado_por: 'detectado_por',
+  responsable_id: 'responsable_id',
+  fecha_deteccion: 'fecha_deteccion',
+  fecha_limite: 'fecha_limite',
+  fecha_cierre: 'fecha_cierre',
+  causa_raiz: 'causa_raiz',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.AccionCorrectivaScalarFieldEnum = {
+  id_accion: 'id_accion',
+  tenant_id: 'tenant_id',
+  nc_id: 'nc_id',
+  descripcion: 'descripcion',
+  responsable_id: 'responsable_id',
+  fecha_compromiso: 'fecha_compromiso',
+  estado: 'estado',
+  evidencia: 'evidencia',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.AuditoriaInternaScalarFieldEnum = {
+  id_auditoria: 'id_auditoria',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  codigo: 'codigo',
+  titulo: 'titulo',
+  alcance: 'alcance',
+  criterios: 'criterios',
+  auditor_lider_id: 'auditor_lider_id',
+  fecha_inicio: 'fecha_inicio',
+  fecha_fin: 'fecha_fin',
+  estado: 'estado',
+  observaciones: 'observaciones',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.HallazgoAuditoriaScalarFieldEnum = {
+  id_hallazgo: 'id_hallazgo',
+  tenant_id: 'tenant_id',
+  auditoria_id: 'auditoria_id',
+  descripcion: 'descripcion',
+  tipo: 'tipo',
+  proceso_afectado: 'proceso_afectado',
+  evidencia: 'evidencia',
+  accion_requerida: 'accion_requerida',
+  estado: 'estado',
+  created_at: 'created_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -174,7 +236,11 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   Documento: 'Documento',
-  VersionDocumento: 'VersionDocumento'
+  VersionDocumento: 'VersionDocumento',
+  NoConformidad: 'NoConformidad',
+  AccionCorrectiva: 'AccionCorrectiva',
+  AuditoriaInterna: 'AuditoriaInterna',
+  HallazgoAuditoria: 'HallazgoAuditoria'
 };
 
 /**

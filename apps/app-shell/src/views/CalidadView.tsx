@@ -99,7 +99,7 @@ function formatBytes(bytes: number): string {
 const CALIDAD_URL = '/api/v1/calidad';
 
 // ── Componente principal ──────────────────────────────────────────────────────
-export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubView: _activeSubView }) => {
+export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant, user } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
@@ -257,8 +257,8 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     { label: 'Borradores',       value: (dashboard?.documentos_por_estado.BORRADOR ?? 0),           color: 'text-muted-foreground',   bg: 'bg-muted',      icon: IconFileText },
   ];
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  return (
+  // ── Vista Documentos (default) ────────────────────────────────────────────
+  const documentosView = (
     <div className="animate-in space-y-8 fade-in duration-700">
 
       {/* Header */}
@@ -685,6 +685,463 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         </div>
       )}
 
+    </div>
+  );
+
+  // ── Routing por sub-vista ────────────────────────────────────────────────
+  if (activeSubView === 'no-conformidades') return <NoConformidadesView isDemo={isDemo} canEdit={canEdit} />;
+  if (activeSubView === 'auditorias')       return <AuditoriasView       isDemo={isDemo} canEdit={canEdit} />;
+  return documentosView;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VISTA: No Conformidades
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface NC {
+  id_nc: string; codigo: string; titulo: string; fuente: string;
+  estado: string; fecha_deteccion: string; fecha_limite?: string | null;
+  responsable_id: string; causa_raiz?: string | null;
+  acciones: AC[];
+}
+interface AC {
+  id_accion: string; descripcion: string; estado: string;
+  responsable_id: string; fecha_compromiso?: string | null; evidencia?: string | null;
+}
+
+const NC_ESTADO_COLOR: Record<string, string> = {
+  ABIERTA:           'bg-red-500/10 text-red-600 border-red-500/20',
+  EN_ANALISIS:       'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  ACCION_CORRECTIVA: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  EN_VERIFICACION:   'bg-violet-500/10 text-violet-600 border-violet-500/20',
+  CERRADA:           'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+};
+const NC_ESTADOS_FLUJO = ['ABIERTA', 'EN_ANALISIS', 'ACCION_CORRECTIVA', 'EN_VERIFICACION', 'CERRADA'];
+
+const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDemo, canEdit }) => {
+  const { notify } = useNotification();
+  const [ncs, setNcs]             = useState<NC[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [selected, setSelected]   = useState<NC | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [form, setForm]           = useState({ titulo: '', descripcion: '', fuente: 'INTERNA', fecha_limite: '' });
+  const [acForm, setAcForm]       = useState({ descripcion: '', fecha_compromiso: '' });
+  const [showAcForm, setShowAcForm] = useState(false);
+
+  const load = useCallback(async () => {
+    if (isDemo) { setNcs([]); setLoading(false); return; }
+    try {
+      const r = await api.get('/api/v1/calidad/no-conformidades');
+      setNcs(r.data.data || []);
+    } catch { /* silencioso */ }
+    finally { setLoading(false); }
+  }, [isDemo]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const handleCreate = async () => {
+    if (!form.titulo) return;
+    setSaving(true);
+    try {
+      await api.post('/api/v1/calidad/no-conformidades', form);
+      notify({ title: 'No Conformidad registrada.', type: 'success' });
+      setShowCreate(false);
+      setForm({ titulo: '', descripcion: '', fuente: 'INTERNA', fecha_limite: '' });
+      void load();
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error al crear NC.', type: 'error' }); }
+    finally { setSaving(false); }
+  };
+
+  const handleEstado = async (nc: NC, estado: string) => {
+    try {
+      await api.patch(`/api/v1/calidad/no-conformidades/${nc.id_nc}`, { estado });
+      notify({ title: `NC ${nc.codigo} → ${estado}`, type: 'success' });
+      void load();
+      setSelected(prev => prev ? { ...prev, estado } : null);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+  };
+
+  const handleAddAC = async () => {
+    if (!selected || !acForm.descripcion) return;
+    setSaving(true);
+    try {
+      await api.post(`/api/v1/calidad/no-conformidades/${selected.id_nc}/acciones`, acForm);
+      notify({ title: 'Acción correctiva agregada.', type: 'success' });
+      setAcForm({ descripcion: '', fecha_compromiso: '' });
+      setShowAcForm(false);
+      void load();
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black tracking-tighter">No Conformidades</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">ISO 9001:2015 § 10.2 — Registro y seguimiento de NC</p>
+        </div>
+        {canEdit && !isDemo && (
+          <button onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-widest text-primary-foreground hover:opacity-90 active:scale-95 transition-all">
+            <IconPlus className="h-3.5 w-3.5" /> Nueva NC
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex h-48 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/10 border-t-primary" /></div>
+      ) : ncs.length === 0 ? (
+        <EmptyStatePanel title="Sin no conformidades registradas" description={isDemo ? 'Demo — sin datos de NC' : 'Registra la primera NC para comenzar el seguimiento.'} />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-border/40 bg-muted/30">
+                    {['Código', 'Título', 'Fuente', 'Estado', 'Fecha límite'].map(h => (
+                      <th key={h} className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20">
+                  {ncs.map(nc => (
+                    <tr key={nc.id_nc} onClick={() => setSelected(nc)}
+                      className="cursor-pointer hover:bg-primary/[0.02] transition-colors">
+                      <td className="px-4 py-3 font-black text-primary text-sm">{nc.codigo}</td>
+                      <td className="px-4 py-3 text-sm text-foreground max-w-xs truncate">{nc.titulo}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{nc.fuente}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', NC_ESTADO_COLOR[nc.estado] || 'bg-muted text-muted-foreground')}>{nc.estado.replace('_', ' ')}</span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {nc.fecha_limite ? new Date(nc.fecha_limite).toLocaleDateString('es-MX') : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Detalle NC */}
+      {selected && (
+        <SlidePanel isOpen title={`${selected.codigo} — ${selected.titulo}`} onClose={() => setSelected(null)} accentColor="indigo">
+          <div className="space-y-4">
+            <div className="flex gap-2 flex-wrap">
+              {NC_ESTADOS_FLUJO.map(e => (
+                <button key={e} disabled={selected.estado === e || !canEdit}
+                  onClick={() => void handleEstado(selected, e)}
+                  className={cn('rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-widest transition-all',
+                    selected.estado === e ? NC_ESTADO_COLOR[e] : 'border-border/40 text-muted-foreground hover:border-primary/40 disabled:opacity-40')}>
+                  {e.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+            {selected.descripcion && <p className="text-sm text-muted-foreground">{selected.descripcion}</p>}
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Acciones Correctivas ({selected.acciones.length})</p>
+              {selected.acciones.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Sin acciones correctivas aún.</p>
+              ) : (
+                <div className="space-y-2">
+                  {selected.acciones.map(ac => (
+                    <div key={ac.id_accion} className="rounded-lg border border-border/30 bg-muted/20 p-3">
+                      <p className="text-sm text-foreground">{ac.descripcion}</p>
+                      <span className={cn('mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest',
+                        ac.estado === 'COMPLETADA' || ac.estado === 'VERIFICADA' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600')}>
+                        {ac.estado}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {canEdit && !showAcForm && (
+                <button onClick={() => setShowAcForm(true)}
+                  className="mt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80">
+                  <IconPlus className="h-3 w-3" /> Agregar acción
+                </button>
+              )}
+              {showAcForm && (
+                <div className="mt-3 space-y-3 rounded-xl border border-border/40 bg-card p-3">
+                  <textarea value={acForm.descripcion} onChange={e => setAcForm(p => ({ ...p, descripcion: e.target.value }))}
+                    placeholder="Descripción de la acción correctiva..." rows={3}
+                    className="w-full rounded-lg border border-border/40 bg-background p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input type="date" value={acForm.fecha_compromiso} onChange={e => setAcForm(p => ({ ...p, fecha_compromiso: e.target.value }))}
+                    className="w-full rounded-lg border border-border/40 bg-background p-2 text-sm" />
+                  <div className="flex gap-2">
+                    <SubmitButton label={saving ? 'Guardando...' : 'Agregar'} loading={saving} onClick={() => void handleAddAC()} color="indigo" />
+                    <button onClick={() => setShowAcForm(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancelar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SlidePanel>
+      )}
+
+      {/* Crear NC */}
+      <SlidePanel isOpen={showCreate} title="Nueva No Conformidad" onClose={() => setShowCreate(false)} accentColor="red">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Título *</label>
+            <input value={form.titulo} onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
+              placeholder="Descripción breve de la NC" className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Fuente</label>
+            <select value={form.fuente} onChange={e => setForm(p => ({ ...p, fuente: e.target.value }))}
+              className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm">
+              {['INTERNA', 'CLIENTE', 'PROVEEDOR', 'AUDITORIA', 'PROCESO'].map(f => <option key={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Descripción</label>
+            <textarea value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))}
+              rows={3} placeholder="Detalle de la no conformidad..."
+              className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Fecha límite de cierre</label>
+            <input type="date" value={form.fecha_limite} onChange={e => setForm(p => ({ ...p, fecha_limite: e.target.value }))}
+              className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm" />
+          </div>
+          <SubmitButton label={saving ? 'Guardando...' : 'Registrar NC'} loading={saving} onClick={() => void handleCreate()} color="red" />
+        </div>
+      </SlidePanel>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VISTA: Auditorías Internas
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Auditoria {
+  id_auditoria: string; codigo: string; titulo: string; alcance?: string | null;
+  estado: string; fecha_inicio?: string | null; fecha_fin?: string | null;
+  auditor_lider_id: string;
+  _count?: { hallazgos: number };
+  hallazgos?: Hallazgo[];
+}
+interface Hallazgo {
+  id_hallazgo: string; descripcion: string; tipo: string;
+  proceso_afectado?: string | null; estado: string;
+}
+
+const AUD_ESTADO_COLOR: Record<string, string> = {
+  PROGRAMADA: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  EN_CURSO:   'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  COMPLETADA: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  CANCELADA:  'bg-muted/50 text-muted-foreground border-border/30',
+};
+const HALLAZGO_COLOR: Record<string, string> = {
+  MAYOR:      'bg-red-500/10 text-red-600 border-red-500/20',
+  MENOR:      'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  OBSERVACION:'bg-blue-500/10 text-blue-600 border-blue-500/20',
+};
+
+const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDemo, canEdit }) => {
+  const { notify } = useNotification();
+  const [auditorias, setAuditorias] = useState<Auditoria[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [selected, setSelected]     = useState<Auditoria | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [saving, setSaving]         = useState(false);
+  const [form, setForm]             = useState({ titulo: '', alcance: '', criterios: '', fecha_inicio: '', fecha_fin: '' });
+  const [hForm, setHForm]           = useState({ descripcion: '', tipo: 'MENOR', proceso_afectado: '' });
+  const [showHForm, setShowHForm]   = useState(false);
+
+  const load = useCallback(async () => {
+    if (isDemo) { setAuditorias([]); setLoading(false); return; }
+    try {
+      const r = await api.get('/api/v1/calidad/auditorias');
+      setAuditorias(r.data.data || []);
+    } catch { /* silencioso */ }
+    finally { setLoading(false); }
+  }, [isDemo]);
+
+  const loadDetail = useCallback(async (id: string) => {
+    try {
+      const r = await api.get(`/api/v1/calidad/auditorias/${id}`);
+      setSelected(r.data.data);
+    } catch { /* silencioso */ }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const handleCreate = async () => {
+    if (!form.titulo) return;
+    setSaving(true);
+    try {
+      await api.post('/api/v1/calidad/auditorias', form);
+      notify({ title: 'Auditoría creada.', type: 'success' });
+      setShowCreate(false);
+      setForm({ titulo: '', alcance: '', criterios: '', fecha_inicio: '', fecha_fin: '' });
+      void load();
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setSaving(false); }
+  };
+
+  const handleAddHallazgo = async () => {
+    if (!selected || !hForm.descripcion) return;
+    setSaving(true);
+    try {
+      await api.post(`/api/v1/calidad/auditorias/${selected.id_auditoria}/hallazgos`, hForm);
+      notify({ title: 'Hallazgo registrado.', type: 'success' });
+      setHForm({ descripcion: '', tipo: 'MENOR', proceso_afectado: '' });
+      setShowHForm(false);
+      void loadDetail(selected.id_auditoria);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black tracking-tighter">Auditorías Internas</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">ISO 9001:2015 § 9.2 — Programa y hallazgos</p>
+        </div>
+        {canEdit && !isDemo && (
+          <button onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-widest text-primary-foreground hover:opacity-90 active:scale-95 transition-all">
+            <IconPlus className="h-3.5 w-3.5" /> Nueva Auditoría
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex h-48 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/10 border-t-primary" /></div>
+      ) : auditorias.length === 0 ? (
+        <EmptyStatePanel title="Sin auditorías registradas" description={isDemo ? 'Demo — sin datos de auditorías' : 'Programa la primera auditoría interna.'} />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-border/40 bg-muted/30">
+                    {['Código', 'Título', 'Estado', 'Fecha inicio', 'Hallazgos'].map(h => (
+                      <th key={h} className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20">
+                  {auditorias.map(a => (
+                    <tr key={a.id_auditoria} onClick={() => void loadDetail(a.id_auditoria)}
+                      className="cursor-pointer hover:bg-primary/[0.02] transition-colors">
+                      <td className="px-4 py-3 font-black text-primary text-sm">{a.codigo}</td>
+                      <td className="px-4 py-3 text-sm text-foreground max-w-xs truncate">{a.titulo}</td>
+                      <td className="px-4 py-3">
+                        <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', AUD_ESTADO_COLOR[a.estado] || 'bg-muted text-muted-foreground')}>{a.estado.replace('_', ' ')}</span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {a.fecha_inicio ? new Date(a.fecha_inicio).toLocaleDateString('es-MX') : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-black text-foreground">{a._count?.hallazgos ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Detalle Auditoría */}
+      {selected && (
+        <SlidePanel isOpen title={`${selected.codigo} — ${selected.titulo}`} onClose={() => setSelected(null)} accentColor="emerald">
+          <div className="space-y-4">
+            {selected.alcance && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Alcance</p>
+                <p className="text-sm text-foreground">{selected.alcance}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+                Hallazgos ({selected.hallazgos?.length ?? 0})
+              </p>
+              {(selected.hallazgos?.length ?? 0) === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Sin hallazgos registrados aún.</p>
+              ) : (
+                <div className="space-y-2">
+                  {selected.hallazgos!.map(h => (
+                    <div key={h.id_hallazgo} className="rounded-lg border border-border/30 bg-muted/20 p-3">
+                      <div className="flex items-start gap-2">
+                        <span className={cn('mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', HALLAZGO_COLOR[h.tipo] || 'bg-muted text-muted-foreground')}>{h.tipo}</span>
+                        <p className="text-sm text-foreground">{h.descripcion}</p>
+                      </div>
+                      {h.proceso_afectado && <p className="mt-1 text-[10px] text-muted-foreground">Proceso: {h.proceso_afectado}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {canEdit && !showHForm && (
+                <button onClick={() => setShowHForm(true)}
+                  className="mt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80">
+                  <IconPlus className="h-3 w-3" /> Agregar hallazgo
+                </button>
+              )}
+              {showHForm && (
+                <div className="mt-3 space-y-3 rounded-xl border border-border/40 bg-card p-3">
+                  <select value={hForm.tipo} onChange={e => setHForm(p => ({ ...p, tipo: e.target.value }))}
+                    className="w-full rounded-lg border border-border/40 bg-background px-3 py-2 text-sm">
+                    {['MAYOR', 'MENOR', 'OBSERVACION'].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                  <textarea value={hForm.descripcion} onChange={e => setHForm(p => ({ ...p, descripcion: e.target.value }))}
+                    placeholder="Descripción del hallazgo..." rows={3}
+                    className="w-full rounded-lg border border-border/40 bg-background p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input value={hForm.proceso_afectado} onChange={e => setHForm(p => ({ ...p, proceso_afectado: e.target.value }))}
+                    placeholder="Proceso afectado (opcional)"
+                    className="w-full rounded-lg border border-border/40 bg-background px-3 py-2 text-sm" />
+                  <div className="flex gap-2">
+                    <SubmitButton label={saving ? 'Guardando...' : 'Registrar'} loading={saving} onClick={() => void handleAddHallazgo()} color="emerald" />
+                    <button onClick={() => setShowHForm(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancelar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SlidePanel>
+      )}
+
+      {/* Crear Auditoría */}
+      <SlidePanel isOpen={showCreate} title="Nueva Auditoría Interna" onClose={() => setShowCreate(false)} accentColor="emerald">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Título *</label>
+            <input value={form.titulo} onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
+              placeholder="Ej. Auditoría SGC Q2-2026" className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Alcance</label>
+            <textarea value={form.alcance} onChange={e => setForm(p => ({ ...p, alcance: e.target.value }))}
+              rows={2} placeholder="Procesos y áreas incluidos..."
+              className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Fecha inicio</label>
+              <input type="date" value={form.fecha_inicio} onChange={e => setForm(p => ({ ...p, fecha_inicio: e.target.value }))}
+                className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Fecha fin</label>
+              <input type="date" value={form.fecha_fin} onChange={e => setForm(p => ({ ...p, fecha_fin: e.target.value }))}
+                className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5 text-sm" />
+            </div>
+          </div>
+          <SubmitButton label={saving ? 'Guardando...' : 'Crear Auditoría'} loading={saving} onClick={() => void handleCreate()} color="emerald" />
+        </div>
+      </SlidePanel>
     </div>
   );
 };
