@@ -9,7 +9,7 @@ import {
   EstadoAvance,
   EstadoEstimacion,
 } from './types';
-import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createEventBus } from '../../../packages/event-bus/src';
 import {
   buildEventContext,
