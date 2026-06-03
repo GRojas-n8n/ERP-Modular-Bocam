@@ -1303,7 +1303,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               <>
                 <button
                   onClick={() => fileInputExplosionRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-3 border border-border/60 bg-card text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-muted/60 active:scale-95 transition-all"
+                  className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
                 >
                   <IconLayers className="h-4 w-4" />
                   Explosión
