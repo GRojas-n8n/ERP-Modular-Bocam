@@ -301,7 +301,7 @@ export const ComparativaDetail: React.FC<Props> = ({
         : (err as { response?: { status?: number } })?.response?.status === 503
           ? 'El servicio de IA no está disponible. Intenta más tarde.'
           : 'No se pudo procesar el PDF.';
-      notify({ type: 'error', message: msg });
+      notify({ type: 'error', title: 'Error al leer PDF', message: msg });
     } finally {
       setUploadingPdf(false);
     }
@@ -321,7 +321,7 @@ export const ComparativaDetail: React.FC<Props> = ({
     });
     onUpdate({ ...comp, lineas: lineasActualizadas });
     setShowPdfReview(false);
-    notify({ type: 'success', message: 'Precios del PDF aplicados al cuadro.' });
+    notify({ type: 'success', title: 'Cotización aplicada', message: 'Precios del PDF aplicados al cuadro.' });
   };
 
   const handleRemoveProveedor = (provId: string) => {
