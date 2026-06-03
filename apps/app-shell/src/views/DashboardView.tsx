@@ -10,6 +10,7 @@ import {
   EmptyStatePanel,
   MetricCard,
   OperationalBanner,
+  ProgressRing,
   SectionBadge,
   cn,
 } from '@bocam/ui-core';
@@ -32,19 +33,21 @@ import {
 // ─── Tipos del Dashboard Ejecutivo ───────────────────────────────────────────
 
 interface ResumenCompras      { requisiciones_pendientes: number; ocs_por_emitir: number; ocs_en_proceso: number; monto_comprometido: number; }
-interface ResumenControlObra  { estimaciones_en_revision: number; estimaciones_aprobadas: number; avances_pendientes: number; }
+interface ResumenControlObra  { estimaciones_en_revision: number; estimaciones_aprobadas: number; avances_pendientes: number; avance_pct?: number; }
 interface ResumenPersonal     { empleados_activos: number; cuadrillas_activas: number; prenominas_pendientes: number; }
 interface ResumenSeguridad    { incidentes_abiertos: number; incidentes_criticos: number; permisos_vigentes: number; }
 interface ResumenCalidad      { documentos_vigentes: number; documentos_en_revision: number; versiones_pendientes: number; }
+interface ResumenFinanzas     { total_autorizado: number; total_ejercido: number; total_comprometido: number; porcentaje_ejercido: number; }
 
 interface EjecutivoState<T> { data: T | null; loading: boolean; error: boolean; }
 
 const DEMO_EJECUTIVO = {
-  compras:     { requisiciones_pendientes: 4, ocs_por_emitir: 2, ocs_en_proceso: 7, monto_comprometido: 1_450_000 },
-  controlObra: { estimaciones_en_revision: 1, estimaciones_aprobadas: 3, avances_pendientes: 5 },
-  personal:    { empleados_activos: 38, cuadrillas_activas: 4, prenominas_pendientes: 2 },
-  seguridad:   { incidentes_abiertos: 2, incidentes_criticos: 1, permisos_vigentes: 3 },
-  calidad:     { documentos_vigentes: 14, documentos_en_revision: 3, versiones_pendientes: 5 },
+  compras:     { requisiciones_pendientes: 3, ocs_por_emitir: 2, ocs_en_proceso: 5, monto_comprometido: 2_340_000 },
+  controlObra: { estimaciones_en_revision: 2, estimaciones_aprobadas: 5, avances_pendientes: 3, avance_pct: 68 },
+  personal:    { empleados_activos: 47, cuadrillas_activas: 6, prenominas_pendientes: 1 },
+  seguridad:   { incidentes_abiertos: 2, incidentes_criticos: 0, permisos_vigentes: 5 },
+  calidad:     { documentos_vigentes: 22, documentos_en_revision: 2, versiones_pendientes: 1 },
+  finanzas:    { total_autorizado: 18_500_000, total_ejercido: 12_810_000, total_comprometido: 2_340_000, porcentaje_ejercido: 69 },
 };
 
 const fmtMXN = (n: number) =>
@@ -58,6 +61,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
   const [personal,    setPersonal]    = useState<EjecutivoState<ResumenPersonal>>   ({ data: null, loading: true, error: false });
   const [seguridad,   setSeguridad]   = useState<EjecutivoState<ResumenSeguridad>>  ({ data: null, loading: true, error: false });
   const [calidad,     setCalidad]     = useState<EjecutivoState<ResumenCalidad>>    ({ data: null, loading: true, error: false });
+  const [finanzas,    setFinanzas]    = useState<EjecutivoState<ResumenFinanzas>>   ({ data: null, loading: true, error: false });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchAll = useCallback(async () => {
@@ -67,6 +71,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
       setPersonal   ({ data: DEMO_EJECUTIVO.personal,    loading: false, error: false });
       setSeguridad  ({ data: DEMO_EJECUTIVO.seguridad,   loading: false, error: false });
       setCalidad    ({ data: DEMO_EJECUTIVO.calidad,     loading: false, error: false });
+      setFinanzas   ({ data: DEMO_EJECUTIVO.finanzas,    loading: false, error: false });
       setLastUpdated(new Date());
       return;
     }
@@ -81,19 +86,29 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
     setPersonal   (prev => ({ ...prev, loading: true, error: false }));
     setSeguridad  (prev => ({ ...prev, loading: true, error: false }));
     setCalidad    (prev => ({ ...prev, loading: true, error: false }));
+    setFinanzas   (prev => ({ ...prev, loading: true, error: false }));
 
-    const [r1, r2, r3, r4, r5] = await Promise.allSettled([
+    const [r1, r2, r3, r4, r5, r6] = await Promise.allSettled([
       api.get('/api/v1/compras/resumen-dashboard'),
       api.get('/api/v1/control-obra/resumen-dashboard'),
       api.get('/api/v1/personal/resumen-dashboard'),
       api.get('/api/v1/seguridad/resumen-dashboard'),
       api.get('/api/v1/calidad/resumen-dashboard'),
+      api.get('/api/v1/finanzas/dashboard'),
     ]);
     setState(setCompras)(r1 as PromiseSettledResult<{ data: { data: ResumenCompras } }>);
     setState(setControlObra)(r2 as PromiseSettledResult<{ data: { data: ResumenControlObra } }>);
     setState(setPersonal)(r3 as PromiseSettledResult<{ data: { data: ResumenPersonal } }>);
     setState(setSeguridad)(r4 as PromiseSettledResult<{ data: { data: ResumenSeguridad } }>);
     setState(setCalidad)(r5 as PromiseSettledResult<{ data: { data: ResumenCalidad } }>);
+    // finanzas/dashboard devuelve { data: { resumenPresupuestal: {...} } }
+    if (r6.status === 'fulfilled') {
+      const rp = r6.value.data?.data?.resumenPresupuestal;
+      if (rp) setFinanzas({ data: { total_autorizado: rp.total_autorizado, total_ejercido: rp.total_ejercido, total_comprometido: rp.total_comprometido, porcentaje_ejercido: rp.porcentaje_ejercido }, loading: false, error: false });
+      else setFinanzas({ data: null, loading: false, error: true });
+    } else {
+      setFinanzas({ data: null, loading: false, error: true });
+    }
     setLastUpdated(new Date());
   }, [isDemo]);
 
@@ -116,7 +131,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
           <span className="flex items-center gap-3">
             <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              5 módulos
+              6 módulos
             </span>
             {lastUpdated && (
               <span className="text-[10px] text-muted-foreground/60">
@@ -134,6 +149,57 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
           </button>
         }
       />
+
+      {/* ── Hero: Avance de Obra ─────────────────────────────────────────── */}
+      <Card className="border-indigo-500/20 bg-gradient-to-r from-indigo-500/5 to-sky-500/5">
+        <CardContent className="p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-5">
+              <ProgressRing
+                percentage={controlObra.data?.avance_pct ?? 0}
+                size={72}
+                strokeWidth={6}
+                colorClassName="text-indigo-500"
+                valueLabel={
+                  <span className="text-lg font-black tracking-tighter text-indigo-600">
+                    {controlObra.data?.avance_pct ?? '—'}%
+                  </span>
+                }
+              />
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Avance General de Obra</p>
+                <p className="text-2xl font-black tracking-tighter text-foreground">
+                  {controlObra.data?.avance_pct != null
+                    ? `${controlObra.data.avance_pct}% completado`
+                    : controlObra.loading ? 'Calculando...' : 'Sin avances registrados'}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {controlObra.data?.estimaciones_aprobadas ?? 0} estimaciones aprobadas ·{' '}
+                  {controlObra.data?.avances_pendientes ?? 0} avances por validar
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {finanzas.data && (
+                <>
+                  <div className="rounded-xl border border-border/40 bg-background px-4 py-2.5 text-center">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Presupuesto</p>
+                    <p className="text-base font-black tracking-tighter text-foreground">{fmtMXN(finanzas.data.total_autorizado)}</p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5 text-center">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Ejercido</p>
+                    <p className="text-base font-black tracking-tighter text-emerald-600">{fmtMXN(finanzas.data.total_ejercido)}</p>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-center">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Comprometido</p>
+                    <p className="text-base font-black tracking-tighter text-amber-600">{fmtMXN(finanzas.data.total_comprometido)}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 
@@ -268,6 +334,52 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
           <div className="border-t border-border/30 px-5 py-2.5">
             <button onClick={() => onNavigate('calidad')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
               Ir a Calidad →
+            </button>
+          </div>
+        </Card>
+
+        {/* ── Finanzas ─────────────────────────────────────────────────────── */}
+        <Card className="flex flex-col">
+          <CardContent className="flex-1 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                  <IconWallet className="h-4 w-4 text-amber-500" />
+                </span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Finanzas</span>
+              </div>
+              {statusBadge(finanzas)}
+            </div>
+            {finanzas.data ? (
+              <>
+                <div className="mb-3 flex items-center gap-3">
+                  <ProgressRing
+                    percentage={finanzas.data.porcentaje_ejercido}
+                    size={44}
+                    strokeWidth={4}
+                    colorClassName={finanzas.data.porcentaje_ejercido > 90 ? 'text-red-500' : finanzas.data.porcentaje_ejercido > 75 ? 'text-amber-500' : 'text-emerald-500'}
+                    valueLabel={<span className="text-[10px] font-black">{finanzas.data.porcentaje_ejercido}%</span>}
+                  />
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">% Presupuesto ejercido</p>
+                    <p className="text-sm font-black text-foreground">{fmtMXN(finanzas.data.total_ejercido)}</p>
+                    <p className="text-[10px] text-muted-foreground">de {fmtMXN(finanzas.data.total_autorizado)}</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Comprometido (OC activas)</p>
+                  <p className="text-base font-black text-amber-600">{fmtMXN(finanzas.data.total_comprometido)}</p>
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                <MetricCard label="Sin datos" value="—" />
+              </div>
+            )}
+          </CardContent>
+          <div className="border-t border-border/30 px-5 py-2.5">
+            <button onClick={() => onNavigate('finanzas')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+              Ir a Finanzas →
             </button>
           </div>
         </Card>

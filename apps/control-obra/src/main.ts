@@ -941,15 +941,20 @@ app.get('/api/v1/control-obra/resumen-dashboard',
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        const [enRevision, aprobadas, avancesPendientes] = await Promise.all([
+        const [enRevision, aprobadas, avancesPendientes, avgAvance] = await Promise.all([
           prisma.estimacion.count({ where: { estado: 'EN_REVISION' } }),
           prisma.estimacion.count({ where: { estado: { in: ['APROBADA_TECNICA', 'APROBADA_FINANCIERA'] } } }),
           prisma.avanceFisico.count({ where: { estado: 'PENDIENTE' } }),
+          prisma.avanceFisico.aggregate({
+            where: { estado: 'VALIDADO' },
+            _avg: { porcentaje_avance: true },
+          }),
         ]);
         return {
           estimaciones_en_revision: enRevision,
           estimaciones_aprobadas:   aprobadas,
           avances_pendientes:       avancesPendientes,
+          avance_pct:               Math.round(Number(avgAvance._avg.porcentaje_avance) || 0),
         };
       });
       res.json({ success: true, data });
