@@ -123,7 +123,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    name: 'Personal', icon: IconUsers, id: 'personal',
+    name: 'Recursos Humanos', icon: IconUsers, id: 'personal',
     roles: ['personal_rh'],
     subItems: [
       { id: 'empleados',  label: 'Empleados',       icon: IconUsers },

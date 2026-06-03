@@ -201,7 +201,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
                   <IconUsers className="h-4 w-4 text-violet-500" />
                 </span>
-                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Personal</span>
+                <span className="text-sm font-black uppercase tracking-tighter text-foreground">Recursos Humanos</span>
               </div>
               {statusBadge(personal)}
             </div>
@@ -213,7 +213,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
           </CardContent>
           <div className="border-t border-border/30 px-5 py-2.5">
             <button onClick={() => onNavigate('personal')} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
-              Ir a Personal →
+              Ir a Recursos Humanos →
             </button>
           </div>
         </Card>
@@ -497,7 +497,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     { name: 'Compras', desc: `${ocCount} órdenes registradas`, icon: IconShoppingCart, id: 'compras', color: 'emerald' },
     { name: 'Finanzas', desc: 'Flujo de caja · CFDI', icon: IconWallet, id: 'finanzas', color: 'amber' },
     { name: 'Control de Obra', desc: 'Avances y estimaciones', icon: IconFileText, id: 'control-obra', color: 'sky' },
-    { name: 'Personal / RRHH', desc: 'Nómina · IMSS · ISR 2025', icon: IconUsers, id: 'personal', color: 'violet' },
+    { name: 'Recursos Humanos', desc: 'Nómina · IMSS · ISR 2025', icon: IconUsers, id: 'personal', color: 'violet' },
     { name: 'Seguridad HSE', desc: 'Incidentes · EPP · STPS', icon: IconShieldCheck, id: 'seguridad', color: 'rose' },
     { name: 'Calidad ISO', desc: 'SGC ISO 9001:2015', icon: IconCheckCircle2, id: 'calidad', color: 'teal' },
     { name: 'Residencia', desc: 'Estimaciones · Asistencia QR', icon: IconClipboardCheck, id: 'residencia', color: 'blue' },

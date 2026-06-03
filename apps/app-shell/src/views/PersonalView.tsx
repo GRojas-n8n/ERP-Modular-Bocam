@@ -382,7 +382,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             </div>
             <div>
               <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
-                Personal
+                Recursos Humanos
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-3">
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
