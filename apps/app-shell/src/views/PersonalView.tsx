@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
+import { useNotification } from '../context/NotificationContext';
 import { DEMO_EMPLEADOS, DEMO_CUADRILLAS, DEMO_PRENOMINAS } from '../lib/demoData';
 import {
   Button,
@@ -150,6 +151,8 @@ type TabId = 'empleados' | 'cuadrillas' | 'prenomina' | 'pases';
 
 export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant } = useTenant();
+  const { notify } = useNotification();
+  const isDemo = tenant?.id === 'iretum-demo';
   const activeTab: TabId = (activeSubView as TabId) || 'empleados';
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cuadrillas, setCuadrillas] = useState<Cuadrilla[]>([]);
