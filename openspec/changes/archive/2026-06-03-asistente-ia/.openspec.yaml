@@ -1,0 +1,12 @@
+schema: spec-driven
+created: 2026-06-03
+status: archived
+production_verified: true
+archived_date: 2026-06-03
+commits:
+  - e92aced feat(asistente-ia): microservicio Asistente IA + alertas predictivas + resumen ejecutivo
+  - d83e59d fix(asistente-ia): agregar title a notify() en ComparativaDetail — build TS
+notes: >
+  app-shell en producción con demo funcional (alertas + resumen narrativo).
+  Microservicio asistente buildeado en VPS; activa en producción al configurar
+  ANTHROPIC_API_KEY en .env del servidor.
