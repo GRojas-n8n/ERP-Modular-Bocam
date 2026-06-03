@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Dockerfile específico para apps/reportes — sin Prisma, sin RabbitMQ.
-# Usa una capa extra de npm install para garantizar que typescript/tsc
-# esté disponible independientemente de NODE_ENV del host.
+# Instala dependencias directamente en el workspace de reportes para evitar
+# el problema de NODE_ENV=production que omite devDependencies en el builder.
 
 FROM node:20-bookworm-slim AS builder
 
@@ -11,21 +11,17 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-COPY apps/*/package.json ./apps/
-COPY packages/*/package.json ./packages/
-
-# Debug: verificar que apps/reportes/package.json fue copiado
-RUN find apps -name 'package.json' | sort && echo "--- apps/reportes content:" && cat apps/reportes/package.json 2>/dev/null || echo "NO PACKAGE.JSON"
-
-ENV npm_config_production=false
-RUN npm ci
-
+# Copiar todo el código fuente (el .dockerignore excluye node_modules y dist)
 COPY . .
 
 ARG WORKSPACE_NAME
 ARG APP_PATH
 
+# Instalar TODAS las dependencias incluyendo devDeps para compilar TypeScript.
+# npm_config_production=false anula NODE_ENV=production del VPS en este stage.
+RUN npm_config_production=false npm ci
+
+# Compilar TypeScript del módulo reportes
 RUN npm run build -w ${WORKSPACE_NAME}
 
 FROM node:20-bookworm-slim AS runner
