@@ -19,7 +19,7 @@ COPY packages/*/package.json ./packages/
 # Garantiza que devDependencies (typescript, ts-node, @types/*) se instalen.
 # El runner stage (ENV NODE_ENV=production) no ejecuta npm install.
 ENV npm_config_production=false
-RUN npm ci
+RUN npm ci && ls node_modules/typescript 2>&1 | head -5 && ls node_modules/.bin/tsc 2>&1 || true
 
 COPY . .
 
