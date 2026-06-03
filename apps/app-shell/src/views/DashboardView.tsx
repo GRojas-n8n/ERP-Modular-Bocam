@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import api from '../lib/api';
+import api, { asistenteApi } from '../lib/api';
+import { DEMO_ALERTAS_PREDICTIVAS, DEMO_RESUMEN_EJECUTIVO } from '../lib/demoData';
 import { useTenant } from '../context/TenantContext';
 import { useDashboardData } from '../hooks/useDashboardData';
 import {
@@ -12,6 +13,7 @@ import {
   OperationalBanner,
   ProgressRing,
   SectionBadge,
+  SideSheet,
   cn,
 } from '@bocam/ui-core';
 import {
@@ -50,6 +52,10 @@ const DEMO_EJECUTIVO = {
   finanzas:    { total_autorizado: 18_500_000, total_ejercido: 12_810_000, total_comprometido: 2_340_000, porcentaje_ejercido: 69 },
 };
 
+interface AlertaPredictiva { titulo: string; descripcion: string; recomendacion: string; severidad: 'alta' | 'media'; }
+interface AlertasPredictivas { alertas: AlertaPredictiva[]; proyecto_saludable: boolean; }
+interface ResumenEjecutivo { resumen: string; modulos_con_error: string[]; generado_en: string; }
+
 const fmtMXN = (n: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
 
@@ -63,6 +69,43 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
   const [calidad,     setCalidad]     = useState<EjecutivoState<ResumenCalidad>>    ({ data: null, loading: true, error: false });
   const [finanzas,    setFinanzas]    = useState<EjecutivoState<ResumenFinanzas>>   ({ data: null, loading: true, error: false });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // ── Asistente IA ─────────────────────────────────────────────────────────────
+  const [alertas, setAlertas]         = useState<AlertaPredictiva[]>([]);
+  const [loadingResumen, setLoadingResumen] = useState(false);
+  const [showResumen, setShowResumen] = useState(false);
+  const [resumenData, setResumenData] = useState<ResumenEjecutivo | null>(null);
+
+  const handleVerResumen = async () => {
+    setLoadingResumen(true);
+    setShowResumen(true);
+    try {
+      if (isDemo) {
+        await new Promise(r => setTimeout(r, 1200));
+        setResumenData({ ...DEMO_RESUMEN_EJECUTIVO, generado_en: new Date().toISOString() });
+      } else {
+        const resp = await asistenteApi.getResumenEjecutivo();
+        setResumenData(resp.data?.data as ResumenEjecutivo);
+      }
+    } catch {
+      setResumenData({ resumen: 'No se pudo generar el resumen. Intenta de nuevo.', modulos_con_error: [], generado_en: new Date().toISOString() });
+    } finally {
+      setLoadingResumen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isDemo) {
+      setAlertas(DEMO_ALERTAS_PREDICTIVAS);
+      return;
+    }
+    void asistenteApi.getAlertasPredictivas()
+      .then(resp => {
+        const data = resp.data?.data as AlertasPredictivas | undefined;
+        setAlertas(data?.alertas?.slice(0, 3) ?? []);
+      })
+      .catch(() => { /* alertas opcionales */ });
+  }, [isDemo]);
 
   const fetchAll = useCallback(async () => {
     if (isDemo) {
@@ -141,14 +184,57 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
           </span>
         }
         actions={
-          <button
-            onClick={() => void fetchAll()}
-            className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/60 transition-colors"
-          >
-            ↻ Actualizar
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => void handleVerResumen()}
+              disabled={loadingResumen}
+              className="flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
+            >
+              {loadingResumen ? (
+                <span className="h-2.5 w-2.5 animate-spin rounded-full border border-indigo-600 border-t-transparent" />
+              ) : '↗'}
+              {loadingResumen ? 'Analizando...' : '¿Cómo va la obra?'}
+            </button>
+            <button
+              onClick={() => void fetchAll()}
+              className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/60 transition-colors"
+            >
+              ↻ Actualizar
+            </button>
+          </div>
         }
       />
+
+      {/* ── Alertas Predictivas IA ──────────────────────────────────────────── */}
+      {alertas.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Alertas Predictivas</p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {alertas.map((alerta, i) => (
+              <div key={i} className={cn(
+                'rounded-2xl border p-4',
+                alerta.severidad === 'alta'
+                  ? 'border-red-500/20 bg-red-500/5'
+                  : 'border-amber-500/20 bg-amber-500/5',
+              )}>
+                <div className="flex items-start gap-2">
+                  <span className={cn(
+                    'mt-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest shrink-0',
+                    alerta.severidad === 'alta' ? 'bg-red-500/15 text-red-600' : 'bg-amber-500/15 text-amber-700',
+                  )}>
+                    {alerta.severidad}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black text-foreground leading-tight">{alerta.titulo}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground leading-snug line-clamp-2">{alerta.descripcion}</p>
+                    <p className="mt-1.5 text-[10px] font-semibold text-foreground/80 leading-snug">{alerta.recomendacion}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Hero: Avance de Obra ─────────────────────────────────────────── */}
       <Card className="border-indigo-500/20 bg-gradient-to-r from-indigo-500/5 to-sky-500/5">
@@ -385,6 +471,35 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
         </Card>
 
       </div>
+
+      {/* ── SideSheet Resumen Ejecutivo IA ──────────────────────────────────── */}
+      <SideSheet
+        isOpen={showResumen}
+        onClose={() => setShowResumen(false)}
+        title="Análisis de la Obra"
+        description={resumenData ? `Generado ${new Date(resumenData.generado_en).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}` : 'Analizando datos...'}
+        maxWidthClassName="max-w-xl"
+      >
+        <div className="p-6">
+          {loadingResumen ? (
+            <div className="flex flex-col items-center gap-4 py-12">
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+              <p className="text-sm text-muted-foreground">Consultando 6 módulos y generando análisis...</p>
+            </div>
+          ) : resumenData ? (
+            <div className="space-y-4">
+              {resumenData.modulos_con_error.length > 0 && (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5">
+                  <p className="text-[10px] text-amber-700">Sin datos de: {resumenData.modulos_con_error.join(', ')}</p>
+                </div>
+              )}
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{resumenData.resumen}</p>
+              <p className="text-[10px] text-muted-foreground/60">Generado por Claude · iretum Asistente</p>
+            </div>
+          ) : null}
+        </div>
+      </SideSheet>
+
     </div>
   );
 };

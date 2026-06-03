@@ -393,6 +393,39 @@ export const DEMO_PRENOMINAS_RESIDENCIA = [
   },
 ];
 
+export const DEMO_RESUMEN_EJECUTIVO = {
+  resumen: `La obra avanza al 68% con $12.81 M ejercidos de $18.50 M autorizados — eficiencia global del 99.1%, dentro del rango aceptable. Sin embargo, esta cifra consolida capítulos muy disímiles: dos de ellos presentan divergencias que, de no atenderse esta semana, generarán una crisis presupuestal visible en el informe mensual.
+
+El riesgo más urgente es Mano de Obra Directa: ya consumió el 81% de sus $4.20 M con solo el 68% de avance físico. A la tasa de consumo de las últimas tres semanas ($41,200/semana), el capítulo se agota el 16 de junio — exactamente cuando el frente de instalaciones eléctricas requiere mayor densidad de cuadrilla para el cierre. Simultáneamente, hay 2 OCs por emitir para materiales eléctricos con entrega estimada de 8 días hábiles; si se emiten hoy llegan a tiempo, mañana ya hay riesgo de un día de paro de cuadrilla ($8,400 en costo directo).
+
+Áreas sólidas: Materiales mantiene margen positivo de +3.2% ($6.1 M ejercidos vs 68% de avance). Calidad opera con 22 documentos vigentes y sin rechazos en dos semanas. Finanzas confirma $3.35 M libres para compromisos pendientes — margen suficiente si el sobrecosto de Mano de Obra se contiene ahora. El dato de nómina de las últimas 3 semanas señala que la Cuadrilla Acabados acumula 23% más horas que el rendimiento del APU autorizado, lo que explica la mayor parte de la desviación.
+
+Recomendación: citar a Residente y Superintendente mañana antes de las 9 AM con tres puntos en agenda — (1) revisar rendimiento de Cuadrilla Acabados vs APU y determinar si hay trabajos fuera de alcance, (2) autorizar las 2 OCs de materiales eléctricos antes de mediodía, y (3) confirmar con HSE que todos los permisos de trabajo en altura están vigentes para las 6 cuadrillas activas.`,
+  modulos_con_error: [] as string[],
+  generado_en: new Date().toISOString(),
+};
+
+export const DEMO_ALERTAS_PREDICTIVAS = [
+  {
+    titulo: 'Mano de Obra — presupuesto agotado en 13 días',
+    descripcion: 'El capítulo consumió $3.40 M de $4.20 M autorizados (81%) con solo 68% de avance. Tasa de consumo actual: $41,200/semana. Proyección de agotamiento: 16 de junio — 10 días antes de terminar las instalaciones eléctricas. La nómina de las últimas 3 semanas indica que Cuadrilla Acabados registra 23% más horas que el APU autorizado.',
+    recomendacion: 'Citar a Residente y Superintendente mañana AM para revisar rendimiento de Cuadrilla Acabados vs APU. Decidir ampliación presupuestal ($280K) o ajuste de alcance antes del viernes.',
+    severidad: 'alta' as const,
+  },
+  {
+    titulo: 'OCs eléctricas — emitir hoy o parar cuadrilla en 6 días',
+    descripcion: '2 OCs por emitir para materiales eléctricos (cable THW-LS calibre 10 y tableros de distribución). Entrega estimada del proveedor: 8 días hábiles. El frente de instalaciones llega a la etapa crítica en 6 días. Cada día de retraso en emitir = $8,400 en costo directo de cuadrilla parada.',
+    recomendacion: 'Emitir las 2 OCs antes de las 2 PM de hoy. El monto total ($187,500) está dentro del presupuesto libre disponible ($3.35 M).',
+    severidad: 'alta' as const,
+  },
+  {
+    titulo: 'HSE — 1 cuadrilla activa sin permiso de altura vigente',
+    descripcion: '6 cuadrillas activas en obra, 5 permisos de trabajo en altura vigentes. Cuadrilla Estructura A realiza trabajos de soldadura en niveles superiores a 3.5 m sin permiso activo en el sistema — actividad de alto riesgo según NOM-009-STPS-2011. Los 2 incidentes abiertos registrados esta semana corresponden a este frente.',
+    recomendacion: 'Verificar con HSE Manager si el permiso está en renovación o vencido. Detener trabajos de altura de Cuadrilla Estructura A hasta confirmar vigencia.',
+    severidad: 'media' as const,
+  },
+];
+
 export const DEMO_ASISTENCIA = [
   // ── 2024-05-21 · Cuadrilla Estructura A ────────────────────────────────────
   { id: 'a-001', fecha: '2024-05-21', cuadrilla_id: 'cua-001', cuadrilla_nombre: 'Cuadrilla Estructura A',  empleado_nombre: 'Roberto Hernández', puesto: 'Maestro de Obra',      hora_entrada: '07:03', hora_salida: '17:05', estado: 'PRESENTE',    tipo_registro: 'QR'     },

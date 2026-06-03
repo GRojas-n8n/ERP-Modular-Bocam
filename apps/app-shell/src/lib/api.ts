@@ -238,6 +238,20 @@ export const finanzasApi = {
   getPresupuestos: ()         => api.get('/api/v1/finanzas/presupuestos'),
 };
 
+// ── Asistente IA ─────────────────────────────────────────────────────────────
+export const asistenteApi = {
+  leerCotizacionPDF: (proveedorNombre: string, file: File) => {
+    const form = new FormData();
+    form.append('cotizacion', file);
+    if (proveedorNombre) form.append('proveedor_nombre', proveedorNombre);
+    return api.post('/api/v1/asistente/leer-cotizacion', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getResumenEjecutivo: () => api.get('/api/v1/asistente/resumen-ejecutivo'),
+  getAlertasPredictivas: () => api.get('/api/v1/asistente/alertas-predictivas'),
+};
+
 // ── Ventas ───────────────────────────────────────────────────────────────────
 export const ventasApi = {
   getClientes:     ()         => api.get('/api/v1/ventas/clientes'),

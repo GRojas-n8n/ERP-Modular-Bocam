@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1.7
+# Dockerfile para apps/asistente — sin Prisma, sin RabbitMQ.
+# Mismo patrón que Dockerfile.reportes: COPY . . primero para evitar
+# el problema de NODE_ENV=production que aplana los package.json de workspaces.
+
+FROM node:20-bookworm-slim AS builder
+
+WORKDIR /workspace
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
+# Copiar todo el código fuente (el .dockerignore excluye node_modules y dist)
+COPY . .
+
+ARG WORKSPACE_NAME
+ARG APP_PATH
+
+# Instalar TODAS las dependencias incluyendo devDeps para compilar TypeScript.
+# npm_config_production=false anula NODE_ENV=production del VPS en este stage.
+RUN npm_config_production=false npm ci
+
+# Compilar TypeScript del módulo asistente
+RUN npm run build -w ${WORKSPACE_NAME}
+
+FROM node:20-bookworm-slim AS runner
+
+WORKDIR /workspace
+
+ENV NODE_ENV=production
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl wget \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/node_modules ./node_modules
+COPY --from=builder /workspace/apps ./apps
+COPY --from=builder /workspace/packages ./packages
+COPY docker/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
+
+ARG APP_PATH
+ENV APP_PATH=${APP_PATH}
+
+CMD ["backend-entrypoint.sh"]

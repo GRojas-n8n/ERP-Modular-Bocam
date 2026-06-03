@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import api from '../lib/api';
+import api, { asistenteApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import {
@@ -10,6 +10,7 @@ import {
   CardTitle,
   Input,
   SectionBadge,
+  SideSheet,
   Textarea,
   cn,
 } from '@bocam/ui-core';
@@ -154,6 +155,14 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const [accionando, setAccionando] = useState(false);
 
+  // ── Asistente IA: lectura de cotización PDF ──────────────────────────────────
+  interface RenglonEditable { descripcion: string; unidad: string; cantidad: string; precio_unitario: string; }
+  const [pdfProveedorId, setPdfProveedorId] = useState<string | null>(null);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [renglonesPdf, setRenglonesPdf] = useState<RenglonEditable[]>([]);
+  const [showPdfReview, setShowPdfReview] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+
   const addLineaRef = useRef<HTMLDivElement>(null);
 
   // Cerrar dropdown al hacer clic afuera
@@ -261,6 +270,58 @@ export const ComparativaDetail: React.FC<Props> = ({
     });
     setNewProvNombre('');
     setShowAddProv(false);
+  };
+
+  const handleSubirCotizacionClick = (provId: string) => {
+    setPdfProveedorId(provId);
+    pdfInputRef.current?.click();
+  };
+
+  const handlePdfFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !pdfProveedorId) return;
+    e.target.value = '';
+
+    const prov = comp.proveedores.find(p => p.id === pdfProveedorId);
+    setUploadingPdf(true);
+    try {
+      const resp = await asistenteApi.leerCotizacionPDF(prov?.nombre ?? '', file);
+      const data = resp.data?.data as { renglones?: { descripcion: string; unidad: string; cantidad: number | null; precio_unitario: number | null }[] };
+      const renglones: RenglonEditable[] = (data?.renglones ?? []).map(r => ({
+        descripcion: r.descripcion ?? '',
+        unidad: r.unidad ?? '',
+        cantidad: r.cantidad != null ? String(r.cantidad) : '',
+        precio_unitario: r.precio_unitario != null ? String(r.precio_unitario) : '',
+      }));
+      setRenglonesPdf(renglones);
+      setShowPdfReview(true);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { status?: number } })?.response?.status === 413
+        ? 'El PDF supera el límite de 10 MB.'
+        : (err as { response?: { status?: number } })?.response?.status === 503
+          ? 'El servicio de IA no está disponible. Intenta más tarde.'
+          : 'No se pudo procesar el PDF.';
+      notify({ type: 'error', message: msg });
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  const handleAplicarCotizacion = () => {
+    if (!pdfProveedorId) return;
+    const lineasActualizadas = comp.lineas.map((linea) => {
+      const match = renglonesPdf.find(
+        r => r.descripcion.toLowerCase().includes(linea.insumo_descripcion.toLowerCase().slice(0, 10))
+          || linea.insumo_descripcion.toLowerCase().includes(r.descripcion.toLowerCase().slice(0, 10)),
+      );
+      if (!match) return linea;
+      const precio = parseFloat(match.precio_unitario);
+      if (isNaN(precio)) return linea;
+      return { ...linea, precios: { ...linea.precios, [pdfProveedorId]: String(precio) } };
+    });
+    onUpdate({ ...comp, lineas: lineasActualizadas });
+    setShowPdfReview(false);
+    notify({ type: 'success', message: 'Precios del PDF aplicados al cuadro.' });
   };
 
   const handleRemoveProveedor = (provId: string) => {
@@ -684,6 +745,20 @@ export const ComparativaDetail: React.FC<Props> = ({
                   <div key={prov.id} className={cn('flex items-center gap-2 rounded-xl border px-3 py-2', c.chip)}>
                     <span className="text-[11px] font-black">{String.fromCharCode(65 + i)}</span>
                     <span className="text-xs font-semibold">{prov.nombre}</span>
+                    {!locked && !isDemo && (
+                      <button
+                        onClick={() => handleSubirCotizacionClick(prov.id)}
+                        disabled={uploadingPdf}
+                        title="Subir cotización PDF"
+                        className="ml-1 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                      >
+                        {uploadingPdf && pdfProveedorId === prov.id ? (
+                          <span className="h-2.5 w-2.5 animate-spin rounded-full border border-current border-t-transparent" />
+                        ) : (
+                          <span>PDF</span>
+                        )}
+                      </button>
+                    )}
                     {!locked && (
                       <button onClick={() => handleRemoveProveedor(prov.id)} className="ml-1 text-current opacity-50 hover:opacity-100 transition-opacity">
                         <IconX className="h-3 w-3" />
@@ -1097,6 +1172,93 @@ export const ComparativaDetail: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      {/* ── Input oculto para PDF ───────────────────────────────────────────────── */}
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={handlePdfFileChange}
+      />
+
+      {/* ── SideSheet revisión de renglones PDF ─────────────────────────────────── */}
+      <SideSheet
+        isOpen={showPdfReview}
+        onClose={() => setShowPdfReview(false)}
+        title="Revisión de cotización PDF"
+        description={`${renglonesPdf.length} renglón${renglonesPdf.length !== 1 ? 'es' : ''} extraído${renglonesPdf.length !== 1 ? 's' : ''}. Edita antes de aplicar.`}
+        maxWidthClassName="max-w-2xl"
+      >
+        <div className="flex flex-col gap-4 p-6">
+          <div className="overflow-x-auto rounded-2xl border border-border/40">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border/30 bg-muted/40">
+                  <th className="px-4 py-2.5 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground">Descripción</th>
+                  <th className="px-3 py-2.5 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground w-16">UM</th>
+                  <th className="px-3 py-2.5 text-right text-[9px] font-black uppercase tracking-widest text-muted-foreground w-20">Cantidad</th>
+                  <th className="px-3 py-2.5 text-right text-[9px] font-black uppercase tracking-widest text-muted-foreground w-24">P. Unitario</th>
+                  <th className="px-2 py-2.5 w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {renglonesPdf.map((r, idx) => (
+                  <tr key={idx} className="border-b border-border/20 hover:bg-muted/20">
+                    <td className="px-4 py-2">
+                      <input
+                        className="w-full rounded-lg border border-border/40 bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                        value={r.descripcion}
+                        onChange={e => setRenglonesPdf(prev => prev.map((x, i) => i === idx ? { ...x, descripcion: e.target.value } : x))}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        className="w-full rounded-lg border border-border/40 bg-background px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-ring"
+                        value={r.unidad}
+                        onChange={e => setRenglonesPdf(prev => prev.map((x, i) => i === idx ? { ...x, unidad: e.target.value } : x))}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        className="w-full rounded-lg border border-border/40 bg-background px-2 py-1 text-xs text-right focus:outline-none focus:ring-1 focus:ring-ring"
+                        value={r.cantidad}
+                        onChange={e => setRenglonesPdf(prev => prev.map((x, i) => i === idx ? { ...x, cantidad: e.target.value } : x))}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        className="w-full rounded-lg border border-border/40 bg-background px-2 py-1 text-xs text-right focus:outline-none focus:ring-1 focus:ring-ring"
+                        value={r.precio_unitario}
+                        onChange={e => setRenglonesPdf(prev => prev.map((x, i) => i === idx ? { ...x, precio_unitario: e.target.value } : x))}
+                      />
+                    </td>
+                    <td className="px-2 py-2 text-center">
+                      <button
+                        onClick={() => setRenglonesPdf(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-muted-foreground/50 hover:text-destructive transition-colors"
+                      >
+                        <IconX className="h-3 w-3" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button onClick={() => setShowPdfReview(false)} variant="outline" className="rounded-xl text-xs">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAplicarCotizacion}
+              className="rounded-xl bg-emerald-600 px-5 text-xs font-black text-white hover:bg-emerald-500"
+            >
+              Aplicar al cuadro
+            </Button>
+          </div>
+        </div>
+      </SideSheet>
 
     </div>
   );
