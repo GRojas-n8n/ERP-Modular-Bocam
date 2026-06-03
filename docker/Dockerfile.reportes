@@ -17,7 +17,7 @@ COPY packages/*/package.json ./packages/
 
 # --include=dev asegura que npm ci instale devDependencies independientemente
 # de NODE_ENV=production heredado del VPS. El runner stage no corre npm install.
-RUN npm ci --include=dev
+RUN npm ci --include=dev && ls node_modules/.bin/tsc 2>&1 || echo "DEBUG: tsc NOT found after npm ci"
 
 COPY . .
 
