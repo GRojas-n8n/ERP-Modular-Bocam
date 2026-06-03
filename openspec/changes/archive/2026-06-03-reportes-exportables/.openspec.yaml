@@ -1,0 +1,15 @@
+schema: spec-driven
+created: 2026-06-01
+status: archived
+archived_at: 2026-06-03
+commits:
+  - hash: 03cb137
+    message: "feat(reportes): microservicio exportable PDF/Excel — OC, prenomina, presupuesto, comparativa"
+    scope: implementation
+  - hash: e04c9ca
+    message: "fix(nginx): agregar proxy rules de reportes e insumos en nginx.qnap.conf"
+    scope: fix
+tasks_status:
+  completed: 33
+  pending: 0
+production_verified: true
