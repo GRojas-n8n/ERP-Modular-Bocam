@@ -15,10 +15,9 @@ COPY package*.json ./
 COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 
-# NODE_ENV=development asegura que npm ci instale TODAS las deps incluyendo
-# devDependencies (typescript, ts-node, @types/*) necesarias para compilar.
-# En el runner stage NODE_ENV=production ya no corre npm install.
-RUN NODE_ENV=development npm ci
+# --include=dev asegura que npm ci instale devDependencies independientemente
+# de NODE_ENV=production heredado del VPS. El runner stage no corre npm install.
+RUN npm ci --include=dev
 
 COPY . .
 
