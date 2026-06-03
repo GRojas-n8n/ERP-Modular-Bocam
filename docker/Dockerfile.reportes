@@ -15,11 +15,11 @@ COPY package*.json ./
 COPY apps/*/package.json ./apps/
 COPY packages/*/package.json ./packages/
 
-# npm_config_production=false anula NODE_ENV=production del VPS para este stage.
-# Garantiza que devDependencies (typescript, ts-node, @types/*) se instalen.
-# El runner stage (ENV NODE_ENV=production) no ejecuta npm install.
+# Debug: verificar que apps/reportes/package.json fue copiado
+RUN find apps -name 'package.json' | sort && echo "--- apps/reportes content:" && cat apps/reportes/package.json 2>/dev/null || echo "NO PACKAGE.JSON"
+
 ENV npm_config_production=false
-RUN npm ci && ls node_modules/typescript 2>&1 | head -5 && ls node_modules/.bin/tsc 2>&1 || true
+RUN npm ci
 
 COPY . .
 
