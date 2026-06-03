@@ -278,10 +278,20 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
-      async (prisma) => prisma.cuadroComparativo.findUnique({
-        where: { id_cuadro: id },
-        include: { detalles: { include: { proveedor: true } } }
-      })
+      async (prisma) => {
+        const [cuadro, lineas] = await Promise.all([
+          prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: { include: { proveedor: true } } },
+          }),
+          prisma.comparativaLinea.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            select: { insumo_id: true, marca_modelo_ref: true, especificaciones_requeridas: true },
+          }),
+        ]);
+        if (!cuadro) return null;
+        return { ...cuadro, lineas_detalle: lineas };
+      },
     );
 
     res.json({ success: true, data });
@@ -289,6 +299,59 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// PUT /comparativas/:id/lineas/:insumoId — guarda detalles técnicos por partida
+app.put('/api/v1/compras/comparativas/:id/lineas/:insumoId',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id, insumoId } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { marca_modelo_ref, especificaciones_requeridas } = req.body as {
+        marca_modelo_ref?: string; especificaciones_requeridas?: string;
+      };
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true, tenant_id: true },
+          });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return { notFound: true };
+          }
+          if (cuadro.estado !== 'BORRADOR') {
+            return { locked: true };
+          }
+
+          const linea = await prisma.comparativaLinea.upsert({
+            where:  { cuadro_id_insumo_id: { cuadro_id: id, insumo_id: insumoId } },
+            create: {
+              tenant_id:   tenantId,
+              proyecto_id: proyectoId,
+              cuadro_id:   id,
+              insumo_id:   insumoId,
+              marca_modelo_ref:           marca_modelo_ref?.trim() ?? null,
+              especificaciones_requeridas: especificaciones_requeridas?.trim() ?? null,
+            },
+            update: {
+              marca_modelo_ref:           marca_modelo_ref?.trim() ?? null,
+              especificaciones_requeridas: especificaciones_requeridas?.trim() ?? null,
+            },
+          });
+          return { linea };
+        },
+      );
+
+      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Cuadro no encontrado.' });
+      if ((data as any).locked)    return res.status(403).json({ success: false, message: 'El cuadro no está en estado BORRADOR.' });
+      return res.json({ success: true, data: (data as any).linea });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
+);
 
 app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 'superintendent', 'procurement'), async (req: Request, res: Response) => {
   try {

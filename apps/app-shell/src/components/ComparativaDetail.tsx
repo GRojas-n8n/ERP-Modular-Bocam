@@ -58,6 +58,22 @@ export interface ProveedorComp {
   nombre: string;
 }
 
+export interface LineaDetalleTecnico {
+  insumo_id: string;
+  marca_modelo_ref?: string | null;
+  especificaciones_requeridas?: string | null;
+}
+
+export interface FichaTecnica {
+  id_ficha: string;
+  nombre_doc: string;
+  proveedor_ref?: string | null;
+  mime_type: string;
+  tamano_bytes: number;
+  subido_por: string;
+  created_at: string;
+}
+
 export type EstadoComparativa =
   | 'BORRADOR'
   | 'EN_EVALUACION_TECNICA'
@@ -76,6 +92,7 @@ export interface ComparativaLocal {
   estado: EstadoComparativa;
   proveedores: ProveedorComp[];
   lineas: CotizacionLinea[];
+  lineas_detalle?: LineaDetalleTecnico[];
   ordenes_compra: { codigo: string; proveedor_nombre: string; total: number }[];
 }
 
@@ -155,6 +172,17 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const [accionando, setAccionando] = useState(false);
 
+  // ── Fichas técnicas de insumo ────────────────────────────────────────────────
+  const [fichasInsumo, setFichasInsumo] = useState<Record<string, FichaTecnica[]>>({});
+  const [sideSheetFichasInsumoId, setSideSheetFichasInsumoId] = useState<string | null>(null);
+  const [loadingFichas, setLoadingFichas] = useState(false);
+  const [uploadingFicha, setUploadingFicha] = useState(false);
+  const fichaFileRef = useRef<HTMLInputElement>(null);
+  const [fichaUploadInsumoId, setFichaUploadInsumoId] = useState<string | null>(null);
+
+  // ── Detalles técnicos inline (BORRADOR) ──────────────────────────────────────
+  const [detallesTecnicos, setDetallesTecnicos] = useState<Record<string, { marca: string; espec: string }>>({});
+
   // ── Asistente IA: lectura de cotización PDF ──────────────────────────────────
   interface RenglonEditable { descripcion: string; unidad: string; cantidad: string; precio_unitario: string; }
   const [pdfProveedorId, setPdfProveedorId] = useState<string | null>(null);
@@ -205,6 +233,75 @@ export const ComparativaDetail: React.FC<Props> = ({
     setGtForm(init);
     setComentarioGTGeneral('');
   }, [showGTPanel]);
+
+  // Inicializar detalles técnicos desde lineas_detalle del cuadro
+  useEffect(() => {
+    const init: Record<string, { marca: string; espec: string }> = {};
+    (comp.lineas_detalle ?? []).forEach(ld => {
+      init[ld.insumo_id] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
+    });
+    setDetallesTecnicos(init);
+  }, [comp.id]);
+
+  // Fetch fichas técnicas de un insumo
+  const fetchFichas = async (insumoId: string) => {
+    if (isDemo) return;
+    setLoadingFichas(true);
+    try {
+      const resp = await api.get(`/api/v1/gerencia-tecnica/insumos/${insumoId}/fichas`);
+      setFichasInsumo(prev => ({ ...prev, [insumoId]: resp.data.data ?? [] }));
+    } catch (_) {
+      setFichasInsumo(prev => ({ ...prev, [insumoId]: [] }));
+    } finally {
+      setLoadingFichas(false);
+    }
+  };
+
+  // Guardar detalle técnico al salir del campo (blur)
+  const handleDetalleBlur = async (insumoId: string) => {
+    if (isDemo || comp.estado !== 'BORRADOR') return;
+    const dt = detallesTecnicos[insumoId] ?? { marca: '', espec: '' };
+    try {
+      await api.put(`/api/v1/compras/comparativas/${comp.id}/lineas/${insumoId}`, {
+        marca_modelo_ref:           dt.marca || null,
+        especificaciones_requeridas: dt.espec || null,
+      });
+    } catch (_) { /* silencioso — el usuario puede reintentar */ }
+  };
+
+  // Upload de ficha técnica
+  const handleFichaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const insumoId = fichaUploadInsumoId;
+    e.target.value = '';
+    if (!file || !insumoId) return;
+    setUploadingFicha(true);
+    try {
+      const fd = new FormData();
+      fd.append('archivo', file);
+      fd.append('nombre_doc', file.name);
+      await api.post(`/api/v1/gerencia-tecnica/insumos/${insumoId}/fichas`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      notify({ type: 'success', title: 'Ficha subida', message: file.name });
+      await fetchFichas(insumoId);
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al subir ficha', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setUploadingFicha(false);
+    }
+  };
+
+  // Eliminar ficha técnica
+  const handleFichaDelete = async (insumoId: string, fichaId: string) => {
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/insumos/${insumoId}/fichas/${fichaId}`);
+      setFichasInsumo(prev => ({ ...prev, [insumoId]: (prev[insumoId] ?? []).filter(f => f.id_ficha !== fichaId) }));
+      notify({ type: 'success', title: 'Ficha eliminada', message: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al eliminar', message: err.response?.data?.message ?? err.message });
+    }
+  };
 
   // ── Computed ─────────────────────────────────────────────────────────────────
   const lineaSuggestions = useMemo(() => {
@@ -808,11 +905,54 @@ export const ComparativaDetail: React.FC<Props> = ({
                 </tr>
               </thead>
               <tbody>
-                {comp.lineas.map(linea => (
+                {comp.lineas.map(linea => {
+                  const dt = detallesTecnicos[linea.insumo_id] ?? { marca: '', espec: '' };
+                  const fichas = fichasInsumo[linea.insumo_id];
+                  const nFichas = fichas?.length ?? null;
+                  const canUpload = isProcurement;
+                  return (
                   <tr key={linea.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
                     <td className="px-5 py-3">
                       <div className="text-[10px] font-black text-emerald-700">{linea.insumo_clave}</div>
                       <div className="text-xs text-foreground max-w-[200px] truncate">{linea.insumo_descripcion}</div>
+                      {/* Detalles técnicos — editable en BORRADOR, solo lectura después */}
+                      {!locked ? (
+                        <div className="mt-1.5 space-y-1">
+                          <input
+                            type="text"
+                            placeholder="Marca / Modelo ref."
+                            maxLength={100}
+                            value={dt.marca}
+                            onChange={e => setDetallesTecnicos(prev => ({ ...prev, [linea.insumo_id]: { ...dt, marca: e.target.value } }))}
+                            onBlur={() => handleDetalleBlur(linea.insumo_id)}
+                            className="w-full rounded border border-border/40 bg-background px-1.5 py-0.5 text-[10px] placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-400"
+                          />
+                          <textarea
+                            placeholder="Especificaciones requeridas"
+                            rows={2}
+                            value={dt.espec}
+                            onChange={e => setDetallesTecnicos(prev => ({ ...prev, [linea.insumo_id]: { ...dt, espec: e.target.value } }))}
+                            onBlur={() => handleDetalleBlur(linea.insumo_id)}
+                            className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-0.5 text-[10px] placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-400"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          {dt.marca && <div className="mt-1 text-[9px] text-indigo-600 font-bold">{dt.marca}</div>}
+                          {dt.espec && <div className="mt-0.5 text-[9px] text-muted-foreground leading-tight">{dt.espec}</div>}
+                        </>
+                      )}
+                      {/* Badge / botón de fichas técnicas */}
+                      <button
+                        onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
+                        className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
+                          nFichas && nFichas > 0
+                            ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20'
+                            : 'text-muted-foreground/50 hover:text-indigo-500'
+                        )}
+                      >
+                        📎 {nFichas != null ? `${nFichas} ficha${nFichas !== 1 ? 's' : ''}` : canUpload ? '+ Subir ficha' : 'Sin fichas'}
+                      </button>
                     </td>
                     <td className="px-3 py-3 text-center"><span className="text-sm font-bold">{linea.cantidad}</span></td>
                     <td className="px-3 py-3 text-center"><span className="text-[10px] text-muted-foreground">{linea.insumo_unidad}</span></td>
@@ -875,7 +1015,8 @@ export const ComparativaDetail: React.FC<Props> = ({
                       </td>
                     )}
                   </tr>
-                ))}
+                  );
+                })}
                 {comp.lineas.length > 0 && (
                   <tr className="border-t-2 border-border/40 bg-muted/30">
                     <td colSpan={3} className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total estimado</td>
@@ -1038,7 +1179,10 @@ export const ComparativaDetail: React.FC<Props> = ({
               <Button onClick={() => setShowEvalPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
             </div>
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
-              {comp.lineas.map(linea => (
+              {comp.lineas.map(linea => {
+                const dt = detallesTecnicos[linea.insumo_id] ?? { marca: '', espec: '' };
+                const fichasEval = fichasInsumo[linea.insumo_id];
+                return (
                 <div key={linea.id} className="rounded-2xl border border-border/40 bg-background p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -1063,6 +1207,24 @@ export const ComparativaDetail: React.FC<Props> = ({
                       ))}
                     </div>
                   </div>
+                  {/* Detalles técnicos capturados por Compras */}
+                  {(dt.marca || dt.espec) && (
+                    <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-3 py-2 space-y-0.5">
+                      {dt.marca && <div className="text-[10px] font-bold text-indigo-600">Marca/Modelo: {dt.marca}</div>}
+                      {dt.espec && <div className="text-[10px] text-muted-foreground leading-tight">{dt.espec}</div>}
+                    </div>
+                  )}
+                  {/* Badge fichas técnicas */}
+                  <button
+                    onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
+                    className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
+                      fichasEval && fichasEval.length > 0
+                        ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20'
+                        : 'text-muted-foreground/40 hover:text-indigo-500'
+                    )}
+                  >
+                    📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
+                  </button>
                   <Textarea
                     className="mt-2 rounded-xl text-xs min-h-[48px]"
                     placeholder="Comentario técnico (opcional)..."
@@ -1070,7 +1232,8 @@ export const ComparativaDetail: React.FC<Props> = ({
                     onChange={e => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], comentario: e.target.value } }))}
                   />
                 </div>
-              ))}
+                );
+              })}
             </div>
             <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
               <Button onClick={() => setShowEvalPanel(false)} variant="outline" className="rounded-xl">Cancelar</Button>
@@ -1257,6 +1420,82 @@ export const ComparativaDetail: React.FC<Props> = ({
               Aplicar al cuadro
             </Button>
           </div>
+        </div>
+      </SideSheet>
+
+      {/* ── Input oculto para upload de fichas técnicas ─────────────────────── */}
+      <input
+        ref={fichaFileRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={handleFichaUpload}
+      />
+
+      {/* ── SideSheet: Fichas Técnicas del Insumo ───────────────────────────── */}
+      <SideSheet
+        isOpen={!!sideSheetFichasInsumoId}
+        onClose={() => setSideSheetFichasInsumoId(null)}
+        title="Fichas Técnicas"
+        description="Documentos de especificación enviados por proveedores para este insumo"
+        maxWidthClassName="max-w-lg"
+      >
+        <div className="flex flex-col gap-4 p-6">
+          {isProcurement && (
+            <button
+              onClick={() => {
+                setFichaUploadInsumoId(sideSheetFichasInsumoId);
+                fichaFileRef.current?.click();
+              }}
+              disabled={uploadingFicha}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-indigo-400/40 bg-indigo-500/5 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+            >
+              {uploadingFicha ? 'Subiendo...' : '📎 Subir ficha técnica'}
+            </button>
+          )}
+
+          {loadingFichas ? (
+            <div className="flex items-center justify-center py-8 text-[10px] text-muted-foreground">Cargando fichas...</div>
+          ) : (fichasInsumo[sideSheetFichasInsumoId ?? ''] ?? []).length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <span className="text-2xl">📂</span>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sin fichas técnicas</p>
+              {isProcurement && <p className="text-[10px] text-muted-foreground/60">Sube el primer documento con el botón de arriba</p>}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(fichasInsumo[sideSheetFichasInsumoId ?? ''] ?? []).map(f => (
+                <div key={f.id_ficha} className="flex items-center gap-3 rounded-2xl border border-border/40 bg-background px-4 py-3">
+                  <span className="text-xl">{f.mime_type === 'application/pdf' ? '📄' : f.mime_type.startsWith('image/') ? '🖼️' : '📝'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold truncate">{f.nombre_doc}</div>
+                    {f.proveedor_ref && <div className="text-[9px] text-muted-foreground">{f.proveedor_ref}</div>}
+                    <div className="text-[9px] text-muted-foreground/60">{(f.tamano_bytes / 1024).toFixed(0)} KB · {new Date(f.created_at).toLocaleDateString('es-MX')}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <a
+                      href={`/api/v1/gerencia-tecnica/insumos/${sideSheetFichasInsumoId}/fichas/${f.id_ficha}/descargar`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-indigo-500/10 hover:text-indigo-600 transition-colors"
+                      title="Descargar"
+                    >
+                      <IconDownload className="h-4 w-4" />
+                    </a>
+                    {isProcurement && (
+                      <button
+                        onClick={() => sideSheetFichasInsumoId && handleFichaDelete(sideSheetFichasInsumoId, f.id_ficha)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                        title="Eliminar"
+                      >
+                        <IconX className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </SideSheet>
 

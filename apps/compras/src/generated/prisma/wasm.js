@@ -201,6 +201,16 @@ exports.Prisma.CuadroComparativoScalarFieldEnum = {
   comentario_gt_general: 'comentario_gt_general'
 };
 
+exports.Prisma.ComparativaLineaScalarFieldEnum = {
+  id_linea: 'id_linea',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  cuadro_id: 'cuadro_id',
+  insumo_id: 'insumo_id',
+  marca_modelo_ref: 'marca_modelo_ref',
+  especificaciones_requeridas: 'especificaciones_requeridas'
+};
+
 exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   id_detalle: 'id_detalle',
   tenant_id: 'tenant_id',
@@ -284,6 +294,7 @@ exports.Prisma.ModelName = {
   OrdenCompra: 'OrdenCompra',
   OrdenCompraItem: 'OrdenCompraItem',
   CuadroComparativo: 'CuadroComparativo',
+  ComparativaLinea: 'ComparativaLinea',
   ComparativaDetalle: 'ComparativaDetalle',
   AlertaOcError: 'AlertaOcError',
   ItemInventario: 'ItemInventario',

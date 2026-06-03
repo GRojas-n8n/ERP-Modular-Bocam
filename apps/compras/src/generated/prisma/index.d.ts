@@ -44,6 +44,11 @@ export type OrdenCompraItem = $Result.DefaultSelection<Prisma.$OrdenCompraItemPa
  */
 export type CuadroComparativo = $Result.DefaultSelection<Prisma.$CuadroComparativoPayload>
 /**
+ * Model ComparativaLinea
+ * 
+ */
+export type ComparativaLinea = $Result.DefaultSelection<Prisma.$ComparativaLineaPayload>
+/**
  * Model ComparativaDetalle
  * 
  */
@@ -246,6 +251,16 @@ export class PrismaClient<
     * ```
     */
   get cuadroComparativo(): Prisma.CuadroComparativoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.comparativaLinea`: Exposes CRUD operations for the **ComparativaLinea** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ComparativaLineas
+    * const comparativaLineas = await prisma.comparativaLinea.findMany()
+    * ```
+    */
+  get comparativaLinea(): Prisma.ComparativaLineaDelegate<ExtArgs>;
 
   /**
    * `prisma.comparativaDetalle`: Exposes CRUD operations for the **ComparativaDetalle** model.
@@ -733,6 +748,7 @@ export namespace Prisma {
     OrdenCompra: 'OrdenCompra',
     OrdenCompraItem: 'OrdenCompraItem',
     CuadroComparativo: 'CuadroComparativo',
+    ComparativaLinea: 'ComparativaLinea',
     ComparativaDetalle: 'ComparativaDetalle',
     AlertaOcError: 'AlertaOcError',
     ItemInventario: 'ItemInventario',
@@ -752,7 +768,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaDetalle" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
+      modelProps: "proveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1173,6 +1189,76 @@ export namespace Prisma {
           count: {
             args: Prisma.CuadroComparativoCountArgs<ExtArgs>
             result: $Utils.Optional<CuadroComparativoCountAggregateOutputType> | number
+          }
+        }
+      }
+      ComparativaLinea: {
+        payload: Prisma.$ComparativaLineaPayload<ExtArgs>
+        fields: Prisma.ComparativaLineaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ComparativaLineaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ComparativaLineaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>
+          }
+          findFirst: {
+            args: Prisma.ComparativaLineaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ComparativaLineaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>
+          }
+          findMany: {
+            args: Prisma.ComparativaLineaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>[]
+          }
+          create: {
+            args: Prisma.ComparativaLineaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>
+          }
+          createMany: {
+            args: Prisma.ComparativaLineaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ComparativaLineaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>[]
+          }
+          delete: {
+            args: Prisma.ComparativaLineaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>
+          }
+          update: {
+            args: Prisma.ComparativaLineaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>
+          }
+          deleteMany: {
+            args: Prisma.ComparativaLineaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ComparativaLineaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ComparativaLineaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaLineaPayload>
+          }
+          aggregate: {
+            args: Prisma.ComparativaLineaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateComparativaLinea>
+          }
+          groupBy: {
+            args: Prisma.ComparativaLineaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ComparativaLineaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ComparativaLineaCountArgs<ExtArgs>
+            result: $Utils.Optional<ComparativaLineaCountAggregateOutputType> | number
           }
         }
       }
@@ -1720,10 +1806,12 @@ export namespace Prisma {
 
   export type CuadroComparativoCountOutputType = {
     detalles: number
+    lineas: number
   }
 
   export type CuadroComparativoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     detalles?: boolean | CuadroComparativoCountOutputTypeCountDetallesArgs
+    lineas?: boolean | CuadroComparativoCountOutputTypeCountLineasArgs
   }
 
   // Custom InputTypes
@@ -1742,6 +1830,13 @@ export namespace Prisma {
    */
   export type CuadroComparativoCountOutputTypeCountDetallesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ComparativaDetalleWhereInput
+  }
+
+  /**
+   * CuadroComparativoCountOutputType without action
+   */
+  export type CuadroComparativoCountOutputTypeCountLineasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ComparativaLineaWhereInput
   }
 
 
@@ -7167,6 +7262,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: boolean
     comentario_gt_general?: boolean
     detalles?: boolean | CuadroComparativo$detallesArgs<ExtArgs>
+    lineas?: boolean | CuadroComparativo$lineasArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cuadroComparativo"]>
 
@@ -7204,6 +7300,7 @@ export namespace Prisma {
 
   export type CuadroComparativoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     detalles?: boolean | CuadroComparativo$detallesArgs<ExtArgs>
+    lineas?: boolean | CuadroComparativo$lineasArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CuadroComparativoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -7212,6 +7309,7 @@ export namespace Prisma {
     name: "CuadroComparativo"
     objects: {
       detalles: Prisma.$ComparativaDetallePayload<ExtArgs>[]
+      lineas: Prisma.$ComparativaLineaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_cuadro: string
@@ -7592,6 +7690,7 @@ export namespace Prisma {
   export interface Prisma__CuadroComparativoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     detalles<T extends CuadroComparativo$detallesArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$detallesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaDetallePayload<ExtArgs>, T, "findMany"> | Null>
+    lineas<T extends CuadroComparativo$lineasArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$lineasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7968,6 +8067,26 @@ export namespace Prisma {
   }
 
   /**
+   * CuadroComparativo.lineas
+   */
+  export type CuadroComparativo$lineasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    where?: ComparativaLineaWhereInput
+    orderBy?: ComparativaLineaOrderByWithRelationInput | ComparativaLineaOrderByWithRelationInput[]
+    cursor?: ComparativaLineaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ComparativaLineaScalarFieldEnum | ComparativaLineaScalarFieldEnum[]
+  }
+
+  /**
    * CuadroComparativo without action
    */
   export type CuadroComparativoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7979,6 +8098,963 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CuadroComparativoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ComparativaLinea
+   */
+
+  export type AggregateComparativaLinea = {
+    _count: ComparativaLineaCountAggregateOutputType | null
+    _min: ComparativaLineaMinAggregateOutputType | null
+    _max: ComparativaLineaMaxAggregateOutputType | null
+  }
+
+  export type ComparativaLineaMinAggregateOutputType = {
+    id_linea: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    cuadro_id: string | null
+    insumo_id: string | null
+    marca_modelo_ref: string | null
+    especificaciones_requeridas: string | null
+  }
+
+  export type ComparativaLineaMaxAggregateOutputType = {
+    id_linea: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    cuadro_id: string | null
+    insumo_id: string | null
+    marca_modelo_ref: string | null
+    especificaciones_requeridas: string | null
+  }
+
+  export type ComparativaLineaCountAggregateOutputType = {
+    id_linea: number
+    tenant_id: number
+    proyecto_id: number
+    cuadro_id: number
+    insumo_id: number
+    marca_modelo_ref: number
+    especificaciones_requeridas: number
+    _all: number
+  }
+
+
+  export type ComparativaLineaMinAggregateInputType = {
+    id_linea?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    insumo_id?: true
+    marca_modelo_ref?: true
+    especificaciones_requeridas?: true
+  }
+
+  export type ComparativaLineaMaxAggregateInputType = {
+    id_linea?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    insumo_id?: true
+    marca_modelo_ref?: true
+    especificaciones_requeridas?: true
+  }
+
+  export type ComparativaLineaCountAggregateInputType = {
+    id_linea?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    insumo_id?: true
+    marca_modelo_ref?: true
+    especificaciones_requeridas?: true
+    _all?: true
+  }
+
+  export type ComparativaLineaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ComparativaLinea to aggregate.
+     */
+    where?: ComparativaLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaLineas to fetch.
+     */
+    orderBy?: ComparativaLineaOrderByWithRelationInput | ComparativaLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ComparativaLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaLineas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ComparativaLineas
+    **/
+    _count?: true | ComparativaLineaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ComparativaLineaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ComparativaLineaMaxAggregateInputType
+  }
+
+  export type GetComparativaLineaAggregateType<T extends ComparativaLineaAggregateArgs> = {
+        [P in keyof T & keyof AggregateComparativaLinea]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateComparativaLinea[P]>
+      : GetScalarType<T[P], AggregateComparativaLinea[P]>
+  }
+
+
+
+
+  export type ComparativaLineaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ComparativaLineaWhereInput
+    orderBy?: ComparativaLineaOrderByWithAggregationInput | ComparativaLineaOrderByWithAggregationInput[]
+    by: ComparativaLineaScalarFieldEnum[] | ComparativaLineaScalarFieldEnum
+    having?: ComparativaLineaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ComparativaLineaCountAggregateInputType | true
+    _min?: ComparativaLineaMinAggregateInputType
+    _max?: ComparativaLineaMaxAggregateInputType
+  }
+
+  export type ComparativaLineaGroupByOutputType = {
+    id_linea: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    insumo_id: string
+    marca_modelo_ref: string | null
+    especificaciones_requeridas: string | null
+    _count: ComparativaLineaCountAggregateOutputType | null
+    _min: ComparativaLineaMinAggregateOutputType | null
+    _max: ComparativaLineaMaxAggregateOutputType | null
+  }
+
+  type GetComparativaLineaGroupByPayload<T extends ComparativaLineaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ComparativaLineaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ComparativaLineaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ComparativaLineaGroupByOutputType[P]>
+            : GetScalarType<T[P], ComparativaLineaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ComparativaLineaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_linea?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    insumo_id?: boolean
+    marca_modelo_ref?: boolean
+    especificaciones_requeridas?: boolean
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["comparativaLinea"]>
+
+  export type ComparativaLineaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_linea?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    insumo_id?: boolean
+    marca_modelo_ref?: boolean
+    especificaciones_requeridas?: boolean
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["comparativaLinea"]>
+
+  export type ComparativaLineaSelectScalar = {
+    id_linea?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    insumo_id?: boolean
+    marca_modelo_ref?: boolean
+    especificaciones_requeridas?: boolean
+  }
+
+  export type ComparativaLineaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }
+  export type ComparativaLineaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }
+
+  export type $ComparativaLineaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ComparativaLinea"
+    objects: {
+      cuadro: Prisma.$CuadroComparativoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_linea: string
+      tenant_id: string
+      proyecto_id: string
+      cuadro_id: string
+      insumo_id: string
+      marca_modelo_ref: string | null
+      especificaciones_requeridas: string | null
+    }, ExtArgs["result"]["comparativaLinea"]>
+    composites: {}
+  }
+
+  type ComparativaLineaGetPayload<S extends boolean | null | undefined | ComparativaLineaDefaultArgs> = $Result.GetResult<Prisma.$ComparativaLineaPayload, S>
+
+  type ComparativaLineaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ComparativaLineaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ComparativaLineaCountAggregateInputType | true
+    }
+
+  export interface ComparativaLineaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ComparativaLinea'], meta: { name: 'ComparativaLinea' } }
+    /**
+     * Find zero or one ComparativaLinea that matches the filter.
+     * @param {ComparativaLineaFindUniqueArgs} args - Arguments to find a ComparativaLinea
+     * @example
+     * // Get one ComparativaLinea
+     * const comparativaLinea = await prisma.comparativaLinea.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ComparativaLineaFindUniqueArgs>(args: SelectSubset<T, ComparativaLineaFindUniqueArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ComparativaLinea that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ComparativaLineaFindUniqueOrThrowArgs} args - Arguments to find a ComparativaLinea
+     * @example
+     * // Get one ComparativaLinea
+     * const comparativaLinea = await prisma.comparativaLinea.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ComparativaLineaFindUniqueOrThrowArgs>(args: SelectSubset<T, ComparativaLineaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ComparativaLinea that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaFindFirstArgs} args - Arguments to find a ComparativaLinea
+     * @example
+     * // Get one ComparativaLinea
+     * const comparativaLinea = await prisma.comparativaLinea.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ComparativaLineaFindFirstArgs>(args?: SelectSubset<T, ComparativaLineaFindFirstArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ComparativaLinea that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaFindFirstOrThrowArgs} args - Arguments to find a ComparativaLinea
+     * @example
+     * // Get one ComparativaLinea
+     * const comparativaLinea = await prisma.comparativaLinea.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ComparativaLineaFindFirstOrThrowArgs>(args?: SelectSubset<T, ComparativaLineaFindFirstOrThrowArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ComparativaLineas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ComparativaLineas
+     * const comparativaLineas = await prisma.comparativaLinea.findMany()
+     * 
+     * // Get first 10 ComparativaLineas
+     * const comparativaLineas = await prisma.comparativaLinea.findMany({ take: 10 })
+     * 
+     * // Only select the `id_linea`
+     * const comparativaLineaWithId_lineaOnly = await prisma.comparativaLinea.findMany({ select: { id_linea: true } })
+     * 
+     */
+    findMany<T extends ComparativaLineaFindManyArgs>(args?: SelectSubset<T, ComparativaLineaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ComparativaLinea.
+     * @param {ComparativaLineaCreateArgs} args - Arguments to create a ComparativaLinea.
+     * @example
+     * // Create one ComparativaLinea
+     * const ComparativaLinea = await prisma.comparativaLinea.create({
+     *   data: {
+     *     // ... data to create a ComparativaLinea
+     *   }
+     * })
+     * 
+     */
+    create<T extends ComparativaLineaCreateArgs>(args: SelectSubset<T, ComparativaLineaCreateArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ComparativaLineas.
+     * @param {ComparativaLineaCreateManyArgs} args - Arguments to create many ComparativaLineas.
+     * @example
+     * // Create many ComparativaLineas
+     * const comparativaLinea = await prisma.comparativaLinea.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ComparativaLineaCreateManyArgs>(args?: SelectSubset<T, ComparativaLineaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ComparativaLineas and returns the data saved in the database.
+     * @param {ComparativaLineaCreateManyAndReturnArgs} args - Arguments to create many ComparativaLineas.
+     * @example
+     * // Create many ComparativaLineas
+     * const comparativaLinea = await prisma.comparativaLinea.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ComparativaLineas and only return the `id_linea`
+     * const comparativaLineaWithId_lineaOnly = await prisma.comparativaLinea.createManyAndReturn({ 
+     *   select: { id_linea: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ComparativaLineaCreateManyAndReturnArgs>(args?: SelectSubset<T, ComparativaLineaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ComparativaLinea.
+     * @param {ComparativaLineaDeleteArgs} args - Arguments to delete one ComparativaLinea.
+     * @example
+     * // Delete one ComparativaLinea
+     * const ComparativaLinea = await prisma.comparativaLinea.delete({
+     *   where: {
+     *     // ... filter to delete one ComparativaLinea
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ComparativaLineaDeleteArgs>(args: SelectSubset<T, ComparativaLineaDeleteArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ComparativaLinea.
+     * @param {ComparativaLineaUpdateArgs} args - Arguments to update one ComparativaLinea.
+     * @example
+     * // Update one ComparativaLinea
+     * const comparativaLinea = await prisma.comparativaLinea.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ComparativaLineaUpdateArgs>(args: SelectSubset<T, ComparativaLineaUpdateArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ComparativaLineas.
+     * @param {ComparativaLineaDeleteManyArgs} args - Arguments to filter ComparativaLineas to delete.
+     * @example
+     * // Delete a few ComparativaLineas
+     * const { count } = await prisma.comparativaLinea.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ComparativaLineaDeleteManyArgs>(args?: SelectSubset<T, ComparativaLineaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ComparativaLineas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ComparativaLineas
+     * const comparativaLinea = await prisma.comparativaLinea.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ComparativaLineaUpdateManyArgs>(args: SelectSubset<T, ComparativaLineaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ComparativaLinea.
+     * @param {ComparativaLineaUpsertArgs} args - Arguments to update or create a ComparativaLinea.
+     * @example
+     * // Update or create a ComparativaLinea
+     * const comparativaLinea = await prisma.comparativaLinea.upsert({
+     *   create: {
+     *     // ... data to create a ComparativaLinea
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ComparativaLinea we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ComparativaLineaUpsertArgs>(args: SelectSubset<T, ComparativaLineaUpsertArgs<ExtArgs>>): Prisma__ComparativaLineaClient<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ComparativaLineas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaCountArgs} args - Arguments to filter ComparativaLineas to count.
+     * @example
+     * // Count the number of ComparativaLineas
+     * const count = await prisma.comparativaLinea.count({
+     *   where: {
+     *     // ... the filter for the ComparativaLineas we want to count
+     *   }
+     * })
+    **/
+    count<T extends ComparativaLineaCountArgs>(
+      args?: Subset<T, ComparativaLineaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ComparativaLineaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ComparativaLinea.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ComparativaLineaAggregateArgs>(args: Subset<T, ComparativaLineaAggregateArgs>): Prisma.PrismaPromise<GetComparativaLineaAggregateType<T>>
+
+    /**
+     * Group by ComparativaLinea.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaLineaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ComparativaLineaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ComparativaLineaGroupByArgs['orderBy'] }
+        : { orderBy?: ComparativaLineaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ComparativaLineaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetComparativaLineaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ComparativaLinea model
+   */
+  readonly fields: ComparativaLineaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ComparativaLinea.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ComparativaLineaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuadro<T extends CuadroComparativoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativoDefaultArgs<ExtArgs>>): Prisma__CuadroComparativoClient<$Result.GetResult<Prisma.$CuadroComparativoPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ComparativaLinea model
+   */ 
+  interface ComparativaLineaFieldRefs {
+    readonly id_linea: FieldRef<"ComparativaLinea", 'String'>
+    readonly tenant_id: FieldRef<"ComparativaLinea", 'String'>
+    readonly proyecto_id: FieldRef<"ComparativaLinea", 'String'>
+    readonly cuadro_id: FieldRef<"ComparativaLinea", 'String'>
+    readonly insumo_id: FieldRef<"ComparativaLinea", 'String'>
+    readonly marca_modelo_ref: FieldRef<"ComparativaLinea", 'String'>
+    readonly especificaciones_requeridas: FieldRef<"ComparativaLinea", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ComparativaLinea findUnique
+   */
+  export type ComparativaLineaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaLinea to fetch.
+     */
+    where: ComparativaLineaWhereUniqueInput
+  }
+
+  /**
+   * ComparativaLinea findUniqueOrThrow
+   */
+  export type ComparativaLineaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaLinea to fetch.
+     */
+    where: ComparativaLineaWhereUniqueInput
+  }
+
+  /**
+   * ComparativaLinea findFirst
+   */
+  export type ComparativaLineaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaLinea to fetch.
+     */
+    where?: ComparativaLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaLineas to fetch.
+     */
+    orderBy?: ComparativaLineaOrderByWithRelationInput | ComparativaLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ComparativaLineas.
+     */
+    cursor?: ComparativaLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaLineas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComparativaLineas.
+     */
+    distinct?: ComparativaLineaScalarFieldEnum | ComparativaLineaScalarFieldEnum[]
+  }
+
+  /**
+   * ComparativaLinea findFirstOrThrow
+   */
+  export type ComparativaLineaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaLinea to fetch.
+     */
+    where?: ComparativaLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaLineas to fetch.
+     */
+    orderBy?: ComparativaLineaOrderByWithRelationInput | ComparativaLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ComparativaLineas.
+     */
+    cursor?: ComparativaLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaLineas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComparativaLineas.
+     */
+    distinct?: ComparativaLineaScalarFieldEnum | ComparativaLineaScalarFieldEnum[]
+  }
+
+  /**
+   * ComparativaLinea findMany
+   */
+  export type ComparativaLineaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaLineas to fetch.
+     */
+    where?: ComparativaLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaLineas to fetch.
+     */
+    orderBy?: ComparativaLineaOrderByWithRelationInput | ComparativaLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ComparativaLineas.
+     */
+    cursor?: ComparativaLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaLineas.
+     */
+    skip?: number
+    distinct?: ComparativaLineaScalarFieldEnum | ComparativaLineaScalarFieldEnum[]
+  }
+
+  /**
+   * ComparativaLinea create
+   */
+  export type ComparativaLineaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ComparativaLinea.
+     */
+    data: XOR<ComparativaLineaCreateInput, ComparativaLineaUncheckedCreateInput>
+  }
+
+  /**
+   * ComparativaLinea createMany
+   */
+  export type ComparativaLineaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ComparativaLineas.
+     */
+    data: ComparativaLineaCreateManyInput | ComparativaLineaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ComparativaLinea createManyAndReturn
+   */
+  export type ComparativaLineaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ComparativaLineas.
+     */
+    data: ComparativaLineaCreateManyInput | ComparativaLineaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ComparativaLinea update
+   */
+  export type ComparativaLineaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ComparativaLinea.
+     */
+    data: XOR<ComparativaLineaUpdateInput, ComparativaLineaUncheckedUpdateInput>
+    /**
+     * Choose, which ComparativaLinea to update.
+     */
+    where: ComparativaLineaWhereUniqueInput
+  }
+
+  /**
+   * ComparativaLinea updateMany
+   */
+  export type ComparativaLineaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ComparativaLineas.
+     */
+    data: XOR<ComparativaLineaUpdateManyMutationInput, ComparativaLineaUncheckedUpdateManyInput>
+    /**
+     * Filter which ComparativaLineas to update
+     */
+    where?: ComparativaLineaWhereInput
+  }
+
+  /**
+   * ComparativaLinea upsert
+   */
+  export type ComparativaLineaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ComparativaLinea to update in case it exists.
+     */
+    where: ComparativaLineaWhereUniqueInput
+    /**
+     * In case the ComparativaLinea found by the `where` argument doesn't exist, create a new ComparativaLinea with this data.
+     */
+    create: XOR<ComparativaLineaCreateInput, ComparativaLineaUncheckedCreateInput>
+    /**
+     * In case the ComparativaLinea was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ComparativaLineaUpdateInput, ComparativaLineaUncheckedUpdateInput>
+  }
+
+  /**
+   * ComparativaLinea delete
+   */
+  export type ComparativaLineaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
+    /**
+     * Filter which ComparativaLinea to delete.
+     */
+    where: ComparativaLineaWhereUniqueInput
+  }
+
+  /**
+   * ComparativaLinea deleteMany
+   */
+  export type ComparativaLineaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ComparativaLineas to delete
+     */
+    where?: ComparativaLineaWhereInput
+  }
+
+  /**
+   * ComparativaLinea without action
+   */
+  export type ComparativaLineaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaLinea
+     */
+    select?: ComparativaLineaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaLineaInclude<ExtArgs> | null
   }
 
 
@@ -12233,6 +13309,19 @@ export namespace Prisma {
   export type CuadroComparativoScalarFieldEnum = (typeof CuadroComparativoScalarFieldEnum)[keyof typeof CuadroComparativoScalarFieldEnum]
 
 
+  export const ComparativaLineaScalarFieldEnum: {
+    id_linea: 'id_linea',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    cuadro_id: 'cuadro_id',
+    insumo_id: 'insumo_id',
+    marca_modelo_ref: 'marca_modelo_ref',
+    especificaciones_requeridas: 'especificaciones_requeridas'
+  };
+
+  export type ComparativaLineaScalarFieldEnum = (typeof ComparativaLineaScalarFieldEnum)[keyof typeof ComparativaLineaScalarFieldEnum]
+
+
   export const ComparativaDetalleScalarFieldEnum: {
     id_detalle: 'id_detalle',
     tenant_id: 'tenant_id',
@@ -12823,6 +13912,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
     comentario_gt_general?: StringNullableFilter<"CuadroComparativo"> | string | null
     detalles?: ComparativaDetalleListRelationFilter
+    lineas?: ComparativaLineaListRelationFilter
   }
 
   export type CuadroComparativoOrderByWithRelationInput = {
@@ -12840,6 +13930,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: SortOrderInput | SortOrder
     comentario_gt_general?: SortOrderInput | SortOrder
     detalles?: ComparativaDetalleOrderByRelationAggregateInput
+    lineas?: ComparativaLineaOrderByRelationAggregateInput
   }
 
   export type CuadroComparativoWhereUniqueInput = Prisma.AtLeast<{
@@ -12861,6 +13952,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
     comentario_gt_general?: StringNullableFilter<"CuadroComparativo"> | string | null
     detalles?: ComparativaDetalleListRelationFilter
+    lineas?: ComparativaLineaListRelationFilter
   }, "id_cuadro" | "tenant_id_codigo">
 
   export type CuadroComparativoOrderByWithAggregationInput = {
@@ -12899,6 +13991,72 @@ export namespace Prisma {
     gerente_tecnico_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
     fecha_aprobacion_gt?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
     comentario_gt_general?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+  }
+
+  export type ComparativaLineaWhereInput = {
+    AND?: ComparativaLineaWhereInput | ComparativaLineaWhereInput[]
+    OR?: ComparativaLineaWhereInput[]
+    NOT?: ComparativaLineaWhereInput | ComparativaLineaWhereInput[]
+    id_linea?: UuidFilter<"ComparativaLinea"> | string
+    tenant_id?: UuidFilter<"ComparativaLinea"> | string
+    proyecto_id?: UuidFilter<"ComparativaLinea"> | string
+    cuadro_id?: UuidFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidFilter<"ComparativaLinea"> | string
+    marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
+    especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
+    cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
+  }
+
+  export type ComparativaLineaOrderByWithRelationInput = {
+    id_linea?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    insumo_id?: SortOrder
+    marca_modelo_ref?: SortOrderInput | SortOrder
+    especificaciones_requeridas?: SortOrderInput | SortOrder
+    cuadro?: CuadroComparativoOrderByWithRelationInput
+  }
+
+  export type ComparativaLineaWhereUniqueInput = Prisma.AtLeast<{
+    id_linea?: string
+    cuadro_id_insumo_id?: ComparativaLineaCuadro_idInsumo_idCompoundUniqueInput
+    AND?: ComparativaLineaWhereInput | ComparativaLineaWhereInput[]
+    OR?: ComparativaLineaWhereInput[]
+    NOT?: ComparativaLineaWhereInput | ComparativaLineaWhereInput[]
+    tenant_id?: UuidFilter<"ComparativaLinea"> | string
+    proyecto_id?: UuidFilter<"ComparativaLinea"> | string
+    cuadro_id?: UuidFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidFilter<"ComparativaLinea"> | string
+    marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
+    especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
+    cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
+  }, "id_linea" | "cuadro_id_insumo_id">
+
+  export type ComparativaLineaOrderByWithAggregationInput = {
+    id_linea?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    insumo_id?: SortOrder
+    marca_modelo_ref?: SortOrderInput | SortOrder
+    especificaciones_requeridas?: SortOrderInput | SortOrder
+    _count?: ComparativaLineaCountOrderByAggregateInput
+    _max?: ComparativaLineaMaxOrderByAggregateInput
+    _min?: ComparativaLineaMinOrderByAggregateInput
+  }
+
+  export type ComparativaLineaScalarWhereWithAggregatesInput = {
+    AND?: ComparativaLineaScalarWhereWithAggregatesInput | ComparativaLineaScalarWhereWithAggregatesInput[]
+    OR?: ComparativaLineaScalarWhereWithAggregatesInput[]
+    NOT?: ComparativaLineaScalarWhereWithAggregatesInput | ComparativaLineaScalarWhereWithAggregatesInput[]
+    id_linea?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
+    cuadro_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
+    marca_modelo_ref?: StringNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
+    especificaciones_requeridas?: StringNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
   }
 
   export type ComparativaDetalleWhereInput = {
@@ -13737,6 +14895,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: Date | string | null
     comentario_gt_general?: string | null
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
+    lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateInput = {
@@ -13754,6 +14913,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: Date | string | null
     comentario_gt_general?: string | null
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
+    lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUpdateInput = {
@@ -13771,6 +14931,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
+    lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateInput = {
@@ -13788,6 +14949,7 @@ export namespace Prisma {
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
+    lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoCreateManyInput = {
@@ -13836,6 +14998,75 @@ export namespace Prisma {
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaLineaCreateInput = {
+    id_linea?: string
+    tenant_id: string
+    proyecto_id: string
+    insumo_id: string
+    marca_modelo_ref?: string | null
+    especificaciones_requeridas?: string | null
+    cuadro: CuadroComparativoCreateNestedOneWithoutLineasInput
+  }
+
+  export type ComparativaLineaUncheckedCreateInput = {
+    id_linea?: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    insumo_id: string
+    marca_modelo_ref?: string | null
+    especificaciones_requeridas?: string | null
+  }
+
+  export type ComparativaLineaUpdateInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    cuadro?: CuadroComparativoUpdateOneRequiredWithoutLineasNestedInput
+  }
+
+  export type ComparativaLineaUncheckedUpdateInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaLineaCreateManyInput = {
+    id_linea?: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    insumo_id: string
+    marca_modelo_ref?: string | null
+    especificaciones_requeridas?: string | null
+  }
+
+  export type ComparativaLineaUpdateManyMutationInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaLineaUncheckedUpdateManyInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateInput = {
@@ -14753,6 +15984,16 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type ComparativaLineaListRelationFilter = {
+    every?: ComparativaLineaWhereInput
+    some?: ComparativaLineaWhereInput
+    none?: ComparativaLineaWhereInput
+  }
+
+  export type ComparativaLineaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type CuadroComparativoTenant_idCodigoCompoundUniqueInput = {
     tenant_id: string
     codigo: string
@@ -14823,6 +16064,41 @@ export namespace Prisma {
   export type CuadroComparativoRelationFilter = {
     is?: CuadroComparativoWhereInput
     isNot?: CuadroComparativoWhereInput
+  }
+
+  export type ComparativaLineaCuadro_idInsumo_idCompoundUniqueInput = {
+    cuadro_id: string
+    insumo_id: string
+  }
+
+  export type ComparativaLineaCountOrderByAggregateInput = {
+    id_linea?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    insumo_id?: SortOrder
+    marca_modelo_ref?: SortOrder
+    especificaciones_requeridas?: SortOrder
+  }
+
+  export type ComparativaLineaMaxOrderByAggregateInput = {
+    id_linea?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    insumo_id?: SortOrder
+    marca_modelo_ref?: SortOrder
+    especificaciones_requeridas?: SortOrder
+  }
+
+  export type ComparativaLineaMinOrderByAggregateInput = {
+    id_linea?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    insumo_id?: SortOrder
+    marca_modelo_ref?: SortOrder
+    especificaciones_requeridas?: SortOrder
   }
 
   export type ComparativaDetalleCountOrderByAggregateInput = {
@@ -15292,11 +16568,25 @@ export namespace Prisma {
     connect?: ComparativaDetalleWhereUniqueInput | ComparativaDetalleWhereUniqueInput[]
   }
 
+  export type ComparativaLineaCreateNestedManyWithoutCuadroInput = {
+    create?: XOR<ComparativaLineaCreateWithoutCuadroInput, ComparativaLineaUncheckedCreateWithoutCuadroInput> | ComparativaLineaCreateWithoutCuadroInput[] | ComparativaLineaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaLineaCreateOrConnectWithoutCuadroInput | ComparativaLineaCreateOrConnectWithoutCuadroInput[]
+    createMany?: ComparativaLineaCreateManyCuadroInputEnvelope
+    connect?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+  }
+
   export type ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
     createMany?: ComparativaDetalleCreateManyCuadroInputEnvelope
     connect?: ComparativaDetalleWhereUniqueInput | ComparativaDetalleWhereUniqueInput[]
+  }
+
+  export type ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput = {
+    create?: XOR<ComparativaLineaCreateWithoutCuadroInput, ComparativaLineaUncheckedCreateWithoutCuadroInput> | ComparativaLineaCreateWithoutCuadroInput[] | ComparativaLineaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaLineaCreateOrConnectWithoutCuadroInput | ComparativaLineaCreateOrConnectWithoutCuadroInput[]
+    createMany?: ComparativaLineaCreateManyCuadroInputEnvelope
+    connect?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -15317,6 +16607,20 @@ export namespace Prisma {
     deleteMany?: ComparativaDetalleScalarWhereInput | ComparativaDetalleScalarWhereInput[]
   }
 
+  export type ComparativaLineaUpdateManyWithoutCuadroNestedInput = {
+    create?: XOR<ComparativaLineaCreateWithoutCuadroInput, ComparativaLineaUncheckedCreateWithoutCuadroInput> | ComparativaLineaCreateWithoutCuadroInput[] | ComparativaLineaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaLineaCreateOrConnectWithoutCuadroInput | ComparativaLineaCreateOrConnectWithoutCuadroInput[]
+    upsert?: ComparativaLineaUpsertWithWhereUniqueWithoutCuadroInput | ComparativaLineaUpsertWithWhereUniqueWithoutCuadroInput[]
+    createMany?: ComparativaLineaCreateManyCuadroInputEnvelope
+    set?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    disconnect?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    delete?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    connect?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    update?: ComparativaLineaUpdateWithWhereUniqueWithoutCuadroInput | ComparativaLineaUpdateWithWhereUniqueWithoutCuadroInput[]
+    updateMany?: ComparativaLineaUpdateManyWithWhereWithoutCuadroInput | ComparativaLineaUpdateManyWithWhereWithoutCuadroInput[]
+    deleteMany?: ComparativaLineaScalarWhereInput | ComparativaLineaScalarWhereInput[]
+  }
+
   export type ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
@@ -15329,6 +16633,34 @@ export namespace Prisma {
     update?: ComparativaDetalleUpdateWithWhereUniqueWithoutCuadroInput | ComparativaDetalleUpdateWithWhereUniqueWithoutCuadroInput[]
     updateMany?: ComparativaDetalleUpdateManyWithWhereWithoutCuadroInput | ComparativaDetalleUpdateManyWithWhereWithoutCuadroInput[]
     deleteMany?: ComparativaDetalleScalarWhereInput | ComparativaDetalleScalarWhereInput[]
+  }
+
+  export type ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput = {
+    create?: XOR<ComparativaLineaCreateWithoutCuadroInput, ComparativaLineaUncheckedCreateWithoutCuadroInput> | ComparativaLineaCreateWithoutCuadroInput[] | ComparativaLineaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaLineaCreateOrConnectWithoutCuadroInput | ComparativaLineaCreateOrConnectWithoutCuadroInput[]
+    upsert?: ComparativaLineaUpsertWithWhereUniqueWithoutCuadroInput | ComparativaLineaUpsertWithWhereUniqueWithoutCuadroInput[]
+    createMany?: ComparativaLineaCreateManyCuadroInputEnvelope
+    set?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    disconnect?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    delete?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    connect?: ComparativaLineaWhereUniqueInput | ComparativaLineaWhereUniqueInput[]
+    update?: ComparativaLineaUpdateWithWhereUniqueWithoutCuadroInput | ComparativaLineaUpdateWithWhereUniqueWithoutCuadroInput[]
+    updateMany?: ComparativaLineaUpdateManyWithWhereWithoutCuadroInput | ComparativaLineaUpdateManyWithWhereWithoutCuadroInput[]
+    deleteMany?: ComparativaLineaScalarWhereInput | ComparativaLineaScalarWhereInput[]
+  }
+
+  export type CuadroComparativoCreateNestedOneWithoutLineasInput = {
+    create?: XOR<CuadroComparativoCreateWithoutLineasInput, CuadroComparativoUncheckedCreateWithoutLineasInput>
+    connectOrCreate?: CuadroComparativoCreateOrConnectWithoutLineasInput
+    connect?: CuadroComparativoWhereUniqueInput
+  }
+
+  export type CuadroComparativoUpdateOneRequiredWithoutLineasNestedInput = {
+    create?: XOR<CuadroComparativoCreateWithoutLineasInput, CuadroComparativoUncheckedCreateWithoutLineasInput>
+    connectOrCreate?: CuadroComparativoCreateOrConnectWithoutLineasInput
+    upsert?: CuadroComparativoUpsertWithoutLineasInput
+    connect?: CuadroComparativoWhereUniqueInput
+    update?: XOR<XOR<CuadroComparativoUpdateToOneWithWhereWithoutLineasInput, CuadroComparativoUpdateWithoutLineasInput>, CuadroComparativoUncheckedUpdateWithoutLineasInput>
   }
 
   export type CuadroComparativoCreateNestedOneWithoutDetallesInput = {
@@ -16165,6 +17497,34 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ComparativaLineaCreateWithoutCuadroInput = {
+    id_linea?: string
+    tenant_id: string
+    proyecto_id: string
+    insumo_id: string
+    marca_modelo_ref?: string | null
+    especificaciones_requeridas?: string | null
+  }
+
+  export type ComparativaLineaUncheckedCreateWithoutCuadroInput = {
+    id_linea?: string
+    tenant_id: string
+    proyecto_id: string
+    insumo_id: string
+    marca_modelo_ref?: string | null
+    especificaciones_requeridas?: string | null
+  }
+
+  export type ComparativaLineaCreateOrConnectWithoutCuadroInput = {
+    where: ComparativaLineaWhereUniqueInput
+    create: XOR<ComparativaLineaCreateWithoutCuadroInput, ComparativaLineaUncheckedCreateWithoutCuadroInput>
+  }
+
+  export type ComparativaLineaCreateManyCuadroInputEnvelope = {
+    data: ComparativaLineaCreateManyCuadroInput | ComparativaLineaCreateManyCuadroInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ComparativaDetalleUpsertWithWhereUniqueWithoutCuadroInput = {
     where: ComparativaDetalleWhereUniqueInput
     update: XOR<ComparativaDetalleUpdateWithoutCuadroInput, ComparativaDetalleUncheckedUpdateWithoutCuadroInput>
@@ -16181,6 +17541,119 @@ export namespace Prisma {
     data: XOR<ComparativaDetalleUpdateManyMutationInput, ComparativaDetalleUncheckedUpdateManyWithoutCuadroInput>
   }
 
+  export type ComparativaLineaUpsertWithWhereUniqueWithoutCuadroInput = {
+    where: ComparativaLineaWhereUniqueInput
+    update: XOR<ComparativaLineaUpdateWithoutCuadroInput, ComparativaLineaUncheckedUpdateWithoutCuadroInput>
+    create: XOR<ComparativaLineaCreateWithoutCuadroInput, ComparativaLineaUncheckedCreateWithoutCuadroInput>
+  }
+
+  export type ComparativaLineaUpdateWithWhereUniqueWithoutCuadroInput = {
+    where: ComparativaLineaWhereUniqueInput
+    data: XOR<ComparativaLineaUpdateWithoutCuadroInput, ComparativaLineaUncheckedUpdateWithoutCuadroInput>
+  }
+
+  export type ComparativaLineaUpdateManyWithWhereWithoutCuadroInput = {
+    where: ComparativaLineaScalarWhereInput
+    data: XOR<ComparativaLineaUpdateManyMutationInput, ComparativaLineaUncheckedUpdateManyWithoutCuadroInput>
+  }
+
+  export type ComparativaLineaScalarWhereInput = {
+    AND?: ComparativaLineaScalarWhereInput | ComparativaLineaScalarWhereInput[]
+    OR?: ComparativaLineaScalarWhereInput[]
+    NOT?: ComparativaLineaScalarWhereInput | ComparativaLineaScalarWhereInput[]
+    id_linea?: UuidFilter<"ComparativaLinea"> | string
+    tenant_id?: UuidFilter<"ComparativaLinea"> | string
+    proyecto_id?: UuidFilter<"ComparativaLinea"> | string
+    cuadro_id?: UuidFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidFilter<"ComparativaLinea"> | string
+    marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
+    especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
+  }
+
+  export type CuadroComparativoCreateWithoutLineasInput = {
+    id_cuadro?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    codigo: string
+    fecha_creacion?: Date | string
+    estado?: string
+    notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
+    detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
+  }
+
+  export type CuadroComparativoUncheckedCreateWithoutLineasInput = {
+    id_cuadro?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    codigo: string
+    fecha_creacion?: Date | string
+    estado?: string
+    notas?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
+    detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
+  }
+
+  export type CuadroComparativoCreateOrConnectWithoutLineasInput = {
+    where: CuadroComparativoWhereUniqueInput
+    create: XOR<CuadroComparativoCreateWithoutLineasInput, CuadroComparativoUncheckedCreateWithoutLineasInput>
+  }
+
+  export type CuadroComparativoUpsertWithoutLineasInput = {
+    update: XOR<CuadroComparativoUpdateWithoutLineasInput, CuadroComparativoUncheckedUpdateWithoutLineasInput>
+    create: XOR<CuadroComparativoCreateWithoutLineasInput, CuadroComparativoUncheckedCreateWithoutLineasInput>
+    where?: CuadroComparativoWhereInput
+  }
+
+  export type CuadroComparativoUpdateToOneWithWhereWithoutLineasInput = {
+    where?: CuadroComparativoWhereInput
+    data: XOR<CuadroComparativoUpdateWithoutLineasInput, CuadroComparativoUncheckedUpdateWithoutLineasInput>
+  }
+
+  export type CuadroComparativoUpdateWithoutLineasInput = {
+    id_cuadro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
+  }
+
+  export type CuadroComparativoUncheckedUpdateWithoutLineasInput = {
+    id_cuadro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
+  }
+
   export type CuadroComparativoCreateWithoutDetallesInput = {
     id_cuadro?: string
     tenant_id: string
@@ -16195,6 +17668,7 @@ export namespace Prisma {
     gerente_tecnico_id?: string | null
     fecha_aprobacion_gt?: Date | string | null
     comentario_gt_general?: string | null
+    lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutDetallesInput = {
@@ -16211,6 +17685,7 @@ export namespace Prisma {
     gerente_tecnico_id?: string | null
     fecha_aprobacion_gt?: Date | string | null
     comentario_gt_general?: string | null
+    lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutDetallesInput = {
@@ -16270,6 +17745,7 @@ export namespace Prisma {
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutDetallesInput = {
@@ -16286,6 +17762,7 @@ export namespace Prisma {
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type ProveedorUpsertWithoutComparativasInput = {
@@ -16698,6 +18175,15 @@ export namespace Prisma {
     comentario_gt?: string | null
   }
 
+  export type ComparativaLineaCreateManyCuadroInput = {
+    id_linea?: string
+    tenant_id: string
+    proyecto_id: string
+    insumo_id: string
+    marca_modelo_ref?: string | null
+    especificaciones_requeridas?: string | null
+  }
+
   export type ComparativaDetalleUpdateWithoutCuadroInput = {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
@@ -16741,6 +18227,33 @@ export namespace Prisma {
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaLineaUpdateWithoutCuadroInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaLineaUncheckedUpdateWithoutCuadroInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaLineaUncheckedUpdateManyWithoutCuadroInput = {
+    id_linea?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenCreateManyItemInput = {
@@ -16848,6 +18361,10 @@ export namespace Prisma {
      * @deprecated Use CuadroComparativoDefaultArgs instead
      */
     export type CuadroComparativoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuadroComparativoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ComparativaLineaDefaultArgs instead
+     */
+    export type ComparativaLineaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ComparativaLineaDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ComparativaDetalleDefaultArgs instead
      */

@@ -147,3 +147,26 @@ enum EstadoPresupuesto {
   LIBERADO     // Emite evento: PresupuestoBaseLiberado
   CONGELADO
 }
+
+// ======================================================================
+// FICHAS TÉCNICAS DE INSUMO
+// Documentos (PDF, Word, imágenes) que los proveedores envían como
+// especificación del material/equipo. Vinculados al insumo del catálogo.
+// ======================================================================
+
+model FichaTecnicaInsumo {
+  id_ficha     String   @id @default(uuid()) @db.Uuid
+  tenant_id    String   @db.Uuid
+  insumo_id    String   @db.Uuid
+  proveedor_ref String? @db.VarChar(100)
+  nombre_doc   String   @db.VarChar(255)
+  ruta_archivo String   @db.Text
+  mime_type    String   @db.VarChar(100)
+  tamano_bytes Int
+  subido_por   String   @db.Uuid
+  created_at   DateTime @default(now())
+
+  @@index([tenant_id, insumo_id])
+  @@map("fichas_tecnicas_insumo")
+}
+

@@ -38,6 +38,11 @@ export type Concepto = $Result.DefaultSelection<Prisma.$ConceptoPayload>
  * Permite calcular take-off de materiales a partir del avance reportado.
  */
 export type ConceptoInsumo = $Result.DefaultSelection<Prisma.$ConceptoInsumoPayload>
+/**
+ * Model FichaTecnicaInsumo
+ * 
+ */
+export type FichaTecnicaInsumo = $Result.DefaultSelection<Prisma.$FichaTecnicaInsumoPayload>
 
 /**
  * Enums
@@ -236,6 +241,16 @@ export class PrismaClient<
     * ```
     */
   get conceptoInsumo(): Prisma.ConceptoInsumoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.fichaTecnicaInsumo`: Exposes CRUD operations for the **FichaTecnicaInsumo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more FichaTecnicaInsumos
+    * const fichaTecnicaInsumos = await prisma.fichaTecnicaInsumo.findMany()
+    * ```
+    */
+  get fichaTecnicaInsumo(): Prisma.FichaTecnicaInsumoDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -680,7 +695,8 @@ export namespace Prisma {
     Insumo: 'Insumo',
     PresupuestoBase: 'PresupuestoBase',
     Concepto: 'Concepto',
-    ConceptoInsumo: 'ConceptoInsumo'
+    ConceptoInsumo: 'ConceptoInsumo',
+    FichaTecnicaInsumo: 'FichaTecnicaInsumo'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -696,7 +712,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo"
+      modelProps: "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "fichaTecnicaInsumo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -977,6 +993,76 @@ export namespace Prisma {
           count: {
             args: Prisma.ConceptoInsumoCountArgs<ExtArgs>
             result: $Utils.Optional<ConceptoInsumoCountAggregateOutputType> | number
+          }
+        }
+      }
+      FichaTecnicaInsumo: {
+        payload: Prisma.$FichaTecnicaInsumoPayload<ExtArgs>
+        fields: Prisma.FichaTecnicaInsumoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.FichaTecnicaInsumoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.FichaTecnicaInsumoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>
+          }
+          findFirst: {
+            args: Prisma.FichaTecnicaInsumoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.FichaTecnicaInsumoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>
+          }
+          findMany: {
+            args: Prisma.FichaTecnicaInsumoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>[]
+          }
+          create: {
+            args: Prisma.FichaTecnicaInsumoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>
+          }
+          createMany: {
+            args: Prisma.FichaTecnicaInsumoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.FichaTecnicaInsumoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>[]
+          }
+          delete: {
+            args: Prisma.FichaTecnicaInsumoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>
+          }
+          update: {
+            args: Prisma.FichaTecnicaInsumoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>
+          }
+          deleteMany: {
+            args: Prisma.FichaTecnicaInsumoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.FichaTecnicaInsumoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.FichaTecnicaInsumoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FichaTecnicaInsumoPayload>
+          }
+          aggregate: {
+            args: Prisma.FichaTecnicaInsumoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateFichaTecnicaInsumo>
+          }
+          groupBy: {
+            args: Prisma.FichaTecnicaInsumoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<FichaTecnicaInsumoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.FichaTecnicaInsumoCountArgs<ExtArgs>
+            result: $Utils.Optional<FichaTecnicaInsumoCountAggregateOutputType> | number
           }
         }
       }
@@ -5469,6 +5555,978 @@ export namespace Prisma {
 
 
   /**
+   * Model FichaTecnicaInsumo
+   */
+
+  export type AggregateFichaTecnicaInsumo = {
+    _count: FichaTecnicaInsumoCountAggregateOutputType | null
+    _avg: FichaTecnicaInsumoAvgAggregateOutputType | null
+    _sum: FichaTecnicaInsumoSumAggregateOutputType | null
+    _min: FichaTecnicaInsumoMinAggregateOutputType | null
+    _max: FichaTecnicaInsumoMaxAggregateOutputType | null
+  }
+
+  export type FichaTecnicaInsumoAvgAggregateOutputType = {
+    tamano_bytes: number | null
+  }
+
+  export type FichaTecnicaInsumoSumAggregateOutputType = {
+    tamano_bytes: number | null
+  }
+
+  export type FichaTecnicaInsumoMinAggregateOutputType = {
+    id_ficha: string | null
+    tenant_id: string | null
+    insumo_id: string | null
+    proveedor_ref: string | null
+    nombre_doc: string | null
+    ruta_archivo: string | null
+    mime_type: string | null
+    tamano_bytes: number | null
+    subido_por: string | null
+    created_at: Date | null
+  }
+
+  export type FichaTecnicaInsumoMaxAggregateOutputType = {
+    id_ficha: string | null
+    tenant_id: string | null
+    insumo_id: string | null
+    proveedor_ref: string | null
+    nombre_doc: string | null
+    ruta_archivo: string | null
+    mime_type: string | null
+    tamano_bytes: number | null
+    subido_por: string | null
+    created_at: Date | null
+  }
+
+  export type FichaTecnicaInsumoCountAggregateOutputType = {
+    id_ficha: number
+    tenant_id: number
+    insumo_id: number
+    proveedor_ref: number
+    nombre_doc: number
+    ruta_archivo: number
+    mime_type: number
+    tamano_bytes: number
+    subido_por: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type FichaTecnicaInsumoAvgAggregateInputType = {
+    tamano_bytes?: true
+  }
+
+  export type FichaTecnicaInsumoSumAggregateInputType = {
+    tamano_bytes?: true
+  }
+
+  export type FichaTecnicaInsumoMinAggregateInputType = {
+    id_ficha?: true
+    tenant_id?: true
+    insumo_id?: true
+    proveedor_ref?: true
+    nombre_doc?: true
+    ruta_archivo?: true
+    mime_type?: true
+    tamano_bytes?: true
+    subido_por?: true
+    created_at?: true
+  }
+
+  export type FichaTecnicaInsumoMaxAggregateInputType = {
+    id_ficha?: true
+    tenant_id?: true
+    insumo_id?: true
+    proveedor_ref?: true
+    nombre_doc?: true
+    ruta_archivo?: true
+    mime_type?: true
+    tamano_bytes?: true
+    subido_por?: true
+    created_at?: true
+  }
+
+  export type FichaTecnicaInsumoCountAggregateInputType = {
+    id_ficha?: true
+    tenant_id?: true
+    insumo_id?: true
+    proveedor_ref?: true
+    nombre_doc?: true
+    ruta_archivo?: true
+    mime_type?: true
+    tamano_bytes?: true
+    subido_por?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type FichaTecnicaInsumoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FichaTecnicaInsumo to aggregate.
+     */
+    where?: FichaTecnicaInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FichaTecnicaInsumos to fetch.
+     */
+    orderBy?: FichaTecnicaInsumoOrderByWithRelationInput | FichaTecnicaInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: FichaTecnicaInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FichaTecnicaInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FichaTecnicaInsumos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned FichaTecnicaInsumos
+    **/
+    _count?: true | FichaTecnicaInsumoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: FichaTecnicaInsumoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: FichaTecnicaInsumoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: FichaTecnicaInsumoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: FichaTecnicaInsumoMaxAggregateInputType
+  }
+
+  export type GetFichaTecnicaInsumoAggregateType<T extends FichaTecnicaInsumoAggregateArgs> = {
+        [P in keyof T & keyof AggregateFichaTecnicaInsumo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateFichaTecnicaInsumo[P]>
+      : GetScalarType<T[P], AggregateFichaTecnicaInsumo[P]>
+  }
+
+
+
+
+  export type FichaTecnicaInsumoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FichaTecnicaInsumoWhereInput
+    orderBy?: FichaTecnicaInsumoOrderByWithAggregationInput | FichaTecnicaInsumoOrderByWithAggregationInput[]
+    by: FichaTecnicaInsumoScalarFieldEnum[] | FichaTecnicaInsumoScalarFieldEnum
+    having?: FichaTecnicaInsumoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: FichaTecnicaInsumoCountAggregateInputType | true
+    _avg?: FichaTecnicaInsumoAvgAggregateInputType
+    _sum?: FichaTecnicaInsumoSumAggregateInputType
+    _min?: FichaTecnicaInsumoMinAggregateInputType
+    _max?: FichaTecnicaInsumoMaxAggregateInputType
+  }
+
+  export type FichaTecnicaInsumoGroupByOutputType = {
+    id_ficha: string
+    tenant_id: string
+    insumo_id: string
+    proveedor_ref: string | null
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at: Date
+    _count: FichaTecnicaInsumoCountAggregateOutputType | null
+    _avg: FichaTecnicaInsumoAvgAggregateOutputType | null
+    _sum: FichaTecnicaInsumoSumAggregateOutputType | null
+    _min: FichaTecnicaInsumoMinAggregateOutputType | null
+    _max: FichaTecnicaInsumoMaxAggregateOutputType | null
+  }
+
+  type GetFichaTecnicaInsumoGroupByPayload<T extends FichaTecnicaInsumoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<FichaTecnicaInsumoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof FichaTecnicaInsumoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], FichaTecnicaInsumoGroupByOutputType[P]>
+            : GetScalarType<T[P], FichaTecnicaInsumoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type FichaTecnicaInsumoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_ficha?: boolean
+    tenant_id?: boolean
+    insumo_id?: boolean
+    proveedor_ref?: boolean
+    nombre_doc?: boolean
+    ruta_archivo?: boolean
+    mime_type?: boolean
+    tamano_bytes?: boolean
+    subido_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["fichaTecnicaInsumo"]>
+
+  export type FichaTecnicaInsumoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_ficha?: boolean
+    tenant_id?: boolean
+    insumo_id?: boolean
+    proveedor_ref?: boolean
+    nombre_doc?: boolean
+    ruta_archivo?: boolean
+    mime_type?: boolean
+    tamano_bytes?: boolean
+    subido_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["fichaTecnicaInsumo"]>
+
+  export type FichaTecnicaInsumoSelectScalar = {
+    id_ficha?: boolean
+    tenant_id?: boolean
+    insumo_id?: boolean
+    proveedor_ref?: boolean
+    nombre_doc?: boolean
+    ruta_archivo?: boolean
+    mime_type?: boolean
+    tamano_bytes?: boolean
+    subido_por?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $FichaTecnicaInsumoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "FichaTecnicaInsumo"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_ficha: string
+      tenant_id: string
+      insumo_id: string
+      proveedor_ref: string | null
+      nombre_doc: string
+      ruta_archivo: string
+      mime_type: string
+      tamano_bytes: number
+      subido_por: string
+      created_at: Date
+    }, ExtArgs["result"]["fichaTecnicaInsumo"]>
+    composites: {}
+  }
+
+  type FichaTecnicaInsumoGetPayload<S extends boolean | null | undefined | FichaTecnicaInsumoDefaultArgs> = $Result.GetResult<Prisma.$FichaTecnicaInsumoPayload, S>
+
+  type FichaTecnicaInsumoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<FichaTecnicaInsumoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: FichaTecnicaInsumoCountAggregateInputType | true
+    }
+
+  export interface FichaTecnicaInsumoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['FichaTecnicaInsumo'], meta: { name: 'FichaTecnicaInsumo' } }
+    /**
+     * Find zero or one FichaTecnicaInsumo that matches the filter.
+     * @param {FichaTecnicaInsumoFindUniqueArgs} args - Arguments to find a FichaTecnicaInsumo
+     * @example
+     * // Get one FichaTecnicaInsumo
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends FichaTecnicaInsumoFindUniqueArgs>(args: SelectSubset<T, FichaTecnicaInsumoFindUniqueArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one FichaTecnicaInsumo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {FichaTecnicaInsumoFindUniqueOrThrowArgs} args - Arguments to find a FichaTecnicaInsumo
+     * @example
+     * // Get one FichaTecnicaInsumo
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends FichaTecnicaInsumoFindUniqueOrThrowArgs>(args: SelectSubset<T, FichaTecnicaInsumoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first FichaTecnicaInsumo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoFindFirstArgs} args - Arguments to find a FichaTecnicaInsumo
+     * @example
+     * // Get one FichaTecnicaInsumo
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends FichaTecnicaInsumoFindFirstArgs>(args?: SelectSubset<T, FichaTecnicaInsumoFindFirstArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first FichaTecnicaInsumo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoFindFirstOrThrowArgs} args - Arguments to find a FichaTecnicaInsumo
+     * @example
+     * // Get one FichaTecnicaInsumo
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends FichaTecnicaInsumoFindFirstOrThrowArgs>(args?: SelectSubset<T, FichaTecnicaInsumoFindFirstOrThrowArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more FichaTecnicaInsumos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all FichaTecnicaInsumos
+     * const fichaTecnicaInsumos = await prisma.fichaTecnicaInsumo.findMany()
+     * 
+     * // Get first 10 FichaTecnicaInsumos
+     * const fichaTecnicaInsumos = await prisma.fichaTecnicaInsumo.findMany({ take: 10 })
+     * 
+     * // Only select the `id_ficha`
+     * const fichaTecnicaInsumoWithId_fichaOnly = await prisma.fichaTecnicaInsumo.findMany({ select: { id_ficha: true } })
+     * 
+     */
+    findMany<T extends FichaTecnicaInsumoFindManyArgs>(args?: SelectSubset<T, FichaTecnicaInsumoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a FichaTecnicaInsumo.
+     * @param {FichaTecnicaInsumoCreateArgs} args - Arguments to create a FichaTecnicaInsumo.
+     * @example
+     * // Create one FichaTecnicaInsumo
+     * const FichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.create({
+     *   data: {
+     *     // ... data to create a FichaTecnicaInsumo
+     *   }
+     * })
+     * 
+     */
+    create<T extends FichaTecnicaInsumoCreateArgs>(args: SelectSubset<T, FichaTecnicaInsumoCreateArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many FichaTecnicaInsumos.
+     * @param {FichaTecnicaInsumoCreateManyArgs} args - Arguments to create many FichaTecnicaInsumos.
+     * @example
+     * // Create many FichaTecnicaInsumos
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends FichaTecnicaInsumoCreateManyArgs>(args?: SelectSubset<T, FichaTecnicaInsumoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many FichaTecnicaInsumos and returns the data saved in the database.
+     * @param {FichaTecnicaInsumoCreateManyAndReturnArgs} args - Arguments to create many FichaTecnicaInsumos.
+     * @example
+     * // Create many FichaTecnicaInsumos
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many FichaTecnicaInsumos and only return the `id_ficha`
+     * const fichaTecnicaInsumoWithId_fichaOnly = await prisma.fichaTecnicaInsumo.createManyAndReturn({ 
+     *   select: { id_ficha: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends FichaTecnicaInsumoCreateManyAndReturnArgs>(args?: SelectSubset<T, FichaTecnicaInsumoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a FichaTecnicaInsumo.
+     * @param {FichaTecnicaInsumoDeleteArgs} args - Arguments to delete one FichaTecnicaInsumo.
+     * @example
+     * // Delete one FichaTecnicaInsumo
+     * const FichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.delete({
+     *   where: {
+     *     // ... filter to delete one FichaTecnicaInsumo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends FichaTecnicaInsumoDeleteArgs>(args: SelectSubset<T, FichaTecnicaInsumoDeleteArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one FichaTecnicaInsumo.
+     * @param {FichaTecnicaInsumoUpdateArgs} args - Arguments to update one FichaTecnicaInsumo.
+     * @example
+     * // Update one FichaTecnicaInsumo
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends FichaTecnicaInsumoUpdateArgs>(args: SelectSubset<T, FichaTecnicaInsumoUpdateArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more FichaTecnicaInsumos.
+     * @param {FichaTecnicaInsumoDeleteManyArgs} args - Arguments to filter FichaTecnicaInsumos to delete.
+     * @example
+     * // Delete a few FichaTecnicaInsumos
+     * const { count } = await prisma.fichaTecnicaInsumo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends FichaTecnicaInsumoDeleteManyArgs>(args?: SelectSubset<T, FichaTecnicaInsumoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FichaTecnicaInsumos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many FichaTecnicaInsumos
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends FichaTecnicaInsumoUpdateManyArgs>(args: SelectSubset<T, FichaTecnicaInsumoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one FichaTecnicaInsumo.
+     * @param {FichaTecnicaInsumoUpsertArgs} args - Arguments to update or create a FichaTecnicaInsumo.
+     * @example
+     * // Update or create a FichaTecnicaInsumo
+     * const fichaTecnicaInsumo = await prisma.fichaTecnicaInsumo.upsert({
+     *   create: {
+     *     // ... data to create a FichaTecnicaInsumo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the FichaTecnicaInsumo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends FichaTecnicaInsumoUpsertArgs>(args: SelectSubset<T, FichaTecnicaInsumoUpsertArgs<ExtArgs>>): Prisma__FichaTecnicaInsumoClient<$Result.GetResult<Prisma.$FichaTecnicaInsumoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of FichaTecnicaInsumos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoCountArgs} args - Arguments to filter FichaTecnicaInsumos to count.
+     * @example
+     * // Count the number of FichaTecnicaInsumos
+     * const count = await prisma.fichaTecnicaInsumo.count({
+     *   where: {
+     *     // ... the filter for the FichaTecnicaInsumos we want to count
+     *   }
+     * })
+    **/
+    count<T extends FichaTecnicaInsumoCountArgs>(
+      args?: Subset<T, FichaTecnicaInsumoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], FichaTecnicaInsumoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a FichaTecnicaInsumo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends FichaTecnicaInsumoAggregateArgs>(args: Subset<T, FichaTecnicaInsumoAggregateArgs>): Prisma.PrismaPromise<GetFichaTecnicaInsumoAggregateType<T>>
+
+    /**
+     * Group by FichaTecnicaInsumo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FichaTecnicaInsumoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends FichaTecnicaInsumoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: FichaTecnicaInsumoGroupByArgs['orderBy'] }
+        : { orderBy?: FichaTecnicaInsumoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, FichaTecnicaInsumoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFichaTecnicaInsumoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the FichaTecnicaInsumo model
+   */
+  readonly fields: FichaTecnicaInsumoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for FichaTecnicaInsumo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__FichaTecnicaInsumoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the FichaTecnicaInsumo model
+   */ 
+  interface FichaTecnicaInsumoFieldRefs {
+    readonly id_ficha: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly tenant_id: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly insumo_id: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly proveedor_ref: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly nombre_doc: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly ruta_archivo: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly mime_type: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly tamano_bytes: FieldRef<"FichaTecnicaInsumo", 'Int'>
+    readonly subido_por: FieldRef<"FichaTecnicaInsumo", 'String'>
+    readonly created_at: FieldRef<"FichaTecnicaInsumo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * FichaTecnicaInsumo findUnique
+   */
+  export type FichaTecnicaInsumoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * Filter, which FichaTecnicaInsumo to fetch.
+     */
+    where: FichaTecnicaInsumoWhereUniqueInput
+  }
+
+  /**
+   * FichaTecnicaInsumo findUniqueOrThrow
+   */
+  export type FichaTecnicaInsumoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * Filter, which FichaTecnicaInsumo to fetch.
+     */
+    where: FichaTecnicaInsumoWhereUniqueInput
+  }
+
+  /**
+   * FichaTecnicaInsumo findFirst
+   */
+  export type FichaTecnicaInsumoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * Filter, which FichaTecnicaInsumo to fetch.
+     */
+    where?: FichaTecnicaInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FichaTecnicaInsumos to fetch.
+     */
+    orderBy?: FichaTecnicaInsumoOrderByWithRelationInput | FichaTecnicaInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FichaTecnicaInsumos.
+     */
+    cursor?: FichaTecnicaInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FichaTecnicaInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FichaTecnicaInsumos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FichaTecnicaInsumos.
+     */
+    distinct?: FichaTecnicaInsumoScalarFieldEnum | FichaTecnicaInsumoScalarFieldEnum[]
+  }
+
+  /**
+   * FichaTecnicaInsumo findFirstOrThrow
+   */
+  export type FichaTecnicaInsumoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * Filter, which FichaTecnicaInsumo to fetch.
+     */
+    where?: FichaTecnicaInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FichaTecnicaInsumos to fetch.
+     */
+    orderBy?: FichaTecnicaInsumoOrderByWithRelationInput | FichaTecnicaInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FichaTecnicaInsumos.
+     */
+    cursor?: FichaTecnicaInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FichaTecnicaInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FichaTecnicaInsumos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FichaTecnicaInsumos.
+     */
+    distinct?: FichaTecnicaInsumoScalarFieldEnum | FichaTecnicaInsumoScalarFieldEnum[]
+  }
+
+  /**
+   * FichaTecnicaInsumo findMany
+   */
+  export type FichaTecnicaInsumoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * Filter, which FichaTecnicaInsumos to fetch.
+     */
+    where?: FichaTecnicaInsumoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FichaTecnicaInsumos to fetch.
+     */
+    orderBy?: FichaTecnicaInsumoOrderByWithRelationInput | FichaTecnicaInsumoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing FichaTecnicaInsumos.
+     */
+    cursor?: FichaTecnicaInsumoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FichaTecnicaInsumos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FichaTecnicaInsumos.
+     */
+    skip?: number
+    distinct?: FichaTecnicaInsumoScalarFieldEnum | FichaTecnicaInsumoScalarFieldEnum[]
+  }
+
+  /**
+   * FichaTecnicaInsumo create
+   */
+  export type FichaTecnicaInsumoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a FichaTecnicaInsumo.
+     */
+    data: XOR<FichaTecnicaInsumoCreateInput, FichaTecnicaInsumoUncheckedCreateInput>
+  }
+
+  /**
+   * FichaTecnicaInsumo createMany
+   */
+  export type FichaTecnicaInsumoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many FichaTecnicaInsumos.
+     */
+    data: FichaTecnicaInsumoCreateManyInput | FichaTecnicaInsumoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * FichaTecnicaInsumo createManyAndReturn
+   */
+  export type FichaTecnicaInsumoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many FichaTecnicaInsumos.
+     */
+    data: FichaTecnicaInsumoCreateManyInput | FichaTecnicaInsumoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * FichaTecnicaInsumo update
+   */
+  export type FichaTecnicaInsumoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a FichaTecnicaInsumo.
+     */
+    data: XOR<FichaTecnicaInsumoUpdateInput, FichaTecnicaInsumoUncheckedUpdateInput>
+    /**
+     * Choose, which FichaTecnicaInsumo to update.
+     */
+    where: FichaTecnicaInsumoWhereUniqueInput
+  }
+
+  /**
+   * FichaTecnicaInsumo updateMany
+   */
+  export type FichaTecnicaInsumoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update FichaTecnicaInsumos.
+     */
+    data: XOR<FichaTecnicaInsumoUpdateManyMutationInput, FichaTecnicaInsumoUncheckedUpdateManyInput>
+    /**
+     * Filter which FichaTecnicaInsumos to update
+     */
+    where?: FichaTecnicaInsumoWhereInput
+  }
+
+  /**
+   * FichaTecnicaInsumo upsert
+   */
+  export type FichaTecnicaInsumoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the FichaTecnicaInsumo to update in case it exists.
+     */
+    where: FichaTecnicaInsumoWhereUniqueInput
+    /**
+     * In case the FichaTecnicaInsumo found by the `where` argument doesn't exist, create a new FichaTecnicaInsumo with this data.
+     */
+    create: XOR<FichaTecnicaInsumoCreateInput, FichaTecnicaInsumoUncheckedCreateInput>
+    /**
+     * In case the FichaTecnicaInsumo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<FichaTecnicaInsumoUpdateInput, FichaTecnicaInsumoUncheckedUpdateInput>
+  }
+
+  /**
+   * FichaTecnicaInsumo delete
+   */
+  export type FichaTecnicaInsumoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+    /**
+     * Filter which FichaTecnicaInsumo to delete.
+     */
+    where: FichaTecnicaInsumoWhereUniqueInput
+  }
+
+  /**
+   * FichaTecnicaInsumo deleteMany
+   */
+  export type FichaTecnicaInsumoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FichaTecnicaInsumos to delete
+     */
+    where?: FichaTecnicaInsumoWhereInput
+  }
+
+  /**
+   * FichaTecnicaInsumo without action
+   */
+  export type FichaTecnicaInsumoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FichaTecnicaInsumo
+     */
+    select?: FichaTecnicaInsumoSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -5547,6 +6605,22 @@ export namespace Prisma {
   };
 
   export type ConceptoInsumoScalarFieldEnum = (typeof ConceptoInsumoScalarFieldEnum)[keyof typeof ConceptoInsumoScalarFieldEnum]
+
+
+  export const FichaTecnicaInsumoScalarFieldEnum: {
+    id_ficha: 'id_ficha',
+    tenant_id: 'tenant_id',
+    insumo_id: 'insumo_id',
+    proveedor_ref: 'proveedor_ref',
+    nombre_doc: 'nombre_doc',
+    ruta_archivo: 'ruta_archivo',
+    mime_type: 'mime_type',
+    tamano_bytes: 'tamano_bytes',
+    subido_por: 'subido_por',
+    created_at: 'created_at'
+  };
+
+  export type FichaTecnicaInsumoScalarFieldEnum = (typeof FichaTecnicaInsumoScalarFieldEnum)[keyof typeof FichaTecnicaInsumoScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -6037,6 +7111,85 @@ export namespace Prisma {
     updated_at?: DateTimeWithAggregatesFilter<"ConceptoInsumo"> | Date | string
   }
 
+  export type FichaTecnicaInsumoWhereInput = {
+    AND?: FichaTecnicaInsumoWhereInput | FichaTecnicaInsumoWhereInput[]
+    OR?: FichaTecnicaInsumoWhereInput[]
+    NOT?: FichaTecnicaInsumoWhereInput | FichaTecnicaInsumoWhereInput[]
+    id_ficha?: UuidFilter<"FichaTecnicaInsumo"> | string
+    tenant_id?: UuidFilter<"FichaTecnicaInsumo"> | string
+    insumo_id?: UuidFilter<"FichaTecnicaInsumo"> | string
+    proveedor_ref?: StringNullableFilter<"FichaTecnicaInsumo"> | string | null
+    nombre_doc?: StringFilter<"FichaTecnicaInsumo"> | string
+    ruta_archivo?: StringFilter<"FichaTecnicaInsumo"> | string
+    mime_type?: StringFilter<"FichaTecnicaInsumo"> | string
+    tamano_bytes?: IntFilter<"FichaTecnicaInsumo"> | number
+    subido_por?: UuidFilter<"FichaTecnicaInsumo"> | string
+    created_at?: DateTimeFilter<"FichaTecnicaInsumo"> | Date | string
+  }
+
+  export type FichaTecnicaInsumoOrderByWithRelationInput = {
+    id_ficha?: SortOrder
+    tenant_id?: SortOrder
+    insumo_id?: SortOrder
+    proveedor_ref?: SortOrderInput | SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type FichaTecnicaInsumoWhereUniqueInput = Prisma.AtLeast<{
+    id_ficha?: string
+    AND?: FichaTecnicaInsumoWhereInput | FichaTecnicaInsumoWhereInput[]
+    OR?: FichaTecnicaInsumoWhereInput[]
+    NOT?: FichaTecnicaInsumoWhereInput | FichaTecnicaInsumoWhereInput[]
+    tenant_id?: UuidFilter<"FichaTecnicaInsumo"> | string
+    insumo_id?: UuidFilter<"FichaTecnicaInsumo"> | string
+    proveedor_ref?: StringNullableFilter<"FichaTecnicaInsumo"> | string | null
+    nombre_doc?: StringFilter<"FichaTecnicaInsumo"> | string
+    ruta_archivo?: StringFilter<"FichaTecnicaInsumo"> | string
+    mime_type?: StringFilter<"FichaTecnicaInsumo"> | string
+    tamano_bytes?: IntFilter<"FichaTecnicaInsumo"> | number
+    subido_por?: UuidFilter<"FichaTecnicaInsumo"> | string
+    created_at?: DateTimeFilter<"FichaTecnicaInsumo"> | Date | string
+  }, "id_ficha">
+
+  export type FichaTecnicaInsumoOrderByWithAggregationInput = {
+    id_ficha?: SortOrder
+    tenant_id?: SortOrder
+    insumo_id?: SortOrder
+    proveedor_ref?: SortOrderInput | SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+    _count?: FichaTecnicaInsumoCountOrderByAggregateInput
+    _avg?: FichaTecnicaInsumoAvgOrderByAggregateInput
+    _max?: FichaTecnicaInsumoMaxOrderByAggregateInput
+    _min?: FichaTecnicaInsumoMinOrderByAggregateInput
+    _sum?: FichaTecnicaInsumoSumOrderByAggregateInput
+  }
+
+  export type FichaTecnicaInsumoScalarWhereWithAggregatesInput = {
+    AND?: FichaTecnicaInsumoScalarWhereWithAggregatesInput | FichaTecnicaInsumoScalarWhereWithAggregatesInput[]
+    OR?: FichaTecnicaInsumoScalarWhereWithAggregatesInput[]
+    NOT?: FichaTecnicaInsumoScalarWhereWithAggregatesInput | FichaTecnicaInsumoScalarWhereWithAggregatesInput[]
+    id_ficha?: UuidWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    insumo_id?: UuidWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    proveedor_ref?: StringNullableWithAggregatesFilter<"FichaTecnicaInsumo"> | string | null
+    nombre_doc?: StringWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    ruta_archivo?: StringWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    mime_type?: StringWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    tamano_bytes?: IntWithAggregatesFilter<"FichaTecnicaInsumo"> | number
+    subido_por?: UuidWithAggregatesFilter<"FichaTecnicaInsumo"> | string
+    created_at?: DateTimeWithAggregatesFilter<"FichaTecnicaInsumo"> | Date | string
+  }
+
   export type InsumoCreateInput = {
     id?: string
     tenant_id: string
@@ -6429,6 +7582,97 @@ export namespace Prisma {
     costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FichaTecnicaInsumoCreateInput = {
+    id_ficha?: string
+    tenant_id: string
+    insumo_id: string
+    proveedor_ref?: string | null
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type FichaTecnicaInsumoUncheckedCreateInput = {
+    id_ficha?: string
+    tenant_id: string
+    insumo_id: string
+    proveedor_ref?: string | null
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type FichaTecnicaInsumoUpdateInput = {
+    id_ficha?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    proveedor_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FichaTecnicaInsumoUncheckedUpdateInput = {
+    id_ficha?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    proveedor_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FichaTecnicaInsumoCreateManyInput = {
+    id_ficha?: string
+    tenant_id: string
+    insumo_id: string
+    proveedor_ref?: string | null
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type FichaTecnicaInsumoUpdateManyMutationInput = {
+    id_ficha?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    proveedor_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FichaTecnicaInsumoUncheckedUpdateManyInput = {
+    id_ficha?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: StringFieldUpdateOperationsInput | string
+    proveedor_ref?: NullableStringFieldUpdateOperationsInput | string | null
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -6926,6 +8170,86 @@ export namespace Prisma {
     costo_unitario?: SortOrder
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type FichaTecnicaInsumoCountOrderByAggregateInput = {
+    id_ficha?: SortOrder
+    tenant_id?: SortOrder
+    insumo_id?: SortOrder
+    proveedor_ref?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type FichaTecnicaInsumoAvgOrderByAggregateInput = {
+    tamano_bytes?: SortOrder
+  }
+
+  export type FichaTecnicaInsumoMaxOrderByAggregateInput = {
+    id_ficha?: SortOrder
+    tenant_id?: SortOrder
+    insumo_id?: SortOrder
+    proveedor_ref?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type FichaTecnicaInsumoMinOrderByAggregateInput = {
+    id_ficha?: SortOrder
+    tenant_id?: SortOrder
+    insumo_id?: SortOrder
+    proveedor_ref?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type FichaTecnicaInsumoSumOrderByAggregateInput = {
+    tamano_bytes?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type ConceptoInsumoCreateNestedManyWithoutInsumoInput = {
     create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
     connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
@@ -7404,6 +8728,23 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type ConceptoInsumoCreateWithoutInsumoInput = {
@@ -8008,6 +9349,10 @@ export namespace Prisma {
      * @deprecated Use ConceptoInsumoDefaultArgs instead
      */
     export type ConceptoInsumoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoInsumoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use FichaTecnicaInsumoDefaultArgs instead
+     */
+    export type FichaTecnicaInsumoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = FichaTecnicaInsumoDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

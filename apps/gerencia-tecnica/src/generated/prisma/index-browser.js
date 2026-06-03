@@ -177,6 +177,19 @@ exports.Prisma.ConceptoInsumoScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.FichaTecnicaInsumoScalarFieldEnum = {
+  id_ficha: 'id_ficha',
+  tenant_id: 'tenant_id',
+  insumo_id: 'insumo_id',
+  proveedor_ref: 'proveedor_ref',
+  nombre_doc: 'nombre_doc',
+  ruta_archivo: 'ruta_archivo',
+  mime_type: 'mime_type',
+  tamano_bytes: 'tamano_bytes',
+  subido_por: 'subido_por',
+  created_at: 'created_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -211,7 +224,8 @@ exports.Prisma.ModelName = {
   Insumo: 'Insumo',
   PresupuestoBase: 'PresupuestoBase',
   Concepto: 'Concepto',
-  ConceptoInsumo: 'ConceptoInsumo'
+  ConceptoInsumo: 'ConceptoInsumo',
+  FichaTecnicaInsumo: 'FichaTecnicaInsumo'
 };
 
 /**

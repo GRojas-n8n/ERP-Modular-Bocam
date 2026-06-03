@@ -15,6 +15,10 @@
  */
 
 import express, { Request, Response, NextFunction } from 'express';
+import path from 'path';
+import fs from 'fs';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import { createTenantContext, disconnectDb } from './db';
 import { initEventBus, closeEventBus } from './event-bus';
 import {
@@ -23,10 +27,27 @@ import {
 } from './types';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
-// En desarrollo local sin el paquete compilado, se puede usar el path relativo.
-// En producción, se importaría desde '@bocam/auth-middleware'.
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import type { SecurityContext } from '../../../packages/auth-middleware/src';
+
+// ─── Configuración de upload de fichas técnicas ──────────────────────────────
+const FICHAS_UPLOAD_DIR = process.env.FICHAS_UPLOAD_DIR || '/tmp/fichas-insumos';
+const FICHAS_MAX_MB     = parseInt(process.env.FICHAS_MAX_SIZE_MB || '20', 10);
+const FICHAS_EXTS       = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+
+fs.mkdirSync(path.join(FICHAS_UPLOAD_DIR, '_tmp'), { recursive: true });
+
+const fichasUpload = multer({
+  dest: path.join(FICHAS_UPLOAD_DIR, '_tmp'),
+  limits: { fileSize: FICHAS_MAX_MB * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!FICHAS_EXTS.includes(ext)) {
+      return cb(new Error(`Tipo de archivo no permitido: ${ext}`));
+    }
+    cb(null, true);
+  },
+});
 
 const app = express();
 app.use(express.json());
@@ -807,6 +828,172 @@ app.patch(
     }
   }
 );
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// FICHAS TÉCNICAS DE INSUMO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const ROLES_FICHAS_UPLOAD  = ['procurement', 'gerencia_tecnica', 'admin'] as const;
+const ROLES_FICHAS_LECTURA = ['resident', 'control_obra', 'gerencia_tecnica', 'superintendent', 'procurement', 'admin'] as const;
+
+// POST /api/v1/gerencia-tecnica/insumos/:id/fichas
+app.post(
+  '/api/v1/gerencia-tecnica/insumos/:id/fichas',
+  requireRoles(...ROLES_FICHAS_UPLOAD),
+  fichasUpload.single('archivo'),
+  async (req: Request, res: Response) => {
+    const tmpFile = req.file?.path;
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id: insumoId } = req.params;
+      const { proveedor_ref, nombre_doc } = req.body as { proveedor_ref?: string; nombre_doc?: string };
+
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'Se requiere un archivo.' });
+      }
+      if (!nombre_doc?.trim()) {
+        fs.unlinkSync(tmpFile!);
+        return res.status(400).json({ success: false, message: 'El campo nombre_doc es requerido.' });
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const insumo = await db.insumo.findFirst({
+        where: { id: insumoId, tenant_id: tenantId },
+        select: { id: true },
+      });
+      if (!insumo) {
+        if (tmpFile && fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+        return res.status(404).json({ success: false, message: 'Insumo no encontrado.' });
+      }
+
+      const fichaId = uuidv4();
+      const ext     = path.extname(req.file.originalname).toLowerCase();
+      const subDir  = path.join(FICHAS_UPLOAD_DIR, tenantId, insumoId);
+      fs.mkdirSync(subDir, { recursive: true });
+      const destino = path.join(subDir, `${fichaId}${ext}`);
+      fs.renameSync(req.file.path, destino);
+      const rutaRelativa = path.posix.join(tenantId, insumoId, `${fichaId}${ext}`);
+
+      const ficha = await (db as any).fichaTecnicaInsumo.create({
+        data: {
+          id_ficha:      fichaId,
+          tenant_id:     tenantId,
+          insumo_id:     insumoId,
+          proveedor_ref: proveedor_ref?.trim() || null,
+          nombre_doc:    nombre_doc.trim(),
+          ruta_archivo:  rutaRelativa,
+          mime_type:     req.file.mimetype,
+          tamano_bytes:  req.file.size,
+          subido_por:    req.securityContext.userId,
+        },
+      });
+
+      return res.status(201).json({ success: true, data: omitRuta(ficha) });
+    } catch (err: any) {
+      if (tmpFile && fs.existsSync(tmpFile)) { try { fs.unlinkSync(tmpFile); } catch (_) { /* ok */ } }
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+);
+
+// GET /api/v1/gerencia-tecnica/insumos/:id/fichas
+app.get(
+  '/api/v1/gerencia-tecnica/insumos/:id/fichas',
+  requireRoles(...ROLES_FICHAS_LECTURA),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id: insumoId } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const fichas = await (db as any).fichaTecnicaInsumo.findMany({
+        where:   { tenant_id: tenantId, insumo_id: insumoId },
+        orderBy: { created_at: 'desc' },
+        select:  {
+          id_ficha: true, nombre_doc: true, proveedor_ref: true,
+          mime_type: true, tamano_bytes: true, subido_por: true, created_at: true,
+        },
+      });
+
+      return res.json({ success: true, data: fichas });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+);
+
+// GET /api/v1/gerencia-tecnica/insumos/:id/fichas/:fid/descargar
+app.get(
+  '/api/v1/gerencia-tecnica/insumos/:id/fichas/:fid/descargar',
+  requireRoles(...ROLES_FICHAS_LECTURA),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id: insumoId, fid } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const ficha = await (db as any).fichaTecnicaInsumo.findFirst({
+        where: { id_ficha: fid, tenant_id: tenantId, insumo_id: insumoId },
+      });
+
+      if (!ficha) return res.status(404).json({ success: false, message: 'Ficha no encontrada.' });
+
+      const absPath = path.join(FICHAS_UPLOAD_DIR, ficha.ruta_archivo);
+      if (!fs.existsSync(absPath)) {
+        return res.status(404).json({ success: false, message: 'Archivo no disponible en el servidor.' });
+      }
+
+      res.setHeader('Content-Type', ficha.mime_type);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(ficha.nombre_doc)}"`);
+      return res.sendFile(path.resolve(absPath));
+    } catch (err: any) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+);
+
+// DELETE /api/v1/gerencia-tecnica/insumos/:id/fichas/:fid
+app.delete(
+  '/api/v1/gerencia-tecnica/insumos/:id/fichas/:fid',
+  requireRoles(...ROLES_FICHAS_UPLOAD),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id: insumoId, fid } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const ficha = await (db as any).fichaTecnicaInsumo.findFirst({
+        where: { id_ficha: fid, tenant_id: tenantId, insumo_id: insumoId },
+      });
+      if (!ficha) return res.status(404).json({ success: false, message: 'Ficha no encontrada.' });
+
+      const absPath = path.join(FICHAS_UPLOAD_DIR, ficha.ruta_archivo);
+      try { fs.unlinkSync(absPath); } catch (_) { /* archivo ya no existe — degradación elegante */ }
+
+      await (db as any).fichaTecnicaInsumo.delete({ where: { id_ficha: fid } });
+      return res.json({ success: true, message: 'Ficha eliminada.' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  },
+);
+
+function omitRuta(ficha: any) {
+  const { ruta_archivo: _r, ...rest } = ficha;
+  return rest;
+}
+
+// ─── Multer error handler ─────────────────────────────────────────────────────
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ success: false, message: `El archivo supera el límite de ${FICHAS_MAX_MB} MB.` });
+  }
+  if (err?.message?.startsWith('Tipo de archivo no permitido')) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  next(err);
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)

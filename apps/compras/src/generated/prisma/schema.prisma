@@ -139,10 +139,30 @@ model CuadroComparativo {
   comentario_gt_general String?   @db.Text
 
   detalles ComparativaDetalle[]
+  lineas   ComparativaLinea[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
   @@map("cuadros_comparativos")
+}
+
+// --- Detalles técnicos por partida (cuadro × insumo) ---
+// Una fila por insumo en el cuadro — independiente de cuántos proveedores haya.
+// Editable por Compras en estado BORRADOR; solo lectura después.
+model ComparativaLinea {
+  id_linea                    String  @id @default(uuid()) @db.Uuid
+  tenant_id                   String  @db.Uuid
+  proyecto_id                 String  @db.Uuid
+  cuadro_id                   String  @db.Uuid
+  insumo_id                   String  @db.Uuid
+  marca_modelo_ref            String? @db.VarChar(100)
+  especificaciones_requeridas String? @db.Text
+
+  cuadro CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
+
+  @@unique([cuadro_id, insumo_id])
+  @@index([tenant_id, cuadro_id])
+  @@map("comparativas_lineas")
 }
 
 model ComparativaDetalle {

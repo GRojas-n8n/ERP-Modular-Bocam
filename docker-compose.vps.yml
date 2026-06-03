@@ -146,6 +146,9 @@ services:
       DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
       GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
+      FICHAS_UPLOAD_DIR: /data/gerencia-tecnica/fichas
+    volumes:
+      - vps_fichas_uploads:/data/gerencia-tecnica/fichas
     depends_on:
       postgres:
         condition: service_healthy
@@ -520,3 +523,4 @@ volumes:
   vps_caddy_data:
   vps_caddy_config:
   vps_calidad_uploads:
+  vps_fichas_uploads:

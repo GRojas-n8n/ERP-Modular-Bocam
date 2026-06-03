@@ -39,6 +39,16 @@ import { cn } from '../lib/utils';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
+interface FichaTecnicaInsumo {
+  id_ficha: string;
+  nombre_doc: string;
+  proveedor_ref?: string | null;
+  mime_type: string;
+  tamano_bytes: number;
+  subido_por: string;
+  created_at: string;
+}
+
 type ActiveTab = 'catalogo' | 'insumos';
 
 type TipoInsumo = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
@@ -705,6 +715,52 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [preReqPrioridad,      setPreReqPrioridad]      = useState<'NORMAL' | 'ALTA' | 'URGENTE'>('ALTA');
   const [preReqObservaciones,  setPreReqObservaciones]  = useState('');
   const [enviandoPreReq,       setEnviandoPreReq]       = useState(false);
+
+  // ── Estado: Fichas técnicas de insumo ────────────────────────────────────
+  const [insumoFichasId,   setInsumoFichasId]   = useState<string | null>(null);
+  const [fichasInsumo,     setFichasInsumo]     = useState<FichaTecnicaInsumo[]>([]);
+  const [loadingFichasIns, setLoadingFichasIns] = useState(false);
+  const [uploadingFichaIns, setUploadingFichaIns] = useState(false);
+  const fichaInsFileRef = useRef<HTMLInputElement>(null);
+
+  const fetchFichasInsumo = async (id: string) => {
+    setLoadingFichasIns(true);
+    try {
+      const resp = await api.get(`/api/v1/gerencia-tecnica/insumos/${id}/fichas`);
+      setFichasInsumo(resp.data.data ?? []);
+    } catch (_) { setFichasInsumo([]); }
+    finally { setLoadingFichasIns(false); }
+  };
+
+  const handleFichaInsUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !insumoFichasId) return;
+    setUploadingFichaIns(true);
+    try {
+      const fd = new FormData();
+      fd.append('archivo', file);
+      fd.append('nombre_doc', file.name);
+      await api.post(`/api/v1/gerencia-tecnica/insumos/${insumoFichasId}/fichas`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      notify({ type: 'success', title: 'Ficha subida', message: file.name });
+      await fetchFichasInsumo(insumoFichasId);
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al subir', message: err.response?.data?.message ?? err.message });
+    } finally { setUploadingFichaIns(false); }
+  };
+
+  const handleFichaInsDelete = async (fichaId: string) => {
+    if (!insumoFichasId) return;
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/insumos/${insumoFichasId}/fichas/${fichaId}`);
+      setFichasInsumo(prev => prev.filter(f => f.id_ficha !== fichaId));
+      notify({ type: 'success', title: 'Ficha eliminada', message: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al eliminar', message: err.response?.data?.message ?? err.message });
+    }
+  };
 
   // ── Derivados Tab 1 ───────────────────────────────────────────────────────
   const validRows    = useMemo(() => preview.filter(r => r._valido), [preview]);
@@ -1673,6 +1729,15 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                           <td className="px-6 py-3.5 text-right font-mono font-black text-sm text-primary">
                             {formatMXN(Number(ins.costo_base))}
                           </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <button
+                              onClick={() => { setInsumoFichasId(ins.id); fetchFichasInsumo(ins.id); }}
+                              className="inline-flex items-center gap-1 rounded-lg bg-indigo-500/10 px-2 py-1 text-[9px] font-bold text-indigo-600 hover:bg-indigo-500/20 transition-colors"
+                              title="Ver fichas técnicas"
+                            >
+                              📎 Fichas
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -2488,6 +2553,76 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               onClick={handleEnviarPreReq}
             />
           </div>
+        </div>
+      </SlidePanel>
+
+      {/* ── Input oculto para upload de fichas desde InsumosView ───────────── */}
+      <input
+        ref={fichaInsFileRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={handleFichaInsUpload}
+      />
+
+      {/* ── Panel: Fichas Técnicas del Insumo ───────────────────────────────── */}
+      <SlidePanel
+        isOpen={!!insumoFichasId}
+        onClose={() => { setInsumoFichasId(null); setFichasInsumo([]); }}
+        title="Fichas Técnicas"
+        subtitle={insumosFiltrados.find(i => i.id === insumoFichasId)?.descripcion ?? ''}
+        accentColor="indigo"
+        maxWidthClassName="max-w-lg"
+      >
+        <div className="space-y-4 pb-10">
+          <button
+            onClick={() => fichaInsFileRef.current?.click()}
+            disabled={uploadingFichaIns}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-indigo-400/40 bg-indigo-500/5 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+          >
+            {uploadingFichaIns ? 'Subiendo...' : '📎 Subir ficha técnica'}
+          </button>
+
+          {loadingFichasIns ? (
+            <div className="flex items-center justify-center py-8 text-[10px] text-muted-foreground">Cargando...</div>
+          ) : fichasInsumo.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <span className="text-3xl">📂</span>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sin fichas técnicas</p>
+              <p className="text-[10px] text-muted-foreground/60">Sube el primer documento con el botón de arriba</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {fichasInsumo.map(f => (
+                <div key={f.id_ficha} className="flex items-center gap-3 rounded-2xl border border-border/40 bg-background px-4 py-3">
+                  <span className="text-xl">{f.mime_type === 'application/pdf' ? '📄' : f.mime_type.startsWith('image/') ? '🖼️' : '📝'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold truncate">{f.nombre_doc}</div>
+                    {f.proveedor_ref && <div className="text-[9px] text-muted-foreground">{f.proveedor_ref}</div>}
+                    <div className="text-[9px] text-muted-foreground/60">{(f.tamano_bytes / 1024).toFixed(0)} KB · {new Date(f.created_at).toLocaleDateString('es-MX')}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <a
+                      href={`/api/v1/gerencia-tecnica/insumos/${insumoFichasId}/fichas/${f.id_ficha}/descargar`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-indigo-500/10 hover:text-indigo-600 transition-colors"
+                      title="Descargar"
+                    >
+                      ⬇
+                    </a>
+                    <button
+                      onClick={() => handleFichaInsDelete(f.id_ficha)}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                      title="Eliminar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </SlidePanel>
     </>
