@@ -153,6 +153,12 @@ const EVAL_STYLE: Record<string, string> = {
 
 interface Insumo { id: string; clave: string; descripcion: string; unidad: string; }
 
+export interface ProveedorCatalogoItem {
+  id: string;
+  razon_social: string;
+  rfc?: string;
+}
+
 interface Props {
   requisicionFolio: string;
   comparativa: ComparativaLocal;
@@ -162,21 +168,24 @@ interface Props {
   onUpdate: (updated: ComparativaLocal) => void;
   onExportOcPdf?: (oc: ComparativaLocal['ordenes_compra'][number]) => void;
   onExportComparativaPdf?: () => void;
+  proveedoresCatalogo?: ProveedorCatalogoItem[];
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export const ComparativaDetail: React.FC<Props> = ({
   requisicionFolio, comparativa: comp, insumos, isDemo, onBack, onUpdate,
-  onExportOcPdf, onExportComparativaPdf,
+  onExportOcPdf, onExportComparativaPdf, proveedoresCatalogo = [],
 }) => {
   const { user } = useTenant();
   const { notify } = useNotification();
   const roles: string[] = user?.role ?? [];
 
   // ── Local state ─────────────────────────────────────────────────────────────
-  const [newProvNombre, setNewProvNombre] = useState('');
   const [showAddProv, setShowAddProv] = useState(false);
+  const [provSearch, setProvSearch] = useState('');
+  const [provDropdownOpen, setProvDropdownOpen] = useState(false);
+  const provSearchRef = useRef<HTMLDivElement>(null);
   const [addLineaOpen, setAddLineaOpen] = useState(false);
   const [addLineaSearch, setAddLineaSearch] = useState('');
   const [addLineaDropdown, setAddLineaDropdown] = useState(false);
@@ -242,7 +251,7 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const addLineaRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar dropdown al hacer clic afuera
+  // Cerrar dropdowns al hacer clic afuera
   useEffect(() => {
     if (!addLineaDropdown) return;
     const handler = (e: MouseEvent) => {
@@ -253,6 +262,17 @@ export const ComparativaDetail: React.FC<Props> = ({
     setTimeout(() => window.addEventListener('mousedown', handler), 0);
     return () => window.removeEventListener('mousedown', handler);
   }, [addLineaDropdown]);
+
+  useEffect(() => {
+    if (!provDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (provSearchRef.current && !provSearchRef.current.contains(e.target as Node)) {
+        setProvDropdownOpen(false);
+      }
+    };
+    setTimeout(() => window.addEventListener('mousedown', handler), 0);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [provDropdownOpen]);
 
   // Inicializar form de evaluación cuando se abre el panel
   useEffect(() => {
@@ -415,17 +435,22 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
-  const handleAddProveedor = () => {
-    if (!newProvNombre.trim() || comp.proveedores.length >= 3) return;
+  const handleAddProveedorFromCatalog = (prov: ProveedorCatalogoItem) => {
+    if (comp.proveedores.length >= 3) return;
+    if (comp.proveedores.some(p => p.id === prov.id)) {
+      notify('Este proveedor ya está en el cuadro', 'warning');
+      return;
+    }
     onUpdate({
       ...comp,
       estado: 'EN_PROCESO',
       proveedores: [
         ...comp.proveedores,
-        { id: `pv-${Date.now()}`, nombre: newProvNombre.trim() },
+        { id: prov.id, nombre: prov.razon_social },
       ],
     });
-    setNewProvNombre('');
+    setProvSearch('');
+    setProvDropdownOpen(false);
     setShowAddProv(false);
   };
 
@@ -1024,6 +1049,47 @@ export const ComparativaDetail: React.FC<Props> = ({
         </div>
       )}
 
+      {/* Sección: Partidas de la Requisición — referencia para Compras */}
+      {(comp.estado === 'BORRADOR' || comp.estado === 'EN_PROCESO') && comp.lineas.length > 0 && (
+        <Card className="border-border/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-tight">
+              <IconPackage className="h-4 w-4 text-sky-500" />
+              Partidas de la Requisición
+              <span className="text-[10px] font-medium normal-case text-muted-foreground">
+                {comp.lineas.length} ítem{comp.lineas.length !== 1 ? 's' : ''} a cotizar
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="overflow-x-auto rounded-xl border border-border/30">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="border-b border-border/30 bg-muted/30">
+                    <th className="px-3 py-2 text-left font-black uppercase tracking-widest text-muted-foreground">#</th>
+                    <th className="px-3 py-2 text-left font-black uppercase tracking-widest text-muted-foreground">Clave</th>
+                    <th className="px-3 py-2 text-left font-black uppercase tracking-widest text-muted-foreground">Descripción</th>
+                    <th className="px-3 py-2 text-center font-black uppercase tracking-widest text-muted-foreground">Cantidad</th>
+                    <th className="px-3 py-2 text-center font-black uppercase tracking-widest text-muted-foreground">Unidad</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20">
+                  {comp.lineas.map((l, idx) => (
+                    <tr key={l.id} className="hover:bg-muted/20">
+                      <td className="px-3 py-2 text-muted-foreground">{idx + 1}</td>
+                      <td className="px-3 py-2 font-mono text-[10px] text-muted-foreground">{l.insumo_clave || '—'}</td>
+                      <td className="px-3 py-2 font-medium text-foreground">{l.insumo_descripcion}</td>
+                      <td className="px-3 py-2 text-center">{l.cantidad}</td>
+                      <td className="px-3 py-2 text-center text-muted-foreground">{l.insumo_unidad || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Sección: Proveedores */}
       <Card className="border-border/40">
         <CardHeader className="pb-3">
@@ -1046,17 +1112,48 @@ export const ComparativaDetail: React.FC<Props> = ({
             )}
           </div>
           {showAddProv && (
-            <div className="mt-3 flex items-center gap-2">
-              <Input
-                className="h-9 flex-1 rounded-xl text-xs"
-                placeholder="Nombre del proveedor..."
-                value={newProvNombre}
-                onChange={e => setNewProvNombre(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleAddProveedor(); if (e.key === 'Escape') { setShowAddProv(false); setNewProvNombre(''); } }}
-                autoFocus
-              />
-              <Button onClick={handleAddProveedor} disabled={!newProvNombre.trim()} className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-black text-white hover:bg-emerald-500">Agregar</Button>
-              <Button onClick={() => { setShowAddProv(false); setNewProvNombre(''); }} variant="ghost" className="h-9 w-9 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
+            <div className="relative mt-3" ref={provSearchRef}>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="h-9 rounded-xl pl-8 text-xs"
+                    placeholder="Buscar proveedor por nombre o RFC..."
+                    value={provSearch}
+                    onChange={e => { setProvSearch(e.target.value); setProvDropdownOpen(true); }}
+                    onFocus={() => setProvDropdownOpen(true)}
+                    onKeyDown={e => { if (e.key === 'Escape') { setShowAddProv(false); setProvSearch(''); } }}
+                    autoFocus
+                  />
+                </div>
+                <Button onClick={() => { setShowAddProv(false); setProvSearch(''); }} variant="ghost" className="h-9 w-9 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
+              </div>
+              {provDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-border bg-background shadow-lg">
+                  {proveedoresCatalogo.length === 0 ? (
+                    <p className="px-3 py-2 text-[11px] text-muted-foreground">Sin proveedores en catálogo</p>
+                  ) : (
+                    <ul className="max-h-52 overflow-y-auto py-1">
+                      {proveedoresCatalogo
+                        .filter(p => {
+                          const q = provSearch.toLowerCase();
+                          return !q || p.razon_social.toLowerCase().includes(q) || (p.rfc ?? '').toLowerCase().includes(q);
+                        })
+                        .filter(p => !comp.proveedores.some(cp => cp.id === p.id))
+                        .map(p => (
+                          <li
+                            key={p.id}
+                            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs hover:bg-emerald-500/10"
+                            onMouseDown={() => handleAddProveedorFromCatalog(p)}
+                          >
+                            <span className="font-medium text-foreground">{p.razon_social}</span>
+                            {p.rfc && <span className="text-[10px] text-muted-foreground">{p.rfc}</span>}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </CardHeader>

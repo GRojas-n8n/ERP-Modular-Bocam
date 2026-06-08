@@ -1092,6 +1092,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               onUpdate={updateComparativa}
               onExportOcPdf={oc => exportarOcPdf(oc, comp)}
               onExportComparativaPdf={() => exportarComparativaPdf(comp)}
+              proveedoresCatalogo={proveedoresList.map(p => ({ id: p.id_proveedor, razon_social: p.razon_social, rfc: p.rfc_tax_id }))}
             />
           );
         })()
