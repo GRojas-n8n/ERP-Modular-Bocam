@@ -681,7 +681,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   const handleNuevaRevision = async () => {
     setCreandoRevision(true);
     try {
-      const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/nueva-revision`);
+      await api.post(`/api/v1/compras/comparativas/${comp.id}/nueva-revision`);
       setShowRevisionConfirm(false);
       notify({ type: 'success', title: 'Nueva revisión creada', message: 'El cuadro original quedó como SUPERSEDIDO.' });
       // Navigate to the new cuadro via onBack + refresh
@@ -1002,7 +1002,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                 className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
               >
                 <option value="">— Sin segunda opción —</option>
-                {comp.proveedores.filter(p => p.id !== primeraOpcion).map((p, i) => (
+                {comp.proveedores.filter(p => p.id !== primeraOpcion).map((p) => (
                   <option key={p.id} value={p.id}>{p.nombre}</option>
                 ))}
               </select>
