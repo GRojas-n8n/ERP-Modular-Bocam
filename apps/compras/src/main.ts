@@ -1,5 +1,8 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 import { createTenantContext } from './db';
 import type { PrismaClient } from './generated/prisma';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
@@ -24,6 +27,8 @@ const PORT = process.env.PORT || 3002;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
 const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
+const DOCS_PROVEEDORES_UPLOAD_DIR = process.env.DOCS_PROVEEDORES_UPLOAD_DIR || '/tmp/docs-proveedores';
+const DOCS_PROVEEDORES_MAX_SIZE_MB = parseInt(process.env.DOCS_PROVEEDORES_MAX_SIZE_MB ?? '10', 10);
 
 const OC_STATUS = {
   PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
@@ -196,7 +201,7 @@ app.get('/api/v1/compras/proveedores', async (req: Request, res: Response) => {
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
-      async (prisma) => prisma.proveedor.findMany()
+      async (prisma) => prisma.proveedor.findMany({ orderBy: { razon_social: 'asc' } })
     );
 
     res.json({ success: true, data });
@@ -204,6 +209,277 @@ app.get('/api/v1/compras/proveedores', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const {
+      rfc_tax_id, razon_social, email_contacto, telefono, estatus,
+      ciudad, tipo_ubicacion, entrega_en_sitio,
+      estatus_credito, limite_credito,
+      tipo_proveedor, calificacion_desempeno,
+    } = req.body;
+
+    if (!rfc_tax_id || !razon_social) {
+      return void res.status(400).json({ success: false, message: 'rfc_tax_id y razon_social son obligatorios.' });
+    }
+    if (calificacion_desempeno !== undefined && (Number(calificacion_desempeno) < 0 || Number(calificacion_desempeno) > 5)) {
+      return void res.status(400).json({ success: false, message: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
+    }
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => prisma.proveedor.create({
+        data: {
+          tenant_id: tenantId,
+          rfc_tax_id: rfc_tax_id.trim().toUpperCase(),
+          razon_social: razon_social.trim(),
+          email_contacto: email_contacto ?? null,
+          telefono: telefono ?? null,
+          estatus: estatus ?? 'ACTIVO',
+          ciudad: ciudad ?? null,
+          tipo_ubicacion: tipo_ubicacion ?? 'LOCAL',
+          entrega_en_sitio: entrega_en_sitio ?? false,
+          estatus_credito: estatus_credito ?? 'ACTIVO',
+          limite_credito: limite_credito != null ? limite_credito : null,
+          tipo_proveedor: tipo_proveedor ?? 'NACIONAL',
+          calificacion_desempeno: calificacion_desempeno != null ? calificacion_desempeno : null,
+        },
+      })
+    );
+
+    logInfo(req, 'compras', 'compras.proveedor.creado', 'Proveedor creado', { proveedor_id: data.id_proveedor });
+    res.status(201).json({ success: true, data });
+  } catch (error: any) {
+    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe un proveedor con ese RFC para este tenant.' });
+    logError(req, 'compras', 'compras.proveedor.crear.error', 'Error al crear proveedor', { error_message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const proveedorId = req.params.id;
+    const {
+      razon_social, email_contacto, telefono, estatus,
+      ciudad, tipo_ubicacion, entrega_en_sitio,
+      estatus_credito, limite_credito,
+      tipo_proveedor, calificacion_desempeno,
+    } = req.body;
+
+    if (calificacion_desempeno !== undefined && calificacion_desempeno !== null &&
+        (Number(calificacion_desempeno) < 0 || Number(calificacion_desempeno) > 5)) {
+      return void res.status(400).json({ success: false, message: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
+    }
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        const exists = await prisma.proveedor.findUnique({ where: { id_proveedor: proveedorId } });
+        if (!exists) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+        return prisma.proveedor.update({
+          where: { id_proveedor: proveedorId },
+          data: {
+            ...(razon_social !== undefined && { razon_social: razon_social.trim() }),
+            ...(email_contacto !== undefined && { email_contacto }),
+            ...(telefono !== undefined && { telefono }),
+            ...(estatus !== undefined && { estatus }),
+            ...(ciudad !== undefined && { ciudad }),
+            ...(tipo_ubicacion !== undefined && { tipo_ubicacion }),
+            ...(entrega_en_sitio !== undefined && { entrega_en_sitio }),
+            ...(estatus_credito !== undefined && { estatus_credito }),
+            ...(limite_credito !== undefined && { limite_credito }),
+            ...(tipo_proveedor !== undefined && { tipo_proveedor }),
+            ...(calificacion_desempeno !== undefined && { calificacion_desempeno }),
+          },
+        });
+      }
+    );
+
+    logInfo(req, 'compras', 'compras.proveedor.actualizado', 'Proveedor actualizado', { proveedor_id: proveedorId });
+    res.json({ success: true, data });
+  } catch (error: any) {
+    const status = error.status ?? 500;
+    logError(req, 'compras', 'compras.proveedor.actualizar.error', 'Error al actualizar proveedor', { error_message: error.message });
+    res.status(status).json({ success: false, message: error.message });
+  }
+});
+
+// ── Documentos de Proveedor ───────────────────────────────────────────────────
+
+const docsUploadTmp = path.join(DOCS_PROVEEDORES_UPLOAD_DIR, '_tmp');
+
+const docsMulter = multer({
+  dest: docsUploadTmp,
+  limits: { fileSize: DOCS_PROVEEDORES_MAX_SIZE_MB * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.pdf', '.xml', '.jpg', '.jpeg', '.png'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error(`Tipo de archivo no permitido: ${ext}. Permitidos: ${allowed.join(', ')}`));
+  },
+});
+
+app.post(
+  '/api/v1/compras/proveedores/:id/documentos',
+  requireRoles('procurement', 'admin'),
+  docsMulter.single('archivo'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const proveedorId = req.params.id;
+      const { tipo_doc, nombre_doc } = req.body as { tipo_doc: string; nombre_doc: string };
+
+      if (!req.file) return void res.status(400).json({ success: false, message: 'Se requiere un archivo.' });
+      if (!tipo_doc) return void res.status(400).json({ success: false, message: 'tipo_doc es obligatorio.' });
+      if (!nombre_doc) return void res.status(400).json({ success: false, message: 'nombre_doc es obligatorio.' });
+
+      const tiposValidos = ['CSD', 'OPINION_SAT', 'ISO', 'OTRO'];
+      if (!tiposValidos.includes(tipo_doc)) {
+        return void res.status(400).json({ success: false, message: `tipo_doc inválido. Valores: ${tiposValidos.join(', ')}` });
+      }
+
+      const result = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const proveedor = await prisma.proveedor.findUnique({ where: { id_proveedor: proveedorId } });
+          if (!proveedor) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+          const ext = path.extname(req.file!.originalname).toLowerCase();
+          const { v4: uuidv4 } = await import('uuid');
+          const docId = uuidv4();
+          const rutaFinal = path.join(DOCS_PROVEEDORES_UPLOAD_DIR, tenantId, proveedorId, `${docId}${ext}`);
+
+          fs.mkdirSync(path.dirname(rutaFinal), { recursive: true });
+          fs.renameSync(req.file!.path, rutaFinal);
+
+          const doc = await prisma.documentoProveedor.create({
+            data: {
+              id_doc: docId,
+              tenant_id: tenantId,
+              proveedor_id: proveedorId,
+              tipo_doc,
+              nombre_doc,
+              ruta_archivo: rutaFinal,
+              mime_type: req.file!.mimetype,
+              tamano_bytes: req.file!.size,
+              subido_por: userId,
+            },
+          });
+
+          return { id_doc: doc.id_doc, tipo_doc: doc.tipo_doc, nombre_doc: doc.nombre_doc,
+                   mime_type: doc.mime_type, tamano_bytes: doc.tamano_bytes,
+                   subido_por: doc.subido_por, created_at: doc.created_at };
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.proveedor.documento.subido', 'Documento de proveedor subido', { proveedor_id: proveedorId, tipo_doc });
+      res.status(201).json({ success: true, data: result });
+    } catch (error: any) {
+      if (req.file?.path) try { fs.unlinkSync(req.file.path); } catch (_) { /* ignorar */ }
+      const status = error.status ?? 500;
+      logError(req, 'compras', 'compras.proveedor.documento.subir.error', 'Error al subir documento', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get(
+  '/api/v1/compras/proveedores/:id/documentos',
+  requireRoles('procurement', 'admin', 'finance', 'gerencia_tecnica', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const proveedorId = req.params.id;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const proveedor = await prisma.proveedor.findUnique({ where: { id_proveedor: proveedorId } });
+          if (!proveedor) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+          return prisma.documentoProveedor.findMany({
+            where: { tenant_id: tenantId, proveedor_id: proveedorId },
+            select: { id_doc: true, tipo_doc: true, nombre_doc: true, mime_type: true,
+                      tamano_bytes: true, subido_por: true, created_at: true },
+            orderBy: { created_at: 'desc' },
+          });
+        }
+      );
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      const status = error.status ?? 500;
+      logError(req, 'compras', 'compras.proveedor.documentos.listar.error', 'Error al listar documentos', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get(
+  '/api/v1/compras/proveedores/:id/documentos/:did/descargar',
+  requireRoles('procurement', 'admin', 'finance', 'gerencia_tecnica', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id: proveedorId, did } = req.params;
+
+      const doc = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.documentoProveedor.findFirst({
+          where: { id_doc: did, tenant_id: tenantId, proveedor_id: proveedorId },
+        })
+      );
+
+      if (!doc) return void res.status(404).json({ success: false, message: 'Documento no encontrado.' });
+      if (!fs.existsSync(doc.ruta_archivo)) {
+        return void res.status(404).json({ success: false, message: 'Archivo físico no encontrado.' });
+      }
+
+      res.download(doc.ruta_archivo, doc.nombre_doc);
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.proveedor.documento.descargar.error', 'Error al descargar documento', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.delete(
+  '/api/v1/compras/proveedores/:id/documentos/:did',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id: proveedorId, did } = req.params;
+
+      await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const doc = await prisma.documentoProveedor.findFirst({
+            where: { id_doc: did, tenant_id: tenantId, proveedor_id: proveedorId },
+          });
+          if (!doc) throw Object.assign(new Error('Documento no encontrado.'), { status: 404 });
+
+          try { fs.unlinkSync(doc.ruta_archivo); } catch (_) {
+            logWarn(req, 'compras', 'compras.proveedor.documento.archivo_fisico_no_encontrado',
+              'Archivo físico no existe al eliminar documento', { doc_id: did, ruta: doc.ruta_archivo });
+          }
+
+          await prisma.documentoProveedor.delete({ where: { id_doc: did } });
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.proveedor.documento.eliminado', 'Documento de proveedor eliminado', { proveedor_id: proveedorId, doc_id: did });
+      res.json({ success: true, message: 'Documento eliminado.' });
+    } catch (error: any) {
+      const status = error.status ?? 500;
+      logError(req, 'compras', 'compras.proveedor.documento.eliminar.error', 'Error al eliminar documento', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
 
 app.get('/api/v1/compras/comparativas', async (req: Request, res: Response) => {
   try {
@@ -2063,3 +2339,14 @@ app.post('/api/v1/compras/almacen/movimientos',
     }
   }
 );
+
+// ── Handler de errores Multer (debe ir al final, después de todas las rutas) ──
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  if (err?.code === 'LIMIT_FILE_SIZE') {
+    return void res.status(400).json({ success: false, message: `Archivo demasiado grande. Máximo ${DOCS_PROVEEDORES_MAX_SIZE_MB} MB.` });
+  }
+  if (err?.name === 'MulterError' || err?.message?.startsWith('Tipo de archivo no permitido')) {
+    return void res.status(400).json({ success: false, message: err.message });
+  }
+  res.status(500).json({ success: false, message: err?.message ?? 'Error interno del servidor.' });
+});

@@ -111,7 +111,29 @@ interface MovimientoAlmacen {
 
 type MovTipo = 'INGRESO' | 'EGRESO' | 'TRASPASO';
 type AlmacenSubView = 'inventario' | 'movimientos';
-type TabId = 'requisiciones' | 'catalogo' | 'almacen' | 'pendientes-eval' | 'pendientes-gt';
+type TabId = 'requisiciones' | 'catalogo' | 'almacen' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt';
+
+interface ProveedorCatalogo {
+  id_proveedor: string;
+  rfc_tax_id: string;
+  razon_social: string;
+  email_contacto?: string;
+  telefono?: string;
+  estatus: string;
+  ciudad?: string;
+  tipo_ubicacion: string;
+  entrega_en_sitio: boolean;
+  estatus_credito: string;
+  limite_credito?: number;
+  tipo_proveedor: string;
+  calificacion_desempeno?: number;
+}
+
+const PROVEEDOR_FORM_EMPTY = {
+  rfc_tax_id: '', razon_social: '', email_contacto: '', telefono: '',
+  estatus: 'ACTIVO', ciudad: '', tipo_ubicacion: 'LOCAL', entrega_en_sitio: false,
+  estatus_credito: 'ACTIVO', limite_credito: '', tipo_proveedor: 'NACIONAL', calificacion_desempeno: '',
+};
 
 // ─── Colores por categoría ───────────────────────────────────────────────────
 const CLASE_STYLE: Record<string, { badge: string; chip: string; label: string }> = {
@@ -166,6 +188,16 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [comparativas, setComparativas] = useState<ComparativaLocal[]>([]);
   const [pendientesEval, setPendientesEval] = useState<ComparativaLocal[]>([]);
   const [pendientesGT, setPendientesGT] = useState<ComparativaLocal[]>([]);
+  const [proveedoresList, setProveedoresList] = useState<ProveedorCatalogo[]>([]);
+  const [proveedoresSearch, setProveedoresSearch] = useState('');
+  const [showProveedorForm, setShowProveedorForm] = useState(false);
+  const [editingProveedor, setEditingProveedor] = useState<ProveedorCatalogo | null>(null);
+  const [proveedorForm, setProveedorForm] = useState(PROVEEDOR_FORM_EMPTY);
+  const [docsProveedorId, setDocsProveedorId] = useState<string | null>(null);
+  const [docsProveedor, setDocsProveedor] = useState<Record<string, any[]>>({});
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docTipoUpload, setDocTipoUpload] = useState('OTRO');
+  const docFileRef = useRef<HTMLInputElement>(null);
   const [activeReqId, setActiveReqId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -241,7 +273,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         setPendientesGT(demoComps.filter(c => c.estado === 'EN_APROBACION_GT'));
         return;
       }
-      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes] = await Promise.allSettled([
+      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
         api.get('/api/v1/gerencia-tecnica/insumos'),
         api.get('/api/v1/compras/almacen/inventario'),
@@ -250,6 +282,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         // Bandejas de aprobación (pueden fallar por rol — ignorar 403)
         api.get('/api/v1/compras/comparativas/pendientes-evaluacion').catch(() => null),
         api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
+        api.get('/api/v1/compras/proveedores').catch(() => null),
       ]);
       // Colectar datos normalizados para las dependencias entre entidades
       let insumosNormalizados: Insumo[] = [];
@@ -347,6 +380,9 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       if (gtRes.status === 'fulfilled' && gtRes.value) {
         const raw: any[] = gtRes.value.data?.data || [];
         setPendientesGT(raw.map(normalizeComp));
+      }
+      if (provRes.status === 'fulfilled' && provRes.value) {
+        setProveedoresList(provRes.value.data?.data || []);
       }
     } catch {
       setError('Error al conectar con el modulo de Compras.');
@@ -566,6 +602,18 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }));
     setMovSearch('');
     setMovDropdownOpen(false);
+  };
+
+  const fetchDocsProveedor = async (proveedorId: string) => {
+    setDocsLoading(true);
+    try {
+      const res = await api.get(`/api/v1/compras/proveedores/${proveedorId}/documentos`);
+      setDocsProveedor(prev => ({ ...prev, [proveedorId]: res.data.data || [] }));
+    } catch {
+      setDocsProveedor(prev => ({ ...prev, [proveedorId]: [] }));
+    } finally {
+      setDocsLoading(false);
+    }
   };
 
   const handleSubmitMovimiento = async () => {
@@ -908,6 +956,15 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           >
             <IconPlus className="h-4 w-4" />
             Nueva Requisicion
+          </Button>
+        )}
+        {activeTab === 'proveedores' && isProcurement && (
+          <Button
+            onClick={() => { setEditingProveedor(null); setProveedorForm(PROVEEDOR_FORM_EMPTY); setShowProveedorForm(true); }}
+            className="rounded-2xl bg-emerald-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500"
+          >
+            <IconPlus className="h-4 w-4" />
+            Nuevo Proveedor
           </Button>
         )}
         {activeTab === 'catalogo' && (
@@ -1477,6 +1534,132 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             </div>
           )}
           {/* ── 9.1 TAB: Pendientes de Evaluación Técnica (Residente) ──────────── */}
+          {activeTab === 'proveedores' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+                  <Input
+                    placeholder="Buscar proveedor por nombre o RFC..."
+                    value={proveedoresSearch}
+                    onChange={e => setProveedoresSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                  {proveedoresSearch && (
+                    <button type="button" onClick={() => setProveedoresSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      <IconX className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              {proveedoresList.filter(p => {
+                const q = proveedoresSearch.toLowerCase();
+                return !q || p.razon_social.toLowerCase().includes(q) || p.rfc_tax_id.toLowerCase().includes(q);
+              }).length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
+                  <IconShoppingCart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+                  <p className="text-sm font-bold text-muted-foreground">Sin proveedores registrados</p>
+                  {isProcurement && <p className="mt-1 text-xs text-muted-foreground/70">Crea el primero con el botón "Nuevo Proveedor"</p>}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-border/50">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-border/50 bg-muted/30">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Razón Social / RFC</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ubicación</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Crédito</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Score</th>
+                        {isProcurement && <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {proveedoresList.filter(p => {
+                        const q = proveedoresSearch.toLowerCase();
+                        return !q || p.razon_social.toLowerCase().includes(q) || p.rfc_tax_id.toLowerCase().includes(q);
+                      }).map(p => (
+                        <tr key={p.id_proveedor} className="bg-background hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-foreground">{p.razon_social}</p>
+                            <p className="text-[10px] text-muted-foreground">{p.rfc_tax_id}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.tipo_ubicacion === 'FORANEO' ? 'bg-violet-500/10 text-violet-700' : 'bg-sky-500/10 text-sky-700'}`}>
+                                {p.tipo_ubicacion === 'FORANEO' ? 'Foráneo' : 'Local'}
+                              </span>
+                              {p.entrega_en_sitio && (
+                                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Entrega en sitio</span>
+                              )}
+                            </div>
+                            {p.ciudad && <p className="mt-0.5 text-[10px] text-muted-foreground">{p.ciudad}</p>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.tipo_proveedor === 'EXTRANJERO' ? 'bg-amber-500/10 text-amber-700' : 'bg-muted text-muted-foreground'}`}>
+                              {p.tipo_proveedor === 'EXTRANJERO' ? 'Extranjero' : 'Nacional'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.estatus_credito === 'BLOQUEADO' ? 'bg-red-500/10 text-red-700 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-700'}`}>
+                              {p.estatus_credito === 'BLOQUEADO' ? '🔴 Bloqueado' : '✓ Activo'}
+                            </span>
+                            {p.limite_credito != null && (
+                              <p className="mt-0.5 text-[10px] text-muted-foreground">Límite: ${Number(p.limite_credito).toLocaleString()}</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {p.calificacion_desempeno != null ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-amber-500">★</span>
+                                <span className="text-xs font-bold">{Number(p.calificacion_desempeno).toFixed(1)}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/40">—</span>
+                            )}
+                          </td>
+                          {isProcurement && (
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => { setDocsProveedorId(p.id_proveedor); fetchDocsProveedor(p.id_proveedor); }}
+                                  className="rounded-lg border border-border/50 px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+                                >
+                                  📎 Docs
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingProveedor(p);
+                                    setProveedorForm({
+                                      rfc_tax_id: p.rfc_tax_id, razon_social: p.razon_social,
+                                      email_contacto: p.email_contacto ?? '', telefono: p.telefono ?? '',
+                                      estatus: p.estatus, ciudad: p.ciudad ?? '',
+                                      tipo_ubicacion: p.tipo_ubicacion, entrega_en_sitio: p.entrega_en_sitio,
+                                      estatus_credito: p.estatus_credito,
+                                      limite_credito: p.limite_credito != null ? String(p.limite_credito) : '',
+                                      tipo_proveedor: p.tipo_proveedor,
+                                      calificacion_desempeno: p.calificacion_desempeno != null ? String(p.calificacion_desempeno) : '',
+                                    });
+                                    setShowProveedorForm(true);
+                                  }}
+                                  className="rounded-lg border border-border/50 px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+                                >
+                                  Editar
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'pendientes-eval' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -1982,6 +2165,245 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               loading={formLoading}
               color={movForm.tipo === 'INGRESO' ? 'emerald' : movForm.tipo === 'EGRESO' ? 'red' : 'blue'}
               onClick={handleSubmitMovimiento}
+            />
+          </div>
+        </div>
+      </SlidePanel>
+
+      {/* ── Documentos de Proveedor ─────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={!!docsProveedorId}
+        onClose={() => setDocsProveedorId(null)}
+        title="Documentos del Proveedor"
+        subtitle={proveedoresList.find(p => p.id_proveedor === docsProveedorId)?.razon_social}
+        accentColor="sky"
+      >
+        <div className="space-y-4">
+          {docsLoading ? (
+            <p className="text-sm text-muted-foreground">Cargando documentos...</p>
+          ) : (docsProveedor[docsProveedorId ?? ''] ?? []).length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/50 p-8 text-center">
+              <p className="text-sm text-muted-foreground">Sin documentos registrados</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(docsProveedor[docsProveedorId ?? ''] ?? []).map((doc: any) => {
+                const TIPO_STYLE: Record<string, string> = {
+                  CSD: 'bg-blue-500/10 text-blue-700', OPINION_SAT: 'bg-emerald-500/10 text-emerald-700',
+                  ISO: 'bg-violet-500/10 text-violet-700', OTRO: 'bg-muted text-muted-foreground',
+                };
+                return (
+                  <div key={doc.id_doc} className="flex items-center justify-between rounded-xl border border-border/50 p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{doc.nombre_doc}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${TIPO_STYLE[doc.tipo_doc] ?? TIPO_STYLE.OTRO}`}>{doc.tipo_doc}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(doc.created_at).toLocaleDateString('es-MX')}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 ml-2">
+                      <a
+                        href={`/api/v1/compras/proveedores/${docsProveedorId}/documentos/${doc.id_doc}/descargar`}
+                        target="_blank" rel="noreferrer"
+                        className="rounded-lg border border-border/50 px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+                      >
+                        Descargar
+                      </a>
+                      {isProcurement && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await api.delete(`/api/v1/compras/proveedores/${docsProveedorId}/documentos/${doc.id_doc}`);
+                              setDocsProveedor(prev => ({
+                                ...prev,
+                                [docsProveedorId!]: (prev[docsProveedorId!] ?? []).filter((d: any) => d.id_doc !== doc.id_doc),
+                              }));
+                              notify({ title: 'Documento eliminado', type: 'success' });
+                            } catch { notify({ title: 'Error al eliminar', type: 'error' }); }
+                          }}
+                          className="rounded-lg border border-red-500/20 px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-500/10 transition-colors"
+                        >
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {isProcurement && (
+            <div className="border-t border-border/40 pt-4 space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subir Documento</p>
+              <FormField label="Tipo de Documento">
+                <Select value={docTipoUpload} onChange={e => setDocTipoUpload(e.target.value)}>
+                  <option value="CSD">CSD</option>
+                  <option value="OPINION_SAT">Opinión SAT</option>
+                  <option value="ISO">Certificado ISO</option>
+                  <option value="OTRO">Otro</option>
+                </Select>
+              </FormField>
+              <input ref={docFileRef} type="file" accept=".pdf,.xml,.jpg,.jpeg,.png" className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !docsProveedorId) return;
+                  const fd = new FormData();
+                  fd.append('archivo', file);
+                  fd.append('tipo_doc', docTipoUpload);
+                  fd.append('nombre_doc', file.name);
+                  try {
+                    const res = await api.post(`/api/v1/compras/proveedores/${docsProveedorId}/documentos`, fd, {
+                      headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+                    setDocsProveedor(prev => ({
+                      ...prev,
+                      [docsProveedorId]: [res.data.data, ...(prev[docsProveedorId] ?? [])],
+                    }));
+                    notify({ title: 'Documento subido', type: 'success' });
+                  } catch (err: any) {
+                    notify({ title: err.response?.data?.message ?? 'Error al subir', type: 'error' });
+                  } finally {
+                    if (docFileRef.current) docFileRef.current.value = '';
+                  }
+                }}
+              />
+              <Button onClick={() => docFileRef.current?.click()} className="w-full rounded-xl border border-dashed border-border bg-muted/20 text-sm font-semibold text-muted-foreground hover:bg-muted/40">
+                + Seleccionar archivo (PDF, XML, JPG, PNG — máx. 10 MB)
+              </Button>
+            </div>
+          )}
+        </div>
+      </SlidePanel>
+
+      {/* ── Formulario Proveedor ─────────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={showProveedorForm}
+        onClose={() => setShowProveedorForm(false)}
+        title={editingProveedor ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+        accentColor="emerald"
+      >
+        <div className="space-y-4">
+          <FormField label="RFC / Tax ID" required>
+            <Input
+              placeholder="Ej: XAXX010101000"
+              value={proveedorForm.rfc_tax_id}
+              onChange={e => setProveedorForm(f => ({ ...f, rfc_tax_id: e.target.value }))}
+              disabled={!!editingProveedor}
+            />
+          </FormField>
+          <FormField label="Razón Social" required>
+            <Input
+              placeholder="Nombre o razón social del proveedor"
+              value={proveedorForm.razon_social}
+              onChange={e => setProveedorForm(f => ({ ...f, razon_social: e.target.value }))}
+            />
+          </FormField>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Email">
+              <Input type="email" placeholder="contacto@empresa.com" value={proveedorForm.email_contacto} onChange={e => setProveedorForm(f => ({ ...f, email_contacto: e.target.value }))} />
+            </FormField>
+            <FormField label="Teléfono">
+              <Input placeholder="(55) 1234-5678" value={proveedorForm.telefono} onChange={e => setProveedorForm(f => ({ ...f, telefono: e.target.value }))} />
+            </FormField>
+          </div>
+          <FormField label="Estatus">
+            <Select value={proveedorForm.estatus} onChange={e => setProveedorForm(f => ({ ...f, estatus: e.target.value }))}>
+              <option value="ACTIVO">Activo</option>
+              <option value="VETADO">Vetado</option>
+              <option value="PENDIENTE">Pendiente</option>
+            </Select>
+          </FormField>
+
+          <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Logística</p>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Ciudad">
+              <Input placeholder="Ciudad de operación" value={proveedorForm.ciudad} onChange={e => setProveedorForm(f => ({ ...f, ciudad: e.target.value }))} />
+            </FormField>
+            <FormField label="Ubicación">
+              <Select value={proveedorForm.tipo_ubicacion} onChange={e => setProveedorForm(f => ({ ...f, tipo_ubicacion: e.target.value }))}>
+                <option value="LOCAL">Local</option>
+                <option value="FORANEO">Foráneo</option>
+              </Select>
+            </FormField>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={proveedorForm.entrega_en_sitio} onChange={e => setProveedorForm(f => ({ ...f, entrega_en_sitio: e.target.checked }))} className="rounded" />
+            <span>Entrega en sitio de obra</span>
+          </label>
+
+          <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Condiciones Comerciales</p>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Tipo de Proveedor">
+              <Select value={proveedorForm.tipo_proveedor} onChange={e => setProveedorForm(f => ({ ...f, tipo_proveedor: e.target.value }))}>
+                <option value="NACIONAL">Nacional</option>
+                <option value="EXTRANJERO">Extranjero</option>
+              </Select>
+            </FormField>
+            <FormField label="Estatus de Crédito">
+              <Select value={proveedorForm.estatus_credito} onChange={e => setProveedorForm(f => ({ ...f, estatus_credito: e.target.value }))}>
+                <option value="ACTIVO">Activo</option>
+                <option value="BLOQUEADO">Bloqueado</option>
+              </Select>
+            </FormField>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Límite de Crédito (MXN)" hint="Dejar vacío = sin límite">
+              <Input type="number" placeholder="0.00" value={proveedorForm.limite_credito} onChange={e => setProveedorForm(f => ({ ...f, limite_credito: e.target.value }))} />
+            </FormField>
+            <FormField label="Calificación Desempeño" hint="0.0 – 5.0">
+              <Input type="number" step="0.1" min="0" max="5" placeholder="—" value={proveedorForm.calificacion_desempeno} onChange={e => setProveedorForm(f => ({ ...f, calificacion_desempeno: e.target.value }))} />
+            </FormField>
+          </div>
+
+          <div className="border-t border-border/40 pt-4">
+            <SubmitButton
+              label={editingProveedor ? 'Guardar Cambios' : 'Crear Proveedor'}
+              loading={formLoading}
+              color="emerald"
+              onClick={async () => {
+                if (!proveedorForm.rfc_tax_id.trim() || !proveedorForm.razon_social.trim()) {
+                  notify({ title: 'RFC y Razón Social son obligatorios', type: 'error' });
+                  return;
+                }
+                const cal = proveedorForm.calificacion_desempeno;
+                if (cal !== '' && (Number(cal) < 0 || Number(cal) > 5)) {
+                  notify({ title: 'Calificación debe ser 0–5', type: 'error' });
+                  return;
+                }
+                setFormLoading(true);
+                try {
+                  const payload = {
+                    rfc_tax_id: proveedorForm.rfc_tax_id.trim(),
+                    razon_social: proveedorForm.razon_social.trim(),
+                    email_contacto: proveedorForm.email_contacto || null,
+                    telefono: proveedorForm.telefono || null,
+                    estatus: proveedorForm.estatus,
+                    ciudad: proveedorForm.ciudad || null,
+                    tipo_ubicacion: proveedorForm.tipo_ubicacion,
+                    entrega_en_sitio: proveedorForm.entrega_en_sitio,
+                    estatus_credito: proveedorForm.estatus_credito,
+                    limite_credito: proveedorForm.limite_credito !== '' ? Number(proveedorForm.limite_credito) : null,
+                    tipo_proveedor: proveedorForm.tipo_proveedor,
+                    calificacion_desempeno: proveedorForm.calificacion_desempeno !== '' ? Number(proveedorForm.calificacion_desempeno) : null,
+                  };
+                  if (editingProveedor) {
+                    const res = await api.put(`/api/v1/compras/proveedores/${editingProveedor.id_proveedor}`, payload);
+                    setProveedoresList(list => list.map(p => p.id_proveedor === editingProveedor.id_proveedor ? res.data.data : p));
+                    notify({ title: 'Proveedor actualizado', type: 'success' });
+                  } else {
+                    const res = await api.post('/api/v1/compras/proveedores', payload);
+                    setProveedoresList(list => [...list, res.data.data]);
+                    notify({ title: 'Proveedor creado', type: 'success' });
+                  }
+                  setShowProveedorForm(false);
+                } catch (err: any) {
+                  notify({ title: err.response?.data?.message ?? 'Error al guardar proveedor', type: 'error' });
+                } finally {
+                  setFormLoading(false);
+                }
+              }}
             />
           </div>
         </div>

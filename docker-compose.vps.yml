@@ -210,6 +210,9 @@ services:
       COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+      DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
+    volumes:
+      - vps_docs_proveedores:/data/compras/docs-proveedores
     depends_on:
       postgres:
         condition: service_healthy
@@ -524,3 +527,4 @@ volumes:
   vps_caddy_config:
   vps_calidad_uploads:
   vps_fichas_uploads:
+  vps_docs_proveedores:

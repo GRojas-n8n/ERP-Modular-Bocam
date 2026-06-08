@@ -1,0 +1,6 @@
+schema: spec-driven
+created: 2026-06-08
+status: draft
+depends_on:
+  - proveedores-catalogo-v2
+production_verified: false

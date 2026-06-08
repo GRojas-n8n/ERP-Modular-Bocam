@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type Proveedor = $Result.DefaultSelection<Prisma.$ProveedorPayload>
 /**
+ * Model DocumentoProveedor
+ * 
+ */
+export type DocumentoProveedor = $Result.DefaultSelection<Prisma.$DocumentoProveedorPayload>
+/**
  * Model Requisicion
  * 
  */
@@ -201,6 +206,16 @@ export class PrismaClient<
     * ```
     */
   get proveedor(): Prisma.ProveedorDelegate<ExtArgs>;
+
+  /**
+   * `prisma.documentoProveedor`: Exposes CRUD operations for the **DocumentoProveedor** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more DocumentoProveedors
+    * const documentoProveedors = await prisma.documentoProveedor.findMany()
+    * ```
+    */
+  get documentoProveedor(): Prisma.DocumentoProveedorDelegate<ExtArgs>;
 
   /**
    * `prisma.requisicion`: Exposes CRUD operations for the **Requisicion** model.
@@ -743,6 +758,7 @@ export namespace Prisma {
 
   export const ModelName: {
     Proveedor: 'Proveedor',
+    DocumentoProveedor: 'DocumentoProveedor',
     Requisicion: 'Requisicion',
     RequisicionItem: 'RequisicionItem',
     OrdenCompra: 'OrdenCompra',
@@ -768,7 +784,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
+      modelProps: "proveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -839,6 +855,76 @@ export namespace Prisma {
           count: {
             args: Prisma.ProveedorCountArgs<ExtArgs>
             result: $Utils.Optional<ProveedorCountAggregateOutputType> | number
+          }
+        }
+      }
+      DocumentoProveedor: {
+        payload: Prisma.$DocumentoProveedorPayload<ExtArgs>
+        fields: Prisma.DocumentoProveedorFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DocumentoProveedorFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DocumentoProveedorFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>
+          }
+          findFirst: {
+            args: Prisma.DocumentoProveedorFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DocumentoProveedorFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>
+          }
+          findMany: {
+            args: Prisma.DocumentoProveedorFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>[]
+          }
+          create: {
+            args: Prisma.DocumentoProveedorCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>
+          }
+          createMany: {
+            args: Prisma.DocumentoProveedorCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DocumentoProveedorCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>[]
+          }
+          delete: {
+            args: Prisma.DocumentoProveedorDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>
+          }
+          update: {
+            args: Prisma.DocumentoProveedorUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>
+          }
+          deleteMany: {
+            args: Prisma.DocumentoProveedorDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DocumentoProveedorUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.DocumentoProveedorUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentoProveedorPayload>
+          }
+          aggregate: {
+            args: Prisma.DocumentoProveedorAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDocumentoProveedor>
+          }
+          groupBy: {
+            args: Prisma.DocumentoProveedorGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DocumentoProveedorGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DocumentoProveedorCountArgs<ExtArgs>
+            result: $Utils.Optional<DocumentoProveedorCountAggregateOutputType> | number
           }
         }
       }
@@ -1705,11 +1791,13 @@ export namespace Prisma {
   export type ProveedorCountOutputType = {
     ordenes: number
     comparativas: number
+    documentos: number
   }
 
   export type ProveedorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ordenes?: boolean | ProveedorCountOutputTypeCountOrdenesArgs
     comparativas?: boolean | ProveedorCountOutputTypeCountComparativasArgs
+    documentos?: boolean | ProveedorCountOutputTypeCountDocumentosArgs
   }
 
   // Custom InputTypes
@@ -1735,6 +1823,13 @@ export namespace Prisma {
    */
   export type ProveedorCountOutputTypeCountComparativasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ComparativaDetalleWhereInput
+  }
+
+  /**
+   * ProveedorCountOutputType without action
+   */
+  export type ProveedorCountOutputTypeCountDocumentosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DocumentoProveedorWhereInput
   }
 
 
@@ -1881,8 +1976,20 @@ export namespace Prisma {
 
   export type AggregateProveedor = {
     _count: ProveedorCountAggregateOutputType | null
+    _avg: ProveedorAvgAggregateOutputType | null
+    _sum: ProveedorSumAggregateOutputType | null
     _min: ProveedorMinAggregateOutputType | null
     _max: ProveedorMaxAggregateOutputType | null
+  }
+
+  export type ProveedorAvgAggregateOutputType = {
+    limite_credito: Decimal | null
+    calificacion_desempeno: Decimal | null
+  }
+
+  export type ProveedorSumAggregateOutputType = {
+    limite_credito: Decimal | null
+    calificacion_desempeno: Decimal | null
   }
 
   export type ProveedorMinAggregateOutputType = {
@@ -1893,6 +2000,13 @@ export namespace Prisma {
     email_contacto: string | null
     telefono: string | null
     estatus: string | null
+    ciudad: string | null
+    tipo_ubicacion: string | null
+    entrega_en_sitio: boolean | null
+    estatus_credito: string | null
+    limite_credito: Decimal | null
+    tipo_proveedor: string | null
+    calificacion_desempeno: Decimal | null
   }
 
   export type ProveedorMaxAggregateOutputType = {
@@ -1903,6 +2017,13 @@ export namespace Prisma {
     email_contacto: string | null
     telefono: string | null
     estatus: string | null
+    ciudad: string | null
+    tipo_ubicacion: string | null
+    entrega_en_sitio: boolean | null
+    estatus_credito: string | null
+    limite_credito: Decimal | null
+    tipo_proveedor: string | null
+    calificacion_desempeno: Decimal | null
   }
 
   export type ProveedorCountAggregateOutputType = {
@@ -1913,9 +2034,26 @@ export namespace Prisma {
     email_contacto: number
     telefono: number
     estatus: number
+    ciudad: number
+    tipo_ubicacion: number
+    entrega_en_sitio: number
+    estatus_credito: number
+    limite_credito: number
+    tipo_proveedor: number
+    calificacion_desempeno: number
     _all: number
   }
 
+
+  export type ProveedorAvgAggregateInputType = {
+    limite_credito?: true
+    calificacion_desempeno?: true
+  }
+
+  export type ProveedorSumAggregateInputType = {
+    limite_credito?: true
+    calificacion_desempeno?: true
+  }
 
   export type ProveedorMinAggregateInputType = {
     id_proveedor?: true
@@ -1925,6 +2063,13 @@ export namespace Prisma {
     email_contacto?: true
     telefono?: true
     estatus?: true
+    ciudad?: true
+    tipo_ubicacion?: true
+    entrega_en_sitio?: true
+    estatus_credito?: true
+    limite_credito?: true
+    tipo_proveedor?: true
+    calificacion_desempeno?: true
   }
 
   export type ProveedorMaxAggregateInputType = {
@@ -1935,6 +2080,13 @@ export namespace Prisma {
     email_contacto?: true
     telefono?: true
     estatus?: true
+    ciudad?: true
+    tipo_ubicacion?: true
+    entrega_en_sitio?: true
+    estatus_credito?: true
+    limite_credito?: true
+    tipo_proveedor?: true
+    calificacion_desempeno?: true
   }
 
   export type ProveedorCountAggregateInputType = {
@@ -1945,6 +2097,13 @@ export namespace Prisma {
     email_contacto?: true
     telefono?: true
     estatus?: true
+    ciudad?: true
+    tipo_ubicacion?: true
+    entrega_en_sitio?: true
+    estatus_credito?: true
+    limite_credito?: true
+    tipo_proveedor?: true
+    calificacion_desempeno?: true
     _all?: true
   }
 
@@ -1986,6 +2145,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ProveedorAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProveedorSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ProveedorMinAggregateInputType
@@ -2016,6 +2187,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ProveedorCountAggregateInputType | true
+    _avg?: ProveedorAvgAggregateInputType
+    _sum?: ProveedorSumAggregateInputType
     _min?: ProveedorMinAggregateInputType
     _max?: ProveedorMaxAggregateInputType
   }
@@ -2028,7 +2201,16 @@ export namespace Prisma {
     email_contacto: string | null
     telefono: string | null
     estatus: string
+    ciudad: string | null
+    tipo_ubicacion: string
+    entrega_en_sitio: boolean
+    estatus_credito: string
+    limite_credito: Decimal | null
+    tipo_proveedor: string
+    calificacion_desempeno: Decimal | null
     _count: ProveedorCountAggregateOutputType | null
+    _avg: ProveedorAvgAggregateOutputType | null
+    _sum: ProveedorSumAggregateOutputType | null
     _min: ProveedorMinAggregateOutputType | null
     _max: ProveedorMaxAggregateOutputType | null
   }
@@ -2055,8 +2237,16 @@ export namespace Prisma {
     email_contacto?: boolean
     telefono?: boolean
     estatus?: boolean
+    ciudad?: boolean
+    tipo_ubicacion?: boolean
+    entrega_en_sitio?: boolean
+    estatus_credito?: boolean
+    limite_credito?: boolean
+    tipo_proveedor?: boolean
+    calificacion_desempeno?: boolean
     ordenes?: boolean | Proveedor$ordenesArgs<ExtArgs>
     comparativas?: boolean | Proveedor$comparativasArgs<ExtArgs>
+    documentos?: boolean | Proveedor$documentosArgs<ExtArgs>
     _count?: boolean | ProveedorCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["proveedor"]>
 
@@ -2068,6 +2258,13 @@ export namespace Prisma {
     email_contacto?: boolean
     telefono?: boolean
     estatus?: boolean
+    ciudad?: boolean
+    tipo_ubicacion?: boolean
+    entrega_en_sitio?: boolean
+    estatus_credito?: boolean
+    limite_credito?: boolean
+    tipo_proveedor?: boolean
+    calificacion_desempeno?: boolean
   }, ExtArgs["result"]["proveedor"]>
 
   export type ProveedorSelectScalar = {
@@ -2078,11 +2275,19 @@ export namespace Prisma {
     email_contacto?: boolean
     telefono?: boolean
     estatus?: boolean
+    ciudad?: boolean
+    tipo_ubicacion?: boolean
+    entrega_en_sitio?: boolean
+    estatus_credito?: boolean
+    limite_credito?: boolean
+    tipo_proveedor?: boolean
+    calificacion_desempeno?: boolean
   }
 
   export type ProveedorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ordenes?: boolean | Proveedor$ordenesArgs<ExtArgs>
     comparativas?: boolean | Proveedor$comparativasArgs<ExtArgs>
+    documentos?: boolean | Proveedor$documentosArgs<ExtArgs>
     _count?: boolean | ProveedorCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2092,6 +2297,7 @@ export namespace Prisma {
     objects: {
       ordenes: Prisma.$OrdenCompraPayload<ExtArgs>[]
       comparativas: Prisma.$ComparativaDetallePayload<ExtArgs>[]
+      documentos: Prisma.$DocumentoProveedorPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_proveedor: string
@@ -2101,6 +2307,13 @@ export namespace Prisma {
       email_contacto: string | null
       telefono: string | null
       estatus: string
+      ciudad: string | null
+      tipo_ubicacion: string
+      entrega_en_sitio: boolean
+      estatus_credito: string
+      limite_credito: Prisma.Decimal | null
+      tipo_proveedor: string
+      calificacion_desempeno: Prisma.Decimal | null
     }, ExtArgs["result"]["proveedor"]>
     composites: {}
   }
@@ -2467,6 +2680,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     ordenes<T extends Proveedor$ordenesArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$ordenesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenCompraPayload<ExtArgs>, T, "findMany"> | Null>
     comparativas<T extends Proveedor$comparativasArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$comparativasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaDetallePayload<ExtArgs>, T, "findMany"> | Null>
+    documentos<T extends Proveedor$documentosArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$documentosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2503,6 +2717,13 @@ export namespace Prisma {
     readonly email_contacto: FieldRef<"Proveedor", 'String'>
     readonly telefono: FieldRef<"Proveedor", 'String'>
     readonly estatus: FieldRef<"Proveedor", 'String'>
+    readonly ciudad: FieldRef<"Proveedor", 'String'>
+    readonly tipo_ubicacion: FieldRef<"Proveedor", 'String'>
+    readonly entrega_en_sitio: FieldRef<"Proveedor", 'Boolean'>
+    readonly estatus_credito: FieldRef<"Proveedor", 'String'>
+    readonly limite_credito: FieldRef<"Proveedor", 'Decimal'>
+    readonly tipo_proveedor: FieldRef<"Proveedor", 'String'>
+    readonly calificacion_desempeno: FieldRef<"Proveedor", 'Decimal'>
   }
     
 
@@ -2857,6 +3078,26 @@ export namespace Prisma {
   }
 
   /**
+   * Proveedor.documentos
+   */
+  export type Proveedor$documentosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    where?: DocumentoProveedorWhereInput
+    orderBy?: DocumentoProveedorOrderByWithRelationInput | DocumentoProveedorOrderByWithRelationInput[]
+    cursor?: DocumentoProveedorWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DocumentoProveedorScalarFieldEnum | DocumentoProveedorScalarFieldEnum[]
+  }
+
+  /**
    * Proveedor without action
    */
   export type ProveedorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2868,6 +3109,1033 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProveedorInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model DocumentoProveedor
+   */
+
+  export type AggregateDocumentoProveedor = {
+    _count: DocumentoProveedorCountAggregateOutputType | null
+    _avg: DocumentoProveedorAvgAggregateOutputType | null
+    _sum: DocumentoProveedorSumAggregateOutputType | null
+    _min: DocumentoProveedorMinAggregateOutputType | null
+    _max: DocumentoProveedorMaxAggregateOutputType | null
+  }
+
+  export type DocumentoProveedorAvgAggregateOutputType = {
+    tamano_bytes: number | null
+  }
+
+  export type DocumentoProveedorSumAggregateOutputType = {
+    tamano_bytes: number | null
+  }
+
+  export type DocumentoProveedorMinAggregateOutputType = {
+    id_doc: string | null
+    tenant_id: string | null
+    proveedor_id: string | null
+    tipo_doc: string | null
+    nombre_doc: string | null
+    ruta_archivo: string | null
+    mime_type: string | null
+    tamano_bytes: number | null
+    subido_por: string | null
+    created_at: Date | null
+  }
+
+  export type DocumentoProveedorMaxAggregateOutputType = {
+    id_doc: string | null
+    tenant_id: string | null
+    proveedor_id: string | null
+    tipo_doc: string | null
+    nombre_doc: string | null
+    ruta_archivo: string | null
+    mime_type: string | null
+    tamano_bytes: number | null
+    subido_por: string | null
+    created_at: Date | null
+  }
+
+  export type DocumentoProveedorCountAggregateOutputType = {
+    id_doc: number
+    tenant_id: number
+    proveedor_id: number
+    tipo_doc: number
+    nombre_doc: number
+    ruta_archivo: number
+    mime_type: number
+    tamano_bytes: number
+    subido_por: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type DocumentoProveedorAvgAggregateInputType = {
+    tamano_bytes?: true
+  }
+
+  export type DocumentoProveedorSumAggregateInputType = {
+    tamano_bytes?: true
+  }
+
+  export type DocumentoProveedorMinAggregateInputType = {
+    id_doc?: true
+    tenant_id?: true
+    proveedor_id?: true
+    tipo_doc?: true
+    nombre_doc?: true
+    ruta_archivo?: true
+    mime_type?: true
+    tamano_bytes?: true
+    subido_por?: true
+    created_at?: true
+  }
+
+  export type DocumentoProveedorMaxAggregateInputType = {
+    id_doc?: true
+    tenant_id?: true
+    proveedor_id?: true
+    tipo_doc?: true
+    nombre_doc?: true
+    ruta_archivo?: true
+    mime_type?: true
+    tamano_bytes?: true
+    subido_por?: true
+    created_at?: true
+  }
+
+  export type DocumentoProveedorCountAggregateInputType = {
+    id_doc?: true
+    tenant_id?: true
+    proveedor_id?: true
+    tipo_doc?: true
+    nombre_doc?: true
+    ruta_archivo?: true
+    mime_type?: true
+    tamano_bytes?: true
+    subido_por?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type DocumentoProveedorAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DocumentoProveedor to aggregate.
+     */
+    where?: DocumentoProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentoProveedors to fetch.
+     */
+    orderBy?: DocumentoProveedorOrderByWithRelationInput | DocumentoProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DocumentoProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentoProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentoProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned DocumentoProveedors
+    **/
+    _count?: true | DocumentoProveedorCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: DocumentoProveedorAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: DocumentoProveedorSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DocumentoProveedorMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DocumentoProveedorMaxAggregateInputType
+  }
+
+  export type GetDocumentoProveedorAggregateType<T extends DocumentoProveedorAggregateArgs> = {
+        [P in keyof T & keyof AggregateDocumentoProveedor]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDocumentoProveedor[P]>
+      : GetScalarType<T[P], AggregateDocumentoProveedor[P]>
+  }
+
+
+
+
+  export type DocumentoProveedorGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DocumentoProveedorWhereInput
+    orderBy?: DocumentoProveedorOrderByWithAggregationInput | DocumentoProveedorOrderByWithAggregationInput[]
+    by: DocumentoProveedorScalarFieldEnum[] | DocumentoProveedorScalarFieldEnum
+    having?: DocumentoProveedorScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DocumentoProveedorCountAggregateInputType | true
+    _avg?: DocumentoProveedorAvgAggregateInputType
+    _sum?: DocumentoProveedorSumAggregateInputType
+    _min?: DocumentoProveedorMinAggregateInputType
+    _max?: DocumentoProveedorMaxAggregateInputType
+  }
+
+  export type DocumentoProveedorGroupByOutputType = {
+    id_doc: string
+    tenant_id: string
+    proveedor_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at: Date
+    _count: DocumentoProveedorCountAggregateOutputType | null
+    _avg: DocumentoProveedorAvgAggregateOutputType | null
+    _sum: DocumentoProveedorSumAggregateOutputType | null
+    _min: DocumentoProveedorMinAggregateOutputType | null
+    _max: DocumentoProveedorMaxAggregateOutputType | null
+  }
+
+  type GetDocumentoProveedorGroupByPayload<T extends DocumentoProveedorGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DocumentoProveedorGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DocumentoProveedorGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DocumentoProveedorGroupByOutputType[P]>
+            : GetScalarType<T[P], DocumentoProveedorGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DocumentoProveedorSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_doc?: boolean
+    tenant_id?: boolean
+    proveedor_id?: boolean
+    tipo_doc?: boolean
+    nombre_doc?: boolean
+    ruta_archivo?: boolean
+    mime_type?: boolean
+    tamano_bytes?: boolean
+    subido_por?: boolean
+    created_at?: boolean
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["documentoProveedor"]>
+
+  export type DocumentoProveedorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_doc?: boolean
+    tenant_id?: boolean
+    proveedor_id?: boolean
+    tipo_doc?: boolean
+    nombre_doc?: boolean
+    ruta_archivo?: boolean
+    mime_type?: boolean
+    tamano_bytes?: boolean
+    subido_por?: boolean
+    created_at?: boolean
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["documentoProveedor"]>
+
+  export type DocumentoProveedorSelectScalar = {
+    id_doc?: boolean
+    tenant_id?: boolean
+    proveedor_id?: boolean
+    tipo_doc?: boolean
+    nombre_doc?: boolean
+    ruta_archivo?: boolean
+    mime_type?: boolean
+    tamano_bytes?: boolean
+    subido_por?: boolean
+    created_at?: boolean
+  }
+
+  export type DocumentoProveedorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }
+  export type DocumentoProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }
+
+  export type $DocumentoProveedorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "DocumentoProveedor"
+    objects: {
+      proveedor: Prisma.$ProveedorPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_doc: string
+      tenant_id: string
+      proveedor_id: string
+      tipo_doc: string
+      nombre_doc: string
+      ruta_archivo: string
+      mime_type: string
+      tamano_bytes: number
+      subido_por: string
+      created_at: Date
+    }, ExtArgs["result"]["documentoProveedor"]>
+    composites: {}
+  }
+
+  type DocumentoProveedorGetPayload<S extends boolean | null | undefined | DocumentoProveedorDefaultArgs> = $Result.GetResult<Prisma.$DocumentoProveedorPayload, S>
+
+  type DocumentoProveedorCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<DocumentoProveedorFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: DocumentoProveedorCountAggregateInputType | true
+    }
+
+  export interface DocumentoProveedorDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['DocumentoProveedor'], meta: { name: 'DocumentoProveedor' } }
+    /**
+     * Find zero or one DocumentoProveedor that matches the filter.
+     * @param {DocumentoProveedorFindUniqueArgs} args - Arguments to find a DocumentoProveedor
+     * @example
+     * // Get one DocumentoProveedor
+     * const documentoProveedor = await prisma.documentoProveedor.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DocumentoProveedorFindUniqueArgs>(args: SelectSubset<T, DocumentoProveedorFindUniqueArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one DocumentoProveedor that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {DocumentoProveedorFindUniqueOrThrowArgs} args - Arguments to find a DocumentoProveedor
+     * @example
+     * // Get one DocumentoProveedor
+     * const documentoProveedor = await prisma.documentoProveedor.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DocumentoProveedorFindUniqueOrThrowArgs>(args: SelectSubset<T, DocumentoProveedorFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first DocumentoProveedor that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorFindFirstArgs} args - Arguments to find a DocumentoProveedor
+     * @example
+     * // Get one DocumentoProveedor
+     * const documentoProveedor = await prisma.documentoProveedor.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DocumentoProveedorFindFirstArgs>(args?: SelectSubset<T, DocumentoProveedorFindFirstArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first DocumentoProveedor that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorFindFirstOrThrowArgs} args - Arguments to find a DocumentoProveedor
+     * @example
+     * // Get one DocumentoProveedor
+     * const documentoProveedor = await prisma.documentoProveedor.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DocumentoProveedorFindFirstOrThrowArgs>(args?: SelectSubset<T, DocumentoProveedorFindFirstOrThrowArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more DocumentoProveedors that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all DocumentoProveedors
+     * const documentoProveedors = await prisma.documentoProveedor.findMany()
+     * 
+     * // Get first 10 DocumentoProveedors
+     * const documentoProveedors = await prisma.documentoProveedor.findMany({ take: 10 })
+     * 
+     * // Only select the `id_doc`
+     * const documentoProveedorWithId_docOnly = await prisma.documentoProveedor.findMany({ select: { id_doc: true } })
+     * 
+     */
+    findMany<T extends DocumentoProveedorFindManyArgs>(args?: SelectSubset<T, DocumentoProveedorFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a DocumentoProveedor.
+     * @param {DocumentoProveedorCreateArgs} args - Arguments to create a DocumentoProveedor.
+     * @example
+     * // Create one DocumentoProveedor
+     * const DocumentoProveedor = await prisma.documentoProveedor.create({
+     *   data: {
+     *     // ... data to create a DocumentoProveedor
+     *   }
+     * })
+     * 
+     */
+    create<T extends DocumentoProveedorCreateArgs>(args: SelectSubset<T, DocumentoProveedorCreateArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many DocumentoProveedors.
+     * @param {DocumentoProveedorCreateManyArgs} args - Arguments to create many DocumentoProveedors.
+     * @example
+     * // Create many DocumentoProveedors
+     * const documentoProveedor = await prisma.documentoProveedor.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DocumentoProveedorCreateManyArgs>(args?: SelectSubset<T, DocumentoProveedorCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many DocumentoProveedors and returns the data saved in the database.
+     * @param {DocumentoProveedorCreateManyAndReturnArgs} args - Arguments to create many DocumentoProveedors.
+     * @example
+     * // Create many DocumentoProveedors
+     * const documentoProveedor = await prisma.documentoProveedor.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many DocumentoProveedors and only return the `id_doc`
+     * const documentoProveedorWithId_docOnly = await prisma.documentoProveedor.createManyAndReturn({ 
+     *   select: { id_doc: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DocumentoProveedorCreateManyAndReturnArgs>(args?: SelectSubset<T, DocumentoProveedorCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a DocumentoProveedor.
+     * @param {DocumentoProveedorDeleteArgs} args - Arguments to delete one DocumentoProveedor.
+     * @example
+     * // Delete one DocumentoProveedor
+     * const DocumentoProveedor = await prisma.documentoProveedor.delete({
+     *   where: {
+     *     // ... filter to delete one DocumentoProveedor
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DocumentoProveedorDeleteArgs>(args: SelectSubset<T, DocumentoProveedorDeleteArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one DocumentoProveedor.
+     * @param {DocumentoProveedorUpdateArgs} args - Arguments to update one DocumentoProveedor.
+     * @example
+     * // Update one DocumentoProveedor
+     * const documentoProveedor = await prisma.documentoProveedor.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DocumentoProveedorUpdateArgs>(args: SelectSubset<T, DocumentoProveedorUpdateArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more DocumentoProveedors.
+     * @param {DocumentoProveedorDeleteManyArgs} args - Arguments to filter DocumentoProveedors to delete.
+     * @example
+     * // Delete a few DocumentoProveedors
+     * const { count } = await prisma.documentoProveedor.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DocumentoProveedorDeleteManyArgs>(args?: SelectSubset<T, DocumentoProveedorDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more DocumentoProveedors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many DocumentoProveedors
+     * const documentoProveedor = await prisma.documentoProveedor.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DocumentoProveedorUpdateManyArgs>(args: SelectSubset<T, DocumentoProveedorUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one DocumentoProveedor.
+     * @param {DocumentoProveedorUpsertArgs} args - Arguments to update or create a DocumentoProveedor.
+     * @example
+     * // Update or create a DocumentoProveedor
+     * const documentoProveedor = await prisma.documentoProveedor.upsert({
+     *   create: {
+     *     // ... data to create a DocumentoProveedor
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the DocumentoProveedor we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DocumentoProveedorUpsertArgs>(args: SelectSubset<T, DocumentoProveedorUpsertArgs<ExtArgs>>): Prisma__DocumentoProveedorClient<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of DocumentoProveedors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorCountArgs} args - Arguments to filter DocumentoProveedors to count.
+     * @example
+     * // Count the number of DocumentoProveedors
+     * const count = await prisma.documentoProveedor.count({
+     *   where: {
+     *     // ... the filter for the DocumentoProveedors we want to count
+     *   }
+     * })
+    **/
+    count<T extends DocumentoProveedorCountArgs>(
+      args?: Subset<T, DocumentoProveedorCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DocumentoProveedorCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a DocumentoProveedor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DocumentoProveedorAggregateArgs>(args: Subset<T, DocumentoProveedorAggregateArgs>): Prisma.PrismaPromise<GetDocumentoProveedorAggregateType<T>>
+
+    /**
+     * Group by DocumentoProveedor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentoProveedorGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DocumentoProveedorGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DocumentoProveedorGroupByArgs['orderBy'] }
+        : { orderBy?: DocumentoProveedorGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DocumentoProveedorGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDocumentoProveedorGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the DocumentoProveedor model
+   */
+  readonly fields: DocumentoProveedorFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for DocumentoProveedor.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DocumentoProveedorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    proveedor<T extends ProveedorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProveedorDefaultArgs<ExtArgs>>): Prisma__ProveedorClient<$Result.GetResult<Prisma.$ProveedorPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the DocumentoProveedor model
+   */ 
+  interface DocumentoProveedorFieldRefs {
+    readonly id_doc: FieldRef<"DocumentoProveedor", 'String'>
+    readonly tenant_id: FieldRef<"DocumentoProveedor", 'String'>
+    readonly proveedor_id: FieldRef<"DocumentoProveedor", 'String'>
+    readonly tipo_doc: FieldRef<"DocumentoProveedor", 'String'>
+    readonly nombre_doc: FieldRef<"DocumentoProveedor", 'String'>
+    readonly ruta_archivo: FieldRef<"DocumentoProveedor", 'String'>
+    readonly mime_type: FieldRef<"DocumentoProveedor", 'String'>
+    readonly tamano_bytes: FieldRef<"DocumentoProveedor", 'Int'>
+    readonly subido_por: FieldRef<"DocumentoProveedor", 'String'>
+    readonly created_at: FieldRef<"DocumentoProveedor", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * DocumentoProveedor findUnique
+   */
+  export type DocumentoProveedorFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentoProveedor to fetch.
+     */
+    where: DocumentoProveedorWhereUniqueInput
+  }
+
+  /**
+   * DocumentoProveedor findUniqueOrThrow
+   */
+  export type DocumentoProveedorFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentoProveedor to fetch.
+     */
+    where: DocumentoProveedorWhereUniqueInput
+  }
+
+  /**
+   * DocumentoProveedor findFirst
+   */
+  export type DocumentoProveedorFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentoProveedor to fetch.
+     */
+    where?: DocumentoProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentoProveedors to fetch.
+     */
+    orderBy?: DocumentoProveedorOrderByWithRelationInput | DocumentoProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DocumentoProveedors.
+     */
+    cursor?: DocumentoProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentoProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentoProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DocumentoProveedors.
+     */
+    distinct?: DocumentoProveedorScalarFieldEnum | DocumentoProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * DocumentoProveedor findFirstOrThrow
+   */
+  export type DocumentoProveedorFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentoProveedor to fetch.
+     */
+    where?: DocumentoProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentoProveedors to fetch.
+     */
+    orderBy?: DocumentoProveedorOrderByWithRelationInput | DocumentoProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DocumentoProveedors.
+     */
+    cursor?: DocumentoProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentoProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentoProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DocumentoProveedors.
+     */
+    distinct?: DocumentoProveedorScalarFieldEnum | DocumentoProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * DocumentoProveedor findMany
+   */
+  export type DocumentoProveedorFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentoProveedors to fetch.
+     */
+    where?: DocumentoProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentoProveedors to fetch.
+     */
+    orderBy?: DocumentoProveedorOrderByWithRelationInput | DocumentoProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing DocumentoProveedors.
+     */
+    cursor?: DocumentoProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentoProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentoProveedors.
+     */
+    skip?: number
+    distinct?: DocumentoProveedorScalarFieldEnum | DocumentoProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * DocumentoProveedor create
+   */
+  export type DocumentoProveedorCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * The data needed to create a DocumentoProveedor.
+     */
+    data: XOR<DocumentoProveedorCreateInput, DocumentoProveedorUncheckedCreateInput>
+  }
+
+  /**
+   * DocumentoProveedor createMany
+   */
+  export type DocumentoProveedorCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many DocumentoProveedors.
+     */
+    data: DocumentoProveedorCreateManyInput | DocumentoProveedorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * DocumentoProveedor createManyAndReturn
+   */
+  export type DocumentoProveedorCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many DocumentoProveedors.
+     */
+    data: DocumentoProveedorCreateManyInput | DocumentoProveedorCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * DocumentoProveedor update
+   */
+  export type DocumentoProveedorUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * The data needed to update a DocumentoProveedor.
+     */
+    data: XOR<DocumentoProveedorUpdateInput, DocumentoProveedorUncheckedUpdateInput>
+    /**
+     * Choose, which DocumentoProveedor to update.
+     */
+    where: DocumentoProveedorWhereUniqueInput
+  }
+
+  /**
+   * DocumentoProveedor updateMany
+   */
+  export type DocumentoProveedorUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update DocumentoProveedors.
+     */
+    data: XOR<DocumentoProveedorUpdateManyMutationInput, DocumentoProveedorUncheckedUpdateManyInput>
+    /**
+     * Filter which DocumentoProveedors to update
+     */
+    where?: DocumentoProveedorWhereInput
+  }
+
+  /**
+   * DocumentoProveedor upsert
+   */
+  export type DocumentoProveedorUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * The filter to search for the DocumentoProveedor to update in case it exists.
+     */
+    where: DocumentoProveedorWhereUniqueInput
+    /**
+     * In case the DocumentoProveedor found by the `where` argument doesn't exist, create a new DocumentoProveedor with this data.
+     */
+    create: XOR<DocumentoProveedorCreateInput, DocumentoProveedorUncheckedCreateInput>
+    /**
+     * In case the DocumentoProveedor was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DocumentoProveedorUpdateInput, DocumentoProveedorUncheckedUpdateInput>
+  }
+
+  /**
+   * DocumentoProveedor delete
+   */
+  export type DocumentoProveedorDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
+    /**
+     * Filter which DocumentoProveedor to delete.
+     */
+    where: DocumentoProveedorWhereUniqueInput
+  }
+
+  /**
+   * DocumentoProveedor deleteMany
+   */
+  export type DocumentoProveedorDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DocumentoProveedors to delete
+     */
+    where?: DocumentoProveedorWhereInput
+  }
+
+  /**
+   * DocumentoProveedor without action
+   */
+  export type DocumentoProveedorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentoProveedor
+     */
+    select?: DocumentoProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentoProveedorInclude<ExtArgs> | null
   }
 
 
@@ -13219,10 +14487,33 @@ export namespace Prisma {
     razon_social: 'razon_social',
     email_contacto: 'email_contacto',
     telefono: 'telefono',
-    estatus: 'estatus'
+    estatus: 'estatus',
+    ciudad: 'ciudad',
+    tipo_ubicacion: 'tipo_ubicacion',
+    entrega_en_sitio: 'entrega_en_sitio',
+    estatus_credito: 'estatus_credito',
+    limite_credito: 'limite_credito',
+    tipo_proveedor: 'tipo_proveedor',
+    calificacion_desempeno: 'calificacion_desempeno'
   };
 
   export type ProveedorScalarFieldEnum = (typeof ProveedorScalarFieldEnum)[keyof typeof ProveedorScalarFieldEnum]
+
+
+  export const DocumentoProveedorScalarFieldEnum: {
+    id_doc: 'id_doc',
+    tenant_id: 'tenant_id',
+    proveedor_id: 'proveedor_id',
+    tipo_doc: 'tipo_doc',
+    nombre_doc: 'nombre_doc',
+    ruta_archivo: 'ruta_archivo',
+    mime_type: 'mime_type',
+    tamano_bytes: 'tamano_bytes',
+    subido_por: 'subido_por',
+    created_at: 'created_at'
+  };
+
+  export type DocumentoProveedorScalarFieldEnum = (typeof DocumentoProveedorScalarFieldEnum)[keyof typeof DocumentoProveedorScalarFieldEnum]
 
 
   export const RequisicionScalarFieldEnum: {
@@ -13438,16 +14729,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'DateTime'
+   * Reference to a field of type 'Boolean'
    */
-  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime[]'
-   */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -13466,13 +14750,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -13483,6 +14760,34 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -13500,8 +14805,16 @@ export namespace Prisma {
     email_contacto?: StringNullableFilter<"Proveedor"> | string | null
     telefono?: StringNullableFilter<"Proveedor"> | string | null
     estatus?: StringFilter<"Proveedor"> | string
+    ciudad?: StringNullableFilter<"Proveedor"> | string | null
+    tipo_ubicacion?: StringFilter<"Proveedor"> | string
+    entrega_en_sitio?: BoolFilter<"Proveedor"> | boolean
+    estatus_credito?: StringFilter<"Proveedor"> | string
+    limite_credito?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFilter<"Proveedor"> | string
+    calificacion_desempeno?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraListRelationFilter
     comparativas?: ComparativaDetalleListRelationFilter
+    documentos?: DocumentoProveedorListRelationFilter
   }
 
   export type ProveedorOrderByWithRelationInput = {
@@ -13512,8 +14825,16 @@ export namespace Prisma {
     email_contacto?: SortOrderInput | SortOrder
     telefono?: SortOrderInput | SortOrder
     estatus?: SortOrder
+    ciudad?: SortOrderInput | SortOrder
+    tipo_ubicacion?: SortOrder
+    entrega_en_sitio?: SortOrder
+    estatus_credito?: SortOrder
+    limite_credito?: SortOrderInput | SortOrder
+    tipo_proveedor?: SortOrder
+    calificacion_desempeno?: SortOrderInput | SortOrder
     ordenes?: OrdenCompraOrderByRelationAggregateInput
     comparativas?: ComparativaDetalleOrderByRelationAggregateInput
+    documentos?: DocumentoProveedorOrderByRelationAggregateInput
   }
 
   export type ProveedorWhereUniqueInput = Prisma.AtLeast<{
@@ -13528,8 +14849,16 @@ export namespace Prisma {
     email_contacto?: StringNullableFilter<"Proveedor"> | string | null
     telefono?: StringNullableFilter<"Proveedor"> | string | null
     estatus?: StringFilter<"Proveedor"> | string
+    ciudad?: StringNullableFilter<"Proveedor"> | string | null
+    tipo_ubicacion?: StringFilter<"Proveedor"> | string
+    entrega_en_sitio?: BoolFilter<"Proveedor"> | boolean
+    estatus_credito?: StringFilter<"Proveedor"> | string
+    limite_credito?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFilter<"Proveedor"> | string
+    calificacion_desempeno?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraListRelationFilter
     comparativas?: ComparativaDetalleListRelationFilter
+    documentos?: DocumentoProveedorListRelationFilter
   }, "id_proveedor" | "tenant_id_rfc_tax_id">
 
   export type ProveedorOrderByWithAggregationInput = {
@@ -13540,9 +14869,18 @@ export namespace Prisma {
     email_contacto?: SortOrderInput | SortOrder
     telefono?: SortOrderInput | SortOrder
     estatus?: SortOrder
+    ciudad?: SortOrderInput | SortOrder
+    tipo_ubicacion?: SortOrder
+    entrega_en_sitio?: SortOrder
+    estatus_credito?: SortOrder
+    limite_credito?: SortOrderInput | SortOrder
+    tipo_proveedor?: SortOrder
+    calificacion_desempeno?: SortOrderInput | SortOrder
     _count?: ProveedorCountOrderByAggregateInput
+    _avg?: ProveedorAvgOrderByAggregateInput
     _max?: ProveedorMaxOrderByAggregateInput
     _min?: ProveedorMinOrderByAggregateInput
+    _sum?: ProveedorSumOrderByAggregateInput
   }
 
   export type ProveedorScalarWhereWithAggregatesInput = {
@@ -13556,6 +14894,95 @@ export namespace Prisma {
     email_contacto?: StringNullableWithAggregatesFilter<"Proveedor"> | string | null
     telefono?: StringNullableWithAggregatesFilter<"Proveedor"> | string | null
     estatus?: StringWithAggregatesFilter<"Proveedor"> | string
+    ciudad?: StringNullableWithAggregatesFilter<"Proveedor"> | string | null
+    tipo_ubicacion?: StringWithAggregatesFilter<"Proveedor"> | string
+    entrega_en_sitio?: BoolWithAggregatesFilter<"Proveedor"> | boolean
+    estatus_credito?: StringWithAggregatesFilter<"Proveedor"> | string
+    limite_credito?: DecimalNullableWithAggregatesFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringWithAggregatesFilter<"Proveedor"> | string
+    calificacion_desempeno?: DecimalNullableWithAggregatesFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type DocumentoProveedorWhereInput = {
+    AND?: DocumentoProveedorWhereInput | DocumentoProveedorWhereInput[]
+    OR?: DocumentoProveedorWhereInput[]
+    NOT?: DocumentoProveedorWhereInput | DocumentoProveedorWhereInput[]
+    id_doc?: UuidFilter<"DocumentoProveedor"> | string
+    tenant_id?: UuidFilter<"DocumentoProveedor"> | string
+    proveedor_id?: UuidFilter<"DocumentoProveedor"> | string
+    tipo_doc?: StringFilter<"DocumentoProveedor"> | string
+    nombre_doc?: StringFilter<"DocumentoProveedor"> | string
+    ruta_archivo?: StringFilter<"DocumentoProveedor"> | string
+    mime_type?: StringFilter<"DocumentoProveedor"> | string
+    tamano_bytes?: IntFilter<"DocumentoProveedor"> | number
+    subido_por?: UuidFilter<"DocumentoProveedor"> | string
+    created_at?: DateTimeFilter<"DocumentoProveedor"> | Date | string
+    proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
+  }
+
+  export type DocumentoProveedorOrderByWithRelationInput = {
+    id_doc?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo_doc?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+    proveedor?: ProveedorOrderByWithRelationInput
+  }
+
+  export type DocumentoProveedorWhereUniqueInput = Prisma.AtLeast<{
+    id_doc?: string
+    AND?: DocumentoProveedorWhereInput | DocumentoProveedorWhereInput[]
+    OR?: DocumentoProveedorWhereInput[]
+    NOT?: DocumentoProveedorWhereInput | DocumentoProveedorWhereInput[]
+    tenant_id?: UuidFilter<"DocumentoProveedor"> | string
+    proveedor_id?: UuidFilter<"DocumentoProveedor"> | string
+    tipo_doc?: StringFilter<"DocumentoProveedor"> | string
+    nombre_doc?: StringFilter<"DocumentoProveedor"> | string
+    ruta_archivo?: StringFilter<"DocumentoProveedor"> | string
+    mime_type?: StringFilter<"DocumentoProveedor"> | string
+    tamano_bytes?: IntFilter<"DocumentoProveedor"> | number
+    subido_por?: UuidFilter<"DocumentoProveedor"> | string
+    created_at?: DateTimeFilter<"DocumentoProveedor"> | Date | string
+    proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
+  }, "id_doc">
+
+  export type DocumentoProveedorOrderByWithAggregationInput = {
+    id_doc?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo_doc?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+    _count?: DocumentoProveedorCountOrderByAggregateInput
+    _avg?: DocumentoProveedorAvgOrderByAggregateInput
+    _max?: DocumentoProveedorMaxOrderByAggregateInput
+    _min?: DocumentoProveedorMinOrderByAggregateInput
+    _sum?: DocumentoProveedorSumOrderByAggregateInput
+  }
+
+  export type DocumentoProveedorScalarWhereWithAggregatesInput = {
+    AND?: DocumentoProveedorScalarWhereWithAggregatesInput | DocumentoProveedorScalarWhereWithAggregatesInput[]
+    OR?: DocumentoProveedorScalarWhereWithAggregatesInput[]
+    NOT?: DocumentoProveedorScalarWhereWithAggregatesInput | DocumentoProveedorScalarWhereWithAggregatesInput[]
+    id_doc?: UuidWithAggregatesFilter<"DocumentoProveedor"> | string
+    tenant_id?: UuidWithAggregatesFilter<"DocumentoProveedor"> | string
+    proveedor_id?: UuidWithAggregatesFilter<"DocumentoProveedor"> | string
+    tipo_doc?: StringWithAggregatesFilter<"DocumentoProveedor"> | string
+    nombre_doc?: StringWithAggregatesFilter<"DocumentoProveedor"> | string
+    ruta_archivo?: StringWithAggregatesFilter<"DocumentoProveedor"> | string
+    mime_type?: StringWithAggregatesFilter<"DocumentoProveedor"> | string
+    tamano_bytes?: IntWithAggregatesFilter<"DocumentoProveedor"> | number
+    subido_por?: UuidWithAggregatesFilter<"DocumentoProveedor"> | string
+    created_at?: DateTimeWithAggregatesFilter<"DocumentoProveedor"> | Date | string
   }
 
   export type RequisicionWhereInput = {
@@ -14434,8 +15861,16 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateInput = {
@@ -14446,8 +15881,16 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUpdateInput = {
@@ -14458,8 +15901,16 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateInput = {
@@ -14470,8 +15921,16 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorCreateManyInput = {
@@ -14482,6 +15941,13 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type ProveedorUpdateManyMutationInput = {
@@ -14492,6 +15958,13 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type ProveedorUncheckedUpdateManyInput = {
@@ -14502,6 +15975,103 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type DocumentoProveedorCreateInput = {
+    id_doc?: string
+    tenant_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+    proveedor: ProveedorCreateNestedOneWithoutDocumentosInput
+  }
+
+  export type DocumentoProveedorUncheckedCreateInput = {
+    id_doc?: string
+    tenant_id: string
+    proveedor_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type DocumentoProveedorUpdateInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedor?: ProveedorUpdateOneRequiredWithoutDocumentosNestedInput
+  }
+
+  export type DocumentoProveedorUncheckedUpdateInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentoProveedorCreateManyInput = {
+    id_doc?: string
+    tenant_id: string
+    proveedor_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type DocumentoProveedorUpdateManyMutationInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentoProveedorUncheckedUpdateManyInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RequisicionCreateInput = {
@@ -15532,6 +17102,22 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type OrdenCompraListRelationFilter = {
     every?: OrdenCompraWhereInput
     some?: OrdenCompraWhereInput
@@ -15544,6 +17130,12 @@ export namespace Prisma {
     none?: ComparativaDetalleWhereInput
   }
 
+  export type DocumentoProveedorListRelationFilter = {
+    every?: DocumentoProveedorWhereInput
+    some?: DocumentoProveedorWhereInput
+    none?: DocumentoProveedorWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -15554,6 +17146,10 @@ export namespace Prisma {
   }
 
   export type ComparativaDetalleOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DocumentoProveedorOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -15570,6 +17166,18 @@ export namespace Prisma {
     email_contacto?: SortOrder
     telefono?: SortOrder
     estatus?: SortOrder
+    ciudad?: SortOrder
+    tipo_ubicacion?: SortOrder
+    entrega_en_sitio?: SortOrder
+    estatus_credito?: SortOrder
+    limite_credito?: SortOrder
+    tipo_proveedor?: SortOrder
+    calificacion_desempeno?: SortOrder
+  }
+
+  export type ProveedorAvgOrderByAggregateInput = {
+    limite_credito?: SortOrder
+    calificacion_desempeno?: SortOrder
   }
 
   export type ProveedorMaxOrderByAggregateInput = {
@@ -15580,6 +17188,13 @@ export namespace Prisma {
     email_contacto?: SortOrder
     telefono?: SortOrder
     estatus?: SortOrder
+    ciudad?: SortOrder
+    tipo_ubicacion?: SortOrder
+    entrega_en_sitio?: SortOrder
+    estatus_credito?: SortOrder
+    limite_credito?: SortOrder
+    tipo_proveedor?: SortOrder
+    calificacion_desempeno?: SortOrder
   }
 
   export type ProveedorMinOrderByAggregateInput = {
@@ -15590,6 +17205,18 @@ export namespace Prisma {
     email_contacto?: SortOrder
     telefono?: SortOrder
     estatus?: SortOrder
+    ciudad?: SortOrder
+    tipo_ubicacion?: SortOrder
+    entrega_en_sitio?: SortOrder
+    estatus_credito?: SortOrder
+    limite_credito?: SortOrder
+    tipo_proveedor?: SortOrder
+    calificacion_desempeno?: SortOrder
+  }
+
+  export type ProveedorSumOrderByAggregateInput = {
+    limite_credito?: SortOrder
+    calificacion_desempeno?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -15643,6 +17270,41 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -15652,6 +17314,88 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type ProveedorRelationFilter = {
+    is?: ProveedorWhereInput
+    isNot?: ProveedorWhereInput
+  }
+
+  export type DocumentoProveedorCountOrderByAggregateInput = {
+    id_doc?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo_doc?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type DocumentoProveedorAvgOrderByAggregateInput = {
+    tamano_bytes?: SortOrder
+  }
+
+  export type DocumentoProveedorMaxOrderByAggregateInput = {
+    id_doc?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo_doc?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type DocumentoProveedorMinOrderByAggregateInput = {
+    id_doc?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo_doc?: SortOrder
+    nombre_doc?: SortOrder
+    ruta_archivo?: SortOrder
+    mime_type?: SortOrder
+    tamano_bytes?: SortOrder
+    subido_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type DocumentoProveedorSumOrderByAggregateInput = {
+    tamano_bytes?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type RequisicionItemListRelationFilter = {
@@ -15708,20 +17452,6 @@ export namespace Prisma {
     observaciones?: SortOrder
   }
 
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
   export type UuidNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -15743,11 +17473,6 @@ export namespace Prisma {
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type RequisicionRelationFilter = {
@@ -15831,19 +17556,6 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type ProveedorRelationFilter = {
-    is?: ProveedorWhereInput
-    isNot?: ProveedorWhereInput
   }
 
   export type OrdenCompraItemListRelationFilter = {
@@ -16341,6 +18053,13 @@ export namespace Prisma {
     connect?: ComparativaDetalleWhereUniqueInput | ComparativaDetalleWhereUniqueInput[]
   }
 
+  export type DocumentoProveedorCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<DocumentoProveedorCreateWithoutProveedorInput, DocumentoProveedorUncheckedCreateWithoutProveedorInput> | DocumentoProveedorCreateWithoutProveedorInput[] | DocumentoProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: DocumentoProveedorCreateOrConnectWithoutProveedorInput | DocumentoProveedorCreateOrConnectWithoutProveedorInput[]
+    createMany?: DocumentoProveedorCreateManyProveedorInputEnvelope
+    connect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+  }
+
   export type OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput = {
     create?: XOR<OrdenCompraCreateWithoutProveedorInput, OrdenCompraUncheckedCreateWithoutProveedorInput> | OrdenCompraCreateWithoutProveedorInput[] | OrdenCompraUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutProveedorInput | OrdenCompraCreateOrConnectWithoutProveedorInput[]
@@ -16355,12 +18074,31 @@ export namespace Prisma {
     connect?: ComparativaDetalleWhereUniqueInput | ComparativaDetalleWhereUniqueInput[]
   }
 
+  export type DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<DocumentoProveedorCreateWithoutProveedorInput, DocumentoProveedorUncheckedCreateWithoutProveedorInput> | DocumentoProveedorCreateWithoutProveedorInput[] | DocumentoProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: DocumentoProveedorCreateOrConnectWithoutProveedorInput | DocumentoProveedorCreateOrConnectWithoutProveedorInput[]
+    createMany?: DocumentoProveedorCreateManyProveedorInputEnvelope
+    connect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type OrdenCompraUpdateManyWithoutProveedorNestedInput = {
@@ -16391,6 +18129,20 @@ export namespace Prisma {
     deleteMany?: ComparativaDetalleScalarWhereInput | ComparativaDetalleScalarWhereInput[]
   }
 
+  export type DocumentoProveedorUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<DocumentoProveedorCreateWithoutProveedorInput, DocumentoProveedorUncheckedCreateWithoutProveedorInput> | DocumentoProveedorCreateWithoutProveedorInput[] | DocumentoProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: DocumentoProveedorCreateOrConnectWithoutProveedorInput | DocumentoProveedorCreateOrConnectWithoutProveedorInput[]
+    upsert?: DocumentoProveedorUpsertWithWhereUniqueWithoutProveedorInput | DocumentoProveedorUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: DocumentoProveedorCreateManyProveedorInputEnvelope
+    set?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    disconnect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    delete?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    connect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    update?: DocumentoProveedorUpdateWithWhereUniqueWithoutProveedorInput | DocumentoProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: DocumentoProveedorUpdateManyWithWhereWithoutProveedorInput | DocumentoProveedorUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: DocumentoProveedorScalarWhereInput | DocumentoProveedorScalarWhereInput[]
+  }
+
   export type OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput = {
     create?: XOR<OrdenCompraCreateWithoutProveedorInput, OrdenCompraUncheckedCreateWithoutProveedorInput> | OrdenCompraCreateWithoutProveedorInput[] | OrdenCompraUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutProveedorInput | OrdenCompraCreateOrConnectWithoutProveedorInput[]
@@ -16419,6 +18171,46 @@ export namespace Prisma {
     deleteMany?: ComparativaDetalleScalarWhereInput | ComparativaDetalleScalarWhereInput[]
   }
 
+  export type DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<DocumentoProveedorCreateWithoutProveedorInput, DocumentoProveedorUncheckedCreateWithoutProveedorInput> | DocumentoProveedorCreateWithoutProveedorInput[] | DocumentoProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: DocumentoProveedorCreateOrConnectWithoutProveedorInput | DocumentoProveedorCreateOrConnectWithoutProveedorInput[]
+    upsert?: DocumentoProveedorUpsertWithWhereUniqueWithoutProveedorInput | DocumentoProveedorUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: DocumentoProveedorCreateManyProveedorInputEnvelope
+    set?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    disconnect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    delete?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    connect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+    update?: DocumentoProveedorUpdateWithWhereUniqueWithoutProveedorInput | DocumentoProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: DocumentoProveedorUpdateManyWithWhereWithoutProveedorInput | DocumentoProveedorUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: DocumentoProveedorScalarWhereInput | DocumentoProveedorScalarWhereInput[]
+  }
+
+  export type ProveedorCreateNestedOneWithoutDocumentosInput = {
+    create?: XOR<ProveedorCreateWithoutDocumentosInput, ProveedorUncheckedCreateWithoutDocumentosInput>
+    connectOrCreate?: ProveedorCreateOrConnectWithoutDocumentosInput
+    connect?: ProveedorWhereUniqueInput
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type ProveedorUpdateOneRequiredWithoutDocumentosNestedInput = {
+    create?: XOR<ProveedorCreateWithoutDocumentosInput, ProveedorUncheckedCreateWithoutDocumentosInput>
+    connectOrCreate?: ProveedorCreateOrConnectWithoutDocumentosInput
+    upsert?: ProveedorUpsertWithoutDocumentosInput
+    connect?: ProveedorWhereUniqueInput
+    update?: XOR<XOR<ProveedorUpdateToOneWithWhereWithoutDocumentosInput, ProveedorUpdateWithoutDocumentosInput>, ProveedorUncheckedUpdateWithoutDocumentosInput>
+  }
+
   export type RequisicionItemCreateNestedManyWithoutRequisicionInput = {
     create?: XOR<RequisicionItemCreateWithoutRequisicionInput, RequisicionItemUncheckedCreateWithoutRequisicionInput> | RequisicionItemCreateWithoutRequisicionInput[] | RequisicionItemUncheckedCreateWithoutRequisicionInput[]
     connectOrCreate?: RequisicionItemCreateOrConnectWithoutRequisicionInput | RequisicionItemCreateOrConnectWithoutRequisicionInput[]
@@ -16431,10 +18223,6 @@ export namespace Prisma {
     connectOrCreate?: RequisicionItemCreateOrConnectWithoutRequisicionInput | RequisicionItemCreateOrConnectWithoutRequisicionInput[]
     createMany?: RequisicionItemCreateManyRequisicionInputEnvelope
     connect?: RequisicionItemWhereUniqueInput | RequisicionItemWhereUniqueInput[]
-  }
-
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
   }
 
   export type RequisicionItemUpdateManyWithoutRequisicionNestedInput = {
@@ -16477,10 +18265,6 @@ export namespace Prisma {
     decrement?: Decimal | DecimalJsLike | number | string
     multiply?: Decimal | DecimalJsLike | number | string
     divide?: Decimal | DecimalJsLike | number | string
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type RequisicionUpdateOneRequiredWithoutItemsNestedInput = {
@@ -16786,6 +18570,22 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -16856,6 +18656,30 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -16865,6 +18689,33 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -16903,11 +18754,6 @@ export namespace Prisma {
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -16936,14 +18782,6 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
@@ -17053,6 +18891,40 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type DocumentoProveedorCreateWithoutProveedorInput = {
+    id_doc?: string
+    tenant_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type DocumentoProveedorUncheckedCreateWithoutProveedorInput = {
+    id_doc?: string
+    tenant_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
+  export type DocumentoProveedorCreateOrConnectWithoutProveedorInput = {
+    where: DocumentoProveedorWhereUniqueInput
+    create: XOR<DocumentoProveedorCreateWithoutProveedorInput, DocumentoProveedorUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type DocumentoProveedorCreateManyProveedorInputEnvelope = {
+    data: DocumentoProveedorCreateManyProveedorInput | DocumentoProveedorCreateManyProveedorInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrdenCompraUpsertWithWhereUniqueWithoutProveedorInput = {
     where: OrdenCompraWhereUniqueInput
     update: XOR<OrdenCompraUpdateWithoutProveedorInput, OrdenCompraUncheckedUpdateWithoutProveedorInput>
@@ -17121,6 +18993,130 @@ export namespace Prisma {
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+  }
+
+  export type DocumentoProveedorUpsertWithWhereUniqueWithoutProveedorInput = {
+    where: DocumentoProveedorWhereUniqueInput
+    update: XOR<DocumentoProveedorUpdateWithoutProveedorInput, DocumentoProveedorUncheckedUpdateWithoutProveedorInput>
+    create: XOR<DocumentoProveedorCreateWithoutProveedorInput, DocumentoProveedorUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type DocumentoProveedorUpdateWithWhereUniqueWithoutProveedorInput = {
+    where: DocumentoProveedorWhereUniqueInput
+    data: XOR<DocumentoProveedorUpdateWithoutProveedorInput, DocumentoProveedorUncheckedUpdateWithoutProveedorInput>
+  }
+
+  export type DocumentoProveedorUpdateManyWithWhereWithoutProveedorInput = {
+    where: DocumentoProveedorScalarWhereInput
+    data: XOR<DocumentoProveedorUpdateManyMutationInput, DocumentoProveedorUncheckedUpdateManyWithoutProveedorInput>
+  }
+
+  export type DocumentoProveedorScalarWhereInput = {
+    AND?: DocumentoProveedorScalarWhereInput | DocumentoProveedorScalarWhereInput[]
+    OR?: DocumentoProveedorScalarWhereInput[]
+    NOT?: DocumentoProveedorScalarWhereInput | DocumentoProveedorScalarWhereInput[]
+    id_doc?: UuidFilter<"DocumentoProveedor"> | string
+    tenant_id?: UuidFilter<"DocumentoProveedor"> | string
+    proveedor_id?: UuidFilter<"DocumentoProveedor"> | string
+    tipo_doc?: StringFilter<"DocumentoProveedor"> | string
+    nombre_doc?: StringFilter<"DocumentoProveedor"> | string
+    ruta_archivo?: StringFilter<"DocumentoProveedor"> | string
+    mime_type?: StringFilter<"DocumentoProveedor"> | string
+    tamano_bytes?: IntFilter<"DocumentoProveedor"> | number
+    subido_por?: UuidFilter<"DocumentoProveedor"> | string
+    created_at?: DateTimeFilter<"DocumentoProveedor"> | Date | string
+  }
+
+  export type ProveedorCreateWithoutDocumentosInput = {
+    id_proveedor?: string
+    tenant_id: string
+    rfc_tax_id: string
+    razon_social: string
+    email_contacto?: string | null
+    telefono?: string | null
+    estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
+    comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
+  }
+
+  export type ProveedorUncheckedCreateWithoutDocumentosInput = {
+    id_proveedor?: string
+    tenant_id: string
+    rfc_tax_id: string
+    razon_social: string
+    email_contacto?: string | null
+    telefono?: string | null
+    estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
+    comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
+  }
+
+  export type ProveedorCreateOrConnectWithoutDocumentosInput = {
+    where: ProveedorWhereUniqueInput
+    create: XOR<ProveedorCreateWithoutDocumentosInput, ProveedorUncheckedCreateWithoutDocumentosInput>
+  }
+
+  export type ProveedorUpsertWithoutDocumentosInput = {
+    update: XOR<ProveedorUpdateWithoutDocumentosInput, ProveedorUncheckedUpdateWithoutDocumentosInput>
+    create: XOR<ProveedorCreateWithoutDocumentosInput, ProveedorUncheckedCreateWithoutDocumentosInput>
+    where?: ProveedorWhereInput
+  }
+
+  export type ProveedorUpdateToOneWithWhereWithoutDocumentosInput = {
+    where?: ProveedorWhereInput
+    data: XOR<ProveedorUpdateWithoutDocumentosInput, ProveedorUncheckedUpdateWithoutDocumentosInput>
+  }
+
+  export type ProveedorUpdateWithoutDocumentosInput = {
+    id_proveedor?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    rfc_tax_id?: StringFieldUpdateOperationsInput | string
+    razon_social?: StringFieldUpdateOperationsInput | string
+    email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
+    comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
+  }
+
+  export type ProveedorUncheckedUpdateWithoutDocumentosInput = {
+    id_proveedor?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    rfc_tax_id?: StringFieldUpdateOperationsInput | string
+    razon_social?: StringFieldUpdateOperationsInput | string
+    email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
+    comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type RequisicionItemCreateWithoutRequisicionInput = {
@@ -17265,7 +19261,15 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutOrdenesInput = {
@@ -17276,7 +19280,15 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutOrdenesInput = {
@@ -17333,7 +19345,15 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutOrdenesInput = {
@@ -17344,7 +19364,15 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type OrdenCompraItemUpsertWithWhereUniqueWithoutOrdenInput = {
@@ -17701,7 +19729,15 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutComparativasInput = {
@@ -17712,7 +19748,15 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutComparativasInput = {
@@ -17784,7 +19828,15 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutComparativasInput = {
@@ -17795,7 +19847,15 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type MovimientoAlmacenCreateWithoutItemInput = {
@@ -17980,6 +20040,18 @@ export namespace Prisma {
     comentario_gt?: string | null
   }
 
+  export type DocumentoProveedorCreateManyProveedorInput = {
+    id_doc?: string
+    tenant_id: string
+    tipo_doc: string
+    nombre_doc: string
+    ruta_archivo: string
+    mime_type: string
+    tamano_bytes: number
+    subido_por: string
+    created_at?: Date | string
+  }
+
   export type OrdenCompraUpdateWithoutProveedorInput = {
     id_orden?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
@@ -18070,6 +20142,42 @@ export namespace Prisma {
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type DocumentoProveedorUpdateWithoutProveedorInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentoProveedorUncheckedUpdateWithoutProveedorInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentoProveedorUncheckedUpdateManyWithoutProveedorInput = {
+    id_doc?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo_doc?: StringFieldUpdateOperationsInput | string
+    nombre_doc?: StringFieldUpdateOperationsInput | string
+    ruta_archivo?: StringFieldUpdateOperationsInput | string
+    mime_type?: StringFieldUpdateOperationsInput | string
+    tamano_bytes?: IntFieldUpdateOperationsInput | number
+    subido_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RequisicionItemCreateManyRequisicionInput = {
@@ -18341,6 +20449,10 @@ export namespace Prisma {
      * @deprecated Use ProveedorDefaultArgs instead
      */
     export type ProveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProveedorDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use DocumentoProveedorDefaultArgs instead
+     */
+    export type DocumentoProveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = DocumentoProveedorDefaultArgs<ExtArgs>
     /**
      * @deprecated Use RequisicionDefaultArgs instead
      */

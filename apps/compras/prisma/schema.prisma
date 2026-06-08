@@ -23,12 +23,44 @@ model Proveedor {
   email_contacto String?  @db.VarChar(100)
   telefono       String?  @db.VarChar(20)
   estatus        String   @default("ACTIVO") // ACTIVO, VETADO, PENDIENTE
-  
+
+  // ── Segmentación Logística ───────────────────────────────────────────────
+  ciudad           String?  @db.VarChar(100)
+  tipo_ubicacion   String   @default("LOCAL") @db.VarChar(20)  // LOCAL | FORANEO
+  entrega_en_sitio Boolean  @default(false)
+
+  // ── Calificación Crediticia ──────────────────────────────────────────────
+  estatus_credito  String   @default("ACTIVO") @db.VarChar(20) // ACTIVO | BLOQUEADO
+  limite_credito   Decimal? @db.Decimal(18, 2)
+
+  // ── Perfil de Cumplimiento ───────────────────────────────────────────────
+  tipo_proveedor        String   @default("NACIONAL") @db.VarChar(20) // NACIONAL | EXTRANJERO
+  calificacion_desempeno Decimal? @db.Decimal(3, 2) // 0.00–5.00
+
   ordenes        OrdenCompra[]
   comparativas   ComparativaDetalle[]
+  documentos     DocumentoProveedor[]
 
   @@unique([tenant_id, rfc_tax_id])
   @@map("proveedores")
+}
+
+model DocumentoProveedor {
+  id_doc       String   @id @default(uuid()) @db.Uuid
+  tenant_id    String   @db.Uuid
+  proveedor_id String   @db.Uuid
+  tipo_doc     String   @db.VarChar(20)   // CSD | OPINION_SAT | ISO | OTRO
+  nombre_doc   String   @db.VarChar(255)
+  ruta_archivo String   @db.Text
+  mime_type    String   @db.VarChar(100)
+  tamano_bytes Int
+  subido_por   String   @db.Uuid
+  created_at   DateTime @default(now())
+
+  proveedor    Proveedor @relation(fields: [proveedor_id], references: [id_proveedor], onDelete: Cascade)
+
+  @@index([tenant_id, proveedor_id])
+  @@map("documentos_proveedor")
 }
 
 // --- Transaccional: Requisiciones ---

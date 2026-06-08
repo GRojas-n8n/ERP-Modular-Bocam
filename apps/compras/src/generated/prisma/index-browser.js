@@ -129,7 +129,27 @@ exports.Prisma.ProveedorScalarFieldEnum = {
   razon_social: 'razon_social',
   email_contacto: 'email_contacto',
   telefono: 'telefono',
-  estatus: 'estatus'
+  estatus: 'estatus',
+  ciudad: 'ciudad',
+  tipo_ubicacion: 'tipo_ubicacion',
+  entrega_en_sitio: 'entrega_en_sitio',
+  estatus_credito: 'estatus_credito',
+  limite_credito: 'limite_credito',
+  tipo_proveedor: 'tipo_proveedor',
+  calificacion_desempeno: 'calificacion_desempeno'
+};
+
+exports.Prisma.DocumentoProveedorScalarFieldEnum = {
+  id_doc: 'id_doc',
+  tenant_id: 'tenant_id',
+  proveedor_id: 'proveedor_id',
+  tipo_doc: 'tipo_doc',
+  nombre_doc: 'nombre_doc',
+  ruta_archivo: 'ruta_archivo',
+  mime_type: 'mime_type',
+  tamano_bytes: 'tamano_bytes',
+  subido_por: 'subido_por',
+  created_at: 'created_at'
 };
 
 exports.Prisma.RequisicionScalarFieldEnum = {
@@ -289,6 +309,7 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   Proveedor: 'Proveedor',
+  DocumentoProveedor: 'DocumentoProveedor',
   Requisicion: 'Requisicion',
   RequisicionItem: 'RequisicionItem',
   OrdenCompra: 'OrdenCompra',
