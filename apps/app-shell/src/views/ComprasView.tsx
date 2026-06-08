@@ -2202,13 +2202,26 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       </div>
                     </div>
                     <div className="flex items-center gap-1 ml-2">
-                      <a
-                        href={`/api/v1/compras/proveedores/${docsProveedorId}/documentos/${doc.id_doc}/descargar`}
-                        target="_blank" rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const res = await api.get(
+                              `/api/v1/compras/proveedores/${docsProveedorId}/documentos/${doc.id_doc}/descargar`,
+                              { responseType: 'blob' }
+                            );
+                            const url = URL.createObjectURL(res.data);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = doc.nombre_doc;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          } catch { notify({ title: 'Error al descargar', type: 'error' }); }
+                        }}
                         className="rounded-lg border border-border/50 px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
                       >
                         Descargar
-                      </a>
+                      </button>
                       {isProcurement && (
                         <button
                           type="button"
