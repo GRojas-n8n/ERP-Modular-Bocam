@@ -1,0 +1,10 @@
+﻿schema: spec-driven
+created: 2026-06-08
+status: archived
+depends_on:
+  - proveedores-catalogo-v2
+production_verified: true
+archived_at: 2026-06-08
+commits:
+  - 1aa98fc feat(comparativa-evaluacion-v2): C/NC/DA eval + firma LOCKED + revisiones + aclaraciones
+  - adce7e6 fix(comparativa-evaluacion-v2): unused vars TS6133

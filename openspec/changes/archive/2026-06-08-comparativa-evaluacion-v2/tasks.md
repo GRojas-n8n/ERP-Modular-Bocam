@@ -114,12 +114,12 @@
 
 ## 15. Deploy y verificaciÃ³n en producciÃ³n
 
-- [ ] 15.1 Migrar schema en VPS: `docker exec bocam-vps-compras npx prisma migrate deploy`
-- [ ] 15.2 Aplicar trigger SQL manualmente: `docker exec -i bocam-vps-postgres psql -U bocam_user -d compras_db < migrations/manual/add_locked_comparativa_trigger.sql`
-- [ ] 15.3 Build y restart: `docker compose -f docker-compose.vps.yml up -d --build compras app-shell`
-- [ ] 15.4 Verificar: crear cuadro, evaluar partidas con C/NC/DA, intentar firmar sin primera opciÃ³n (debe fallar 400), asignar primera opciÃ³n, firmar â†’ badge LOCKED aparece
-- [ ] 15.5 Verificar: intentar editar un cuadro LOCKED desde Postman â†’ debe retornar 403
-- [ ] 15.6 Verificar: ejecutar `UPDATE cuadros_comparativos SET notas='test' WHERE estado='LOCKED'` directo en DB â†’ debe lanzar excepciÃ³n del trigger
-- [ ] 15.7 Verificar: crear aclaraciÃ³n en celda â†’ indicador `?` aparece â†’ marcar resuelta â†’ indicador desaparece
-- [ ] 15.8 Verificar: crear nueva revisiÃ³n desde un cuadro â†’ cuadro original pasa a SUPERSEDIDO â†’ nuevo cuadro tiene Rev B con evaluaciones en PENDIENTE
-- [ ] 15.9 Verificar: cuadros comparativos histÃ³ricos con evaluaciones `APROBADO`/`RECHAZADO` cargan sin error en la UI
+- [x] 15.1 Migrar schema en VPS: `docker exec bocam-vps-compras npx prisma migrate deploy`
+- [x] 15.2 Aplicar trigger SQL manualmente: `docker exec -i bocam-vps-postgres psql -U bocam_user -d compras_db < migrations/manual/add_locked_comparativa_trigger.sql`
+- [x] 15.3 Build y restart: `docker compose -f docker-compose.vps.yml up -d --build compras app-shell`
+- [x] 15.4 Verificar: crear cuadro, evaluar partidas con C/NC/DA, intentar firmar sin primera opciÃ³n (debe fallar 400), asignar primera opciÃ³n, firmar â†’ badge LOCKED aparece
+- [x] 15.5 Verificar: intentar editar un cuadro LOCKED desde Postman â†’ debe retornar 403
+- [x] 15.6 Verificar: ejecutar `UPDATE cuadros_comparativos SET notas='test' WHERE estado='LOCKED'` directo en DB â†’ debe lanzar excepciÃ³n del trigger
+- [x] 15.7 Verificar: crear aclaraciÃ³n en celda â†’ indicador `?` aparece â†’ marcar resuelta â†’ indicador desaparece
+- [x] 15.8 Verificar: crear nueva revisiÃ³n desde un cuadro â†’ cuadro original pasa a SUPERSEDIDO â†’ nuevo cuadro tiene Rev B con evaluaciones en PENDIENTE
+- [x] 15.9 Verificar: cuadros comparativos histÃ³ricos con evaluaciones `APROBADO`/`RECHAZADO` cargan sin error en la UI
