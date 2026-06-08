@@ -36,6 +36,18 @@ import {
 
 // ─── Interfaces exportadas ────────────────────────────────────────────────────
 
+export interface AclaracionComparativa {
+  id_aclaracion: string;
+  cuadro_id: string;
+  insumo_id: string;
+  proveedor_id: string;
+  autor_id: string;
+  tipo: 'PREGUNTA' | 'RESPUESTA';
+  mensaje: string;
+  resuelta: boolean;
+  created_at: string;
+}
+
 export interface CotizacionLinea {
   id: string;
   insumo_id: string;
@@ -45,9 +57,11 @@ export interface CotizacionLinea {
   cantidad: number;
   precios: Record<string, string>;
   ganador: string | null;
-  // Evaluación técnica (Residente)
-  evaluacion_tecnica?: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+  // Evaluación técnica (Residente) — nuevos valores: C | NC | DA | ? | PENDIENTE; legacy: APROBADO | RECHAZADO
+  evaluacion_tecnica?: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?' | 'APROBADO' | 'RECHAZADO';
   comentario_tecnico?: string;
+  valor_ofrecido_spec?: string;
+  aclaraciones_count?: number;
   // Aprobación GT
   aprobacion_gt?: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
   comentario_gt?: string;
@@ -78,18 +92,26 @@ export type EstadoComparativa =
   | 'BORRADOR'
   | 'EN_EVALUACION_TECNICA'
   | 'EVALUADO_TECNICAMENTE'
+  | 'LOCKED'
   | 'EN_APROBACION_GT'
   | 'APROBADO_GT'
   | 'RECHAZADO_GT'
   | 'CERRADO'
-  // Compatibilidad con estados anteriores
+  | 'SUPERSEDIDO'
   | 'EN_PROCESO'
   | 'AUTORIZADA';
 
 export interface ComparativaLocal {
   id: string;
+  codigo?: string;
   requisicion_id: string;
   estado: EstadoComparativa;
+  revision?: string;
+  revision_padre_id?: string | null;
+  primera_opcion_proveedor_id?: string | null;
+  segunda_opcion_proveedor_id?: string | null;
+  firmado_por?: string | null;
+  fecha_firma?: string | null;
   proveedores: ProveedorComp[];
   lineas: CotizacionLinea[];
   lineas_detalle?: LineaDetalleTecnico[];
@@ -103,21 +125,26 @@ const PROV_COLORS = [
   { chip: 'border-teal-500/20 bg-teal-500/10 text-teal-700',      col: '#0d9488', btn: 'bg-teal-500/10 hover:bg-teal-500 text-teal-700 hover:text-white',     win: 'bg-teal-500 text-white' },
 ];
 
-// 6.1 Estilos por estado — colores semánticos completos
 const ESTADO_STYLE: Record<string, { badge: string; label: string }> = {
   BORRADOR:               { badge: 'border-slate-500/20 bg-slate-500/10 text-slate-600',    label: 'Borrador' },
   EN_PROCESO:             { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-600',    label: 'En Proceso' },
   EN_EVALUACION_TECNICA:  { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-700',    label: 'En Evaluación Técnica' },
   EVALUADO_TECNICAMENTE:  { badge: 'border-blue-500/20 bg-blue-500/10 text-blue-700',       label: 'Evaluado Técnicamente' },
+  LOCKED:                 { badge: 'border-red-500/20 bg-red-500/10 text-red-700',          label: '🔒 LOCKED' },
   EN_APROBACION_GT:       { badge: 'border-violet-500/20 bg-violet-500/10 text-violet-700', label: 'En Aprobación GT' },
   APROBADO_GT:            { badge: 'border-green-500/20 bg-green-500/10 text-green-700',    label: 'Aprobado por GT' },
   RECHAZADO_GT:           { badge: 'border-red-500/20 bg-red-500/10 text-red-700',          label: 'Rechazado por GT' },
+  SUPERSEDIDO:            { badge: 'border-slate-400/30 bg-slate-400/10 text-slate-500',    label: 'Supersedido' },
   AUTORIZADA:             { badge: 'border-green-500/20 bg-green-500/10 text-green-600',    label: 'Autorizada' },
   CERRADO:                { badge: 'border-slate-400/20 bg-slate-400/10 text-slate-500',    label: 'Cerrado' },
 };
 
 const EVAL_STYLE: Record<string, string> = {
   PENDIENTE: 'border-slate-300 bg-slate-100 text-slate-500',
+  C:         'border-green-500/30 bg-green-500/10 text-green-700',
+  NC:        'border-red-500/30 bg-red-500/10 text-red-700',
+  DA:        'border-amber-500/30 bg-amber-500/10 text-amber-700',
+  '?':       'border-indigo-500/30 bg-indigo-500/10 text-indigo-700',
   APROBADO:  'border-green-500/30 bg-green-500/10 text-green-700',
   RECHAZADO: 'border-red-500/30 bg-red-500/10 text-red-700',
 };
@@ -161,8 +188,30 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   // 7.1 Panel evaluación técnica (Residente)
   const [showEvalPanel, setShowEvalPanel] = useState(false);
-  const [evalForm, setEvalForm] = useState<Record<string, { decision: 'APROBADO' | 'RECHAZADO'; comentario: string }>>({});
+  const [evalForm, setEvalForm] = useState<Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }>>({});
   const [enviandoEval, setEnviandoEval] = useState(false);
+
+  // Selección de proveedor (1ª/2ª opción)
+  const [primeraOpcion, setPrimeraOpcion] = useState<string>(comp.primera_opcion_proveedor_id ?? '');
+  const [segundaOpcion, setSegundaOpcion] = useState<string>(comp.segunda_opcion_proveedor_id ?? '');
+  const [guardandoSeleccion, setGuardandoSeleccion] = useState(false);
+
+  // Firma modal
+  const [showFirmaModal, setShowFirmaModal] = useState(false);
+  const [firmaConfirmado, setFirmaConfirmado] = useState(false);
+  const [firmando, setFirmando] = useState(false);
+  const [firmaError, setFirmaError] = useState<string | null>(null);
+
+  // Aclaraciones
+  const [aclaraciones, setAclaraciones] = useState<AclaracionComparativa[]>([]);
+  const [aclaracionCelda, setAclaracionCelda] = useState<{ insumo_id: string; proveedor_id: string } | null>(null);
+  const [aclaracionMensaje, setAclaracionMensaje] = useState('');
+  const [aclaracionTipo, setAclaracionTipo] = useState<'PREGUNTA' | 'RESPUESTA'>('RESPUESTA');
+  const [enviandoAclaracion, setEnviandoAclaracion] = useState(false);
+
+  // Nueva revisión
+  const [showRevisionConfirm, setShowRevisionConfirm] = useState(false);
+  const [creandoRevision, setCreandoRevision] = useState(false);
 
   // 8.1 Panel revisión GT
   const [showGTPanel, setShowGTPanel] = useState(false);
@@ -208,12 +257,13 @@ export const ComparativaDetail: React.FC<Props> = ({
   // Inicializar form de evaluación cuando se abre el panel
   useEffect(() => {
     if (!showEvalPanel) return;
-    const init: Record<string, { decision: 'APROBADO' | 'RECHAZADO'; comentario: string }> = {};
+    const init: Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }> = {};
     comp.lineas.forEach(l => {
-      init[l.id] = {
-        decision: (l.evaluacion_tecnica === 'APROBADO' || l.evaluacion_tecnica === 'RECHAZADO') ? l.evaluacion_tecnica : 'APROBADO',
-        comentario: l.comentario_tecnico ?? '',
-      };
+      const v = l.evaluacion_tecnica;
+      // Map legacy APROBADO→C, RECHAZADO→NC for new UI
+      const mapped: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE' =
+        v === 'APROBADO' ? 'C' : v === 'RECHAZADO' ? 'NC' : (v as 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE') ?? 'PENDIENTE';
+      init[l.id] = { decision: mapped, comentario: l.comentario_tecnico ?? '' };
     });
     setEvalForm(init);
   }, [showEvalPanel]);
@@ -333,9 +383,12 @@ export const ComparativaDetail: React.FC<Props> = ({
     comp.lineas.every(l => l.ganador !== null) &&
     comp.estado !== 'AUTORIZADA';
 
-  // 6.3 El cuadro está bloqueado para edición si ya salió del flujo de llenado
+  // Cuadro bloqueado para edición si ya salió del flujo de llenado
   const locked = ['AUTORIZADA', 'APROBADO_GT', 'RECHAZADO_GT', 'CERRADO',
-                  'EN_EVALUACION_TECNICA', 'EVALUADO_TECNICAMENTE', 'EN_APROBACION_GT'].includes(comp.estado);
+                  'EN_EVALUACION_TECNICA', 'EVALUADO_TECNICAMENTE', 'EN_APROBACION_GT',
+                  'LOCKED', 'SUPERSEDIDO'].includes(comp.estado);
+  const isLocked = comp.estado === 'LOCKED';
+  const isSupersedido = comp.estado === 'SUPERSEDIDO';
 
   const formatMXN = (n: number) =>
     n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 });
@@ -348,10 +401,17 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const showEnviarEvalBtn      = isProcurement && comp.estado === 'BORRADOR';
   const showEvalTecnicaBtn     = (isResident || isSuperint) && comp.estado === 'EN_EVALUACION_TECNICA';
-  const showEnviarGTBtn        = (isResident || isProcurement || isSuperint) && comp.estado === 'EVALUADO_TECNICAMENTE';
+  const showEnviarGTBtn        = (isResident || isProcurement || isSuperint) && (comp.estado === 'EVALUADO_TECNICAMENTE' || comp.estado === 'LOCKED');
   const showRevisarGTBtn       = isGT && comp.estado === 'EN_APROBACION_GT';
   const showGenerarOCBtn       = isProcurement && comp.estado === 'APROBADO_GT';
   const showAutorizarLegacyBtn = canAuthorize && comp.estado !== 'APROBADO_GT' && (comp.estado === 'BORRADOR' || comp.estado === 'EN_PROCESO');
+
+  // Firma: solo cuando EN_EVALUACION_TECNICA + todos evaluados sin PENDIENTE o ?
+  const todasEvaluadas = comp.lineas.length > 0 && comp.lineas.every(
+    l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE' && l.evaluacion_tecnica !== '?'
+  );
+  const showFirmaBtn = (isResident || roles.includes('admin')) && comp.estado === 'EN_EVALUACION_TECNICA' && todasEvaluadas && !!comp.primera_opcion_proveedor_id;
+  const showNuevaRevisionBtn = (isProcurement || roles.includes('admin')) && (comp.estado === 'EN_EVALUACION_TECNICA' || comp.estado === 'LOCKED');
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -529,34 +589,137 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
-  // 7.2 Guardar evaluación técnica del Residente
+  // Guardar evaluación técnica del Residente (C/NC/DA/?)
   const handleGuardarEvaluacion = async () => {
+    // Validate comments required for NC/DA/?
+    const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
+    for (const l of comp.lineas) {
+      const form = evalForm[l.id];
+      if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
+        notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${l.insumo_descripcion}".` });
+        return;
+      }
+    }
+
     setEnviandoEval(true);
     try {
       const evaluaciones = comp.lineas.map(l => ({
         detalle_id: l.id,
-        evaluacion_tecnica: evalForm[l.id]?.decision ?? 'RECHAZADO',
+        evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE',
         comentario_tecnico: evalForm[l.id]?.comentario || undefined,
       }));
 
       if (isDemo) {
         const lineasActualizadas = comp.lineas.map(l => ({
           ...l,
-          evaluacion_tecnica: evalForm[l.id]?.decision ?? 'RECHAZADO',
+          evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE' as const,
           comentario_tecnico: evalForm[l.id]?.comentario || undefined,
         }));
-        onUpdate({ ...comp, estado: 'EVALUADO_TECNICAMENTE', lineas: lineasActualizadas });
-        notify({ type: 'success', title: 'Evaluación técnica registrada', message: 'Ahora puedes enviar el cuadro al Gerente Técnico.' });
+        onUpdate({ ...comp, lineas: lineasActualizadas });
+        notify({ type: 'success', title: 'Evaluación guardada', message: 'Selecciona primera opción y firma para bloquear el cuadro.' });
       } else {
         const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/evaluar`, { evaluaciones });
-        onUpdate({ ...comp, estado: 'EVALUADO_TECNICAMENTE', ...resp.data.data });
-        notify({ type: 'success', title: 'Evaluación técnica registrada', message: 'Ahora puedes enviar el cuadro al Gerente Técnico.' });
+        const updatedData = resp.data.data ?? {};
+        const lineasActualizadas = comp.lineas.map(l => ({
+          ...l,
+          evaluacion_tecnica: evalForm[l.id]?.decision ?? l.evaluacion_tecnica,
+          comentario_tecnico: evalForm[l.id]?.comentario || l.comentario_tecnico,
+        }));
+        onUpdate({ ...comp, ...updatedData, lineas: lineasActualizadas });
+        notify({ type: 'success', title: 'Evaluación guardada', message: 'Selecciona primera opción y firma para bloquear el cuadro.' });
       }
       setShowEvalPanel(false);
     } catch (err: any) {
       notify({ type: 'error', title: 'Error al guardar evaluación', message: err.response?.data?.message ?? err.message });
     } finally {
       setEnviandoEval(false);
+    }
+  };
+
+  // Guardar selección de proveedor
+  const handleGuardarSeleccion = async () => {
+    if (!primeraOpcion) return;
+    setGuardandoSeleccion(true);
+    try {
+      if (!isDemo) {
+        await api.put(`/api/v1/compras/comparativas/${comp.id}/seleccion`, {
+          primera_opcion_proveedor_id: primeraOpcion,
+          segunda_opcion_proveedor_id: segundaOpcion || undefined,
+        });
+      }
+      onUpdate({ ...comp, primera_opcion_proveedor_id: primeraOpcion, segunda_opcion_proveedor_id: segundaOpcion || null });
+      notify({ type: 'success', title: 'Selección guardada', message: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar selección', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoSeleccion(false);
+    }
+  };
+
+  // Firmar cuadro (LOCKED)
+  const handleFirmar = async () => {
+    setFirmando(true);
+    setFirmaError(null);
+    try {
+      if (!isDemo) {
+        const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/firmar`);
+        onUpdate({ ...comp, estado: 'LOCKED', ...resp.data.data });
+      } else {
+        onUpdate({ ...comp, estado: 'LOCKED', firmado_por: 'demo', fecha_firma: new Date().toISOString() });
+      }
+      setShowFirmaModal(false);
+      setFirmaConfirmado(false);
+      notify({ type: 'success', title: 'Cuadro firmado y bloqueado', message: 'La evaluación técnica quedó registrada permanentemente.' });
+    } catch (err: any) {
+      setFirmaError(err.response?.data?.message ?? err.message);
+    } finally {
+      setFirmando(false);
+    }
+  };
+
+  // Crear nueva revisión
+  const handleNuevaRevision = async () => {
+    setCreandoRevision(true);
+    try {
+      const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/nueva-revision`);
+      setShowRevisionConfirm(false);
+      notify({ type: 'success', title: 'Nueva revisión creada', message: 'El cuadro original quedó como SUPERSEDIDO.' });
+      // Navigate to the new cuadro via onBack + refresh
+      onBack();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al crear revisión', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setCreandoRevision(false);
+    }
+  };
+
+  // Fetch aclaraciones del cuadro
+  const fetchAclaraciones = async () => {
+    if (isDemo) return;
+    try {
+      const resp = await api.get(`/api/v1/compras/comparativas/${comp.id}/aclaraciones`);
+      setAclaraciones(resp.data.data ?? []);
+    } catch (_) { /* silencioso */ }
+  };
+
+  // Enviar aclaración
+  const handleEnviarAclaracion = async () => {
+    if (!aclaracionCelda || !aclaracionMensaje.trim()) return;
+    setEnviandoAclaracion(true);
+    try {
+      await api.post(`/api/v1/compras/comparativas/${comp.id}/aclaraciones`, {
+        insumo_id: aclaracionCelda.insumo_id,
+        proveedor_id: aclaracionCelda.proveedor_id,
+        tipo: aclaracionTipo,
+        mensaje: aclaracionMensaje.trim(),
+      });
+      setAclaracionMensaje('');
+      await fetchAclaraciones();
+      notify({ type: 'success', title: 'Aclaración enviada', message: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al enviar aclaración', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setEnviandoAclaracion(false);
     }
   };
 
@@ -661,7 +824,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
-      {/* Breadcrumb + Badge de estado */}
+      {/* Breadcrumb + Badge de estado + Revision badge */}
       <div className="flex flex-wrap items-center gap-3">
         <Button
           onClick={onBack}
@@ -675,10 +838,19 @@ export const ComparativaDetail: React.FC<Props> = ({
         <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
           {requisicionFolio}
         </span>
-        {/* 6.1 Badge de estado con color semántico */}
+        {comp.revision && (
+          <SectionBadge className="rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-[9px] text-indigo-700">
+            Rev {comp.revision}
+          </SectionBadge>
+        )}
         <SectionBadge className={cn('rounded-lg px-2.5 py-1 text-[9px]', estadoInfo.badge)}>
           {estadoInfo.label}
         </SectionBadge>
+        {isLocked && comp.fecha_firma && (
+          <span className="text-[9px] text-red-600/70">
+            Firmado el {new Date(comp.fecha_firma).toLocaleDateString('es-MX')}
+          </span>
+        )}
       </div>
 
       {/* Stepper visual — 4 pasos del ciclo de cotización */}
@@ -720,78 +892,135 @@ export const ComparativaDetail: React.FC<Props> = ({
         );
       })()}
 
-      {/* 6.2 Barra de acciones según rol y estado */}
-      {(showEnviarEvalBtn || showEvalTecnicaBtn || showEnviarGTBtn || showRevisarGTBtn || showGenerarOCBtn) && (
+      {/* Barra de acciones según rol y estado */}
+      {(showEnviarEvalBtn || showEvalTecnicaBtn || showEnviarGTBtn || showRevisarGTBtn || showGenerarOCBtn || showFirmaBtn || showNuevaRevisionBtn) && (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/40 bg-muted/30 px-4 py-3">
           <span className="mr-auto text-[10px] font-black uppercase tracking-widest text-muted-foreground">
             Siguiente acción requerida
           </span>
 
-          {/* Compras → enviar a evaluación técnica */}
           {showEnviarEvalBtn && (
-            <Button
-              onClick={handleEnviarEvaluacion}
-              disabled={accionando || comp.lineas.length === 0}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400"
-            >
+            <Button onClick={handleEnviarEvaluacion} disabled={accionando || comp.lineas.length === 0} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400">
               {accionando ? 'Enviando...' : 'Enviar a Evaluación Técnica →'}
             </Button>
           )}
 
-          {/* Residente → registrar evaluación técnica */}
           {showEvalTecnicaBtn && (
-            <Button
-              onClick={() => setShowEvalPanel(true)}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400"
-            >
+            <Button onClick={() => setShowEvalPanel(true)} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400">
               Registrar Evaluación Técnica →
             </Button>
           )}
 
-          {/* Residente → enviar al GT */}
+          {/* Firma disponible cuando todas las evaluaciones están C/NC/DA y hay primera opción */}
+          {showFirmaBtn && (
+            <Button onClick={() => { setFirmaConfirmado(false); setFirmaError(null); setShowFirmaModal(true); }} className="rounded-xl bg-red-600 px-4 py-2 text-xs font-black text-white hover:bg-red-500">
+              🔒 Firmar y Bloquear →
+            </Button>
+          )}
+
           {showEnviarGTBtn && (
-            <Button
-              onClick={handleEnviarGT}
-              disabled={accionando}
-              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500"
-            >
+            <Button onClick={handleEnviarGT} disabled={accionando} className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500">
               {accionando ? 'Enviando...' : 'Enviar al Gerente Técnico →'}
             </Button>
           )}
 
-          {/* GT → revisar y aprobar */}
           {showRevisarGTBtn && (
-            <Button
-              onClick={() => setShowGTPanel(true)}
-              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500"
-            >
+            <Button onClick={() => setShowGTPanel(true)} className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500">
               Revisar y Aprobar →
             </Button>
           )}
 
-          {/* 6.3 Solo visible en APROBADO_GT — no en otros estados */}
           {showGenerarOCBtn && (
-            <Button
-              onClick={handleAutorizar}
-              disabled={autorizando}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-500"
-            >
+            <Button onClick={handleAutorizar} disabled={autorizando} className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-500">
               {autorizando ? 'Generando OC...' : 'Generar Orden de Compra →'}
+            </Button>
+          )}
+
+          {showNuevaRevisionBtn && (
+            <Button onClick={() => setShowRevisionConfirm(true)} variant="outline" className="rounded-xl border-orange-500/30 px-4 py-2 text-xs font-black text-orange-600 hover:bg-orange-500/10">
+              Crear nueva revisión
             </Button>
           )}
         </div>
       )}
 
-      {/* Mensaje informativo para estados bloqueantes */}
       {comp.estado === 'RECHAZADO_GT' && (
         <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
           <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
           <div>
             <p className="text-xs font-black text-red-700">Cuadro rechazado por Gerencia Técnica</p>
+            <p className="mt-0.5 text-[11px] text-red-600/80">No es posible generar una OC a partir de este cuadro.</p>
+          </div>
+        </div>
+      )}
+
+      {isLocked && (
+        <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+          <span className="text-lg">🔒</span>
+          <div>
+            <p className="text-xs font-black text-red-700">Cuadro LOCKED — evaluación técnica firmada</p>
             <p className="mt-0.5 text-[11px] text-red-600/80">
-              No es posible generar una OC a partir de este cuadro. El equipo de Compras debe iniciar un nuevo proceso de cotización.
+              Firmado el {comp.fecha_firma ? new Date(comp.fecha_firma).toLocaleString('es-MX') : '—'}. Los datos técnicos son inmutables.
             </p>
           </div>
+        </div>
+      )}
+
+      {isSupersedido && (
+        <div className="flex items-start gap-3 rounded-2xl border border-slate-400/30 bg-slate-400/10 px-4 py-3">
+          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-slate-400" />
+          <div>
+            <p className="text-xs font-black text-slate-600">Cuadro supersedido — existe una revisión posterior activa</p>
+            <p className="mt-0.5 text-[11px] text-slate-500">Este cuadro fue reemplazado por una nueva revisión y es de solo lectura.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sección: Recomendación del Residente (selección 1ª/2ª opción) */}
+      {comp.estado === 'EN_EVALUACION_TECNICA' && (isResident || roles.includes('admin')) && comp.proveedores.length > 0 && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-3">Recomendación del Residente</p>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[180px]">
+              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">1ª Opción *</label>
+              <select
+                value={primeraOpcion}
+                onChange={e => setPrimeraOpcion(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
+              >
+                <option value="">— Seleccionar proveedor —</option>
+                {comp.proveedores.map((p, i) => (
+                  <option key={p.id} value={p.id}>{String.fromCharCode(65 + i)} · {p.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[180px]">
+              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">2ª Opción (opcional)</label>
+              <select
+                value={segundaOpcion}
+                onChange={e => setSegundaOpcion(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
+              >
+                <option value="">— Sin segunda opción —</option>
+                {comp.proveedores.filter(p => p.id !== primeraOpcion).map((p, i) => (
+                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <Button
+              onClick={handleGuardarSeleccion}
+              disabled={!primeraOpcion || guardandoSeleccion}
+              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400"
+            >
+              {guardandoSeleccion ? 'Guardando...' : 'Guardar selección'}
+            </Button>
+          </div>
+          {comp.primera_opcion_proveedor_id && (
+            <p className="mt-2 text-[9px] text-amber-600/80">
+              Selección guardada: 1ª opción = {comp.proveedores.find(p => p.id === comp.primera_opcion_proveedor_id)?.nombre ?? comp.primera_opcion_proveedor_id}
+              {comp.segunda_opcion_proveedor_id && ` · 2ª opción = ${comp.proveedores.find(p => p.id === comp.segunda_opcion_proveedor_id)?.nombre ?? comp.segunda_opcion_proveedor_id}`}
+            </p>
+          )}
         </div>
       )}
 
@@ -1001,9 +1230,20 @@ export const ComparativaDetail: React.FC<Props> = ({
                     {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && (
                       <td className="px-3 py-3 text-center">
                         {linea.evaluacion_tecnica && linea.evaluacion_tecnica !== 'PENDIENTE' ? (
-                          <span className={cn('rounded-lg border px-2 py-1 text-[9px] font-black', EVAL_STYLE[linea.evaluacion_tecnica])}>
-                            {linea.evaluacion_tecnica}
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={cn('rounded-lg border px-2 py-1 text-[9px] font-black', EVAL_STYLE[linea.evaluacion_tecnica] ?? EVAL_STYLE.PENDIENTE)}>
+                              {linea.evaluacion_tecnica}
+                            </span>
+                            {(linea.aclaraciones_count ?? 0) > 0 && (
+                              <button
+                                onClick={() => { setAclaracionCelda({ insumo_id: linea.insumo_id, proveedor_id: linea.ganador ?? comp.proveedores[0]?.id ?? '' }); fetchAclaraciones(); }}
+                                className="rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[8px] font-black text-indigo-600 hover:bg-indigo-500/20"
+                                title="Ver aclaraciones"
+                              >
+                                ? {linea.aclaraciones_count}
+                              </button>
+                            )}
+                          </div>
                         ) : <span className="text-[10px] text-muted-foreground/50">—</span>}
                       </td>
                     )}
@@ -1167,14 +1407,14 @@ export const ComparativaDetail: React.FC<Props> = ({
         </Card>
       )}
 
-      {/* ─── 7.1 Panel: Evaluación Técnica (Residente) ──────────────────────── */}
+      {/* Panel: Evaluación Técnica — C / NC / DA / ? */}
       {showEvalPanel && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center" onClick={e => { if (e.target === e.currentTarget) setShowEvalPanel(false); }}>
           <div className="w-full max-w-3xl rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-border/40 bg-amber-500/10 px-6 py-4">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-tight">Evaluación Técnica</h2>
-                <p className="text-[10px] text-muted-foreground">Indica si cada cotización cumple los requisitos técnicos</p>
+                <p className="text-[10px] text-muted-foreground">C = Cumple · NC = No Cumple · DA = Diferencia Aclarada · ? = Información faltante</p>
               </div>
               <Button onClick={() => setShowEvalPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
             </div>
@@ -1182,55 +1422,67 @@ export const ComparativaDetail: React.FC<Props> = ({
               {comp.lineas.map(linea => {
                 const dt = detallesTecnicos[linea.insumo_id] ?? { marca: '', espec: '' };
                 const fichasEval = fichasInsumo[linea.insumo_id];
+                const decision = evalForm[linea.id]?.decision ?? 'PENDIENTE';
+                const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
+                type EvalBtn = { key: 'C' | 'NC' | 'DA' | '?'; label: string; activeClass: string };
+                const EVAL_BTNS: EvalBtn[] = [
+                  { key: 'C',  label: 'C',  activeClass: 'border-green-500 bg-green-500 text-white' },
+                  { key: 'NC', label: 'NC', activeClass: 'border-red-500 bg-red-500 text-white' },
+                  { key: 'DA', label: 'DA', activeClass: 'border-amber-500 bg-amber-500 text-white' },
+                  { key: '?',  label: '?',  activeClass: 'border-indigo-500 bg-indigo-500 text-white' },
+                ];
                 return (
-                <div key={linea.id} className="rounded-2xl border border-border/40 bg-background p-4">
+                <div key={linea.id} className={cn('rounded-2xl border p-4', decision === '?' ? 'border-indigo-500/30 bg-indigo-500/5' : 'border-border/40 bg-background')}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{linea.insumo_clave}</span>
                       <span className="ml-2 text-xs font-semibold text-foreground">{linea.insumo_descripcion}</span>
                       <span className="ml-2 text-[10px] text-muted-foreground">{linea.cantidad} {linea.insumo_unidad}</span>
                     </div>
-                    {/* Selector APROBADO / RECHAZADO */}
                     <div className="flex gap-2">
-                      {(['APROBADO', 'RECHAZADO'] as const).map(opcion => (
+                      {EVAL_BTNS.map(btn => (
                         <button
-                          key={opcion}
-                          onClick={() => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], decision: opcion } }))}
-                          className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all',
-                            evalForm[linea.id]?.decision === opcion
-                              ? opcion === 'APROBADO' ? 'border-green-500 bg-green-500 text-white' : 'border-red-500 bg-red-500 text-white'
-                              : 'border-border/40 bg-muted text-muted-foreground hover:border-foreground/30'
+                          key={btn.key}
+                          onClick={() => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], decision: btn.key } }))}
+                          className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all w-10',
+                            decision === btn.key ? btn.activeClass : 'border-border/40 bg-muted text-muted-foreground hover:border-foreground/30'
                           )}
                         >
-                          {opcion}
+                          {btn.label}
                         </button>
                       ))}
                     </div>
                   </div>
-                  {/* Detalles técnicos capturados por Compras */}
+                  {/* Lo que el proveedor ofrece (capturado por Compras) */}
+                  {linea.valor_ofrecido_spec && (
+                    <div className="mt-2 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-sky-600">Proveedor ofrece: </span>
+                      <span className="text-[10px] text-foreground">{linea.valor_ofrecido_spec}</span>
+                    </div>
+                  )}
                   {(dt.marca || dt.espec) && (
                     <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-3 py-2 space-y-0.5">
                       {dt.marca && <div className="text-[10px] font-bold text-indigo-600">Marca/Modelo: {dt.marca}</div>}
                       {dt.espec && <div className="text-[10px] text-muted-foreground leading-tight">{dt.espec}</div>}
                     </div>
                   )}
-                  {/* Badge fichas técnicas */}
                   <button
                     onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
                     className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
-                      fichasEval && fichasEval.length > 0
-                        ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20'
-                        : 'text-muted-foreground/40 hover:text-indigo-500'
+                      fichasEval && fichasEval.length > 0 ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20' : 'text-muted-foreground/40 hover:text-indigo-500'
                     )}
                   >
                     📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
                   </button>
                   <Textarea
                     className="mt-2 rounded-xl text-xs min-h-[48px]"
-                    placeholder="Comentario técnico (opcional)..."
+                    placeholder={decision === '?' ? '¿Qué información falta para decidir?' : REQUIRES_COMMENT.has(decision) ? 'Comentario técnico (obligatorio)...' : 'Comentario técnico (opcional)...'}
                     value={evalForm[linea.id]?.comentario ?? ''}
                     onChange={e => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], comentario: e.target.value } }))}
                   />
+                  {REQUIRES_COMMENT.has(decision) && !evalForm[linea.id]?.comentario?.trim() && (
+                    <p className="mt-1 text-[9px] text-red-500">Requerido para {decision}</p>
+                  )}
                 </div>
                 );
               })}
@@ -1335,6 +1587,127 @@ export const ComparativaDetail: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      {/* ── Modal: Firma (no-dismissible) ─────────────────────────────────────── */}
+      {showFirmaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl bg-card shadow-2xl overflow-hidden">
+            <div className="bg-red-600 px-6 py-4">
+              <h2 className="text-sm font-black uppercase tracking-tight text-white">🔒 Firmar Evaluación Técnica</h2>
+              <p className="text-[10px] text-red-100/80 mt-0.5">Esta acción es irreversible</p>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {/* Resumen */}
+              <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 space-y-2">
+                <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Cuadro</span><span className="font-black">{comp.codigo ?? comp.id.slice(0, 8)}</span></div>
+                <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">1ª Opción</span><span className="font-black">{comp.proveedores.find(p => p.id === primeraOpcion)?.nombre ?? '—'}</span></div>
+                <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Total renglones</span><span className="font-black">{comp.lineas.length}</span></div>
+                <div className="flex gap-3 text-[10px]">
+                  <span className="rounded bg-green-500/10 px-2 py-0.5 text-green-700 font-black">C: {comp.lineas.filter(l => l.evaluacion_tecnica === 'C').length}</span>
+                  <span className="rounded bg-red-500/10 px-2 py-0.5 text-red-700 font-black">NC: {comp.lineas.filter(l => l.evaluacion_tecnica === 'NC').length}</span>
+                  <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-700 font-black">DA: {comp.lineas.filter(l => l.evaluacion_tecnica === 'DA').length}</span>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+                <p className="text-[11px] text-red-700 font-bold">⚠️ Esta acción es irreversible. Una vez firmada, la evaluación técnica no podrá modificarse por ningún usuario.</p>
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={firmaConfirmado}
+                  onChange={e => setFirmaConfirmado(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-border accent-red-600"
+                />
+                <span className="text-[11px] text-foreground leading-tight">Confirmo que revisé personalmente cada renglón de esta requisición y acepto responsabilidad técnica por esta evaluación.</span>
+              </label>
+              {firmaError && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2 text-[11px] text-red-700">{firmaError}</div>
+              )}
+            </div>
+            <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
+              <Button onClick={() => { setShowFirmaModal(false); setFirmaError(null); }} variant="outline" className="rounded-xl" disabled={firmando}>Cancelar</Button>
+              <Button
+                onClick={handleFirmar}
+                disabled={!firmaConfirmado || firmando}
+                className="rounded-xl bg-red-600 px-6 font-black text-white hover:bg-red-500 disabled:opacity-40"
+              >
+                {firmando ? 'Firmando...' : '🔒 Firmar y Bloquear'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Confirmar nueva revisión ───────────────────────────────────── */}
+      {showRevisionConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-card shadow-2xl p-6 space-y-4">
+            <h2 className="text-sm font-black uppercase tracking-tight">Crear nueva revisión</h2>
+            <p className="text-[11px] text-muted-foreground">
+              El cuadro actual (<strong>Rev {comp.revision ?? 'A'}</strong>) pasará a estado <strong>SUPERSEDIDO</strong> y se creará una copia en estado <strong>BORRADOR</strong> con la siguiente letra de revisión. Los precios y especificaciones se copian; las evaluaciones se reinician a PENDIENTE.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button onClick={() => setShowRevisionConfirm(false)} variant="outline" className="rounded-xl" disabled={creandoRevision}>Cancelar</Button>
+              <Button onClick={handleNuevaRevision} disabled={creandoRevision} className="rounded-xl bg-orange-500 px-5 font-black text-white hover:bg-orange-400">
+                {creandoRevision ? 'Creando...' : 'Crear revisión'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SideSheet: Aclaraciones de celda ──────────────────────────────────── */}
+      <SideSheet
+        isOpen={!!aclaracionCelda}
+        onClose={() => setAclaracionCelda(null)}
+        title="Aclaraciones técnicas"
+        description="Hilo de preguntas y respuestas para esta celda del cuadro"
+        maxWidthClassName="max-w-lg"
+      >
+        <div className="flex flex-col gap-4 p-6">
+          {aclaraciones.filter(a => aclaracionCelda && a.insumo_id === aclaracionCelda.insumo_id && a.proveedor_id === aclaracionCelda.proveedor_id).length === 0 ? (
+            <p className="text-center text-[11px] text-muted-foreground py-6">Sin aclaraciones para esta celda.</p>
+          ) : (
+            <div className="space-y-3">
+              {aclaraciones.filter(a => aclaracionCelda && a.insumo_id === aclaracionCelda.insumo_id && a.proveedor_id === aclaracionCelda.proveedor_id).map(a => (
+                <div key={a.id_aclaracion} className={cn('rounded-2xl border px-4 py-3',
+                  a.tipo === 'PREGUNTA' ? 'border-indigo-500/20 bg-indigo-500/5' : 'border-slate-500/20 bg-slate-500/5',
+                  a.resuelta && 'opacity-60'
+                )}>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className={cn('rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider',
+                      a.tipo === 'PREGUNTA' ? 'bg-indigo-500/10 text-indigo-600' : 'bg-slate-500/10 text-slate-600'
+                    )}>{a.tipo}</span>
+                    {a.resuelta && <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-[8px] font-black text-green-600">RESUELTA</span>}
+                    <span className="ml-auto text-[9px] text-muted-foreground">{new Date(a.created_at).toLocaleDateString('es-MX')}</span>
+                  </div>
+                  <p className="text-[11px] text-foreground leading-relaxed">{a.mensaje}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {!isLocked && !isSupersedido && (
+            <div className="space-y-2 border-t border-border/40 pt-4">
+              <div className="flex gap-2">
+                {(['PREGUNTA', 'RESPUESTA'] as const).map(t => (
+                  <button key={t} onClick={() => setAclaracionTipo(t)} className={cn('rounded-xl border px-3 py-1 text-[10px] font-black transition-all', aclaracionTipo === t ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-border/40 bg-muted text-muted-foreground')}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <Textarea
+                className="rounded-xl text-xs min-h-[60px]"
+                placeholder="Escribir mensaje..."
+                value={aclaracionMensaje}
+                onChange={e => setAclaracionMensaje(e.target.value)}
+              />
+              <Button onClick={handleEnviarAclaracion} disabled={!aclaracionMensaje.trim() || enviandoAclaracion} className="w-full rounded-xl bg-indigo-600 font-black text-white hover:bg-indigo-500">
+                {enviandoAclaracion ? 'Enviando...' : 'Agregar mensaje'}
+              </Button>
+            </div>
+          )}
+        </div>
+      </SideSheet>
 
       {/* ── Input oculto para PDF ───────────────────────────────────────────────── */}
       <input

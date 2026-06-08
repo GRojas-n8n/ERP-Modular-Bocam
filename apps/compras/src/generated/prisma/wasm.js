@@ -228,6 +228,12 @@ exports.Prisma.CuadroComparativoScalarFieldEnum = {
   fecha_creacion: 'fecha_creacion',
   estado: 'estado',
   notas: 'notas',
+  revision: 'revision',
+  revision_padre_id: 'revision_padre_id',
+  firmado_por: 'firmado_por',
+  fecha_firma: 'fecha_firma',
+  primera_opcion_proveedor_id: 'primera_opcion_proveedor_id',
+  segunda_opcion_proveedor_id: 'segunda_opcion_proveedor_id',
   evaluacion_residente_id: 'evaluacion_residente_id',
   fecha_evaluacion_tecnica: 'fecha_evaluacion_tecnica',
   gerente_tecnico_id: 'gerente_tecnico_id',
@@ -257,8 +263,23 @@ exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   es_ganador: 'es_ganador',
   evaluacion_tecnica: 'evaluacion_tecnica',
   comentario_tecnico: 'comentario_tecnico',
+  valor_ofrecido_spec: 'valor_ofrecido_spec',
   aprobacion_gt: 'aprobacion_gt',
   comentario_gt: 'comentario_gt'
+};
+
+exports.Prisma.AclaracionComparativaScalarFieldEnum = {
+  id_aclaracion: 'id_aclaracion',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  cuadro_id: 'cuadro_id',
+  insumo_id: 'insumo_id',
+  proveedor_id: 'proveedor_id',
+  autor_id: 'autor_id',
+  tipo: 'tipo',
+  mensaje: 'mensaje',
+  resuelta: 'resuelta',
+  created_at: 'created_at'
 };
 
 exports.Prisma.AlertaOcErrorScalarFieldEnum = {
@@ -332,6 +353,7 @@ exports.Prisma.ModelName = {
   CuadroComparativo: 'CuadroComparativo',
   ComparativaLinea: 'ComparativaLinea',
   ComparativaDetalle: 'ComparativaDetalle',
+  AclaracionComparativa: 'AclaracionComparativa',
   AlertaOcError: 'AlertaOcError',
   ItemInventario: 'ItemInventario',
   MovimientoAlmacen: 'MovimientoAlmacen'

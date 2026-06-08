@@ -170,9 +170,9 @@ model OrdenCompraItem {
 }
 
 // --- Operativo: Cuadros Comparativos ---
-// Estados: BORRADOR → EN_EVALUACION_TECNICA → EVALUADO_TECNICAMENTE
+// Estados: BORRADOR → EN_EVALUACION_TECNICA → LOCKED (firmado por Residente, INMUTABLE)
 //        → EN_APROBACION_GT → APROBADO_GT → CERRADO
-//        → RECHAZADO_GT (terminal)
+//        → RECHAZADO_GT (terminal) → SUPERSEDIDO (reemplazado por revisión posterior)
 model CuadroComparativo {
   id_cuadro      String   @id @default(uuid()) @db.Uuid
   tenant_id      String   @db.Uuid
@@ -183,17 +183,30 @@ model CuadroComparativo {
   estado         String   @default("BORRADOR")
   notas          String?  @db.Text
 
+  // ── Control de revisiones ────────────────────────────────────────────────
+  revision              String  @default("A") @db.VarChar(5)
+  revision_padre_id     String? @db.Uuid  // self-ref sin @relation
+
+  // ── Firma digital (Residente) ────────────────────────────────────────────
+  firmado_por           String?   @db.Uuid
+  fecha_firma           DateTime?
+
+  // ── Selección de proveedor preferido ────────────────────────────────────
+  primera_opcion_proveedor_id  String? @db.Uuid
+  segunda_opcion_proveedor_id  String? @db.Uuid
+
   // ── Auditoría evaluación técnica (Residente) ─────────────────────────────
   evaluacion_residente_id  String?   @db.Uuid
   fecha_evaluacion_tecnica DateTime?
 
   // ── Auditoría aprobación GT ──────────────────────────────────────────────
-  gerente_tecnico_id  String?   @db.Uuid
-  fecha_aprobacion_gt DateTime?
-  comentario_gt_general String? @db.Text
+  gerente_tecnico_id    String?   @db.Uuid
+  fecha_aprobacion_gt   DateTime?
+  comentario_gt_general String?   @db.Text
 
   detalles       ComparativaDetalle[]
   lineas         ComparativaLinea[]
+  aclaraciones   AclaracionComparativa[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
@@ -231,9 +244,11 @@ model ComparativaDetalle {
   es_ganador     Boolean  @default(false)
 
   // ── Evaluación técnica del Residente ─────────────────────────────────────
-  // Valores: PENDIENTE | APROBADO | RECHAZADO
-  evaluacion_tecnica String  @default("PENDIENTE")
-  comentario_tecnico String? @db.Text
+  // Valores escritura nueva: PENDIENTE | C | NC | DA | ?
+  // Valores legacy (solo lectura): APROBADO | RECHAZADO
+  evaluacion_tecnica   String  @default("PENDIENTE")
+  comentario_tecnico   String? @db.Text
+  valor_ofrecido_spec  String? @db.Text  // Lo que el proveedor ofrece (texto libre de Compras)
 
   // ── Aprobación del Gerente Técnico ────────────────────────────────────────
   // Valores: PENDIENTE | APROBADO | RECHAZADO
@@ -246,6 +261,29 @@ model ComparativaDetalle {
 
   @@index([tenant_id, cuadro_id])
   @@map("comparativas_detalles")
+}
+
+// ── Aclaraciones técnicas por celda (cuadro × insumo × proveedor) ────────────
+// Tipos: PREGUNTA (Residente no puede decidir → solicita info a Compras)
+//        RESPUESTA (Compras transcribe respuesta del proveedor)
+model AclaracionComparativa {
+  id_aclaracion String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  proyecto_id   String   @db.Uuid
+  cuadro_id     String   @db.Uuid
+  insumo_id     String   @db.Uuid
+  proveedor_id  String   @db.Uuid
+  autor_id      String   @db.Uuid
+  tipo          String   @db.VarChar(20)  // PREGUNTA | RESPUESTA
+  mensaje       String   @db.Text
+  resuelta      Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  cuadro  CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
+
+  @@index([tenant_id, cuadro_id])
+  @@index([cuadro_id, insumo_id, proveedor_id])
+  @@map("aclaraciones_comparativa")
 }
 
 // ── Alertas de Integridad Financiera ─────────────────────────────────────────

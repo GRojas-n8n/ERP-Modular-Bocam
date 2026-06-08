@@ -722,7 +722,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        const [cuadro, lineas] = await Promise.all([
+        const [cuadro, lineas, aclaraciones] = await Promise.all([
           prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
             include: { detalles: { include: { proveedor: true } } },
@@ -731,9 +731,29 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
             where: { cuadro_id: id, tenant_id: tenantId },
             select: { insumo_id: true, marca_modelo_ref: true, especificaciones_requeridas: true },
           }),
+          prisma.aclaracionComparativa.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            select: { insumo_id: true, proveedor_id: true, resuelta: true },
+          }),
         ]);
         if (!cuadro) return null;
-        return { ...cuadro, lineas_detalle: lineas };
+
+        // Build aclaraciones_count map: key = insumo_id:proveedor_id → count of unresolved
+        const aclaracionesCountMap = new Map<string, number>();
+        for (const acl of aclaraciones) {
+          if (!acl.resuelta) {
+            const key = `${acl.insumo_id}:${acl.proveedor_id}`;
+            aclaracionesCountMap.set(key, (aclaracionesCountMap.get(key) ?? 0) + 1);
+          }
+        }
+
+        const detallesConCount = cuadro.detalles.map(d => ({
+          ...d,
+          precio_ofertado: Number(d.precio_ofertado),
+          aclaraciones_count: aclaracionesCountMap.get(`${d.insumo_id}:${d.proveedor_id}`) ?? 0,
+        }));
+
+        return { ...cuadro, detalles: detallesConCount, lineas_detalle: lineas };
       },
     );
 
@@ -1202,17 +1222,39 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-evaluacion',
 
 // 2.2 PATCH evaluar — Residente registra evaluación técnica por renglón
 app.patch('/api/v1/compras/comparativas/:id/evaluar',
-  requireRoles('resident', 'residencia', 'control_obra', 'superintendent'),
+  requireRoles('resident', 'residencia', 'control_obra', 'superintendent', 'procurement', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
       const { evaluaciones } = req.body as {
-        evaluaciones: { detalle_id: string; evaluacion_tecnica: 'APROBADO' | 'RECHAZADO'; comentario_tecnico?: string }[];
+        evaluaciones: {
+          detalle_id: string;
+          evaluacion_tecnica: string;
+          comentario_tecnico?: string;
+          valor_ofrecido_spec?: string;
+        }[];
       };
 
       if (!evaluaciones || !Array.isArray(evaluaciones) || evaluaciones.length === 0) {
         return res.status(400).json({ success: false, message: 'Se requiere un array "evaluaciones" con al menos un ítem.' });
+      }
+
+      const VALID_VALUES = new Set(['C', 'NC', 'DA', '?', 'PENDIENTE']);
+      const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
+      for (const ev of evaluaciones) {
+        if (!VALID_VALUES.has(ev.evaluacion_tecnica)) {
+          return res.status(400).json({
+            success: false,
+            message: `Valor de evaluación inválido: "${ev.evaluacion_tecnica}". Valores permitidos: C, NC, DA, ?, PENDIENTE`,
+          });
+        }
+        if (REQUIRES_COMMENT.has(ev.evaluacion_tecnica) && !ev.comentario_tecnico?.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `El valor "${ev.evaluacion_tecnica}" requiere comentario_tecnico no vacío.`,
+          });
+        }
       }
 
       const data = await createTenantContext(
@@ -1225,6 +1267,10 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
+          if (cuadro.estado === 'LOCKED') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: Este cuadro está firmado y no puede modificarse.' });
+          }
+
           if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
             return res.status(400).json({
               success: false,
@@ -1232,9 +1278,8 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
             });
           }
 
-          // Validar que los detalle_id pertenecen a este cuadro
-          const detalleIds = new Set(cuadro.detalles.map(d => d.id_detalle));
-          const invalid = evaluaciones.find(e => !detalleIds.has(e.detalle_id));
+          const detalleMap = new Map(cuadro.detalles.map(d => [d.id_detalle, d]));
+          const invalid = evaluaciones.find(e => !detalleMap.has(e.detalle_id));
           if (invalid) {
             return res.status(400).json({
               success: false,
@@ -1242,36 +1287,65 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
             });
           }
 
-          // Actualizar evaluación técnica por renglón
           await Promise.all(
-            evaluaciones.map(ev =>
-              prisma.comparativaDetalle.update({
+            evaluaciones.map(async (ev) => {
+              const detalleActual = detalleMap.get(ev.detalle_id)!;
+
+              await prisma.comparativaDetalle.update({
                 where: { id_detalle: ev.detalle_id },
                 data: {
                   evaluacion_tecnica: ev.evaluacion_tecnica,
-                  comentario_tecnico: ev.comentario_tecnico ?? null,
+                  comentario_tecnico: ev.comentario_tecnico?.trim() ?? null,
+                  ...(ev.valor_ofrecido_spec !== undefined
+                    ? { valor_ofrecido_spec: ev.valor_ofrecido_spec.trim() || null }
+                    : {}),
                 },
-              })
-            )
+              });
+
+              // ? → crear AclaracionComparativa de tipo PREGUNTA
+              if (ev.evaluacion_tecnica === '?') {
+                await prisma.aclaracionComparativa.create({
+                  data: {
+                    tenant_id: tenantId,
+                    proyecto_id: proyectoId,
+                    cuadro_id: id,
+                    insumo_id: detalleActual.insumo_id,
+                    proveedor_id: detalleActual.proveedor_id,
+                    autor_id: userId,
+                    tipo: 'PREGUNTA',
+                    mensaje: ev.comentario_tecnico!.trim(),
+                    resuelta: false,
+                  },
+                });
+              }
+
+              // ? → C/NC/DA: resolver aclaraciones abiertas de esa celda
+              if (detalleActual.evaluacion_tecnica === '?' && ['C', 'NC', 'DA'].includes(ev.evaluacion_tecnica)) {
+                await prisma.aclaracionComparativa.updateMany({
+                  where: {
+                    cuadro_id: id,
+                    insumo_id: detalleActual.insumo_id,
+                    proveedor_id: detalleActual.proveedor_id,
+                    resuelta: false,
+                  },
+                  data: { resuelta: true },
+                });
+              }
+            })
           );
 
-          return prisma.cuadroComparativo.update({
+          return prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            data: {
-              estado: 'EVALUADO_TECNICAMENTE',
-              evaluacion_residente_id: userId,
-              fecha_evaluacion_tecnica: new Date(),
-            },
             include: { detalles: { include: { proveedor: true } } },
           });
         }
       );
 
       if (res.headersSent) return;
-      logInfo(req, 'compras', 'compras.comparativa.evaluada_tecnicamente', 'Evaluación técnica registrada', { cuadro_id: id, evaluador: userId });
+      logInfo(req, 'compras', 'compras.comparativa.evaluacion_guardada', 'Evaluación técnica guardada', { cuadro_id: id, evaluador: userId });
       res.json({ success: true, data });
     } catch (error: any) {
-      logError(req, 'compras', 'compras.comparativa.evaluar.error', 'Error al registrar evaluación técnica', { error_message: error.message });
+      logError(req, 'compras', 'compras.comparativa.evaluar.error', 'Error al guardar evaluación técnica', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }
@@ -1295,18 +1369,21 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
-          if (cuadro.estado !== 'EVALUADO_TECNICAMENTE') {
+          const ESTADOS_ENVIABLES = new Set(['EVALUADO_TECNICAMENTE', 'LOCKED']);
+          if (!ESTADOS_ENVIABLES.has(cuadro.estado)) {
             return res.status(400).json({
               success: false,
-              message: `El cuadro no está en estado EVALUADO_TECNICAMENTE. Estado actual: ${cuadro.estado}`,
+              message: `El cuadro no está en estado EVALUADO_TECNICAMENTE ni LOCKED. Estado actual: ${cuadro.estado}`,
             });
           }
 
-          const hayAprobados = cuadro.detalles.some(d => d.evaluacion_tecnica === 'APROBADO');
+          const hayAprobados = cuadro.detalles.some(d =>
+            d.evaluacion_tecnica === 'APROBADO' || d.evaluacion_tecnica === 'C'
+          );
           if (!hayAprobados) {
             return res.status(400).json({
               success: false,
-              message: 'Sin renglones aprobados técnicamente — no es posible remitir al Gerente Técnico.',
+              message: 'Sin renglones aprobados técnicamente (C o APROBADO) — no es posible remitir al Gerente Técnico.',
             });
           }
 
@@ -2503,6 +2580,433 @@ app.post('/api/v1/compras/almacen/movimientos',
       logError(req, 'compras', 'compras.almacen.movimiento.crear.error',
         'Error al registrar movimiento de almacén', { error_message: error.message });
       res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── comparativa-evaluacion-v2: Selección, Firma, Revisiones y Aclaraciones ────
+
+// 8.2 PUT seleccion — Residente actualiza primera/segunda opción de proveedor
+app.put('/api/v1/compras/comparativas/:id/seleccion',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { primera_opcion_proveedor_id, segunda_opcion_proveedor_id } = req.body as {
+        primera_opcion_proveedor_id: string;
+        segunda_opcion_proveedor_id?: string;
+      };
+
+      if (!primera_opcion_proveedor_id) {
+        return res.status(400).json({ success: false, message: 'primera_opcion_proveedor_id es requerido.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id } });
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (cuadro.estado === 'LOCKED') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: No se puede modificar un cuadro firmado.' });
+          }
+          if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
+            return res.status(400).json({ success: false, message: `Estado inválido para selección: ${cuadro.estado}` });
+          }
+
+          // Validar que el proveedor existe en los detalles de este cuadro
+          const proveedoresEnCuadro = await prisma.comparativaDetalle.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            select: { proveedor_id: true },
+            distinct: ['proveedor_id'],
+          });
+          const proveedorIds = new Set(proveedoresEnCuadro.map(d => d.proveedor_id));
+          if (!proveedorIds.has(primera_opcion_proveedor_id)) {
+            return res.status(400).json({ success: false, message: 'primera_opcion_proveedor_id no participa en este cuadro.' });
+          }
+
+          return prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: {
+              primera_opcion_proveedor_id,
+              segunda_opcion_proveedor_id: segunda_opcion_proveedor_id ?? null,
+            },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      logInfo(req, 'compras', 'compras.comparativa.seleccion_guardada', 'Selección de proveedor guardada', { cuadro_id: id, primera_opcion_proveedor_id });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.seleccion.error', 'Error al guardar selección', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 5.1 POST firmar — Residente firma y bloquea el cuadro (LOCKED)
+app.post('/api/v1/compras/comparativas/:id/firmar',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true },
+          });
+
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
+            return res.status(400).json({
+              success: false,
+              message: `ESTADO_INVALIDO_FIRMA: El cuadro debe estar en EN_EVALUACION_TECNICA. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          const conPendiente = cuadro.detalles.some(d => d.evaluacion_tecnica === 'PENDIENTE');
+          if (conPendiente) {
+            return res.status(400).json({
+              success: false,
+              message: 'EVALUACION_INCOMPLETA: Hay renglones sin evaluar (PENDIENTE). Evalúa todos los renglones antes de firmar.',
+            });
+          }
+
+          const conPregunta = cuadro.detalles.some(d => d.evaluacion_tecnica === '?');
+          if (conPregunta) {
+            return res.status(400).json({
+              success: false,
+              message: 'EVALUACION_CON_PREGUNTAS_ABIERTAS: Hay renglones con aclaraciones pendientes (?). Resuelve todas las preguntas antes de firmar.',
+            });
+          }
+
+          if (!cuadro.primera_opcion_proveedor_id) {
+            return res.status(400).json({
+              success: false,
+              message: 'PRIMERA_OPCION_REQUERIDA: Debes seleccionar la primera opción de proveedor antes de firmar.',
+            });
+          }
+
+          // Validar que la primera opción no tenga renglones NC ni ?
+          const detallesPrimeraOpcion = cuadro.detalles.filter(
+            d => d.proveedor_id === cuadro.primera_opcion_proveedor_id
+          );
+          const primeraOpcionConNC = detallesPrimeraOpcion.some(
+            d => d.evaluacion_tecnica === 'NC' || d.evaluacion_tecnica === '?'
+          );
+          if (primeraOpcionConNC) {
+            return res.status(400).json({
+              success: false,
+              message: 'SELECCION_INVALIDA_NC: La primera opción de proveedor tiene renglones NC o ?. Solo puede ser primera opción un proveedor con todos sus renglones en C o DA.',
+            });
+          }
+
+          const cuadroFirmado = await prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: {
+              estado: 'LOCKED',
+              firmado_por: userId,
+              fecha_firma: new Date(),
+              evaluacion_residente_id: userId,
+              fecha_evaluacion_tecnica: new Date(),
+            },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+
+          const resumen = {
+            total: cuadro.detalles.length,
+            c: cuadro.detalles.filter(d => d.evaluacion_tecnica === 'C').length,
+            nc: cuadro.detalles.filter(d => d.evaluacion_tecnica === 'NC').length,
+            da: cuadro.detalles.filter(d => d.evaluacion_tecnica === 'DA').length,
+          };
+
+          logInfo(req, 'compras', 'compras.comparativa.firmada', 'Cuadro comparativo firmado y bloqueado', {
+            cuadro_id: id,
+            codigo: cuadro.codigo,
+            requisicion_id: cuadro.requisicion_id,
+            firmado_por: userId,
+            primera_opcion_proveedor_id: cuadro.primera_opcion_proveedor_id,
+            resumen_evaluacion: resumen,
+          });
+
+          return cuadroFirmado;
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.firmar.error', 'Error al firmar cuadro comparativo', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 6.1 POST nueva-revision — Clonar cuadro con siguiente letra de revisión
+app.post('/api/v1/compras/comparativas/:id/nueva-revision',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadroOriginal = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: {
+              detalles: true,
+              lineas: true,
+            },
+          });
+
+          if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          const ESTADOS_VALIDOS = new Set(['EN_EVALUACION_TECNICA', 'LOCKED']);
+          if (!ESTADOS_VALIDOS.has(cuadroOriginal.estado)) {
+            return res.status(400).json({
+              success: false,
+              message: `Solo se puede crear nueva revisión desde EN_EVALUACION_TECNICA o LOCKED. Estado actual: ${cuadroOriginal.estado}`,
+            });
+          }
+
+          // Calcular siguiente letra de revisión (A→B, B→C, etc.)
+          const revActual = cuadroOriginal.revision || 'A';
+          const siguienteRev = String.fromCharCode(revActual.charCodeAt(0) + 1);
+          const codigoNuevo = cuadroOriginal.codigo.replace(`-Rev${revActual}`, '') + `-Rev${siguienteRev}`;
+
+          const [cuadroClonado] = await prisma.$transaction([
+            // 1. Marcar el original como SUPERSEDIDO
+            prisma.cuadroComparativo.update({
+              where: { id_cuadro: id },
+              data: { estado: 'SUPERSEDIDO' },
+            }),
+          ]);
+
+          // 2. Crear el nuevo cuadro clonado
+          const nuevoCuadro = await prisma.cuadroComparativo.create({
+            data: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              requisicion_id: cuadroOriginal.requisicion_id,
+              codigo: codigoNuevo,
+              estado: 'BORRADOR',
+              notas: cuadroOriginal.notas,
+              revision: siguienteRev,
+              revision_padre_id: id,
+            },
+          });
+
+          // 3. Clonar detalles con evaluaciones reset a PENDIENTE
+          if (cuadroOriginal.detalles.length > 0) {
+            await prisma.comparativaDetalle.createMany({
+              data: cuadroOriginal.detalles.map(d => ({
+                tenant_id: d.tenant_id,
+                proyecto_id: d.proyecto_id,
+                cuadro_id: nuevoCuadro.id_cuadro,
+                proveedor_id: d.proveedor_id,
+                insumo_id: d.insumo_id,
+                precio_ofertado: d.precio_ofertado,
+                tiempo_entrega: d.tiempo_entrega,
+                es_ganador: false,
+                evaluacion_tecnica: 'PENDIENTE',
+                comentario_tecnico: null,
+                valor_ofrecido_spec: d.valor_ofrecido_spec,
+                aprobacion_gt: 'PENDIENTE',
+                comentario_gt: null,
+              })),
+            });
+          }
+
+          // 4. Clonar líneas de especificación
+          if (cuadroOriginal.lineas.length > 0) {
+            await prisma.comparativaLinea.createMany({
+              data: cuadroOriginal.lineas.map(l => ({
+                tenant_id: l.tenant_id,
+                proyecto_id: l.proyecto_id,
+                cuadro_id: nuevoCuadro.id_cuadro,
+                insumo_id: l.insumo_id,
+                marca_modelo_ref: l.marca_modelo_ref,
+                especificaciones_requeridas: l.especificaciones_requeridas,
+              })),
+            });
+          }
+
+          logInfo(req, 'compras', 'compras.comparativa.nueva_revision', 'Nueva revisión de cuadro comparativo creada', {
+            cuadro_original_id: id,
+            nuevo_cuadro_id: nuevoCuadro.id_cuadro,
+            revision_anterior: revActual,
+            nueva_revision: siguienteRev,
+          });
+
+          return prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: nuevoCuadro.id_cuadro },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.nueva_revision.error', 'Error al crear nueva revisión', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 7.1 POST aclaraciones — Crear aclaración en una celda del cuadro
+app.post('/api/v1/compras/comparativas/:id/aclaraciones',
+  requireRoles('procurement', 'resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { insumo_id, proveedor_id, tipo, mensaje } = req.body as {
+        insumo_id: string;
+        proveedor_id: string;
+        tipo: 'PREGUNTA' | 'RESPUESTA';
+        mensaje: string;
+      };
+
+      if (!insumo_id || !proveedor_id || !tipo || !mensaje?.trim()) {
+        return res.status(400).json({ success: false, message: 'insumo_id, proveedor_id, tipo y mensaje son requeridos.' });
+      }
+      if (!['PREGUNTA', 'RESPUESTA'].includes(tipo)) {
+        return res.status(400).json({ success: false, message: 'tipo debe ser PREGUNTA o RESPUESTA.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true },
+          });
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          const ESTADOS_BLOQUEADOS = new Set(['LOCKED', 'SUPERSEDIDO', 'CERRADO']);
+          if (ESTADOS_BLOQUEADOS.has(cuadro.estado)) {
+            return res.status(403).json({
+              success: false,
+              message: `No se pueden agregar aclaraciones en un cuadro con estado ${cuadro.estado}.`,
+            });
+          }
+
+          // Validar que el par (insumo_id, proveedor_id) existe en este cuadro
+          const detalle = await prisma.comparativaDetalle.findFirst({
+            where: { cuadro_id: id, insumo_id, proveedor_id, tenant_id: tenantId },
+          });
+          if (!detalle) {
+            return res.status(404).json({ success: false, message: 'No existe detalle para el par (insumo_id, proveedor_id) en este cuadro.' });
+          }
+
+          return prisma.aclaracionComparativa.create({
+            data: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              cuadro_id: id,
+              insumo_id,
+              proveedor_id,
+              autor_id: userId,
+              tipo,
+              mensaje: mensaje.trim(),
+              resuelta: false,
+            },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.aclaracion.crear.error', 'Error al crear aclaración', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 7.2 GET aclaraciones — Obtener aclaraciones de un cuadro
+app.get('/api/v1/compras/comparativas/:id/aclaraciones',
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { id_cuadro: true },
+          });
+          if (!cuadro) return null;
+
+          return prisma.aclaracionComparativa.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            orderBy: { created_at: 'asc' },
+          });
+        }
+      );
+
+      if (data === null) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 7.3 PATCH aclaraciones/:aid — Marcar aclaración como resuelta
+app.patch('/api/v1/compras/comparativas/:id/aclaraciones/:aid',
+  requireRoles('procurement', 'resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id, aid } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { resuelta } = req.body as { resuelta: boolean };
+
+      if (typeof resuelta !== 'boolean') {
+        return res.status(400).json({ success: false, message: 'El campo "resuelta" debe ser boolean.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const aclaracion = await prisma.aclaracionComparativa.findUnique({
+            where: { id_aclaracion: aid },
+          });
+
+          if (!aclaracion || aclaracion.cuadro_id !== id || aclaracion.tenant_id !== tenantId) {
+            return res.status(404).json({ success: false, message: 'Aclaración no encontrada.' });
+          }
+
+          const roles: string[] = (req as any).securityContext?.roles ?? [];
+          const esAdmin = roles.includes('admin');
+          if (!esAdmin && aclaracion.autor_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Solo el autor o un admin puede modificar esta aclaración.' });
+          }
+
+          return prisma.aclaracionComparativa.update({
+            where: { id_aclaracion: aid },
+            data: { resuelta },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.aclaracion.patch.error', 'Error al actualizar aclaración', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 );
