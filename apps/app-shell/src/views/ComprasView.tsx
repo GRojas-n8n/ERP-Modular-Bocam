@@ -2289,7 +2289,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     setCalPromedios(prev => ({ ...prev, [calHistorialId]: promedio_actualizado }));
                     setCalTotales(prev => ({ ...prev, [calHistorialId]: total_calificaciones }));
                     setProveedoresList(prev => prev.map(p =>
-                      p.id_proveedor === calHistorialId ? { ...p, calificacion_desempeno: promedio_actualizado } : p
+                      p.id_proveedor === calHistorialId ? { ...p, calificacion_desempeno: promedio_actualizado ?? undefined } : p
                     ));
                     await fetchCalHistorial(calHistorialId);
                     notify({ title: res.data.data.accion === 'created' ? 'Calificación registrada' : 'Calificación actualizada', type: 'success' });
@@ -2335,7 +2335,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 await fetchCalHistorial(calHistorialId!);
                                 const newScore = calPromedios[calHistorialId!];
                                 setProveedoresList(prev => prev.map(p =>
-                                  p.id_proveedor === calHistorialId ? { ...p, calificacion_desempeno: newScore } : p
+                                  p.id_proveedor === calHistorialId ? { ...p, calificacion_desempeno: newScore ?? undefined } : p
                                 ));
                                 notify({ title: 'Calificación eliminada', type: 'success' });
                               } catch { notify({ title: 'Error al eliminar', type: 'error' }); }
