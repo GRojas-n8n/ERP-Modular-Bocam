@@ -438,7 +438,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   const handleAddProveedorFromCatalog = (prov: ProveedorCatalogoItem) => {
     if (comp.proveedores.length >= 3) return;
     if (comp.proveedores.some(p => p.id === prov.id)) {
-      notify('Este proveedor ya está en el cuadro', 'warning');
+      notify({ type: 'warning', title: 'Proveedor duplicado', message: 'Este proveedor ya está en el cuadro' });
       return;
     }
     onUpdate({
