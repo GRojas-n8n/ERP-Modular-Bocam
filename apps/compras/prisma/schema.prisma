@@ -40,9 +40,30 @@ model Proveedor {
   ordenes        OrdenCompra[]
   comparativas   ComparativaDetalle[]
   documentos     DocumentoProveedor[]
+  calificaciones CalificacionProveedor[]
 
   @@unique([tenant_id, rfc_tax_id])
   @@map("proveedores")
+}
+
+model CalificacionProveedor {
+  id_calificacion      String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  proveedor_id         String   @db.Uuid
+  proyecto_id          String   @db.Uuid
+  proyecto_nombre      String   @db.VarChar(255)
+  puntuacion           Decimal  @db.Decimal(3, 2)
+  comentario           String?  @db.Text
+  calificado_por       String   @db.Uuid
+  calificado_por_nombre String  @db.VarChar(255)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  proveedor  Proveedor @relation(fields: [proveedor_id], references: [id_proveedor], onDelete: Cascade)
+
+  @@unique([tenant_id, proveedor_id, proyecto_id])
+  @@index([tenant_id, proveedor_id])
+  @@map("calificaciones_proveedor")
 }
 
 model DocumentoProveedor {

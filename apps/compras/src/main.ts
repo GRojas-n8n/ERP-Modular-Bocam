@@ -481,6 +481,173 @@ app.delete(
   }
 );
 
+// ── Calificaciones de Proveedor ───────────────────────────────────────────────
+
+app.post(
+  '/api/v1/compras/proveedores/:id/calificaciones',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId, name: userName } = req.securityContext;
+      const proveedorId = req.params.id;
+      const { puntuacion, comentario, proyecto_nombre: proyectoNombreOverride } = req.body;
+
+      if (puntuacion === undefined || puntuacion === null) {
+        return res.status(400).json({ success: false, message: 'El campo puntuacion es requerido.' });
+      }
+      const score = parseFloat(puntuacion);
+      if (isNaN(score) || score < 0 || score > 5) {
+        return res.status(400).json({ success: false, message: 'La puntuacion debe ser un número entre 0.00 y 5.00.' });
+      }
+
+      const proyectoNombre: string = proyectoNombreOverride ?? proyectoId.substring(0, 8).toUpperCase();
+
+      const result = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const proveedor = await prisma.proveedor.findFirst({
+            where: { id_proveedor: proveedorId, tenant_id: tenantId },
+          });
+          if (!proveedor) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+          const existing = await prisma.calificacionProveedor.findUnique({
+            where: { tenant_id_proveedor_id_proyecto_id: { tenant_id: tenantId, proveedor_id: proveedorId, proyecto_id: proyectoId } },
+          });
+
+          const calificacion = await prisma.calificacionProveedor.upsert({
+            where: { tenant_id_proveedor_id_proyecto_id: { tenant_id: tenantId, proveedor_id: proveedorId, proyecto_id: proyectoId } },
+            create: {
+              tenant_id: tenantId,
+              proveedor_id: proveedorId,
+              proyecto_id: proyectoId,
+              proyecto_nombre: proyectoNombre,
+              puntuacion: score,
+              comentario: comentario ?? null,
+              calificado_por: userId,
+              calificado_por_nombre: userName,
+            },
+            update: {
+              puntuacion: score,
+              comentario: comentario ?? null,
+              calificado_por: userId,
+              calificado_por_nombre: userName,
+            },
+          });
+
+          // Recalcular promedio
+          const agg = await prisma.calificacionProveedor.aggregate({
+            where: { tenant_id: tenantId, proveedor_id: proveedorId },
+            _avg: { puntuacion: true },
+            _count: { id_calificacion: true },
+          });
+          const promedio = agg._avg.puntuacion ? Math.round(Number(agg._avg.puntuacion.toNumber()) * 100) / 100 : null;
+
+          await prisma.proveedor.update({
+            where: { id_proveedor: proveedorId },
+            data: { calificacion_desempeno: promedio },
+          });
+
+          return { calificacion, promedio_actualizado: promedio, total_calificaciones: agg._count.id_calificacion, accion: existing ? 'updated' : 'created' };
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.proveedor.calificacion.registrada', 'Calificación de proveedor registrada', { proveedor_id: proveedorId, puntuacion: score, accion: result.accion });
+      res.status(result.accion === 'created' ? 201 : 200).json({ success: true, data: result });
+    } catch (error: any) {
+      const status = error.status ?? 500;
+      logError(req, 'compras', 'compras.proveedor.calificacion.error', 'Error al registrar calificación', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get(
+  '/api/v1/compras/proveedores/:id/calificaciones',
+  requireRoles('procurement', 'admin', 'finance', 'gerencia_tecnica', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const proveedorId = req.params.id;
+
+      const result = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const proveedor = await prisma.proveedor.findFirst({
+            where: { id_proveedor: proveedorId, tenant_id: tenantId },
+            select: { calificacion_desempeno: true },
+          });
+          if (!proveedor) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+          const calificaciones = await prisma.calificacionProveedor.findMany({
+            where: { tenant_id: tenantId, proveedor_id: proveedorId },
+            orderBy: { created_at: 'desc' },
+          });
+
+          const count = await prisma.calificacionProveedor.count({
+            where: { tenant_id: tenantId, proveedor_id: proveedorId },
+          });
+
+          return {
+            calificaciones: calificaciones.map(c => ({
+              ...c,
+              puntuacion: Number(c.puntuacion.toNumber()),
+            })),
+            promedio_global: proveedor.calificacion_desempeno ? Number(proveedor.calificacion_desempeno.toNumber()) : null,
+            total: count,
+          };
+        }
+      );
+
+      res.json({ success: true, data: result });
+    } catch (error: any) {
+      const status = error.status ?? 500;
+      logError(req, 'compras', 'compras.proveedor.calificaciones.error', 'Error al obtener calificaciones', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.delete(
+  '/api/v1/compras/proveedores/:id/calificaciones/:cid',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id: proveedorId, cid } = req.params;
+
+      await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cal = await prisma.calificacionProveedor.findFirst({
+            where: { id_calificacion: cid, tenant_id: tenantId, proveedor_id: proveedorId },
+          });
+          if (!cal) throw Object.assign(new Error('Calificación no encontrada.'), { status: 404 });
+
+          await prisma.calificacionProveedor.delete({ where: { id_calificacion: cid } });
+
+          const agg = await prisma.calificacionProveedor.aggregate({
+            where: { tenant_id: tenantId, proveedor_id: proveedorId },
+            _avg: { puntuacion: true },
+          });
+          const promedio = agg._avg.puntuacion ? Math.round(Number(agg._avg.puntuacion.toNumber()) * 100) / 100 : null;
+
+          await prisma.proveedor.update({
+            where: { id_proveedor: proveedorId },
+            data: { calificacion_desempeno: promedio },
+          });
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.proveedor.calificacion.eliminada', 'Calificación eliminada y promedio recalculado', { proveedor_id: proveedorId, cal_id: cid });
+      res.json({ success: true, message: 'Calificación eliminada.' });
+    } catch (error: any) {
+      const status = error.status ?? 500;
+      logError(req, 'compras', 'compras.proveedor.calificacion.eliminar.error', 'Error al eliminar calificación', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
+    }
+  }
+);
+
 app.get('/api/v1/compras/comparativas', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;

@@ -139,6 +139,20 @@ exports.Prisma.ProveedorScalarFieldEnum = {
   calificacion_desempeno: 'calificacion_desempeno'
 };
 
+exports.Prisma.CalificacionProveedorScalarFieldEnum = {
+  id_calificacion: 'id_calificacion',
+  tenant_id: 'tenant_id',
+  proveedor_id: 'proveedor_id',
+  proyecto_id: 'proyecto_id',
+  proyecto_nombre: 'proyecto_nombre',
+  puntuacion: 'puntuacion',
+  comentario: 'comentario',
+  calificado_por: 'calificado_por',
+  calificado_por_nombre: 'calificado_por_nombre',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.DocumentoProveedorScalarFieldEnum = {
   id_doc: 'id_doc',
   tenant_id: 'tenant_id',
@@ -309,6 +323,7 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   Proveedor: 'Proveedor',
+  CalificacionProveedor: 'CalificacionProveedor',
   DocumentoProveedor: 'DocumentoProveedor',
   Requisicion: 'Requisicion',
   RequisicionItem: 'RequisicionItem',

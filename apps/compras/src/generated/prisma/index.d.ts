@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type Proveedor = $Result.DefaultSelection<Prisma.$ProveedorPayload>
 /**
+ * Model CalificacionProveedor
+ * 
+ */
+export type CalificacionProveedor = $Result.DefaultSelection<Prisma.$CalificacionProveedorPayload>
+/**
  * Model DocumentoProveedor
  * 
  */
@@ -206,6 +211,16 @@ export class PrismaClient<
     * ```
     */
   get proveedor(): Prisma.ProveedorDelegate<ExtArgs>;
+
+  /**
+   * `prisma.calificacionProveedor`: Exposes CRUD operations for the **CalificacionProveedor** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CalificacionProveedors
+    * const calificacionProveedors = await prisma.calificacionProveedor.findMany()
+    * ```
+    */
+  get calificacionProveedor(): Prisma.CalificacionProveedorDelegate<ExtArgs>;
 
   /**
    * `prisma.documentoProveedor`: Exposes CRUD operations for the **DocumentoProveedor** model.
@@ -758,6 +773,7 @@ export namespace Prisma {
 
   export const ModelName: {
     Proveedor: 'Proveedor',
+    CalificacionProveedor: 'CalificacionProveedor',
     DocumentoProveedor: 'DocumentoProveedor',
     Requisicion: 'Requisicion',
     RequisicionItem: 'RequisicionItem',
@@ -784,7 +800,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
+      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -855,6 +871,76 @@ export namespace Prisma {
           count: {
             args: Prisma.ProveedorCountArgs<ExtArgs>
             result: $Utils.Optional<ProveedorCountAggregateOutputType> | number
+          }
+        }
+      }
+      CalificacionProveedor: {
+        payload: Prisma.$CalificacionProveedorPayload<ExtArgs>
+        fields: Prisma.CalificacionProveedorFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CalificacionProveedorFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CalificacionProveedorFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>
+          }
+          findFirst: {
+            args: Prisma.CalificacionProveedorFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CalificacionProveedorFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>
+          }
+          findMany: {
+            args: Prisma.CalificacionProveedorFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>[]
+          }
+          create: {
+            args: Prisma.CalificacionProveedorCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>
+          }
+          createMany: {
+            args: Prisma.CalificacionProveedorCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CalificacionProveedorCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>[]
+          }
+          delete: {
+            args: Prisma.CalificacionProveedorDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>
+          }
+          update: {
+            args: Prisma.CalificacionProveedorUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>
+          }
+          deleteMany: {
+            args: Prisma.CalificacionProveedorDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CalificacionProveedorUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CalificacionProveedorUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CalificacionProveedorPayload>
+          }
+          aggregate: {
+            args: Prisma.CalificacionProveedorAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCalificacionProveedor>
+          }
+          groupBy: {
+            args: Prisma.CalificacionProveedorGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CalificacionProveedorGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CalificacionProveedorCountArgs<ExtArgs>
+            result: $Utils.Optional<CalificacionProveedorCountAggregateOutputType> | number
           }
         }
       }
@@ -1792,12 +1878,14 @@ export namespace Prisma {
     ordenes: number
     comparativas: number
     documentos: number
+    calificaciones: number
   }
 
   export type ProveedorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ordenes?: boolean | ProveedorCountOutputTypeCountOrdenesArgs
     comparativas?: boolean | ProveedorCountOutputTypeCountComparativasArgs
     documentos?: boolean | ProveedorCountOutputTypeCountDocumentosArgs
+    calificaciones?: boolean | ProveedorCountOutputTypeCountCalificacionesArgs
   }
 
   // Custom InputTypes
@@ -1830,6 +1918,13 @@ export namespace Prisma {
    */
   export type ProveedorCountOutputTypeCountDocumentosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: DocumentoProveedorWhereInput
+  }
+
+  /**
+   * ProveedorCountOutputType without action
+   */
+  export type ProveedorCountOutputTypeCountCalificacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CalificacionProveedorWhereInput
   }
 
 
@@ -2247,6 +2342,7 @@ export namespace Prisma {
     ordenes?: boolean | Proveedor$ordenesArgs<ExtArgs>
     comparativas?: boolean | Proveedor$comparativasArgs<ExtArgs>
     documentos?: boolean | Proveedor$documentosArgs<ExtArgs>
+    calificaciones?: boolean | Proveedor$calificacionesArgs<ExtArgs>
     _count?: boolean | ProveedorCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["proveedor"]>
 
@@ -2288,6 +2384,7 @@ export namespace Prisma {
     ordenes?: boolean | Proveedor$ordenesArgs<ExtArgs>
     comparativas?: boolean | Proveedor$comparativasArgs<ExtArgs>
     documentos?: boolean | Proveedor$documentosArgs<ExtArgs>
+    calificaciones?: boolean | Proveedor$calificacionesArgs<ExtArgs>
     _count?: boolean | ProveedorCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2298,6 +2395,7 @@ export namespace Prisma {
       ordenes: Prisma.$OrdenCompraPayload<ExtArgs>[]
       comparativas: Prisma.$ComparativaDetallePayload<ExtArgs>[]
       documentos: Prisma.$DocumentoProveedorPayload<ExtArgs>[]
+      calificaciones: Prisma.$CalificacionProveedorPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_proveedor: string
@@ -2681,6 +2779,7 @@ export namespace Prisma {
     ordenes<T extends Proveedor$ordenesArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$ordenesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenCompraPayload<ExtArgs>, T, "findMany"> | Null>
     comparativas<T extends Proveedor$comparativasArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$comparativasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaDetallePayload<ExtArgs>, T, "findMany"> | Null>
     documentos<T extends Proveedor$documentosArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$documentosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findMany"> | Null>
+    calificaciones<T extends Proveedor$calificacionesArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$calificacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3098,6 +3197,26 @@ export namespace Prisma {
   }
 
   /**
+   * Proveedor.calificaciones
+   */
+  export type Proveedor$calificacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    where?: CalificacionProveedorWhereInput
+    orderBy?: CalificacionProveedorOrderByWithRelationInput | CalificacionProveedorOrderByWithRelationInput[]
+    cursor?: CalificacionProveedorWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CalificacionProveedorScalarFieldEnum | CalificacionProveedorScalarFieldEnum[]
+  }
+
+  /**
    * Proveedor without action
    */
   export type ProveedorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3109,6 +3228,1045 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProveedorInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CalificacionProveedor
+   */
+
+  export type AggregateCalificacionProveedor = {
+    _count: CalificacionProveedorCountAggregateOutputType | null
+    _avg: CalificacionProveedorAvgAggregateOutputType | null
+    _sum: CalificacionProveedorSumAggregateOutputType | null
+    _min: CalificacionProveedorMinAggregateOutputType | null
+    _max: CalificacionProveedorMaxAggregateOutputType | null
+  }
+
+  export type CalificacionProveedorAvgAggregateOutputType = {
+    puntuacion: Decimal | null
+  }
+
+  export type CalificacionProveedorSumAggregateOutputType = {
+    puntuacion: Decimal | null
+  }
+
+  export type CalificacionProveedorMinAggregateOutputType = {
+    id_calificacion: string | null
+    tenant_id: string | null
+    proveedor_id: string | null
+    proyecto_id: string | null
+    proyecto_nombre: string | null
+    puntuacion: Decimal | null
+    comentario: string | null
+    calificado_por: string | null
+    calificado_por_nombre: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type CalificacionProveedorMaxAggregateOutputType = {
+    id_calificacion: string | null
+    tenant_id: string | null
+    proveedor_id: string | null
+    proyecto_id: string | null
+    proyecto_nombre: string | null
+    puntuacion: Decimal | null
+    comentario: string | null
+    calificado_por: string | null
+    calificado_por_nombre: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type CalificacionProveedorCountAggregateOutputType = {
+    id_calificacion: number
+    tenant_id: number
+    proveedor_id: number
+    proyecto_id: number
+    proyecto_nombre: number
+    puntuacion: number
+    comentario: number
+    calificado_por: number
+    calificado_por_nombre: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type CalificacionProveedorAvgAggregateInputType = {
+    puntuacion?: true
+  }
+
+  export type CalificacionProveedorSumAggregateInputType = {
+    puntuacion?: true
+  }
+
+  export type CalificacionProveedorMinAggregateInputType = {
+    id_calificacion?: true
+    tenant_id?: true
+    proveedor_id?: true
+    proyecto_id?: true
+    proyecto_nombre?: true
+    puntuacion?: true
+    comentario?: true
+    calificado_por?: true
+    calificado_por_nombre?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type CalificacionProveedorMaxAggregateInputType = {
+    id_calificacion?: true
+    tenant_id?: true
+    proveedor_id?: true
+    proyecto_id?: true
+    proyecto_nombre?: true
+    puntuacion?: true
+    comentario?: true
+    calificado_por?: true
+    calificado_por_nombre?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type CalificacionProveedorCountAggregateInputType = {
+    id_calificacion?: true
+    tenant_id?: true
+    proveedor_id?: true
+    proyecto_id?: true
+    proyecto_nombre?: true
+    puntuacion?: true
+    comentario?: true
+    calificado_por?: true
+    calificado_por_nombre?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type CalificacionProveedorAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CalificacionProveedor to aggregate.
+     */
+    where?: CalificacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CalificacionProveedors to fetch.
+     */
+    orderBy?: CalificacionProveedorOrderByWithRelationInput | CalificacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CalificacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CalificacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CalificacionProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CalificacionProveedors
+    **/
+    _count?: true | CalificacionProveedorCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CalificacionProveedorAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CalificacionProveedorSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CalificacionProveedorMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CalificacionProveedorMaxAggregateInputType
+  }
+
+  export type GetCalificacionProveedorAggregateType<T extends CalificacionProveedorAggregateArgs> = {
+        [P in keyof T & keyof AggregateCalificacionProveedor]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCalificacionProveedor[P]>
+      : GetScalarType<T[P], AggregateCalificacionProveedor[P]>
+  }
+
+
+
+
+  export type CalificacionProveedorGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CalificacionProveedorWhereInput
+    orderBy?: CalificacionProveedorOrderByWithAggregationInput | CalificacionProveedorOrderByWithAggregationInput[]
+    by: CalificacionProveedorScalarFieldEnum[] | CalificacionProveedorScalarFieldEnum
+    having?: CalificacionProveedorScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CalificacionProveedorCountAggregateInputType | true
+    _avg?: CalificacionProveedorAvgAggregateInputType
+    _sum?: CalificacionProveedorSumAggregateInputType
+    _min?: CalificacionProveedorMinAggregateInputType
+    _max?: CalificacionProveedorMaxAggregateInputType
+  }
+
+  export type CalificacionProveedorGroupByOutputType = {
+    id_calificacion: string
+    tenant_id: string
+    proveedor_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal
+    comentario: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at: Date
+    updated_at: Date
+    _count: CalificacionProveedorCountAggregateOutputType | null
+    _avg: CalificacionProveedorAvgAggregateOutputType | null
+    _sum: CalificacionProveedorSumAggregateOutputType | null
+    _min: CalificacionProveedorMinAggregateOutputType | null
+    _max: CalificacionProveedorMaxAggregateOutputType | null
+  }
+
+  type GetCalificacionProveedorGroupByPayload<T extends CalificacionProveedorGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CalificacionProveedorGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CalificacionProveedorGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CalificacionProveedorGroupByOutputType[P]>
+            : GetScalarType<T[P], CalificacionProveedorGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CalificacionProveedorSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_calificacion?: boolean
+    tenant_id?: boolean
+    proveedor_id?: boolean
+    proyecto_id?: boolean
+    proyecto_nombre?: boolean
+    puntuacion?: boolean
+    comentario?: boolean
+    calificado_por?: boolean
+    calificado_por_nombre?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["calificacionProveedor"]>
+
+  export type CalificacionProveedorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_calificacion?: boolean
+    tenant_id?: boolean
+    proveedor_id?: boolean
+    proyecto_id?: boolean
+    proyecto_nombre?: boolean
+    puntuacion?: boolean
+    comentario?: boolean
+    calificado_por?: boolean
+    calificado_por_nombre?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["calificacionProveedor"]>
+
+  export type CalificacionProveedorSelectScalar = {
+    id_calificacion?: boolean
+    tenant_id?: boolean
+    proveedor_id?: boolean
+    proyecto_id?: boolean
+    proyecto_nombre?: boolean
+    puntuacion?: boolean
+    comentario?: boolean
+    calificado_por?: boolean
+    calificado_por_nombre?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type CalificacionProveedorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }
+  export type CalificacionProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
+  }
+
+  export type $CalificacionProveedorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CalificacionProveedor"
+    objects: {
+      proveedor: Prisma.$ProveedorPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_calificacion: string
+      tenant_id: string
+      proveedor_id: string
+      proyecto_id: string
+      proyecto_nombre: string
+      puntuacion: Prisma.Decimal
+      comentario: string | null
+      calificado_por: string
+      calificado_por_nombre: string
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["calificacionProveedor"]>
+    composites: {}
+  }
+
+  type CalificacionProveedorGetPayload<S extends boolean | null | undefined | CalificacionProveedorDefaultArgs> = $Result.GetResult<Prisma.$CalificacionProveedorPayload, S>
+
+  type CalificacionProveedorCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CalificacionProveedorFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CalificacionProveedorCountAggregateInputType | true
+    }
+
+  export interface CalificacionProveedorDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CalificacionProveedor'], meta: { name: 'CalificacionProveedor' } }
+    /**
+     * Find zero or one CalificacionProveedor that matches the filter.
+     * @param {CalificacionProveedorFindUniqueArgs} args - Arguments to find a CalificacionProveedor
+     * @example
+     * // Get one CalificacionProveedor
+     * const calificacionProveedor = await prisma.calificacionProveedor.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CalificacionProveedorFindUniqueArgs>(args: SelectSubset<T, CalificacionProveedorFindUniqueArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one CalificacionProveedor that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CalificacionProveedorFindUniqueOrThrowArgs} args - Arguments to find a CalificacionProveedor
+     * @example
+     * // Get one CalificacionProveedor
+     * const calificacionProveedor = await prisma.calificacionProveedor.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CalificacionProveedorFindUniqueOrThrowArgs>(args: SelectSubset<T, CalificacionProveedorFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first CalificacionProveedor that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorFindFirstArgs} args - Arguments to find a CalificacionProveedor
+     * @example
+     * // Get one CalificacionProveedor
+     * const calificacionProveedor = await prisma.calificacionProveedor.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CalificacionProveedorFindFirstArgs>(args?: SelectSubset<T, CalificacionProveedorFindFirstArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first CalificacionProveedor that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorFindFirstOrThrowArgs} args - Arguments to find a CalificacionProveedor
+     * @example
+     * // Get one CalificacionProveedor
+     * const calificacionProveedor = await prisma.calificacionProveedor.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CalificacionProveedorFindFirstOrThrowArgs>(args?: SelectSubset<T, CalificacionProveedorFindFirstOrThrowArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more CalificacionProveedors that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CalificacionProveedors
+     * const calificacionProveedors = await prisma.calificacionProveedor.findMany()
+     * 
+     * // Get first 10 CalificacionProveedors
+     * const calificacionProveedors = await prisma.calificacionProveedor.findMany({ take: 10 })
+     * 
+     * // Only select the `id_calificacion`
+     * const calificacionProveedorWithId_calificacionOnly = await prisma.calificacionProveedor.findMany({ select: { id_calificacion: true } })
+     * 
+     */
+    findMany<T extends CalificacionProveedorFindManyArgs>(args?: SelectSubset<T, CalificacionProveedorFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a CalificacionProveedor.
+     * @param {CalificacionProveedorCreateArgs} args - Arguments to create a CalificacionProveedor.
+     * @example
+     * // Create one CalificacionProveedor
+     * const CalificacionProveedor = await prisma.calificacionProveedor.create({
+     *   data: {
+     *     // ... data to create a CalificacionProveedor
+     *   }
+     * })
+     * 
+     */
+    create<T extends CalificacionProveedorCreateArgs>(args: SelectSubset<T, CalificacionProveedorCreateArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many CalificacionProveedors.
+     * @param {CalificacionProveedorCreateManyArgs} args - Arguments to create many CalificacionProveedors.
+     * @example
+     * // Create many CalificacionProveedors
+     * const calificacionProveedor = await prisma.calificacionProveedor.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CalificacionProveedorCreateManyArgs>(args?: SelectSubset<T, CalificacionProveedorCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CalificacionProveedors and returns the data saved in the database.
+     * @param {CalificacionProveedorCreateManyAndReturnArgs} args - Arguments to create many CalificacionProveedors.
+     * @example
+     * // Create many CalificacionProveedors
+     * const calificacionProveedor = await prisma.calificacionProveedor.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CalificacionProveedors and only return the `id_calificacion`
+     * const calificacionProveedorWithId_calificacionOnly = await prisma.calificacionProveedor.createManyAndReturn({ 
+     *   select: { id_calificacion: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CalificacionProveedorCreateManyAndReturnArgs>(args?: SelectSubset<T, CalificacionProveedorCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a CalificacionProveedor.
+     * @param {CalificacionProveedorDeleteArgs} args - Arguments to delete one CalificacionProveedor.
+     * @example
+     * // Delete one CalificacionProveedor
+     * const CalificacionProveedor = await prisma.calificacionProveedor.delete({
+     *   where: {
+     *     // ... filter to delete one CalificacionProveedor
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CalificacionProveedorDeleteArgs>(args: SelectSubset<T, CalificacionProveedorDeleteArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one CalificacionProveedor.
+     * @param {CalificacionProveedorUpdateArgs} args - Arguments to update one CalificacionProveedor.
+     * @example
+     * // Update one CalificacionProveedor
+     * const calificacionProveedor = await prisma.calificacionProveedor.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CalificacionProveedorUpdateArgs>(args: SelectSubset<T, CalificacionProveedorUpdateArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more CalificacionProveedors.
+     * @param {CalificacionProveedorDeleteManyArgs} args - Arguments to filter CalificacionProveedors to delete.
+     * @example
+     * // Delete a few CalificacionProveedors
+     * const { count } = await prisma.calificacionProveedor.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CalificacionProveedorDeleteManyArgs>(args?: SelectSubset<T, CalificacionProveedorDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CalificacionProveedors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CalificacionProveedors
+     * const calificacionProveedor = await prisma.calificacionProveedor.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CalificacionProveedorUpdateManyArgs>(args: SelectSubset<T, CalificacionProveedorUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CalificacionProveedor.
+     * @param {CalificacionProveedorUpsertArgs} args - Arguments to update or create a CalificacionProveedor.
+     * @example
+     * // Update or create a CalificacionProveedor
+     * const calificacionProveedor = await prisma.calificacionProveedor.upsert({
+     *   create: {
+     *     // ... data to create a CalificacionProveedor
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CalificacionProveedor we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CalificacionProveedorUpsertArgs>(args: SelectSubset<T, CalificacionProveedorUpsertArgs<ExtArgs>>): Prisma__CalificacionProveedorClient<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of CalificacionProveedors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorCountArgs} args - Arguments to filter CalificacionProveedors to count.
+     * @example
+     * // Count the number of CalificacionProveedors
+     * const count = await prisma.calificacionProveedor.count({
+     *   where: {
+     *     // ... the filter for the CalificacionProveedors we want to count
+     *   }
+     * })
+    **/
+    count<T extends CalificacionProveedorCountArgs>(
+      args?: Subset<T, CalificacionProveedorCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CalificacionProveedorCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CalificacionProveedor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CalificacionProveedorAggregateArgs>(args: Subset<T, CalificacionProveedorAggregateArgs>): Prisma.PrismaPromise<GetCalificacionProveedorAggregateType<T>>
+
+    /**
+     * Group by CalificacionProveedor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CalificacionProveedorGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CalificacionProveedorGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CalificacionProveedorGroupByArgs['orderBy'] }
+        : { orderBy?: CalificacionProveedorGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CalificacionProveedorGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCalificacionProveedorGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CalificacionProveedor model
+   */
+  readonly fields: CalificacionProveedorFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CalificacionProveedor.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CalificacionProveedorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    proveedor<T extends ProveedorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProveedorDefaultArgs<ExtArgs>>): Prisma__ProveedorClient<$Result.GetResult<Prisma.$ProveedorPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CalificacionProveedor model
+   */ 
+  interface CalificacionProveedorFieldRefs {
+    readonly id_calificacion: FieldRef<"CalificacionProveedor", 'String'>
+    readonly tenant_id: FieldRef<"CalificacionProveedor", 'String'>
+    readonly proveedor_id: FieldRef<"CalificacionProveedor", 'String'>
+    readonly proyecto_id: FieldRef<"CalificacionProveedor", 'String'>
+    readonly proyecto_nombre: FieldRef<"CalificacionProveedor", 'String'>
+    readonly puntuacion: FieldRef<"CalificacionProveedor", 'Decimal'>
+    readonly comentario: FieldRef<"CalificacionProveedor", 'String'>
+    readonly calificado_por: FieldRef<"CalificacionProveedor", 'String'>
+    readonly calificado_por_nombre: FieldRef<"CalificacionProveedor", 'String'>
+    readonly created_at: FieldRef<"CalificacionProveedor", 'DateTime'>
+    readonly updated_at: FieldRef<"CalificacionProveedor", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CalificacionProveedor findUnique
+   */
+  export type CalificacionProveedorFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which CalificacionProveedor to fetch.
+     */
+    where: CalificacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * CalificacionProveedor findUniqueOrThrow
+   */
+  export type CalificacionProveedorFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which CalificacionProveedor to fetch.
+     */
+    where: CalificacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * CalificacionProveedor findFirst
+   */
+  export type CalificacionProveedorFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which CalificacionProveedor to fetch.
+     */
+    where?: CalificacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CalificacionProveedors to fetch.
+     */
+    orderBy?: CalificacionProveedorOrderByWithRelationInput | CalificacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CalificacionProveedors.
+     */
+    cursor?: CalificacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CalificacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CalificacionProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CalificacionProveedors.
+     */
+    distinct?: CalificacionProveedorScalarFieldEnum | CalificacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * CalificacionProveedor findFirstOrThrow
+   */
+  export type CalificacionProveedorFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which CalificacionProveedor to fetch.
+     */
+    where?: CalificacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CalificacionProveedors to fetch.
+     */
+    orderBy?: CalificacionProveedorOrderByWithRelationInput | CalificacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CalificacionProveedors.
+     */
+    cursor?: CalificacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CalificacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CalificacionProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CalificacionProveedors.
+     */
+    distinct?: CalificacionProveedorScalarFieldEnum | CalificacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * CalificacionProveedor findMany
+   */
+  export type CalificacionProveedorFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which CalificacionProveedors to fetch.
+     */
+    where?: CalificacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CalificacionProveedors to fetch.
+     */
+    orderBy?: CalificacionProveedorOrderByWithRelationInput | CalificacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CalificacionProveedors.
+     */
+    cursor?: CalificacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CalificacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CalificacionProveedors.
+     */
+    skip?: number
+    distinct?: CalificacionProveedorScalarFieldEnum | CalificacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * CalificacionProveedor create
+   */
+  export type CalificacionProveedorCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CalificacionProveedor.
+     */
+    data: XOR<CalificacionProveedorCreateInput, CalificacionProveedorUncheckedCreateInput>
+  }
+
+  /**
+   * CalificacionProveedor createMany
+   */
+  export type CalificacionProveedorCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CalificacionProveedors.
+     */
+    data: CalificacionProveedorCreateManyInput | CalificacionProveedorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CalificacionProveedor createManyAndReturn
+   */
+  export type CalificacionProveedorCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many CalificacionProveedors.
+     */
+    data: CalificacionProveedorCreateManyInput | CalificacionProveedorCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CalificacionProveedor update
+   */
+  export type CalificacionProveedorUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CalificacionProveedor.
+     */
+    data: XOR<CalificacionProveedorUpdateInput, CalificacionProveedorUncheckedUpdateInput>
+    /**
+     * Choose, which CalificacionProveedor to update.
+     */
+    where: CalificacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * CalificacionProveedor updateMany
+   */
+  export type CalificacionProveedorUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CalificacionProveedors.
+     */
+    data: XOR<CalificacionProveedorUpdateManyMutationInput, CalificacionProveedorUncheckedUpdateManyInput>
+    /**
+     * Filter which CalificacionProveedors to update
+     */
+    where?: CalificacionProveedorWhereInput
+  }
+
+  /**
+   * CalificacionProveedor upsert
+   */
+  export type CalificacionProveedorUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CalificacionProveedor to update in case it exists.
+     */
+    where: CalificacionProveedorWhereUniqueInput
+    /**
+     * In case the CalificacionProveedor found by the `where` argument doesn't exist, create a new CalificacionProveedor with this data.
+     */
+    create: XOR<CalificacionProveedorCreateInput, CalificacionProveedorUncheckedCreateInput>
+    /**
+     * In case the CalificacionProveedor was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CalificacionProveedorUpdateInput, CalificacionProveedorUncheckedUpdateInput>
+  }
+
+  /**
+   * CalificacionProveedor delete
+   */
+  export type CalificacionProveedorDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter which CalificacionProveedor to delete.
+     */
+    where: CalificacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * CalificacionProveedor deleteMany
+   */
+  export type CalificacionProveedorDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CalificacionProveedors to delete
+     */
+    where?: CalificacionProveedorWhereInput
+  }
+
+  /**
+   * CalificacionProveedor without action
+   */
+  export type CalificacionProveedorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CalificacionProveedor
+     */
+    select?: CalificacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CalificacionProveedorInclude<ExtArgs> | null
   }
 
 
@@ -14500,6 +15658,23 @@ export namespace Prisma {
   export type ProveedorScalarFieldEnum = (typeof ProveedorScalarFieldEnum)[keyof typeof ProveedorScalarFieldEnum]
 
 
+  export const CalificacionProveedorScalarFieldEnum: {
+    id_calificacion: 'id_calificacion',
+    tenant_id: 'tenant_id',
+    proveedor_id: 'proveedor_id',
+    proyecto_id: 'proyecto_id',
+    proyecto_nombre: 'proyecto_nombre',
+    puntuacion: 'puntuacion',
+    comentario: 'comentario',
+    calificado_por: 'calificado_por',
+    calificado_por_nombre: 'calificado_por_nombre',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type CalificacionProveedorScalarFieldEnum = (typeof CalificacionProveedorScalarFieldEnum)[keyof typeof CalificacionProveedorScalarFieldEnum]
+
+
   export const DocumentoProveedorScalarFieldEnum: {
     id_doc: 'id_doc',
     tenant_id: 'tenant_id',
@@ -14750,20 +15925,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
-   */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-  /**
-   * Reference to a field of type 'Int[]'
-   */
-  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-  /**
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -14774,6 +15935,20 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -14815,6 +15990,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraListRelationFilter
     comparativas?: ComparativaDetalleListRelationFilter
     documentos?: DocumentoProveedorListRelationFilter
+    calificaciones?: CalificacionProveedorListRelationFilter
   }
 
   export type ProveedorOrderByWithRelationInput = {
@@ -14835,6 +16011,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraOrderByRelationAggregateInput
     comparativas?: ComparativaDetalleOrderByRelationAggregateInput
     documentos?: DocumentoProveedorOrderByRelationAggregateInput
+    calificaciones?: CalificacionProveedorOrderByRelationAggregateInput
   }
 
   export type ProveedorWhereUniqueInput = Prisma.AtLeast<{
@@ -14859,6 +16036,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraListRelationFilter
     comparativas?: ComparativaDetalleListRelationFilter
     documentos?: DocumentoProveedorListRelationFilter
+    calificaciones?: CalificacionProveedorListRelationFilter
   }, "id_proveedor" | "tenant_id_rfc_tax_id">
 
   export type ProveedorOrderByWithAggregationInput = {
@@ -14901,6 +16079,94 @@ export namespace Prisma {
     limite_credito?: DecimalNullableWithAggregatesFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
     tipo_proveedor?: StringWithAggregatesFilter<"Proveedor"> | string
     calificacion_desempeno?: DecimalNullableWithAggregatesFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type CalificacionProveedorWhereInput = {
+    AND?: CalificacionProveedorWhereInput | CalificacionProveedorWhereInput[]
+    OR?: CalificacionProveedorWhereInput[]
+    NOT?: CalificacionProveedorWhereInput | CalificacionProveedorWhereInput[]
+    id_calificacion?: UuidFilter<"CalificacionProveedor"> | string
+    tenant_id?: UuidFilter<"CalificacionProveedor"> | string
+    proveedor_id?: UuidFilter<"CalificacionProveedor"> | string
+    proyecto_id?: UuidFilter<"CalificacionProveedor"> | string
+    proyecto_nombre?: StringFilter<"CalificacionProveedor"> | string
+    puntuacion?: DecimalFilter<"CalificacionProveedor"> | Decimal | DecimalJsLike | number | string
+    comentario?: StringNullableFilter<"CalificacionProveedor"> | string | null
+    calificado_por?: UuidFilter<"CalificacionProveedor"> | string
+    calificado_por_nombre?: StringFilter<"CalificacionProveedor"> | string
+    created_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
+    updated_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
+    proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
+  }
+
+  export type CalificacionProveedorOrderByWithRelationInput = {
+    id_calificacion?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    proyecto_id?: SortOrder
+    proyecto_nombre?: SortOrder
+    puntuacion?: SortOrder
+    comentario?: SortOrderInput | SortOrder
+    calificado_por?: SortOrder
+    calificado_por_nombre?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    proveedor?: ProveedorOrderByWithRelationInput
+  }
+
+  export type CalificacionProveedorWhereUniqueInput = Prisma.AtLeast<{
+    id_calificacion?: string
+    tenant_id_proveedor_id_proyecto_id?: CalificacionProveedorTenant_idProveedor_idProyecto_idCompoundUniqueInput
+    AND?: CalificacionProveedorWhereInput | CalificacionProveedorWhereInput[]
+    OR?: CalificacionProveedorWhereInput[]
+    NOT?: CalificacionProveedorWhereInput | CalificacionProveedorWhereInput[]
+    tenant_id?: UuidFilter<"CalificacionProveedor"> | string
+    proveedor_id?: UuidFilter<"CalificacionProveedor"> | string
+    proyecto_id?: UuidFilter<"CalificacionProveedor"> | string
+    proyecto_nombre?: StringFilter<"CalificacionProveedor"> | string
+    puntuacion?: DecimalFilter<"CalificacionProveedor"> | Decimal | DecimalJsLike | number | string
+    comentario?: StringNullableFilter<"CalificacionProveedor"> | string | null
+    calificado_por?: UuidFilter<"CalificacionProveedor"> | string
+    calificado_por_nombre?: StringFilter<"CalificacionProveedor"> | string
+    created_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
+    updated_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
+    proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
+  }, "id_calificacion" | "tenant_id_proveedor_id_proyecto_id">
+
+  export type CalificacionProveedorOrderByWithAggregationInput = {
+    id_calificacion?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    proyecto_id?: SortOrder
+    proyecto_nombre?: SortOrder
+    puntuacion?: SortOrder
+    comentario?: SortOrderInput | SortOrder
+    calificado_por?: SortOrder
+    calificado_por_nombre?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: CalificacionProveedorCountOrderByAggregateInput
+    _avg?: CalificacionProveedorAvgOrderByAggregateInput
+    _max?: CalificacionProveedorMaxOrderByAggregateInput
+    _min?: CalificacionProveedorMinOrderByAggregateInput
+    _sum?: CalificacionProveedorSumOrderByAggregateInput
+  }
+
+  export type CalificacionProveedorScalarWhereWithAggregatesInput = {
+    AND?: CalificacionProveedorScalarWhereWithAggregatesInput | CalificacionProveedorScalarWhereWithAggregatesInput[]
+    OR?: CalificacionProveedorScalarWhereWithAggregatesInput[]
+    NOT?: CalificacionProveedorScalarWhereWithAggregatesInput | CalificacionProveedorScalarWhereWithAggregatesInput[]
+    id_calificacion?: UuidWithAggregatesFilter<"CalificacionProveedor"> | string
+    tenant_id?: UuidWithAggregatesFilter<"CalificacionProveedor"> | string
+    proveedor_id?: UuidWithAggregatesFilter<"CalificacionProveedor"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"CalificacionProveedor"> | string
+    proyecto_nombre?: StringWithAggregatesFilter<"CalificacionProveedor"> | string
+    puntuacion?: DecimalWithAggregatesFilter<"CalificacionProveedor"> | Decimal | DecimalJsLike | number | string
+    comentario?: StringNullableWithAggregatesFilter<"CalificacionProveedor"> | string | null
+    calificado_por?: UuidWithAggregatesFilter<"CalificacionProveedor"> | string
+    calificado_por_nombre?: StringWithAggregatesFilter<"CalificacionProveedor"> | string
+    created_at?: DateTimeWithAggregatesFilter<"CalificacionProveedor"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"CalificacionProveedor"> | Date | string
   }
 
   export type DocumentoProveedorWhereInput = {
@@ -15871,6 +17137,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateInput = {
@@ -15891,6 +17158,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUpdateInput = {
@@ -15911,6 +17179,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateInput = {
@@ -15931,6 +17200,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorCreateManyInput = {
@@ -15982,6 +17252,103 @@ export namespace Prisma {
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type CalificacionProveedorCreateInput = {
+    id_calificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal | DecimalJsLike | number | string
+    comentario?: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at?: Date | string
+    updated_at?: Date | string
+    proveedor: ProveedorCreateNestedOneWithoutCalificacionesInput
+  }
+
+  export type CalificacionProveedorUncheckedCreateInput = {
+    id_calificacion?: string
+    tenant_id: string
+    proveedor_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal | DecimalJsLike | number | string
+    comentario?: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CalificacionProveedorUpdateInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedor?: ProveedorUpdateOneRequiredWithoutCalificacionesNestedInput
+  }
+
+  export type CalificacionProveedorUncheckedUpdateInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CalificacionProveedorCreateManyInput = {
+    id_calificacion?: string
+    tenant_id: string
+    proveedor_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal | DecimalJsLike | number | string
+    comentario?: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CalificacionProveedorUpdateManyMutationInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CalificacionProveedorUncheckedUpdateManyInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type DocumentoProveedorCreateInput = {
@@ -17136,6 +18503,12 @@ export namespace Prisma {
     none?: DocumentoProveedorWhereInput
   }
 
+  export type CalificacionProveedorListRelationFilter = {
+    every?: CalificacionProveedorWhereInput
+    some?: CalificacionProveedorWhereInput
+    none?: CalificacionProveedorWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -17150,6 +18523,10 @@ export namespace Prisma {
   }
 
   export type DocumentoProveedorOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CalificacionProveedorOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -17294,15 +18671,15 @@ export namespace Prisma {
     _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
+  export type DecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type DateTimeFilter<$PrismaModel = never> = {
@@ -17319,6 +18696,103 @@ export namespace Prisma {
   export type ProveedorRelationFilter = {
     is?: ProveedorWhereInput
     isNot?: ProveedorWhereInput
+  }
+
+  export type CalificacionProveedorTenant_idProveedor_idProyecto_idCompoundUniqueInput = {
+    tenant_id: string
+    proveedor_id: string
+    proyecto_id: string
+  }
+
+  export type CalificacionProveedorCountOrderByAggregateInput = {
+    id_calificacion?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    proyecto_id?: SortOrder
+    proyecto_nombre?: SortOrder
+    puntuacion?: SortOrder
+    comentario?: SortOrder
+    calificado_por?: SortOrder
+    calificado_por_nombre?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CalificacionProveedorAvgOrderByAggregateInput = {
+    puntuacion?: SortOrder
+  }
+
+  export type CalificacionProveedorMaxOrderByAggregateInput = {
+    id_calificacion?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    proyecto_id?: SortOrder
+    proyecto_nombre?: SortOrder
+    puntuacion?: SortOrder
+    comentario?: SortOrder
+    calificado_por?: SortOrder
+    calificado_por_nombre?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CalificacionProveedorMinOrderByAggregateInput = {
+    id_calificacion?: SortOrder
+    tenant_id?: SortOrder
+    proveedor_id?: SortOrder
+    proyecto_id?: SortOrder
+    proyecto_nombre?: SortOrder
+    puntuacion?: SortOrder
+    comentario?: SortOrder
+    calificado_por?: SortOrder
+    calificado_por_nombre?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CalificacionProveedorSumOrderByAggregateInput = {
+    puntuacion?: SortOrder
+  }
+
+  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type DocumentoProveedorCountOrderByAggregateInput = {
@@ -17382,20 +18856,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type RequisicionItemListRelationFilter = {
@@ -17464,17 +18924,6 @@ export namespace Prisma {
     not?: NestedUuidNullableFilter<$PrismaModel> | string | null
   }
 
-  export type DecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-  }
-
   export type RequisicionRelationFilter = {
     is?: RequisicionWhereInput
     isNot?: RequisicionWhereInput
@@ -17540,22 +18989,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
   }
 
   export type OrdenCompraItemListRelationFilter = {
@@ -18060,6 +19493,13 @@ export namespace Prisma {
     connect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
   }
 
+  export type CalificacionProveedorCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<CalificacionProveedorCreateWithoutProveedorInput, CalificacionProveedorUncheckedCreateWithoutProveedorInput> | CalificacionProveedorCreateWithoutProveedorInput[] | CalificacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CalificacionProveedorCreateOrConnectWithoutProveedorInput | CalificacionProveedorCreateOrConnectWithoutProveedorInput[]
+    createMany?: CalificacionProveedorCreateManyProveedorInputEnvelope
+    connect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+  }
+
   export type OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput = {
     create?: XOR<OrdenCompraCreateWithoutProveedorInput, OrdenCompraUncheckedCreateWithoutProveedorInput> | OrdenCompraCreateWithoutProveedorInput[] | OrdenCompraUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutProveedorInput | OrdenCompraCreateOrConnectWithoutProveedorInput[]
@@ -18079,6 +19519,13 @@ export namespace Prisma {
     connectOrCreate?: DocumentoProveedorCreateOrConnectWithoutProveedorInput | DocumentoProveedorCreateOrConnectWithoutProveedorInput[]
     createMany?: DocumentoProveedorCreateManyProveedorInputEnvelope
     connect?: DocumentoProveedorWhereUniqueInput | DocumentoProveedorWhereUniqueInput[]
+  }
+
+  export type CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<CalificacionProveedorCreateWithoutProveedorInput, CalificacionProveedorUncheckedCreateWithoutProveedorInput> | CalificacionProveedorCreateWithoutProveedorInput[] | CalificacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CalificacionProveedorCreateOrConnectWithoutProveedorInput | CalificacionProveedorCreateOrConnectWithoutProveedorInput[]
+    createMany?: CalificacionProveedorCreateManyProveedorInputEnvelope
+    connect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -18143,6 +19590,20 @@ export namespace Prisma {
     deleteMany?: DocumentoProveedorScalarWhereInput | DocumentoProveedorScalarWhereInput[]
   }
 
+  export type CalificacionProveedorUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<CalificacionProveedorCreateWithoutProveedorInput, CalificacionProveedorUncheckedCreateWithoutProveedorInput> | CalificacionProveedorCreateWithoutProveedorInput[] | CalificacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CalificacionProveedorCreateOrConnectWithoutProveedorInput | CalificacionProveedorCreateOrConnectWithoutProveedorInput[]
+    upsert?: CalificacionProveedorUpsertWithWhereUniqueWithoutProveedorInput | CalificacionProveedorUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: CalificacionProveedorCreateManyProveedorInputEnvelope
+    set?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    disconnect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    delete?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    connect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    update?: CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput | CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput | CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: CalificacionProveedorScalarWhereInput | CalificacionProveedorScalarWhereInput[]
+  }
+
   export type OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput = {
     create?: XOR<OrdenCompraCreateWithoutProveedorInput, OrdenCompraUncheckedCreateWithoutProveedorInput> | OrdenCompraCreateWithoutProveedorInput[] | OrdenCompraUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutProveedorInput | OrdenCompraCreateOrConnectWithoutProveedorInput[]
@@ -18185,6 +19646,46 @@ export namespace Prisma {
     deleteMany?: DocumentoProveedorScalarWhereInput | DocumentoProveedorScalarWhereInput[]
   }
 
+  export type CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<CalificacionProveedorCreateWithoutProveedorInput, CalificacionProveedorUncheckedCreateWithoutProveedorInput> | CalificacionProveedorCreateWithoutProveedorInput[] | CalificacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CalificacionProveedorCreateOrConnectWithoutProveedorInput | CalificacionProveedorCreateOrConnectWithoutProveedorInput[]
+    upsert?: CalificacionProveedorUpsertWithWhereUniqueWithoutProveedorInput | CalificacionProveedorUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: CalificacionProveedorCreateManyProveedorInputEnvelope
+    set?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    disconnect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    delete?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    connect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+    update?: CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput | CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput | CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: CalificacionProveedorScalarWhereInput | CalificacionProveedorScalarWhereInput[]
+  }
+
+  export type ProveedorCreateNestedOneWithoutCalificacionesInput = {
+    create?: XOR<ProveedorCreateWithoutCalificacionesInput, ProveedorUncheckedCreateWithoutCalificacionesInput>
+    connectOrCreate?: ProveedorCreateOrConnectWithoutCalificacionesInput
+    connect?: ProveedorWhereUniqueInput
+  }
+
+  export type DecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type ProveedorUpdateOneRequiredWithoutCalificacionesNestedInput = {
+    create?: XOR<ProveedorCreateWithoutCalificacionesInput, ProveedorUncheckedCreateWithoutCalificacionesInput>
+    connectOrCreate?: ProveedorCreateOrConnectWithoutCalificacionesInput
+    upsert?: ProveedorUpsertWithoutCalificacionesInput
+    connect?: ProveedorWhereUniqueInput
+    update?: XOR<XOR<ProveedorUpdateToOneWithWhereWithoutCalificacionesInput, ProveedorUpdateWithoutCalificacionesInput>, ProveedorUncheckedUpdateWithoutCalificacionesInput>
+  }
+
   export type ProveedorCreateNestedOneWithoutDocumentosInput = {
     create?: XOR<ProveedorCreateWithoutDocumentosInput, ProveedorUncheckedCreateWithoutDocumentosInput>
     connectOrCreate?: ProveedorCreateOrConnectWithoutDocumentosInput
@@ -18197,10 +19698,6 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
-  }
-
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
   }
 
   export type ProveedorUpdateOneRequiredWithoutDocumentosNestedInput = {
@@ -18257,14 +19754,6 @@ export namespace Prisma {
     create?: XOR<RequisicionCreateWithoutItemsInput, RequisicionUncheckedCreateWithoutItemsInput>
     connectOrCreate?: RequisicionCreateOrConnectWithoutItemsInput
     connect?: RequisicionWhereUniqueInput
-  }
-
-  export type DecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type RequisicionUpdateOneRequiredWithoutItemsNestedInput = {
@@ -18680,6 +20169,17 @@ export namespace Prisma {
     _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
+  export type NestedDecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -18689,6 +20189,36 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -18718,20 +20248,6 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
-  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
   export type NestedUuidNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -18741,17 +20257,6 @@ export namespace Prisma {
     gt?: string | StringFieldRefInput<$PrismaModel>
     gte?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type NestedDecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -18766,22 +20271,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
@@ -18925,6 +20414,42 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CalificacionProveedorCreateWithoutProveedorInput = {
+    id_calificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal | DecimalJsLike | number | string
+    comentario?: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CalificacionProveedorUncheckedCreateWithoutProveedorInput = {
+    id_calificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal | DecimalJsLike | number | string
+    comentario?: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CalificacionProveedorCreateOrConnectWithoutProveedorInput = {
+    where: CalificacionProveedorWhereUniqueInput
+    create: XOR<CalificacionProveedorCreateWithoutProveedorInput, CalificacionProveedorUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type CalificacionProveedorCreateManyProveedorInputEnvelope = {
+    data: CalificacionProveedorCreateManyProveedorInput | CalificacionProveedorCreateManyProveedorInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrdenCompraUpsertWithWhereUniqueWithoutProveedorInput = {
     where: OrdenCompraWhereUniqueInput
     update: XOR<OrdenCompraUpdateWithoutProveedorInput, OrdenCompraUncheckedUpdateWithoutProveedorInput>
@@ -19027,6 +20552,135 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"DocumentoProveedor"> | Date | string
   }
 
+  export type CalificacionProveedorUpsertWithWhereUniqueWithoutProveedorInput = {
+    where: CalificacionProveedorWhereUniqueInput
+    update: XOR<CalificacionProveedorUpdateWithoutProveedorInput, CalificacionProveedorUncheckedUpdateWithoutProveedorInput>
+    create: XOR<CalificacionProveedorCreateWithoutProveedorInput, CalificacionProveedorUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput = {
+    where: CalificacionProveedorWhereUniqueInput
+    data: XOR<CalificacionProveedorUpdateWithoutProveedorInput, CalificacionProveedorUncheckedUpdateWithoutProveedorInput>
+  }
+
+  export type CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput = {
+    where: CalificacionProveedorScalarWhereInput
+    data: XOR<CalificacionProveedorUpdateManyMutationInput, CalificacionProveedorUncheckedUpdateManyWithoutProveedorInput>
+  }
+
+  export type CalificacionProveedorScalarWhereInput = {
+    AND?: CalificacionProveedorScalarWhereInput | CalificacionProveedorScalarWhereInput[]
+    OR?: CalificacionProveedorScalarWhereInput[]
+    NOT?: CalificacionProveedorScalarWhereInput | CalificacionProveedorScalarWhereInput[]
+    id_calificacion?: UuidFilter<"CalificacionProveedor"> | string
+    tenant_id?: UuidFilter<"CalificacionProveedor"> | string
+    proveedor_id?: UuidFilter<"CalificacionProveedor"> | string
+    proyecto_id?: UuidFilter<"CalificacionProveedor"> | string
+    proyecto_nombre?: StringFilter<"CalificacionProveedor"> | string
+    puntuacion?: DecimalFilter<"CalificacionProveedor"> | Decimal | DecimalJsLike | number | string
+    comentario?: StringNullableFilter<"CalificacionProveedor"> | string | null
+    calificado_por?: UuidFilter<"CalificacionProveedor"> | string
+    calificado_por_nombre?: StringFilter<"CalificacionProveedor"> | string
+    created_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
+    updated_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
+  }
+
+  export type ProveedorCreateWithoutCalificacionesInput = {
+    id_proveedor?: string
+    tenant_id: string
+    rfc_tax_id: string
+    razon_social: string
+    email_contacto?: string | null
+    telefono?: string | null
+    estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
+    comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
+  }
+
+  export type ProveedorUncheckedCreateWithoutCalificacionesInput = {
+    id_proveedor?: string
+    tenant_id: string
+    rfc_tax_id: string
+    razon_social: string
+    email_contacto?: string | null
+    telefono?: string | null
+    estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
+    comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
+  }
+
+  export type ProveedorCreateOrConnectWithoutCalificacionesInput = {
+    where: ProveedorWhereUniqueInput
+    create: XOR<ProveedorCreateWithoutCalificacionesInput, ProveedorUncheckedCreateWithoutCalificacionesInput>
+  }
+
+  export type ProveedorUpsertWithoutCalificacionesInput = {
+    update: XOR<ProveedorUpdateWithoutCalificacionesInput, ProveedorUncheckedUpdateWithoutCalificacionesInput>
+    create: XOR<ProveedorCreateWithoutCalificacionesInput, ProveedorUncheckedCreateWithoutCalificacionesInput>
+    where?: ProveedorWhereInput
+  }
+
+  export type ProveedorUpdateToOneWithWhereWithoutCalificacionesInput = {
+    where?: ProveedorWhereInput
+    data: XOR<ProveedorUpdateWithoutCalificacionesInput, ProveedorUncheckedUpdateWithoutCalificacionesInput>
+  }
+
+  export type ProveedorUpdateWithoutCalificacionesInput = {
+    id_proveedor?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    rfc_tax_id?: StringFieldUpdateOperationsInput | string
+    razon_social?: StringFieldUpdateOperationsInput | string
+    email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
+    comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
+  }
+
+  export type ProveedorUncheckedUpdateWithoutCalificacionesInput = {
+    id_proveedor?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    rfc_tax_id?: StringFieldUpdateOperationsInput | string
+    razon_social?: StringFieldUpdateOperationsInput | string
+    email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
+    comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+  }
+
   export type ProveedorCreateWithoutDocumentosInput = {
     id_proveedor?: string
     tenant_id: string
@@ -19044,6 +20698,7 @@ export namespace Prisma {
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutDocumentosInput = {
@@ -19063,6 +20718,7 @@ export namespace Prisma {
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutDocumentosInput = {
@@ -19098,6 +20754,7 @@ export namespace Prisma {
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutDocumentosInput = {
@@ -19117,6 +20774,7 @@ export namespace Prisma {
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type RequisicionItemCreateWithoutRequisicionInput = {
@@ -19270,6 +20928,7 @@ export namespace Prisma {
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutOrdenesInput = {
@@ -19289,6 +20948,7 @@ export namespace Prisma {
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutOrdenesInput = {
@@ -19354,6 +21014,7 @@ export namespace Prisma {
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutOrdenesInput = {
@@ -19373,6 +21034,7 @@ export namespace Prisma {
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type OrdenCompraItemUpsertWithWhereUniqueWithoutOrdenInput = {
@@ -19738,6 +21400,7 @@ export namespace Prisma {
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutComparativasInput = {
@@ -19757,6 +21420,7 @@ export namespace Prisma {
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutComparativasInput = {
@@ -19837,6 +21501,7 @@ export namespace Prisma {
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutComparativasInput = {
@@ -19856,6 +21521,7 @@ export namespace Prisma {
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type MovimientoAlmacenCreateWithoutItemInput = {
@@ -20052,6 +21718,19 @@ export namespace Prisma {
     created_at?: Date | string
   }
 
+  export type CalificacionProveedorCreateManyProveedorInput = {
+    id_calificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    proyecto_nombre: string
+    puntuacion: Decimal | DecimalJsLike | number | string
+    comentario?: string | null
+    calificado_por: string
+    calificado_por_nombre: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
   export type OrdenCompraUpdateWithoutProveedorInput = {
     id_orden?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
@@ -20178,6 +21857,45 @@ export namespace Prisma {
     tamano_bytes?: IntFieldUpdateOperationsInput | number
     subido_por?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CalificacionProveedorUpdateWithoutProveedorInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CalificacionProveedorUncheckedUpdateWithoutProveedorInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CalificacionProveedorUncheckedUpdateManyWithoutProveedorInput = {
+    id_calificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proyecto_nombre?: StringFieldUpdateOperationsInput | string
+    puntuacion?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    comentario?: NullableStringFieldUpdateOperationsInput | string | null
+    calificado_por?: StringFieldUpdateOperationsInput | string
+    calificado_por_nombre?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RequisicionItemCreateManyRequisicionInput = {
@@ -20449,6 +22167,10 @@ export namespace Prisma {
      * @deprecated Use ProveedorDefaultArgs instead
      */
     export type ProveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProveedorDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CalificacionProveedorDefaultArgs instead
+     */
+    export type CalificacionProveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CalificacionProveedorDefaultArgs<ExtArgs>
     /**
      * @deprecated Use DocumentoProveedorDefaultArgs instead
      */

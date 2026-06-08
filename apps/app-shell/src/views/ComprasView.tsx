@@ -198,6 +198,16 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [docsLoading, setDocsLoading] = useState(false);
   const [docTipoUpload, setDocTipoUpload] = useState('OTRO');
   const docFileRef = useRef<HTMLInputElement>(null);
+  // ── Calificaciones de proveedor ───────────────────────────────────────────
+  const [calHistorialId, setCalHistorialId] = useState<string | null>(null);
+  const [calHistorial, setCalHistorial] = useState<Record<string, any[]>>({});
+  const [calPromedios, setCalPromedios] = useState<Record<string, number | null>>({});
+  const [calTotales, setCalTotales] = useState<Record<string, number>>({});
+  const [calLoading, setCalLoading] = useState(false);
+  const [calPuntuacion, setCalPuntuacion] = useState('');
+  const [calComentario, setCalComentario] = useState('');
+  const [calSubmitting, setCalSubmitting] = useState(false);
+
   const [activeReqId, setActiveReqId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -602,6 +612,30 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }));
     setMovSearch('');
     setMovDropdownOpen(false);
+  };
+
+  const fetchCalHistorial = async (proveedorId: string) => {
+    setCalLoading(true);
+    try {
+      const res = await api.get(`/api/v1/compras/proveedores/${proveedorId}/calificaciones`);
+      const d = res.data.data;
+      setCalHistorial(prev => ({ ...prev, [proveedorId]: d.calificaciones || [] }));
+      setCalPromedios(prev => ({ ...prev, [proveedorId]: d.promedio_global ?? null }));
+      setCalTotales(prev => ({ ...prev, [proveedorId]: d.total ?? 0 }));
+      // Precargar formulario si ya existe calificación para proyecto actual
+      const existing = (d.calificaciones as any[]).find((c: any) => c.proyecto_id === user?.projects?.[0]?.id);
+      if (existing) {
+        setCalPuntuacion(String(existing.puntuacion));
+        setCalComentario(existing.comentario ?? '');
+      } else {
+        setCalPuntuacion('');
+        setCalComentario('');
+      }
+    } catch {
+      setCalHistorial(prev => ({ ...prev, [proveedorId]: [] }));
+    } finally {
+      setCalLoading(false);
+    }
   };
 
   const fetchDocsProveedor = async (proveedorId: string) => {
@@ -1609,18 +1643,31 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            {p.calificacion_desempeno != null ? (
-                              <div className="flex items-center gap-1">
-                                <span className="text-amber-500">★</span>
-                                <span className="text-xs font-bold">{Number(p.calificacion_desempeno).toFixed(1)}</span>
-                              </div>
-                            ) : (
+                            {p.calificacion_desempeno != null ? (() => {
+                              const score = Number(p.calificacion_desempeno);
+                              const total = calTotales[p.id_proveedor];
+                              const colorClass = score >= 4 ? 'text-emerald-600' : score >= 2.5 ? 'text-amber-500' : 'text-red-500';
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <span className={colorClass}>★</span>
+                                  <span className={`text-xs font-bold ${colorClass}`}>{score.toFixed(1)}</span>
+                                  {total != null && <span className="text-[10px] text-muted-foreground">({total})</span>}
+                                </div>
+                              );
+                            })() : (
                               <span className="text-[10px] text-muted-foreground/40">—</span>
                             )}
                           </td>
                           {isProcurement && (
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => { setCalHistorialId(p.id_proveedor); fetchCalHistorial(p.id_proveedor); }}
+                                  className="rounded-lg border border-amber-500/30 px-2 py-1 text-[10px] font-bold text-amber-600 hover:bg-amber-500/10 transition-colors"
+                                >
+                                  ★ Calificar
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => { setDocsProveedorId(p.id_proveedor); fetchDocsProveedor(p.id_proveedor); }}
@@ -2170,7 +2217,146 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         </div>
       </SlidePanel>
 
-      {/* ── Documentos de Proveedor ─────────────────────────────────────── */}
+      {/* ── Historial de Calificaciones ──────────────────────────────────── */}
+      <SlidePanel
+        isOpen={!!calHistorialId}
+        onClose={() => setCalHistorialId(null)}
+        title="Historial de Calificaciones"
+        subtitle={proveedoresList.find(p => p.id_proveedor === calHistorialId)?.razon_social}
+        accentColor="amber"
+      >
+        <div className="space-y-4">
+          {/* ── Promedio global ── */}
+          {calPromedios[calHistorialId ?? ''] != null && (() => {
+            const score = calPromedios[calHistorialId!]!;
+            const colorClass = score >= 4 ? 'text-emerald-600' : score >= 2.5 ? 'text-amber-500' : 'text-red-500';
+            return (
+              <div className="flex items-center gap-3 rounded-xl border border-border/40 bg-muted/20 p-3">
+                <span className={`text-3xl font-black ${colorClass}`}>★ {score.toFixed(1)}</span>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Promedio global</p>
+                  <p className="text-[10px] text-muted-foreground">{calTotales[calHistorialId!] ?? 0} calificaciones registradas</p>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Formulario calificar ── */}
+          {isProcurement && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                {(calHistorial[calHistorialId ?? ''] ?? []).some((c: any) => c.proyecto_id === user?.projects?.[0]?.id)
+                  ? 'Actualizar calificación — ' : 'Calificar en '}
+                {user?.projects?.[0]?.name ?? 'proyecto actual'}
+              </p>
+              {/* Estrellas clicables */}
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setCalPuntuacion(String(star))}
+                    className={`text-2xl transition-transform hover:scale-110 ${Number(calPuntuacion) >= star ? 'text-amber-400' : 'text-muted-foreground/30'}`}
+                  >★</button>
+                ))}
+                {calPuntuacion && (
+                  <span className="ml-2 self-center text-sm font-bold text-amber-600">{Number(calPuntuacion).toFixed(1)}</span>
+                )}
+              </div>
+              <FormField label="Comentario (opcional)">
+                <textarea
+                  className="w-full rounded-xl border border-border/50 bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                  rows={3} maxLength={500} placeholder="Entrega puntual, calidad del material, cumplimiento de especificaciones..."
+                  value={calComentario} onChange={e => setCalComentario(e.target.value)}
+                />
+              </FormField>
+              <SubmitButton
+                label={calSubmitting ? 'Guardando...' : (calHistorial[calHistorialId ?? ''] ?? []).some((c: any) => c.proyecto_id === user?.projects?.[0]?.id) ? 'Actualizar calificación' : 'Registrar calificación'}
+                loading={calSubmitting}
+                color="amber"
+                onClick={async () => {
+                  if (!calPuntuacion || !calHistorialId) return;
+                  setCalSubmitting(true);
+                  try {
+                    const proyectoNombre = user?.projects?.[0]?.name ?? '';
+                    const res = await api.post(`/api/v1/compras/proveedores/${calHistorialId}/calificaciones`, {
+                      puntuacion: Number(calPuntuacion),
+                      comentario: calComentario || undefined,
+                      proyecto_nombre: proyectoNombre,
+                    });
+                    const { promedio_actualizado, total_calificaciones } = res.data.data;
+                    // Actualizar cache y lista de proveedores
+                    setCalPromedios(prev => ({ ...prev, [calHistorialId]: promedio_actualizado }));
+                    setCalTotales(prev => ({ ...prev, [calHistorialId]: total_calificaciones }));
+                    setProveedoresList(prev => prev.map(p =>
+                      p.id_proveedor === calHistorialId ? { ...p, calificacion_desempeno: promedio_actualizado } : p
+                    ));
+                    await fetchCalHistorial(calHistorialId);
+                    notify({ title: res.data.data.accion === 'created' ? 'Calificación registrada' : 'Calificación actualizada', type: 'success' });
+                  } catch (err: any) {
+                    notify({ title: err.response?.data?.message ?? 'Error al registrar calificación', type: 'error' });
+                  } finally {
+                    setCalSubmitting(false);
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {/* ── Lista historial ── */}
+          {calLoading ? (
+            <p className="text-sm text-muted-foreground">Cargando historial...</p>
+          ) : (calHistorial[calHistorialId ?? ''] ?? []).length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/50 p-8 text-center">
+              <p className="text-sm text-muted-foreground">Sin calificaciones registradas.</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">Sé el primero en calificar a este proveedor.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(calHistorial[calHistorialId ?? ''] ?? []).map((cal: any) => {
+                const s = Number(cal.puntuacion);
+                const colorClass = s >= 4 ? 'text-emerald-600' : s >= 2.5 ? 'text-amber-500' : 'text-red-500';
+                return (
+                  <div key={cal.id_calificacion} className="rounded-xl border border-border/40 p-3 space-y-1">
+                    <div className="flex items-start justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate">{cal.proyecto_nombre}</p>
+                        <p className="text-[10px] text-muted-foreground">{new Date(cal.created_at).toLocaleDateString('es-MX')} · {cal.calificado_por_nombre}</p>
+                      </div>
+                      <div className="flex items-center gap-1 ml-2 shrink-0">
+                        <span className={`font-black ${colorClass}`}>★</span>
+                        <span className={`text-sm font-black ${colorClass}`}>{s.toFixed(1)}</span>
+                        {user?.role?.includes('admin') && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await api.delete(`/api/v1/compras/proveedores/${calHistorialId}/calificaciones/${cal.id_calificacion}`);
+                                await fetchCalHistorial(calHistorialId!);
+                                const newScore = calPromedios[calHistorialId!];
+                                setProveedoresList(prev => prev.map(p =>
+                                  p.id_proveedor === calHistorialId ? { ...p, calificacion_desempeno: newScore } : p
+                                ));
+                                notify({ title: 'Calificación eliminada', type: 'success' });
+                              } catch { notify({ title: 'Error al eliminar', type: 'error' }); }
+                            }}
+                            className="ml-1 rounded-lg border border-red-500/20 px-1.5 py-0.5 text-[9px] font-bold text-red-600 hover:bg-red-500/10 transition-colors"
+                          >✕</button>
+                        )}
+                      </div>
+                    </div>
+                    {cal.comentario && (
+                      <p className="text-[11px] text-muted-foreground italic">"{cal.comentario}"</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </SlidePanel>
+
+      {/* ── Documentos del Proveedor ─── */}
       <SlidePanel
         isOpen={!!docsProveedorId}
         onClose={() => setDocsProveedorId(null)}
@@ -2365,8 +2551,18 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             <FormField label="Límite de Crédito (MXN)" hint="Dejar vacío = sin límite">
               <Input type="number" placeholder="0.00" value={proveedorForm.limite_credito} onChange={e => setProveedorForm(f => ({ ...f, limite_credito: e.target.value }))} />
             </FormField>
-            <FormField label="Calificación Desempeño" hint="0.0 – 5.0">
-              <Input type="number" step="0.1" min="0" max="5" placeholder="—" value={proveedorForm.calificacion_desempeno} onChange={e => setProveedorForm(f => ({ ...f, calificacion_desempeno: e.target.value }))} />
+            <FormField label="Score de Desempeño" hint="Calculado automáticamente del historial de calificaciones">
+              <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
+                {proveedorForm.calificacion_desempeno ? (
+                  <>
+                    <span className="text-amber-500 font-bold">★</span>
+                    <span className="text-sm font-bold">{Number(proveedorForm.calificacion_desempeno).toFixed(1)}</span>
+                    <span className="text-[10px] text-muted-foreground ml-1">({calTotales[editingProveedor?.id_proveedor ?? ''] ?? 0} calificaciones)</span>
+                  </>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Sin calificaciones aún</span>
+                )}
+              </div>
             </FormField>
           </div>
 
