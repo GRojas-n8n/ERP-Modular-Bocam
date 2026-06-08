@@ -50,8 +50,8 @@
 
 ## 8. Integración y verificación en producción
 
-- [ ] 8.1 Migrar en VPS: `docker exec bocam-vps-compras npx prisma migrate deploy`
-- [ ] 8.2 Build y restart de `compras` y `app-shell` en VPS: `docker compose -f docker-compose.vps.yml up -d --build compras app-shell`
-- [ ] 8.3 Verificar: crear proveedor con campos logísticos y crediticios → confirmar se guardan y aparecen en lista
-- [ ] 8.4 Verificar: subir un PDF de tipo OPINION_SAT a un proveedor → descargarlo → confirmar nombre correcto
-- [ ] 8.5 Verificar: proveedor con `estatus_credito = BLOQUEADO` muestra badge rojo en la lista
+- [x] 8.1 Migrar en VPS: SQL aplicado via `prisma db execute` + registrado con `prisma migrate resolve --applied`
+- [x] 8.2 Build y restart de `compras` y `app-shell` en VPS: todos los contenedores `Healthy`
+- [x] 8.3 Verificar: GET /proveedores retorna campos nuevos (`tipo_ubicacion`, `estatus_credito`, `limite_credito`, `calificacion_desempeno`, etc.) con valores por defecto correctos
+- [x] 8.4 Verificar: upload PDF OPINION_SAT + descarga funcionando ✓ (fix fetch+blob aplicado)
+- [x] 8.5 Verificar: badge rojo BLOQUEADO visible en tabla ✓

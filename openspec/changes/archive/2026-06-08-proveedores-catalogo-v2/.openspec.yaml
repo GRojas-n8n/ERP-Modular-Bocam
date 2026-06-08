@@ -1,0 +1,10 @@
+schema: spec-driven
+created: 2026-06-08
+status: archived
+depends_on: []
+production_verified: true
+archived_at: 2026-06-08
+commits:
+  - b34075d feat: campos logísticos/crédito/documentos
+  - 193198f fix: IconScale→IconUsers
+  - ffde42b fix: descarga via fetch+blob

@@ -1,6 +1,0 @@
-name: calificacion-proveedor
-status: draft
-depends_on:
-  - proveedores-catalogo-v2
-created_at: 2026-06-08
-production_verified: false
