@@ -43,7 +43,7 @@ const OC_STATUS = {
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
-  excludePaths: ['/health'],
+  excludePaths: ['/health', '/debug-sentry'],
 }));
 app.use(requireProjectAccess());
 
@@ -2338,6 +2338,10 @@ app.get('/api/v1/compras/alertas/oc-error',
     }
   }
 );
+
+app.get('/debug-sentry', function mainHandler(_req: Request, _res: Response) {
+  throw new Error('My first Sentry error!');
+});
 
 setupSentryExpressHandler(app);
 
