@@ -136,6 +136,15 @@ interface TrazabilidadMaterial {
   items_ids: string[];
 }
 
+interface AlertaCotizacion {
+  solicitud_id: string;
+  requisicion_id: string;
+  requisicion_codigo: string;
+  fecha_limite: string;
+  dias_retraso: number;
+  proveedores_pendientes: string[];
+}
+
 interface ScpEntry {
   id_scp: string;
   proveedor_id: string;
@@ -267,9 +276,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [asignacionPanel, setAsignacionPanel] = useState<{ itemId: string; insumoDesc: string } | null>(null);
   const [asignForm, setAsignForm] = useState({ concepto_id: '', concepto_clave: '', concepto_descripcion: '', monto_extra: '' });
   const [asignSubmitting, setAsignSubmitting] = useState(false);
+  const [expandedConceptoId, setExpandedConceptoId] = useState<string | null>(null);
 
   // ── Solicitud de Cotización ──────────────────────────────────────────────
   const [solicitudesMap, setSolicitudesMap] = useState<Record<string, SolicitudCotizacion>>({});
+  const [alertasCotizacion, setAlertasCotizacion] = useState<AlertaCotizacion[]>([]);
   const [solicitudPanelReqId, setSolicitudPanelReqId] = useState<string | null>(null);
   const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[] }>({ dias_habiles: 3, notas: '', provsSeleccionados: [] });
   const [solicitudSubmitting, setSolicitudSubmitting] = useState(false);
@@ -346,7 +357,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         setPendientesGT(demoComps.filter(c => c.estado === 'EN_APROBACION_GT'));
         return;
       }
-      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes] = await Promise.allSettled([
+      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes, alertasRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
         api.get('/api/v1/gerencia-tecnica/insumos'),
         api.get('/api/v1/compras/almacen/inventario'),
@@ -356,6 +367,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         api.get('/api/v1/compras/comparativas/pendientes-evaluacion').catch(() => null),
         api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
         api.get('/api/v1/compras/proveedores').catch(() => null),
+        api.get('/api/v1/compras/alertas/cotizacion-pendiente').catch(() => null),
       ]);
       // Colectar datos normalizados para las dependencias entre entidades
       let insumosNormalizados: Insumo[] = [];
@@ -457,6 +469,9 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       if (provRes.status === 'fulfilled' && provRes.value) {
         setProveedoresList(provRes.value.data?.data || []);
       }
+      if (alertasRes.status === 'fulfilled' && alertasRes.value) {
+        setAlertasCotizacion(alertasRes.value.data?.data || []);
+      }
     } catch {
       setError('Error al conectar con el modulo de Compras.');
     } finally {
@@ -520,6 +535,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       i.ubicacion.toLowerCase().includes(q)
     );
   }, [inventario, inventarioSearch]);
+
+  const alertasReqIds = useMemo(
+    () => new Set(alertasCotizacion.map(a => a.requisicion_id)),
+    [alertasCotizacion]
+  );
 
   const movimientosFiltrados = useMemo(() => {
     if (!almacenFilter) return movimientosAlmacen;
@@ -1316,6 +1336,33 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </CardContent>
               </Card>
             ) : (
+              <div className="space-y-6">
+                {/* ── 9.2 Banner de alertas de cotización vencida ─────────── */}
+                {isProcurement && alertasCotizacion.length > 0 && (
+                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <IconAlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                      <p className="text-xs font-black uppercase tracking-widest text-amber-700">
+                        {alertasCotizacion.length} solicitud{alertasCotizacion.length !== 1 ? 'es' : ''} con plazo vencido
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      {alertasCotizacion.map(a => (
+                        <div key={a.solicitud_id} className="flex items-center justify-between rounded-xl border border-amber-500/10 bg-background px-3 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[10px] font-black text-foreground shrink-0">{a.requisicion_codigo}</span>
+                            <span className="text-[10px] text-amber-700 shrink-0">
+                              {a.dias_retraso} día{a.dias_retraso !== 1 ? 's' : ''} de retraso
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-muted-foreground shrink-0">
+                            {a.proveedores_pendientes.length} proveedor{a.proveedores_pendientes.length !== 1 ? 'es' : ''} pendiente{a.proveedores_pendientes.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {requisiciones.map(req => {
                   const hasComp = comparativas.some(c => c.requisicion_id === req.id);
@@ -1327,7 +1374,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       </div>
                       <CardHeader className="space-y-4">
                         <div className="flex items-center justify-between gap-3">
-                          <SectionBadge className="rounded-full px-3 py-1 text-[10px]">Folio: {req.folio}</SectionBadge>
+                          <div className="flex items-center gap-1.5">
+                            <SectionBadge className="rounded-full px-3 py-1 text-[10px]">Folio: {req.folio}</SectionBadge>
+                            {alertasReqIds.has(req.id) && (
+                              <span className="animate-pulse rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black text-amber-700">
+                                ⚠ Plazo
+                              </span>
+                            )}
+                          </div>
                           {prioridadBadge(req.prioridad)}
                         </div>
                         <div className="space-y-3">
@@ -1445,6 +1499,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </Card>
                   );
                 })}
+              </div>
               </div>
             )
           )}
@@ -2252,7 +2307,84 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </TableContainer>
                   </Card>
                 )}
-              </div>
+              {/* ── 6.11 + Group 7: Resumen por Concepto ──────────────────── */}
+              {(() => {
+                const resumenConceptos: Array<{
+                  concepto_id: string; concepto_clave: string; concepto_descripcion: string;
+                  monto_total_extra: number;
+                  incisos: Array<{ asignacion_id: string; insumo_desc: string; justificaciones: string[]; monto_extra: number }>;
+                }> = [];
+                const map = new Map<string, typeof resumenConceptos[number]>();
+                for (const mat of trazabilidad) {
+                  for (const ea of mat.extras_asignados) {
+                    if (!map.has(ea.concepto_id)) {
+                      const entry = { concepto_id: ea.concepto_id, concepto_clave: ea.concepto_clave, concepto_descripcion: ea.concepto_descripcion, monto_total_extra: 0, incisos: [] };
+                      map.set(ea.concepto_id, entry);
+                      resumenConceptos.push(entry);
+                    }
+                    const e = map.get(ea.concepto_id)!;
+                    e.monto_total_extra += ea.monto_extra;
+                    e.incisos.push({ asignacion_id: ea.asignacion_id, insumo_desc: mat.descripcion_libre ?? mat.insumo_id ?? '—', justificaciones: mat.justificaciones, monto_extra: ea.monto_extra });
+                  }
+                }
+                resumenConceptos.sort((a, b) => a.concepto_clave.localeCompare(b.concepto_clave));
+                if (resumenConceptos.length === 0) return null;
+                return (
+                  <div className="space-y-3">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Resumen por concepto</p>
+                    <Card className="overflow-hidden rounded-2xl border-border/40">
+                      {resumenConceptos.map(concepto => {
+                        const isExp = expandedConceptoId === concepto.concepto_id;
+                        return (
+                          <div key={concepto.concepto_id} className="border-b border-border/20 last:border-0">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedConceptoId(isExp ? null : concepto.concepto_id)}
+                              className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className="text-[10px] font-mono font-black text-indigo-700 shrink-0">{concepto.concepto_clave}</span>
+                                <span className="text-xs text-foreground truncate">{concepto.concepto_descripcion}</span>
+                                <span className="shrink-0 rounded border border-slate-500/20 bg-slate-500/10 px-1.5 py-0.5 text-[8px] font-black text-slate-500">
+                                  {concepto.incisos.length} inciso{concepto.incisos.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className="text-xs font-black text-amber-700">{formatMXN(concepto.monto_total_extra)}</span>
+                                <span className="text-[10px] text-muted-foreground">{isExp ? '▲' : '▼'}</span>
+                              </div>
+                            </button>
+                            {isExp && (
+                              <div className="px-4 pb-3 space-y-1.5 bg-muted/20">
+                                {concepto.incisos.map((inc, ii) => (
+                                  <div key={inc.asignacion_id} className="flex items-start justify-between rounded-xl border border-border/30 bg-background px-3 py-2 gap-3">
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-[10px] font-semibold text-foreground truncate">{inc.insumo_desc}</p>
+                                      {inc.justificaciones[0] && (
+                                        <p className="text-[9px] text-amber-600 mt-0.5 italic">"{inc.justificaciones[0]}"</p>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className="text-xs font-bold">{formatMXN(inc.monto_extra)}</span>
+                                      {isProcurement && (
+                                        <button type="button"
+                                          onClick={() => handleEliminarAsignacion(inc.asignacion_id)}
+                                          className="rounded-lg border border-red-500/20 px-2 py-0.5 text-[9px] font-black text-red-500 hover:bg-red-500/5"
+                                        >Eliminar</button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </Card>
+                  </div>
+                );
+              })()}
+            </div>
             );
           })()}
 

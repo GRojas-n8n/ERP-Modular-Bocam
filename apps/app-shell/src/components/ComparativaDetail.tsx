@@ -72,10 +72,30 @@ export interface ProveedorComp {
   nombre: string;
 }
 
+export interface EspecificacionLinea {
+  id_especificacion: string;
+  detalle_id: string;
+  descripcion: string;
+  orden: number;
+}
+
+export interface AnotacionSpec {
+  id_anotacion: string;
+  cuadro_id: string;
+  especificacion_id: string;
+  proveedor_id: string;
+  tipo: 'pregunta' | 'respuesta';
+  texto: string;
+  creado_por: string;
+  created_at: string;
+}
+
 export interface LineaDetalleTecnico {
   insumo_id: string;
   marca_modelo_ref?: string | null;
   especificaciones_requeridas?: string | null;
+  detalle_req_id?: string | null;
+  especificaciones?: EspecificacionLinea[];
 }
 
 export interface FichaTecnica {
@@ -115,6 +135,7 @@ export interface ComparativaLocal {
   proveedores: ProveedorComp[];
   lineas: CotizacionLinea[];
   lineas_detalle?: LineaDetalleTecnico[];
+  anotaciones_spec?: AnotacionSpec[];
   ordenes_compra: { codigo: string; proveedor_nombre: string; total: number }[];
 }
 
@@ -241,6 +262,13 @@ export const ComparativaDetail: React.FC<Props> = ({
   // ── Detalles técnicos inline (BORRADOR) ──────────────────────────────────────
   const [detallesTecnicos, setDetallesTecnicos] = useState<Record<string, { marca: string; espec: string }>>({});
 
+  // ── Specs por insumo y anotaciones (10.1-10.4) ───────────────────────────────
+  const [especsMap, setEspecsMap] = useState<Record<string, EspecificacionLinea[]>>({});
+  const [anotacionesSpec, setAnotacionesSpec] = useState<AnotacionSpec[]>([]);
+  const [anotacionPanel, setAnotacionPanel] = useState<{ especId: string; especDesc: string; proveedorId: string; proveedorNombre: string } | null>(null);
+  const [anotacionForm, setAnotacionForm] = useState<{ tipo: 'pregunta' | 'respuesta'; texto: string }>({ tipo: 'pregunta', texto: '' });
+  const [guardandoAnotacion, setGuardandoAnotacion] = useState(false);
+
   // ── Asistente IA: lectura de cotización PDF ──────────────────────────────────
   interface RenglonEditable { descripcion: string; unidad: string; cantidad: string; precio_unitario: string; }
   const [pdfProveedorId, setPdfProveedorId] = useState<string | null>(null);
@@ -304,14 +332,58 @@ export const ComparativaDetail: React.FC<Props> = ({
     setComentarioGTGeneral('');
   }, [showGTPanel]);
 
-  // Inicializar detalles técnicos desde lineas_detalle del cuadro
+  // Cargar detalle completo del cuadro (lineas_detalle + specs + anotaciones)
   useEffect(() => {
-    const init: Record<string, { marca: string; espec: string }> = {};
-    (comp.lineas_detalle ?? []).forEach(ld => {
-      init[ld.insumo_id] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
-    });
-    setDetallesTecnicos(init);
+    const initFromProp = () => {
+      const init: Record<string, { marca: string; espec: string }> = {};
+      (comp.lineas_detalle ?? []).forEach(ld => {
+        init[ld.insumo_id] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
+        if ((ld.especificaciones?.length ?? 0) > 0) {
+          setEspecsMap(prev => ({ ...prev, [ld.insumo_id]: ld.especificaciones! }));
+        }
+      });
+      setDetallesTecnicos(init);
+      if (comp.anotaciones_spec) setAnotacionesSpec(comp.anotaciones_spec);
+    };
+    initFromProp();
+    if (isDemo) return;
+    // Enriquecer desde el API para obtener specs y anotaciones actualizadas
+    api.get(`/api/v1/compras/comparativas/${comp.id}`).then(res => {
+      const full = res.data?.data;
+      if (!full) return;
+      const init: Record<string, { marca: string; espec: string }> = {};
+      const newEspecsMap: Record<string, EspecificacionLinea[]> = {};
+      for (const ld of (full.lineas_detalle ?? [])) {
+        init[ld.insumo_id] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
+        if ((ld.especificaciones?.length ?? 0) > 0) newEspecsMap[ld.insumo_id] = ld.especificaciones;
+      }
+      setDetallesTecnicos(init);
+      setEspecsMap(newEspecsMap);
+      setAnotacionesSpec(full.anotaciones_spec ?? []);
+    }).catch(() => { /* silencioso */ });
   }, [comp.id]);
+
+  // Guardar anotación de especificación (10.4)
+  const handleGuardarAnotacion = async () => {
+    if (!anotacionPanel || !anotacionForm.texto.trim()) return;
+    setGuardandoAnotacion(true);
+    try {
+      await api.post(`/api/v1/compras/comparativas/${comp.id}/anotaciones-spec`, {
+        especificacion_id: anotacionPanel.especId,
+        proveedor_id:      anotacionPanel.proveedorId,
+        tipo:              anotacionForm.tipo,
+        texto:             anotacionForm.texto.trim(),
+      });
+      const res = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
+      setAnotacionesSpec(res.data?.data?.anotaciones_spec ?? []);
+      setAnotacionPanel(null);
+      notify({ type: 'success', title: 'Anotación guardada' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar anotación', message: err.message });
+    } finally {
+      setGuardandoAnotacion(false);
+    }
+  };
 
   // Fetch fichas técnicas de un insumo
   const fetchFichas = async (insumoId: string) => {
@@ -1237,7 +1309,8 @@ export const ComparativaDetail: React.FC<Props> = ({
                   const nFichas = fichas?.length ?? null;
                   const canUpload = isProcurement;
                   return (
-                  <tr key={linea.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                  <React.Fragment key={linea.id}>
+                  <tr className="border-b border-border/20 hover:bg-muted/20 transition-colors">
                     <td className="px-5 py-3">
                       <div className="text-[10px] font-black text-emerald-700">{linea.insumo_clave}</div>
                       <div className="text-xs text-foreground max-w-[200px] truncate">{linea.insumo_descripcion}</div>
@@ -1352,6 +1425,48 @@ export const ComparativaDetail: React.FC<Props> = ({
                       </td>
                     )}
                   </tr>
+                  {/* ── Sub-filas de especificaciones (10.2-10.3) ─────────── */}
+                  {(especsMap[linea.insumo_id] ?? []).map(esp => {
+                    return (
+                      <tr key={esp.id_especificacion} className="border-b border-indigo-500/5 bg-indigo-500/[0.02]">
+                        <td className="pl-10 pr-2 py-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-indigo-400 text-[8px]">◆</span>
+                            <span className="text-[10px] text-muted-foreground leading-tight">{esp.descripcion}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-1" />
+                        <td className="px-3 py-1" />
+                        {comp.proveedores.map(prov => {
+                          const nota = anotacionesSpec.find(a => a.especificacion_id === esp.id_especificacion && a.proveedor_id === prov.id);
+                          return (
+                            <td key={prov.id} className="px-2 py-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAnotacionPanel({ especId: esp.id_especificacion, especDesc: esp.descripcion, proveedorId: prov.id, proveedorNombre: prov.nombre });
+                                  setAnotacionForm({ tipo: nota?.tipo === 'respuesta' ? 'respuesta' : 'pregunta', texto: '' });
+                                }}
+                                title={nota ? `${nota.tipo}: ${nota.texto}` : 'Agregar anotación'}
+                                className={cn(
+                                  'rounded-full px-2 py-0.5 text-[9px] font-black transition-all',
+                                  nota?.tipo === 'pregunta' ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/20' :
+                                  nota?.tipo === 'respuesta' ? 'bg-green-500/10 text-green-700 hover:bg-green-500/20' :
+                                  'text-muted-foreground/25 hover:text-indigo-500 hover:bg-indigo-500/10'
+                                )}
+                              >
+                                {nota?.tipo === 'pregunta' ? '?' : nota?.tipo === 'respuesta' ? '✓' : '+'}
+                              </button>
+                            </td>
+                          );
+                        })}
+                        <td className="px-3 py-1" />
+                        {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && <td />}
+                        {!locked && <td />}
+                      </tr>
+                    );
+                  })}
+                  </React.Fragment>
                   );
                 })}
                 {comp.lineas.length > 0 && (
@@ -1967,6 +2082,65 @@ export const ComparativaDetail: React.FC<Props> = ({
             </div>
           )}
         </div>
+      </SideSheet>
+
+      {/* ── SideSheet: Anotación de especificación (10.4) ───────────────────── */}
+      <SideSheet
+        isOpen={!!anotacionPanel}
+        onClose={() => setAnotacionPanel(null)}
+        title="Anotación de especificación"
+        description={anotacionPanel ? `${anotacionPanel.especDesc} · Proveedor: ${anotacionPanel.proveedorNombre}` : ''}
+        maxWidthClassName="max-w-md"
+      >
+        {anotacionPanel && (() => {
+          const existente = anotacionesSpec.find(a => a.especificacion_id === anotacionPanel.especId && a.proveedor_id === anotacionPanel.proveedorId);
+          return (
+            <div className="space-y-4 p-1">
+              {existente && (
+                <div className={cn('rounded-xl border p-3 text-[11px]',
+                  existente.tipo === 'pregunta' ? 'border-amber-500/20 bg-amber-500/5 text-amber-700' : 'border-green-500/20 bg-green-500/5 text-green-700'
+                )}>
+                  <p className="text-[9px] font-black uppercase tracking-widest mb-1">
+                    {existente.tipo === 'pregunta' ? '? Pregunta registrada' : '✓ Respuesta registrada'}
+                  </p>
+                  <p>"{existente.texto}"</p>
+                </div>
+              )}
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2">Tipo de anotación</p>
+                <div className="flex gap-2">
+                  {(['pregunta', 'respuesta'] as const).map(t => (
+                    <button key={t} type="button"
+                      onClick={() => setAnotacionForm(f => ({ ...f, tipo: t }))}
+                      className={cn('flex-1 rounded-xl border py-2 text-[10px] font-black capitalize transition-all',
+                        anotacionForm.tipo === t
+                          ? t === 'pregunta' ? 'border-amber-500/40 bg-amber-500/10 text-amber-700' : 'border-green-500/40 bg-green-500/10 text-green-700'
+                          : 'border-border/40 text-muted-foreground hover:border-border'
+                      )}
+                    >{t}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Texto</p>
+                <Textarea
+                  rows={3}
+                  placeholder={anotacionForm.tipo === 'pregunta' ? 'Escribe tu pregunta técnica…' : 'Escribe la respuesta del proveedor…'}
+                  value={anotacionForm.texto}
+                  onChange={e => setAnotacionForm(f => ({ ...f, texto: e.target.value }))}
+                  className="resize-none text-xs"
+                />
+              </div>
+              <Button
+                onClick={handleGuardarAnotacion}
+                disabled={guardandoAnotacion || !anotacionForm.texto.trim()}
+                className="w-full rounded-xl bg-indigo-600 text-white text-xs font-black disabled:opacity-40"
+              >
+                {guardandoAnotacion ? 'Guardando…' : 'Guardar anotación'}
+              </Button>
+            </div>
+          );
+        })()}
       </SideSheet>
 
     </div>
