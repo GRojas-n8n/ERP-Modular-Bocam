@@ -1,5 +1,14 @@
-status: in_progress
-production_verified: false
+status: archived
+production_verified: true
 created: 2026-06-09
 author: German
-commits: []
+commits:
+  - 57bf30c  # feat: backend SCP + alertas + comparativa specs
+  - 86a07ce  # feat: frontend tasks 9.1-9.2 + 10.1-10.4
+  - abe306f  # fix: JSX placeholder escape
+  - 98e697f  # fix: TS6133 unused var
+deployed: 2026-06-09
+notes: >
+  Todas las tasks implementadas. Migracion 20260609120000 aplicada en VPS.
+  Endpoints /solicitudes-cotizacion, /alertas/cotizacion-pendiente, /anotaciones-spec
+  y /trazabilidad/materiales verificados 401 (auth required = existen).
