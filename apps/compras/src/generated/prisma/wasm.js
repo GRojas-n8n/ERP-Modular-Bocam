@@ -189,7 +189,23 @@ exports.Prisma.RequisicionItemScalarFieldEnum = {
   notas: 'notas',
   descripcion_libre: 'descripcion_libre',
   unidad_libre: 'unidad_libre',
-  es_imprevisto: 'es_imprevisto'
+  es_imprevisto: 'es_imprevisto',
+  cantidad_presupuestada: 'cantidad_presupuestada',
+  concepto_origen_id: 'concepto_origen_id',
+  justificacion: 'justificacion'
+};
+
+exports.Prisma.AsignacionExtraConceptoScalarFieldEnum = {
+  id_asignacion: 'id_asignacion',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  requisicion_item_id: 'requisicion_item_id',
+  concepto_id: 'concepto_id',
+  concepto_clave: 'concepto_clave',
+  concepto_descripcion: 'concepto_descripcion',
+  monto_extra: 'monto_extra',
+  asignado_por: 'asignado_por',
+  created_at: 'created_at'
 };
 
 exports.Prisma.OrdenCompraScalarFieldEnum = {
@@ -248,7 +264,8 @@ exports.Prisma.ComparativaLineaScalarFieldEnum = {
   cuadro_id: 'cuadro_id',
   insumo_id: 'insumo_id',
   marca_modelo_ref: 'marca_modelo_ref',
-  especificaciones_requeridas: 'especificaciones_requeridas'
+  especificaciones_requeridas: 'especificaciones_requeridas',
+  detalle_req_id: 'detalle_req_id'
 };
 
 exports.Prisma.ComparativaDetalleScalarFieldEnum = {
@@ -279,6 +296,55 @@ exports.Prisma.AclaracionComparativaScalarFieldEnum = {
   tipo: 'tipo',
   mensaje: 'mensaje',
   resuelta: 'resuelta',
+  created_at: 'created_at'
+};
+
+exports.Prisma.EspecificacionDetalleReqScalarFieldEnum = {
+  id_especificacion: 'id_especificacion',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  detalle_id: 'detalle_id',
+  descripcion: 'descripcion',
+  orden: 'orden',
+  created_at: 'created_at'
+};
+
+exports.Prisma.SolicitudCotizacionScalarFieldEnum = {
+  id_solicitud: 'id_solicitud',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  requisicion_id: 'requisicion_id',
+  dias_habiles: 'dias_habiles',
+  fecha_solicitud: 'fecha_solicitud',
+  fecha_limite: 'fecha_limite',
+  creado_por: 'creado_por',
+  notas: 'notas',
+  created_at: 'created_at'
+};
+
+exports.Prisma.SolicitudCotizacionProveedorScalarFieldEnum = {
+  id_scp: 'id_scp',
+  tenant_id: 'tenant_id',
+  solicitud_id: 'solicitud_id',
+  proveedor_id: 'proveedor_id',
+  estado: 'estado',
+  pdf_nombre: 'pdf_nombre',
+  pdf_ruta: 'pdf_ruta',
+  pdf_mime: 'pdf_mime',
+  notas_proveedor: 'notas_proveedor',
+  fecha_respuesta: 'fecha_respuesta',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.AnotacionEspecificacionScalarFieldEnum = {
+  id_anotacion: 'id_anotacion',
+  tenant_id: 'tenant_id',
+  cuadro_id: 'cuadro_id',
+  especificacion_id: 'especificacion_id',
+  proveedor_id: 'proveedor_id',
+  tipo: 'tipo',
+  texto: 'texto',
+  creado_por: 'creado_por',
   created_at: 'created_at'
 };
 
@@ -348,12 +414,17 @@ exports.Prisma.ModelName = {
   DocumentoProveedor: 'DocumentoProveedor',
   Requisicion: 'Requisicion',
   RequisicionItem: 'RequisicionItem',
+  AsignacionExtraConcepto: 'AsignacionExtraConcepto',
   OrdenCompra: 'OrdenCompra',
   OrdenCompraItem: 'OrdenCompraItem',
   CuadroComparativo: 'CuadroComparativo',
   ComparativaLinea: 'ComparativaLinea',
   ComparativaDetalle: 'ComparativaDetalle',
   AclaracionComparativa: 'AclaracionComparativa',
+  EspecificacionDetalleReq: 'EspecificacionDetalleReq',
+  SolicitudCotizacion: 'SolicitudCotizacion',
+  SolicitudCotizacionProveedor: 'SolicitudCotizacionProveedor',
+  AnotacionEspecificacion: 'AnotacionEspecificacion',
   AlertaOcError: 'AlertaOcError',
   ItemInventario: 'ItemInventario',
   MovimientoAlmacen: 'MovimientoAlmacen'

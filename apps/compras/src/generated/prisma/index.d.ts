@@ -39,6 +39,11 @@ export type Requisicion = $Result.DefaultSelection<Prisma.$RequisicionPayload>
  */
 export type RequisicionItem = $Result.DefaultSelection<Prisma.$RequisicionItemPayload>
 /**
+ * Model AsignacionExtraConcepto
+ * 
+ */
+export type AsignacionExtraConcepto = $Result.DefaultSelection<Prisma.$AsignacionExtraConceptoPayload>
+/**
  * Model OrdenCompra
  * 
  */
@@ -68,6 +73,26 @@ export type ComparativaDetalle = $Result.DefaultSelection<Prisma.$ComparativaDet
  * 
  */
 export type AclaracionComparativa = $Result.DefaultSelection<Prisma.$AclaracionComparativaPayload>
+/**
+ * Model EspecificacionDetalleReq
+ * 
+ */
+export type EspecificacionDetalleReq = $Result.DefaultSelection<Prisma.$EspecificacionDetalleReqPayload>
+/**
+ * Model SolicitudCotizacion
+ * 
+ */
+export type SolicitudCotizacion = $Result.DefaultSelection<Prisma.$SolicitudCotizacionPayload>
+/**
+ * Model SolicitudCotizacionProveedor
+ * 
+ */
+export type SolicitudCotizacionProveedor = $Result.DefaultSelection<Prisma.$SolicitudCotizacionProveedorPayload>
+/**
+ * Model AnotacionEspecificacion
+ * 
+ */
+export type AnotacionEspecificacion = $Result.DefaultSelection<Prisma.$AnotacionEspecificacionPayload>
 /**
  * Model AlertaOcError
  * 
@@ -258,6 +283,16 @@ export class PrismaClient<
   get requisicionItem(): Prisma.RequisicionItemDelegate<ExtArgs>;
 
   /**
+   * `prisma.asignacionExtraConcepto`: Exposes CRUD operations for the **AsignacionExtraConcepto** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AsignacionExtraConceptos
+    * const asignacionExtraConceptos = await prisma.asignacionExtraConcepto.findMany()
+    * ```
+    */
+  get asignacionExtraConcepto(): Prisma.AsignacionExtraConceptoDelegate<ExtArgs>;
+
+  /**
    * `prisma.ordenCompra`: Exposes CRUD operations for the **OrdenCompra** model.
     * Example usage:
     * ```ts
@@ -316,6 +351,46 @@ export class PrismaClient<
     * ```
     */
   get aclaracionComparativa(): Prisma.AclaracionComparativaDelegate<ExtArgs>;
+
+  /**
+   * `prisma.especificacionDetalleReq`: Exposes CRUD operations for the **EspecificacionDetalleReq** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EspecificacionDetalleReqs
+    * const especificacionDetalleReqs = await prisma.especificacionDetalleReq.findMany()
+    * ```
+    */
+  get especificacionDetalleReq(): Prisma.EspecificacionDetalleReqDelegate<ExtArgs>;
+
+  /**
+   * `prisma.solicitudCotizacion`: Exposes CRUD operations for the **SolicitudCotizacion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SolicitudCotizacions
+    * const solicitudCotizacions = await prisma.solicitudCotizacion.findMany()
+    * ```
+    */
+  get solicitudCotizacion(): Prisma.SolicitudCotizacionDelegate<ExtArgs>;
+
+  /**
+   * `prisma.solicitudCotizacionProveedor`: Exposes CRUD operations for the **SolicitudCotizacionProveedor** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SolicitudCotizacionProveedors
+    * const solicitudCotizacionProveedors = await prisma.solicitudCotizacionProveedor.findMany()
+    * ```
+    */
+  get solicitudCotizacionProveedor(): Prisma.SolicitudCotizacionProveedorDelegate<ExtArgs>;
+
+  /**
+   * `prisma.anotacionEspecificacion`: Exposes CRUD operations for the **AnotacionEspecificacion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AnotacionEspecificacions
+    * const anotacionEspecificacions = await prisma.anotacionEspecificacion.findMany()
+    * ```
+    */
+  get anotacionEspecificacion(): Prisma.AnotacionEspecificacionDelegate<ExtArgs>;
 
   /**
    * `prisma.alertaOcError`: Exposes CRUD operations for the **AlertaOcError** model.
@@ -792,12 +867,17 @@ export namespace Prisma {
     DocumentoProveedor: 'DocumentoProveedor',
     Requisicion: 'Requisicion',
     RequisicionItem: 'RequisicionItem',
+    AsignacionExtraConcepto: 'AsignacionExtraConcepto',
     OrdenCompra: 'OrdenCompra',
     OrdenCompraItem: 'OrdenCompraItem',
     CuadroComparativo: 'CuadroComparativo',
     ComparativaLinea: 'ComparativaLinea',
     ComparativaDetalle: 'ComparativaDetalle',
     AclaracionComparativa: 'AclaracionComparativa',
+    EspecificacionDetalleReq: 'EspecificacionDetalleReq',
+    SolicitudCotizacion: 'SolicitudCotizacion',
+    SolicitudCotizacionProveedor: 'SolicitudCotizacionProveedor',
+    AnotacionEspecificacion: 'AnotacionEspecificacion',
     AlertaOcError: 'AlertaOcError',
     ItemInventario: 'ItemInventario',
     MovimientoAlmacen: 'MovimientoAlmacen'
@@ -816,7 +896,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
+      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1167,6 +1247,76 @@ export namespace Prisma {
           count: {
             args: Prisma.RequisicionItemCountArgs<ExtArgs>
             result: $Utils.Optional<RequisicionItemCountAggregateOutputType> | number
+          }
+        }
+      }
+      AsignacionExtraConcepto: {
+        payload: Prisma.$AsignacionExtraConceptoPayload<ExtArgs>
+        fields: Prisma.AsignacionExtraConceptoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AsignacionExtraConceptoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AsignacionExtraConceptoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>
+          }
+          findFirst: {
+            args: Prisma.AsignacionExtraConceptoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AsignacionExtraConceptoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>
+          }
+          findMany: {
+            args: Prisma.AsignacionExtraConceptoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>[]
+          }
+          create: {
+            args: Prisma.AsignacionExtraConceptoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>
+          }
+          createMany: {
+            args: Prisma.AsignacionExtraConceptoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AsignacionExtraConceptoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>[]
+          }
+          delete: {
+            args: Prisma.AsignacionExtraConceptoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>
+          }
+          update: {
+            args: Prisma.AsignacionExtraConceptoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>
+          }
+          deleteMany: {
+            args: Prisma.AsignacionExtraConceptoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AsignacionExtraConceptoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.AsignacionExtraConceptoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AsignacionExtraConceptoPayload>
+          }
+          aggregate: {
+            args: Prisma.AsignacionExtraConceptoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAsignacionExtraConcepto>
+          }
+          groupBy: {
+            args: Prisma.AsignacionExtraConceptoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AsignacionExtraConceptoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AsignacionExtraConceptoCountArgs<ExtArgs>
+            result: $Utils.Optional<AsignacionExtraConceptoCountAggregateOutputType> | number
           }
         }
       }
@@ -1587,6 +1737,286 @@ export namespace Prisma {
           count: {
             args: Prisma.AclaracionComparativaCountArgs<ExtArgs>
             result: $Utils.Optional<AclaracionComparativaCountAggregateOutputType> | number
+          }
+        }
+      }
+      EspecificacionDetalleReq: {
+        payload: Prisma.$EspecificacionDetalleReqPayload<ExtArgs>
+        fields: Prisma.EspecificacionDetalleReqFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EspecificacionDetalleReqFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EspecificacionDetalleReqFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>
+          }
+          findFirst: {
+            args: Prisma.EspecificacionDetalleReqFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EspecificacionDetalleReqFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>
+          }
+          findMany: {
+            args: Prisma.EspecificacionDetalleReqFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>[]
+          }
+          create: {
+            args: Prisma.EspecificacionDetalleReqCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>
+          }
+          createMany: {
+            args: Prisma.EspecificacionDetalleReqCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EspecificacionDetalleReqCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>[]
+          }
+          delete: {
+            args: Prisma.EspecificacionDetalleReqDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>
+          }
+          update: {
+            args: Prisma.EspecificacionDetalleReqUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>
+          }
+          deleteMany: {
+            args: Prisma.EspecificacionDetalleReqDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EspecificacionDetalleReqUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.EspecificacionDetalleReqUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EspecificacionDetalleReqPayload>
+          }
+          aggregate: {
+            args: Prisma.EspecificacionDetalleReqAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEspecificacionDetalleReq>
+          }
+          groupBy: {
+            args: Prisma.EspecificacionDetalleReqGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EspecificacionDetalleReqGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EspecificacionDetalleReqCountArgs<ExtArgs>
+            result: $Utils.Optional<EspecificacionDetalleReqCountAggregateOutputType> | number
+          }
+        }
+      }
+      SolicitudCotizacion: {
+        payload: Prisma.$SolicitudCotizacionPayload<ExtArgs>
+        fields: Prisma.SolicitudCotizacionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SolicitudCotizacionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SolicitudCotizacionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>
+          }
+          findFirst: {
+            args: Prisma.SolicitudCotizacionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SolicitudCotizacionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>
+          }
+          findMany: {
+            args: Prisma.SolicitudCotizacionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>[]
+          }
+          create: {
+            args: Prisma.SolicitudCotizacionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>
+          }
+          createMany: {
+            args: Prisma.SolicitudCotizacionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SolicitudCotizacionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>[]
+          }
+          delete: {
+            args: Prisma.SolicitudCotizacionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>
+          }
+          update: {
+            args: Prisma.SolicitudCotizacionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>
+          }
+          deleteMany: {
+            args: Prisma.SolicitudCotizacionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SolicitudCotizacionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SolicitudCotizacionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionPayload>
+          }
+          aggregate: {
+            args: Prisma.SolicitudCotizacionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSolicitudCotizacion>
+          }
+          groupBy: {
+            args: Prisma.SolicitudCotizacionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SolicitudCotizacionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SolicitudCotizacionCountArgs<ExtArgs>
+            result: $Utils.Optional<SolicitudCotizacionCountAggregateOutputType> | number
+          }
+        }
+      }
+      SolicitudCotizacionProveedor: {
+        payload: Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>
+        fields: Prisma.SolicitudCotizacionProveedorFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SolicitudCotizacionProveedorFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SolicitudCotizacionProveedorFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>
+          }
+          findFirst: {
+            args: Prisma.SolicitudCotizacionProveedorFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SolicitudCotizacionProveedorFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>
+          }
+          findMany: {
+            args: Prisma.SolicitudCotizacionProveedorFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>[]
+          }
+          create: {
+            args: Prisma.SolicitudCotizacionProveedorCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>
+          }
+          createMany: {
+            args: Prisma.SolicitudCotizacionProveedorCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SolicitudCotizacionProveedorCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>[]
+          }
+          delete: {
+            args: Prisma.SolicitudCotizacionProveedorDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>
+          }
+          update: {
+            args: Prisma.SolicitudCotizacionProveedorUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>
+          }
+          deleteMany: {
+            args: Prisma.SolicitudCotizacionProveedorDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SolicitudCotizacionProveedorUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SolicitudCotizacionProveedorUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SolicitudCotizacionProveedorPayload>
+          }
+          aggregate: {
+            args: Prisma.SolicitudCotizacionProveedorAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSolicitudCotizacionProveedor>
+          }
+          groupBy: {
+            args: Prisma.SolicitudCotizacionProveedorGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SolicitudCotizacionProveedorGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SolicitudCotizacionProveedorCountArgs<ExtArgs>
+            result: $Utils.Optional<SolicitudCotizacionProveedorCountAggregateOutputType> | number
+          }
+        }
+      }
+      AnotacionEspecificacion: {
+        payload: Prisma.$AnotacionEspecificacionPayload<ExtArgs>
+        fields: Prisma.AnotacionEspecificacionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AnotacionEspecificacionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AnotacionEspecificacionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>
+          }
+          findFirst: {
+            args: Prisma.AnotacionEspecificacionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AnotacionEspecificacionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>
+          }
+          findMany: {
+            args: Prisma.AnotacionEspecificacionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>[]
+          }
+          create: {
+            args: Prisma.AnotacionEspecificacionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>
+          }
+          createMany: {
+            args: Prisma.AnotacionEspecificacionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AnotacionEspecificacionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>[]
+          }
+          delete: {
+            args: Prisma.AnotacionEspecificacionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>
+          }
+          update: {
+            args: Prisma.AnotacionEspecificacionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>
+          }
+          deleteMany: {
+            args: Prisma.AnotacionEspecificacionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AnotacionEspecificacionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.AnotacionEspecificacionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AnotacionEspecificacionPayload>
+          }
+          aggregate: {
+            args: Prisma.AnotacionEspecificacionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAnotacionEspecificacion>
+          }
+          groupBy: {
+            args: Prisma.AnotacionEspecificacionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AnotacionEspecificacionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AnotacionEspecificacionCountArgs<ExtArgs>
+            result: $Utils.Optional<AnotacionEspecificacionCountAggregateOutputType> | number
           }
         }
       }
@@ -2122,6 +2552,37 @@ export namespace Prisma {
    */
   export type CuadroComparativoCountOutputTypeCountAclaracionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AclaracionComparativaWhereInput
+  }
+
+
+  /**
+   * Count Type SolicitudCotizacionCountOutputType
+   */
+
+  export type SolicitudCotizacionCountOutputType = {
+    proveedores: number
+  }
+
+  export type SolicitudCotizacionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    proveedores?: boolean | SolicitudCotizacionCountOutputTypeCountProveedoresArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SolicitudCotizacionCountOutputType without action
+   */
+  export type SolicitudCotizacionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionCountOutputType
+     */
+    select?: SolicitudCotizacionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SolicitudCotizacionCountOutputType without action
+   */
+  export type SolicitudCotizacionCountOutputTypeCountProveedoresArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SolicitudCotizacionProveedorWhereInput
   }
 
 
@@ -6417,10 +6878,12 @@ export namespace Prisma {
 
   export type RequisicionItemAvgAggregateOutputType = {
     cantidad: Decimal | null
+    cantidad_presupuestada: Decimal | null
   }
 
   export type RequisicionItemSumAggregateOutputType = {
     cantidad: Decimal | null
+    cantidad_presupuestada: Decimal | null
   }
 
   export type RequisicionItemMinAggregateOutputType = {
@@ -6434,6 +6897,9 @@ export namespace Prisma {
     descripcion_libre: string | null
     unidad_libre: string | null
     es_imprevisto: boolean | null
+    cantidad_presupuestada: Decimal | null
+    concepto_origen_id: string | null
+    justificacion: string | null
   }
 
   export type RequisicionItemMaxAggregateOutputType = {
@@ -6447,6 +6913,9 @@ export namespace Prisma {
     descripcion_libre: string | null
     unidad_libre: string | null
     es_imprevisto: boolean | null
+    cantidad_presupuestada: Decimal | null
+    concepto_origen_id: string | null
+    justificacion: string | null
   }
 
   export type RequisicionItemCountAggregateOutputType = {
@@ -6460,16 +6929,21 @@ export namespace Prisma {
     descripcion_libre: number
     unidad_libre: number
     es_imprevisto: number
+    cantidad_presupuestada: number
+    concepto_origen_id: number
+    justificacion: number
     _all: number
   }
 
 
   export type RequisicionItemAvgAggregateInputType = {
     cantidad?: true
+    cantidad_presupuestada?: true
   }
 
   export type RequisicionItemSumAggregateInputType = {
     cantidad?: true
+    cantidad_presupuestada?: true
   }
 
   export type RequisicionItemMinAggregateInputType = {
@@ -6483,6 +6957,9 @@ export namespace Prisma {
     descripcion_libre?: true
     unidad_libre?: true
     es_imprevisto?: true
+    cantidad_presupuestada?: true
+    concepto_origen_id?: true
+    justificacion?: true
   }
 
   export type RequisicionItemMaxAggregateInputType = {
@@ -6496,6 +6973,9 @@ export namespace Prisma {
     descripcion_libre?: true
     unidad_libre?: true
     es_imprevisto?: true
+    cantidad_presupuestada?: true
+    concepto_origen_id?: true
+    justificacion?: true
   }
 
   export type RequisicionItemCountAggregateInputType = {
@@ -6509,6 +6989,9 @@ export namespace Prisma {
     descripcion_libre?: true
     unidad_libre?: true
     es_imprevisto?: true
+    cantidad_presupuestada?: true
+    concepto_origen_id?: true
+    justificacion?: true
     _all?: true
   }
 
@@ -6609,6 +7092,9 @@ export namespace Prisma {
     descripcion_libre: string | null
     unidad_libre: string | null
     es_imprevisto: boolean
+    cantidad_presupuestada: Decimal | null
+    concepto_origen_id: string | null
+    justificacion: string | null
     _count: RequisicionItemCountAggregateOutputType | null
     _avg: RequisicionItemAvgAggregateOutputType | null
     _sum: RequisicionItemSumAggregateOutputType | null
@@ -6641,6 +7127,9 @@ export namespace Prisma {
     descripcion_libre?: boolean
     unidad_libre?: boolean
     es_imprevisto?: boolean
+    cantidad_presupuestada?: boolean
+    concepto_origen_id?: boolean
+    justificacion?: boolean
     requisicion?: boolean | RequisicionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["requisicionItem"]>
 
@@ -6655,6 +7144,9 @@ export namespace Prisma {
     descripcion_libre?: boolean
     unidad_libre?: boolean
     es_imprevisto?: boolean
+    cantidad_presupuestada?: boolean
+    concepto_origen_id?: boolean
+    justificacion?: boolean
     requisicion?: boolean | RequisicionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["requisicionItem"]>
 
@@ -6669,6 +7161,9 @@ export namespace Prisma {
     descripcion_libre?: boolean
     unidad_libre?: boolean
     es_imprevisto?: boolean
+    cantidad_presupuestada?: boolean
+    concepto_origen_id?: boolean
+    justificacion?: boolean
   }
 
   export type RequisicionItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6706,6 +7201,18 @@ export namespace Prisma {
        * Marcador de ítem imprevisto (sin insumo_id en catálogo)
        */
       es_imprevisto: boolean
+      /**
+       * Cantidad presupuestada para este insumo en el proyecto (snapshot al crear req)
+       */
+      cantidad_presupuestada: Prisma.Decimal | null
+      /**
+       * ID del concepto APU del catálogo del que proviene este insumo (nullable si es imprevisto)
+       */
+      concepto_origen_id: string | null
+      /**
+       * Justificación obligatoria cuando excede presupuesto o es imprevisto
+       */
+      justificacion: string | null
     }, ExtArgs["result"]["requisicionItem"]>
     composites: {}
   }
@@ -7110,6 +7617,9 @@ export namespace Prisma {
     readonly descripcion_libre: FieldRef<"RequisicionItem", 'String'>
     readonly unidad_libre: FieldRef<"RequisicionItem", 'String'>
     readonly es_imprevisto: FieldRef<"RequisicionItem", 'Boolean'>
+    readonly cantidad_presupuestada: FieldRef<"RequisicionItem", 'Decimal'>
+    readonly concepto_origen_id: FieldRef<"RequisicionItem", 'String'>
+    readonly justificacion: FieldRef<"RequisicionItem", 'String'>
   }
     
 
@@ -7439,6 +7949,978 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: RequisicionItemInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AsignacionExtraConcepto
+   */
+
+  export type AggregateAsignacionExtraConcepto = {
+    _count: AsignacionExtraConceptoCountAggregateOutputType | null
+    _avg: AsignacionExtraConceptoAvgAggregateOutputType | null
+    _sum: AsignacionExtraConceptoSumAggregateOutputType | null
+    _min: AsignacionExtraConceptoMinAggregateOutputType | null
+    _max: AsignacionExtraConceptoMaxAggregateOutputType | null
+  }
+
+  export type AsignacionExtraConceptoAvgAggregateOutputType = {
+    monto_extra: Decimal | null
+  }
+
+  export type AsignacionExtraConceptoSumAggregateOutputType = {
+    monto_extra: Decimal | null
+  }
+
+  export type AsignacionExtraConceptoMinAggregateOutputType = {
+    id_asignacion: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    requisicion_item_id: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    concepto_descripcion: string | null
+    monto_extra: Decimal | null
+    asignado_por: string | null
+    created_at: Date | null
+  }
+
+  export type AsignacionExtraConceptoMaxAggregateOutputType = {
+    id_asignacion: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    requisicion_item_id: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    concepto_descripcion: string | null
+    monto_extra: Decimal | null
+    asignado_por: string | null
+    created_at: Date | null
+  }
+
+  export type AsignacionExtraConceptoCountAggregateOutputType = {
+    id_asignacion: number
+    tenant_id: number
+    proyecto_id: number
+    requisicion_item_id: number
+    concepto_id: number
+    concepto_clave: number
+    concepto_descripcion: number
+    monto_extra: number
+    asignado_por: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type AsignacionExtraConceptoAvgAggregateInputType = {
+    monto_extra?: true
+  }
+
+  export type AsignacionExtraConceptoSumAggregateInputType = {
+    monto_extra?: true
+  }
+
+  export type AsignacionExtraConceptoMinAggregateInputType = {
+    id_asignacion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    requisicion_item_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    concepto_descripcion?: true
+    monto_extra?: true
+    asignado_por?: true
+    created_at?: true
+  }
+
+  export type AsignacionExtraConceptoMaxAggregateInputType = {
+    id_asignacion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    requisicion_item_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    concepto_descripcion?: true
+    monto_extra?: true
+    asignado_por?: true
+    created_at?: true
+  }
+
+  export type AsignacionExtraConceptoCountAggregateInputType = {
+    id_asignacion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    requisicion_item_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    concepto_descripcion?: true
+    monto_extra?: true
+    asignado_por?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type AsignacionExtraConceptoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AsignacionExtraConcepto to aggregate.
+     */
+    where?: AsignacionExtraConceptoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AsignacionExtraConceptos to fetch.
+     */
+    orderBy?: AsignacionExtraConceptoOrderByWithRelationInput | AsignacionExtraConceptoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AsignacionExtraConceptoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AsignacionExtraConceptos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AsignacionExtraConceptos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AsignacionExtraConceptos
+    **/
+    _count?: true | AsignacionExtraConceptoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AsignacionExtraConceptoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AsignacionExtraConceptoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AsignacionExtraConceptoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AsignacionExtraConceptoMaxAggregateInputType
+  }
+
+  export type GetAsignacionExtraConceptoAggregateType<T extends AsignacionExtraConceptoAggregateArgs> = {
+        [P in keyof T & keyof AggregateAsignacionExtraConcepto]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAsignacionExtraConcepto[P]>
+      : GetScalarType<T[P], AggregateAsignacionExtraConcepto[P]>
+  }
+
+
+
+
+  export type AsignacionExtraConceptoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AsignacionExtraConceptoWhereInput
+    orderBy?: AsignacionExtraConceptoOrderByWithAggregationInput | AsignacionExtraConceptoOrderByWithAggregationInput[]
+    by: AsignacionExtraConceptoScalarFieldEnum[] | AsignacionExtraConceptoScalarFieldEnum
+    having?: AsignacionExtraConceptoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AsignacionExtraConceptoCountAggregateInputType | true
+    _avg?: AsignacionExtraConceptoAvgAggregateInputType
+    _sum?: AsignacionExtraConceptoSumAggregateInputType
+    _min?: AsignacionExtraConceptoMinAggregateInputType
+    _max?: AsignacionExtraConceptoMaxAggregateInputType
+  }
+
+  export type AsignacionExtraConceptoGroupByOutputType = {
+    id_asignacion: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_item_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_descripcion: string
+    monto_extra: Decimal
+    asignado_por: string
+    created_at: Date
+    _count: AsignacionExtraConceptoCountAggregateOutputType | null
+    _avg: AsignacionExtraConceptoAvgAggregateOutputType | null
+    _sum: AsignacionExtraConceptoSumAggregateOutputType | null
+    _min: AsignacionExtraConceptoMinAggregateOutputType | null
+    _max: AsignacionExtraConceptoMaxAggregateOutputType | null
+  }
+
+  type GetAsignacionExtraConceptoGroupByPayload<T extends AsignacionExtraConceptoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AsignacionExtraConceptoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AsignacionExtraConceptoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AsignacionExtraConceptoGroupByOutputType[P]>
+            : GetScalarType<T[P], AsignacionExtraConceptoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AsignacionExtraConceptoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_asignacion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    requisicion_item_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    concepto_descripcion?: boolean
+    monto_extra?: boolean
+    asignado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["asignacionExtraConcepto"]>
+
+  export type AsignacionExtraConceptoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_asignacion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    requisicion_item_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    concepto_descripcion?: boolean
+    monto_extra?: boolean
+    asignado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["asignacionExtraConcepto"]>
+
+  export type AsignacionExtraConceptoSelectScalar = {
+    id_asignacion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    requisicion_item_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    concepto_descripcion?: boolean
+    monto_extra?: boolean
+    asignado_por?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $AsignacionExtraConceptoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AsignacionExtraConcepto"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_asignacion: string
+      tenant_id: string
+      proyecto_id: string
+      requisicion_item_id: string
+      concepto_id: string
+      concepto_clave: string
+      concepto_descripcion: string
+      monto_extra: Prisma.Decimal
+      asignado_por: string
+      created_at: Date
+    }, ExtArgs["result"]["asignacionExtraConcepto"]>
+    composites: {}
+  }
+
+  type AsignacionExtraConceptoGetPayload<S extends boolean | null | undefined | AsignacionExtraConceptoDefaultArgs> = $Result.GetResult<Prisma.$AsignacionExtraConceptoPayload, S>
+
+  type AsignacionExtraConceptoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<AsignacionExtraConceptoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: AsignacionExtraConceptoCountAggregateInputType | true
+    }
+
+  export interface AsignacionExtraConceptoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AsignacionExtraConcepto'], meta: { name: 'AsignacionExtraConcepto' } }
+    /**
+     * Find zero or one AsignacionExtraConcepto that matches the filter.
+     * @param {AsignacionExtraConceptoFindUniqueArgs} args - Arguments to find a AsignacionExtraConcepto
+     * @example
+     * // Get one AsignacionExtraConcepto
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AsignacionExtraConceptoFindUniqueArgs>(args: SelectSubset<T, AsignacionExtraConceptoFindUniqueArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one AsignacionExtraConcepto that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {AsignacionExtraConceptoFindUniqueOrThrowArgs} args - Arguments to find a AsignacionExtraConcepto
+     * @example
+     * // Get one AsignacionExtraConcepto
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AsignacionExtraConceptoFindUniqueOrThrowArgs>(args: SelectSubset<T, AsignacionExtraConceptoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first AsignacionExtraConcepto that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoFindFirstArgs} args - Arguments to find a AsignacionExtraConcepto
+     * @example
+     * // Get one AsignacionExtraConcepto
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AsignacionExtraConceptoFindFirstArgs>(args?: SelectSubset<T, AsignacionExtraConceptoFindFirstArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first AsignacionExtraConcepto that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoFindFirstOrThrowArgs} args - Arguments to find a AsignacionExtraConcepto
+     * @example
+     * // Get one AsignacionExtraConcepto
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AsignacionExtraConceptoFindFirstOrThrowArgs>(args?: SelectSubset<T, AsignacionExtraConceptoFindFirstOrThrowArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more AsignacionExtraConceptos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AsignacionExtraConceptos
+     * const asignacionExtraConceptos = await prisma.asignacionExtraConcepto.findMany()
+     * 
+     * // Get first 10 AsignacionExtraConceptos
+     * const asignacionExtraConceptos = await prisma.asignacionExtraConcepto.findMany({ take: 10 })
+     * 
+     * // Only select the `id_asignacion`
+     * const asignacionExtraConceptoWithId_asignacionOnly = await prisma.asignacionExtraConcepto.findMany({ select: { id_asignacion: true } })
+     * 
+     */
+    findMany<T extends AsignacionExtraConceptoFindManyArgs>(args?: SelectSubset<T, AsignacionExtraConceptoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a AsignacionExtraConcepto.
+     * @param {AsignacionExtraConceptoCreateArgs} args - Arguments to create a AsignacionExtraConcepto.
+     * @example
+     * // Create one AsignacionExtraConcepto
+     * const AsignacionExtraConcepto = await prisma.asignacionExtraConcepto.create({
+     *   data: {
+     *     // ... data to create a AsignacionExtraConcepto
+     *   }
+     * })
+     * 
+     */
+    create<T extends AsignacionExtraConceptoCreateArgs>(args: SelectSubset<T, AsignacionExtraConceptoCreateArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many AsignacionExtraConceptos.
+     * @param {AsignacionExtraConceptoCreateManyArgs} args - Arguments to create many AsignacionExtraConceptos.
+     * @example
+     * // Create many AsignacionExtraConceptos
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AsignacionExtraConceptoCreateManyArgs>(args?: SelectSubset<T, AsignacionExtraConceptoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AsignacionExtraConceptos and returns the data saved in the database.
+     * @param {AsignacionExtraConceptoCreateManyAndReturnArgs} args - Arguments to create many AsignacionExtraConceptos.
+     * @example
+     * // Create many AsignacionExtraConceptos
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AsignacionExtraConceptos and only return the `id_asignacion`
+     * const asignacionExtraConceptoWithId_asignacionOnly = await prisma.asignacionExtraConcepto.createManyAndReturn({ 
+     *   select: { id_asignacion: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AsignacionExtraConceptoCreateManyAndReturnArgs>(args?: SelectSubset<T, AsignacionExtraConceptoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a AsignacionExtraConcepto.
+     * @param {AsignacionExtraConceptoDeleteArgs} args - Arguments to delete one AsignacionExtraConcepto.
+     * @example
+     * // Delete one AsignacionExtraConcepto
+     * const AsignacionExtraConcepto = await prisma.asignacionExtraConcepto.delete({
+     *   where: {
+     *     // ... filter to delete one AsignacionExtraConcepto
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AsignacionExtraConceptoDeleteArgs>(args: SelectSubset<T, AsignacionExtraConceptoDeleteArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one AsignacionExtraConcepto.
+     * @param {AsignacionExtraConceptoUpdateArgs} args - Arguments to update one AsignacionExtraConcepto.
+     * @example
+     * // Update one AsignacionExtraConcepto
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AsignacionExtraConceptoUpdateArgs>(args: SelectSubset<T, AsignacionExtraConceptoUpdateArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more AsignacionExtraConceptos.
+     * @param {AsignacionExtraConceptoDeleteManyArgs} args - Arguments to filter AsignacionExtraConceptos to delete.
+     * @example
+     * // Delete a few AsignacionExtraConceptos
+     * const { count } = await prisma.asignacionExtraConcepto.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AsignacionExtraConceptoDeleteManyArgs>(args?: SelectSubset<T, AsignacionExtraConceptoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AsignacionExtraConceptos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AsignacionExtraConceptos
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AsignacionExtraConceptoUpdateManyArgs>(args: SelectSubset<T, AsignacionExtraConceptoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AsignacionExtraConcepto.
+     * @param {AsignacionExtraConceptoUpsertArgs} args - Arguments to update or create a AsignacionExtraConcepto.
+     * @example
+     * // Update or create a AsignacionExtraConcepto
+     * const asignacionExtraConcepto = await prisma.asignacionExtraConcepto.upsert({
+     *   create: {
+     *     // ... data to create a AsignacionExtraConcepto
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AsignacionExtraConcepto we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AsignacionExtraConceptoUpsertArgs>(args: SelectSubset<T, AsignacionExtraConceptoUpsertArgs<ExtArgs>>): Prisma__AsignacionExtraConceptoClient<$Result.GetResult<Prisma.$AsignacionExtraConceptoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of AsignacionExtraConceptos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoCountArgs} args - Arguments to filter AsignacionExtraConceptos to count.
+     * @example
+     * // Count the number of AsignacionExtraConceptos
+     * const count = await prisma.asignacionExtraConcepto.count({
+     *   where: {
+     *     // ... the filter for the AsignacionExtraConceptos we want to count
+     *   }
+     * })
+    **/
+    count<T extends AsignacionExtraConceptoCountArgs>(
+      args?: Subset<T, AsignacionExtraConceptoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AsignacionExtraConceptoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AsignacionExtraConcepto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AsignacionExtraConceptoAggregateArgs>(args: Subset<T, AsignacionExtraConceptoAggregateArgs>): Prisma.PrismaPromise<GetAsignacionExtraConceptoAggregateType<T>>
+
+    /**
+     * Group by AsignacionExtraConcepto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AsignacionExtraConceptoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AsignacionExtraConceptoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AsignacionExtraConceptoGroupByArgs['orderBy'] }
+        : { orderBy?: AsignacionExtraConceptoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AsignacionExtraConceptoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAsignacionExtraConceptoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AsignacionExtraConcepto model
+   */
+  readonly fields: AsignacionExtraConceptoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AsignacionExtraConcepto.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AsignacionExtraConceptoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AsignacionExtraConcepto model
+   */ 
+  interface AsignacionExtraConceptoFieldRefs {
+    readonly id_asignacion: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly tenant_id: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly proyecto_id: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly requisicion_item_id: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly concepto_id: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly concepto_clave: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly concepto_descripcion: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly monto_extra: FieldRef<"AsignacionExtraConcepto", 'Decimal'>
+    readonly asignado_por: FieldRef<"AsignacionExtraConcepto", 'String'>
+    readonly created_at: FieldRef<"AsignacionExtraConcepto", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AsignacionExtraConcepto findUnique
+   */
+  export type AsignacionExtraConceptoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * Filter, which AsignacionExtraConcepto to fetch.
+     */
+    where: AsignacionExtraConceptoWhereUniqueInput
+  }
+
+  /**
+   * AsignacionExtraConcepto findUniqueOrThrow
+   */
+  export type AsignacionExtraConceptoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * Filter, which AsignacionExtraConcepto to fetch.
+     */
+    where: AsignacionExtraConceptoWhereUniqueInput
+  }
+
+  /**
+   * AsignacionExtraConcepto findFirst
+   */
+  export type AsignacionExtraConceptoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * Filter, which AsignacionExtraConcepto to fetch.
+     */
+    where?: AsignacionExtraConceptoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AsignacionExtraConceptos to fetch.
+     */
+    orderBy?: AsignacionExtraConceptoOrderByWithRelationInput | AsignacionExtraConceptoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AsignacionExtraConceptos.
+     */
+    cursor?: AsignacionExtraConceptoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AsignacionExtraConceptos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AsignacionExtraConceptos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AsignacionExtraConceptos.
+     */
+    distinct?: AsignacionExtraConceptoScalarFieldEnum | AsignacionExtraConceptoScalarFieldEnum[]
+  }
+
+  /**
+   * AsignacionExtraConcepto findFirstOrThrow
+   */
+  export type AsignacionExtraConceptoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * Filter, which AsignacionExtraConcepto to fetch.
+     */
+    where?: AsignacionExtraConceptoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AsignacionExtraConceptos to fetch.
+     */
+    orderBy?: AsignacionExtraConceptoOrderByWithRelationInput | AsignacionExtraConceptoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AsignacionExtraConceptos.
+     */
+    cursor?: AsignacionExtraConceptoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AsignacionExtraConceptos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AsignacionExtraConceptos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AsignacionExtraConceptos.
+     */
+    distinct?: AsignacionExtraConceptoScalarFieldEnum | AsignacionExtraConceptoScalarFieldEnum[]
+  }
+
+  /**
+   * AsignacionExtraConcepto findMany
+   */
+  export type AsignacionExtraConceptoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * Filter, which AsignacionExtraConceptos to fetch.
+     */
+    where?: AsignacionExtraConceptoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AsignacionExtraConceptos to fetch.
+     */
+    orderBy?: AsignacionExtraConceptoOrderByWithRelationInput | AsignacionExtraConceptoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AsignacionExtraConceptos.
+     */
+    cursor?: AsignacionExtraConceptoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AsignacionExtraConceptos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AsignacionExtraConceptos.
+     */
+    skip?: number
+    distinct?: AsignacionExtraConceptoScalarFieldEnum | AsignacionExtraConceptoScalarFieldEnum[]
+  }
+
+  /**
+   * AsignacionExtraConcepto create
+   */
+  export type AsignacionExtraConceptoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a AsignacionExtraConcepto.
+     */
+    data: XOR<AsignacionExtraConceptoCreateInput, AsignacionExtraConceptoUncheckedCreateInput>
+  }
+
+  /**
+   * AsignacionExtraConcepto createMany
+   */
+  export type AsignacionExtraConceptoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AsignacionExtraConceptos.
+     */
+    data: AsignacionExtraConceptoCreateManyInput | AsignacionExtraConceptoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AsignacionExtraConcepto createManyAndReturn
+   */
+  export type AsignacionExtraConceptoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many AsignacionExtraConceptos.
+     */
+    data: AsignacionExtraConceptoCreateManyInput | AsignacionExtraConceptoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AsignacionExtraConcepto update
+   */
+  export type AsignacionExtraConceptoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a AsignacionExtraConcepto.
+     */
+    data: XOR<AsignacionExtraConceptoUpdateInput, AsignacionExtraConceptoUncheckedUpdateInput>
+    /**
+     * Choose, which AsignacionExtraConcepto to update.
+     */
+    where: AsignacionExtraConceptoWhereUniqueInput
+  }
+
+  /**
+   * AsignacionExtraConcepto updateMany
+   */
+  export type AsignacionExtraConceptoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AsignacionExtraConceptos.
+     */
+    data: XOR<AsignacionExtraConceptoUpdateManyMutationInput, AsignacionExtraConceptoUncheckedUpdateManyInput>
+    /**
+     * Filter which AsignacionExtraConceptos to update
+     */
+    where?: AsignacionExtraConceptoWhereInput
+  }
+
+  /**
+   * AsignacionExtraConcepto upsert
+   */
+  export type AsignacionExtraConceptoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the AsignacionExtraConcepto to update in case it exists.
+     */
+    where: AsignacionExtraConceptoWhereUniqueInput
+    /**
+     * In case the AsignacionExtraConcepto found by the `where` argument doesn't exist, create a new AsignacionExtraConcepto with this data.
+     */
+    create: XOR<AsignacionExtraConceptoCreateInput, AsignacionExtraConceptoUncheckedCreateInput>
+    /**
+     * In case the AsignacionExtraConcepto was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AsignacionExtraConceptoUpdateInput, AsignacionExtraConceptoUncheckedUpdateInput>
+  }
+
+  /**
+   * AsignacionExtraConcepto delete
+   */
+  export type AsignacionExtraConceptoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
+    /**
+     * Filter which AsignacionExtraConcepto to delete.
+     */
+    where: AsignacionExtraConceptoWhereUniqueInput
+  }
+
+  /**
+   * AsignacionExtraConcepto deleteMany
+   */
+  export type AsignacionExtraConceptoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AsignacionExtraConceptos to delete
+     */
+    where?: AsignacionExtraConceptoWhereInput
+  }
+
+  /**
+   * AsignacionExtraConcepto without action
+   */
+  export type AsignacionExtraConceptoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AsignacionExtraConcepto
+     */
+    select?: AsignacionExtraConceptoSelect<ExtArgs> | null
   }
 
 
@@ -10736,6 +12218,7 @@ export namespace Prisma {
     insumo_id: string | null
     marca_modelo_ref: string | null
     especificaciones_requeridas: string | null
+    detalle_req_id: string | null
   }
 
   export type ComparativaLineaMaxAggregateOutputType = {
@@ -10746,6 +12229,7 @@ export namespace Prisma {
     insumo_id: string | null
     marca_modelo_ref: string | null
     especificaciones_requeridas: string | null
+    detalle_req_id: string | null
   }
 
   export type ComparativaLineaCountAggregateOutputType = {
@@ -10756,6 +12240,7 @@ export namespace Prisma {
     insumo_id: number
     marca_modelo_ref: number
     especificaciones_requeridas: number
+    detalle_req_id: number
     _all: number
   }
 
@@ -10768,6 +12253,7 @@ export namespace Prisma {
     insumo_id?: true
     marca_modelo_ref?: true
     especificaciones_requeridas?: true
+    detalle_req_id?: true
   }
 
   export type ComparativaLineaMaxAggregateInputType = {
@@ -10778,6 +12264,7 @@ export namespace Prisma {
     insumo_id?: true
     marca_modelo_ref?: true
     especificaciones_requeridas?: true
+    detalle_req_id?: true
   }
 
   export type ComparativaLineaCountAggregateInputType = {
@@ -10788,6 +12275,7 @@ export namespace Prisma {
     insumo_id?: true
     marca_modelo_ref?: true
     especificaciones_requeridas?: true
+    detalle_req_id?: true
     _all?: true
   }
 
@@ -10871,6 +12359,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref: string | null
     especificaciones_requeridas: string | null
+    detalle_req_id: string | null
     _count: ComparativaLineaCountAggregateOutputType | null
     _min: ComparativaLineaMinAggregateOutputType | null
     _max: ComparativaLineaMaxAggregateOutputType | null
@@ -10898,6 +12387,7 @@ export namespace Prisma {
     insumo_id?: boolean
     marca_modelo_ref?: boolean
     especificaciones_requeridas?: boolean
+    detalle_req_id?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["comparativaLinea"]>
 
@@ -10909,6 +12399,7 @@ export namespace Prisma {
     insumo_id?: boolean
     marca_modelo_ref?: boolean
     especificaciones_requeridas?: boolean
+    detalle_req_id?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["comparativaLinea"]>
 
@@ -10920,6 +12411,7 @@ export namespace Prisma {
     insumo_id?: boolean
     marca_modelo_ref?: boolean
     especificaciones_requeridas?: boolean
+    detalle_req_id?: boolean
   }
 
   export type ComparativaLineaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10942,6 +12434,7 @@ export namespace Prisma {
       insumo_id: string
       marca_modelo_ref: string | null
       especificaciones_requeridas: string | null
+      detalle_req_id: string | null
     }, ExtArgs["result"]["comparativaLinea"]>
     composites: {}
   }
@@ -11343,6 +12836,7 @@ export namespace Prisma {
     readonly insumo_id: FieldRef<"ComparativaLinea", 'String'>
     readonly marca_modelo_ref: FieldRef<"ComparativaLinea", 'String'>
     readonly especificaciones_requeridas: FieldRef<"ComparativaLinea", 'String'>
+    readonly detalle_req_id: FieldRef<"ComparativaLinea", 'String'>
   }
     
 
@@ -13758,6 +15252,3915 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: AclaracionComparativaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EspecificacionDetalleReq
+   */
+
+  export type AggregateEspecificacionDetalleReq = {
+    _count: EspecificacionDetalleReqCountAggregateOutputType | null
+    _avg: EspecificacionDetalleReqAvgAggregateOutputType | null
+    _sum: EspecificacionDetalleReqSumAggregateOutputType | null
+    _min: EspecificacionDetalleReqMinAggregateOutputType | null
+    _max: EspecificacionDetalleReqMaxAggregateOutputType | null
+  }
+
+  export type EspecificacionDetalleReqAvgAggregateOutputType = {
+    orden: number | null
+  }
+
+  export type EspecificacionDetalleReqSumAggregateOutputType = {
+    orden: number | null
+  }
+
+  export type EspecificacionDetalleReqMinAggregateOutputType = {
+    id_especificacion: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    detalle_id: string | null
+    descripcion: string | null
+    orden: number | null
+    created_at: Date | null
+  }
+
+  export type EspecificacionDetalleReqMaxAggregateOutputType = {
+    id_especificacion: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    detalle_id: string | null
+    descripcion: string | null
+    orden: number | null
+    created_at: Date | null
+  }
+
+  export type EspecificacionDetalleReqCountAggregateOutputType = {
+    id_especificacion: number
+    tenant_id: number
+    proyecto_id: number
+    detalle_id: number
+    descripcion: number
+    orden: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type EspecificacionDetalleReqAvgAggregateInputType = {
+    orden?: true
+  }
+
+  export type EspecificacionDetalleReqSumAggregateInputType = {
+    orden?: true
+  }
+
+  export type EspecificacionDetalleReqMinAggregateInputType = {
+    id_especificacion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    detalle_id?: true
+    descripcion?: true
+    orden?: true
+    created_at?: true
+  }
+
+  export type EspecificacionDetalleReqMaxAggregateInputType = {
+    id_especificacion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    detalle_id?: true
+    descripcion?: true
+    orden?: true
+    created_at?: true
+  }
+
+  export type EspecificacionDetalleReqCountAggregateInputType = {
+    id_especificacion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    detalle_id?: true
+    descripcion?: true
+    orden?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type EspecificacionDetalleReqAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EspecificacionDetalleReq to aggregate.
+     */
+    where?: EspecificacionDetalleReqWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EspecificacionDetalleReqs to fetch.
+     */
+    orderBy?: EspecificacionDetalleReqOrderByWithRelationInput | EspecificacionDetalleReqOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EspecificacionDetalleReqWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EspecificacionDetalleReqs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EspecificacionDetalleReqs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EspecificacionDetalleReqs
+    **/
+    _count?: true | EspecificacionDetalleReqCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EspecificacionDetalleReqAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EspecificacionDetalleReqSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EspecificacionDetalleReqMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EspecificacionDetalleReqMaxAggregateInputType
+  }
+
+  export type GetEspecificacionDetalleReqAggregateType<T extends EspecificacionDetalleReqAggregateArgs> = {
+        [P in keyof T & keyof AggregateEspecificacionDetalleReq]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEspecificacionDetalleReq[P]>
+      : GetScalarType<T[P], AggregateEspecificacionDetalleReq[P]>
+  }
+
+
+
+
+  export type EspecificacionDetalleReqGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EspecificacionDetalleReqWhereInput
+    orderBy?: EspecificacionDetalleReqOrderByWithAggregationInput | EspecificacionDetalleReqOrderByWithAggregationInput[]
+    by: EspecificacionDetalleReqScalarFieldEnum[] | EspecificacionDetalleReqScalarFieldEnum
+    having?: EspecificacionDetalleReqScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EspecificacionDetalleReqCountAggregateInputType | true
+    _avg?: EspecificacionDetalleReqAvgAggregateInputType
+    _sum?: EspecificacionDetalleReqSumAggregateInputType
+    _min?: EspecificacionDetalleReqMinAggregateInputType
+    _max?: EspecificacionDetalleReqMaxAggregateInputType
+  }
+
+  export type EspecificacionDetalleReqGroupByOutputType = {
+    id_especificacion: string
+    tenant_id: string
+    proyecto_id: string
+    detalle_id: string
+    descripcion: string
+    orden: number
+    created_at: Date
+    _count: EspecificacionDetalleReqCountAggregateOutputType | null
+    _avg: EspecificacionDetalleReqAvgAggregateOutputType | null
+    _sum: EspecificacionDetalleReqSumAggregateOutputType | null
+    _min: EspecificacionDetalleReqMinAggregateOutputType | null
+    _max: EspecificacionDetalleReqMaxAggregateOutputType | null
+  }
+
+  type GetEspecificacionDetalleReqGroupByPayload<T extends EspecificacionDetalleReqGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EspecificacionDetalleReqGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EspecificacionDetalleReqGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EspecificacionDetalleReqGroupByOutputType[P]>
+            : GetScalarType<T[P], EspecificacionDetalleReqGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EspecificacionDetalleReqSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_especificacion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    detalle_id?: boolean
+    descripcion?: boolean
+    orden?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["especificacionDetalleReq"]>
+
+  export type EspecificacionDetalleReqSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_especificacion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    detalle_id?: boolean
+    descripcion?: boolean
+    orden?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["especificacionDetalleReq"]>
+
+  export type EspecificacionDetalleReqSelectScalar = {
+    id_especificacion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    detalle_id?: boolean
+    descripcion?: boolean
+    orden?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $EspecificacionDetalleReqPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EspecificacionDetalleReq"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_especificacion: string
+      tenant_id: string
+      proyecto_id: string
+      detalle_id: string
+      descripcion: string
+      orden: number
+      created_at: Date
+    }, ExtArgs["result"]["especificacionDetalleReq"]>
+    composites: {}
+  }
+
+  type EspecificacionDetalleReqGetPayload<S extends boolean | null | undefined | EspecificacionDetalleReqDefaultArgs> = $Result.GetResult<Prisma.$EspecificacionDetalleReqPayload, S>
+
+  type EspecificacionDetalleReqCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<EspecificacionDetalleReqFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: EspecificacionDetalleReqCountAggregateInputType | true
+    }
+
+  export interface EspecificacionDetalleReqDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EspecificacionDetalleReq'], meta: { name: 'EspecificacionDetalleReq' } }
+    /**
+     * Find zero or one EspecificacionDetalleReq that matches the filter.
+     * @param {EspecificacionDetalleReqFindUniqueArgs} args - Arguments to find a EspecificacionDetalleReq
+     * @example
+     * // Get one EspecificacionDetalleReq
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EspecificacionDetalleReqFindUniqueArgs>(args: SelectSubset<T, EspecificacionDetalleReqFindUniqueArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one EspecificacionDetalleReq that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {EspecificacionDetalleReqFindUniqueOrThrowArgs} args - Arguments to find a EspecificacionDetalleReq
+     * @example
+     * // Get one EspecificacionDetalleReq
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EspecificacionDetalleReqFindUniqueOrThrowArgs>(args: SelectSubset<T, EspecificacionDetalleReqFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first EspecificacionDetalleReq that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqFindFirstArgs} args - Arguments to find a EspecificacionDetalleReq
+     * @example
+     * // Get one EspecificacionDetalleReq
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EspecificacionDetalleReqFindFirstArgs>(args?: SelectSubset<T, EspecificacionDetalleReqFindFirstArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first EspecificacionDetalleReq that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqFindFirstOrThrowArgs} args - Arguments to find a EspecificacionDetalleReq
+     * @example
+     * // Get one EspecificacionDetalleReq
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EspecificacionDetalleReqFindFirstOrThrowArgs>(args?: SelectSubset<T, EspecificacionDetalleReqFindFirstOrThrowArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more EspecificacionDetalleReqs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EspecificacionDetalleReqs
+     * const especificacionDetalleReqs = await prisma.especificacionDetalleReq.findMany()
+     * 
+     * // Get first 10 EspecificacionDetalleReqs
+     * const especificacionDetalleReqs = await prisma.especificacionDetalleReq.findMany({ take: 10 })
+     * 
+     * // Only select the `id_especificacion`
+     * const especificacionDetalleReqWithId_especificacionOnly = await prisma.especificacionDetalleReq.findMany({ select: { id_especificacion: true } })
+     * 
+     */
+    findMany<T extends EspecificacionDetalleReqFindManyArgs>(args?: SelectSubset<T, EspecificacionDetalleReqFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a EspecificacionDetalleReq.
+     * @param {EspecificacionDetalleReqCreateArgs} args - Arguments to create a EspecificacionDetalleReq.
+     * @example
+     * // Create one EspecificacionDetalleReq
+     * const EspecificacionDetalleReq = await prisma.especificacionDetalleReq.create({
+     *   data: {
+     *     // ... data to create a EspecificacionDetalleReq
+     *   }
+     * })
+     * 
+     */
+    create<T extends EspecificacionDetalleReqCreateArgs>(args: SelectSubset<T, EspecificacionDetalleReqCreateArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many EspecificacionDetalleReqs.
+     * @param {EspecificacionDetalleReqCreateManyArgs} args - Arguments to create many EspecificacionDetalleReqs.
+     * @example
+     * // Create many EspecificacionDetalleReqs
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EspecificacionDetalleReqCreateManyArgs>(args?: SelectSubset<T, EspecificacionDetalleReqCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EspecificacionDetalleReqs and returns the data saved in the database.
+     * @param {EspecificacionDetalleReqCreateManyAndReturnArgs} args - Arguments to create many EspecificacionDetalleReqs.
+     * @example
+     * // Create many EspecificacionDetalleReqs
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EspecificacionDetalleReqs and only return the `id_especificacion`
+     * const especificacionDetalleReqWithId_especificacionOnly = await prisma.especificacionDetalleReq.createManyAndReturn({ 
+     *   select: { id_especificacion: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EspecificacionDetalleReqCreateManyAndReturnArgs>(args?: SelectSubset<T, EspecificacionDetalleReqCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a EspecificacionDetalleReq.
+     * @param {EspecificacionDetalleReqDeleteArgs} args - Arguments to delete one EspecificacionDetalleReq.
+     * @example
+     * // Delete one EspecificacionDetalleReq
+     * const EspecificacionDetalleReq = await prisma.especificacionDetalleReq.delete({
+     *   where: {
+     *     // ... filter to delete one EspecificacionDetalleReq
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EspecificacionDetalleReqDeleteArgs>(args: SelectSubset<T, EspecificacionDetalleReqDeleteArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one EspecificacionDetalleReq.
+     * @param {EspecificacionDetalleReqUpdateArgs} args - Arguments to update one EspecificacionDetalleReq.
+     * @example
+     * // Update one EspecificacionDetalleReq
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EspecificacionDetalleReqUpdateArgs>(args: SelectSubset<T, EspecificacionDetalleReqUpdateArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more EspecificacionDetalleReqs.
+     * @param {EspecificacionDetalleReqDeleteManyArgs} args - Arguments to filter EspecificacionDetalleReqs to delete.
+     * @example
+     * // Delete a few EspecificacionDetalleReqs
+     * const { count } = await prisma.especificacionDetalleReq.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EspecificacionDetalleReqDeleteManyArgs>(args?: SelectSubset<T, EspecificacionDetalleReqDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EspecificacionDetalleReqs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EspecificacionDetalleReqs
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EspecificacionDetalleReqUpdateManyArgs>(args: SelectSubset<T, EspecificacionDetalleReqUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one EspecificacionDetalleReq.
+     * @param {EspecificacionDetalleReqUpsertArgs} args - Arguments to update or create a EspecificacionDetalleReq.
+     * @example
+     * // Update or create a EspecificacionDetalleReq
+     * const especificacionDetalleReq = await prisma.especificacionDetalleReq.upsert({
+     *   create: {
+     *     // ... data to create a EspecificacionDetalleReq
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EspecificacionDetalleReq we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EspecificacionDetalleReqUpsertArgs>(args: SelectSubset<T, EspecificacionDetalleReqUpsertArgs<ExtArgs>>): Prisma__EspecificacionDetalleReqClient<$Result.GetResult<Prisma.$EspecificacionDetalleReqPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of EspecificacionDetalleReqs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqCountArgs} args - Arguments to filter EspecificacionDetalleReqs to count.
+     * @example
+     * // Count the number of EspecificacionDetalleReqs
+     * const count = await prisma.especificacionDetalleReq.count({
+     *   where: {
+     *     // ... the filter for the EspecificacionDetalleReqs we want to count
+     *   }
+     * })
+    **/
+    count<T extends EspecificacionDetalleReqCountArgs>(
+      args?: Subset<T, EspecificacionDetalleReqCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EspecificacionDetalleReqCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EspecificacionDetalleReq.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EspecificacionDetalleReqAggregateArgs>(args: Subset<T, EspecificacionDetalleReqAggregateArgs>): Prisma.PrismaPromise<GetEspecificacionDetalleReqAggregateType<T>>
+
+    /**
+     * Group by EspecificacionDetalleReq.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EspecificacionDetalleReqGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EspecificacionDetalleReqGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EspecificacionDetalleReqGroupByArgs['orderBy'] }
+        : { orderBy?: EspecificacionDetalleReqGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EspecificacionDetalleReqGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEspecificacionDetalleReqGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EspecificacionDetalleReq model
+   */
+  readonly fields: EspecificacionDetalleReqFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EspecificacionDetalleReq.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EspecificacionDetalleReqClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EspecificacionDetalleReq model
+   */ 
+  interface EspecificacionDetalleReqFieldRefs {
+    readonly id_especificacion: FieldRef<"EspecificacionDetalleReq", 'String'>
+    readonly tenant_id: FieldRef<"EspecificacionDetalleReq", 'String'>
+    readonly proyecto_id: FieldRef<"EspecificacionDetalleReq", 'String'>
+    readonly detalle_id: FieldRef<"EspecificacionDetalleReq", 'String'>
+    readonly descripcion: FieldRef<"EspecificacionDetalleReq", 'String'>
+    readonly orden: FieldRef<"EspecificacionDetalleReq", 'Int'>
+    readonly created_at: FieldRef<"EspecificacionDetalleReq", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EspecificacionDetalleReq findUnique
+   */
+  export type EspecificacionDetalleReqFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * Filter, which EspecificacionDetalleReq to fetch.
+     */
+    where: EspecificacionDetalleReqWhereUniqueInput
+  }
+
+  /**
+   * EspecificacionDetalleReq findUniqueOrThrow
+   */
+  export type EspecificacionDetalleReqFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * Filter, which EspecificacionDetalleReq to fetch.
+     */
+    where: EspecificacionDetalleReqWhereUniqueInput
+  }
+
+  /**
+   * EspecificacionDetalleReq findFirst
+   */
+  export type EspecificacionDetalleReqFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * Filter, which EspecificacionDetalleReq to fetch.
+     */
+    where?: EspecificacionDetalleReqWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EspecificacionDetalleReqs to fetch.
+     */
+    orderBy?: EspecificacionDetalleReqOrderByWithRelationInput | EspecificacionDetalleReqOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EspecificacionDetalleReqs.
+     */
+    cursor?: EspecificacionDetalleReqWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EspecificacionDetalleReqs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EspecificacionDetalleReqs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EspecificacionDetalleReqs.
+     */
+    distinct?: EspecificacionDetalleReqScalarFieldEnum | EspecificacionDetalleReqScalarFieldEnum[]
+  }
+
+  /**
+   * EspecificacionDetalleReq findFirstOrThrow
+   */
+  export type EspecificacionDetalleReqFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * Filter, which EspecificacionDetalleReq to fetch.
+     */
+    where?: EspecificacionDetalleReqWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EspecificacionDetalleReqs to fetch.
+     */
+    orderBy?: EspecificacionDetalleReqOrderByWithRelationInput | EspecificacionDetalleReqOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EspecificacionDetalleReqs.
+     */
+    cursor?: EspecificacionDetalleReqWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EspecificacionDetalleReqs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EspecificacionDetalleReqs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EspecificacionDetalleReqs.
+     */
+    distinct?: EspecificacionDetalleReqScalarFieldEnum | EspecificacionDetalleReqScalarFieldEnum[]
+  }
+
+  /**
+   * EspecificacionDetalleReq findMany
+   */
+  export type EspecificacionDetalleReqFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * Filter, which EspecificacionDetalleReqs to fetch.
+     */
+    where?: EspecificacionDetalleReqWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EspecificacionDetalleReqs to fetch.
+     */
+    orderBy?: EspecificacionDetalleReqOrderByWithRelationInput | EspecificacionDetalleReqOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EspecificacionDetalleReqs.
+     */
+    cursor?: EspecificacionDetalleReqWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EspecificacionDetalleReqs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EspecificacionDetalleReqs.
+     */
+    skip?: number
+    distinct?: EspecificacionDetalleReqScalarFieldEnum | EspecificacionDetalleReqScalarFieldEnum[]
+  }
+
+  /**
+   * EspecificacionDetalleReq create
+   */
+  export type EspecificacionDetalleReqCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * The data needed to create a EspecificacionDetalleReq.
+     */
+    data: XOR<EspecificacionDetalleReqCreateInput, EspecificacionDetalleReqUncheckedCreateInput>
+  }
+
+  /**
+   * EspecificacionDetalleReq createMany
+   */
+  export type EspecificacionDetalleReqCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EspecificacionDetalleReqs.
+     */
+    data: EspecificacionDetalleReqCreateManyInput | EspecificacionDetalleReqCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EspecificacionDetalleReq createManyAndReturn
+   */
+  export type EspecificacionDetalleReqCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many EspecificacionDetalleReqs.
+     */
+    data: EspecificacionDetalleReqCreateManyInput | EspecificacionDetalleReqCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EspecificacionDetalleReq update
+   */
+  export type EspecificacionDetalleReqUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * The data needed to update a EspecificacionDetalleReq.
+     */
+    data: XOR<EspecificacionDetalleReqUpdateInput, EspecificacionDetalleReqUncheckedUpdateInput>
+    /**
+     * Choose, which EspecificacionDetalleReq to update.
+     */
+    where: EspecificacionDetalleReqWhereUniqueInput
+  }
+
+  /**
+   * EspecificacionDetalleReq updateMany
+   */
+  export type EspecificacionDetalleReqUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EspecificacionDetalleReqs.
+     */
+    data: XOR<EspecificacionDetalleReqUpdateManyMutationInput, EspecificacionDetalleReqUncheckedUpdateManyInput>
+    /**
+     * Filter which EspecificacionDetalleReqs to update
+     */
+    where?: EspecificacionDetalleReqWhereInput
+  }
+
+  /**
+   * EspecificacionDetalleReq upsert
+   */
+  export type EspecificacionDetalleReqUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * The filter to search for the EspecificacionDetalleReq to update in case it exists.
+     */
+    where: EspecificacionDetalleReqWhereUniqueInput
+    /**
+     * In case the EspecificacionDetalleReq found by the `where` argument doesn't exist, create a new EspecificacionDetalleReq with this data.
+     */
+    create: XOR<EspecificacionDetalleReqCreateInput, EspecificacionDetalleReqUncheckedCreateInput>
+    /**
+     * In case the EspecificacionDetalleReq was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EspecificacionDetalleReqUpdateInput, EspecificacionDetalleReqUncheckedUpdateInput>
+  }
+
+  /**
+   * EspecificacionDetalleReq delete
+   */
+  export type EspecificacionDetalleReqDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+    /**
+     * Filter which EspecificacionDetalleReq to delete.
+     */
+    where: EspecificacionDetalleReqWhereUniqueInput
+  }
+
+  /**
+   * EspecificacionDetalleReq deleteMany
+   */
+  export type EspecificacionDetalleReqDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EspecificacionDetalleReqs to delete
+     */
+    where?: EspecificacionDetalleReqWhereInput
+  }
+
+  /**
+   * EspecificacionDetalleReq without action
+   */
+  export type EspecificacionDetalleReqDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EspecificacionDetalleReq
+     */
+    select?: EspecificacionDetalleReqSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SolicitudCotizacion
+   */
+
+  export type AggregateSolicitudCotizacion = {
+    _count: SolicitudCotizacionCountAggregateOutputType | null
+    _avg: SolicitudCotizacionAvgAggregateOutputType | null
+    _sum: SolicitudCotizacionSumAggregateOutputType | null
+    _min: SolicitudCotizacionMinAggregateOutputType | null
+    _max: SolicitudCotizacionMaxAggregateOutputType | null
+  }
+
+  export type SolicitudCotizacionAvgAggregateOutputType = {
+    dias_habiles: number | null
+  }
+
+  export type SolicitudCotizacionSumAggregateOutputType = {
+    dias_habiles: number | null
+  }
+
+  export type SolicitudCotizacionMinAggregateOutputType = {
+    id_solicitud: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    requisicion_id: string | null
+    dias_habiles: number | null
+    fecha_solicitud: Date | null
+    fecha_limite: Date | null
+    creado_por: string | null
+    notas: string | null
+    created_at: Date | null
+  }
+
+  export type SolicitudCotizacionMaxAggregateOutputType = {
+    id_solicitud: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    requisicion_id: string | null
+    dias_habiles: number | null
+    fecha_solicitud: Date | null
+    fecha_limite: Date | null
+    creado_por: string | null
+    notas: string | null
+    created_at: Date | null
+  }
+
+  export type SolicitudCotizacionCountAggregateOutputType = {
+    id_solicitud: number
+    tenant_id: number
+    proyecto_id: number
+    requisicion_id: number
+    dias_habiles: number
+    fecha_solicitud: number
+    fecha_limite: number
+    creado_por: number
+    notas: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type SolicitudCotizacionAvgAggregateInputType = {
+    dias_habiles?: true
+  }
+
+  export type SolicitudCotizacionSumAggregateInputType = {
+    dias_habiles?: true
+  }
+
+  export type SolicitudCotizacionMinAggregateInputType = {
+    id_solicitud?: true
+    tenant_id?: true
+    proyecto_id?: true
+    requisicion_id?: true
+    dias_habiles?: true
+    fecha_solicitud?: true
+    fecha_limite?: true
+    creado_por?: true
+    notas?: true
+    created_at?: true
+  }
+
+  export type SolicitudCotizacionMaxAggregateInputType = {
+    id_solicitud?: true
+    tenant_id?: true
+    proyecto_id?: true
+    requisicion_id?: true
+    dias_habiles?: true
+    fecha_solicitud?: true
+    fecha_limite?: true
+    creado_por?: true
+    notas?: true
+    created_at?: true
+  }
+
+  export type SolicitudCotizacionCountAggregateInputType = {
+    id_solicitud?: true
+    tenant_id?: true
+    proyecto_id?: true
+    requisicion_id?: true
+    dias_habiles?: true
+    fecha_solicitud?: true
+    fecha_limite?: true
+    creado_por?: true
+    notas?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type SolicitudCotizacionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SolicitudCotizacion to aggregate.
+     */
+    where?: SolicitudCotizacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacions to fetch.
+     */
+    orderBy?: SolicitudCotizacionOrderByWithRelationInput | SolicitudCotizacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SolicitudCotizacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SolicitudCotizacions
+    **/
+    _count?: true | SolicitudCotizacionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SolicitudCotizacionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SolicitudCotizacionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SolicitudCotizacionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SolicitudCotizacionMaxAggregateInputType
+  }
+
+  export type GetSolicitudCotizacionAggregateType<T extends SolicitudCotizacionAggregateArgs> = {
+        [P in keyof T & keyof AggregateSolicitudCotizacion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSolicitudCotizacion[P]>
+      : GetScalarType<T[P], AggregateSolicitudCotizacion[P]>
+  }
+
+
+
+
+  export type SolicitudCotizacionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SolicitudCotizacionWhereInput
+    orderBy?: SolicitudCotizacionOrderByWithAggregationInput | SolicitudCotizacionOrderByWithAggregationInput[]
+    by: SolicitudCotizacionScalarFieldEnum[] | SolicitudCotizacionScalarFieldEnum
+    having?: SolicitudCotizacionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SolicitudCotizacionCountAggregateInputType | true
+    _avg?: SolicitudCotizacionAvgAggregateInputType
+    _sum?: SolicitudCotizacionSumAggregateInputType
+    _min?: SolicitudCotizacionMinAggregateInputType
+    _max?: SolicitudCotizacionMaxAggregateInputType
+  }
+
+  export type SolicitudCotizacionGroupByOutputType = {
+    id_solicitud: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    dias_habiles: number
+    fecha_solicitud: Date
+    fecha_limite: Date
+    creado_por: string
+    notas: string | null
+    created_at: Date
+    _count: SolicitudCotizacionCountAggregateOutputType | null
+    _avg: SolicitudCotizacionAvgAggregateOutputType | null
+    _sum: SolicitudCotizacionSumAggregateOutputType | null
+    _min: SolicitudCotizacionMinAggregateOutputType | null
+    _max: SolicitudCotizacionMaxAggregateOutputType | null
+  }
+
+  type GetSolicitudCotizacionGroupByPayload<T extends SolicitudCotizacionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SolicitudCotizacionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SolicitudCotizacionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SolicitudCotizacionGroupByOutputType[P]>
+            : GetScalarType<T[P], SolicitudCotizacionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SolicitudCotizacionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_solicitud?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    requisicion_id?: boolean
+    dias_habiles?: boolean
+    fecha_solicitud?: boolean
+    fecha_limite?: boolean
+    creado_por?: boolean
+    notas?: boolean
+    created_at?: boolean
+    proveedores?: boolean | SolicitudCotizacion$proveedoresArgs<ExtArgs>
+    _count?: boolean | SolicitudCotizacionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["solicitudCotizacion"]>
+
+  export type SolicitudCotizacionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_solicitud?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    requisicion_id?: boolean
+    dias_habiles?: boolean
+    fecha_solicitud?: boolean
+    fecha_limite?: boolean
+    creado_por?: boolean
+    notas?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["solicitudCotizacion"]>
+
+  export type SolicitudCotizacionSelectScalar = {
+    id_solicitud?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    requisicion_id?: boolean
+    dias_habiles?: boolean
+    fecha_solicitud?: boolean
+    fecha_limite?: boolean
+    creado_por?: boolean
+    notas?: boolean
+    created_at?: boolean
+  }
+
+  export type SolicitudCotizacionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    proveedores?: boolean | SolicitudCotizacion$proveedoresArgs<ExtArgs>
+    _count?: boolean | SolicitudCotizacionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SolicitudCotizacionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SolicitudCotizacionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SolicitudCotizacion"
+    objects: {
+      proveedores: Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_solicitud: string
+      tenant_id: string
+      proyecto_id: string
+      requisicion_id: string
+      dias_habiles: number
+      fecha_solicitud: Date
+      fecha_limite: Date
+      creado_por: string
+      notas: string | null
+      created_at: Date
+    }, ExtArgs["result"]["solicitudCotizacion"]>
+    composites: {}
+  }
+
+  type SolicitudCotizacionGetPayload<S extends boolean | null | undefined | SolicitudCotizacionDefaultArgs> = $Result.GetResult<Prisma.$SolicitudCotizacionPayload, S>
+
+  type SolicitudCotizacionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SolicitudCotizacionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SolicitudCotizacionCountAggregateInputType | true
+    }
+
+  export interface SolicitudCotizacionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SolicitudCotizacion'], meta: { name: 'SolicitudCotizacion' } }
+    /**
+     * Find zero or one SolicitudCotizacion that matches the filter.
+     * @param {SolicitudCotizacionFindUniqueArgs} args - Arguments to find a SolicitudCotizacion
+     * @example
+     * // Get one SolicitudCotizacion
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SolicitudCotizacionFindUniqueArgs>(args: SelectSubset<T, SolicitudCotizacionFindUniqueArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SolicitudCotizacion that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SolicitudCotizacionFindUniqueOrThrowArgs} args - Arguments to find a SolicitudCotizacion
+     * @example
+     * // Get one SolicitudCotizacion
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SolicitudCotizacionFindUniqueOrThrowArgs>(args: SelectSubset<T, SolicitudCotizacionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SolicitudCotizacion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionFindFirstArgs} args - Arguments to find a SolicitudCotizacion
+     * @example
+     * // Get one SolicitudCotizacion
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SolicitudCotizacionFindFirstArgs>(args?: SelectSubset<T, SolicitudCotizacionFindFirstArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SolicitudCotizacion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionFindFirstOrThrowArgs} args - Arguments to find a SolicitudCotizacion
+     * @example
+     * // Get one SolicitudCotizacion
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SolicitudCotizacionFindFirstOrThrowArgs>(args?: SelectSubset<T, SolicitudCotizacionFindFirstOrThrowArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SolicitudCotizacions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SolicitudCotizacions
+     * const solicitudCotizacions = await prisma.solicitudCotizacion.findMany()
+     * 
+     * // Get first 10 SolicitudCotizacions
+     * const solicitudCotizacions = await prisma.solicitudCotizacion.findMany({ take: 10 })
+     * 
+     * // Only select the `id_solicitud`
+     * const solicitudCotizacionWithId_solicitudOnly = await prisma.solicitudCotizacion.findMany({ select: { id_solicitud: true } })
+     * 
+     */
+    findMany<T extends SolicitudCotizacionFindManyArgs>(args?: SelectSubset<T, SolicitudCotizacionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SolicitudCotizacion.
+     * @param {SolicitudCotizacionCreateArgs} args - Arguments to create a SolicitudCotizacion.
+     * @example
+     * // Create one SolicitudCotizacion
+     * const SolicitudCotizacion = await prisma.solicitudCotizacion.create({
+     *   data: {
+     *     // ... data to create a SolicitudCotizacion
+     *   }
+     * })
+     * 
+     */
+    create<T extends SolicitudCotizacionCreateArgs>(args: SelectSubset<T, SolicitudCotizacionCreateArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SolicitudCotizacions.
+     * @param {SolicitudCotizacionCreateManyArgs} args - Arguments to create many SolicitudCotizacions.
+     * @example
+     * // Create many SolicitudCotizacions
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SolicitudCotizacionCreateManyArgs>(args?: SelectSubset<T, SolicitudCotizacionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SolicitudCotizacions and returns the data saved in the database.
+     * @param {SolicitudCotizacionCreateManyAndReturnArgs} args - Arguments to create many SolicitudCotizacions.
+     * @example
+     * // Create many SolicitudCotizacions
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SolicitudCotizacions and only return the `id_solicitud`
+     * const solicitudCotizacionWithId_solicitudOnly = await prisma.solicitudCotizacion.createManyAndReturn({ 
+     *   select: { id_solicitud: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SolicitudCotizacionCreateManyAndReturnArgs>(args?: SelectSubset<T, SolicitudCotizacionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SolicitudCotizacion.
+     * @param {SolicitudCotizacionDeleteArgs} args - Arguments to delete one SolicitudCotizacion.
+     * @example
+     * // Delete one SolicitudCotizacion
+     * const SolicitudCotizacion = await prisma.solicitudCotizacion.delete({
+     *   where: {
+     *     // ... filter to delete one SolicitudCotizacion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SolicitudCotizacionDeleteArgs>(args: SelectSubset<T, SolicitudCotizacionDeleteArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SolicitudCotizacion.
+     * @param {SolicitudCotizacionUpdateArgs} args - Arguments to update one SolicitudCotizacion.
+     * @example
+     * // Update one SolicitudCotizacion
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SolicitudCotizacionUpdateArgs>(args: SelectSubset<T, SolicitudCotizacionUpdateArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SolicitudCotizacions.
+     * @param {SolicitudCotizacionDeleteManyArgs} args - Arguments to filter SolicitudCotizacions to delete.
+     * @example
+     * // Delete a few SolicitudCotizacions
+     * const { count } = await prisma.solicitudCotizacion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SolicitudCotizacionDeleteManyArgs>(args?: SelectSubset<T, SolicitudCotizacionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SolicitudCotizacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SolicitudCotizacions
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SolicitudCotizacionUpdateManyArgs>(args: SelectSubset<T, SolicitudCotizacionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SolicitudCotizacion.
+     * @param {SolicitudCotizacionUpsertArgs} args - Arguments to update or create a SolicitudCotizacion.
+     * @example
+     * // Update or create a SolicitudCotizacion
+     * const solicitudCotizacion = await prisma.solicitudCotizacion.upsert({
+     *   create: {
+     *     // ... data to create a SolicitudCotizacion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SolicitudCotizacion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SolicitudCotizacionUpsertArgs>(args: SelectSubset<T, SolicitudCotizacionUpsertArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SolicitudCotizacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionCountArgs} args - Arguments to filter SolicitudCotizacions to count.
+     * @example
+     * // Count the number of SolicitudCotizacions
+     * const count = await prisma.solicitudCotizacion.count({
+     *   where: {
+     *     // ... the filter for the SolicitudCotizacions we want to count
+     *   }
+     * })
+    **/
+    count<T extends SolicitudCotizacionCountArgs>(
+      args?: Subset<T, SolicitudCotizacionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SolicitudCotizacionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SolicitudCotizacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SolicitudCotizacionAggregateArgs>(args: Subset<T, SolicitudCotizacionAggregateArgs>): Prisma.PrismaPromise<GetSolicitudCotizacionAggregateType<T>>
+
+    /**
+     * Group by SolicitudCotizacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SolicitudCotizacionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SolicitudCotizacionGroupByArgs['orderBy'] }
+        : { orderBy?: SolicitudCotizacionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SolicitudCotizacionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSolicitudCotizacionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SolicitudCotizacion model
+   */
+  readonly fields: SolicitudCotizacionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SolicitudCotizacion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SolicitudCotizacionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    proveedores<T extends SolicitudCotizacion$proveedoresArgs<ExtArgs> = {}>(args?: Subset<T, SolicitudCotizacion$proveedoresArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SolicitudCotizacion model
+   */ 
+  interface SolicitudCotizacionFieldRefs {
+    readonly id_solicitud: FieldRef<"SolicitudCotizacion", 'String'>
+    readonly tenant_id: FieldRef<"SolicitudCotizacion", 'String'>
+    readonly proyecto_id: FieldRef<"SolicitudCotizacion", 'String'>
+    readonly requisicion_id: FieldRef<"SolicitudCotizacion", 'String'>
+    readonly dias_habiles: FieldRef<"SolicitudCotizacion", 'Int'>
+    readonly fecha_solicitud: FieldRef<"SolicitudCotizacion", 'DateTime'>
+    readonly fecha_limite: FieldRef<"SolicitudCotizacion", 'DateTime'>
+    readonly creado_por: FieldRef<"SolicitudCotizacion", 'String'>
+    readonly notas: FieldRef<"SolicitudCotizacion", 'String'>
+    readonly created_at: FieldRef<"SolicitudCotizacion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SolicitudCotizacion findUnique
+   */
+  export type SolicitudCotizacionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacion to fetch.
+     */
+    where: SolicitudCotizacionWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacion findUniqueOrThrow
+   */
+  export type SolicitudCotizacionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacion to fetch.
+     */
+    where: SolicitudCotizacionWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacion findFirst
+   */
+  export type SolicitudCotizacionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacion to fetch.
+     */
+    where?: SolicitudCotizacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacions to fetch.
+     */
+    orderBy?: SolicitudCotizacionOrderByWithRelationInput | SolicitudCotizacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SolicitudCotizacions.
+     */
+    cursor?: SolicitudCotizacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SolicitudCotizacions.
+     */
+    distinct?: SolicitudCotizacionScalarFieldEnum | SolicitudCotizacionScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacion findFirstOrThrow
+   */
+  export type SolicitudCotizacionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacion to fetch.
+     */
+    where?: SolicitudCotizacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacions to fetch.
+     */
+    orderBy?: SolicitudCotizacionOrderByWithRelationInput | SolicitudCotizacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SolicitudCotizacions.
+     */
+    cursor?: SolicitudCotizacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SolicitudCotizacions.
+     */
+    distinct?: SolicitudCotizacionScalarFieldEnum | SolicitudCotizacionScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacion findMany
+   */
+  export type SolicitudCotizacionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacions to fetch.
+     */
+    where?: SolicitudCotizacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacions to fetch.
+     */
+    orderBy?: SolicitudCotizacionOrderByWithRelationInput | SolicitudCotizacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SolicitudCotizacions.
+     */
+    cursor?: SolicitudCotizacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacions.
+     */
+    skip?: number
+    distinct?: SolicitudCotizacionScalarFieldEnum | SolicitudCotizacionScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacion create
+   */
+  export type SolicitudCotizacionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SolicitudCotizacion.
+     */
+    data: XOR<SolicitudCotizacionCreateInput, SolicitudCotizacionUncheckedCreateInput>
+  }
+
+  /**
+   * SolicitudCotizacion createMany
+   */
+  export type SolicitudCotizacionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SolicitudCotizacions.
+     */
+    data: SolicitudCotizacionCreateManyInput | SolicitudCotizacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SolicitudCotizacion createManyAndReturn
+   */
+  export type SolicitudCotizacionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SolicitudCotizacions.
+     */
+    data: SolicitudCotizacionCreateManyInput | SolicitudCotizacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SolicitudCotizacion update
+   */
+  export type SolicitudCotizacionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SolicitudCotizacion.
+     */
+    data: XOR<SolicitudCotizacionUpdateInput, SolicitudCotizacionUncheckedUpdateInput>
+    /**
+     * Choose, which SolicitudCotizacion to update.
+     */
+    where: SolicitudCotizacionWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacion updateMany
+   */
+  export type SolicitudCotizacionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SolicitudCotizacions.
+     */
+    data: XOR<SolicitudCotizacionUpdateManyMutationInput, SolicitudCotizacionUncheckedUpdateManyInput>
+    /**
+     * Filter which SolicitudCotizacions to update
+     */
+    where?: SolicitudCotizacionWhereInput
+  }
+
+  /**
+   * SolicitudCotizacion upsert
+   */
+  export type SolicitudCotizacionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SolicitudCotizacion to update in case it exists.
+     */
+    where: SolicitudCotizacionWhereUniqueInput
+    /**
+     * In case the SolicitudCotizacion found by the `where` argument doesn't exist, create a new SolicitudCotizacion with this data.
+     */
+    create: XOR<SolicitudCotizacionCreateInput, SolicitudCotizacionUncheckedCreateInput>
+    /**
+     * In case the SolicitudCotizacion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SolicitudCotizacionUpdateInput, SolicitudCotizacionUncheckedUpdateInput>
+  }
+
+  /**
+   * SolicitudCotizacion delete
+   */
+  export type SolicitudCotizacionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+    /**
+     * Filter which SolicitudCotizacion to delete.
+     */
+    where: SolicitudCotizacionWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacion deleteMany
+   */
+  export type SolicitudCotizacionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SolicitudCotizacions to delete
+     */
+    where?: SolicitudCotizacionWhereInput
+  }
+
+  /**
+   * SolicitudCotizacion.proveedores
+   */
+  export type SolicitudCotizacion$proveedoresArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    where?: SolicitudCotizacionProveedorWhereInput
+    orderBy?: SolicitudCotizacionProveedorOrderByWithRelationInput | SolicitudCotizacionProveedorOrderByWithRelationInput[]
+    cursor?: SolicitudCotizacionProveedorWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SolicitudCotizacionProveedorScalarFieldEnum | SolicitudCotizacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacion without action
+   */
+  export type SolicitudCotizacionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacion
+     */
+    select?: SolicitudCotizacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SolicitudCotizacionProveedor
+   */
+
+  export type AggregateSolicitudCotizacionProveedor = {
+    _count: SolicitudCotizacionProveedorCountAggregateOutputType | null
+    _min: SolicitudCotizacionProveedorMinAggregateOutputType | null
+    _max: SolicitudCotizacionProveedorMaxAggregateOutputType | null
+  }
+
+  export type SolicitudCotizacionProveedorMinAggregateOutputType = {
+    id_scp: string | null
+    tenant_id: string | null
+    solicitud_id: string | null
+    proveedor_id: string | null
+    estado: string | null
+    pdf_nombre: string | null
+    pdf_ruta: string | null
+    pdf_mime: string | null
+    notas_proveedor: string | null
+    fecha_respuesta: Date | null
+    updated_at: Date | null
+  }
+
+  export type SolicitudCotizacionProveedorMaxAggregateOutputType = {
+    id_scp: string | null
+    tenant_id: string | null
+    solicitud_id: string | null
+    proveedor_id: string | null
+    estado: string | null
+    pdf_nombre: string | null
+    pdf_ruta: string | null
+    pdf_mime: string | null
+    notas_proveedor: string | null
+    fecha_respuesta: Date | null
+    updated_at: Date | null
+  }
+
+  export type SolicitudCotizacionProveedorCountAggregateOutputType = {
+    id_scp: number
+    tenant_id: number
+    solicitud_id: number
+    proveedor_id: number
+    estado: number
+    pdf_nombre: number
+    pdf_ruta: number
+    pdf_mime: number
+    notas_proveedor: number
+    fecha_respuesta: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type SolicitudCotizacionProveedorMinAggregateInputType = {
+    id_scp?: true
+    tenant_id?: true
+    solicitud_id?: true
+    proveedor_id?: true
+    estado?: true
+    pdf_nombre?: true
+    pdf_ruta?: true
+    pdf_mime?: true
+    notas_proveedor?: true
+    fecha_respuesta?: true
+    updated_at?: true
+  }
+
+  export type SolicitudCotizacionProveedorMaxAggregateInputType = {
+    id_scp?: true
+    tenant_id?: true
+    solicitud_id?: true
+    proveedor_id?: true
+    estado?: true
+    pdf_nombre?: true
+    pdf_ruta?: true
+    pdf_mime?: true
+    notas_proveedor?: true
+    fecha_respuesta?: true
+    updated_at?: true
+  }
+
+  export type SolicitudCotizacionProveedorCountAggregateInputType = {
+    id_scp?: true
+    tenant_id?: true
+    solicitud_id?: true
+    proveedor_id?: true
+    estado?: true
+    pdf_nombre?: true
+    pdf_ruta?: true
+    pdf_mime?: true
+    notas_proveedor?: true
+    fecha_respuesta?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type SolicitudCotizacionProveedorAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SolicitudCotizacionProveedor to aggregate.
+     */
+    where?: SolicitudCotizacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacionProveedors to fetch.
+     */
+    orderBy?: SolicitudCotizacionProveedorOrderByWithRelationInput | SolicitudCotizacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SolicitudCotizacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacionProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SolicitudCotizacionProveedors
+    **/
+    _count?: true | SolicitudCotizacionProveedorCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SolicitudCotizacionProveedorMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SolicitudCotizacionProveedorMaxAggregateInputType
+  }
+
+  export type GetSolicitudCotizacionProveedorAggregateType<T extends SolicitudCotizacionProveedorAggregateArgs> = {
+        [P in keyof T & keyof AggregateSolicitudCotizacionProveedor]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSolicitudCotizacionProveedor[P]>
+      : GetScalarType<T[P], AggregateSolicitudCotizacionProveedor[P]>
+  }
+
+
+
+
+  export type SolicitudCotizacionProveedorGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SolicitudCotizacionProveedorWhereInput
+    orderBy?: SolicitudCotizacionProveedorOrderByWithAggregationInput | SolicitudCotizacionProveedorOrderByWithAggregationInput[]
+    by: SolicitudCotizacionProveedorScalarFieldEnum[] | SolicitudCotizacionProveedorScalarFieldEnum
+    having?: SolicitudCotizacionProveedorScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SolicitudCotizacionProveedorCountAggregateInputType | true
+    _min?: SolicitudCotizacionProveedorMinAggregateInputType
+    _max?: SolicitudCotizacionProveedorMaxAggregateInputType
+  }
+
+  export type SolicitudCotizacionProveedorGroupByOutputType = {
+    id_scp: string
+    tenant_id: string
+    solicitud_id: string
+    proveedor_id: string
+    estado: string
+    pdf_nombre: string | null
+    pdf_ruta: string | null
+    pdf_mime: string | null
+    notas_proveedor: string | null
+    fecha_respuesta: Date | null
+    updated_at: Date
+    _count: SolicitudCotizacionProveedorCountAggregateOutputType | null
+    _min: SolicitudCotizacionProveedorMinAggregateOutputType | null
+    _max: SolicitudCotizacionProveedorMaxAggregateOutputType | null
+  }
+
+  type GetSolicitudCotizacionProveedorGroupByPayload<T extends SolicitudCotizacionProveedorGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SolicitudCotizacionProveedorGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SolicitudCotizacionProveedorGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SolicitudCotizacionProveedorGroupByOutputType[P]>
+            : GetScalarType<T[P], SolicitudCotizacionProveedorGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SolicitudCotizacionProveedorSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_scp?: boolean
+    tenant_id?: boolean
+    solicitud_id?: boolean
+    proveedor_id?: boolean
+    estado?: boolean
+    pdf_nombre?: boolean
+    pdf_ruta?: boolean
+    pdf_mime?: boolean
+    notas_proveedor?: boolean
+    fecha_respuesta?: boolean
+    updated_at?: boolean
+    solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["solicitudCotizacionProveedor"]>
+
+  export type SolicitudCotizacionProveedorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_scp?: boolean
+    tenant_id?: boolean
+    solicitud_id?: boolean
+    proveedor_id?: boolean
+    estado?: boolean
+    pdf_nombre?: boolean
+    pdf_ruta?: boolean
+    pdf_mime?: boolean
+    notas_proveedor?: boolean
+    fecha_respuesta?: boolean
+    updated_at?: boolean
+    solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["solicitudCotizacionProveedor"]>
+
+  export type SolicitudCotizacionProveedorSelectScalar = {
+    id_scp?: boolean
+    tenant_id?: boolean
+    solicitud_id?: boolean
+    proveedor_id?: boolean
+    estado?: boolean
+    pdf_nombre?: boolean
+    pdf_ruta?: boolean
+    pdf_mime?: boolean
+    notas_proveedor?: boolean
+    fecha_respuesta?: boolean
+    updated_at?: boolean
+  }
+
+  export type SolicitudCotizacionProveedorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+  }
+  export type SolicitudCotizacionProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+  }
+
+  export type $SolicitudCotizacionProveedorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SolicitudCotizacionProveedor"
+    objects: {
+      solicitud: Prisma.$SolicitudCotizacionPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_scp: string
+      tenant_id: string
+      solicitud_id: string
+      proveedor_id: string
+      estado: string
+      pdf_nombre: string | null
+      pdf_ruta: string | null
+      pdf_mime: string | null
+      notas_proveedor: string | null
+      fecha_respuesta: Date | null
+      updated_at: Date
+    }, ExtArgs["result"]["solicitudCotizacionProveedor"]>
+    composites: {}
+  }
+
+  type SolicitudCotizacionProveedorGetPayload<S extends boolean | null | undefined | SolicitudCotizacionProveedorDefaultArgs> = $Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload, S>
+
+  type SolicitudCotizacionProveedorCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SolicitudCotizacionProveedorFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SolicitudCotizacionProveedorCountAggregateInputType | true
+    }
+
+  export interface SolicitudCotizacionProveedorDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SolicitudCotizacionProveedor'], meta: { name: 'SolicitudCotizacionProveedor' } }
+    /**
+     * Find zero or one SolicitudCotizacionProveedor that matches the filter.
+     * @param {SolicitudCotizacionProveedorFindUniqueArgs} args - Arguments to find a SolicitudCotizacionProveedor
+     * @example
+     * // Get one SolicitudCotizacionProveedor
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SolicitudCotizacionProveedorFindUniqueArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorFindUniqueArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SolicitudCotizacionProveedor that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SolicitudCotizacionProveedorFindUniqueOrThrowArgs} args - Arguments to find a SolicitudCotizacionProveedor
+     * @example
+     * // Get one SolicitudCotizacionProveedor
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SolicitudCotizacionProveedorFindUniqueOrThrowArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SolicitudCotizacionProveedor that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorFindFirstArgs} args - Arguments to find a SolicitudCotizacionProveedor
+     * @example
+     * // Get one SolicitudCotizacionProveedor
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SolicitudCotizacionProveedorFindFirstArgs>(args?: SelectSubset<T, SolicitudCotizacionProveedorFindFirstArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SolicitudCotizacionProveedor that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorFindFirstOrThrowArgs} args - Arguments to find a SolicitudCotizacionProveedor
+     * @example
+     * // Get one SolicitudCotizacionProveedor
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SolicitudCotizacionProveedorFindFirstOrThrowArgs>(args?: SelectSubset<T, SolicitudCotizacionProveedorFindFirstOrThrowArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SolicitudCotizacionProveedors that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SolicitudCotizacionProveedors
+     * const solicitudCotizacionProveedors = await prisma.solicitudCotizacionProveedor.findMany()
+     * 
+     * // Get first 10 SolicitudCotizacionProveedors
+     * const solicitudCotizacionProveedors = await prisma.solicitudCotizacionProveedor.findMany({ take: 10 })
+     * 
+     * // Only select the `id_scp`
+     * const solicitudCotizacionProveedorWithId_scpOnly = await prisma.solicitudCotizacionProveedor.findMany({ select: { id_scp: true } })
+     * 
+     */
+    findMany<T extends SolicitudCotizacionProveedorFindManyArgs>(args?: SelectSubset<T, SolicitudCotizacionProveedorFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SolicitudCotizacionProveedor.
+     * @param {SolicitudCotizacionProveedorCreateArgs} args - Arguments to create a SolicitudCotizacionProveedor.
+     * @example
+     * // Create one SolicitudCotizacionProveedor
+     * const SolicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.create({
+     *   data: {
+     *     // ... data to create a SolicitudCotizacionProveedor
+     *   }
+     * })
+     * 
+     */
+    create<T extends SolicitudCotizacionProveedorCreateArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorCreateArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SolicitudCotizacionProveedors.
+     * @param {SolicitudCotizacionProveedorCreateManyArgs} args - Arguments to create many SolicitudCotizacionProveedors.
+     * @example
+     * // Create many SolicitudCotizacionProveedors
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SolicitudCotizacionProveedorCreateManyArgs>(args?: SelectSubset<T, SolicitudCotizacionProveedorCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SolicitudCotizacionProveedors and returns the data saved in the database.
+     * @param {SolicitudCotizacionProveedorCreateManyAndReturnArgs} args - Arguments to create many SolicitudCotizacionProveedors.
+     * @example
+     * // Create many SolicitudCotizacionProveedors
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SolicitudCotizacionProveedors and only return the `id_scp`
+     * const solicitudCotizacionProveedorWithId_scpOnly = await prisma.solicitudCotizacionProveedor.createManyAndReturn({ 
+     *   select: { id_scp: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SolicitudCotizacionProveedorCreateManyAndReturnArgs>(args?: SelectSubset<T, SolicitudCotizacionProveedorCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SolicitudCotizacionProveedor.
+     * @param {SolicitudCotizacionProveedorDeleteArgs} args - Arguments to delete one SolicitudCotizacionProveedor.
+     * @example
+     * // Delete one SolicitudCotizacionProveedor
+     * const SolicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.delete({
+     *   where: {
+     *     // ... filter to delete one SolicitudCotizacionProveedor
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SolicitudCotizacionProveedorDeleteArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorDeleteArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SolicitudCotizacionProveedor.
+     * @param {SolicitudCotizacionProveedorUpdateArgs} args - Arguments to update one SolicitudCotizacionProveedor.
+     * @example
+     * // Update one SolicitudCotizacionProveedor
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SolicitudCotizacionProveedorUpdateArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorUpdateArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SolicitudCotizacionProveedors.
+     * @param {SolicitudCotizacionProveedorDeleteManyArgs} args - Arguments to filter SolicitudCotizacionProveedors to delete.
+     * @example
+     * // Delete a few SolicitudCotizacionProveedors
+     * const { count } = await prisma.solicitudCotizacionProveedor.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SolicitudCotizacionProveedorDeleteManyArgs>(args?: SelectSubset<T, SolicitudCotizacionProveedorDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SolicitudCotizacionProveedors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SolicitudCotizacionProveedors
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SolicitudCotizacionProveedorUpdateManyArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SolicitudCotizacionProveedor.
+     * @param {SolicitudCotizacionProveedorUpsertArgs} args - Arguments to update or create a SolicitudCotizacionProveedor.
+     * @example
+     * // Update or create a SolicitudCotizacionProveedor
+     * const solicitudCotizacionProveedor = await prisma.solicitudCotizacionProveedor.upsert({
+     *   create: {
+     *     // ... data to create a SolicitudCotizacionProveedor
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SolicitudCotizacionProveedor we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SolicitudCotizacionProveedorUpsertArgs>(args: SelectSubset<T, SolicitudCotizacionProveedorUpsertArgs<ExtArgs>>): Prisma__SolicitudCotizacionProveedorClient<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SolicitudCotizacionProveedors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorCountArgs} args - Arguments to filter SolicitudCotizacionProveedors to count.
+     * @example
+     * // Count the number of SolicitudCotizacionProveedors
+     * const count = await prisma.solicitudCotizacionProveedor.count({
+     *   where: {
+     *     // ... the filter for the SolicitudCotizacionProveedors we want to count
+     *   }
+     * })
+    **/
+    count<T extends SolicitudCotizacionProveedorCountArgs>(
+      args?: Subset<T, SolicitudCotizacionProveedorCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SolicitudCotizacionProveedorCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SolicitudCotizacionProveedor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SolicitudCotizacionProveedorAggregateArgs>(args: Subset<T, SolicitudCotizacionProveedorAggregateArgs>): Prisma.PrismaPromise<GetSolicitudCotizacionProveedorAggregateType<T>>
+
+    /**
+     * Group by SolicitudCotizacionProveedor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SolicitudCotizacionProveedorGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SolicitudCotizacionProveedorGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SolicitudCotizacionProveedorGroupByArgs['orderBy'] }
+        : { orderBy?: SolicitudCotizacionProveedorGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SolicitudCotizacionProveedorGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSolicitudCotizacionProveedorGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SolicitudCotizacionProveedor model
+   */
+  readonly fields: SolicitudCotizacionProveedorFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SolicitudCotizacionProveedor.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SolicitudCotizacionProveedorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    solicitud<T extends SolicitudCotizacionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SolicitudCotizacionDefaultArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SolicitudCotizacionProveedor model
+   */ 
+  interface SolicitudCotizacionProveedorFieldRefs {
+    readonly id_scp: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly tenant_id: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly solicitud_id: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly proveedor_id: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly estado: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly pdf_nombre: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly pdf_ruta: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly pdf_mime: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly notas_proveedor: FieldRef<"SolicitudCotizacionProveedor", 'String'>
+    readonly fecha_respuesta: FieldRef<"SolicitudCotizacionProveedor", 'DateTime'>
+    readonly updated_at: FieldRef<"SolicitudCotizacionProveedor", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SolicitudCotizacionProveedor findUnique
+   */
+  export type SolicitudCotizacionProveedorFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacionProveedor to fetch.
+     */
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacionProveedor findUniqueOrThrow
+   */
+  export type SolicitudCotizacionProveedorFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacionProveedor to fetch.
+     */
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacionProveedor findFirst
+   */
+  export type SolicitudCotizacionProveedorFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacionProveedor to fetch.
+     */
+    where?: SolicitudCotizacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacionProveedors to fetch.
+     */
+    orderBy?: SolicitudCotizacionProveedorOrderByWithRelationInput | SolicitudCotizacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SolicitudCotizacionProveedors.
+     */
+    cursor?: SolicitudCotizacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacionProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SolicitudCotizacionProveedors.
+     */
+    distinct?: SolicitudCotizacionProveedorScalarFieldEnum | SolicitudCotizacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacionProveedor findFirstOrThrow
+   */
+  export type SolicitudCotizacionProveedorFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacionProveedor to fetch.
+     */
+    where?: SolicitudCotizacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacionProveedors to fetch.
+     */
+    orderBy?: SolicitudCotizacionProveedorOrderByWithRelationInput | SolicitudCotizacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SolicitudCotizacionProveedors.
+     */
+    cursor?: SolicitudCotizacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacionProveedors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SolicitudCotizacionProveedors.
+     */
+    distinct?: SolicitudCotizacionProveedorScalarFieldEnum | SolicitudCotizacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacionProveedor findMany
+   */
+  export type SolicitudCotizacionProveedorFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter, which SolicitudCotizacionProveedors to fetch.
+     */
+    where?: SolicitudCotizacionProveedorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SolicitudCotizacionProveedors to fetch.
+     */
+    orderBy?: SolicitudCotizacionProveedorOrderByWithRelationInput | SolicitudCotizacionProveedorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SolicitudCotizacionProveedors.
+     */
+    cursor?: SolicitudCotizacionProveedorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SolicitudCotizacionProveedors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SolicitudCotizacionProveedors.
+     */
+    skip?: number
+    distinct?: SolicitudCotizacionProveedorScalarFieldEnum | SolicitudCotizacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * SolicitudCotizacionProveedor create
+   */
+  export type SolicitudCotizacionProveedorCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SolicitudCotizacionProveedor.
+     */
+    data: XOR<SolicitudCotizacionProveedorCreateInput, SolicitudCotizacionProveedorUncheckedCreateInput>
+  }
+
+  /**
+   * SolicitudCotizacionProveedor createMany
+   */
+  export type SolicitudCotizacionProveedorCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SolicitudCotizacionProveedors.
+     */
+    data: SolicitudCotizacionProveedorCreateManyInput | SolicitudCotizacionProveedorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SolicitudCotizacionProveedor createManyAndReturn
+   */
+  export type SolicitudCotizacionProveedorCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SolicitudCotizacionProveedors.
+     */
+    data: SolicitudCotizacionProveedorCreateManyInput | SolicitudCotizacionProveedorCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SolicitudCotizacionProveedor update
+   */
+  export type SolicitudCotizacionProveedorUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SolicitudCotizacionProveedor.
+     */
+    data: XOR<SolicitudCotizacionProveedorUpdateInput, SolicitudCotizacionProveedorUncheckedUpdateInput>
+    /**
+     * Choose, which SolicitudCotizacionProveedor to update.
+     */
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacionProveedor updateMany
+   */
+  export type SolicitudCotizacionProveedorUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SolicitudCotizacionProveedors.
+     */
+    data: XOR<SolicitudCotizacionProveedorUpdateManyMutationInput, SolicitudCotizacionProveedorUncheckedUpdateManyInput>
+    /**
+     * Filter which SolicitudCotizacionProveedors to update
+     */
+    where?: SolicitudCotizacionProveedorWhereInput
+  }
+
+  /**
+   * SolicitudCotizacionProveedor upsert
+   */
+  export type SolicitudCotizacionProveedorUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SolicitudCotizacionProveedor to update in case it exists.
+     */
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    /**
+     * In case the SolicitudCotizacionProveedor found by the `where` argument doesn't exist, create a new SolicitudCotizacionProveedor with this data.
+     */
+    create: XOR<SolicitudCotizacionProveedorCreateInput, SolicitudCotizacionProveedorUncheckedCreateInput>
+    /**
+     * In case the SolicitudCotizacionProveedor was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SolicitudCotizacionProveedorUpdateInput, SolicitudCotizacionProveedorUncheckedUpdateInput>
+  }
+
+  /**
+   * SolicitudCotizacionProveedor delete
+   */
+  export type SolicitudCotizacionProveedorDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    /**
+     * Filter which SolicitudCotizacionProveedor to delete.
+     */
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+  }
+
+  /**
+   * SolicitudCotizacionProveedor deleteMany
+   */
+  export type SolicitudCotizacionProveedorDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SolicitudCotizacionProveedors to delete
+     */
+    where?: SolicitudCotizacionProveedorWhereInput
+  }
+
+  /**
+   * SolicitudCotizacionProveedor without action
+   */
+  export type SolicitudCotizacionProveedorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AnotacionEspecificacion
+   */
+
+  export type AggregateAnotacionEspecificacion = {
+    _count: AnotacionEspecificacionCountAggregateOutputType | null
+    _min: AnotacionEspecificacionMinAggregateOutputType | null
+    _max: AnotacionEspecificacionMaxAggregateOutputType | null
+  }
+
+  export type AnotacionEspecificacionMinAggregateOutputType = {
+    id_anotacion: string | null
+    tenant_id: string | null
+    cuadro_id: string | null
+    especificacion_id: string | null
+    proveedor_id: string | null
+    tipo: string | null
+    texto: string | null
+    creado_por: string | null
+    created_at: Date | null
+  }
+
+  export type AnotacionEspecificacionMaxAggregateOutputType = {
+    id_anotacion: string | null
+    tenant_id: string | null
+    cuadro_id: string | null
+    especificacion_id: string | null
+    proveedor_id: string | null
+    tipo: string | null
+    texto: string | null
+    creado_por: string | null
+    created_at: Date | null
+  }
+
+  export type AnotacionEspecificacionCountAggregateOutputType = {
+    id_anotacion: number
+    tenant_id: number
+    cuadro_id: number
+    especificacion_id: number
+    proveedor_id: number
+    tipo: number
+    texto: number
+    creado_por: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type AnotacionEspecificacionMinAggregateInputType = {
+    id_anotacion?: true
+    tenant_id?: true
+    cuadro_id?: true
+    especificacion_id?: true
+    proveedor_id?: true
+    tipo?: true
+    texto?: true
+    creado_por?: true
+    created_at?: true
+  }
+
+  export type AnotacionEspecificacionMaxAggregateInputType = {
+    id_anotacion?: true
+    tenant_id?: true
+    cuadro_id?: true
+    especificacion_id?: true
+    proveedor_id?: true
+    tipo?: true
+    texto?: true
+    creado_por?: true
+    created_at?: true
+  }
+
+  export type AnotacionEspecificacionCountAggregateInputType = {
+    id_anotacion?: true
+    tenant_id?: true
+    cuadro_id?: true
+    especificacion_id?: true
+    proveedor_id?: true
+    tipo?: true
+    texto?: true
+    creado_por?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type AnotacionEspecificacionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AnotacionEspecificacion to aggregate.
+     */
+    where?: AnotacionEspecificacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnotacionEspecificacions to fetch.
+     */
+    orderBy?: AnotacionEspecificacionOrderByWithRelationInput | AnotacionEspecificacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AnotacionEspecificacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnotacionEspecificacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnotacionEspecificacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AnotacionEspecificacions
+    **/
+    _count?: true | AnotacionEspecificacionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AnotacionEspecificacionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AnotacionEspecificacionMaxAggregateInputType
+  }
+
+  export type GetAnotacionEspecificacionAggregateType<T extends AnotacionEspecificacionAggregateArgs> = {
+        [P in keyof T & keyof AggregateAnotacionEspecificacion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAnotacionEspecificacion[P]>
+      : GetScalarType<T[P], AggregateAnotacionEspecificacion[P]>
+  }
+
+
+
+
+  export type AnotacionEspecificacionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AnotacionEspecificacionWhereInput
+    orderBy?: AnotacionEspecificacionOrderByWithAggregationInput | AnotacionEspecificacionOrderByWithAggregationInput[]
+    by: AnotacionEspecificacionScalarFieldEnum[] | AnotacionEspecificacionScalarFieldEnum
+    having?: AnotacionEspecificacionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AnotacionEspecificacionCountAggregateInputType | true
+    _min?: AnotacionEspecificacionMinAggregateInputType
+    _max?: AnotacionEspecificacionMaxAggregateInputType
+  }
+
+  export type AnotacionEspecificacionGroupByOutputType = {
+    id_anotacion: string
+    tenant_id: string
+    cuadro_id: string
+    especificacion_id: string
+    proveedor_id: string
+    tipo: string
+    texto: string
+    creado_por: string
+    created_at: Date
+    _count: AnotacionEspecificacionCountAggregateOutputType | null
+    _min: AnotacionEspecificacionMinAggregateOutputType | null
+    _max: AnotacionEspecificacionMaxAggregateOutputType | null
+  }
+
+  type GetAnotacionEspecificacionGroupByPayload<T extends AnotacionEspecificacionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AnotacionEspecificacionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AnotacionEspecificacionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AnotacionEspecificacionGroupByOutputType[P]>
+            : GetScalarType<T[P], AnotacionEspecificacionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AnotacionEspecificacionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_anotacion?: boolean
+    tenant_id?: boolean
+    cuadro_id?: boolean
+    especificacion_id?: boolean
+    proveedor_id?: boolean
+    tipo?: boolean
+    texto?: boolean
+    creado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["anotacionEspecificacion"]>
+
+  export type AnotacionEspecificacionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_anotacion?: boolean
+    tenant_id?: boolean
+    cuadro_id?: boolean
+    especificacion_id?: boolean
+    proveedor_id?: boolean
+    tipo?: boolean
+    texto?: boolean
+    creado_por?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["anotacionEspecificacion"]>
+
+  export type AnotacionEspecificacionSelectScalar = {
+    id_anotacion?: boolean
+    tenant_id?: boolean
+    cuadro_id?: boolean
+    especificacion_id?: boolean
+    proveedor_id?: boolean
+    tipo?: boolean
+    texto?: boolean
+    creado_por?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $AnotacionEspecificacionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AnotacionEspecificacion"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_anotacion: string
+      tenant_id: string
+      cuadro_id: string
+      especificacion_id: string
+      proveedor_id: string
+      tipo: string
+      texto: string
+      creado_por: string
+      created_at: Date
+    }, ExtArgs["result"]["anotacionEspecificacion"]>
+    composites: {}
+  }
+
+  type AnotacionEspecificacionGetPayload<S extends boolean | null | undefined | AnotacionEspecificacionDefaultArgs> = $Result.GetResult<Prisma.$AnotacionEspecificacionPayload, S>
+
+  type AnotacionEspecificacionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<AnotacionEspecificacionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: AnotacionEspecificacionCountAggregateInputType | true
+    }
+
+  export interface AnotacionEspecificacionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AnotacionEspecificacion'], meta: { name: 'AnotacionEspecificacion' } }
+    /**
+     * Find zero or one AnotacionEspecificacion that matches the filter.
+     * @param {AnotacionEspecificacionFindUniqueArgs} args - Arguments to find a AnotacionEspecificacion
+     * @example
+     * // Get one AnotacionEspecificacion
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AnotacionEspecificacionFindUniqueArgs>(args: SelectSubset<T, AnotacionEspecificacionFindUniqueArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one AnotacionEspecificacion that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {AnotacionEspecificacionFindUniqueOrThrowArgs} args - Arguments to find a AnotacionEspecificacion
+     * @example
+     * // Get one AnotacionEspecificacion
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AnotacionEspecificacionFindUniqueOrThrowArgs>(args: SelectSubset<T, AnotacionEspecificacionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first AnotacionEspecificacion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionFindFirstArgs} args - Arguments to find a AnotacionEspecificacion
+     * @example
+     * // Get one AnotacionEspecificacion
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AnotacionEspecificacionFindFirstArgs>(args?: SelectSubset<T, AnotacionEspecificacionFindFirstArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first AnotacionEspecificacion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionFindFirstOrThrowArgs} args - Arguments to find a AnotacionEspecificacion
+     * @example
+     * // Get one AnotacionEspecificacion
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AnotacionEspecificacionFindFirstOrThrowArgs>(args?: SelectSubset<T, AnotacionEspecificacionFindFirstOrThrowArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more AnotacionEspecificacions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AnotacionEspecificacions
+     * const anotacionEspecificacions = await prisma.anotacionEspecificacion.findMany()
+     * 
+     * // Get first 10 AnotacionEspecificacions
+     * const anotacionEspecificacions = await prisma.anotacionEspecificacion.findMany({ take: 10 })
+     * 
+     * // Only select the `id_anotacion`
+     * const anotacionEspecificacionWithId_anotacionOnly = await prisma.anotacionEspecificacion.findMany({ select: { id_anotacion: true } })
+     * 
+     */
+    findMany<T extends AnotacionEspecificacionFindManyArgs>(args?: SelectSubset<T, AnotacionEspecificacionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a AnotacionEspecificacion.
+     * @param {AnotacionEspecificacionCreateArgs} args - Arguments to create a AnotacionEspecificacion.
+     * @example
+     * // Create one AnotacionEspecificacion
+     * const AnotacionEspecificacion = await prisma.anotacionEspecificacion.create({
+     *   data: {
+     *     // ... data to create a AnotacionEspecificacion
+     *   }
+     * })
+     * 
+     */
+    create<T extends AnotacionEspecificacionCreateArgs>(args: SelectSubset<T, AnotacionEspecificacionCreateArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many AnotacionEspecificacions.
+     * @param {AnotacionEspecificacionCreateManyArgs} args - Arguments to create many AnotacionEspecificacions.
+     * @example
+     * // Create many AnotacionEspecificacions
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AnotacionEspecificacionCreateManyArgs>(args?: SelectSubset<T, AnotacionEspecificacionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AnotacionEspecificacions and returns the data saved in the database.
+     * @param {AnotacionEspecificacionCreateManyAndReturnArgs} args - Arguments to create many AnotacionEspecificacions.
+     * @example
+     * // Create many AnotacionEspecificacions
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AnotacionEspecificacions and only return the `id_anotacion`
+     * const anotacionEspecificacionWithId_anotacionOnly = await prisma.anotacionEspecificacion.createManyAndReturn({ 
+     *   select: { id_anotacion: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AnotacionEspecificacionCreateManyAndReturnArgs>(args?: SelectSubset<T, AnotacionEspecificacionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a AnotacionEspecificacion.
+     * @param {AnotacionEspecificacionDeleteArgs} args - Arguments to delete one AnotacionEspecificacion.
+     * @example
+     * // Delete one AnotacionEspecificacion
+     * const AnotacionEspecificacion = await prisma.anotacionEspecificacion.delete({
+     *   where: {
+     *     // ... filter to delete one AnotacionEspecificacion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AnotacionEspecificacionDeleteArgs>(args: SelectSubset<T, AnotacionEspecificacionDeleteArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one AnotacionEspecificacion.
+     * @param {AnotacionEspecificacionUpdateArgs} args - Arguments to update one AnotacionEspecificacion.
+     * @example
+     * // Update one AnotacionEspecificacion
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AnotacionEspecificacionUpdateArgs>(args: SelectSubset<T, AnotacionEspecificacionUpdateArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more AnotacionEspecificacions.
+     * @param {AnotacionEspecificacionDeleteManyArgs} args - Arguments to filter AnotacionEspecificacions to delete.
+     * @example
+     * // Delete a few AnotacionEspecificacions
+     * const { count } = await prisma.anotacionEspecificacion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AnotacionEspecificacionDeleteManyArgs>(args?: SelectSubset<T, AnotacionEspecificacionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AnotacionEspecificacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AnotacionEspecificacions
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AnotacionEspecificacionUpdateManyArgs>(args: SelectSubset<T, AnotacionEspecificacionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AnotacionEspecificacion.
+     * @param {AnotacionEspecificacionUpsertArgs} args - Arguments to update or create a AnotacionEspecificacion.
+     * @example
+     * // Update or create a AnotacionEspecificacion
+     * const anotacionEspecificacion = await prisma.anotacionEspecificacion.upsert({
+     *   create: {
+     *     // ... data to create a AnotacionEspecificacion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AnotacionEspecificacion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AnotacionEspecificacionUpsertArgs>(args: SelectSubset<T, AnotacionEspecificacionUpsertArgs<ExtArgs>>): Prisma__AnotacionEspecificacionClient<$Result.GetResult<Prisma.$AnotacionEspecificacionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of AnotacionEspecificacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionCountArgs} args - Arguments to filter AnotacionEspecificacions to count.
+     * @example
+     * // Count the number of AnotacionEspecificacions
+     * const count = await prisma.anotacionEspecificacion.count({
+     *   where: {
+     *     // ... the filter for the AnotacionEspecificacions we want to count
+     *   }
+     * })
+    **/
+    count<T extends AnotacionEspecificacionCountArgs>(
+      args?: Subset<T, AnotacionEspecificacionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AnotacionEspecificacionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AnotacionEspecificacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AnotacionEspecificacionAggregateArgs>(args: Subset<T, AnotacionEspecificacionAggregateArgs>): Prisma.PrismaPromise<GetAnotacionEspecificacionAggregateType<T>>
+
+    /**
+     * Group by AnotacionEspecificacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AnotacionEspecificacionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AnotacionEspecificacionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AnotacionEspecificacionGroupByArgs['orderBy'] }
+        : { orderBy?: AnotacionEspecificacionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AnotacionEspecificacionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAnotacionEspecificacionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AnotacionEspecificacion model
+   */
+  readonly fields: AnotacionEspecificacionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AnotacionEspecificacion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AnotacionEspecificacionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AnotacionEspecificacion model
+   */ 
+  interface AnotacionEspecificacionFieldRefs {
+    readonly id_anotacion: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly tenant_id: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly cuadro_id: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly especificacion_id: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly proveedor_id: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly tipo: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly texto: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly creado_por: FieldRef<"AnotacionEspecificacion", 'String'>
+    readonly created_at: FieldRef<"AnotacionEspecificacion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AnotacionEspecificacion findUnique
+   */
+  export type AnotacionEspecificacionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * Filter, which AnotacionEspecificacion to fetch.
+     */
+    where: AnotacionEspecificacionWhereUniqueInput
+  }
+
+  /**
+   * AnotacionEspecificacion findUniqueOrThrow
+   */
+  export type AnotacionEspecificacionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * Filter, which AnotacionEspecificacion to fetch.
+     */
+    where: AnotacionEspecificacionWhereUniqueInput
+  }
+
+  /**
+   * AnotacionEspecificacion findFirst
+   */
+  export type AnotacionEspecificacionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * Filter, which AnotacionEspecificacion to fetch.
+     */
+    where?: AnotacionEspecificacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnotacionEspecificacions to fetch.
+     */
+    orderBy?: AnotacionEspecificacionOrderByWithRelationInput | AnotacionEspecificacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AnotacionEspecificacions.
+     */
+    cursor?: AnotacionEspecificacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnotacionEspecificacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnotacionEspecificacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AnotacionEspecificacions.
+     */
+    distinct?: AnotacionEspecificacionScalarFieldEnum | AnotacionEspecificacionScalarFieldEnum[]
+  }
+
+  /**
+   * AnotacionEspecificacion findFirstOrThrow
+   */
+  export type AnotacionEspecificacionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * Filter, which AnotacionEspecificacion to fetch.
+     */
+    where?: AnotacionEspecificacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnotacionEspecificacions to fetch.
+     */
+    orderBy?: AnotacionEspecificacionOrderByWithRelationInput | AnotacionEspecificacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AnotacionEspecificacions.
+     */
+    cursor?: AnotacionEspecificacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnotacionEspecificacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnotacionEspecificacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AnotacionEspecificacions.
+     */
+    distinct?: AnotacionEspecificacionScalarFieldEnum | AnotacionEspecificacionScalarFieldEnum[]
+  }
+
+  /**
+   * AnotacionEspecificacion findMany
+   */
+  export type AnotacionEspecificacionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * Filter, which AnotacionEspecificacions to fetch.
+     */
+    where?: AnotacionEspecificacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AnotacionEspecificacions to fetch.
+     */
+    orderBy?: AnotacionEspecificacionOrderByWithRelationInput | AnotacionEspecificacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AnotacionEspecificacions.
+     */
+    cursor?: AnotacionEspecificacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AnotacionEspecificacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AnotacionEspecificacions.
+     */
+    skip?: number
+    distinct?: AnotacionEspecificacionScalarFieldEnum | AnotacionEspecificacionScalarFieldEnum[]
+  }
+
+  /**
+   * AnotacionEspecificacion create
+   */
+  export type AnotacionEspecificacionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * The data needed to create a AnotacionEspecificacion.
+     */
+    data: XOR<AnotacionEspecificacionCreateInput, AnotacionEspecificacionUncheckedCreateInput>
+  }
+
+  /**
+   * AnotacionEspecificacion createMany
+   */
+  export type AnotacionEspecificacionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AnotacionEspecificacions.
+     */
+    data: AnotacionEspecificacionCreateManyInput | AnotacionEspecificacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AnotacionEspecificacion createManyAndReturn
+   */
+  export type AnotacionEspecificacionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many AnotacionEspecificacions.
+     */
+    data: AnotacionEspecificacionCreateManyInput | AnotacionEspecificacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AnotacionEspecificacion update
+   */
+  export type AnotacionEspecificacionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * The data needed to update a AnotacionEspecificacion.
+     */
+    data: XOR<AnotacionEspecificacionUpdateInput, AnotacionEspecificacionUncheckedUpdateInput>
+    /**
+     * Choose, which AnotacionEspecificacion to update.
+     */
+    where: AnotacionEspecificacionWhereUniqueInput
+  }
+
+  /**
+   * AnotacionEspecificacion updateMany
+   */
+  export type AnotacionEspecificacionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AnotacionEspecificacions.
+     */
+    data: XOR<AnotacionEspecificacionUpdateManyMutationInput, AnotacionEspecificacionUncheckedUpdateManyInput>
+    /**
+     * Filter which AnotacionEspecificacions to update
+     */
+    where?: AnotacionEspecificacionWhereInput
+  }
+
+  /**
+   * AnotacionEspecificacion upsert
+   */
+  export type AnotacionEspecificacionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * The filter to search for the AnotacionEspecificacion to update in case it exists.
+     */
+    where: AnotacionEspecificacionWhereUniqueInput
+    /**
+     * In case the AnotacionEspecificacion found by the `where` argument doesn't exist, create a new AnotacionEspecificacion with this data.
+     */
+    create: XOR<AnotacionEspecificacionCreateInput, AnotacionEspecificacionUncheckedCreateInput>
+    /**
+     * In case the AnotacionEspecificacion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AnotacionEspecificacionUpdateInput, AnotacionEspecificacionUncheckedUpdateInput>
+  }
+
+  /**
+   * AnotacionEspecificacion delete
+   */
+  export type AnotacionEspecificacionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
+    /**
+     * Filter which AnotacionEspecificacion to delete.
+     */
+    where: AnotacionEspecificacionWhereUniqueInput
+  }
+
+  /**
+   * AnotacionEspecificacion deleteMany
+   */
+  export type AnotacionEspecificacionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AnotacionEspecificacions to delete
+     */
+    where?: AnotacionEspecificacionWhereInput
+  }
+
+  /**
+   * AnotacionEspecificacion without action
+   */
+  export type AnotacionEspecificacionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AnotacionEspecificacion
+     */
+    select?: AnotacionEspecificacionSelect<ExtArgs> | null
   }
 
 
@@ -16925,10 +22328,29 @@ export namespace Prisma {
     notas: 'notas',
     descripcion_libre: 'descripcion_libre',
     unidad_libre: 'unidad_libre',
-    es_imprevisto: 'es_imprevisto'
+    es_imprevisto: 'es_imprevisto',
+    cantidad_presupuestada: 'cantidad_presupuestada',
+    concepto_origen_id: 'concepto_origen_id',
+    justificacion: 'justificacion'
   };
 
   export type RequisicionItemScalarFieldEnum = (typeof RequisicionItemScalarFieldEnum)[keyof typeof RequisicionItemScalarFieldEnum]
+
+
+  export const AsignacionExtraConceptoScalarFieldEnum: {
+    id_asignacion: 'id_asignacion',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    requisicion_item_id: 'requisicion_item_id',
+    concepto_id: 'concepto_id',
+    concepto_clave: 'concepto_clave',
+    concepto_descripcion: 'concepto_descripcion',
+    monto_extra: 'monto_extra',
+    asignado_por: 'asignado_por',
+    created_at: 'created_at'
+  };
+
+  export type AsignacionExtraConceptoScalarFieldEnum = (typeof AsignacionExtraConceptoScalarFieldEnum)[keyof typeof AsignacionExtraConceptoScalarFieldEnum]
 
 
   export const OrdenCompraScalarFieldEnum: {
@@ -16996,7 +22418,8 @@ export namespace Prisma {
     cuadro_id: 'cuadro_id',
     insumo_id: 'insumo_id',
     marca_modelo_ref: 'marca_modelo_ref',
-    especificaciones_requeridas: 'especificaciones_requeridas'
+    especificaciones_requeridas: 'especificaciones_requeridas',
+    detalle_req_id: 'detalle_req_id'
   };
 
   export type ComparativaLineaScalarFieldEnum = (typeof ComparativaLineaScalarFieldEnum)[keyof typeof ComparativaLineaScalarFieldEnum]
@@ -17037,6 +22460,67 @@ export namespace Prisma {
   };
 
   export type AclaracionComparativaScalarFieldEnum = (typeof AclaracionComparativaScalarFieldEnum)[keyof typeof AclaracionComparativaScalarFieldEnum]
+
+
+  export const EspecificacionDetalleReqScalarFieldEnum: {
+    id_especificacion: 'id_especificacion',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    detalle_id: 'detalle_id',
+    descripcion: 'descripcion',
+    orden: 'orden',
+    created_at: 'created_at'
+  };
+
+  export type EspecificacionDetalleReqScalarFieldEnum = (typeof EspecificacionDetalleReqScalarFieldEnum)[keyof typeof EspecificacionDetalleReqScalarFieldEnum]
+
+
+  export const SolicitudCotizacionScalarFieldEnum: {
+    id_solicitud: 'id_solicitud',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    requisicion_id: 'requisicion_id',
+    dias_habiles: 'dias_habiles',
+    fecha_solicitud: 'fecha_solicitud',
+    fecha_limite: 'fecha_limite',
+    creado_por: 'creado_por',
+    notas: 'notas',
+    created_at: 'created_at'
+  };
+
+  export type SolicitudCotizacionScalarFieldEnum = (typeof SolicitudCotizacionScalarFieldEnum)[keyof typeof SolicitudCotizacionScalarFieldEnum]
+
+
+  export const SolicitudCotizacionProveedorScalarFieldEnum: {
+    id_scp: 'id_scp',
+    tenant_id: 'tenant_id',
+    solicitud_id: 'solicitud_id',
+    proveedor_id: 'proveedor_id',
+    estado: 'estado',
+    pdf_nombre: 'pdf_nombre',
+    pdf_ruta: 'pdf_ruta',
+    pdf_mime: 'pdf_mime',
+    notas_proveedor: 'notas_proveedor',
+    fecha_respuesta: 'fecha_respuesta',
+    updated_at: 'updated_at'
+  };
+
+  export type SolicitudCotizacionProveedorScalarFieldEnum = (typeof SolicitudCotizacionProveedorScalarFieldEnum)[keyof typeof SolicitudCotizacionProveedorScalarFieldEnum]
+
+
+  export const AnotacionEspecificacionScalarFieldEnum: {
+    id_anotacion: 'id_anotacion',
+    tenant_id: 'tenant_id',
+    cuadro_id: 'cuadro_id',
+    especificacion_id: 'especificacion_id',
+    proveedor_id: 'proveedor_id',
+    tipo: 'tipo',
+    texto: 'texto',
+    creado_por: 'creado_por',
+    created_at: 'created_at'
+  };
+
+  export type AnotacionEspecificacionScalarFieldEnum = (typeof AnotacionEspecificacionScalarFieldEnum)[keyof typeof AnotacionEspecificacionScalarFieldEnum]
 
 
   export const AlertaOcErrorScalarFieldEnum: {
@@ -17578,6 +23062,9 @@ export namespace Prisma {
     descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
+    cantidad_presupuestada?: DecimalNullableFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: UuidNullableFilter<"RequisicionItem"> | string | null
+    justificacion?: StringNullableFilter<"RequisicionItem"> | string | null
     requisicion?: XOR<RequisicionRelationFilter, RequisicionWhereInput>
   }
 
@@ -17592,6 +23079,9 @@ export namespace Prisma {
     descripcion_libre?: SortOrderInput | SortOrder
     unidad_libre?: SortOrderInput | SortOrder
     es_imprevisto?: SortOrder
+    cantidad_presupuestada?: SortOrderInput | SortOrder
+    concepto_origen_id?: SortOrderInput | SortOrder
+    justificacion?: SortOrderInput | SortOrder
     requisicion?: RequisicionOrderByWithRelationInput
   }
 
@@ -17609,6 +23099,9 @@ export namespace Prisma {
     descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
+    cantidad_presupuestada?: DecimalNullableFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: UuidNullableFilter<"RequisicionItem"> | string | null
+    justificacion?: StringNullableFilter<"RequisicionItem"> | string | null
     requisicion?: XOR<RequisicionRelationFilter, RequisicionWhereInput>
   }, "id_item">
 
@@ -17623,6 +23116,9 @@ export namespace Prisma {
     descripcion_libre?: SortOrderInput | SortOrder
     unidad_libre?: SortOrderInput | SortOrder
     es_imprevisto?: SortOrder
+    cantidad_presupuestada?: SortOrderInput | SortOrder
+    concepto_origen_id?: SortOrderInput | SortOrder
+    justificacion?: SortOrderInput | SortOrder
     _count?: RequisicionItemCountOrderByAggregateInput
     _avg?: RequisicionItemAvgOrderByAggregateInput
     _max?: RequisicionItemMaxOrderByAggregateInput
@@ -17644,6 +23140,89 @@ export namespace Prisma {
     descripcion_libre?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolWithAggregatesFilter<"RequisicionItem"> | boolean
+    cantidad_presupuestada?: DecimalNullableWithAggregatesFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: UuidNullableWithAggregatesFilter<"RequisicionItem"> | string | null
+    justificacion?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
+  }
+
+  export type AsignacionExtraConceptoWhereInput = {
+    AND?: AsignacionExtraConceptoWhereInput | AsignacionExtraConceptoWhereInput[]
+    OR?: AsignacionExtraConceptoWhereInput[]
+    NOT?: AsignacionExtraConceptoWhereInput | AsignacionExtraConceptoWhereInput[]
+    id_asignacion?: UuidFilter<"AsignacionExtraConcepto"> | string
+    tenant_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    proyecto_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    requisicion_item_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    concepto_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    concepto_clave?: StringFilter<"AsignacionExtraConcepto"> | string
+    concepto_descripcion?: StringFilter<"AsignacionExtraConcepto"> | string
+    monto_extra?: DecimalFilter<"AsignacionExtraConcepto"> | Decimal | DecimalJsLike | number | string
+    asignado_por?: UuidFilter<"AsignacionExtraConcepto"> | string
+    created_at?: DateTimeFilter<"AsignacionExtraConcepto"> | Date | string
+  }
+
+  export type AsignacionExtraConceptoOrderByWithRelationInput = {
+    id_asignacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_item_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_descripcion?: SortOrder
+    monto_extra?: SortOrder
+    asignado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AsignacionExtraConceptoWhereUniqueInput = Prisma.AtLeast<{
+    id_asignacion?: string
+    tenant_id_requisicion_item_id?: AsignacionExtraConceptoTenant_idRequisicion_item_idCompoundUniqueInput
+    AND?: AsignacionExtraConceptoWhereInput | AsignacionExtraConceptoWhereInput[]
+    OR?: AsignacionExtraConceptoWhereInput[]
+    NOT?: AsignacionExtraConceptoWhereInput | AsignacionExtraConceptoWhereInput[]
+    tenant_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    proyecto_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    requisicion_item_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    concepto_id?: UuidFilter<"AsignacionExtraConcepto"> | string
+    concepto_clave?: StringFilter<"AsignacionExtraConcepto"> | string
+    concepto_descripcion?: StringFilter<"AsignacionExtraConcepto"> | string
+    monto_extra?: DecimalFilter<"AsignacionExtraConcepto"> | Decimal | DecimalJsLike | number | string
+    asignado_por?: UuidFilter<"AsignacionExtraConcepto"> | string
+    created_at?: DateTimeFilter<"AsignacionExtraConcepto"> | Date | string
+  }, "id_asignacion" | "tenant_id_requisicion_item_id">
+
+  export type AsignacionExtraConceptoOrderByWithAggregationInput = {
+    id_asignacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_item_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_descripcion?: SortOrder
+    monto_extra?: SortOrder
+    asignado_por?: SortOrder
+    created_at?: SortOrder
+    _count?: AsignacionExtraConceptoCountOrderByAggregateInput
+    _avg?: AsignacionExtraConceptoAvgOrderByAggregateInput
+    _max?: AsignacionExtraConceptoMaxOrderByAggregateInput
+    _min?: AsignacionExtraConceptoMinOrderByAggregateInput
+    _sum?: AsignacionExtraConceptoSumOrderByAggregateInput
+  }
+
+  export type AsignacionExtraConceptoScalarWhereWithAggregatesInput = {
+    AND?: AsignacionExtraConceptoScalarWhereWithAggregatesInput | AsignacionExtraConceptoScalarWhereWithAggregatesInput[]
+    OR?: AsignacionExtraConceptoScalarWhereWithAggregatesInput[]
+    NOT?: AsignacionExtraConceptoScalarWhereWithAggregatesInput | AsignacionExtraConceptoScalarWhereWithAggregatesInput[]
+    id_asignacion?: UuidWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    tenant_id?: UuidWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    requisicion_item_id?: UuidWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    concepto_id?: UuidWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    concepto_clave?: StringWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    concepto_descripcion?: StringWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    monto_extra?: DecimalWithAggregatesFilter<"AsignacionExtraConcepto"> | Decimal | DecimalJsLike | number | string
+    asignado_por?: UuidWithAggregatesFilter<"AsignacionExtraConcepto"> | string
+    created_at?: DateTimeWithAggregatesFilter<"AsignacionExtraConcepto"> | Date | string
   }
 
   export type OrdenCompraWhereInput = {
@@ -17962,6 +23541,7 @@ export namespace Prisma {
     insumo_id?: UuidFilter<"ComparativaLinea"> | string
     marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
+    detalle_req_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
   }
 
@@ -17973,6 +23553,7 @@ export namespace Prisma {
     insumo_id?: SortOrder
     marca_modelo_ref?: SortOrderInput | SortOrder
     especificaciones_requeridas?: SortOrderInput | SortOrder
+    detalle_req_id?: SortOrderInput | SortOrder
     cuadro?: CuadroComparativoOrderByWithRelationInput
   }
 
@@ -17988,6 +23569,7 @@ export namespace Prisma {
     insumo_id?: UuidFilter<"ComparativaLinea"> | string
     marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
+    detalle_req_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
   }, "id_linea" | "cuadro_id_insumo_id">
 
@@ -17999,6 +23581,7 @@ export namespace Prisma {
     insumo_id?: SortOrder
     marca_modelo_ref?: SortOrderInput | SortOrder
     especificaciones_requeridas?: SortOrderInput | SortOrder
+    detalle_req_id?: SortOrderInput | SortOrder
     _count?: ComparativaLineaCountOrderByAggregateInput
     _max?: ComparativaLineaMaxOrderByAggregateInput
     _min?: ComparativaLineaMinOrderByAggregateInput
@@ -18015,6 +23598,7 @@ export namespace Prisma {
     insumo_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
     marca_modelo_ref?: StringNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
+    detalle_req_id?: UuidNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
   }
 
   export type ComparativaDetalleWhereInput = {
@@ -18205,6 +23789,311 @@ export namespace Prisma {
     mensaje?: StringWithAggregatesFilter<"AclaracionComparativa"> | string
     resuelta?: BoolWithAggregatesFilter<"AclaracionComparativa"> | boolean
     created_at?: DateTimeWithAggregatesFilter<"AclaracionComparativa"> | Date | string
+  }
+
+  export type EspecificacionDetalleReqWhereInput = {
+    AND?: EspecificacionDetalleReqWhereInput | EspecificacionDetalleReqWhereInput[]
+    OR?: EspecificacionDetalleReqWhereInput[]
+    NOT?: EspecificacionDetalleReqWhereInput | EspecificacionDetalleReqWhereInput[]
+    id_especificacion?: UuidFilter<"EspecificacionDetalleReq"> | string
+    tenant_id?: UuidFilter<"EspecificacionDetalleReq"> | string
+    proyecto_id?: UuidFilter<"EspecificacionDetalleReq"> | string
+    detalle_id?: UuidFilter<"EspecificacionDetalleReq"> | string
+    descripcion?: StringFilter<"EspecificacionDetalleReq"> | string
+    orden?: IntFilter<"EspecificacionDetalleReq"> | number
+    created_at?: DateTimeFilter<"EspecificacionDetalleReq"> | Date | string
+  }
+
+  export type EspecificacionDetalleReqOrderByWithRelationInput = {
+    id_especificacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    detalle_id?: SortOrder
+    descripcion?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type EspecificacionDetalleReqWhereUniqueInput = Prisma.AtLeast<{
+    id_especificacion?: string
+    AND?: EspecificacionDetalleReqWhereInput | EspecificacionDetalleReqWhereInput[]
+    OR?: EspecificacionDetalleReqWhereInput[]
+    NOT?: EspecificacionDetalleReqWhereInput | EspecificacionDetalleReqWhereInput[]
+    tenant_id?: UuidFilter<"EspecificacionDetalleReq"> | string
+    proyecto_id?: UuidFilter<"EspecificacionDetalleReq"> | string
+    detalle_id?: UuidFilter<"EspecificacionDetalleReq"> | string
+    descripcion?: StringFilter<"EspecificacionDetalleReq"> | string
+    orden?: IntFilter<"EspecificacionDetalleReq"> | number
+    created_at?: DateTimeFilter<"EspecificacionDetalleReq"> | Date | string
+  }, "id_especificacion">
+
+  export type EspecificacionDetalleReqOrderByWithAggregationInput = {
+    id_especificacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    detalle_id?: SortOrder
+    descripcion?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    _count?: EspecificacionDetalleReqCountOrderByAggregateInput
+    _avg?: EspecificacionDetalleReqAvgOrderByAggregateInput
+    _max?: EspecificacionDetalleReqMaxOrderByAggregateInput
+    _min?: EspecificacionDetalleReqMinOrderByAggregateInput
+    _sum?: EspecificacionDetalleReqSumOrderByAggregateInput
+  }
+
+  export type EspecificacionDetalleReqScalarWhereWithAggregatesInput = {
+    AND?: EspecificacionDetalleReqScalarWhereWithAggregatesInput | EspecificacionDetalleReqScalarWhereWithAggregatesInput[]
+    OR?: EspecificacionDetalleReqScalarWhereWithAggregatesInput[]
+    NOT?: EspecificacionDetalleReqScalarWhereWithAggregatesInput | EspecificacionDetalleReqScalarWhereWithAggregatesInput[]
+    id_especificacion?: UuidWithAggregatesFilter<"EspecificacionDetalleReq"> | string
+    tenant_id?: UuidWithAggregatesFilter<"EspecificacionDetalleReq"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"EspecificacionDetalleReq"> | string
+    detalle_id?: UuidWithAggregatesFilter<"EspecificacionDetalleReq"> | string
+    descripcion?: StringWithAggregatesFilter<"EspecificacionDetalleReq"> | string
+    orden?: IntWithAggregatesFilter<"EspecificacionDetalleReq"> | number
+    created_at?: DateTimeWithAggregatesFilter<"EspecificacionDetalleReq"> | Date | string
+  }
+
+  export type SolicitudCotizacionWhereInput = {
+    AND?: SolicitudCotizacionWhereInput | SolicitudCotizacionWhereInput[]
+    OR?: SolicitudCotizacionWhereInput[]
+    NOT?: SolicitudCotizacionWhereInput | SolicitudCotizacionWhereInput[]
+    id_solicitud?: UuidFilter<"SolicitudCotizacion"> | string
+    tenant_id?: UuidFilter<"SolicitudCotizacion"> | string
+    proyecto_id?: UuidFilter<"SolicitudCotizacion"> | string
+    requisicion_id?: UuidFilter<"SolicitudCotizacion"> | string
+    dias_habiles?: IntFilter<"SolicitudCotizacion"> | number
+    fecha_solicitud?: DateTimeFilter<"SolicitudCotizacion"> | Date | string
+    fecha_limite?: DateTimeFilter<"SolicitudCotizacion"> | Date | string
+    creado_por?: UuidFilter<"SolicitudCotizacion"> | string
+    notas?: StringNullableFilter<"SolicitudCotizacion"> | string | null
+    created_at?: DateTimeFilter<"SolicitudCotizacion"> | Date | string
+    proveedores?: SolicitudCotizacionProveedorListRelationFilter
+  }
+
+  export type SolicitudCotizacionOrderByWithRelationInput = {
+    id_solicitud?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_id?: SortOrder
+    dias_habiles?: SortOrder
+    fecha_solicitud?: SortOrder
+    fecha_limite?: SortOrder
+    creado_por?: SortOrder
+    notas?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    proveedores?: SolicitudCotizacionProveedorOrderByRelationAggregateInput
+  }
+
+  export type SolicitudCotizacionWhereUniqueInput = Prisma.AtLeast<{
+    id_solicitud?: string
+    tenant_id_requisicion_id?: SolicitudCotizacionTenant_idRequisicion_idCompoundUniqueInput
+    AND?: SolicitudCotizacionWhereInput | SolicitudCotizacionWhereInput[]
+    OR?: SolicitudCotizacionWhereInput[]
+    NOT?: SolicitudCotizacionWhereInput | SolicitudCotizacionWhereInput[]
+    tenant_id?: UuidFilter<"SolicitudCotizacion"> | string
+    proyecto_id?: UuidFilter<"SolicitudCotizacion"> | string
+    requisicion_id?: UuidFilter<"SolicitudCotizacion"> | string
+    dias_habiles?: IntFilter<"SolicitudCotizacion"> | number
+    fecha_solicitud?: DateTimeFilter<"SolicitudCotizacion"> | Date | string
+    fecha_limite?: DateTimeFilter<"SolicitudCotizacion"> | Date | string
+    creado_por?: UuidFilter<"SolicitudCotizacion"> | string
+    notas?: StringNullableFilter<"SolicitudCotizacion"> | string | null
+    created_at?: DateTimeFilter<"SolicitudCotizacion"> | Date | string
+    proveedores?: SolicitudCotizacionProveedorListRelationFilter
+  }, "id_solicitud" | "tenant_id_requisicion_id">
+
+  export type SolicitudCotizacionOrderByWithAggregationInput = {
+    id_solicitud?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_id?: SortOrder
+    dias_habiles?: SortOrder
+    fecha_solicitud?: SortOrder
+    fecha_limite?: SortOrder
+    creado_por?: SortOrder
+    notas?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    _count?: SolicitudCotizacionCountOrderByAggregateInput
+    _avg?: SolicitudCotizacionAvgOrderByAggregateInput
+    _max?: SolicitudCotizacionMaxOrderByAggregateInput
+    _min?: SolicitudCotizacionMinOrderByAggregateInput
+    _sum?: SolicitudCotizacionSumOrderByAggregateInput
+  }
+
+  export type SolicitudCotizacionScalarWhereWithAggregatesInput = {
+    AND?: SolicitudCotizacionScalarWhereWithAggregatesInput | SolicitudCotizacionScalarWhereWithAggregatesInput[]
+    OR?: SolicitudCotizacionScalarWhereWithAggregatesInput[]
+    NOT?: SolicitudCotizacionScalarWhereWithAggregatesInput | SolicitudCotizacionScalarWhereWithAggregatesInput[]
+    id_solicitud?: UuidWithAggregatesFilter<"SolicitudCotizacion"> | string
+    tenant_id?: UuidWithAggregatesFilter<"SolicitudCotizacion"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"SolicitudCotizacion"> | string
+    requisicion_id?: UuidWithAggregatesFilter<"SolicitudCotizacion"> | string
+    dias_habiles?: IntWithAggregatesFilter<"SolicitudCotizacion"> | number
+    fecha_solicitud?: DateTimeWithAggregatesFilter<"SolicitudCotizacion"> | Date | string
+    fecha_limite?: DateTimeWithAggregatesFilter<"SolicitudCotizacion"> | Date | string
+    creado_por?: UuidWithAggregatesFilter<"SolicitudCotizacion"> | string
+    notas?: StringNullableWithAggregatesFilter<"SolicitudCotizacion"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"SolicitudCotizacion"> | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorWhereInput = {
+    AND?: SolicitudCotizacionProveedorWhereInput | SolicitudCotizacionProveedorWhereInput[]
+    OR?: SolicitudCotizacionProveedorWhereInput[]
+    NOT?: SolicitudCotizacionProveedorWhereInput | SolicitudCotizacionProveedorWhereInput[]
+    id_scp?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    tenant_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    solicitud_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    proveedor_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    estado?: StringFilter<"SolicitudCotizacionProveedor"> | string
+    pdf_nombre?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_ruta?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_mime?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    notas_proveedor?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
+    updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
+    solicitud?: XOR<SolicitudCotizacionRelationFilter, SolicitudCotizacionWhereInput>
+  }
+
+  export type SolicitudCotizacionProveedorOrderByWithRelationInput = {
+    id_scp?: SortOrder
+    tenant_id?: SortOrder
+    solicitud_id?: SortOrder
+    proveedor_id?: SortOrder
+    estado?: SortOrder
+    pdf_nombre?: SortOrderInput | SortOrder
+    pdf_ruta?: SortOrderInput | SortOrder
+    pdf_mime?: SortOrderInput | SortOrder
+    notas_proveedor?: SortOrderInput | SortOrder
+    fecha_respuesta?: SortOrderInput | SortOrder
+    updated_at?: SortOrder
+    solicitud?: SolicitudCotizacionOrderByWithRelationInput
+  }
+
+  export type SolicitudCotizacionProveedorWhereUniqueInput = Prisma.AtLeast<{
+    id_scp?: string
+    solicitud_id_proveedor_id?: SolicitudCotizacionProveedorSolicitud_idProveedor_idCompoundUniqueInput
+    AND?: SolicitudCotizacionProveedorWhereInput | SolicitudCotizacionProveedorWhereInput[]
+    OR?: SolicitudCotizacionProveedorWhereInput[]
+    NOT?: SolicitudCotizacionProveedorWhereInput | SolicitudCotizacionProveedorWhereInput[]
+    tenant_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    solicitud_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    proveedor_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    estado?: StringFilter<"SolicitudCotizacionProveedor"> | string
+    pdf_nombre?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_ruta?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_mime?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    notas_proveedor?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
+    updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
+    solicitud?: XOR<SolicitudCotizacionRelationFilter, SolicitudCotizacionWhereInput>
+  }, "id_scp" | "solicitud_id_proveedor_id">
+
+  export type SolicitudCotizacionProveedorOrderByWithAggregationInput = {
+    id_scp?: SortOrder
+    tenant_id?: SortOrder
+    solicitud_id?: SortOrder
+    proveedor_id?: SortOrder
+    estado?: SortOrder
+    pdf_nombre?: SortOrderInput | SortOrder
+    pdf_ruta?: SortOrderInput | SortOrder
+    pdf_mime?: SortOrderInput | SortOrder
+    notas_proveedor?: SortOrderInput | SortOrder
+    fecha_respuesta?: SortOrderInput | SortOrder
+    updated_at?: SortOrder
+    _count?: SolicitudCotizacionProveedorCountOrderByAggregateInput
+    _max?: SolicitudCotizacionProveedorMaxOrderByAggregateInput
+    _min?: SolicitudCotizacionProveedorMinOrderByAggregateInput
+  }
+
+  export type SolicitudCotizacionProveedorScalarWhereWithAggregatesInput = {
+    AND?: SolicitudCotizacionProveedorScalarWhereWithAggregatesInput | SolicitudCotizacionProveedorScalarWhereWithAggregatesInput[]
+    OR?: SolicitudCotizacionProveedorScalarWhereWithAggregatesInput[]
+    NOT?: SolicitudCotizacionProveedorScalarWhereWithAggregatesInput | SolicitudCotizacionProveedorScalarWhereWithAggregatesInput[]
+    id_scp?: UuidWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string
+    tenant_id?: UuidWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string
+    solicitud_id?: UuidWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string
+    proveedor_id?: UuidWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string
+    estado?: StringWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string
+    pdf_nombre?: StringNullableWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_ruta?: StringNullableWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_mime?: StringNullableWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string | null
+    notas_proveedor?: StringNullableWithAggregatesFilter<"SolicitudCotizacionProveedor"> | string | null
+    fecha_respuesta?: DateTimeNullableWithAggregatesFilter<"SolicitudCotizacionProveedor"> | Date | string | null
+    updated_at?: DateTimeWithAggregatesFilter<"SolicitudCotizacionProveedor"> | Date | string
+  }
+
+  export type AnotacionEspecificacionWhereInput = {
+    AND?: AnotacionEspecificacionWhereInput | AnotacionEspecificacionWhereInput[]
+    OR?: AnotacionEspecificacionWhereInput[]
+    NOT?: AnotacionEspecificacionWhereInput | AnotacionEspecificacionWhereInput[]
+    id_anotacion?: UuidFilter<"AnotacionEspecificacion"> | string
+    tenant_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    cuadro_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    especificacion_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    proveedor_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    tipo?: StringFilter<"AnotacionEspecificacion"> | string
+    texto?: StringFilter<"AnotacionEspecificacion"> | string
+    creado_por?: UuidFilter<"AnotacionEspecificacion"> | string
+    created_at?: DateTimeFilter<"AnotacionEspecificacion"> | Date | string
+  }
+
+  export type AnotacionEspecificacionOrderByWithRelationInput = {
+    id_anotacion?: SortOrder
+    tenant_id?: SortOrder
+    cuadro_id?: SortOrder
+    especificacion_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo?: SortOrder
+    texto?: SortOrder
+    creado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AnotacionEspecificacionWhereUniqueInput = Prisma.AtLeast<{
+    id_anotacion?: string
+    AND?: AnotacionEspecificacionWhereInput | AnotacionEspecificacionWhereInput[]
+    OR?: AnotacionEspecificacionWhereInput[]
+    NOT?: AnotacionEspecificacionWhereInput | AnotacionEspecificacionWhereInput[]
+    tenant_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    cuadro_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    especificacion_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    proveedor_id?: UuidFilter<"AnotacionEspecificacion"> | string
+    tipo?: StringFilter<"AnotacionEspecificacion"> | string
+    texto?: StringFilter<"AnotacionEspecificacion"> | string
+    creado_por?: UuidFilter<"AnotacionEspecificacion"> | string
+    created_at?: DateTimeFilter<"AnotacionEspecificacion"> | Date | string
+  }, "id_anotacion">
+
+  export type AnotacionEspecificacionOrderByWithAggregationInput = {
+    id_anotacion?: SortOrder
+    tenant_id?: SortOrder
+    cuadro_id?: SortOrder
+    especificacion_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo?: SortOrder
+    texto?: SortOrder
+    creado_por?: SortOrder
+    created_at?: SortOrder
+    _count?: AnotacionEspecificacionCountOrderByAggregateInput
+    _max?: AnotacionEspecificacionMaxOrderByAggregateInput
+    _min?: AnotacionEspecificacionMinOrderByAggregateInput
+  }
+
+  export type AnotacionEspecificacionScalarWhereWithAggregatesInput = {
+    AND?: AnotacionEspecificacionScalarWhereWithAggregatesInput | AnotacionEspecificacionScalarWhereWithAggregatesInput[]
+    OR?: AnotacionEspecificacionScalarWhereWithAggregatesInput[]
+    NOT?: AnotacionEspecificacionScalarWhereWithAggregatesInput | AnotacionEspecificacionScalarWhereWithAggregatesInput[]
+    id_anotacion?: UuidWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    tenant_id?: UuidWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    cuadro_id?: UuidWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    especificacion_id?: UuidWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    proveedor_id?: UuidWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    tipo?: StringWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    texto?: StringWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    creado_por?: UuidWithAggregatesFilter<"AnotacionEspecificacion"> | string
+    created_at?: DateTimeWithAggregatesFilter<"AnotacionEspecificacion"> | Date | string
   }
 
   export type AlertaOcErrorWhereInput = {
@@ -18901,6 +24790,9 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: string | null
+    justificacion?: string | null
     requisicion: RequisicionCreateNestedOneWithoutItemsInput
   }
 
@@ -18915,6 +24807,9 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: string | null
+    justificacion?: string | null
   }
 
   export type RequisicionItemUpdateInput = {
@@ -18927,6 +24822,9 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
     requisicion?: RequisicionUpdateOneRequiredWithoutItemsNestedInput
   }
 
@@ -18941,6 +24839,9 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionItemCreateManyInput = {
@@ -18954,6 +24855,9 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: string | null
+    justificacion?: string | null
   }
 
   export type RequisicionItemUpdateManyMutationInput = {
@@ -18966,6 +24870,9 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionItemUncheckedUpdateManyInput = {
@@ -18979,6 +24886,100 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AsignacionExtraConceptoCreateInput = {
+    id_asignacion?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_item_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_descripcion: string
+    monto_extra: Decimal | DecimalJsLike | number | string
+    asignado_por: string
+    created_at?: Date | string
+  }
+
+  export type AsignacionExtraConceptoUncheckedCreateInput = {
+    id_asignacion?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_item_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_descripcion: string
+    monto_extra: Decimal | DecimalJsLike | number | string
+    asignado_por: string
+    created_at?: Date | string
+  }
+
+  export type AsignacionExtraConceptoUpdateInput = {
+    id_asignacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_item_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_descripcion?: StringFieldUpdateOperationsInput | string
+    monto_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    asignado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AsignacionExtraConceptoUncheckedUpdateInput = {
+    id_asignacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_item_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_descripcion?: StringFieldUpdateOperationsInput | string
+    monto_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    asignado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AsignacionExtraConceptoCreateManyInput = {
+    id_asignacion?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_item_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_descripcion: string
+    monto_extra: Decimal | DecimalJsLike | number | string
+    asignado_por: string
+    created_at?: Date | string
+  }
+
+  export type AsignacionExtraConceptoUpdateManyMutationInput = {
+    id_asignacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_item_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_descripcion?: StringFieldUpdateOperationsInput | string
+    monto_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    asignado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AsignacionExtraConceptoUncheckedUpdateManyInput = {
+    id_asignacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_item_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_descripcion?: StringFieldUpdateOperationsInput | string
+    monto_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    asignado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrdenCompraCreateInput = {
@@ -19345,6 +25346,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
+    detalle_req_id?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutLineasInput
   }
 
@@ -19356,6 +25358,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
+    detalle_req_id?: string | null
   }
 
   export type ComparativaLineaUpdateInput = {
@@ -19365,6 +25368,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutLineasNestedInput
   }
 
@@ -19376,6 +25380,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaLineaCreateManyInput = {
@@ -19386,6 +25391,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
+    detalle_req_id?: string | null
   }
 
   export type ComparativaLineaUpdateManyMutationInput = {
@@ -19395,6 +25401,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaLineaUncheckedUpdateManyInput = {
@@ -19405,6 +25412,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateInput = {
@@ -19618,6 +25626,352 @@ export namespace Prisma {
     tipo?: StringFieldUpdateOperationsInput | string
     mensaje?: StringFieldUpdateOperationsInput | string
     resuelta?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EspecificacionDetalleReqCreateInput = {
+    id_especificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    detalle_id: string
+    descripcion: string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type EspecificacionDetalleReqUncheckedCreateInput = {
+    id_especificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    detalle_id: string
+    descripcion: string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type EspecificacionDetalleReqUpdateInput = {
+    id_especificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    detalle_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EspecificacionDetalleReqUncheckedUpdateInput = {
+    id_especificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    detalle_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EspecificacionDetalleReqCreateManyInput = {
+    id_especificacion?: string
+    tenant_id: string
+    proyecto_id: string
+    detalle_id: string
+    descripcion: string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type EspecificacionDetalleReqUpdateManyMutationInput = {
+    id_especificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    detalle_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EspecificacionDetalleReqUncheckedUpdateManyInput = {
+    id_especificacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    detalle_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionCreateInput = {
+    id_solicitud?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    dias_habiles?: number
+    fecha_solicitud?: Date | string
+    fecha_limite: Date | string
+    creado_por: string
+    notas?: string | null
+    created_at?: Date | string
+    proveedores?: SolicitudCotizacionProveedorCreateNestedManyWithoutSolicitudInput
+  }
+
+  export type SolicitudCotizacionUncheckedCreateInput = {
+    id_solicitud?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    dias_habiles?: number
+    fecha_solicitud?: Date | string
+    fecha_limite: Date | string
+    creado_por: string
+    notas?: string | null
+    created_at?: Date | string
+    proveedores?: SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutSolicitudInput
+  }
+
+  export type SolicitudCotizacionUpdateInput = {
+    id_solicitud?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    dias_habiles?: IntFieldUpdateOperationsInput | number
+    fecha_solicitud?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_limite?: DateTimeFieldUpdateOperationsInput | Date | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedores?: SolicitudCotizacionProveedorUpdateManyWithoutSolicitudNestedInput
+  }
+
+  export type SolicitudCotizacionUncheckedUpdateInput = {
+    id_solicitud?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    dias_habiles?: IntFieldUpdateOperationsInput | number
+    fecha_solicitud?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_limite?: DateTimeFieldUpdateOperationsInput | Date | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedores?: SolicitudCotizacionProveedorUncheckedUpdateManyWithoutSolicitudNestedInput
+  }
+
+  export type SolicitudCotizacionCreateManyInput = {
+    id_solicitud?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    dias_habiles?: number
+    fecha_solicitud?: Date | string
+    fecha_limite: Date | string
+    creado_por: string
+    notas?: string | null
+    created_at?: Date | string
+  }
+
+  export type SolicitudCotizacionUpdateManyMutationInput = {
+    id_solicitud?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    dias_habiles?: IntFieldUpdateOperationsInput | number
+    fecha_solicitud?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_limite?: DateTimeFieldUpdateOperationsInput | Date | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionUncheckedUpdateManyInput = {
+    id_solicitud?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    dias_habiles?: IntFieldUpdateOperationsInput | number
+    fecha_solicitud?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_limite?: DateTimeFieldUpdateOperationsInput | Date | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorCreateInput = {
+    id_scp?: string
+    tenant_id: string
+    proveedor_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+    solicitud: SolicitudCotizacionCreateNestedOneWithoutProveedoresInput
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedCreateInput = {
+    id_scp?: string
+    tenant_id: string
+    solicitud_id: string
+    proveedor_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUpdateInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    solicitud?: SolicitudCotizacionUpdateOneRequiredWithoutProveedoresNestedInput
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    solicitud_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorCreateManyInput = {
+    id_scp?: string
+    tenant_id: string
+    solicitud_id: string
+    proveedor_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUpdateManyMutationInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateManyInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    solicitud_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnotacionEspecificacionCreateInput = {
+    id_anotacion?: string
+    tenant_id: string
+    cuadro_id: string
+    especificacion_id: string
+    proveedor_id: string
+    tipo: string
+    texto: string
+    creado_por: string
+    created_at?: Date | string
+  }
+
+  export type AnotacionEspecificacionUncheckedCreateInput = {
+    id_anotacion?: string
+    tenant_id: string
+    cuadro_id: string
+    especificacion_id: string
+    proveedor_id: string
+    tipo: string
+    texto: string
+    creado_por: string
+    created_at?: Date | string
+  }
+
+  export type AnotacionEspecificacionUpdateInput = {
+    id_anotacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    especificacion_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    texto?: StringFieldUpdateOperationsInput | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnotacionEspecificacionUncheckedUpdateInput = {
+    id_anotacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    especificacion_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    texto?: StringFieldUpdateOperationsInput | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnotacionEspecificacionCreateManyInput = {
+    id_anotacion?: string
+    tenant_id: string
+    cuadro_id: string
+    especificacion_id: string
+    proveedor_id: string
+    tipo: string
+    texto: string
+    creado_por: string
+    created_at?: Date | string
+  }
+
+  export type AnotacionEspecificacionUpdateManyMutationInput = {
+    id_anotacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    especificacion_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    texto?: StringFieldUpdateOperationsInput | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AnotacionEspecificacionUncheckedUpdateManyInput = {
+    id_anotacion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    especificacion_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    texto?: StringFieldUpdateOperationsInput | string
+    creado_por?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -20445,10 +26799,14 @@ export namespace Prisma {
     descripcion_libre?: SortOrder
     unidad_libre?: SortOrder
     es_imprevisto?: SortOrder
+    cantidad_presupuestada?: SortOrder
+    concepto_origen_id?: SortOrder
+    justificacion?: SortOrder
   }
 
   export type RequisicionItemAvgOrderByAggregateInput = {
     cantidad?: SortOrder
+    cantidad_presupuestada?: SortOrder
   }
 
   export type RequisicionItemMaxOrderByAggregateInput = {
@@ -20462,6 +26820,9 @@ export namespace Prisma {
     descripcion_libre?: SortOrder
     unidad_libre?: SortOrder
     es_imprevisto?: SortOrder
+    cantidad_presupuestada?: SortOrder
+    concepto_origen_id?: SortOrder
+    justificacion?: SortOrder
   }
 
   export type RequisicionItemMinOrderByAggregateInput = {
@@ -20475,10 +26836,14 @@ export namespace Prisma {
     descripcion_libre?: SortOrder
     unidad_libre?: SortOrder
     es_imprevisto?: SortOrder
+    cantidad_presupuestada?: SortOrder
+    concepto_origen_id?: SortOrder
+    justificacion?: SortOrder
   }
 
   export type RequisicionItemSumOrderByAggregateInput = {
     cantidad?: SortOrder
+    cantidad_presupuestada?: SortOrder
   }
 
   export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -20494,6 +26859,58 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type AsignacionExtraConceptoTenant_idRequisicion_item_idCompoundUniqueInput = {
+    tenant_id: string
+    requisicion_item_id: string
+  }
+
+  export type AsignacionExtraConceptoCountOrderByAggregateInput = {
+    id_asignacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_item_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_descripcion?: SortOrder
+    monto_extra?: SortOrder
+    asignado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AsignacionExtraConceptoAvgOrderByAggregateInput = {
+    monto_extra?: SortOrder
+  }
+
+  export type AsignacionExtraConceptoMaxOrderByAggregateInput = {
+    id_asignacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_item_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_descripcion?: SortOrder
+    monto_extra?: SortOrder
+    asignado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AsignacionExtraConceptoMinOrderByAggregateInput = {
+    id_asignacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_item_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_descripcion?: SortOrder
+    monto_extra?: SortOrder
+    asignado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AsignacionExtraConceptoSumOrderByAggregateInput = {
+    monto_extra?: SortOrder
   }
 
   export type OrdenCompraItemListRelationFilter = {
@@ -20757,6 +27174,7 @@ export namespace Prisma {
     insumo_id?: SortOrder
     marca_modelo_ref?: SortOrder
     especificaciones_requeridas?: SortOrder
+    detalle_req_id?: SortOrder
   }
 
   export type ComparativaLineaMaxOrderByAggregateInput = {
@@ -20767,6 +27185,7 @@ export namespace Prisma {
     insumo_id?: SortOrder
     marca_modelo_ref?: SortOrder
     especificaciones_requeridas?: SortOrder
+    detalle_req_id?: SortOrder
   }
 
   export type ComparativaLineaMinOrderByAggregateInput = {
@@ -20777,6 +27196,7 @@ export namespace Prisma {
     insumo_id?: SortOrder
     marca_modelo_ref?: SortOrder
     especificaciones_requeridas?: SortOrder
+    detalle_req_id?: SortOrder
   }
 
   export type ComparativaDetalleCountOrderByAggregateInput = {
@@ -20877,6 +27297,194 @@ export namespace Prisma {
     tipo?: SortOrder
     mensaje?: SortOrder
     resuelta?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type EspecificacionDetalleReqCountOrderByAggregateInput = {
+    id_especificacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    detalle_id?: SortOrder
+    descripcion?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type EspecificacionDetalleReqAvgOrderByAggregateInput = {
+    orden?: SortOrder
+  }
+
+  export type EspecificacionDetalleReqMaxOrderByAggregateInput = {
+    id_especificacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    detalle_id?: SortOrder
+    descripcion?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type EspecificacionDetalleReqMinOrderByAggregateInput = {
+    id_especificacion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    detalle_id?: SortOrder
+    descripcion?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type EspecificacionDetalleReqSumOrderByAggregateInput = {
+    orden?: SortOrder
+  }
+
+  export type SolicitudCotizacionProveedorListRelationFilter = {
+    every?: SolicitudCotizacionProveedorWhereInput
+    some?: SolicitudCotizacionProveedorWhereInput
+    none?: SolicitudCotizacionProveedorWhereInput
+  }
+
+  export type SolicitudCotizacionProveedorOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SolicitudCotizacionTenant_idRequisicion_idCompoundUniqueInput = {
+    tenant_id: string
+    requisicion_id: string
+  }
+
+  export type SolicitudCotizacionCountOrderByAggregateInput = {
+    id_solicitud?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_id?: SortOrder
+    dias_habiles?: SortOrder
+    fecha_solicitud?: SortOrder
+    fecha_limite?: SortOrder
+    creado_por?: SortOrder
+    notas?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type SolicitudCotizacionAvgOrderByAggregateInput = {
+    dias_habiles?: SortOrder
+  }
+
+  export type SolicitudCotizacionMaxOrderByAggregateInput = {
+    id_solicitud?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_id?: SortOrder
+    dias_habiles?: SortOrder
+    fecha_solicitud?: SortOrder
+    fecha_limite?: SortOrder
+    creado_por?: SortOrder
+    notas?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type SolicitudCotizacionMinOrderByAggregateInput = {
+    id_solicitud?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    requisicion_id?: SortOrder
+    dias_habiles?: SortOrder
+    fecha_solicitud?: SortOrder
+    fecha_limite?: SortOrder
+    creado_por?: SortOrder
+    notas?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type SolicitudCotizacionSumOrderByAggregateInput = {
+    dias_habiles?: SortOrder
+  }
+
+  export type SolicitudCotizacionRelationFilter = {
+    is?: SolicitudCotizacionWhereInput
+    isNot?: SolicitudCotizacionWhereInput
+  }
+
+  export type SolicitudCotizacionProveedorSolicitud_idProveedor_idCompoundUniqueInput = {
+    solicitud_id: string
+    proveedor_id: string
+  }
+
+  export type SolicitudCotizacionProveedorCountOrderByAggregateInput = {
+    id_scp?: SortOrder
+    tenant_id?: SortOrder
+    solicitud_id?: SortOrder
+    proveedor_id?: SortOrder
+    estado?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    notas_proveedor?: SortOrder
+    fecha_respuesta?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type SolicitudCotizacionProveedorMaxOrderByAggregateInput = {
+    id_scp?: SortOrder
+    tenant_id?: SortOrder
+    solicitud_id?: SortOrder
+    proveedor_id?: SortOrder
+    estado?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    notas_proveedor?: SortOrder
+    fecha_respuesta?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type SolicitudCotizacionProveedorMinOrderByAggregateInput = {
+    id_scp?: SortOrder
+    tenant_id?: SortOrder
+    solicitud_id?: SortOrder
+    proveedor_id?: SortOrder
+    estado?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    notas_proveedor?: SortOrder
+    fecha_respuesta?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type AnotacionEspecificacionCountOrderByAggregateInput = {
+    id_anotacion?: SortOrder
+    tenant_id?: SortOrder
+    cuadro_id?: SortOrder
+    especificacion_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo?: SortOrder
+    texto?: SortOrder
+    creado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AnotacionEspecificacionMaxOrderByAggregateInput = {
+    id_anotacion?: SortOrder
+    tenant_id?: SortOrder
+    cuadro_id?: SortOrder
+    especificacion_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo?: SortOrder
+    texto?: SortOrder
+    creado_por?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type AnotacionEspecificacionMinOrderByAggregateInput = {
+    id_anotacion?: SortOrder
+    tenant_id?: SortOrder
+    cuadro_id?: SortOrder
+    especificacion_id?: SortOrder
+    proveedor_id?: SortOrder
+    tipo?: SortOrder
+    texto?: SortOrder
+    creado_por?: SortOrder
     created_at?: SortOrder
   }
 
@@ -21596,6 +28204,62 @@ export namespace Prisma {
     upsert?: CuadroComparativoUpsertWithoutAclaracionesInput
     connect?: CuadroComparativoWhereUniqueInput
     update?: XOR<XOR<CuadroComparativoUpdateToOneWithWhereWithoutAclaracionesInput, CuadroComparativoUpdateWithoutAclaracionesInput>, CuadroComparativoUncheckedUpdateWithoutAclaracionesInput>
+  }
+
+  export type SolicitudCotizacionProveedorCreateNestedManyWithoutSolicitudInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput> | SolicitudCotizacionProveedorCreateWithoutSolicitudInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput | SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManySolicitudInputEnvelope
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutSolicitudInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput> | SolicitudCotizacionProveedorCreateWithoutSolicitudInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput | SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManySolicitudInputEnvelope
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+  }
+
+  export type SolicitudCotizacionProveedorUpdateManyWithoutSolicitudNestedInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput> | SolicitudCotizacionProveedorCreateWithoutSolicitudInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput | SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput[]
+    upsert?: SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutSolicitudInput | SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutSolicitudInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManySolicitudInputEnvelope
+    set?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    disconnect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    delete?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    update?: SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutSolicitudInput | SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutSolicitudInput[]
+    updateMany?: SolicitudCotizacionProveedorUpdateManyWithWhereWithoutSolicitudInput | SolicitudCotizacionProveedorUpdateManyWithWhereWithoutSolicitudInput[]
+    deleteMany?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateManyWithoutSolicitudNestedInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput> | SolicitudCotizacionProveedorCreateWithoutSolicitudInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput | SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput[]
+    upsert?: SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutSolicitudInput | SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutSolicitudInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManySolicitudInputEnvelope
+    set?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    disconnect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    delete?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    update?: SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutSolicitudInput | SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutSolicitudInput[]
+    updateMany?: SolicitudCotizacionProveedorUpdateManyWithWhereWithoutSolicitudInput | SolicitudCotizacionProveedorUpdateManyWithWhereWithoutSolicitudInput[]
+    deleteMany?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+  }
+
+  export type SolicitudCotizacionCreateNestedOneWithoutProveedoresInput = {
+    create?: XOR<SolicitudCotizacionCreateWithoutProveedoresInput, SolicitudCotizacionUncheckedCreateWithoutProveedoresInput>
+    connectOrCreate?: SolicitudCotizacionCreateOrConnectWithoutProveedoresInput
+    connect?: SolicitudCotizacionWhereUniqueInput
+  }
+
+  export type SolicitudCotizacionUpdateOneRequiredWithoutProveedoresNestedInput = {
+    create?: XOR<SolicitudCotizacionCreateWithoutProveedoresInput, SolicitudCotizacionUncheckedCreateWithoutProveedoresInput>
+    connectOrCreate?: SolicitudCotizacionCreateOrConnectWithoutProveedoresInput
+    upsert?: SolicitudCotizacionUpsertWithoutProveedoresInput
+    connect?: SolicitudCotizacionWhereUniqueInput
+    update?: XOR<XOR<SolicitudCotizacionUpdateToOneWithWhereWithoutProveedoresInput, SolicitudCotizacionUpdateWithoutProveedoresInput>, SolicitudCotizacionUncheckedUpdateWithoutProveedoresInput>
   }
 
   export type MovimientoAlmacenCreateNestedManyWithoutItemInput = {
@@ -22424,6 +29088,9 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: string | null
+    justificacion?: string | null
   }
 
   export type RequisicionItemUncheckedCreateWithoutRequisicionInput = {
@@ -22436,6 +29103,9 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: string | null
+    justificacion?: string | null
   }
 
   export type RequisicionItemCreateOrConnectWithoutRequisicionInput = {
@@ -22478,6 +29148,9 @@ export namespace Prisma {
     descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
+    cantidad_presupuestada?: DecimalNullableFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: UuidNullableFilter<"RequisicionItem"> | string | null
+    justificacion?: StringNullableFilter<"RequisicionItem"> | string | null
   }
 
   export type RequisicionCreateWithoutItemsInput = {
@@ -22833,6 +29506,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
+    detalle_req_id?: string | null
   }
 
   export type ComparativaLineaUncheckedCreateWithoutCuadroInput = {
@@ -22842,6 +29516,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
+    detalle_req_id?: string | null
   }
 
   export type ComparativaLineaCreateOrConnectWithoutCuadroInput = {
@@ -22933,6 +29608,7 @@ export namespace Prisma {
     insumo_id?: UuidFilter<"ComparativaLinea"> | string
     marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
+    detalle_req_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
   }
 
   export type AclaracionComparativaUpsertWithWhereUniqueWithoutCuadroInput = {
@@ -23400,6 +30076,143 @@ export namespace Prisma {
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
+  export type SolicitudCotizacionProveedorCreateWithoutSolicitudInput = {
+    id_scp?: string
+    tenant_id: string
+    proveedor_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput = {
+    id_scp?: string
+    tenant_id: string
+    proveedor_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorCreateOrConnectWithoutSolicitudInput = {
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    create: XOR<SolicitudCotizacionProveedorCreateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput>
+  }
+
+  export type SolicitudCotizacionProveedorCreateManySolicitudInputEnvelope = {
+    data: SolicitudCotizacionProveedorCreateManySolicitudInput | SolicitudCotizacionProveedorCreateManySolicitudInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutSolicitudInput = {
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    update: XOR<SolicitudCotizacionProveedorUpdateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedUpdateWithoutSolicitudInput>
+    create: XOR<SolicitudCotizacionProveedorCreateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput>
+  }
+
+  export type SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutSolicitudInput = {
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    data: XOR<SolicitudCotizacionProveedorUpdateWithoutSolicitudInput, SolicitudCotizacionProveedorUncheckedUpdateWithoutSolicitudInput>
+  }
+
+  export type SolicitudCotizacionProveedorUpdateManyWithWhereWithoutSolicitudInput = {
+    where: SolicitudCotizacionProveedorScalarWhereInput
+    data: XOR<SolicitudCotizacionProveedorUpdateManyMutationInput, SolicitudCotizacionProveedorUncheckedUpdateManyWithoutSolicitudInput>
+  }
+
+  export type SolicitudCotizacionProveedorScalarWhereInput = {
+    AND?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+    OR?: SolicitudCotizacionProveedorScalarWhereInput[]
+    NOT?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+    id_scp?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    tenant_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    solicitud_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    proveedor_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    estado?: StringFilter<"SolicitudCotizacionProveedor"> | string
+    pdf_nombre?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_ruta?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_mime?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    notas_proveedor?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
+    updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
+  }
+
+  export type SolicitudCotizacionCreateWithoutProveedoresInput = {
+    id_solicitud?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    dias_habiles?: number
+    fecha_solicitud?: Date | string
+    fecha_limite: Date | string
+    creado_por: string
+    notas?: string | null
+    created_at?: Date | string
+  }
+
+  export type SolicitudCotizacionUncheckedCreateWithoutProveedoresInput = {
+    id_solicitud?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    dias_habiles?: number
+    fecha_solicitud?: Date | string
+    fecha_limite: Date | string
+    creado_por: string
+    notas?: string | null
+    created_at?: Date | string
+  }
+
+  export type SolicitudCotizacionCreateOrConnectWithoutProveedoresInput = {
+    where: SolicitudCotizacionWhereUniqueInput
+    create: XOR<SolicitudCotizacionCreateWithoutProveedoresInput, SolicitudCotizacionUncheckedCreateWithoutProveedoresInput>
+  }
+
+  export type SolicitudCotizacionUpsertWithoutProveedoresInput = {
+    update: XOR<SolicitudCotizacionUpdateWithoutProveedoresInput, SolicitudCotizacionUncheckedUpdateWithoutProveedoresInput>
+    create: XOR<SolicitudCotizacionCreateWithoutProveedoresInput, SolicitudCotizacionUncheckedCreateWithoutProveedoresInput>
+    where?: SolicitudCotizacionWhereInput
+  }
+
+  export type SolicitudCotizacionUpdateToOneWithWhereWithoutProveedoresInput = {
+    where?: SolicitudCotizacionWhereInput
+    data: XOR<SolicitudCotizacionUpdateWithoutProveedoresInput, SolicitudCotizacionUncheckedUpdateWithoutProveedoresInput>
+  }
+
+  export type SolicitudCotizacionUpdateWithoutProveedoresInput = {
+    id_solicitud?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    dias_habiles?: IntFieldUpdateOperationsInput | number
+    fecha_solicitud?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_limite?: DateTimeFieldUpdateOperationsInput | Date | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionUncheckedUpdateWithoutProveedoresInput = {
+    id_solicitud?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    dias_habiles?: IntFieldUpdateOperationsInput | number
+    fecha_solicitud?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_limite?: DateTimeFieldUpdateOperationsInput | Date | string
+    creado_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MovimientoAlmacenCreateWithoutItemInput = {
     id?: string
     tenant_id: string
@@ -23788,6 +30601,9 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: string | null
+    justificacion?: string | null
   }
 
   export type RequisicionItemUpdateWithoutRequisicionInput = {
@@ -23800,6 +30616,9 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionItemUncheckedUpdateWithoutRequisicionInput = {
@@ -23812,6 +30631,9 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionItemUncheckedUpdateManyWithoutRequisicionInput = {
@@ -23824,6 +30646,9 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    justificacion?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrdenCompraItemCreateManyOrdenInput = {
@@ -23889,6 +30714,7 @@ export namespace Prisma {
     insumo_id: string
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
+    detalle_req_id?: string | null
   }
 
   export type AclaracionComparativaCreateManyCuadroInput = {
@@ -23959,6 +30785,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaLineaUncheckedUpdateWithoutCuadroInput = {
@@ -23968,6 +30795,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaLineaUncheckedUpdateManyWithoutCuadroInput = {
@@ -23977,6 +30805,7 @@ export namespace Prisma {
     insumo_id?: StringFieldUpdateOperationsInput | string
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AclaracionComparativaUpdateWithoutCuadroInput = {
@@ -24016,6 +30845,58 @@ export namespace Prisma {
     mensaje?: StringFieldUpdateOperationsInput | string
     resuelta?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorCreateManySolicitudInput = {
+    id_scp?: string
+    tenant_id: string
+    proveedor_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUpdateWithoutSolicitudInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateWithoutSolicitudInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateManyWithoutSolicitudInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MovimientoAlmacenCreateManyItemInput = {
@@ -24096,6 +30977,10 @@ export namespace Prisma {
      */
     export type CuadroComparativoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use SolicitudCotizacionCountOutputTypeDefaultArgs instead
+     */
+    export type SolicitudCotizacionCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SolicitudCotizacionCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use ItemInventarioCountOutputTypeDefaultArgs instead
      */
     export type ItemInventarioCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ItemInventarioCountOutputTypeDefaultArgs<ExtArgs>
@@ -24120,6 +31005,10 @@ export namespace Prisma {
      */
     export type RequisicionItemArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RequisicionItemDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use AsignacionExtraConceptoDefaultArgs instead
+     */
+    export type AsignacionExtraConceptoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AsignacionExtraConceptoDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use OrdenCompraDefaultArgs instead
      */
     export type OrdenCompraArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrdenCompraDefaultArgs<ExtArgs>
@@ -24143,6 +31032,22 @@ export namespace Prisma {
      * @deprecated Use AclaracionComparativaDefaultArgs instead
      */
     export type AclaracionComparativaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AclaracionComparativaDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use EspecificacionDetalleReqDefaultArgs instead
+     */
+    export type EspecificacionDetalleReqArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = EspecificacionDetalleReqDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SolicitudCotizacionDefaultArgs instead
+     */
+    export type SolicitudCotizacionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SolicitudCotizacionDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SolicitudCotizacionProveedorDefaultArgs instead
+     */
+    export type SolicitudCotizacionProveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SolicitudCotizacionProveedorDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use AnotacionEspecificacionDefaultArgs instead
+     */
+    export type AnotacionEspecificacionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AnotacionEspecificacionDefaultArgs<ExtArgs>
     /**
      * @deprecated Use AlertaOcErrorDefaultArgs instead
      */

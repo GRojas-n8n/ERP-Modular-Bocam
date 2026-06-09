@@ -28,17 +28,21 @@ import {
 } from '@bocam/ui-core';
 import {
   IconAlertCircle,
+  IconAlertTriangle,
   IconArrowDownRight,
   IconArrowUpRight,
   IconCheckCircle2,
   IconClock,
+  IconFileText,
   IconLayers,
   IconPackage,
   IconPlus,
   IconRefreshCw,
   IconScale,
   IconSearch,
+  IconSend,
   IconShoppingCart,
+  IconUpload,
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
@@ -111,7 +115,48 @@ interface MovimientoAlmacen {
 
 type MovTipo = 'INGRESO' | 'EGRESO' | 'TRASPASO';
 type AlmacenSubView = 'inventario' | 'movimientos';
-type TabId = 'requisiciones' | 'catalogo' | 'almacen' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt';
+type TabId = 'requisiciones' | 'catalogo' | 'almacen' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt' | 'trazabilidad';
+
+interface TrazabilidadMaterial {
+  insumo_id: string | null;
+  descripcion_libre: string | null;
+  unidad_libre: string | null;
+  cantidad_presupuestada: number;
+  cantidad_requisicionada: number;
+  cantidad_oc_emitida: number;
+  cantidad_surtida: number;
+  monto_oc_emitida: number;
+  pct_avance_req: number | null;
+  pct_avance_oc: number | null;
+  semaforo: 'ROJO' | 'AMARILLO' | 'VERDE' | 'EXTRA';
+  es_extra: boolean;
+  tiene_justificacion: boolean;
+  justificaciones: string[];
+  extras_asignados: { concepto_id: string; concepto_clave: string; concepto_descripcion: string; monto_extra: number; asignacion_id: string; item_id: string }[];
+  items_ids: string[];
+}
+
+interface ScpEntry {
+  id_scp: string;
+  proveedor_id: string;
+  proveedor_nombre: string;
+  estado: 'PENDIENTE' | 'RESPONDIO' | 'DECLINO';
+  pdf_nombre: string | null;
+  notas_proveedor: string | null;
+  fecha_respuesta: string | null;
+}
+
+interface SolicitudCotizacion {
+  id_solicitud: string;
+  requisicion_id: string;
+  dias_habiles: number;
+  fecha_solicitud: string;
+  fecha_limite: string;
+  notas: string | null;
+  dias_habiles_restantes: number;
+  alerta_plazo: boolean;
+  proveedores: ScpEntry[];
+}
 
 interface ProveedorCatalogo {
   id_proveedor: string;
@@ -212,6 +257,24 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [aprobando, setAprobando] = useState<string | null>(null);
+
+  // ── Trazabilidad de Materiales ───────────────────────────────────────────
+  const [trazabilidad, setTrazabilidad] = useState<TrazabilidadMaterial[]>([]);
+  const [loadingTraz, setLoadingTraz] = useState(false);
+  const [trazFilter, setTrazFilter] = useState<'TODOS' | 'ROJO' | 'AMARILLO' | 'VERDE' | 'EXTRA'>('TODOS');
+  const [trazSearch, setTrazSearch] = useState('');
+  const [expandedTrazId, setExpandedTrazId] = useState<string | null>(null);
+  const [asignacionPanel, setAsignacionPanel] = useState<{ itemId: string; insumoDesc: string } | null>(null);
+  const [asignForm, setAsignForm] = useState({ concepto_id: '', concepto_clave: '', concepto_descripcion: '', monto_extra: '' });
+  const [asignSubmitting, setAsignSubmitting] = useState(false);
+
+  // ── Solicitud de Cotización ──────────────────────────────────────────────
+  const [solicitudesMap, setSolicitudesMap] = useState<Record<string, SolicitudCotizacion>>({});
+  const [solicitudPanelReqId, setSolicitudPanelReqId] = useState<string | null>(null);
+  const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[] }>({ dias_habiles: 3, notas: '', provsSeleccionados: [] });
+  const [solicitudSubmitting, setSolicitudSubmitting] = useState(false);
+  const [scpUploadTarget, setScpUploadTarget] = useState<{ reqId: string; scpId: string } | null>(null);
+  const scpFileRef = useRef<HTMLInputElement>(null);
 
   // Almacén sub-vistas y filtros
   const [almacenSubView, setAlmacenSubView] = useState<AlmacenSubView>('inventario');
@@ -402,6 +465,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (activeTab === 'trazabilidad') loadTrazabilidad(); }, [activeTab]);
 
   // Cerrar dropdown al hacer clic afuera (requisición)
   useEffect(() => {
@@ -797,6 +861,144 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  // ── Solicitud de Cotización — handlers ───────────────────────────────────────
+  const loadSolicitud = async (reqId: string) => {
+    try {
+      const res = await api.get(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion`);
+      const s = res.data.data;
+      const normalized: SolicitudCotizacion = {
+        id_solicitud:            s.id_solicitud,
+        requisicion_id:          reqId,
+        dias_habiles:            s.dias_habiles,
+        fecha_solicitud:         s.fecha_solicitud,
+        fecha_limite:            s.fecha_limite,
+        notas:                   s.notas ?? null,
+        dias_habiles_restantes:  s.dias_habiles_restantes,
+        alerta_plazo:            s.alerta_plazo,
+        proveedores: (s.proveedores ?? []).map((p: any) => ({
+          id_scp:          p.id_scp,
+          proveedor_id:    p.proveedor_id,
+          proveedor_nombre: p.proveedor?.razon_social ?? p.proveedor_nombre ?? '—',
+          estado:          p.estado,
+          pdf_nombre:      p.pdf_nombre ?? null,
+          notas_proveedor: p.notas_proveedor ?? null,
+          fecha_respuesta: p.fecha_respuesta ?? null,
+        })),
+      };
+      setSolicitudesMap(prev => ({ ...prev, [reqId]: normalized }));
+      return normalized;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleOpenSolicitudPanel = async (req: Requisicion) => {
+    const existing = solicitudesMap[req.id];
+    if (!existing && !isDemo) {
+      const loaded = await loadSolicitud(req.id);
+      if (loaded) {
+        setSolicitudForm({ dias_habiles: loaded.dias_habiles, notas: loaded.notas ?? '', provsSeleccionados: loaded.proveedores.map(p => p.proveedor_id) });
+      } else {
+        setSolicitudForm({ dias_habiles: 3, notas: '', provsSeleccionados: [] });
+      }
+    } else if (existing) {
+      setSolicitudForm({ dias_habiles: existing.dias_habiles, notas: existing.notas ?? '', provsSeleccionados: existing.proveedores.map(p => p.proveedor_id) });
+    }
+    setSolicitudPanelReqId(req.id);
+  };
+
+  const handleSubmitSolicitud = async (reqId: string) => {
+    if (solicitudForm.provsSeleccionados.length === 0) {
+      notify({ type: 'error', title: 'Sin proveedores', message: 'Selecciona al menos un proveedor.' }); return;
+    }
+    if (isDemo) {
+      notify({ type: 'success', title: 'Solicitud enviada (demo)', message: `${solicitudForm.provsSeleccionados.length} proveedor(es) · ${solicitudForm.dias_habiles} días hábiles` });
+      setSolicitudPanelReqId(null); return;
+    }
+    try {
+      setSolicitudSubmitting(true);
+      await api.post(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion`, {
+        dias_habiles: solicitudForm.dias_habiles,
+        notas:        solicitudForm.notas || undefined,
+        proveedores:  solicitudForm.provsSeleccionados,
+      });
+      await loadSolicitud(reqId);
+      notify({ type: 'success', title: 'Solicitud de cotización enviada', message: `${solicitudForm.provsSeleccionados.length} proveedor(es) · plazo ${solicitudForm.dias_habiles} días hábiles` });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al enviar solicitud', message: err.response?.data?.message || err.message });
+    } finally {
+      setSolicitudSubmitting(false);
+    }
+  };
+
+  const handleUploadScpPdf = async (file: File, reqId: string, scpId: string) => {
+    const fd = new FormData();
+    fd.append('pdf', file);
+    fd.append('estado', 'RESPONDIO');
+    try {
+      await api.put(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion/proveedores/${scpId}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      await loadSolicitud(reqId);
+      notify({ type: 'success', title: 'Cotización recibida', message: file.name });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al subir PDF', message: err.response?.data?.message || err.message });
+    }
+  };
+
+  const handleMarcarDeclino = async (reqId: string, scpId: string) => {
+    try {
+      await api.put(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion/proveedores/${scpId}`, { estado: 'DECLINO' });
+      await loadSolicitud(reqId);
+      notify({ type: 'info', title: 'Proveedor marcado como Declinó' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message || err.message });
+    }
+  };
+
+  // ── Trazabilidad — handlers ───────────────────────────────────────────────────
+  const loadTrazabilidad = async () => {
+    if (isDemo) return;
+    setLoadingTraz(true);
+    try {
+      const res = await api.get('/api/v1/compras/trazabilidad/materiales');
+      setTrazabilidad(res.data?.data ?? []);
+    } catch { /* silencioso */ }
+    finally { setLoadingTraz(false); }
+  };
+
+  const handleSubmitAsignacion = async () => {
+    if (!asignacionPanel || !asignForm.concepto_id || !asignForm.monto_extra) {
+      notify({ type: 'error', title: 'Faltan datos', message: 'Completa concepto y monto.' }); return;
+    }
+    try {
+      setAsignSubmitting(true);
+      await api.post('/api/v1/compras/trazabilidad/asignaciones', {
+        requisicion_item_id:  asignacionPanel.itemId,
+        concepto_id:          asignForm.concepto_id,
+        concepto_clave:       asignForm.concepto_clave,
+        concepto_descripcion: asignForm.concepto_descripcion,
+        monto_extra:          Number(asignForm.monto_extra),
+      });
+      await loadTrazabilidad();
+      notify({ type: 'success', title: 'Inciso asignado al concepto' });
+      setAsignacionPanel(null);
+      setAsignForm({ concepto_id: '', concepto_clave: '', concepto_descripcion: '', monto_extra: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al asignar', message: err.response?.data?.message || err.message });
+    } finally { setAsignSubmitting(false); }
+  };
+
+  const handleEliminarAsignacion = async (asignacionId: string) => {
+    try {
+      await api.delete(`/api/v1/compras/trazabilidad/asignaciones/${asignacionId}`);
+      await loadTrazabilidad();
+      notify({ type: 'success', title: 'Inciso eliminado' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message || err.message });
+    }
+  };
+
   // ── Exportación de documentos ─────────────────────────────────────────────────
   const triggerDownload = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
@@ -1169,26 +1371,76 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             {aprobando === req.id ? 'Aprobando…' : 'Aprobar Requisición'}
                           </Button>
                         )}
-                        {/* Botón comparativa para APROBADAS */}
-                        {req.estado === 'APROBADA' && (
-                          <Button
-                            onClick={() => openComparativa(req)}
-                            variant="outline"
-                            className={cn(
-                              'w-full rounded-xl text-[9px] font-black uppercase tracking-widest',
-                              compEstado === 'AUTORIZADA'
-                                ? 'border-green-500/30 text-green-600 hover:bg-green-500/5'
-                                : 'border-amber-500/30 text-amber-600 hover:bg-amber-500/5'
-                            )}
-                          >
-                            <IconScale className="h-3.5 w-3.5" />
-                            {compEstado === 'AUTORIZADA'
-                              ? 'Ver OC generadas'
-                              : hasComp
-                              ? 'Continuar comparativa'
-                              : 'Iniciar comparativa'}
-                          </Button>
-                        )}
+                        {/* Sección Solicitud + Comparativa para APROBADAS */}
+                        {req.estado === 'APROBADA' && (() => {
+                          const solic = solicitudesMap[req.id];
+                          const respondidos = solic?.proveedores.filter(p => p.estado === 'RESPONDIO').length ?? 0;
+                          const totalProvs = solic?.proveedores.length ?? 0;
+                          return (
+                            <>
+                              {/* Alerta de plazo vencido */}
+                              {solic?.alerta_plazo && (
+                                <div className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/5 px-2.5 py-1.5">
+                                  <IconAlertTriangle className="h-3 w-3 shrink-0 text-red-500" />
+                                  <span className="text-[9px] font-black text-red-600">
+                                    Plazo vencido · {Math.abs(solic.dias_habiles_restantes)} día(s) de retraso
+                                  </span>
+                                </div>
+                              )}
+                              {/* Estado de respuestas si ya hay solicitud */}
+                              {solic && !solic.alerta_plazo && (
+                                <div className="flex items-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 px-2.5 py-1.5">
+                                  <IconClock className="h-3 w-3 shrink-0 text-sky-500" />
+                                  <span className="text-[9px] font-black text-sky-700">
+                                    {respondidos}/{totalProvs} respuestas · {solic.dias_habiles_restantes}d hábiles
+                                  </span>
+                                </div>
+                              )}
+                              {/* Botón de solicitud de cotización */}
+                              {isProcurement && (
+                                <Button
+                                  onClick={() => handleOpenSolicitudPanel(req)}
+                                  variant="outline"
+                                  className="w-full rounded-xl border-sky-500/30 text-[9px] font-black uppercase tracking-widest text-sky-600 hover:bg-sky-500/5"
+                                >
+                                  <IconSend className="h-3.5 w-3.5" />
+                                  {solic ? 'Ver Solicitud de Cotización' : 'Enviar Solicitud de Cotización'}
+                                </Button>
+                              )}
+                              {/* Botón comparativa */}
+                              {(hasComp || (solic && respondidos > 0)) && (
+                                <Button
+                                  onClick={() => openComparativa(req)}
+                                  variant="outline"
+                                  className={cn(
+                                    'w-full rounded-xl text-[9px] font-black uppercase tracking-widest',
+                                    compEstado === 'AUTORIZADA'
+                                      ? 'border-green-500/30 text-green-600 hover:bg-green-500/5'
+                                      : 'border-amber-500/30 text-amber-600 hover:bg-amber-500/5'
+                                  )}
+                                >
+                                  <IconScale className="h-3.5 w-3.5" />
+                                  {compEstado === 'AUTORIZADA'
+                                    ? 'Ver OC generadas'
+                                    : hasComp
+                                    ? 'Continuar comparativa'
+                                    : 'Crear Cuadro Comparativo'}
+                                </Button>
+                              )}
+                              {/* Si no hay solicitud ni comparativa, mostrar el botón original de iniciar comparativa */}
+                              {!hasComp && !solic && !isProcurement && (
+                                <Button
+                                  onClick={() => openComparativa(req)}
+                                  variant="outline"
+                                  className="w-full rounded-xl border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-500/5"
+                                >
+                                  <IconScale className="h-3.5 w-3.5" />
+                                  Iniciar comparativa
+                                </Button>
+                              )}
+                            </>
+                          );
+                        })()}
                       </CardContent>
                     </Card>
                   );
@@ -1818,8 +2070,461 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             </div>
           )}
 
+          {/* ── TAB: Trazabilidad de Materiales ──────────────────────────────── */}
+          {activeTab === 'trazabilidad' && (() => {
+            const semColors: Record<string, { row: string; badge: string; dot: string; label: string }> = {
+              VERDE:    { row: 'bg-green-500/5',  badge: 'bg-green-500/10 text-green-700 border-green-500/20',  dot: 'bg-green-500',  label: 'OC Emitida' },
+              AMARILLO: { row: 'bg-amber-500/5',  badge: 'bg-amber-500/10 text-amber-700 border-amber-500/20',  dot: 'bg-amber-500',  label: 'Req sin OC' },
+              ROJO:     { row: 'bg-red-500/5',    badge: 'bg-red-500/10 text-red-700 border-red-500/20',        dot: 'bg-red-500',    label: 'Sin Req' },
+              EXTRA:    { row: 'bg-slate-500/5',  badge: 'bg-slate-500/10 text-slate-500 border-slate-500/20',  dot: 'bg-slate-400',  label: 'Extra' },
+            };
+
+            const filtrado = trazabilidad
+              .filter(m => trazFilter === 'TODOS' || m.semaforo === trazFilter)
+              .filter(m => {
+                if (!trazSearch.trim()) return true;
+                const q = trazSearch.toLowerCase();
+                return (m.insumo_id ?? '').toLowerCase().includes(q)
+                  || (m.descripcion_libre ?? '').toLowerCase().includes(q);
+              });
+
+            const contadores = { ROJO: 0, AMARILLO: 0, VERDE: 0, EXTRA: 0 };
+            trazabilidad.forEach(m => { contadores[m.semaforo] = (contadores[m.semaforo] ?? 0) + 1; });
+
+            return (
+              <div className="space-y-4">
+                {/* Filtros semáforo */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {(['TODOS', 'ROJO', 'AMARILLO', 'VERDE', 'EXTRA'] as const).map(f => (
+                    <button key={f} type="button"
+                      onClick={() => setTrazFilter(f)}
+                      className={cn(
+                        'rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all',
+                        trazFilter === f
+                          ? f === 'ROJO' ? 'bg-red-500 text-white'
+                          : f === 'AMARILLO' ? 'bg-amber-500 text-white'
+                          : f === 'VERDE' ? 'bg-green-600 text-white'
+                          : f === 'EXTRA' ? 'bg-slate-500 text-white'
+                          : 'bg-foreground text-background'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      )}
+                    >
+                      {f === 'TODOS' ? `Todos (${trazabilidad.length})`
+                        : `${f === 'ROJO' ? '🔴' : f === 'AMARILLO' ? '🟡' : f === 'VERDE' ? '🟢' : '⚪'} ${f} (${contadores[f as keyof typeof contadores] ?? 0})`}
+                    </button>
+                  ))}
+                  <div className="relative ml-auto">
+                    <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <input type="text" placeholder="Buscar insumo…"
+                      value={trazSearch} onChange={e => setTrazSearch(e.target.value)}
+                      className="rounded-xl border border-border/40 bg-background pl-9 pr-3 py-1.5 text-xs outline-none focus:border-emerald-400 w-56"
+                    />
+                  </div>
+                </div>
+
+                {loadingTraz ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">Calculando trazabilidad…</div>
+                ) : filtrado.length === 0 ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">Sin materiales para mostrar.</div>
+                ) : (
+                  <Card className="overflow-hidden rounded-3xl border-border/40 shadow-xl">
+                    <TableContainer>
+                      <Table className="min-w-[900px]">
+                        <TableHeader>
+                          <tr>
+                            <TableHead className="w-8"></TableHead>
+                            <TableHead>Insumo</TableHead>
+                            <TableHead className="text-right">Presup.</TableHead>
+                            <TableHead className="text-right">Req.</TableHead>
+                            <TableHead className="text-right">OC Emit.</TableHead>
+                            <TableHead className="text-right">Surtido</TableHead>
+                            <TableHead className="text-right">% OC</TableHead>
+                            <TableHead className="text-right">Gasto OC</TableHead>
+                            <TableHead className="w-10"></TableHead>
+                          </tr>
+                        </TableHeader>
+                        <TableBody>
+                          {filtrado.map((mat, mi) => {
+                            const sc = semColors[mat.semaforo] ?? semColors.EXTRA;
+                            const rowKey = mat.insumo_id ?? `libre-${mi}`;
+                            const isExpanded = expandedTrazId === rowKey;
+                            return (
+                              <React.Fragment key={rowKey}>
+                                <TableRow
+                                  className={cn('cursor-pointer hover:brightness-95 transition-all', sc.row)}
+                                  onClick={() => setExpandedTrazId(isExpanded ? null : rowKey)}
+                                >
+                                  <TableCell>
+                                    <span className={cn('inline-block h-2.5 w-2.5 rounded-full', sc.dot)} />
+                                  </TableCell>
+                                  <TableCell className="max-w-[260px]">
+                                    <p className="text-xs font-semibold truncate">
+                                      {mat.descripcion_libre ?? mat.insumo_id ?? '—'}
+                                    </p>
+                                    <span className={cn('mt-0.5 inline-block rounded border px-1.5 py-0.5 text-[8px] font-black', sc.badge)}>
+                                      {sc.label}
+                                    </span>
+                                    {mat.tiene_justificacion && (
+                                      <span className="ml-1.5 inline-block rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[8px] font-black text-amber-700">
+                                        Justificado
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs font-bold">
+                                    {mat.cantidad_presupuestada > 0 ? mat.cantidad_presupuestada.toLocaleString('es-MX') : '—'}
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs">
+                                    {mat.cantidad_requisicionada.toLocaleString('es-MX')}
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs">
+                                    {mat.cantidad_oc_emitida.toLocaleString('es-MX')}
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs text-muted-foreground">
+                                    {mat.cantidad_surtida.toLocaleString('es-MX')}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {mat.pct_avance_oc != null ? (
+                                      <span className={cn('text-xs font-black', mat.pct_avance_oc >= 100 ? 'text-green-600' : mat.pct_avance_oc >= 50 ? 'text-amber-600' : 'text-red-600')}>
+                                        {mat.pct_avance_oc}%
+                                      </span>
+                                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs font-bold">
+                                    {mat.monto_oc_emitida > 0 ? formatMXN(mat.monto_oc_emitida) : '—'}
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="text-muted-foreground text-[10px]">{isExpanded ? '▲' : '▼'}</span>
+                                  </TableCell>
+                                </TableRow>
+                                {/* Fila expandida: justificaciones + extras asignados */}
+                                {isExpanded && (
+                                  <TableRow className={sc.row}>
+                                    <TableCell colSpan={9} className="px-8 pb-4 pt-1">
+                                      {mat.justificaciones.length > 0 && (
+                                        <div className="mb-3">
+                                          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Justificaciones</p>
+                                          {mat.justificaciones.map((j, ji) => (
+                                            <p key={ji} className="text-[10px] text-amber-700 bg-amber-500/10 rounded-lg px-3 py-1.5 mb-1">
+                                              "{j}"
+                                            </p>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {mat.extras_asignados.length > 0 && (
+                                        <div className="mb-3">
+                                          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Incisos asignados a concepto</p>
+                                          {mat.extras_asignados.map(ea => (
+                                            <div key={ea.asignacion_id} className="flex items-center justify-between rounded-lg border border-slate-500/20 bg-background px-3 py-1.5 mb-1">
+                                              <div>
+                                                <span className="text-[10px] font-mono font-black text-slate-700">{ea.concepto_clave}</span>
+                                                <span className="ml-2 text-[10px] text-muted-foreground">{ea.concepto_descripcion}</span>
+                                              </div>
+                                              <div className="flex items-center gap-3">
+                                                <span className="text-xs font-bold">{formatMXN(ea.monto_extra)}</span>
+                                                {isProcurement && (
+                                                  <button type="button"
+                                                    onClick={e => { e.stopPropagation(); handleEliminarAsignacion(ea.asignacion_id); }}
+                                                    className="text-[9px] text-red-500 hover:underline"
+                                                  >Eliminar</button>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {/* Botón asignar a concepto (solo para EXTRA sin asignación o procurement) */}
+                                      {isProcurement && mat.es_extra && mat.extras_asignados.length === 0 && (
+                                        <button type="button"
+                                          onClick={e => { e.stopPropagation(); setAsignacionPanel({ itemId: mat.items_ids[0] ?? '', insumoDesc: mat.descripcion_libre ?? mat.insumo_id ?? '' }); setAsignForm({ concepto_id: '', concepto_clave: '', concepto_descripcion: '', monto_extra: '' }); }}
+                                          className="flex items-center gap-1.5 rounded-xl border border-dashed border-emerald-500/40 px-4 py-2 text-[10px] font-black text-emerald-600 hover:bg-emerald-500/5"
+                                        >
+                                          <IconPlus className="h-3 w-3" /> Asignar a partida del catálogo
+                                        </button>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Card>
+                )}
+              </div>
+            );
+          })()}
+
         </>
       )}
+
+      {/* ── SLIDE PANEL: Asignación Extra a Concepto ─────────────────────── */}
+      <SlidePanel
+        isOpen={!!asignacionPanel}
+        onClose={() => setAsignacionPanel(null)}
+        title="Asignar a partida del catálogo"
+        subtitle={asignacionPanel?.insumoDesc ?? ''}
+        accentColor="emerald"
+      >
+        <div className="space-y-4 pt-2">
+          <p className="text-[10px] text-muted-foreground">
+            Asigna este material fuera de presupuesto a un concepto del catálogo como inciso extra.
+          </p>
+          <FormField label="Clave del concepto" required>
+            <Input
+              value={asignForm.concepto_clave}
+              onChange={e => setAsignForm(f => ({ ...f, concepto_clave: e.target.value }))}
+              placeholder="Ej. 02.03.01"
+            />
+          </FormField>
+          <FormField label="Descripción del concepto" required>
+            <Input
+              value={asignForm.concepto_descripcion}
+              onChange={e => setAsignForm(f => ({ ...f, concepto_descripcion: e.target.value }))}
+              placeholder="Ej. Suministro e instalación de tubería HG 2\""
+            />
+          </FormField>
+          <FormField label="ID del concepto (UUID)" required hint="Puedes obtenerlo del catálogo en Gerencia Técnica">
+            <Input
+              value={asignForm.concepto_id}
+              onChange={e => setAsignForm(f => ({ ...f, concepto_id: e.target.value }))}
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            />
+          </FormField>
+          <FormField label="Monto extra (MXN)" required>
+            <Input
+              type="number" min="0" step="0.01"
+              value={asignForm.monto_extra}
+              onChange={e => setAsignForm(f => ({ ...f, monto_extra: e.target.value }))}
+              placeholder="0.00"
+            />
+          </FormField>
+          <SubmitButton
+            label="Guardar asignación"
+            loading={asignSubmitting}
+            color="emerald"
+            onClick={handleSubmitAsignacion}
+          />
+        </div>
+      </SlidePanel>
+
+      {/* ── SLIDE PANEL: Solicitud de Cotización ─────────────────────────── */}
+      {solicitudPanelReqId && (() => {
+        const req = requisiciones.find(r => r.id === solicitudPanelReqId);
+        const solic = solicitudesMap[solicitudPanelReqId];
+        const provsFiltrados = proveedoresList.filter(p => p.estatus === 'ACTIVO');
+        return (
+          <SlidePanel
+            isOpen={true}
+            onClose={() => setSolicitudPanelReqId(null)}
+            title="Solicitud de Cotización"
+            subtitle={req ? `${req.folio} · ${req.items?.length ?? 0} partida(s)` : ''}
+            accentColor="sky"
+          >
+            <div className="space-y-5 p-1">
+              {/* ── Si ya existe solicitud, mostrar estado de proveedores ── */}
+              {solic ? (
+                <div className="space-y-3">
+                  {/* Resumen de plazo */}
+                  <div className={cn(
+                    'flex items-center gap-2 rounded-xl border px-4 py-3',
+                    solic.alerta_plazo
+                      ? 'border-red-500/30 bg-red-500/5'
+                      : 'border-sky-500/20 bg-sky-500/5'
+                  )}>
+                    {solic.alerta_plazo
+                      ? <IconAlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+                      : <IconClock className="h-4 w-4 shrink-0 text-sky-500" />
+                    }
+                    <div>
+                      <p className={cn('text-xs font-black', solic.alerta_plazo ? 'text-red-600' : 'text-sky-700')}>
+                        {solic.alerta_plazo
+                          ? `Plazo vencido · ${Math.abs(solic.dias_habiles_restantes)} día(s) de retraso`
+                          : `${solic.dias_habiles_restantes} día(s) hábil(es) restante(s)`
+                        }
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Límite: {new Date(solic.fecha_limite).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {' · '}{solic.dias_habiles} días hábiles
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lista de proveedores con su estado */}
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Proveedores ({solic.proveedores.length})
+                  </p>
+                  <div className="space-y-2">
+                    {solic.proveedores.map(scp => (
+                      <div key={scp.id_scp} className="rounded-xl border border-border/40 bg-muted/30 px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold truncate">{scp.proveedor_nombre}</p>
+                            {scp.pdf_nombre && (
+                              <a
+                                href={`/api/v1/compras/requisiciones/${solicitudPanelReqId}/solicitud-cotizacion/proveedores/${scp.id_scp}/pdf`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-1 mt-0.5 text-[10px] text-sky-600 hover:underline"
+                              >
+                                <IconFileText className="h-3 w-3" />
+                                {scp.pdf_nombre}
+                              </a>
+                            )}
+                          </div>
+                          <span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-black',
+                            scp.estado === 'RESPONDIO' ? 'bg-green-500/10 text-green-700' :
+                            scp.estado === 'DECLINO'   ? 'bg-slate-500/10 text-slate-500' :
+                                                         'bg-amber-500/10 text-amber-700'
+                          )}>
+                            {scp.estado === 'RESPONDIO' ? 'Respondió' : scp.estado === 'DECLINO' ? 'Declinó' : 'Pendiente'}
+                          </span>
+                        </div>
+                        {scp.estado === 'PENDIENTE' && isProcurement && (
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => { setScpUploadTarget({ reqId: solicitudPanelReqId, scpId: scp.id_scp }); scpFileRef.current?.click(); }}
+                              className="flex items-center gap-1 rounded-lg bg-sky-500/10 px-3 py-1.5 text-[10px] font-black text-sky-700 hover:bg-sky-500/20"
+                            >
+                              <IconUpload className="h-3 w-3" /> Subir PDF
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMarcarDeclino(solicitudPanelReqId, scp.id_scp)}
+                              className="flex items-center gap-1 rounded-lg bg-slate-500/10 px-3 py-1.5 text-[10px] font-black text-slate-600 hover:bg-slate-500/20"
+                            >
+                              <IconX className="h-3 w-3" /> Declinó
+                            </button>
+                          </div>
+                        )}
+                        {scp.estado === 'RESPONDIO' && isProcurement && (
+                          <button
+                            type="button"
+                            onClick={() => { setScpUploadTarget({ reqId: solicitudPanelReqId, scpId: scp.id_scp }); scpFileRef.current?.click(); }}
+                            className="flex items-center gap-1 mt-2 rounded-lg bg-sky-500/10 px-3 py-1.5 text-[10px] font-black text-sky-700 hover:bg-sky-500/20"
+                          >
+                            <IconUpload className="h-3 w-3" /> Re-subir PDF
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botón agregar más proveedores */}
+                  {isProcurement && (
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      Para agregar más proveedores, crea una nueva solicitud (sobrescribe la actual).
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* ── Formulario para crear solicitud ── */
+                <div className="space-y-4">
+                  {/* Selector de proveedores */}
+                  <div>
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Proveedores a invitar ({solicitudForm.provsSeleccionados.length} sel.)
+                    </p>
+                    <div className="max-h-48 overflow-y-auto rounded-xl border border-border/40 divide-y divide-border/30">
+                      {provsFiltrados.length === 0 ? (
+                        <p className="p-4 text-xs text-muted-foreground text-center">Sin proveedores activos en el catálogo.</p>
+                      ) : provsFiltrados.map(prov => {
+                        const sel = solicitudForm.provsSeleccionados.includes(prov.id_proveedor);
+                        return (
+                          <button
+                            key={prov.id_proveedor}
+                            type="button"
+                            onClick={() => setSolicitudForm(f => ({
+                              ...f,
+                              provsSeleccionados: sel
+                                ? f.provsSeleccionados.filter(id => id !== prov.id_proveedor)
+                                : [...f.provsSeleccionados, prov.id_proveedor],
+                            }))}
+                            className={cn(
+                              'flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors',
+                              sel ? 'bg-sky-500/10' : 'hover:bg-muted/50'
+                            )}
+                          >
+                            <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded border', sel ? 'border-sky-500 bg-sky-500' : 'border-border')}>
+                              {sel && <span className="text-[8px] font-black text-white">✓</span>}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold truncate">{prov.razon_social}</p>
+                              {prov.ciudad && <p className="text-[10px] text-muted-foreground">{prov.ciudad}</p>}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Días hábiles */}
+                  <div>
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Plazo de respuesta</p>
+                    <div className="flex gap-2">
+                      {[3, 5].map(d => (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setSolicitudForm(f => ({ ...f, dias_habiles: d }))}
+                          className={cn(
+                            'flex-1 rounded-xl border py-2 text-xs font-black transition-all',
+                            solicitudForm.dias_habiles === d
+                              ? 'border-sky-500 bg-sky-500/10 text-sky-700'
+                              : 'border-border/40 text-muted-foreground hover:border-sky-500/40'
+                          )}
+                        >
+                          {d} días hábiles
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Notas */}
+                  <div>
+                    <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Notas adicionales</p>
+                    <textarea
+                      value={solicitudForm.notas}
+                      onChange={e => setSolicitudForm(f => ({ ...f, notas: e.target.value }))}
+                      rows={3}
+                      placeholder="Instrucciones especiales para los proveedores…"
+                      className="w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs outline-none focus:border-sky-400 resize-none placeholder:text-muted-foreground/60"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Botón enviar (solo si es nuevo) */}
+              {!solic && isProcurement && (
+                <SubmitButton
+                  label={solicitudSubmitting ? 'Enviando…' : `Enviar Solicitud · ${solicitudForm.provsSeleccionados.length} prov.`}
+                  loading={solicitudSubmitting}
+                  color="sky"
+                  onClick={() => handleSubmitSolicitud(solicitudPanelReqId)}
+                />
+              )}
+            </div>
+          </SlidePanel>
+        );
+      })()}
+
+      {/* Input oculto para subir PDF de cotización */}
+      <input
+        ref={scpFileRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={async e => {
+          const file = e.target.files?.[0];
+          if (file && scpUploadTarget) {
+            await handleUploadScpPdf(file, scpUploadTarget.reqId, scpUploadTarget.scpId);
+          }
+          e.target.value = '';
+          setScpUploadTarget(null);
+        }}
+      />
 
       {/* ── SLIDE PANEL: Nueva Requisición ──────────────────────────────────── */}
       <SlidePanel

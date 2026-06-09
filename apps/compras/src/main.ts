@@ -31,7 +31,55 @@ const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/f
 const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
 const DOCS_PROVEEDORES_UPLOAD_DIR = process.env.DOCS_PROVEEDORES_UPLOAD_DIR || '/tmp/docs-proveedores';
 const DOCS_PROVEEDORES_MAX_SIZE_MB = parseInt(process.env.DOCS_PROVEEDORES_MAX_SIZE_MB ?? '10', 10);
+const COTIZACIONES_UPLOAD_DIR = process.env.COTIZACIONES_UPLOAD_DIR || '/tmp/cotizaciones';
+const COTIZACIONES_MAX_SIZE_MB = parseInt(process.env.COTIZACIONES_MAX_SIZE_MB ?? '20', 10);
 initSentry(process.env.SENTRY_DSN || '', 'compras');
+
+// Multer para PDFs de cotización (declarado aquí para que esté disponible antes de las rutas)
+const cotizacionesTmp = path.join(COTIZACIONES_UPLOAD_DIR, '_tmp');
+const cotizacionesMulter = multer({
+  dest: cotizacionesTmp,
+  limits: { fileSize: COTIZACIONES_MAX_SIZE_MB * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error(`Tipo de archivo no permitido: ${ext}. Permitidos: ${allowed.join(', ')}`));
+  },
+});
+
+function addDiasHabiles(fecha: Date, dias: number): Date {
+  const result = new Date(fecha);
+  let added = 0;
+  while (added < dias) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return result;
+}
+
+function calcDiasHabilesRestantes(fechaLimite: Date): number {
+  const now = new Date();
+  if (fechaLimite <= now) {
+    let count = 0;
+    const curr = new Date(fechaLimite);
+    while (curr <= now) {
+      const day = curr.getDay();
+      if (day !== 0 && day !== 6) count++;
+      curr.setDate(curr.getDate() + 1);
+    }
+    return -count;
+  }
+  let count = 0;
+  const curr = new Date(now);
+  while (curr < fechaLimite) {
+    curr.setDate(curr.getDate() + 1);
+    const day = curr.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
 
 const OC_STATUS = {
   PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
@@ -43,7 +91,7 @@ const OC_STATUS = {
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
-  excludePaths: ['/health', '/debug-sentry'],
+  excludePaths: ['/health'],
 }));
 app.use(requireProjectAccess());
 
@@ -76,6 +124,22 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
 
     const tipoReq: string = tipo === 'IMPREVISTO' ? 'IMPREVISTO' : 'NORMAL';
 
+    // ── Validar justificación en excedentes e imprevistos (D3 trazabilidad) ──
+    for (const item of items) {
+      const esImprevisto = Boolean(item.es_imprevisto) || tipoReq === 'IMPREVISTO';
+      const cantPres = item.cantidad_presupuestada != null ? Number(item.cantidad_presupuestada) : null;
+      const cantSol  = Number(item.cantidad);
+      const excede   = cantPres !== null && cantPres > 0 && cantSol > cantPres;
+      const label    = item.clave || item.descripcion_libre || item.insumo_id || 'ítem';
+
+      if ((esImprevisto || excede) && (!item.justificacion || String(item.justificacion).trim() === '')) {
+        return res.status(400).json({
+          success: false,
+          message: `El ítem "${label}" ${excede ? 'excede el presupuesto' : 'es imprevisto'} — se requiere justificación.`,
+        });
+      }
+    }
+
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => prisma.requisicion.create({
@@ -85,19 +149,22 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
           codigo:        codigo || `REQ-${Date.now()}`,
           solicitante_id: userId,
           prioridad:     prioridad || 'NORMAL',
-          estado:        'PENDIENTE', // siempre inicia PENDIENTE — requiere aprobación de procurement
+          estado:        'PENDIENTE',
           tipo:          tipoReq,
           observaciones,
           items: {
             create: items.map((item: any) => ({
-              tenant_id:         tenantId,
-              proyecto_id:       proyectoId,
-              insumo_id:         item.insumo_id   || null,
-              cantidad:          item.cantidad,
-              notas:             item.notas        || null,
-              descripcion_libre: item.descripcion_libre || null,
-              unidad_libre:      item.unidad_libre       || null,
-              es_imprevisto:     Boolean(item.es_imprevisto),
+              tenant_id:              tenantId,
+              proyecto_id:            proyectoId,
+              insumo_id:              item.insumo_id             || null,
+              cantidad:               item.cantidad,
+              notas:                  item.notas                 || null,
+              descripcion_libre:      item.descripcion_libre     || null,
+              unidad_libre:           item.unidad_libre          || null,
+              es_imprevisto:          Boolean(item.es_imprevisto),
+              cantidad_presupuestada: item.cantidad_presupuestada != null ? Number(item.cantidad_presupuestada) : null,
+              concepto_origen_id:     item.concepto_origen_id    || null,
+              justificacion:          item.justificacion         || null,
             }))
           }
         },
@@ -176,6 +243,803 @@ app.patch(
     } catch (error: any) {
       logError(req, 'compras', 'compras.requisicion_aprobar_error', 'Error al aprobar requisición', { error_message: error.message });
       res.status(400).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── GET requisición por ID con especificaciones ────────────────────────────────
+
+app.get('/api/v1/compras/requisiciones/:id', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        const requisicion = await prisma.requisicion.findUnique({
+          where: { id_requisicion: id },
+          include: { items: true },
+        });
+        if (!requisicion) return null;
+
+        const specs = await prisma.especificacionDetalleReq.findMany({
+          where: { tenant_id: tenantId, detalle_id: { in: requisicion.items.map(i => i.id_item) } },
+          orderBy: { orden: 'asc' },
+        });
+
+        const specsMap = new Map<string, typeof specs>();
+        for (const s of specs) {
+          if (!specsMap.has(s.detalle_id)) specsMap.set(s.detalle_id, []);
+          specsMap.get(s.detalle_id)!.push(s);
+        }
+
+        const solicitud = await prisma.solicitudCotizacion.findUnique({
+          where: { tenant_id_requisicion_id: { tenant_id: tenantId, requisicion_id: id } },
+          include: { proveedores: true },
+        });
+
+        const solicitudConAlerta = solicitud ? {
+          ...solicitud,
+          dias_habiles_restantes: calcDiasHabilesRestantes(solicitud.fecha_limite),
+          alerta_plazo: solicitud.fecha_limite < new Date() &&
+            solicitud.proveedores.some(p => p.estado === 'PENDIENTE'),
+          proveedores: solicitud.proveedores.map(p => ({ ...p, pdf_ruta: undefined })),
+        } : null;
+
+        return {
+          ...requisicion,
+          items: requisicion.items.map(item => ({
+            ...item,
+            especificaciones: specsMap.get(item.id_item) ?? [],
+          })),
+          solicitud: solicitudConAlerta,
+        };
+      }
+    );
+
+    if (!data) return res.status(404).json({ success: false, message: 'Requisición no encontrada.' });
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logError(req, 'compras', 'compras.requisicion.get.error', 'Error al obtener requisición', { error_message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ── Especificaciones por partida de requisición ────────────────────────────────
+
+app.put(
+  '/api/v1/compras/requisiciones/:reqId/items/:itemId/especificaciones',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId, itemId } = req.params;
+      const { especificaciones } = req.body as {
+        especificaciones: { descripcion: string; orden?: number }[];
+      };
+
+      if (!Array.isArray(especificaciones)) {
+        return res.status(400).json({ success: false, message: 'especificaciones debe ser un array.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const req_obj = await prisma.requisicion.findUnique({
+            where: { id_requisicion: reqId },
+            select: { estado: true, tenant_id: true },
+          });
+          if (!req_obj || req_obj.tenant_id !== tenantId) {
+            return { notFound: true };
+          }
+          if (!['BORRADOR', 'PENDIENTE'].includes(req_obj.estado)) {
+            return { locked: true, estado: req_obj.estado };
+          }
+
+          const item = await prisma.requisicionItem.findFirst({
+            where: { id_item: itemId, requisicion_id: reqId, tenant_id: tenantId },
+          });
+          if (!item) return { notFound: true };
+
+          await prisma.especificacionDetalleReq.deleteMany({
+            where: { tenant_id: tenantId, detalle_id: itemId },
+          });
+
+          if (especificaciones.length > 0) {
+            await prisma.especificacionDetalleReq.createMany({
+              data: especificaciones
+                .filter(e => e.descripcion?.trim())
+                .map((e, idx) => ({
+                  tenant_id: tenantId,
+                  proyecto_id: proyectoId,
+                  detalle_id: itemId,
+                  descripcion: e.descripcion.trim().substring(0, 500),
+                  orden: e.orden ?? idx,
+                })),
+            });
+          }
+
+          return prisma.especificacionDetalleReq.findMany({
+            where: { tenant_id: tenantId, detalle_id: itemId },
+            orderBy: { orden: 'asc' },
+          });
+        }
+      );
+
+      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Requisición o partida no encontrada.' });
+      if ((data as any).locked) return res.status(400).json({ success: false, message: `La requisición en estado ${(data as any).estado} no puede editarse.` });
+
+      logInfo(req, 'compras', 'compras.requisicion.specs.actualizadas', 'Especificaciones actualizadas', { req_id: reqId, item_id: itemId, total: (data as any[]).length });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.requisicion.specs.error', 'Error al actualizar especificaciones', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── Solicitudes de Cotización ──────────────────────────────────────────────────
+
+app.post(
+  '/api/v1/compras/requisiciones/:reqId/solicitud-cotizacion',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId } = req.params;
+      const { proveedores_ids, dias_habiles, notas } = req.body as {
+        proveedores_ids: string[];
+        dias_habiles: 3 | 5;
+        notas?: string;
+      };
+
+      if (!Array.isArray(proveedores_ids) || proveedores_ids.length === 0) {
+        return res.status(400).json({ success: false, message: 'proveedores_ids debe ser un array no vacío.' });
+      }
+      if (![3, 5].includes(Number(dias_habiles))) {
+        return res.status(400).json({ success: false, message: 'dias_habiles debe ser 3 o 5.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const req_obj = await prisma.requisicion.findUnique({
+            where: { id_requisicion: reqId },
+            select: { id_requisicion: true, tenant_id: true },
+          });
+          if (!req_obj || req_obj.tenant_id !== tenantId) {
+            return { notFound: true };
+          }
+
+          const fechaSolicitud = new Date();
+          const fechaLimite = addDiasHabiles(fechaSolicitud, Number(dias_habiles));
+
+          // upsert: si ya existe una solicitud, la reemplaza (resetea proveedores)
+          const existing = await prisma.solicitudCotizacion.findUnique({
+            where: { tenant_id_requisicion_id: { tenant_id: tenantId, requisicion_id: reqId } },
+          });
+
+          if (existing) {
+            await prisma.solicitudCotizacionProveedor.deleteMany({ where: { solicitud_id: existing.id_solicitud } });
+            const updated = await prisma.solicitudCotizacion.update({
+              where: { id_solicitud: existing.id_solicitud },
+              data: { dias_habiles: Number(dias_habiles), fecha_solicitud: fechaSolicitud, fecha_limite: fechaLimite, notas: notas ?? null },
+            });
+            await prisma.solicitudCotizacionProveedor.createMany({
+              data: proveedores_ids.map(pid => ({
+                tenant_id: tenantId,
+                solicitud_id: updated.id_solicitud,
+                proveedor_id: pid,
+              })),
+            });
+            return prisma.solicitudCotizacion.findUnique({
+              where: { id_solicitud: updated.id_solicitud },
+              include: { proveedores: true },
+            });
+          }
+
+          const sol = await prisma.solicitudCotizacion.create({
+            data: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              requisicion_id: reqId,
+              dias_habiles: Number(dias_habiles),
+              fecha_solicitud: fechaSolicitud,
+              fecha_limite: fechaLimite,
+              creado_por: userId,
+              notas: notas ?? null,
+              proveedores: {
+                create: proveedores_ids.map(pid => ({
+                  tenant_id: tenantId,
+                  proveedor_id: pid,
+                })),
+              },
+            },
+            include: { proveedores: true },
+          });
+          return sol;
+        }
+      );
+
+      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Requisición no encontrada.' });
+
+      logInfo(req, 'compras', 'compras.solicitud_cotizacion.creada', 'Solicitud de cotización registrada', {
+        req_id: reqId, proveedores: proveedores_ids.length, dias_habiles,
+      });
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.solicitud_cotizacion.crear.error', 'Error al crear solicitud de cotización', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get(
+  '/api/v1/compras/requisiciones/:reqId/solicitud-cotizacion',
+  requireRoles('procurement', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId } = req.params;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const sol = await prisma.solicitudCotizacion.findUnique({
+            where: { tenant_id_requisicion_id: { tenant_id: tenantId, requisicion_id: reqId } },
+            include: { proveedores: true },
+          });
+          if (!sol) return null;
+
+          return {
+            ...sol,
+            dias_habiles_restantes: calcDiasHabilesRestantes(sol.fecha_limite),
+            alerta_plazo: sol.fecha_limite < new Date() && sol.proveedores.some(p => p.estado === 'PENDIENTE'),
+            proveedores: sol.proveedores.map(p => ({ ...p, pdf_ruta: undefined })),
+          };
+        }
+      );
+
+      if (!data) return res.status(404).json({ success: false, message: 'No existe solicitud de cotización para esta requisición.' });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.put(
+  '/api/v1/compras/requisiciones/:reqId/solicitud-cotizacion/proveedores/:scpId',
+  requireRoles('procurement', 'admin'),
+  cotizacionesMulter.single('archivo'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId, scpId } = req.params;
+      const { estado, notas_proveedor } = req.body as { estado: string; notas_proveedor?: string };
+
+      const estadosValidos = ['RESPONDIO', 'DECLINO', 'PENDIENTE'];
+      if (!estadosValidos.includes(estado)) {
+        if (req.file?.path) try { fs.unlinkSync(req.file.path); } catch (_) {}
+        return res.status(400).json({ success: false, message: `estado inválido. Valores: ${estadosValidos.join(', ')}` });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const scp = await prisma.solicitudCotizacionProveedor.findFirst({
+            where: { id_scp: scpId, tenant_id: tenantId },
+            include: { solicitud: true },
+          });
+          if (!scp || scp.solicitud.requisicion_id !== reqId) {
+            return { notFound: true };
+          }
+
+          let pdfNombre: string | null = scp.pdf_nombre;
+          let pdfRuta: string | null = scp.pdf_ruta;
+          let pdfMime: string | null = scp.pdf_mime;
+
+          if (req.file) {
+            const ext = path.extname(req.file.originalname).toLowerCase();
+            const rutaFinal = path.join(COTIZACIONES_UPLOAD_DIR, tenantId, scp.solicitud_id, `${scpId}${ext}`);
+            fs.mkdirSync(path.dirname(rutaFinal), { recursive: true });
+            if (pdfRuta && fs.existsSync(pdfRuta)) try { fs.unlinkSync(pdfRuta); } catch (_) {}
+            fs.renameSync(req.file.path, rutaFinal);
+            pdfNombre = req.file.originalname;
+            pdfRuta = rutaFinal;
+            pdfMime = req.file.mimetype;
+          }
+
+          return prisma.solicitudCotizacionProveedor.update({
+            where: { id_scp: scpId },
+            data: {
+              estado,
+              notas_proveedor: notas_proveedor ?? null,
+              pdf_nombre: pdfNombre,
+              pdf_ruta: pdfRuta,
+              pdf_mime: pdfMime,
+              fecha_respuesta: ['RESPONDIO', 'DECLINO'].includes(estado) ? new Date() : null,
+            },
+          });
+        }
+      );
+
+      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Registro de proveedor no encontrado.' });
+
+      const result = data as any;
+      res.json({ success: true, data: { ...result, pdf_ruta: undefined } });
+    } catch (error: any) {
+      if (req.file?.path) try { fs.unlinkSync(req.file.path); } catch (_) {}
+      logError(req, 'compras', 'compras.solicitud_cotizacion.proveedor.error', 'Error al actualizar respuesta de proveedor', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get(
+  '/api/v1/compras/requisiciones/:reqId/solicitud-cotizacion/proveedores/:scpId/pdf',
+  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { scpId } = req.params;
+
+      const scp = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.solicitudCotizacionProveedor.findFirst({
+          where: { id_scp: scpId, tenant_id: tenantId },
+        })
+      );
+
+      if (!scp || !scp.pdf_ruta) return res.status(404).json({ success: false, message: 'PDF no disponible.' });
+      if (!fs.existsSync(scp.pdf_ruta)) return res.status(404).json({ success: false, message: 'Archivo físico no encontrado.' });
+
+      res.download(scp.pdf_ruta, scp.pdf_nombre ?? 'cotizacion.pdf');
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get(
+  '/api/v1/compras/alertas/cotizacion-pendiente',
+  requireRoles('procurement', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const solicitudesVencidas = await prisma.solicitudCotizacion.findMany({
+            where: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              fecha_limite: { lt: new Date() },
+              proveedores: { some: { estado: 'PENDIENTE' } },
+            },
+            include: {
+              proveedores: { where: { estado: 'PENDIENTE' } },
+            },
+            orderBy: { fecha_limite: 'asc' },
+          });
+
+          const requisicionIds = solicitudesVencidas.map(s => s.requisicion_id);
+          const requisiciones = await prisma.requisicion.findMany({
+            where: { id_requisicion: { in: requisicionIds } },
+            select: { id_requisicion: true, codigo: true, observaciones: true },
+          });
+          const reqMap = new Map(requisiciones.map(r => [r.id_requisicion, r]));
+
+          return solicitudesVencidas.map(sol => {
+            const diasRetraso = -calcDiasHabilesRestantes(sol.fecha_limite);
+            const req_data = reqMap.get(sol.requisicion_id);
+            return {
+              solicitud_id: sol.id_solicitud,
+              requisicion_id: sol.requisicion_id,
+              requisicion_codigo: req_data?.codigo ?? '',
+              fecha_limite: sol.fecha_limite,
+              dias_retraso: diasRetraso,
+              proveedores_pendientes: sol.proveedores.map(p => p.proveedor_id),
+            };
+          });
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.alertas.cotizacion_pendiente.listadas', 'Alertas de cotización pendiente consultadas', { total: data.length });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.alertas.cotizacion_pendiente.error', 'Error al listar alertas de cotización', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TRAZABILIDAD DE MATERIALES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/compras/trazabilidad/materiales
+ * Vista semáforo consolidada por insumo para el proyecto.
+ * Agrega: presupuestado, requisicionado, OC emitida, surtido (stock almacén), gasto.
+ */
+app.get(
+  '/api/v1/compras/trazabilidad/materiales',
+  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          // ── Paso 1: agregar items de requisición por insumo ──────────────
+          const reqItems = await prisma.requisicionItem.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId },
+            select: {
+              id_item: true,
+              insumo_id: true,
+              cantidad: true,
+              cantidad_presupuestada: true,
+              concepto_origen_id: true,
+              justificacion: true,
+              es_imprevisto: true,
+              descripcion_libre: true,
+              unidad_libre: true,
+              requisicion: { select: { estado: true } },
+            },
+          });
+
+          // ── Paso 2: agregar items de OC por insumo ───────────────────────
+          const ocItems = await prisma.ordenCompraItem.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId },
+            select: {
+              insumo_id: true,
+              cantidad: true,
+              precio_unitario: true,
+              importe: true,
+              orden: { select: { estado: true } },
+            },
+          });
+
+          // ── Paso 3: stock en almacén por insumo ──────────────────────────
+          const inventario = await prisma.itemInventario.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId },
+            select: { insumo_id: true, stock_actual: true },
+          });
+          const stockMap = new Map<string, number>();
+          for (const inv of inventario) {
+            if (inv.insumo_id) {
+              stockMap.set(inv.insumo_id, (stockMap.get(inv.insumo_id) ?? 0) + Number(inv.stock_actual));
+            }
+          }
+
+          // ── Paso 4: asignaciones extra por item ──────────────────────────
+          const asignaciones = await prisma.asignacionExtraConcepto.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId },
+          });
+          const asigMap = new Map<string, typeof asignaciones[number]>();
+          for (const a of asignaciones) {
+            asigMap.set(a.requisicion_item_id, a);
+          }
+
+          // ── Paso 5: consolidar por insumo_id ─────────────────────────────
+          type InsumoKey = string; // insumo_id o 'LIBRE:descripcion_libre'
+          interface InsumoAgg {
+            insumo_id: string | null;
+            descripcion_libre: string | null;
+            unidad_libre: string | null;
+            cantidad_presupuestada: number;
+            cantidad_requisicionada: number;
+            cantidad_oc_emitida: number;
+            monto_oc_emitida: number;
+            tiene_justificacion: boolean;
+            justificaciones: string[];
+            items_ids: string[];
+          }
+          const agg = new Map<InsumoKey, InsumoAgg>();
+
+          for (const item of reqItems) {
+            // solo contar reqs aprobadas o superiores
+            if (!['APROBADA', 'COMPRADA'].includes(item.requisicion.estado)) continue;
+            const key: InsumoKey = item.insumo_id ?? `LIBRE:${item.descripcion_libre ?? ''}`;
+            if (!agg.has(key)) {
+              agg.set(key, {
+                insumo_id: item.insumo_id,
+                descripcion_libre: item.descripcion_libre,
+                unidad_libre: item.unidad_libre,
+                cantidad_presupuestada: 0,
+                cantidad_requisicionada: 0,
+                cantidad_oc_emitida: 0,
+                monto_oc_emitida: 0,
+                tiene_justificacion: false,
+                justificaciones: [],
+                items_ids: [],
+              });
+            }
+            const entry = agg.get(key)!;
+            entry.cantidad_requisicionada += Number(item.cantidad);
+            // presupuestada: tomar el mayor valor informado (snapshot por ítem)
+            if (item.cantidad_presupuestada != null && Number(item.cantidad_presupuestada) > entry.cantidad_presupuestada) {
+              entry.cantidad_presupuestada = Number(item.cantidad_presupuestada);
+            }
+            if (item.justificacion) {
+              entry.tiene_justificacion = true;
+              entry.justificaciones.push(item.justificacion);
+            }
+            entry.items_ids.push(item.id_item);
+          }
+
+          for (const oc of ocItems) {
+            if (!['EMITIDA', 'RECIBIDA'].includes(oc.orden.estado)) continue;
+            const key: InsumoKey = oc.insumo_id;
+            if (!agg.has(key)) {
+              agg.set(key, {
+                insumo_id: oc.insumo_id,
+                descripcion_libre: null,
+                unidad_libre: null,
+                cantidad_presupuestada: 0,
+                cantidad_requisicionada: 0,
+                cantidad_oc_emitida: 0,
+                monto_oc_emitida: 0,
+                tiene_justificacion: false,
+                justificaciones: [],
+                items_ids: [],
+              });
+            }
+            const entry = agg.get(key)!;
+            entry.cantidad_oc_emitida += Number(oc.cantidad);
+            entry.monto_oc_emitida    += Number(oc.importe);
+          }
+
+          // ── Paso 6: calcular semáforo y armar respuesta ──────────────────
+          const resultado = Array.from(agg.entries()).map(([, entry]) => {
+            const pres = entry.cantidad_presupuestada;
+            const req_ = entry.cantidad_requisicionada;
+            const oc   = entry.cantidad_oc_emitida;
+            const esExtra = pres === 0;
+
+            let semaforo: string;
+            if (esExtra)         semaforo = 'EXTRA';
+            else if (oc >= pres)  semaforo = 'VERDE';
+            else if (req_ > 0)    semaforo = 'AMARILLO';
+            else                  semaforo = 'ROJO';
+
+            const pctReq = pres > 0 ? Math.round((req_ / pres) * 100) : null;
+            const pctOC  = pres > 0 ? Math.round((oc  / pres) * 100) : null;
+
+            const surtido = entry.insumo_id ? (stockMap.get(entry.insumo_id) ?? 0) : 0;
+
+            // extras asignados a concepto (para este item)
+            const extrasAsignados = entry.items_ids
+              .map(id => asigMap.get(id))
+              .filter(Boolean)
+              .map(a => ({
+                concepto_id:          a!.concepto_id,
+                concepto_clave:       a!.concepto_clave,
+                concepto_descripcion: a!.concepto_descripcion,
+                monto_extra:          Number(a!.monto_extra),
+                asignacion_id:        a!.id_asignacion,
+                item_id:              a!.requisicion_item_id,
+              }));
+
+            return {
+              insumo_id:              entry.insumo_id,
+              descripcion_libre:      entry.descripcion_libre,
+              unidad_libre:           entry.unidad_libre,
+              cantidad_presupuestada: pres,
+              cantidad_requisicionada: req_,
+              cantidad_oc_emitida:    oc,
+              cantidad_surtida:       surtido,
+              monto_oc_emitida:       Number(entry.monto_oc_emitida.toFixed(2)),
+              pct_avance_req:         pctReq,
+              pct_avance_oc:          pctOC,
+              semaforo,
+              es_extra:               esExtra,
+              tiene_justificacion:    entry.tiene_justificacion,
+              justificaciones:        entry.justificaciones,
+              extras_asignados:       extrasAsignados,
+              items_ids:              entry.items_ids,
+            };
+          });
+
+          // Ordenar: ROJO primero, luego AMARILLO, VERDE, EXTRA
+          const orden = { ROJO: 0, AMARILLO: 1, VERDE: 2, EXTRA: 3 };
+          resultado.sort((a, b) => (orden[a.semaforo as keyof typeof orden] ?? 4) - (orden[b.semaforo as keyof typeof orden] ?? 4));
+
+          return resultado;
+        }
+      );
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.trazabilidad.materiales.error', 'Error al consultar trazabilidad', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
+ * GET /api/v1/compras/trazabilidad/concepto/:conceptoId
+ * Monto base (suma de OC) + lista de incisos extra asignados a ese concepto.
+ */
+app.get(
+  '/api/v1/compras/trazabilidad/concepto/:conceptoId',
+  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { conceptoId } = req.params;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const extras = await prisma.asignacionExtraConcepto.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: conceptoId },
+            orderBy: { created_at: 'asc' },
+          });
+
+          const montoExtras = extras.reduce((sum, e) => sum + Number(e.monto_extra), 0);
+
+          // Monto base: suma de OC emitidas cuyo concepto_origen_id = conceptoId
+          const ocItemsConcepto = await prisma.requisicionItem.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_origen_id: conceptoId },
+            select: { id_item: true, insumo_id: true, justificacion: true },
+          });
+          const itemIds = ocItemsConcepto.map(i => i.id_item);
+          // monto base via OC emitidas para esos insumos (aproximación por insumo_id)
+          const insumoIds = ocItemsConcepto.map(i => i.insumo_id).filter(Boolean) as string[];
+          const ocItems = insumoIds.length > 0
+            ? await prisma.ordenCompraItem.findMany({
+                where: { tenant_id: tenantId, proyecto_id: proyectoId, insumo_id: { in: insumoIds }, orden: { estado: { in: ['EMITIDA', 'RECIBIDA'] } } },
+                select: { importe: true },
+              })
+            : [];
+          const montoBase = ocItems.reduce((sum, i) => sum + Number(i.importe), 0);
+
+          return {
+            concepto_id: conceptoId,
+            monto_base: Number(montoBase.toFixed(2)),
+            monto_extras: Number(montoExtras.toFixed(2)),
+            monto_total: Number((montoBase + montoExtras).toFixed(2)),
+            incisos_extra: extras.map(e => ({
+              id_asignacion:        e.id_asignacion,
+              requisicion_item_id:  e.requisicion_item_id,
+              monto_extra:          Number(e.monto_extra),
+              asignado_por:         e.asignado_por,
+              created_at:           e.created_at,
+            })),
+          };
+        }
+      );
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.trazabilidad.concepto.error', 'Error al consultar trazabilidad de concepto', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/compras/trazabilidad/asignaciones
+ * Asigna un ítem extra a un concepto del catálogo (inciso).
+ */
+app.post(
+  '/api/v1/compras/trazabilidad/asignaciones',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { requisicion_item_id, concepto_id, concepto_clave, concepto_descripcion, monto_extra } = req.body;
+
+      if (!requisicion_item_id || !concepto_id || !concepto_clave || monto_extra == null) {
+        return res.status(400).json({ success: false, message: 'Faltan campos requeridos: requisicion_item_id, concepto_id, concepto_clave, monto_extra.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          // Verificar que el item pertenece al tenant/proyecto
+          const item = await prisma.requisicionItem.findFirst({
+            where: { id_item: requisicion_item_id, tenant_id: tenantId, proyecto_id: proyectoId },
+          });
+          if (!item) {
+            return null;
+          }
+          // Upsert: un ítem → un concepto (reemplaza si ya existe)
+          return prisma.asignacionExtraConcepto.upsert({
+            where: { tenant_id_requisicion_item_id: { tenant_id: tenantId, requisicion_item_id } },
+            update: {
+              concepto_id,
+              concepto_clave,
+              concepto_descripcion: concepto_descripcion || concepto_clave,
+              monto_extra:          Number(monto_extra),
+              asignado_por:         userId,
+            },
+            create: {
+              tenant_id:            tenantId,
+              proyecto_id:          proyectoId,
+              requisicion_item_id,
+              concepto_id,
+              concepto_clave,
+              concepto_descripcion: concepto_descripcion || concepto_clave,
+              monto_extra:          Number(monto_extra),
+              asignado_por:         userId,
+            },
+          });
+        }
+      );
+
+      if (!data) {
+        return res.status(404).json({ success: false, message: 'Ítem de requisición no encontrado.' });
+      }
+
+      logInfo(req, 'compras', 'compras.trazabilidad.asignacion_creada', `Ítem ${requisicion_item_id} asignado a concepto ${concepto_clave}`);
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.trazabilidad.asignacion.error', 'Error al asignar inciso a concepto', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
+ * DELETE /api/v1/compras/trazabilidad/asignaciones/:id
+ * Elimina un inciso (solo si la OC del ítem no está EMITIDA).
+ */
+app.delete(
+  '/api/v1/compras/trazabilidad/asignaciones/:id',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const asig = await prisma.asignacionExtraConcepto.findFirst({
+            where: { id_asignacion: id, tenant_id: tenantId },
+          });
+          if (!asig) return { error: 'not_found' };
+
+          // Verificar que no haya OC emitida para el insumo de ese ítem
+          const item = await prisma.requisicionItem.findUnique({
+            where: { id_item: asig.requisicion_item_id },
+            select: { insumo_id: true },
+          });
+          if (item?.insumo_id) {
+            const ocEmitida = await prisma.ordenCompraItem.findFirst({
+              where: {
+                tenant_id: tenantId,
+                proyecto_id: proyectoId,
+                insumo_id: item.insumo_id,
+                orden: { estado: { in: ['EMITIDA', 'RECIBIDA'] } },
+              },
+            });
+            if (ocEmitida) return { error: 'oc_emitida' };
+          }
+
+          await prisma.asignacionExtraConcepto.delete({ where: { id_asignacion: id } });
+          return { deleted: id };
+        }
+      );
+
+      if (!data || data.error === 'not_found') {
+        return res.status(404).json({ success: false, message: 'Asignación no encontrada.' });
+      }
+      if (data.error === 'oc_emitida') {
+        return res.status(409).json({ success: false, message: 'No se puede desasignar: la OC ya fue emitida.' });
+      }
+
+      logInfo(req, 'compras', 'compras.trazabilidad.asignacion_eliminada', `Asignación ${id} eliminada por ${userId}`);
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.trazabilidad.asignacion_delete.error', 'Error al eliminar asignación', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 );
@@ -324,6 +1188,7 @@ const docsMulter = multer({
     else cb(new Error(`Tipo de archivo no permitido: ${ext}. Permitidos: ${allowed.join(', ')}`));
   },
 });
+
 
 app.post(
   '/api/v1/compras/proveedores/:id/documentos',
@@ -725,23 +1590,26 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        const [cuadro, lineas, aclaraciones] = await Promise.all([
+        const [cuadro, lineas, aclaraciones, anotacionesSpec] = await Promise.all([
           prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
             include: { detalles: { include: { proveedor: true } } },
           }),
           prisma.comparativaLinea.findMany({
             where: { cuadro_id: id, tenant_id: tenantId },
-            select: { insumo_id: true, marca_modelo_ref: true, especificaciones_requeridas: true },
           }),
           prisma.aclaracionComparativa.findMany({
             where: { cuadro_id: id, tenant_id: tenantId },
             select: { insumo_id: true, proveedor_id: true, resuelta: true },
           }),
+          prisma.anotacionEspecificacion.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            orderBy: { created_at: 'asc' },
+          }),
         ]);
         if (!cuadro) return null;
 
-        // Build aclaraciones_count map: key = insumo_id:proveedor_id → count of unresolved
+        // Aclaraciones count map
         const aclaracionesCountMap = new Map<string, number>();
         for (const acl of aclaraciones) {
           if (!acl.resuelta) {
@@ -750,13 +1618,41 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           }
         }
 
+        // Para lineas con detalle_req_id, buscar especificaciones individuales
+        const detalleReqIds = lineas.filter(l => l.detalle_req_id).map(l => l.detalle_req_id!);
+        const especificaciones = detalleReqIds.length > 0
+          ? await prisma.especificacionDetalleReq.findMany({
+              where: { tenant_id: tenantId, detalle_id: { in: detalleReqIds } },
+              orderBy: { orden: 'asc' },
+            })
+          : [];
+
+        const specsMap = new Map<string, typeof especificaciones>();
+        for (const s of especificaciones) {
+          if (!specsMap.has(s.detalle_id)) specsMap.set(s.detalle_id, []);
+          specsMap.get(s.detalle_id)!.push(s);
+        }
+
+        const lineasDetalle = lineas.map(l => ({
+          insumo_id: l.insumo_id,
+          marca_modelo_ref: l.marca_modelo_ref,
+          especificaciones_requeridas: l.especificaciones_requeridas,
+          detalle_req_id: l.detalle_req_id,
+          especificaciones: l.detalle_req_id ? (specsMap.get(l.detalle_req_id) ?? []) : [],
+        }));
+
         const detallesConCount = cuadro.detalles.map(d => ({
           ...d,
           precio_ofertado: Number(d.precio_ofertado),
           aclaraciones_count: aclaracionesCountMap.get(`${d.insumo_id}:${d.proveedor_id}`) ?? 0,
         }));
 
-        return { ...cuadro, detalles: detallesConCount, lineas_detalle: lineas };
+        return {
+          ...cuadro,
+          detalles: detallesConCount,
+          lineas_detalle: lineasDetalle,
+          anotaciones_spec: anotacionesSpec,
+        };
       },
     );
 
@@ -1043,6 +1939,8 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
 // ── Crear cuadro comparativo ──────────────────────────────────────────────────
 
 // POST /comparativas — crea un cuadro comparativo para una requisición (idempotente)
+// Si la req tiene SolicitudCotizacion, auto-populará ComparativaLinea con specs y
+// añadirá como detalles los proveedores que respondieron (RESPONDIO).
 app.post('/api/v1/compras/comparativas',
   requireRoles('procurement', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
@@ -1064,7 +1962,7 @@ app.post('/api/v1/compras/comparativas',
           });
           if (existing) return existing;
 
-          return prisma.cuadroComparativo.create({
+          const cuadro = await prisma.cuadroComparativo.create({
             data: {
               tenant_id:      tenantId,
               proyecto_id:    proyectoId,
@@ -1072,6 +1970,49 @@ app.post('/api/v1/compras/comparativas',
               codigo:         `CC-${Date.now()}`,
               estado:         'BORRADOR',
             },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+
+          // Auto-popular ComparativaLinea desde specs de la req
+          const items = await prisma.requisicionItem.findMany({
+            where: { requisicion_id, tenant_id: tenantId },
+          });
+
+          if (items.length > 0) {
+            const specs = await prisma.especificacionDetalleReq.findMany({
+              where: { tenant_id: tenantId, detalle_id: { in: items.map(i => i.id_item) } },
+              orderBy: { orden: 'asc' },
+            });
+
+            const specsMap = new Map<string, string[]>();
+            for (const s of specs) {
+              if (!specsMap.has(s.detalle_id)) specsMap.set(s.detalle_id, []);
+              specsMap.get(s.detalle_id)!.push(s.descripcion);
+            }
+
+            for (const item of items) {
+              if (!item.insumo_id) continue;
+              const specsTexto = specsMap.get(item.id_item)?.join('\n') ?? null;
+              await prisma.comparativaLinea.upsert({
+                where: { cuadro_id_insumo_id: { cuadro_id: cuadro.id_cuadro, insumo_id: item.insumo_id } },
+                create: {
+                  tenant_id: tenantId,
+                  proyecto_id: proyectoId,
+                  cuadro_id: cuadro.id_cuadro,
+                  insumo_id: item.insumo_id,
+                  especificaciones_requeridas: specsTexto,
+                  detalle_req_id: item.id_item,
+                },
+                update: {
+                  especificaciones_requeridas: specsTexto,
+                  detalle_req_id: item.id_item,
+                },
+              });
+            }
+          }
+
+          return prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: cuadro.id_cuadro },
             include: { detalles: { include: { proveedor: true } } },
           });
         }
@@ -2339,10 +3280,6 @@ app.get('/api/v1/compras/alertas/oc-error',
   }
 );
 
-app.get('/debug-sentry', function mainHandler(_req: Request, _res: Response) {
-  throw new Error('My first Sentry error!');
-});
-
 setupSentryExpressHandler(app);
 
 export async function startServer() {
@@ -3015,6 +3952,65 @@ app.patch('/api/v1/compras/comparativas/:id/aclaraciones/:aid',
       res.json({ success: true, data });
     } catch (error: any) {
       logError(req, 'compras', 'compras.comparativa.aclaracion.patch.error', 'Error al actualizar aclaración', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── Anotaciones por especificación [spec × proveedor] ────────────────────────
+
+app.post(
+  '/api/v1/compras/comparativas/:id/anotaciones-spec',
+  requireRoles('resident', 'residencia', 'procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { especificacion_id, proveedor_id, tipo, texto } = req.body as {
+        especificacion_id: string;
+        proveedor_id: string;
+        tipo: 'pregunta' | 'respuesta';
+        texto: string;
+      };
+
+      if (!especificacion_id || !proveedor_id || !['pregunta', 'respuesta'].includes(tipo) || !texto?.trim()) {
+        return res.status(400).json({ success: false, message: 'especificacion_id, proveedor_id, tipo (pregunta|respuesta) y texto son obligatorios.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true, tenant_id: true },
+          });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return { notFound: true };
+          }
+          if (['LOCKED', 'SUPERSEDIDO', 'CERRADO'].includes(cuadro.estado)) {
+            return { locked: true };
+          }
+
+          return prisma.anotacionEspecificacion.create({
+            data: {
+              tenant_id: tenantId,
+              cuadro_id: id,
+              especificacion_id,
+              proveedor_id,
+              tipo,
+              texto: texto.trim(),
+              creado_por: userId,
+            },
+          });
+        }
+      );
+
+      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+      if ((data as any).locked) return res.status(403).json({ success: false, message: 'El cuadro está bloqueado y no admite nuevas anotaciones.' });
+
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.anotacion_spec.crear.error', 'Error al crear anotación de especificación', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }

@@ -122,10 +122,40 @@ model RequisicionItem {
   /// Marcador de ítem imprevisto (sin insumo_id en catálogo)
   es_imprevisto     Boolean @default(false)
 
+  // ── Trazabilidad de presupuesto ──────────────────────────────────────────
+  /// Cantidad presupuestada para este insumo en el proyecto (snapshot al crear req)
+  cantidad_presupuestada Decimal? @db.Decimal(18, 4)
+  /// ID del concepto APU del catálogo del que proviene este insumo (nullable si es imprevisto)
+  concepto_origen_id     String?  @db.Uuid
+  /// Justificación obligatoria cuando excede presupuesto o es imprevisto
+  justificacion          String?  @db.Text
+
   requisicion Requisicion @relation(fields: [requisicion_id], references: [id_requisicion], onDelete: Cascade)
 
   @@index([tenant_id, requisicion_id])
+  @@index([tenant_id, proyecto_id, insumo_id])
   @@map("requisiciones_items")
+}
+
+// ── Incisos extra: gastos fuera de presupuesto asignados a una partida del catálogo ──
+// Permite que un material imprevisto o en excedente se vincule a un concepto APU,
+// sumando su monto al total de esa partida para reportes de control presupuestal.
+model AsignacionExtraConcepto {
+  id_asignacion        String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  proyecto_id          String   @db.Uuid
+  requisicion_item_id  String   @db.Uuid // ref a RequisicionItem.id_item
+  concepto_id          String   @db.Uuid // ref a concepto en gerencia-tecnica (UUID solo, sin @relation)
+  concepto_clave       String   @db.VarChar(100) // desnormalizado para evitar JOIN cross-module
+  concepto_descripcion String   @db.Text // desnormalizado
+  monto_extra          Decimal  @db.Decimal(18, 4)
+  asignado_por         String   @db.Uuid
+  created_at           DateTime @default(now())
+
+  @@unique([tenant_id, requisicion_item_id]) // un ítem → un concepto destino
+  @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, concepto_id])
+  @@map("asignaciones_extra_concepto")
 }
 
 // --- Transaccional: Órdenes de Compra ---
@@ -223,6 +253,8 @@ model ComparativaLinea {
   insumo_id                   String  @db.Uuid
   marca_modelo_ref            String? @db.VarChar(100)
   especificaciones_requeridas String? @db.Text
+  // Referencia al RequisicionItem de origen (nullable para cuadros anteriores)
+  detalle_req_id              String? @db.Uuid
 
   cuadro CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
 
@@ -283,6 +315,81 @@ model AclaracionComparativa {
   @@index([tenant_id, cuadro_id])
   @@index([cuadro_id, insumo_id, proveedor_id])
   @@map("aclaraciones_comparativa")
+}
+
+// ── Especificaciones técnicas por partida de requisición ─────────────────────
+// N especificaciones por RequisicionItem — el Residente las captura al crear/editar la req.
+model EspecificacionDetalleReq {
+  id_especificacion String   @id @default(uuid()) @db.Uuid
+  tenant_id         String   @db.Uuid
+  proyecto_id       String   @db.Uuid
+  detalle_id        String   @db.Uuid // ref a RequisicionItem.id_item (misma BD)
+  descripcion       String   @db.Text
+  orden             Int      @default(0)
+  created_at        DateTime @default(now())
+
+  @@index([tenant_id, detalle_id])
+  @@map("especificaciones_detalle_req")
+}
+
+// ── Solicitudes de Cotización ─────────────────────────────────────────────────
+// Una solicitud por requisición (única activa). Registra a qué proveedores se les pidió cotizar y el plazo.
+model SolicitudCotizacion {
+  id_solicitud    String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  requisicion_id  String   @db.Uuid
+  dias_habiles    Int      @default(3)
+  fecha_solicitud DateTime @default(now())
+  fecha_limite    DateTime
+  creado_por      String   @db.Uuid
+  notas           String?  @db.Text
+  created_at      DateTime @default(now())
+
+  proveedores SolicitudCotizacionProveedor[]
+
+  @@unique([tenant_id, requisicion_id])
+  @@index([tenant_id, proyecto_id])
+  @@map("solicitudes_cotizacion")
+}
+
+model SolicitudCotizacionProveedor {
+  id_scp          String    @id @default(uuid()) @db.Uuid
+  tenant_id       String    @db.Uuid
+  solicitud_id    String    @db.Uuid
+  proveedor_id    String    @db.Uuid
+  estado          String    @default("PENDIENTE") // PENDIENTE | RESPONDIO | DECLINO
+  pdf_nombre      String?   @db.VarChar(255)
+  pdf_ruta        String?   @db.Text
+  pdf_mime        String?   @db.VarChar(100)
+  notas_proveedor String?   @db.Text
+  fecha_respuesta DateTime?
+  updated_at      DateTime  @updatedAt
+
+  solicitud SolicitudCotizacion @relation(fields: [solicitud_id], references: [id_solicitud], onDelete: Cascade)
+
+  @@unique([solicitud_id, proveedor_id])
+  @@index([tenant_id, solicitud_id])
+  @@map("solicitudes_cotizacion_proveedores")
+}
+
+// ── Anotaciones por celda [especificación × proveedor] en el cuadro comparativo ──
+// El Residente puede plantear preguntas puntuales sobre una especificación de un proveedor;
+// Compras registra la respuesta. Independiente del flujo C/NC/DA/?.
+model AnotacionEspecificacion {
+  id_anotacion      String   @id @default(uuid()) @db.Uuid
+  tenant_id         String   @db.Uuid
+  cuadro_id         String   @db.Uuid
+  especificacion_id String   @db.Uuid // ref a EspecificacionDetalleReq
+  proveedor_id      String   @db.Uuid
+  tipo              String   @db.VarChar(20) // pregunta | respuesta
+  texto             String   @db.Text
+  creado_por        String   @db.Uuid
+  created_at        DateTime @default(now())
+
+  @@index([tenant_id, cuadro_id])
+  @@index([tenant_id, especificacion_id])
+  @@map("anotaciones_especificacion")
 }
 
 // ── Alertas de Integridad Financiera ─────────────────────────────────────────

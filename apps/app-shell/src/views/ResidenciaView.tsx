@@ -88,6 +88,7 @@ interface ImprevistoItem {
   unidad_libre: string;
   cantidad: string;
   notas: string;
+  justificacion: string;
 }
 
 /** Insumo del catálogo GT — para flujo "Por Insumo" */
@@ -104,7 +105,9 @@ interface InsumoReq {
 interface InsumoSeleccionado extends InsumoReq {
   cantidad: number;
   notas: string;
-  es_excedente?: boolean; // true si cantidad > cantidad_presupuestada
+  es_excedente?: boolean;
+  especificaciones: string[];
+  justificacion: string;
 }
 
 const UNIDADES_REQ = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
@@ -331,7 +334,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [loadingComposicion, setLoadingComposicion] = useState(false);
   // IMPREVISTO items
   const [itemsImprevisto, setItemsImprevisto] = useState<ImprevistoItem[]>([
-    { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' },
+    { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '' },
   ]);
 
   const [sinPresupuesto, setSinPresupuesto] = useState(false);
@@ -342,6 +345,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [insumoTabTipo,        setInsumoTabTipo]        = useState<'MATERIAL' | 'EQUIPO' | 'SERVICIO'>('MATERIAL');
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<InsumoSeleccionado[]>([]);
   const [loadingInsumos,       setLoadingInsumos]       = useState(false);
+  const [specInputs,           setSpecInputs]           = useState<Record<number, string>>({});
 
   // ── Carga inicial ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -554,10 +558,11 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     setConceptoSeleccionado(null);
     setCantidadTakeoff('');
     setMaterialesTakeoff([]);
-    setItemsImprevisto([{ descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' }]);
+    setItemsImprevisto([{ descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '' }]);
     setInsumoSearch('');
     setInsumoTabTipo('MATERIAL');
     setInsumosSeleccionados([]);
+    setSpecInputs({});
   };
 
   const conceptosFiltrados = conceptoSearch.trim()
@@ -576,6 +581,13 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       const sinCantidad = insumosSeleccionados.filter(i => !(i.cantidad > 0));
       if (sinCantidad.length > 0) {
         notify({ type: 'error', title: 'Cantidades inválidas', message: 'Ingresa la cantidad de todos los ítems.' }); return;
+      }
+      const sinJustificacion = insumosSeleccionados.filter(i => {
+        const excede = i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada;
+        return excede && !i.justificacion.trim();
+      });
+      if (sinJustificacion.length > 0) {
+        notify({ type: 'error', title: 'Justificación requerida', message: `${sinJustificacion.map(i => i.clave).join(', ')} excede el presupuesto — escribe la justificación.` }); return;
       }
       if (isDemo) {
         notify({ type: 'success', title: 'Requisición creada (demo)',
@@ -596,15 +608,36 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           tipo: 'NORMAL',
           prioridad: reqPrioridad,
           observaciones: observacionesFinal,
-          items: insumosSeleccionados.map(i => ({
-            insumo_id: i.insumo_id,
-            cantidad:  i.cantidad,
-            notas:     i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada
-              ? `EXCEDENTE: presupuesto ${i.cantidad_presupuestada} ${i.unidad_medida}, solicitado ${i.cantidad} ${i.unidad_medida}`
-              : (i.notas || undefined),
-          })),
+          items: insumosSeleccionados.map(i => {
+            const excede = i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada;
+            return {
+              insumo_id:              i.insumo_id,
+              clave:                  i.clave,
+              cantidad:               i.cantidad,
+              cantidad_presupuestada: i.cantidad_presupuestada ?? null,
+              concepto_origen_id:     null, // sin APU de origen en flujo directo
+              justificacion:          excede ? i.justificacion : null,
+              notas: excede
+                ? `EXCEDENTE: presupuesto ${i.cantidad_presupuestada} ${i.unidad_medida}, solicitado ${i.cantidad} ${i.unidad_medida}`
+                : (i.notas || undefined),
+            };
+          }),
         });
         const r = res.data.data;
+        // guardar especificaciones técnicas por ítem (best-effort)
+        const itemsConSpecs = insumosSeleccionados.filter(i => i.especificaciones.length > 0);
+        if (itemsConSpecs.length > 0 && Array.isArray(r.items)) {
+          await Promise.allSettled(
+            itemsConSpecs.map(async (insumo) => {
+              const backendItem = (r.items as any[]).find((bi: any) => bi.insumo_id === insumo.insumo_id);
+              if (!backendItem) return;
+              await api.put(
+                `/api/v1/compras/requisiciones/${r.id_requisicion}/items/${backendItem.id_item}/especificaciones`,
+                { especificaciones: insumo.especificaciones }
+              );
+            })
+          );
+        }
         notify({ type: 'success', title: 'Requisición creada',
           message: `${r.codigo ?? r.id} · ${insumosSeleccionados.length} ítem${insumosSeleccionados.length !== 1 ? 's' : ''} · Procurement la revisará.`,
           duration: 7000 });
@@ -646,9 +679,13 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           prioridad: reqPrioridad,
           observaciones: `Take-off APU · ${conceptoSeleccionado.clave} · ${conceptoSeleccionado.descripcion} · ${qty} ${conceptoSeleccionado.unidad_medida}`,
           items: materiales.map(m => ({
-            insumo_id: m.insumo_id,
-            cantidad:  m.cantidad_total,
-            notas:     `APU ${conceptoSeleccionado.clave}: ${m.cantidad_unitaria} × ${qty} ${conceptoSeleccionado.unidad_medida}`,
+            insumo_id:              m.insumo_id,
+            clave:                  m.clave,
+            cantidad:               m.cantidad_total,
+            cantidad_presupuestada: m.cantidad_total,          // take-off = cantidad presupuestada
+            concepto_origen_id:     conceptoSeleccionado.id,  // vínculo al APU
+            justificacion:          null,
+            notas: `APU ${conceptoSeleccionado.clave}: ${m.cantidad_unitaria} × ${qty} ${conceptoSeleccionado.unidad_medida}`,
           })),
         });
         const r = res.data.data;
@@ -676,6 +713,10 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       if (validos.length === 0) {
         notify({ type: 'error', title: 'Agrega al menos un ítem con descripción y cantidad', message: '' }); return;
       }
+      const sinJustif = validos.filter(i => !i.justificacion.trim());
+      if (sinJustif.length > 0) {
+        notify({ type: 'error', title: 'Justificación requerida', message: `${sinJustif.length} ítem(s) sin justificación — todos los imprevistos deben explicar el motivo.` }); return;
+      }
       if (isDemo) {
         notify({ type: 'success', title: 'Req. Imprevisto creada (demo)',
           message: `${validos.length} ítem${validos.length !== 1 ? 's' : ''} · Prioridad ${reqPrioridad}` });
@@ -688,11 +729,14 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           prioridad: reqPrioridad,
           observaciones: reqNotas || undefined,
           items: validos.map(i => ({
-            descripcion_libre: i.descripcion_libre,
-            unidad_libre: i.unidad_libre || 'PZA',
-            cantidad: Number(i.cantidad),
-            notas: i.notas || undefined,
-            es_imprevisto: true,
+            descripcion_libre:      i.descripcion_libre,
+            unidad_libre:           i.unidad_libre || 'PZA',
+            cantidad:               Number(i.cantidad),
+            cantidad_presupuestada: null,
+            concepto_origen_id:     null,
+            justificacion:          i.justificacion,
+            notas:                  i.notas || undefined,
+            es_imprevisto:          true,
           })),
         });
         const r = res.data.data;
@@ -1538,7 +1582,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                         type="button"
                         onClick={() => {
                           const cantDefault = insumo.cantidad_presupuestada ?? 0;
-                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: cantDefault, notas: '' }]);
+                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: cantDefault, notas: '', especificaciones: [], justificacion: '' }]);
                           setInsumoSearch('');
                         }}
                         className={cn(
@@ -1576,48 +1620,110 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                       <div
                         key={item.insumo_id}
                         className={cn(
-                          'flex items-start gap-3 rounded-xl border px-4 py-2.5',
+                          'flex flex-col rounded-xl border',
                           excedente
                             ? 'border-amber-500/40 bg-amber-500/5'
                             : 'border-indigo-500/20 bg-indigo-500/5'
                         )}
                       >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-mono text-muted-foreground">{item.clave}</p>
-                          <p className="text-xs font-semibold text-foreground truncate">{item.descripcion}</p>
-                          {excedente && (
-                            <p className="text-[9px] text-amber-600 mt-0.5">
-                              ⚠ Excede presupuesto — pres: {item.cantidad_presupuestada} {item.unidad_medida}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end shrink-0 gap-0.5">
-                          <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            placeholder="Cant."
-                            value={item.cantidad || ''}
-                            onChange={e => setInsumosSeleccionados(prev => prev.map((p, i) => i === idx ? { ...p, cantidad: Number(e.target.value) } : p))}
-                            className={cn(
-                              'w-20 text-right text-xs font-bold bg-background border rounded-lg px-2 py-1 focus:border-indigo-400 outline-none',
-                              excedente ? 'border-amber-500/60' : 'border-border/60'
+                        {/* fila principal: descripción + cantidad + eliminar */}
+                        <div className="flex items-start gap-3 px-4 py-2.5">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-mono text-muted-foreground">{item.clave}</p>
+                            <p className="text-xs font-semibold text-foreground truncate">{item.descripcion}</p>
+                            {excedente && (
+                              <p className="text-[9px] text-amber-600 mt-0.5">
+                                ⚠ Excede presupuesto — pres: {item.cantidad_presupuestada} {item.unidad_medida}
+                              </p>
                             )}
-                          />
-                          <span className="text-[9px] text-muted-foreground">{item.unidad_medida}</span>
-                          {pctExcedente && (
-                            <span className="text-[8px] font-black text-amber-600 bg-amber-500/10 rounded px-1.5 py-0.5 whitespace-nowrap">
-                              ↑ {pctExcedente}% sobre pres.
-                            </span>
-                          )}
+                          </div>
+                          <div className="flex flex-col items-end shrink-0 gap-0.5">
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              placeholder="Cant."
+                              value={item.cantidad || ''}
+                              onChange={e => setInsumosSeleccionados(prev => prev.map((p, i) => i === idx ? { ...p, cantidad: Number(e.target.value) } : p))}
+                              className={cn(
+                                'w-20 text-right text-xs font-bold bg-background border rounded-lg px-2 py-1 focus:border-indigo-400 outline-none',
+                                excedente ? 'border-amber-500/60' : 'border-border/60'
+                              )}
+                            />
+                            <span className="text-[9px] text-muted-foreground">{item.unidad_medida}</span>
+                            {pctExcedente && (
+                              <span className="text-[8px] font-black text-amber-600 bg-amber-500/10 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                ↑ {pctExcedente}% sobre pres.
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setInsumosSeleccionados(prev => prev.filter((_, i) => i !== idx))}
+                            className="text-muted-foreground hover:text-red-500 shrink-0 mt-0.5"
+                          >
+                            <IconX className="h-3.5 w-3.5" />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setInsumosSeleccionados(prev => prev.filter((_, i) => i !== idx))}
-                          className="text-muted-foreground hover:text-red-500 shrink-0 mt-0.5"
-                        >
-                          <IconX className="h-3.5 w-3.5" />
-                        </button>
+                        {/* ── Justificación de excedente (obligatoria) ── */}
+                        {excedente && (
+                          <div className="px-4 pb-2 pt-1 border-t border-amber-500/20">
+                            <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-amber-600">
+                              Justificación del excedente <span className="text-red-500">*</span>
+                            </p>
+                            <textarea
+                              rows={2}
+                              placeholder="Explica el motivo por el que se requiere más cantidad de lo presupuestado…"
+                              value={item.justificacion}
+                              onChange={e => setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx ? { ...p, justificacion: e.target.value } : p))}
+                              className={cn(
+                                'w-full resize-none rounded-lg border px-2.5 py-1.5 text-[10px] outline-none placeholder:text-muted-foreground/60',
+                                item.justificacion.trim()
+                                  ? 'border-amber-400/60 focus:border-amber-500 bg-background'
+                                  : 'border-red-400/60 bg-red-500/5 focus:border-red-500'
+                              )}
+                            />
+                          </div>
+                        )}
+                        {/* ── Especificaciones técnicas por partida ── */}
+                        <div className="px-4 pb-3 pt-1 border-t border-indigo-500/10">
+                          {item.especificaciones.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-1.5">
+                              {item.especificaciones.map((spec, si) => (
+                                <span key={si} className="flex items-center gap-1 text-[9px] bg-indigo-500/10 text-indigo-700 rounded-full px-2 py-0.5 max-w-[240px]">
+                                  <span className="truncate">{spec}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx
+                                      ? { ...p, especificaciones: p.especificaciones.filter((_, xi) => xi !== si) }
+                                      : p))}
+                                    className="shrink-0 hover:text-red-500"
+                                  >
+                                    <IconX className="h-2.5 w-2.5" />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <input
+                            type="text"
+                            placeholder="+ Especificación técnica (Enter para agregar)"
+                            value={specInputs[idx] ?? ''}
+                            maxLength={500}
+                            onChange={e => setSpecInputs(prev => ({ ...prev, [idx]: e.target.value }))}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && specInputs[idx]?.trim()) {
+                                e.preventDefault();
+                                const val = specInputs[idx].trim();
+                                setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx
+                                  ? { ...p, especificaciones: [...p.especificaciones, val] }
+                                  : p));
+                                setSpecInputs(prev => ({ ...prev, [idx]: '' }));
+                              }
+                            }}
+                            className="w-full text-[10px] bg-background border border-border/40 rounded-lg px-2.5 py-1.5 focus:border-indigo-400 outline-none placeholder:text-muted-foreground/60"
+                          />
+                        </div>
                       </div>
                     );
                   })}
@@ -1789,7 +1895,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                   Materiales a solicitar <span className="text-red-500">*</span>
                 </p>
                 <button type="button"
-                  onClick={() => setItemsImprevisto(prev => [...prev, { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '' }])}
+                  onClick={() => setItemsImprevisto(prev => [...prev, { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '' }])}
                   className="flex items-center gap-1 text-[10px] font-black text-orange-600 hover:text-orange-500"
                 >
                   <IconPlus className="h-3 w-3" /> Agregar ítem
@@ -1831,14 +1937,35 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                         />
                       </FormField>
                     </div>
-                    <FormField label="Notas (frente, área)">
-                      <Input className="text-xs" placeholder="Ej: Frente Nivel 12 eje A-B"
-                        value={item.notas}
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField label="Notas (frente, área)">
+                        <Input className="text-xs" placeholder="Ej: Frente Nivel 12 eje A-B"
+                          value={item.notas}
+                          onChange={e => setItemsImprevisto(prev => {
+                            const n = [...prev]; n[idx] = { ...n[idx], notas: e.target.value }; return n;
+                          })}
+                        />
+                      </FormField>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-orange-600">
+                        Justificación <span className="text-red-500">*</span>
+                      </p>
+                      <textarea
+                        rows={2}
+                        placeholder="Ej: Retroexcavadora reventó puesta a tierra — reposición urgente"
+                        value={item.justificacion}
                         onChange={e => setItemsImprevisto(prev => {
-                          const n = [...prev]; n[idx] = { ...n[idx], notas: e.target.value }; return n;
+                          const n = [...prev]; n[idx] = { ...n[idx], justificacion: e.target.value }; return n;
                         })}
+                        className={cn(
+                          'w-full resize-none rounded-lg border px-2.5 py-1.5 text-[10px] outline-none placeholder:text-muted-foreground/60',
+                          item.justificacion.trim()
+                            ? 'border-orange-400/40 focus:border-orange-500 bg-background'
+                            : 'border-red-400/60 bg-red-500/5 focus:border-red-500'
+                        )}
                       />
-                    </FormField>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

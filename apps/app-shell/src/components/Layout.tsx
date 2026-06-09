@@ -23,6 +23,7 @@ import {
   IconActivity,
   IconQrCode,
   IconUserCheck,
+  IconScale,
 } from './Icons';
 import { useTenant } from '../context/TenantContext';
 
@@ -100,6 +101,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'proveedores',     label: 'Proveedores',    icon: IconUsers,        roles: ['compras', 'procurement', 'superintendent'] },
       { id: 'pendientes-eval', label: 'Eval. Técnica',  icon: IconClock,        roles: ['resident', 'residencia', 'superintendent'] },
       { id: 'pendientes-gt',   label: 'Aprob. GT',      icon: IconCheckCircle2, roles: ['gerencia_tecnica', 'superintendent'] },
+      { id: 'trazabilidad',    label: 'Trazabilidad',   icon: IconScale,        roles: ['compras', 'procurement', 'superintendent', 'gerencia_tecnica'] },
     ],
   },
   { name: 'Finanzas',     icon: IconWallet,         id: 'finanzas',     roles: ['finanzas'] },
