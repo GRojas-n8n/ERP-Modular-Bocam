@@ -2414,7 +2414,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             <Input
               value={asignForm.concepto_descripcion}
               onChange={e => setAsignForm(f => ({ ...f, concepto_descripcion: e.target.value }))}
-              placeholder="Ej. Suministro e instalación de tubería HG 2\""
+              placeholder={'Ej. Suministro e instalación de tubería HG 2"'}
             />
           </FormField>
           <FormField label="ID del concepto (UUID)" required hint="Puedes obtenerlo del catálogo en Gerencia Técnica">
