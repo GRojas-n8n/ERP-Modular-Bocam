@@ -2356,7 +2356,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             </button>
                             {isExp && (
                               <div className="px-4 pb-3 space-y-1.5 bg-muted/20">
-                                {concepto.incisos.map((inc, ii) => (
+                                {concepto.incisos.map((inc) => (
                                   <div key={inc.asignacion_id} className="flex items-start justify-between rounded-xl border border-border/30 bg-background px-3 py-2 gap-3">
                                     <div className="min-w-0 flex-1">
                                       <p className="text-[10px] font-semibold text-foreground truncate">{inc.insumo_desc}</p>
