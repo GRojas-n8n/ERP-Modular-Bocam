@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import * as Sentry from '@sentry/react';
 import type { TenantConfig, UserContext, AppState, ProjectAccess } from '../types';
 import { getAccessToken, setTokens, clearTokens, loginApi, fetchMe } from '../lib/api';
 
@@ -71,6 +72,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           document.documentElement.style.setProperty('--brand-primary', tenant.primaryColor);
         }
 
+        Sentry.setUser({ id: user.id, email: user.email, username: user.name });
         setState({
           tenant,
           user,
@@ -134,6 +136,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         document.documentElement.style.setProperty('--brand-primary', tenant.primaryColor);
       }
 
+      Sentry.setUser({ id: user.id, email: user.email, username: user.name });
       setState({
         tenant,
         user,
@@ -186,6 +189,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // ─── Logout ────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
     clearTokens();
+    Sentry.setUser(null);
     setState({
       tenant: null,
       user: null,

@@ -1,4 +1,5 @@
 import React, { useState, Suspense, Component } from 'react';
+import * as Sentry from '@sentry/react';
 import { NotificationProvider } from './context/NotificationContext';
 import { ToastContainer } from './components/ToastContainer';
 import { Layout } from './components/Layout';
@@ -39,6 +40,7 @@ class AppErrorBoundary extends Component<{ children: React.ReactNode }, EBState>
   }
   componentDidCatch(error: Error) {
     console.error('[AppShell] Error capturado por boundary:', error);
+    Sentry.captureException(error);
   }
   render() {
     if (this.state.hasError) {
