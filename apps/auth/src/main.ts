@@ -18,6 +18,7 @@ import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
 import { createTenantContext, disconnectDb, runAsSystem } from './db';
 import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
+import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 
 const app = express();
@@ -32,6 +33,7 @@ const JWT_ACCESS_EXPIRATION = (process.env.JWT_ACCESS_EXPIRATION || '15m').trim(
 const JWT_REFRESH_EXPIRATION = (process.env.JWT_REFRESH_EXPIRATION || '7d').trim();
 const BCRYPT_ROUNDS = 12;
 const PORT = process.env.PORT || 3003;
+initSentry(process.env.SENTRY_DSN || '', 'auth');
 
 // ─── Redis + Rate Limiters ───────────────────────────────────────────────────
 
@@ -1024,6 +1026,8 @@ app.get('/api/v1/master/audit-log',
     }
   }
 );
+
+setupSentryExpressHandler(app);
 
 async function startServer() {
   if (redisClient) {

@@ -5,8 +5,10 @@ import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../..
 import {
   buildEventContext,
   createObservabilityMiddleware,
+  initSentry,
   logError,
   logInfo,
+  setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 import { buildTerminalHttpResponse } from '../../../packages/tenant-idempotency/src';
 
@@ -18,6 +20,7 @@ app.use(createObservabilityMiddleware('ventas'));
 
 const PORT = process.env.PORT_VENTAS || process.env.PORT || 3012;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+initSentry(process.env.SENTRY_DSN || '', 'ventas');
 
 app.use(
   createAuthMiddleware({
@@ -153,6 +156,8 @@ app.post('/api/v1/ventas/cotizaciones/:id/aceptar', async (req: Request, res: Re
     res.status(500).json({ success: false, message });
   }
 });
+
+setupSentryExpressHandler(app);
 
 export async function startServer() {
   return app.listen(PORT, async () => {

@@ -6,7 +6,7 @@
 
 import express, { Request, Response } from 'express';
 import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
-import { createObservabilityMiddleware, logError } from '../../../packages/observability/src';
+import { createObservabilityMiddleware, initSentry, logError, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { generateOcPdf } from './generators/oc-pdf';
 import { generateComparativaPdf } from './generators/comparativa-pdf';
 import { generatePrenominaPdf } from './generators/prenomina-pdf';
@@ -15,6 +15,7 @@ import { generatePresupuestoExcel } from './generators/presupuesto-excel';
 
 const PORT       = process.env.PORT       || 3010;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+initSentry(process.env.SENTRY_DSN || '', 'reportes');
 
 export const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -129,6 +130,8 @@ app.post('/api/v1/reportes/presupuesto-excel',
 );
 
 // ── Server ────────────────────────────────────────────────────────────────────
+setupSentryExpressHandler(app);
+
 export async function startServer() {
   return app.listen(PORT, () => {
     console.log(`[reportes] Módulo Reportes escuchando en puerto ${PORT}`);

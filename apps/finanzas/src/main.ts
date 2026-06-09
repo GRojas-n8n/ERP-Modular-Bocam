@@ -44,9 +44,11 @@ import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
   getCorrelationId,
+  initSentry,
   logError,
   logInfo,
   logWarn,
+  setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 import { applyIdempotentMutationInContext } from '../../../packages/tenant-idempotency/src';
 
@@ -72,6 +74,7 @@ app.use(createObservabilityMiddleware('finanzas'));
 
 const PORT = process.env.PORT || 3004;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+initSentry(process.env.SENTRY_DSN || '', 'finanzas');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MIDDLEWARE JWT REAL
@@ -1954,6 +1957,8 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     await publishFinanceDomainEvent(result.evento, event.context, result.payload);
   }
 }
+
+setupSentryExpressHandler(app);
 
 export async function startServer() {
   return app.listen(PORT, async () => {

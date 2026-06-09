@@ -28,6 +28,7 @@ import {
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import type { SecurityContext } from '../../../packages/auth-middleware/src';
 
 // ─── Configuración de upload de fichas técnicas ──────────────────────────────
@@ -1007,6 +1008,8 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const PORT = process.env.PORT || 3001;
+initSentry(process.env.SENTRY_DSN || '', 'gerencia-tecnica');
+setupSentryExpressHandler(app);
 
 async function bootstrap(): Promise<void> {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

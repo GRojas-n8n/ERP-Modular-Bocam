@@ -42,8 +42,10 @@ import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
   getCorrelationId,
+  initSentry,
   logInfo,
   logWarn,
+  setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 
 const eventBus = createEventBus(process.env.CONTABILIDAD_EVENT_BUS_NAME || 'contabilidad');
@@ -1415,6 +1417,7 @@ app.use(createObservabilityMiddleware('contabilidad'));
 
 const PORT = process.env.PORT || 3008;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+initSentry(process.env.SENTRY_DSN || '', 'contabilidad');
 const INTEGRATION_CALLBACK_PATHS = [
   '/api/v1/contabilidad/integraciones/sat/claim-dispatch',
   '/api/v1/contabilidad/integraciones/sat/callback',
@@ -2850,6 +2853,8 @@ app.post(
     }
   }
 );
+
+setupSentryExpressHandler(app);
 
 export async function startServer() {
   await eventBus.connect();

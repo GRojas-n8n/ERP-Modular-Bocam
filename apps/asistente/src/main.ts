@@ -8,7 +8,7 @@ import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
-import { createObservabilityMiddleware } from '../../../packages/observability/src';
+import { createObservabilityMiddleware, initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import leerCotizacionRouter from './routes/leer-cotizacion';
 import resumenEjecutivoRouter from './routes/resumen-ejecutivo';
 import alertasPredictivas from './routes/alertas-predictivas';
@@ -16,6 +16,7 @@ import alertasPredictivas from './routes/alertas-predictivas';
 const PORT       = process.env.PORT       || 3011;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 requireEnv('ANTHROPIC_API_KEY');
+initSentry(process.env.SENTRY_DSN || '', 'asistente');
 
 export const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -50,6 +51,8 @@ app.use(resumenEjecutivoRouter);
 app.use(alertasPredictivas);
 
 // ── Server ────────────────────────────────────────────────────────────────────
+setupSentryExpressHandler(app);
+
 export async function startServer() {
   return app.listen(PORT, () => {
     console.log(`[asistente] Módulo Asistente IA escuchando en puerto ${PORT}`);

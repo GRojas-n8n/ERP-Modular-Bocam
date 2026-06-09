@@ -6,7 +6,7 @@ import {
 } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createEventBus, type BocamEvent } from '../../../packages/event-bus/src';
-import { logWarn } from '../../../packages/observability/src';
+import { initSentry, logWarn, setupSentryExpressHandler } from '../../../packages/observability/src';
 
 /**
  * ---------------------------------------------------------------------------
@@ -30,6 +30,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3007;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+initSentry(process.env.SENTRY_DSN || '', 'seguridad');
 
 // EventBus
 const eventBus = createEventBus('seguridad');
@@ -617,6 +618,8 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ARRANQUE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+setupSentryExpressHandler(app);
+
 app.listen(PORT, async () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  🛡️  Módulo: SEGURIDAD / HSE');

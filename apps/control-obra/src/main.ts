@@ -16,9 +16,11 @@ import {
   buildForwardHeaders,
   createObservabilityMiddleware,
   getCorrelationId,
+  initSentry,
   logError,
   logInfo,
   logWarn,
+  setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
 
@@ -48,6 +50,7 @@ app.use(createObservabilityMiddleware('control-obra'));
 const PORT = process.env.PORT || 3005;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
+initSentry(process.env.SENTRY_DSN || '', 'control-obra');
 const ESTIMACION_STATUS = {
   PENDIENTE_FINANZAS: EstadoEstimacion.PENDIENTE_CONFIRMACION_FINANZAS,
   ERROR_FINANZAS: EstadoEstimacion.ERROR_FINANZAS,
@@ -973,6 +976,8 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ARRANQUE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+setupSentryExpressHandler(app);
+
 export async function startServer() {
   return app.listen(PORT, async () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

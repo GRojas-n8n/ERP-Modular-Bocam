@@ -10,7 +10,7 @@ import fs from 'fs';
 import multer from 'multer';
 import { createCalidadContext, disconnectDb } from './db';
 import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
-import { createObservabilityMiddleware, logError, logInfo } from '../../../packages/observability/src';
+import { createObservabilityMiddleware, initSentry, logError, logInfo, setupSentryExpressHandler } from '../../../packages/observability/src';
 import {
   TIPOS_DOCUMENTO,
   ESTADOS_DOCUMENTO,
@@ -23,6 +23,7 @@ import {
 const PORT     = process.env.PORT     || 3009;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/calidad-uploads';
+initSentry(process.env.SENTRY_DSN || '', 'calidad');
 
 // Garantizar que el directorio de uploads exista
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -729,6 +730,8 @@ app.use((err: any, _req: Request, res: Response, next: any) => {
 });
 
 // ── Server ───────────────────────────────────────────────────────────────────
+setupSentryExpressHandler(app);
+
 export async function startServer() {
   return app.listen(PORT, () => {
     console.log(`[calidad] Módulo Calidad escuchando en puerto ${PORT}`);

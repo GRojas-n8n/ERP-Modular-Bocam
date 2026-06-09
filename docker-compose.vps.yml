@@ -116,6 +116,7 @@ services:
       DATABASE_URL: ${AUTH_DATABASE_URL}
       AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,6 +148,7 @@ services:
       GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       FICHAS_UPLOAD_DIR: /data/gerencia-tecnica/fichas
+      SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
       - vps_fichas_uploads:/data/gerencia-tecnica/fichas
     depends_on:
@@ -179,6 +181,7 @@ services:
       DATABASE_URL: ${FINANZAS_DATABASE_URL}
       FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -211,6 +214,7 @@ services:
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
       DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
+      SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
       - vps_docs_proveedores:/data/compras/docs-proveedores
     depends_on:
@@ -246,6 +250,7 @@ services:
       CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -279,6 +284,7 @@ services:
       PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -312,6 +318,7 @@ services:
       SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -352,6 +359,7 @@ services:
       SAT_ADAPTER_TIMEOUT_MS: ${SAT_ADAPTER_TIMEOUT_MS}
       SAT_WORKER_RETRY_DELAY_MS: ${SAT_WORKER_RETRY_DELAY_MS}
       SAT_WORKER_MAX_ATTEMPTS: ${SAT_WORKER_MAX_ATTEMPTS}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -416,6 +424,7 @@ services:
       DATABASE_URL: ${CALIDAD_DATABASE_URL}
       CALIDAD_DATABASE_URL: ${CALIDAD_DATABASE_URL}
       UPLOAD_DIR: /data/calidad/uploads
+      SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
       - vps_calidad_uploads:/data/calidad/uploads
     depends_on:
@@ -443,6 +452,7 @@ services:
       PORT: 3010
       NODE_ENV: ${NODE_ENV}
       JWT_SECRET: ${JWT_SECRET}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     networks:
       - bocam-vps-network
     healthcheck:
@@ -467,6 +477,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       ANTHROPIC_TIMEOUT_MS: 30000
+      SENTRY_DSN: ${SENTRY_DSN:-}
       COMPRAS_URL: http://compras:3002/api/v1/compras
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
       CONTROL_OBRA_URL: http://control-obra:3005/api/v1/control-obra

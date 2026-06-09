@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createApiResponse, createApiError, EstadoPreNomina } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcularHorasTrabajadas, calcularHorasDesglose, calcularMontoHEPorSemana } from './tablas-fiscales';
 
 /**
@@ -25,6 +26,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3006;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+initSentry(process.env.SENTRY_DSN || '', 'personal');
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
@@ -1168,6 +1170,8 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ARRANQUE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+setupSentryExpressHandler(app);
+
 app.listen(PORT, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  👷  Módulo: PERSONAL / RRHH');

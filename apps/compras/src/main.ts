@@ -11,9 +11,11 @@ import {
   buildEventContext,
   buildForwardHeaders,
   createObservabilityMiddleware,
+  initSentry,
   logError,
   logInfo,
   logWarn,
+  setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
 
@@ -29,6 +31,7 @@ const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/f
 const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
 const DOCS_PROVEEDORES_UPLOAD_DIR = process.env.DOCS_PROVEEDORES_UPLOAD_DIR || '/tmp/docs-proveedores';
 const DOCS_PROVEEDORES_MAX_SIZE_MB = parseInt(process.env.DOCS_PROVEEDORES_MAX_SIZE_MB ?? '10', 10);
+initSentry(process.env.SENTRY_DSN || '', 'compras');
 
 const OC_STATUS = {
   PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
@@ -2335,6 +2338,8 @@ app.get('/api/v1/compras/alertas/oc-error',
     }
   }
 );
+
+setupSentryExpressHandler(app);
 
 export async function startServer() {
   return app.listen(PORT, async () => {

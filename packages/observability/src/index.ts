@@ -1,5 +1,6 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response, Application } from 'express';
 import { randomUUID } from 'node:crypto';
+import * as Sentry from '@sentry/node';
 
 type LogLevel = 'info' | 'warn' | 'error';
 
@@ -36,6 +37,24 @@ declare global {
       };
     }
   }
+}
+
+let _sentryEnabled = false;
+
+export function initSentry(dsn: string, moduleName: string): void {
+  if (!dsn) return;
+  Sentry.init({
+    dsn,
+    environment: process.env.NODE_ENV || 'production',
+    initialScope: { tags: { module: moduleName } },
+    tracesSampleRate: 0.1,
+  });
+  _sentryEnabled = true;
+}
+
+export function setupSentryExpressHandler(app: Application): void {
+  if (!_sentryEnabled) return;
+  Sentry.setupExpressErrorHandler(app);
 }
 
 function compact<T extends Record<string, unknown>>(value: T): T {
@@ -142,4 +161,19 @@ export function logWarn(req: Request, moduleName: string, action: string, messag
 
 export function logError(req: Request, moduleName: string, action: string, message: string, payload: Omit<StructuredLogPayload, 'action' | 'message'> = {}) {
   writeStructuredLog('error', req, moduleName, { action, message, ...payload });
+  if (_sentryEnabled) {
+    Sentry.withScope((scope) => {
+      scope.setTag('module', moduleName);
+      scope.setTag('action', action);
+      if (req.securityContext) {
+        scope.setUser({ id: req.securityContext.userId, email: req.securityContext.email });
+        scope.setTag('tenant_id', req.securityContext.tenantId);
+      }
+      if (req.observabilityContext?.correlationId) {
+        scope.setTag('correlation_id', req.observabilityContext.correlationId);
+      }
+      scope.setExtras(payload as Record<string, unknown>);
+      Sentry.captureMessage(message, 'error');
+    });
+  }
 }
