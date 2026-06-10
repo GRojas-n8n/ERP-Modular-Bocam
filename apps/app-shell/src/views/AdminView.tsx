@@ -428,33 +428,6 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
             </div>
           )}
         </div>
-      ) : (
-        /* ── Projects Table ── */
-        <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
-          {proyectos.length === 0 ? (
-            <div className="p-12 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">Sin proyectos registrados</div>
-          ) : (
-            <div className="divide-y divide-border/20">
-              {proyectos.map(p => (
-                <div key={p.id_proyecto} className={`flex items-center gap-4 px-6 py-4 hover:bg-muted/20 transition-colors ${!p.activo ? 'opacity-50' : ''}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-lg border border-border/40 bg-muted/50 px-2 py-0.5 text-[10px] font-mono font-bold">{p.codigo_centro_costos}</span>
-                      <p className="text-sm font-bold truncate">{p.nombre_oficial}</p>
-                    </div>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      {p.tipo_contrato} · {p.moneda_base} · {p.estatus}
-                    </p>
-                  </div>
-                  <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
-                    className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
-                    Editar
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       ) : activeTab === 'categorias' ? (
         /* ── Categorías de Gasto ── */
         <div className="space-y-6">
@@ -582,7 +555,34 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
             </div>
           )}
         </div>
-      ) : null}
+      ) : (
+        /* ── Projects Table ── */
+        <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
+          {proyectos.length === 0 ? (
+            <div className="p-12 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">Sin proyectos registrados</div>
+          ) : (
+            <div className="divide-y divide-border/20">
+              {proyectos.map(p => (
+                <div key={p.id_proyecto} className={`flex items-center gap-4 px-6 py-4 hover:bg-muted/20 transition-colors ${!p.activo ? 'opacity-50' : ''}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-lg border border-border/40 bg-muted/50 px-2 py-0.5 text-[10px] font-mono font-bold">{p.codigo_centro_costos}</span>
+                      <p className="text-sm font-bold truncate">{p.nombre_oficial}</p>
+                    </div>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      {p.tipo_contrato} · {p.moneda_base} · {p.estatus}
+                    </p>
+                  </div>
+                  <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
+                    className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
+                    Editar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal de confirmación: Activar Proyecto */}
       {confirmActivar && (
