@@ -65,6 +65,9 @@ interface ReqResidente {
   tipo?: string;
   prioridad: string;
   observaciones?: string;
+  concepto_id?: string | null;
+  concepto_clave?: string | null;
+  concepto_descripcion?: string | null;
 }
 
 interface ConceptoSimple {
@@ -89,6 +92,8 @@ interface ImprevistoItem {
   cantidad: string;
   notas: string;
   justificacion: string;
+  especificacion_marca_modelo: string;
+  especificacion_detalle: string;
 }
 
 /** Insumo del catálogo GT — para flujo "Por Insumo" */
@@ -108,6 +113,8 @@ interface InsumoSeleccionado extends InsumoReq {
   es_excedente?: boolean;
   especificaciones: string[];
   justificacion: string;
+  especificacion_marca_modelo: string;
+  especificacion_detalle: string;
 }
 
 const UNIDADES_REQ = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
@@ -324,6 +331,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
   const [reqNotas, setReqNotas] = useState('');
   const [generandoReq, setGenerandoReq] = useState(false);
+  // Partida del catálogo — obligatoria para INSUMO e IMPREVISTO
+  const [reqConceptoId, setReqConceptoId] = useState<string | null>(null);
+  const [reqConceptoSearch2, setReqConceptoSearch2] = useState('');
 
   // Take-off APU (tipo NORMAL)
   const [conceptos, setConceptos] = useState<ConceptoSimple[]>([]);
@@ -334,7 +344,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [loadingComposicion, setLoadingComposicion] = useState(false);
   // IMPREVISTO items
   const [itemsImprevisto, setItemsImprevisto] = useState<ImprevistoItem[]>([
-    { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '' },
+    { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '', especificacion_marca_modelo: '', especificacion_detalle: '' },
   ]);
 
   const [sinPresupuesto, setSinPresupuesto] = useState(false);
@@ -411,6 +421,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             tipo:         r.tipo,
             prioridad:    r.prioridad,
             observaciones: r.observaciones,
+            concepto_id:  r.concepto_id ?? null,
+            concepto_clave: r.concepto_clave ?? null,
+            concepto_descripcion: r.concepto_descripcion ?? null,
           })));
         }
         if (presRes.status === 'fulfilled') {
@@ -554,11 +567,13 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     setReqTipo('INSUMO');
     setReqPrioridad('MEDIA');
     setReqNotas('');
+    setReqConceptoId(null);
+    setReqConceptoSearch2('');
     setConceptoSearch('');
     setConceptoSeleccionado(null);
     setCantidadTakeoff('');
     setMaterialesTakeoff([]);
-    setItemsImprevisto([{ descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '' }]);
+    setItemsImprevisto([{ descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '', especificacion_marca_modelo: '', especificacion_detalle: '' }]);
     setInsumoSearch('');
     setInsumoTabTipo('MATERIAL');
     setInsumosSeleccionados([]);
@@ -606,17 +621,20 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           : observacionesBase;
         const res = await api.post('/api/v1/compras/requisiciones', {
           tipo: 'NORMAL',
+          concepto_id: reqConceptoId,
           prioridad: reqPrioridad,
           observaciones: observacionesFinal,
           items: insumosSeleccionados.map(i => {
             const excede = i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada;
             return {
-              insumo_id:              i.insumo_id,
-              clave:                  i.clave,
-              cantidad:               i.cantidad,
-              cantidad_presupuestada: i.cantidad_presupuestada ?? null,
-              concepto_origen_id:     null, // sin APU de origen en flujo directo
-              justificacion:          excede ? i.justificacion : null,
+              insumo_id:                   i.insumo_id,
+              clave:                       i.clave,
+              cantidad:                    i.cantidad,
+              cantidad_presupuestada:      i.cantidad_presupuestada ?? null,
+              concepto_origen_id:          null,
+              justificacion:               excede ? i.justificacion : null,
+              especificacion_marca_modelo: i.especificacion_marca_modelo || undefined,
+              especificacion_detalle:      i.especificacion_detalle || undefined,
               notas: excede
                 ? `EXCEDENTE: presupuesto ${i.cantidad_presupuestada} ${i.unidad_medida}, solicitado ${i.cantidad} ${i.unidad_medida}`
                 : (i.notas || undefined),
@@ -648,6 +666,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           id: r2.id_requisicion ?? r2.id, folio: r2.codigo ?? r2.folio,
           fecha: r2.fecha_solicitud ?? r2.fecha, estado: r2.estado,
           tipo: r2.tipo, prioridad: r2.prioridad, observaciones: r2.observaciones,
+          concepto_id: r2.concepto_id ?? null,
+          concepto_clave: r2.concepto_clave ?? null,
+          concepto_descripcion: r2.concepto_descripcion ?? null,
         })));
       } catch (err: any) {
         notify({ type: 'error', title: 'Error al crear requisición', message: err.response?.data?.message || err.message });
@@ -676,6 +697,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
         setGenerandoReq(true);
         const res = await api.post('/api/v1/compras/requisiciones', {
           tipo: 'NORMAL',
+          concepto_id: conceptoSeleccionado.id,
           prioridad: reqPrioridad,
           observaciones: `Take-off APU · ${conceptoSeleccionado.clave} · ${conceptoSeleccionado.descripcion} · ${qty} ${conceptoSeleccionado.unidad_medida}`,
           items: materiales.map(m => ({
@@ -701,6 +723,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           id: r2.id_requisicion ?? r2.id, folio: r2.codigo ?? r2.folio,
           fecha: r2.fecha_solicitud ?? r2.fecha, estado: r2.estado,
           tipo: r2.tipo, prioridad: r2.prioridad, observaciones: r2.observaciones,
+          concepto_id: r2.concepto_id ?? null,
+          concepto_clave: r2.concepto_clave ?? null,
+          concepto_descripcion: r2.concepto_descripcion ?? null,
         })));
       } catch (err: any) {
         notify({ type: 'error', title: 'Error al crear requisición', message: err.response?.data?.message || err.message });
@@ -726,17 +751,20 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
         setGenerandoReq(true);
         const res = await api.post('/api/v1/compras/requisiciones', {
           tipo: 'IMPREVISTO',
+          concepto_id: reqConceptoId,
           prioridad: reqPrioridad,
           observaciones: reqNotas || undefined,
           items: validos.map(i => ({
-            descripcion_libre:      i.descripcion_libre,
-            unidad_libre:           i.unidad_libre || 'PZA',
-            cantidad:               Number(i.cantidad),
-            cantidad_presupuestada: null,
-            concepto_origen_id:     null,
-            justificacion:          i.justificacion,
-            notas:                  i.notas || undefined,
-            es_imprevisto:          true,
+            descripcion_libre:           i.descripcion_libre,
+            unidad_libre:                i.unidad_libre || 'PZA',
+            cantidad:                    Number(i.cantidad),
+            cantidad_presupuestada:      null,
+            concepto_origen_id:          null,
+            justificacion:               i.justificacion,
+            notas:                       i.notas || undefined,
+            es_imprevisto:               true,
+            especificacion_marca_modelo: i.especificacion_marca_modelo || undefined,
+            especificacion_detalle:      i.especificacion_detalle || undefined,
           })),
         });
         const r = res.data.data;
@@ -750,6 +778,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           id: r2.id_requisicion ?? r2.id, folio: r2.codigo ?? r2.folio,
           fecha: r2.fecha_solicitud ?? r2.fecha, estado: r2.estado,
           tipo: r2.tipo, prioridad: r2.prioridad, observaciones: r2.observaciones,
+          concepto_id: r2.concepto_id ?? null,
+          concepto_clave: r2.concepto_clave ?? null,
+          concepto_descripcion: r2.concepto_descripcion ?? null,
         })));
       } catch (err: any) {
         notify({ type: 'error', title: 'Error al crear requisición', message: err.response?.data?.message || err.message });
@@ -1437,6 +1468,11 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                           {new Date(req.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                         </span>
                       </div>
+                      {req.concepto_clave && (
+                        <p className="text-[10px] font-mono text-indigo-600 truncate">
+                          [{req.concepto_clave}] {req.concepto_descripcion}
+                        </p>
+                      )}
                       {req.observaciones && (
                         <p className="text-[11px] text-muted-foreground line-clamp-2">{req.observaciones}</p>
                       )}
@@ -1473,6 +1509,63 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
         accentColor={reqTipo === 'IMPREVISTO' ? 'amber' : 'indigo'}
       >
         <div className="space-y-5">
+
+          {/* ── Partida del catálogo (obligatoria para INSUMO / IMPREVISTO) ── */}
+          {reqTipo !== 'APU' && (() => {
+            const conceptoReq = conceptos.find(c => c.id === reqConceptoId) ?? null;
+            const filtrados2 = reqConceptoSearch2.trim()
+              ? conceptos.filter(c => `${c.clave} ${c.descripcion}`.toLowerCase().includes(reqConceptoSearch2.toLowerCase()))
+              : conceptos;
+            return (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Partida del catálogo <span className="text-red-500">*</span>
+                </p>
+                {conceptoReq ? (
+                  <div className="flex items-center justify-between rounded-xl border border-indigo-500/40 bg-indigo-500/5 px-3 py-2">
+                    <div>
+                      <p className="text-[10px] font-mono text-indigo-600 uppercase tracking-wider">{conceptoReq.clave}</p>
+                      <p className="text-xs font-bold text-foreground/80">{conceptoReq.descripcion}</p>
+                    </div>
+                    <button type="button" onClick={() => setReqConceptoId(null)}
+                      className="ml-2 text-muted-foreground hover:text-red-500">
+                      <IconX className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="relative">
+                      <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Buscar partida por clave o descripción..."
+                        value={reqConceptoSearch2}
+                        onChange={e => setReqConceptoSearch2(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border/60 rounded-lg focus:border-indigo-400 outline-none"
+                      />
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                      {filtrados2.length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground py-2 text-center">
+                          {conceptos.length === 0 ? 'Sin catálogo de obra — importa en Gerencia Técnica' : 'Sin coincidencias'}
+                        </p>
+                      ) : filtrados2.map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setReqConceptoId(c.id); setReqConceptoSearch2(''); }}
+                          className="w-full flex items-center gap-3 rounded-lg border border-border/30 px-3 py-2 text-left hover:border-indigo-400/40 hover:bg-indigo-500/5 transition-all"
+                        >
+                          <span className="text-[10px] font-mono text-indigo-600 shrink-0">{c.clave}</span>
+                          <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Selector tipo — 3 opciones */}
           <div className="grid grid-cols-3 gap-2">
@@ -1582,7 +1675,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                         type="button"
                         onClick={() => {
                           const cantDefault = insumo.cantidad_presupuestada ?? 0;
-                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: cantDefault, notas: '', especificaciones: [], justificacion: '' }]);
+                          setInsumosSeleccionados(prev => [...prev, { ...insumo, cantidad: cantDefault, notas: '', especificaciones: [], justificacion: '', especificacion_marca_modelo: '', especificacion_detalle: '' }]);
                           setInsumoSearch('');
                         }}
                         className={cn(
@@ -1686,9 +1779,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                           </div>
                         )}
                         {/* ── Especificaciones técnicas por partida ── */}
-                        <div className="px-4 pb-3 pt-1 border-t border-indigo-500/10">
+                        <div className="px-4 pb-3 pt-1 border-t border-indigo-500/10 space-y-1.5">
                           {item.especificaciones.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-1.5">
+                            <div className="flex flex-wrap gap-1 mb-1">
                               {item.especificaciones.map((spec, si) => (
                                 <span key={si} className="flex items-center gap-1 text-[9px] bg-indigo-500/10 text-indigo-700 rounded-full px-2 py-0.5 max-w-[240px]">
                                   <span className="truncate">{spec}</span>
@@ -1722,6 +1815,21 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                               }
                             }}
                             className="w-full text-[10px] bg-background border border-border/40 rounded-lg px-2.5 py-1.5 focus:border-indigo-400 outline-none placeholder:text-muted-foreground/60"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Marca / Modelo ref. (opcional)"
+                            value={item.especificacion_marca_modelo}
+                            maxLength={200}
+                            onChange={e => setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx ? { ...p, especificacion_marca_modelo: e.target.value } : p))}
+                            className="w-full text-[10px] bg-background border border-border/40 rounded-lg px-2.5 py-1.5 focus:border-indigo-400 outline-none placeholder:text-muted-foreground/60"
+                          />
+                          <textarea
+                            rows={2}
+                            placeholder="Especificaciones técnicas detalladas (opcional)"
+                            value={item.especificacion_detalle}
+                            onChange={e => setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx ? { ...p, especificacion_detalle: e.target.value } : p))}
+                            className="w-full resize-none text-[10px] bg-background border border-border/40 rounded-lg px-2.5 py-1.5 focus:border-indigo-400 outline-none placeholder:text-muted-foreground/60"
                           />
                         </div>
                       </div>
@@ -1895,7 +2003,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                   Materiales a solicitar <span className="text-red-500">*</span>
                 </p>
                 <button type="button"
-                  onClick={() => setItemsImprevisto(prev => [...prev, { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '' }])}
+                  onClick={() => setItemsImprevisto(prev => [...prev, { descripcion_libre: '', unidad_libre: 'PZA', cantidad: '', notas: '', justificacion: '', especificacion_marca_modelo: '', especificacion_detalle: '' }])}
                   className="flex items-center gap-1 text-[10px] font-black text-orange-600 hover:text-orange-500"
                 >
                   <IconPlus className="h-3 w-3" /> Agregar ítem
@@ -1966,6 +2074,26 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                         )}
                       />
                     </div>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <Input
+                        placeholder="Marca / Modelo ref. (opcional)"
+                        value={item.especificacion_marca_modelo}
+                        maxLength={200}
+                        onChange={e => setItemsImprevisto(prev => {
+                          const n = [...prev]; n[idx] = { ...n[idx], especificacion_marca_modelo: e.target.value }; return n;
+                        })}
+                        className="text-[10px]"
+                      />
+                      <Textarea
+                        rows={2}
+                        placeholder="Especificaciones técnicas detalladas (opcional)"
+                        value={item.especificacion_detalle}
+                        onChange={e => setItemsImprevisto(prev => {
+                          const n = [...prev]; n[idx] = { ...n[idx], especificacion_detalle: e.target.value }; return n;
+                        })}
+                        className="min-h-[50px] text-[10px]"
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -1998,7 +2126,8 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           <div className="border-t border-border/40 pt-4">
             <SubmitButton
               label={
-                reqTipo === 'IMPREVISTO' ? 'Enviar Imprevisto a Compras'
+                (reqTipo !== 'APU' && !reqConceptoId) ? 'Selecciona la partida del catálogo'
+                : reqTipo === 'IMPREVISTO' ? 'Enviar Imprevisto a Compras'
                 : reqTipo === 'APU' ? 'Generar Requisición APU'
                 : insumosSeleccionados.length === 0 ? 'Selecciona al menos un insumo'
                 : `Generar Requisición (${insumosSeleccionados.length} ítem${insumosSeleccionados.length !== 1 ? 's' : ''})`

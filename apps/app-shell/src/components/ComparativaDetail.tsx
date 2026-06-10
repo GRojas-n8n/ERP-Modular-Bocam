@@ -65,6 +65,12 @@ export interface CotizacionLinea {
   // Aprobación GT
   aprobacion_gt?: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
   comentario_gt?: string;
+  // Specs de la req (heredadas del item de requisición)
+  especificacion_marca_modelo?: string | null;
+  especificacion_detalle?: string | null;
+  // Preguntas del Residente / respuestas de Compras (flujo revisión)
+  pregunta_residente?: string | null;
+  respuesta_compras?: string | null;
 }
 
 export interface ProveedorComp {
@@ -113,6 +119,8 @@ export type EstadoComparativa =
   | 'EN_EVALUACION_TECNICA'
   | 'EVALUADO_TECNICAMENTE'
   | 'LOCKED'
+  | 'FIRMADO_BLOQUEADO'
+  | 'REVISION_SOLICITADA'
   | 'EN_APROBACION_GT'
   | 'APROBADO_GT'
   | 'RECHAZADO_GT'
@@ -132,6 +140,8 @@ export interface ComparativaLocal {
   segunda_opcion_proveedor_id?: string | null;
   firmado_por?: string | null;
   fecha_firma?: string | null;
+  veredicto_residente?: string | null;
+  proveedores_sugeridos?: string | null;
   proveedores: ProveedorComp[];
   lineas: CotizacionLinea[];
   lineas_detalle?: LineaDetalleTecnico[];
@@ -152,6 +162,8 @@ const ESTADO_STYLE: Record<string, { badge: string; label: string }> = {
   EN_EVALUACION_TECNICA:  { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-700',    label: 'En Evaluación Técnica' },
   EVALUADO_TECNICAMENTE:  { badge: 'border-blue-500/20 bg-blue-500/10 text-blue-700',       label: 'Evaluado Técnicamente' },
   LOCKED:                 { badge: 'border-red-500/20 bg-red-500/10 text-red-700',          label: '🔒 LOCKED' },
+  FIRMADO_BLOQUEADO:      { badge: 'border-red-700/30 bg-red-700/10 text-red-800',          label: '🔒 Firmado y Bloqueado' },
+  REVISION_SOLICITADA:    { badge: 'border-orange-500/20 bg-orange-500/10 text-orange-600', label: 'Revisión Solicitada' },
   EN_APROBACION_GT:       { badge: 'border-violet-500/20 bg-violet-500/10 text-violet-700', label: 'En Aprobación GT' },
   APROBADO_GT:            { badge: 'border-green-500/20 bg-green-500/10 text-green-700',    label: 'Aprobado por GT' },
   RECHAZADO_GT:           { badge: 'border-red-500/20 bg-red-500/10 text-red-700',          label: 'Rechazado por GT' },
@@ -190,6 +202,8 @@ interface Props {
   onExportOcPdf?: (oc: ComparativaLocal['ordenes_compra'][number]) => void;
   onExportComparativaPdf?: () => void;
   proveedoresCatalogo?: ProveedorCatalogoItem[];
+  /** Vista de Residente: oculta precios y habilita flujo de evaluación técnica pura */
+  modo?: 'compras' | 'residente';
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -197,6 +211,7 @@ interface Props {
 export const ComparativaDetail: React.FC<Props> = ({
   requisicionFolio, comparativa: comp, insumos, isDemo, onBack, onUpdate,
   onExportOcPdf, onExportComparativaPdf, proveedoresCatalogo = [],
+  modo = 'compras',
 }) => {
   const { user } = useTenant();
   const { notify } = useNotification();
@@ -219,7 +234,21 @@ export const ComparativaDetail: React.FC<Props> = ({
   // 7.1 Panel evaluación técnica (Residente)
   const [showEvalPanel, setShowEvalPanel] = useState(false);
   const [evalForm, setEvalForm] = useState<Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }>>({});
+  const [preguntasEval, setPreguntasEval] = useState<Record<string, string>>({});
   const [enviandoEval, setEnviandoEval] = useState(false);
+
+  // Veredicto del Residente
+  const [veredicto, setVeredicto] = useState<string>(comp.veredicto_residente ?? '');
+  const [provSugeridos, setProvSugeridos] = useState<string[]>(() => {
+    try { return JSON.parse(comp.proveedores_sugeridos ?? '[]'); } catch { return []; }
+  });
+  const [guardandoVeredicto, setGuardandoVeredicto] = useState(false);
+
+  // Desbloqueo admin
+  const [showDesbloquearModal, setShowDesbloquearModal] = useState(false);
+  const [justificacionDesbloqueo, setJustificacionDesbloqueo] = useState('');
+  const [desbloqueando, setDesbloqueando] = useState(false);
+  const [auditDesbloqueos, setAuditDesbloqueos] = useState<{ id_auditoria: string; timestamp_desbloqueo: string; desbloqueado_por: string; justificacion: string }[]>([]);
 
   // Selección de proveedor (1ª/2ª opción)
   const [primeraOpcion, setPrimeraOpcion] = useState<string>(comp.primera_opcion_proveedor_id ?? '');
@@ -331,6 +360,14 @@ export const ComparativaDetail: React.FC<Props> = ({
     setGtForm(init);
     setComentarioGTGeneral('');
   }, [showGTPanel]);
+
+  // Cargar auditoría de desbloqueos si admin y cuadro firmado
+  useEffect(() => {
+    if (isDemo || !roles.includes('admin')) return;
+    api.get(`/api/v1/compras/comparativas/${comp.id}/auditoria-desbloqueos`)
+      .then(res => setAuditDesbloqueos(res.data?.data ?? []))
+      .catch(() => {});
+  }, [comp.id, comp.estado]);
 
   // Cargar detalle completo del cuadro (lineas_detalle + specs + anotaciones)
   useEffect(() => {
@@ -478,9 +515,12 @@ export const ComparativaDetail: React.FC<Props> = ({
   // Cuadro bloqueado para edición si ya salió del flujo de llenado
   const locked = ['AUTORIZADA', 'APROBADO_GT', 'RECHAZADO_GT', 'CERRADO',
                   'EN_EVALUACION_TECNICA', 'EVALUADO_TECNICAMENTE', 'EN_APROBACION_GT',
-                  'LOCKED', 'SUPERSEDIDO'].includes(comp.estado);
-  const isLocked = comp.estado === 'LOCKED';
+                  'LOCKED', 'FIRMADO_BLOQUEADO', 'REVISION_SOLICITADA', 'SUPERSEDIDO'].includes(comp.estado);
+  const isLocked = comp.estado === 'LOCKED' || comp.estado === 'FIRMADO_BLOQUEADO';
+  const isFirmadoBloqueado = comp.estado === 'FIRMADO_BLOQUEADO';
   const isSupersedido = comp.estado === 'SUPERSEDIDO';
+  const isRevisionSolicitada = comp.estado === 'REVISION_SOLICITADA';
+  const isResidenteMode = modo === 'residente';
 
   const formatMXN = (n: number) =>
     n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 });
@@ -502,8 +542,10 @@ export const ComparativaDetail: React.FC<Props> = ({
   const todasEvaluadas = comp.lineas.length > 0 && comp.lineas.every(
     l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE' && l.evaluacion_tecnica !== '?'
   );
-  const showFirmaBtn = (isResident || roles.includes('admin')) && comp.estado === 'EN_EVALUACION_TECNICA' && todasEvaluadas && !!comp.primera_opcion_proveedor_id;
+  const veredictoListo = veredicto.trim().length > 0 && provSugeridos.length > 0;
+  const showFirmaBtn = (isResident || roles.includes('admin')) && comp.estado === 'EN_EVALUACION_TECNICA' && todasEvaluadas && veredictoListo;
   const showNuevaRevisionBtn = (isProcurement || roles.includes('admin')) && (comp.estado === 'EN_EVALUACION_TECNICA' || comp.estado === 'LOCKED');
+  const showDesbloquearBtn = roles.includes('admin') && isFirmadoBloqueado;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -688,15 +730,20 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   // Guardar evaluación técnica del Residente (C/NC/DA/?)
   const handleGuardarEvaluacion = async () => {
-    // Validate comments required for NC/DA/?
-    const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
+    const REQUIRES_COMMENT = new Set(['NC', 'DA']);
     for (const l of comp.lineas) {
       const form = evalForm[l.id];
       if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
         notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${l.insumo_descripcion}".` });
         return;
       }
+      if (form?.decision === '?' && !preguntasEval[l.id]?.trim()) {
+        notify({ type: 'error', title: 'Pregunta requerida', message: `El renglón "${l.insumo_descripcion}" tiene "?" pero no tiene pregunta.` });
+        return;
+      }
     }
+
+    const tienePreguntas = comp.lineas.some(l => evalForm[l.id]?.decision === '?');
 
     setEnviandoEval(true);
     try {
@@ -704,6 +751,7 @@ export const ComparativaDetail: React.FC<Props> = ({
         detalle_id: l.id,
         evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE',
         comentario_tecnico: evalForm[l.id]?.comentario || undefined,
+        pregunta_residente: evalForm[l.id]?.decision === '?' ? (preguntasEval[l.id] ?? undefined) : undefined,
       }));
 
       if (isDemo) {
@@ -713,7 +761,15 @@ export const ComparativaDetail: React.FC<Props> = ({
           comentario_tecnico: evalForm[l.id]?.comentario || undefined,
         }));
         onUpdate({ ...comp, lineas: lineasActualizadas });
-        notify({ type: 'success', title: 'Evaluación guardada', message: 'Selecciona primera opción y firma para bloquear el cuadro.' });
+        notify({ type: 'success', title: 'Evaluación guardada', message: tienePreguntas ? 'Se enviarán las preguntas a Compras.' : 'Llena el veredicto y firma para bloquear el cuadro.' });
+      } else if (tienePreguntas) {
+        // Flujo revisión con preguntas — crea nueva revisión
+        const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/revision-con-preguntas`, { evaluaciones });
+        const nuevaRevision = resp.data.data?.revision_label ?? '?';
+        notify({ type: 'success', title: `Se creó la revisión ${nuevaRevision}`, message: 'Compras verá tus preguntas y podrá responderlas.' });
+        setShowEvalPanel(false);
+        onBack();
+        return;
       } else {
         const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/evaluar`, { evaluaciones });
         const updatedData = resp.data.data ?? {};
@@ -723,7 +779,7 @@ export const ComparativaDetail: React.FC<Props> = ({
           comentario_tecnico: evalForm[l.id]?.comentario || l.comentario_tecnico,
         }));
         onUpdate({ ...comp, ...updatedData, lineas: lineasActualizadas });
-        notify({ type: 'success', title: 'Evaluación guardada', message: 'Selecciona primera opción y firma para bloquear el cuadro.' });
+        notify({ type: 'success', title: 'Evaluación guardada', message: 'Llena el veredicto y firma para bloquear el cuadro.' });
       }
       setShowEvalPanel(false);
     } catch (err: any) {
@@ -753,16 +809,19 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
-  // Firmar cuadro (LOCKED)
+  // Firmar cuadro (FIRMADO_BLOQUEADO)
   const handleFirmar = async () => {
     setFirmando(true);
     setFirmaError(null);
     try {
       if (!isDemo) {
-        const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/firmar`);
-        onUpdate({ ...comp, estado: 'LOCKED', ...resp.data.data });
+        const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/firmar`, {
+          veredicto_residente: veredicto.trim(),
+          proveedores_sugeridos: provSugeridos,
+        });
+        onUpdate({ ...comp, estado: 'FIRMADO_BLOQUEADO', veredicto_residente: veredicto.trim(), proveedores_sugeridos: JSON.stringify(provSugeridos), ...resp.data.data });
       } else {
-        onUpdate({ ...comp, estado: 'LOCKED', firmado_por: 'demo', fecha_firma: new Date().toISOString() });
+        onUpdate({ ...comp, estado: 'FIRMADO_BLOQUEADO', firmado_por: 'demo', fecha_firma: new Date().toISOString(), veredicto_residente: veredicto.trim(), proveedores_sugeridos: JSON.stringify(provSugeridos) });
       }
       setShowFirmaModal(false);
       setFirmaConfirmado(false);
@@ -771,6 +830,46 @@ export const ComparativaDetail: React.FC<Props> = ({
       setFirmaError(err.response?.data?.message ?? err.message);
     } finally {
       setFirmando(false);
+    }
+  };
+
+  // Guardar veredicto del Residente
+  const handleGuardarVeredicto = async () => {
+    if (!veredicto.trim() || provSugeridos.length === 0) return;
+    setGuardandoVeredicto(true);
+    try {
+      await api.put(`/api/v1/compras/comparativas/${comp.id}/veredicto`, {
+        veredicto_residente: veredicto.trim(),
+        proveedores_sugeridos: provSugeridos,
+      });
+      onUpdate({ ...comp, veredicto_residente: veredicto.trim(), proveedores_sugeridos: JSON.stringify(provSugeridos) });
+      notify({ type: 'success', title: 'Veredicto guardado', message: 'Puedes firmar cuando estés listo.' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar veredicto', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoVeredicto(false);
+    }
+  };
+
+  // Desbloquear cuadro (admin)
+  const handleDesbloquear = async () => {
+    if (justificacionDesbloqueo.trim().length < 10) return;
+    setDesbloqueando(true);
+    try {
+      const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/desbloquear`, {
+        justificacion: justificacionDesbloqueo.trim(),
+      });
+      onUpdate({ ...comp, estado: 'EN_EVALUACION_TECNICA', ...resp.data.data });
+      setShowDesbloquearModal(false);
+      setJustificacionDesbloqueo('');
+      notify({ type: 'success', title: 'Cuadro desbloqueado', message: 'El Residente puede re-evaluar.' });
+      // Recargar auditoría
+      const audit = await api.get(`/api/v1/compras/comparativas/${comp.id}/auditoria-desbloqueos`);
+      setAuditDesbloqueos(audit.data?.data ?? []);
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al desbloquear', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setDesbloqueando(false);
     }
   };
 
@@ -950,20 +1049,23 @@ export const ComparativaDetail: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Stepper visual — 4 pasos del ciclo de cotización */}
+      {/* Stepper visual — 5 pasos del ciclo de cotización */}
       {(() => {
         const STEPS = [
-          { n: 1, label: 'Cotizando' },
-          { n: 2, label: 'Evaluación' },
-          { n: 3, label: 'Aprob. GT' },
-          { n: 4, label: 'OC Emitida' },
+          { n: 1, label: 'Especif.' },
+          { n: 2, label: 'Cotizando' },
+          { n: 3, label: 'Evaluación' },
+          { n: 4, label: 'Aprob. GT' },
+          { n: 5, label: 'OC Emitida' },
         ] as const;
         const currentStep =
-          comp.estado === 'BORRADOR'               ? 1 :
-          comp.estado === 'EN_EVALUACION_TECNICA'  ? 2 :
-          comp.estado === 'EVALUADO_TECNICAMENTE'  ? 2 :
-          comp.estado === 'EN_APROBACION_GT'       ? 3 :
-          ['APROBADO_GT', 'AUTORIZADA', 'CERRADO'].includes(comp.estado) ? 4 : 1;
+          comp.estado === 'BORRADOR'               ? 2 :
+          comp.estado === 'EN_EVALUACION_TECNICA'  ? 3 :
+          comp.estado === 'EVALUADO_TECNICAMENTE'  ? 3 :
+          comp.estado === 'FIRMADO_BLOQUEADO'      ? 3 :
+          comp.estado === 'REVISION_SOLICITADA'    ? 3 :
+          comp.estado === 'EN_APROBACION_GT'       ? 4 :
+          ['APROBADO_GT', 'AUTORIZADA', 'CERRADO'].includes(comp.estado) ? 5 : 2;
         return (
           <div className="flex flex-wrap items-center gap-1">
             {STEPS.map((s, i) => {
@@ -1051,13 +1153,48 @@ export const ComparativaDetail: React.FC<Props> = ({
         </div>
       )}
 
-      {isLocked && (
+      {isFirmadoBloqueado && (
+        <div className="flex items-start gap-3 rounded-2xl border border-red-700/20 bg-red-700/5 px-4 py-3">
+          <span className="text-lg">🔒</span>
+          <div className="flex-1">
+            <p className="text-xs font-black text-red-800">Cuadro Firmado y Bloqueado — evaluación técnica definitiva</p>
+            <p className="mt-0.5 text-[11px] text-red-700/80">
+              Firmado el {comp.fecha_firma ? new Date(comp.fecha_firma).toLocaleString('es-MX') : '—'}.
+            </p>
+            {comp.veredicto_residente && (
+              <p className="mt-1 text-[11px] text-foreground/80 italic">Veredicto: {comp.veredicto_residente}</p>
+            )}
+          </div>
+          {showDesbloquearBtn && (
+            <button
+              onClick={() => { setShowDesbloquearModal(true); setJustificacionDesbloqueo(''); }}
+              className="shrink-0 rounded-xl border border-red-700/30 bg-red-700/10 px-3 py-1.5 text-[10px] font-black text-red-800 hover:bg-red-700/20 transition-colors"
+            >
+              Desbloquear
+            </button>
+          )}
+        </div>
+      )}
+
+      {isLocked && !isFirmadoBloqueado && (
         <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
           <span className="text-lg">🔒</span>
           <div>
             <p className="text-xs font-black text-red-700">Cuadro LOCKED — evaluación técnica firmada</p>
             <p className="mt-0.5 text-[11px] text-red-600/80">
               Firmado el {comp.fecha_firma ? new Date(comp.fecha_firma).toLocaleString('es-MX') : '—'}. Los datos técnicos son inmutables.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isRevisionSolicitada && (
+        <div className="flex items-start gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/5 px-4 py-3">
+          <span className="text-lg">📋</span>
+          <div>
+            <p className="text-xs font-black text-orange-700">Revisión solicitada — el Residente tiene dudas</p>
+            <p className="mt-0.5 text-[11px] text-orange-600/80">
+              El Residente marcó renglones con "?" en la revisión anterior. Compras debe responder las preguntas en la nueva revisión.
             </p>
           </div>
         </div>
@@ -1286,7 +1423,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                   <th className="px-5 py-3 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground w-[220px]">Material</th>
                   <th className="px-3 py-3 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground w-16">Cant.</th>
                   <th className="px-3 py-3 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground w-12">UM</th>
-                  {comp.proveedores.map((prov, i) => {
+                  {!isResidenteMode && comp.proveedores.map((prov, i) => {
                     const c = PROV_COLORS[i] || PROV_COLORS[0];
                     return (
                       <th key={prov.id} className="px-3 py-3 text-right text-[9px] font-black uppercase tracking-widest w-36" style={{ color: c.col }}>
@@ -1294,7 +1431,15 @@ export const ComparativaDetail: React.FC<Props> = ({
                       </th>
                     );
                   })}
-                  <th className="px-3 py-3 text-center text-[9px] font-black uppercase tracking-widest text-amber-600 w-28">Ganador</th>
+                  {isResidenteMode && comp.proveedores.map((prov, i) => {
+                    const c = PROV_COLORS[i] || PROV_COLORS[0];
+                    return (
+                      <th key={prov.id} className="px-3 py-3 text-left text-[9px] font-black uppercase tracking-widest w-36" style={{ color: c.col }}>
+                        {String.fromCharCode(65 + i)} · {prov.nombre.split(' ').slice(0, 2).join(' ')}
+                      </th>
+                    );
+                  })}
+                  {!isResidenteMode && <th className="px-3 py-3 text-center text-[9px] font-black uppercase tracking-widest text-amber-600 w-28">Ganador</th>}
                   {/* Columna de evaluación técnica visible cuando hay datos */}
                   {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && (
                     <th className="px-3 py-3 text-center text-[9px] font-black uppercase tracking-widest text-amber-600 w-28">Eval. Técnica</th>
@@ -1314,6 +1459,17 @@ export const ComparativaDetail: React.FC<Props> = ({
                     <td className="px-5 py-3">
                       <div className="text-[10px] font-black text-emerald-700">{linea.insumo_clave}</div>
                       <div className="text-xs text-foreground max-w-[200px] truncate">{linea.insumo_descripcion}</div>
+                      {/* Specs de la req (modo residente) */}
+                      {isResidenteMode && (linea.especificacion_marca_modelo || linea.especificacion_detalle) && (
+                        <div className="mt-1.5 rounded border border-indigo-500/20 bg-indigo-500/5 px-2 py-1.5 space-y-0.5">
+                          {linea.especificacion_marca_modelo && (
+                            <div className="text-[9px] font-black text-indigo-700">Marca/Modelo: {linea.especificacion_marca_modelo}</div>
+                          )}
+                          {linea.especificacion_detalle && (
+                            <div className="text-[9px] text-muted-foreground leading-tight">{linea.especificacion_detalle}</div>
+                          )}
+                        </div>
+                      )}
                       {/* Detalles técnicos — editable en BORRADOR, solo lectura después */}
                       {!locked ? (
                         <div className="mt-1.5 space-y-1">
@@ -1341,21 +1497,56 @@ export const ComparativaDetail: React.FC<Props> = ({
                           {dt.espec && <div className="mt-0.5 text-[9px] text-muted-foreground leading-tight">{dt.espec}</div>}
                         </>
                       )}
+                      {/* Pregunta del Residente (modo compras, revisión) */}
+                      {!isResidenteMode && comp.revision_padre_id && linea.pregunta_residente && (
+                        <div className="mt-2 rounded border border-amber-500/30 bg-amber-500/5 px-2 py-1.5 space-y-1">
+                          <p className="text-[9px] font-black text-amber-700">Residente pregunta:</p>
+                          <p className="text-[10px] text-foreground leading-tight">{linea.pregunta_residente}</p>
+                          {linea.respuesta_compras ? (
+                            <p className="text-[9px] text-green-700">✓ Respondido</p>
+                          ) : (
+                            <div className="mt-1 space-y-1">
+                              <textarea
+                                className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-amber-500 min-h-[48px]"
+                                placeholder="Escribe tu respuesta..."
+                                id={`resp-${linea.id}`}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* Pregunta + respuesta (modo residente, revisión siguiente) */}
+                      {isResidenteMode && linea.pregunta_residente && (
+                        <div className="mt-2 space-y-1">
+                          <div className="rounded border border-indigo-500/30 bg-indigo-500/5 px-2 py-1">
+                            <p className="text-[9px] font-black text-indigo-700">Tu pregunta:</p>
+                            <p className="text-[10px] text-foreground">{linea.pregunta_residente}</p>
+                          </div>
+                          {linea.respuesta_compras && (
+                            <div className="rounded border border-green-500/30 bg-green-500/5 px-2 py-1">
+                              <p className="text-[9px] font-black text-green-700">Respuesta de Compras:</p>
+                              <p className="text-[10px] text-foreground">{linea.respuesta_compras}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {/* Badge / botón de fichas técnicas */}
-                      <button
-                        onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
-                        className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
-                          nFichas && nFichas > 0
-                            ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20'
-                            : 'text-muted-foreground/50 hover:text-indigo-500'
-                        )}
-                      >
-                        📎 {nFichas != null ? `${nFichas} ficha${nFichas !== 1 ? 's' : ''}` : canUpload ? '+ Subir ficha' : 'Sin fichas'}
-                      </button>
+                      {!isResidenteMode && (
+                        <button
+                          onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
+                          className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
+                            nFichas && nFichas > 0
+                              ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20'
+                              : 'text-muted-foreground/50 hover:text-indigo-500'
+                          )}
+                        >
+                          📎 {nFichas != null ? `${nFichas} ficha${nFichas !== 1 ? 's' : ''}` : canUpload ? '+ Subir ficha' : 'Sin fichas'}
+                        </button>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-center"><span className="text-sm font-bold">{linea.cantidad}</span></td>
                     <td className="px-3 py-3 text-center"><span className="text-[10px] text-muted-foreground">{linea.insumo_unidad}</span></td>
-                    {comp.proveedores.map((prov) => {
+                    {!isResidenteMode && comp.proveedores.map((prov) => {
                       const precio = parseFloat(linea.precios[prov.id] || '0') || 0;
                       const subtotal = precio * linea.cantidad;
                       return (
@@ -1376,26 +1567,39 @@ export const ComparativaDetail: React.FC<Props> = ({
                         </td>
                       );
                     })}
-                    <td className="px-3 py-3">
-                      <div className="flex justify-center gap-1">
-                        {comp.proveedores.map((prov, i) => {
-                          const c = PROV_COLORS[i] || PROV_COLORS[0];
-                          const isWinner = linea.ganador === prov.id;
-                          const hasPrecio = !!(linea.precios[prov.id] && parseFloat(linea.precios[prov.id]) > 0);
-                          return (
-                            <button
-                              key={prov.id}
-                              onClick={() => hasPrecio && handleSetGanador(linea.id, prov.id)}
-                              disabled={!hasPrecio || locked}
-                              title={isWinner ? `Ganador: ${prov.nombre}` : hasPrecio ? `Seleccionar ${prov.nombre}` : 'Sin precio'}
-                              className={cn('h-7 w-7 rounded-lg text-[10px] font-black transition-all shadow-sm', isWinner ? c.win : hasPrecio && !locked ? c.btn : 'cursor-not-allowed opacity-25 bg-muted')}
-                            >
-                              {String.fromCharCode(65 + i)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </td>
+                    {isResidenteMode && comp.proveedores.map((prov) => {
+                      return (
+                        <td key={prov.id} className="px-2 py-2 text-left align-top">
+                          {linea.valor_ofrecido_spec ? (
+                            <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[9px] text-sky-700">{linea.valor_ofrecido_spec}</span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground/40">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    {!isResidenteMode && (
+                      <td className="px-3 py-3">
+                        <div className="flex justify-center gap-1">
+                          {comp.proveedores.map((prov, i) => {
+                            const c = PROV_COLORS[i] || PROV_COLORS[0];
+                            const isWinner = linea.ganador === prov.id;
+                            const hasPrecio = !!(linea.precios[prov.id] && parseFloat(linea.precios[prov.id]) > 0);
+                            return (
+                              <button
+                                key={prov.id}
+                                onClick={() => hasPrecio && handleSetGanador(linea.id, prov.id)}
+                                disabled={!hasPrecio || locked}
+                                title={isWinner ? `Ganador: ${prov.nombre}` : hasPrecio ? `Seleccionar ${prov.nombre}` : 'Sin precio'}
+                                className={cn('h-7 w-7 rounded-lg text-[10px] font-black transition-all shadow-sm', isWinner ? c.win : hasPrecio && !locked ? c.btn : 'cursor-not-allowed opacity-25 bg-muted')}
+                              >
+                                {String.fromCharCode(65 + i)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    )}
                     {/* Columna evaluación técnica */}
                     {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && (
                       <td className="px-3 py-3 text-center">
@@ -1469,7 +1673,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                   </React.Fragment>
                   );
                 })}
-                {comp.lineas.length > 0 && (
+                {comp.lineas.length > 0 && !isResidenteMode && (
                   <tr className="border-t-2 border-border/40 bg-muted/30">
                     <td colSpan={3} className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total estimado</td>
                     {comp.proveedores.map((prov, i) => {
@@ -1496,6 +1700,36 @@ export const ComparativaDetail: React.FC<Props> = ({
             </table>
           </div>
 
+          {/* Footer: responder preguntas del Residente (modo compras, revisión) */}
+          {!isResidenteMode && comp.revision_padre_id && comp.lineas.some(l => l.pregunta_residente && !l.respuesta_compras) && comp.estado === 'BORRADOR' && (
+            <div className="border-t border-amber-500/20 bg-amber-500/5 px-6 py-4 flex items-center justify-between gap-3">
+              <p className="text-[10px] text-amber-700 font-bold">El Residente tiene preguntas — escribe tus respuestas en cada renglón y guarda.</p>
+              <Button
+                onClick={async () => {
+                  const respuestas = comp.lineas
+                    .filter(l => l.pregunta_residente)
+                    .map(l => ({
+                      detalle_id: l.id,
+                      respuesta_compras: (document.getElementById(`resp-${l.id}`) as HTMLTextAreaElement)?.value?.trim() ?? '',
+                    }))
+                    .filter(r => r.respuesta_compras);
+                  if (respuestas.length === 0) return;
+                  try {
+                    await api.put(`/api/v1/compras/comparativas/${comp.id}/responder-preguntas`, { respuestas });
+                    notify({ type: 'success', title: 'Respuestas guardadas', message: 'El Residente puede continuar con la evaluación.' });
+                    // Reload para reflejar respuestas
+                    const full = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
+                    onUpdate({ ...comp, ...full.data.data });
+                  } catch (err: any) {
+                    notify({ type: 'error', title: 'Error al guardar respuestas', message: err.response?.data?.message ?? err.message });
+                  }
+                }}
+                className="rounded-xl bg-amber-600 px-4 text-xs font-black text-white hover:bg-amber-500 whitespace-nowrap"
+              >
+                Guardar respuestas
+              </Button>
+            </div>
+          )}
           {/* Footer tabla: agregar material + botón legacy */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/30 px-6 py-4">
             {!locked && (
@@ -1619,6 +1853,78 @@ export const ComparativaDetail: React.FC<Props> = ({
         </Card>
       )}
 
+      {/* Sección: Veredicto del Residente */}
+      {comp.estado === 'EN_EVALUACION_TECNICA' && (isResident || roles.includes('admin')) && !isResidenteMode && (
+        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-4 space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Veredicto del Residente</p>
+          <div>
+            <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Veredicto técnico general *</label>
+            <Textarea
+              className="mt-1 rounded-xl text-xs min-h-[72px]"
+              placeholder="Describe tu evaluación general del cuadro: cuál proveedor recomiendas y por qué..."
+              value={veredicto}
+              onChange={e => setVeredicto(e.target.value)}
+              disabled={isFirmadoBloqueado}
+            />
+          </div>
+          <div>
+            <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Proveedor(es) recomendado(s) *</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {comp.proveedores.map((prov, i) => {
+                const sel = provSugeridos.includes(prov.id);
+                return (
+                  <button
+                    key={prov.id}
+                    disabled={isFirmadoBloqueado}
+                    onClick={() => setProvSugeridos(prev => sel ? prev.filter(id => id !== prov.id) : [...prev, prov.id])}
+                    className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all',
+                      sel ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-border/40 bg-muted text-muted-foreground hover:border-indigo-500/40',
+                      isFirmadoBloqueado && 'cursor-default opacity-70'
+                    )}
+                  >
+                    {String.fromCharCode(65 + i)} · {prov.nombre}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {!isFirmadoBloqueado && (
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                onClick={handleGuardarVeredicto}
+                disabled={!veredicto.trim() || provSugeridos.length === 0 || guardandoVeredicto}
+                className="rounded-xl bg-indigo-600 px-4 text-xs font-black text-white hover:bg-indigo-500 disabled:opacity-40"
+              >
+                {guardandoVeredicto ? 'Guardando...' : 'Guardar veredicto'}
+              </Button>
+              {(!veredicto.trim() || provSugeridos.length === 0) && (
+                <p className="text-[9px] text-muted-foreground">Completa el veredicto y selecciona al menos un proveedor antes de firmar.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Veredicto solo lectura (post-firma) */}
+      {isFirmadoBloqueado && comp.veredicto_residente && (
+        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-4 space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Veredicto del Residente — registrado</p>
+          <p className="text-[11px] text-foreground leading-relaxed">{comp.veredicto_residente}</p>
+          {(() => {
+            const ids: string[] = (() => { try { return JSON.parse(comp.proveedores_sugeridos ?? '[]'); } catch { return []; } })();
+            const nombres = ids.map(id => comp.proveedores.find(p => p.id === id)?.nombre ?? id);
+            return nombres.length > 0 ? (
+              <p className="text-[10px] text-indigo-600 font-bold">
+                Proveedor(es) recomendado(s): {nombres.join(', ')}
+              </p>
+            ) : null;
+          })()}
+          {comp.fecha_firma && (
+            <p className="text-[9px] text-muted-foreground">Firmado el {new Date(comp.fecha_firma).toLocaleString('es-MX')}</p>
+          )}
+        </div>
+      )}
+
       {/* Panel: Evaluación Técnica — C / NC / DA / ? */}
       {showEvalPanel && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center" onClick={e => { if (e.target === e.currentTarget) setShowEvalPanel(false); }}>
@@ -1686,23 +1992,50 @@ export const ComparativaDetail: React.FC<Props> = ({
                   >
                     📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
                   </button>
-                  <Textarea
-                    className="mt-2 rounded-xl text-xs min-h-[48px]"
-                    placeholder={decision === '?' ? '¿Qué información falta para decidir?' : REQUIRES_COMMENT.has(decision) ? 'Comentario técnico (obligatorio)...' : 'Comentario técnico (opcional)...'}
-                    value={evalForm[linea.id]?.comentario ?? ''}
-                    onChange={e => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], comentario: e.target.value } }))}
-                  />
-                  {REQUIRES_COMMENT.has(decision) && !evalForm[linea.id]?.comentario?.trim() && (
-                    <p className="mt-1 text-[9px] text-red-500">Requerido para {decision}</p>
+                  {decision === '?' && (
+                    <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 space-y-1.5">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">¿Qué necesitas aclarar? (obligatorio)</p>
+                      <Textarea
+                        className="rounded-xl text-xs min-h-[56px]"
+                        placeholder="Describe la duda o información faltante..."
+                        value={preguntasEval[linea.id] ?? ''}
+                        onChange={e => setPreguntasEval(p => ({ ...p, [linea.id]: e.target.value }))}
+                      />
+                      {!preguntasEval[linea.id]?.trim() && (
+                        <p className="text-[9px] text-indigo-600">La pregunta es obligatoria para usar "?"</p>
+                      )}
+                    </div>
+                  )}
+                  {decision !== '?' && (
+                    <>
+                      <Textarea
+                        className="mt-2 rounded-xl text-xs min-h-[48px]"
+                        placeholder={REQUIRES_COMMENT.has(decision) ? 'Comentario técnico (obligatorio)...' : 'Comentario técnico (opcional)...'}
+                        value={evalForm[linea.id]?.comentario ?? ''}
+                        onChange={e => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], comentario: e.target.value } }))}
+                      />
+                      {REQUIRES_COMMENT.has(decision) && !evalForm[linea.id]?.comentario?.trim() && (
+                        <p className="mt-1 text-[9px] text-red-500">Requerido para {decision}</p>
+                      )}
+                    </>
                   )}
                 </div>
                 );
               })}
             </div>
-            <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
+            <div className="border-t border-border/40 px-6 py-4 flex flex-wrap justify-end gap-3">
+              {comp.lineas.some(l => evalForm[l.id]?.decision === '?') && (
+                <p className="w-full text-[10px] text-indigo-700 font-bold">
+                  ⚠️ Tienes renglones con "?" — al guardar se creará una nueva revisión y Compras recibirá tus preguntas.
+                </p>
+              )}
               <Button onClick={() => setShowEvalPanel(false)} variant="outline" className="rounded-xl">Cancelar</Button>
-              <Button onClick={handleGuardarEvaluacion} disabled={enviandoEval} className="rounded-xl bg-amber-500 px-6 font-black text-white hover:bg-amber-400">
-                {enviandoEval ? 'Guardando...' : 'Guardar Evaluación'}
+              <Button
+                onClick={handleGuardarEvaluacion}
+                disabled={enviandoEval || comp.lineas.some(l => evalForm[l.id]?.decision === '?' && !preguntasEval[l.id]?.trim())}
+                className="rounded-xl bg-amber-500 px-6 font-black text-white hover:bg-amber-400 disabled:opacity-40"
+              >
+                {enviandoEval ? 'Guardando...' : comp.lineas.some(l => evalForm[l.id]?.decision === '?') ? 'Guardar y Crear Revisión' : 'Guardar Evaluación'}
               </Button>
             </div>
           </div>
@@ -1812,7 +2145,6 @@ export const ComparativaDetail: React.FC<Props> = ({
               {/* Resumen */}
               <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 space-y-2">
                 <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Cuadro</span><span className="font-black">{comp.codigo ?? comp.id.slice(0, 8)}</span></div>
-                <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">1ª Opción</span><span className="font-black">{comp.proveedores.find(p => p.id === primeraOpcion)?.nombre ?? '—'}</span></div>
                 <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Total renglones</span><span className="font-black">{comp.lineas.length}</span></div>
                 <div className="flex gap-3 text-[10px]">
                   <span className="rounded bg-green-500/10 px-2 py-0.5 text-green-700 font-black">C: {comp.lineas.filter(l => l.evaluacion_tecnica === 'C').length}</span>
@@ -1820,8 +2152,20 @@ export const ComparativaDetail: React.FC<Props> = ({
                   <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-700 font-black">DA: {comp.lineas.filter(l => l.evaluacion_tecnica === 'DA').length}</span>
                 </div>
               </div>
+              {/* Veredicto resumido */}
+              {veredicto.trim() && (
+                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 space-y-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">Veredicto a firmar</p>
+                  <p className="text-[11px] text-foreground leading-relaxed">{veredicto.trim()}</p>
+                  {provSugeridos.length > 0 && (
+                    <p className="text-[10px] text-indigo-600 font-bold">
+                      Proveedor(es) sugerido(s): {provSugeridos.map(id => comp.proveedores.find(p => p.id === id)?.nombre ?? id).join(', ')}
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-                <p className="text-[11px] text-red-700 font-bold">⚠️ Esta acción es irreversible. Una vez firmada, la evaluación técnica no podrá modificarse por ningún usuario.</p>
+                <p className="text-[11px] text-red-700 font-bold">⚠️ Al firmar, este cuadro quedará bloqueado permanentemente. Solo el administrador podrá desbloquearlo. ¿Confirmas?</p>
               </div>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -1862,6 +2206,61 @@ export const ComparativaDetail: React.FC<Props> = ({
               <Button onClick={() => setShowRevisionConfirm(false)} variant="outline" className="rounded-xl" disabled={creandoRevision}>Cancelar</Button>
               <Button onClick={handleNuevaRevision} disabled={creandoRevision} className="rounded-xl bg-orange-500 px-5 font-black text-white hover:bg-orange-400">
                 {creandoRevision ? 'Creando...' : 'Crear revisión'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sección: Historial de desbloqueos (admin) ─────────────────────────── */}
+      {roles.includes('admin') && auditDesbloqueos.length > 0 && (
+        <div className="rounded-2xl border border-slate-400/30 bg-slate-400/5 px-4 py-4 space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Historial de desbloqueos</p>
+          {auditDesbloqueos.map(a => (
+            <div key={a.id_auditoria} className="rounded-xl border border-border/30 bg-background px-3 py-2.5 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[9px] font-black text-muted-foreground">{new Date(a.timestamp_desbloqueo).toLocaleString('es-MX')}</span>
+                <span className="text-[9px] font-mono text-muted-foreground/60">{a.desbloqueado_por.slice(0, 8)}</span>
+              </div>
+              <p className="text-[11px] text-foreground">{a.justificacion}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Modal: Desbloqueo admin ────────────────────────────────────────────── */}
+      {showDesbloquearModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl bg-card shadow-2xl overflow-hidden">
+            <div className="bg-red-800 px-6 py-4">
+              <h2 className="text-sm font-black uppercase tracking-tight text-white">Desbloquear Cuadro Comparativo</h2>
+              <p className="text-[10px] text-red-200/80 mt-0.5">El cuadro regresará a EN_EVALUACION_TECNICA</p>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div className="rounded-2xl border border-red-700/20 bg-red-700/5 px-4 py-3">
+                <p className="text-[11px] text-red-800 font-bold">⚠️ Esta acción quedará registrada en el historial de auditoría con tu usuario, la fecha y la justificación que proporciones.</p>
+              </div>
+              <div>
+                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Justificación del desbloqueo (obligatorio, mín. 10 caracteres)</label>
+                <Textarea
+                  className="mt-1 rounded-xl text-xs min-h-[80px]"
+                  placeholder="Describe la razón por la que se desbloquea este cuadro..."
+                  value={justificacionDesbloqueo}
+                  onChange={e => setJustificacionDesbloqueo(e.target.value)}
+                />
+                {justificacionDesbloqueo.length > 0 && justificacionDesbloqueo.trim().length < 10 && (
+                  <p className="mt-1 text-[9px] text-red-600">Mínimo 10 caracteres.</p>
+                )}
+              </div>
+            </div>
+            <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
+              <Button onClick={() => setShowDesbloquearModal(false)} variant="outline" className="rounded-xl" disabled={desbloqueando}>Cancelar</Button>
+              <Button
+                onClick={handleDesbloquear}
+                disabled={justificacionDesbloqueo.trim().length < 10 || desbloqueando}
+                className="rounded-xl bg-red-700 px-6 font-black text-white hover:bg-red-600 disabled:opacity-40"
+              >
+                {desbloqueando ? 'Desbloqueando...' : 'Confirmar desbloqueo'}
               </Button>
             </div>
           </div>

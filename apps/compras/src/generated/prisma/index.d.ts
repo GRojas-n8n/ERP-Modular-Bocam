@@ -59,6 +59,11 @@ export type OrdenCompraItem = $Result.DefaultSelection<Prisma.$OrdenCompraItemPa
  */
 export type CuadroComparativo = $Result.DefaultSelection<Prisma.$CuadroComparativoPayload>
 /**
+ * Model AuditoriaDesbloqueoComparativa
+ * 
+ */
+export type AuditoriaDesbloqueoComparativa = $Result.DefaultSelection<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+/**
  * Model ComparativaLinea
  * 
  */
@@ -321,6 +326,16 @@ export class PrismaClient<
     * ```
     */
   get cuadroComparativo(): Prisma.CuadroComparativoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.auditoriaDesbloqueoComparativa`: Exposes CRUD operations for the **AuditoriaDesbloqueoComparativa** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AuditoriaDesbloqueoComparativas
+    * const auditoriaDesbloqueoComparativas = await prisma.auditoriaDesbloqueoComparativa.findMany()
+    * ```
+    */
+  get auditoriaDesbloqueoComparativa(): Prisma.AuditoriaDesbloqueoComparativaDelegate<ExtArgs>;
 
   /**
    * `prisma.comparativaLinea`: Exposes CRUD operations for the **ComparativaLinea** model.
@@ -871,6 +886,7 @@ export namespace Prisma {
     OrdenCompra: 'OrdenCompra',
     OrdenCompraItem: 'OrdenCompraItem',
     CuadroComparativo: 'CuadroComparativo',
+    AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
     ComparativaLinea: 'ComparativaLinea',
     ComparativaDetalle: 'ComparativaDetalle',
     AclaracionComparativa: 'AclaracionComparativa',
@@ -896,7 +912,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
+      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "auditoriaDesbloqueoComparativa" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1527,6 +1543,76 @@ export namespace Prisma {
           count: {
             args: Prisma.CuadroComparativoCountArgs<ExtArgs>
             result: $Utils.Optional<CuadroComparativoCountAggregateOutputType> | number
+          }
+        }
+      }
+      AuditoriaDesbloqueoComparativa: {
+        payload: Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>
+        fields: Prisma.AuditoriaDesbloqueoComparativaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AuditoriaDesbloqueoComparativaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AuditoriaDesbloqueoComparativaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+          }
+          findFirst: {
+            args: Prisma.AuditoriaDesbloqueoComparativaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AuditoriaDesbloqueoComparativaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+          }
+          findMany: {
+            args: Prisma.AuditoriaDesbloqueoComparativaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>[]
+          }
+          create: {
+            args: Prisma.AuditoriaDesbloqueoComparativaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+          }
+          createMany: {
+            args: Prisma.AuditoriaDesbloqueoComparativaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AuditoriaDesbloqueoComparativaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>[]
+          }
+          delete: {
+            args: Prisma.AuditoriaDesbloqueoComparativaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+          }
+          update: {
+            args: Prisma.AuditoriaDesbloqueoComparativaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+          }
+          deleteMany: {
+            args: Prisma.AuditoriaDesbloqueoComparativaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AuditoriaDesbloqueoComparativaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.AuditoriaDesbloqueoComparativaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaDesbloqueoComparativaPayload>
+          }
+          aggregate: {
+            args: Prisma.AuditoriaDesbloqueoComparativaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAuditoriaDesbloqueoComparativa>
+          }
+          groupBy: {
+            args: Prisma.AuditoriaDesbloqueoComparativaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AuditoriaDesbloqueoComparativaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AuditoriaDesbloqueoComparativaCountArgs<ExtArgs>
+            result: $Utils.Optional<AuditoriaDesbloqueoComparativaCountAggregateOutputType> | number
           }
         }
       }
@@ -2514,12 +2600,14 @@ export namespace Prisma {
     detalles: number
     lineas: number
     aclaraciones: number
+    auditoria_desbloqueos: number
   }
 
   export type CuadroComparativoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     detalles?: boolean | CuadroComparativoCountOutputTypeCountDetallesArgs
     lineas?: boolean | CuadroComparativoCountOutputTypeCountLineasArgs
     aclaraciones?: boolean | CuadroComparativoCountOutputTypeCountAclaracionesArgs
+    auditoria_desbloqueos?: boolean | CuadroComparativoCountOutputTypeCountAuditoria_desbloqueosArgs
   }
 
   // Custom InputTypes
@@ -2552,6 +2640,13 @@ export namespace Prisma {
    */
   export type CuadroComparativoCountOutputTypeCountAclaracionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AclaracionComparativaWhereInput
+  }
+
+  /**
+   * CuadroComparativoCountOutputType without action
+   */
+  export type CuadroComparativoCountOutputTypeCountAuditoria_desbloqueosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditoriaDesbloqueoComparativaWhereInput
   }
 
 
@@ -5874,6 +5969,7 @@ export namespace Prisma {
     estado: string | null
     tipo: string | null
     observaciones: string | null
+    concepto_id: string | null
   }
 
   export type RequisicionMaxAggregateOutputType = {
@@ -5887,6 +5983,7 @@ export namespace Prisma {
     estado: string | null
     tipo: string | null
     observaciones: string | null
+    concepto_id: string | null
   }
 
   export type RequisicionCountAggregateOutputType = {
@@ -5900,6 +5997,7 @@ export namespace Prisma {
     estado: number
     tipo: number
     observaciones: number
+    concepto_id: number
     _all: number
   }
 
@@ -5915,6 +6013,7 @@ export namespace Prisma {
     estado?: true
     tipo?: true
     observaciones?: true
+    concepto_id?: true
   }
 
   export type RequisicionMaxAggregateInputType = {
@@ -5928,6 +6027,7 @@ export namespace Prisma {
     estado?: true
     tipo?: true
     observaciones?: true
+    concepto_id?: true
   }
 
   export type RequisicionCountAggregateInputType = {
@@ -5941,6 +6041,7 @@ export namespace Prisma {
     estado?: true
     tipo?: true
     observaciones?: true
+    concepto_id?: true
     _all?: true
   }
 
@@ -6027,6 +6128,7 @@ export namespace Prisma {
     estado: string
     tipo: string
     observaciones: string | null
+    concepto_id: string | null
     _count: RequisicionCountAggregateOutputType | null
     _min: RequisicionMinAggregateOutputType | null
     _max: RequisicionMaxAggregateOutputType | null
@@ -6057,6 +6159,7 @@ export namespace Prisma {
     estado?: boolean
     tipo?: boolean
     observaciones?: boolean
+    concepto_id?: boolean
     items?: boolean | Requisicion$itemsArgs<ExtArgs>
     _count?: boolean | RequisicionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["requisicion"]>
@@ -6072,6 +6175,7 @@ export namespace Prisma {
     estado?: boolean
     tipo?: boolean
     observaciones?: boolean
+    concepto_id?: boolean
   }, ExtArgs["result"]["requisicion"]>
 
   export type RequisicionSelectScalar = {
@@ -6085,6 +6189,7 @@ export namespace Prisma {
     estado?: boolean
     tipo?: boolean
     observaciones?: boolean
+    concepto_id?: boolean
   }
 
   export type RequisicionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6112,6 +6217,10 @@ export namespace Prisma {
        */
       tipo: string
       observaciones: string | null
+      /**
+       * Partida del catálogo de conceptos a la que pertenece esta requisición (obligatorio en nuevas reqs)
+       */
+      concepto_id: string | null
     }, ExtArgs["result"]["requisicion"]>
     composites: {}
   }
@@ -6516,6 +6625,7 @@ export namespace Prisma {
     readonly estado: FieldRef<"Requisicion", 'String'>
     readonly tipo: FieldRef<"Requisicion", 'String'>
     readonly observaciones: FieldRef<"Requisicion", 'String'>
+    readonly concepto_id: FieldRef<"Requisicion", 'String'>
   }
     
 
@@ -6897,6 +7007,8 @@ export namespace Prisma {
     descripcion_libre: string | null
     unidad_libre: string | null
     es_imprevisto: boolean | null
+    especificacion_marca_modelo: string | null
+    especificacion_detalle: string | null
     cantidad_presupuestada: Decimal | null
     concepto_origen_id: string | null
     justificacion: string | null
@@ -6913,6 +7025,8 @@ export namespace Prisma {
     descripcion_libre: string | null
     unidad_libre: string | null
     es_imprevisto: boolean | null
+    especificacion_marca_modelo: string | null
+    especificacion_detalle: string | null
     cantidad_presupuestada: Decimal | null
     concepto_origen_id: string | null
     justificacion: string | null
@@ -6929,6 +7043,8 @@ export namespace Prisma {
     descripcion_libre: number
     unidad_libre: number
     es_imprevisto: number
+    especificacion_marca_modelo: number
+    especificacion_detalle: number
     cantidad_presupuestada: number
     concepto_origen_id: number
     justificacion: number
@@ -6957,6 +7073,8 @@ export namespace Prisma {
     descripcion_libre?: true
     unidad_libre?: true
     es_imprevisto?: true
+    especificacion_marca_modelo?: true
+    especificacion_detalle?: true
     cantidad_presupuestada?: true
     concepto_origen_id?: true
     justificacion?: true
@@ -6973,6 +7091,8 @@ export namespace Prisma {
     descripcion_libre?: true
     unidad_libre?: true
     es_imprevisto?: true
+    especificacion_marca_modelo?: true
+    especificacion_detalle?: true
     cantidad_presupuestada?: true
     concepto_origen_id?: true
     justificacion?: true
@@ -6989,6 +7109,8 @@ export namespace Prisma {
     descripcion_libre?: true
     unidad_libre?: true
     es_imprevisto?: true
+    especificacion_marca_modelo?: true
+    especificacion_detalle?: true
     cantidad_presupuestada?: true
     concepto_origen_id?: true
     justificacion?: true
@@ -7092,6 +7214,8 @@ export namespace Prisma {
     descripcion_libre: string | null
     unidad_libre: string | null
     es_imprevisto: boolean
+    especificacion_marca_modelo: string | null
+    especificacion_detalle: string | null
     cantidad_presupuestada: Decimal | null
     concepto_origen_id: string | null
     justificacion: string | null
@@ -7127,6 +7251,8 @@ export namespace Prisma {
     descripcion_libre?: boolean
     unidad_libre?: boolean
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: boolean
+    especificacion_detalle?: boolean
     cantidad_presupuestada?: boolean
     concepto_origen_id?: boolean
     justificacion?: boolean
@@ -7144,6 +7270,8 @@ export namespace Prisma {
     descripcion_libre?: boolean
     unidad_libre?: boolean
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: boolean
+    especificacion_detalle?: boolean
     cantidad_presupuestada?: boolean
     concepto_origen_id?: boolean
     justificacion?: boolean
@@ -7161,6 +7289,8 @@ export namespace Prisma {
     descripcion_libre?: boolean
     unidad_libre?: boolean
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: boolean
+    especificacion_detalle?: boolean
     cantidad_presupuestada?: boolean
     concepto_origen_id?: boolean
     justificacion?: boolean
@@ -7201,6 +7331,14 @@ export namespace Prisma {
        * Marcador de ítem imprevisto (sin insumo_id en catálogo)
        */
       es_imprevisto: boolean
+      /**
+       * Marca o modelo de referencia indicado por el Residente al crear la req
+       */
+      especificacion_marca_modelo: string | null
+      /**
+       * Especificaciones técnicas libres indicadas por el Residente
+       */
+      especificacion_detalle: string | null
       /**
        * Cantidad presupuestada para este insumo en el proyecto (snapshot al crear req)
        */
@@ -7617,6 +7755,8 @@ export namespace Prisma {
     readonly descripcion_libre: FieldRef<"RequisicionItem", 'String'>
     readonly unidad_libre: FieldRef<"RequisicionItem", 'String'>
     readonly es_imprevisto: FieldRef<"RequisicionItem", 'Boolean'>
+    readonly especificacion_marca_modelo: FieldRef<"RequisicionItem", 'String'>
+    readonly especificacion_detalle: FieldRef<"RequisicionItem", 'String'>
     readonly cantidad_presupuestada: FieldRef<"RequisicionItem", 'Decimal'>
     readonly concepto_origen_id: FieldRef<"RequisicionItem", 'String'>
     readonly justificacion: FieldRef<"RequisicionItem", 'String'>
@@ -8964,6 +9104,7 @@ export namespace Prisma {
     iva: Decimal | null
     total: Decimal | null
     presupuesto_id: string | null
+    requisicion_id: string | null
   }
 
   export type OrdenCompraMaxAggregateOutputType = {
@@ -8980,6 +9121,7 @@ export namespace Prisma {
     iva: Decimal | null
     total: Decimal | null
     presupuesto_id: string | null
+    requisicion_id: string | null
   }
 
   export type OrdenCompraCountAggregateOutputType = {
@@ -8996,6 +9138,7 @@ export namespace Prisma {
     iva: number
     total: number
     presupuesto_id: number
+    requisicion_id: number
     _all: number
   }
 
@@ -9028,6 +9171,7 @@ export namespace Prisma {
     iva?: true
     total?: true
     presupuesto_id?: true
+    requisicion_id?: true
   }
 
   export type OrdenCompraMaxAggregateInputType = {
@@ -9044,6 +9188,7 @@ export namespace Prisma {
     iva?: true
     total?: true
     presupuesto_id?: true
+    requisicion_id?: true
   }
 
   export type OrdenCompraCountAggregateInputType = {
@@ -9060,6 +9205,7 @@ export namespace Prisma {
     iva?: true
     total?: true
     presupuesto_id?: true
+    requisicion_id?: true
     _all?: true
   }
 
@@ -9163,6 +9309,7 @@ export namespace Prisma {
     iva: Decimal
     total: Decimal
     presupuesto_id: string | null
+    requisicion_id: string | null
     _count: OrdenCompraCountAggregateOutputType | null
     _avg: OrdenCompraAvgAggregateOutputType | null
     _sum: OrdenCompraSumAggregateOutputType | null
@@ -9198,6 +9345,7 @@ export namespace Prisma {
     iva?: boolean
     total?: boolean
     presupuesto_id?: boolean
+    requisicion_id?: boolean
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
     items?: boolean | OrdenCompra$itemsArgs<ExtArgs>
     _count?: boolean | OrdenCompraCountOutputTypeDefaultArgs<ExtArgs>
@@ -9217,6 +9365,7 @@ export namespace Prisma {
     iva?: boolean
     total?: boolean
     presupuesto_id?: boolean
+    requisicion_id?: boolean
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["ordenCompra"]>
 
@@ -9234,6 +9383,7 @@ export namespace Prisma {
     iva?: boolean
     total?: boolean
     presupuesto_id?: boolean
+    requisicion_id?: boolean
   }
 
   export type OrdenCompraInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9265,6 +9415,10 @@ export namespace Prisma {
       iva: Prisma.Decimal
       total: Prisma.Decimal
       presupuesto_id: string | null
+      /**
+       * Requisición que originó esta OC — para cálculo de acumulados por partida
+       */
+      requisicion_id: string | null
     }, ExtArgs["result"]["ordenCompra"]>
     composites: {}
   }
@@ -9673,6 +9827,7 @@ export namespace Prisma {
     readonly iva: FieldRef<"OrdenCompra", 'Decimal'>
     readonly total: FieldRef<"OrdenCompra", 'Decimal'>
     readonly presupuesto_id: FieldRef<"OrdenCompra", 'String'>
+    readonly requisicion_id: FieldRef<"OrdenCompra", 'String'>
   }
     
 
@@ -11061,6 +11216,8 @@ export namespace Prisma {
     fecha_firma: Date | null
     primera_opcion_proveedor_id: string | null
     segunda_opcion_proveedor_id: string | null
+    veredicto_residente: string | null
+    proveedores_sugeridos: string | null
     evaluacion_residente_id: string | null
     fecha_evaluacion_tecnica: Date | null
     gerente_tecnico_id: string | null
@@ -11083,6 +11240,8 @@ export namespace Prisma {
     fecha_firma: Date | null
     primera_opcion_proveedor_id: string | null
     segunda_opcion_proveedor_id: string | null
+    veredicto_residente: string | null
+    proveedores_sugeridos: string | null
     evaluacion_residente_id: string | null
     fecha_evaluacion_tecnica: Date | null
     gerente_tecnico_id: string | null
@@ -11105,6 +11264,8 @@ export namespace Prisma {
     fecha_firma: number
     primera_opcion_proveedor_id: number
     segunda_opcion_proveedor_id: number
+    veredicto_residente: number
+    proveedores_sugeridos: number
     evaluacion_residente_id: number
     fecha_evaluacion_tecnica: number
     gerente_tecnico_id: number
@@ -11129,6 +11290,8 @@ export namespace Prisma {
     fecha_firma?: true
     primera_opcion_proveedor_id?: true
     segunda_opcion_proveedor_id?: true
+    veredicto_residente?: true
+    proveedores_sugeridos?: true
     evaluacion_residente_id?: true
     fecha_evaluacion_tecnica?: true
     gerente_tecnico_id?: true
@@ -11151,6 +11314,8 @@ export namespace Prisma {
     fecha_firma?: true
     primera_opcion_proveedor_id?: true
     segunda_opcion_proveedor_id?: true
+    veredicto_residente?: true
+    proveedores_sugeridos?: true
     evaluacion_residente_id?: true
     fecha_evaluacion_tecnica?: true
     gerente_tecnico_id?: true
@@ -11173,6 +11338,8 @@ export namespace Prisma {
     fecha_firma?: true
     primera_opcion_proveedor_id?: true
     segunda_opcion_proveedor_id?: true
+    veredicto_residente?: true
+    proveedores_sugeridos?: true
     evaluacion_residente_id?: true
     fecha_evaluacion_tecnica?: true
     gerente_tecnico_id?: true
@@ -11268,6 +11435,8 @@ export namespace Prisma {
     fecha_firma: Date | null
     primera_opcion_proveedor_id: string | null
     segunda_opcion_proveedor_id: string | null
+    veredicto_residente: string | null
+    proveedores_sugeridos: string | null
     evaluacion_residente_id: string | null
     fecha_evaluacion_tecnica: Date | null
     gerente_tecnico_id: string | null
@@ -11307,6 +11476,8 @@ export namespace Prisma {
     fecha_firma?: boolean
     primera_opcion_proveedor_id?: boolean
     segunda_opcion_proveedor_id?: boolean
+    veredicto_residente?: boolean
+    proveedores_sugeridos?: boolean
     evaluacion_residente_id?: boolean
     fecha_evaluacion_tecnica?: boolean
     gerente_tecnico_id?: boolean
@@ -11315,6 +11486,7 @@ export namespace Prisma {
     detalles?: boolean | CuadroComparativo$detallesArgs<ExtArgs>
     lineas?: boolean | CuadroComparativo$lineasArgs<ExtArgs>
     aclaraciones?: boolean | CuadroComparativo$aclaracionesArgs<ExtArgs>
+    auditoria_desbloqueos?: boolean | CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cuadroComparativo"]>
 
@@ -11333,6 +11505,8 @@ export namespace Prisma {
     fecha_firma?: boolean
     primera_opcion_proveedor_id?: boolean
     segunda_opcion_proveedor_id?: boolean
+    veredicto_residente?: boolean
+    proveedores_sugeridos?: boolean
     evaluacion_residente_id?: boolean
     fecha_evaluacion_tecnica?: boolean
     gerente_tecnico_id?: boolean
@@ -11355,6 +11529,8 @@ export namespace Prisma {
     fecha_firma?: boolean
     primera_opcion_proveedor_id?: boolean
     segunda_opcion_proveedor_id?: boolean
+    veredicto_residente?: boolean
+    proveedores_sugeridos?: boolean
     evaluacion_residente_id?: boolean
     fecha_evaluacion_tecnica?: boolean
     gerente_tecnico_id?: boolean
@@ -11366,6 +11542,7 @@ export namespace Prisma {
     detalles?: boolean | CuadroComparativo$detallesArgs<ExtArgs>
     lineas?: boolean | CuadroComparativo$lineasArgs<ExtArgs>
     aclaraciones?: boolean | CuadroComparativo$aclaracionesArgs<ExtArgs>
+    auditoria_desbloqueos?: boolean | CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CuadroComparativoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -11376,6 +11553,7 @@ export namespace Prisma {
       detalles: Prisma.$ComparativaDetallePayload<ExtArgs>[]
       lineas: Prisma.$ComparativaLineaPayload<ExtArgs>[]
       aclaraciones: Prisma.$AclaracionComparativaPayload<ExtArgs>[]
+      auditoria_desbloqueos: Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_cuadro: string
@@ -11392,6 +11570,14 @@ export namespace Prisma {
       fecha_firma: Date | null
       primera_opcion_proveedor_id: string | null
       segunda_opcion_proveedor_id: string | null
+      /**
+       * Texto libre de veredicto general del Residente — obligatorio para firmar
+       */
+      veredicto_residente: string | null
+      /**
+       * UUIDs de proveedores recomendados — JSON array serializado
+       */
+      proveedores_sugeridos: string | null
       evaluacion_residente_id: string | null
       fecha_evaluacion_tecnica: Date | null
       gerente_tecnico_id: string | null
@@ -11764,6 +11950,7 @@ export namespace Prisma {
     detalles<T extends CuadroComparativo$detallesArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$detallesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaDetallePayload<ExtArgs>, T, "findMany"> | Null>
     lineas<T extends CuadroComparativo$lineasArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$lineasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findMany"> | Null>
     aclaraciones<T extends CuadroComparativo$aclaracionesArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$aclaracionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AclaracionComparativaPayload<ExtArgs>, T, "findMany"> | Null>
+    auditoria_desbloqueos<T extends CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11807,6 +11994,8 @@ export namespace Prisma {
     readonly fecha_firma: FieldRef<"CuadroComparativo", 'DateTime'>
     readonly primera_opcion_proveedor_id: FieldRef<"CuadroComparativo", 'String'>
     readonly segunda_opcion_proveedor_id: FieldRef<"CuadroComparativo", 'String'>
+    readonly veredicto_residente: FieldRef<"CuadroComparativo", 'String'>
+    readonly proveedores_sugeridos: FieldRef<"CuadroComparativo", 'String'>
     readonly evaluacion_residente_id: FieldRef<"CuadroComparativo", 'String'>
     readonly fecha_evaluacion_tecnica: FieldRef<"CuadroComparativo", 'DateTime'>
     readonly gerente_tecnico_id: FieldRef<"CuadroComparativo", 'String'>
@@ -12186,6 +12375,26 @@ export namespace Prisma {
   }
 
   /**
+   * CuadroComparativo.auditoria_desbloqueos
+   */
+  export type CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+    orderBy?: AuditoriaDesbloqueoComparativaOrderByWithRelationInput | AuditoriaDesbloqueoComparativaOrderByWithRelationInput[]
+    cursor?: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AuditoriaDesbloqueoComparativaScalarFieldEnum | AuditoriaDesbloqueoComparativaScalarFieldEnum[]
+  }
+
+  /**
    * CuadroComparativo without action
    */
   export type CuadroComparativoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12197,6 +12406,963 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CuadroComparativoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AuditoriaDesbloqueoComparativa
+   */
+
+  export type AggregateAuditoriaDesbloqueoComparativa = {
+    _count: AuditoriaDesbloqueoComparativaCountAggregateOutputType | null
+    _min: AuditoriaDesbloqueoComparativaMinAggregateOutputType | null
+    _max: AuditoriaDesbloqueoComparativaMaxAggregateOutputType | null
+  }
+
+  export type AuditoriaDesbloqueoComparativaMinAggregateOutputType = {
+    id_auditoria: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    cuadro_id: string | null
+    desbloqueado_por: string | null
+    timestamp_desbloqueo: Date | null
+    justificacion: string | null
+  }
+
+  export type AuditoriaDesbloqueoComparativaMaxAggregateOutputType = {
+    id_auditoria: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    cuadro_id: string | null
+    desbloqueado_por: string | null
+    timestamp_desbloqueo: Date | null
+    justificacion: string | null
+  }
+
+  export type AuditoriaDesbloqueoComparativaCountAggregateOutputType = {
+    id_auditoria: number
+    tenant_id: number
+    proyecto_id: number
+    cuadro_id: number
+    desbloqueado_por: number
+    timestamp_desbloqueo: number
+    justificacion: number
+    _all: number
+  }
+
+
+  export type AuditoriaDesbloqueoComparativaMinAggregateInputType = {
+    id_auditoria?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    desbloqueado_por?: true
+    timestamp_desbloqueo?: true
+    justificacion?: true
+  }
+
+  export type AuditoriaDesbloqueoComparativaMaxAggregateInputType = {
+    id_auditoria?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    desbloqueado_por?: true
+    timestamp_desbloqueo?: true
+    justificacion?: true
+  }
+
+  export type AuditoriaDesbloqueoComparativaCountAggregateInputType = {
+    id_auditoria?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    desbloqueado_por?: true
+    timestamp_desbloqueo?: true
+    justificacion?: true
+    _all?: true
+  }
+
+  export type AuditoriaDesbloqueoComparativaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuditoriaDesbloqueoComparativa to aggregate.
+     */
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaDesbloqueoComparativas to fetch.
+     */
+    orderBy?: AuditoriaDesbloqueoComparativaOrderByWithRelationInput | AuditoriaDesbloqueoComparativaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaDesbloqueoComparativas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaDesbloqueoComparativas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AuditoriaDesbloqueoComparativas
+    **/
+    _count?: true | AuditoriaDesbloqueoComparativaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AuditoriaDesbloqueoComparativaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AuditoriaDesbloqueoComparativaMaxAggregateInputType
+  }
+
+  export type GetAuditoriaDesbloqueoComparativaAggregateType<T extends AuditoriaDesbloqueoComparativaAggregateArgs> = {
+        [P in keyof T & keyof AggregateAuditoriaDesbloqueoComparativa]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAuditoriaDesbloqueoComparativa[P]>
+      : GetScalarType<T[P], AggregateAuditoriaDesbloqueoComparativa[P]>
+  }
+
+
+
+
+  export type AuditoriaDesbloqueoComparativaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+    orderBy?: AuditoriaDesbloqueoComparativaOrderByWithAggregationInput | AuditoriaDesbloqueoComparativaOrderByWithAggregationInput[]
+    by: AuditoriaDesbloqueoComparativaScalarFieldEnum[] | AuditoriaDesbloqueoComparativaScalarFieldEnum
+    having?: AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AuditoriaDesbloqueoComparativaCountAggregateInputType | true
+    _min?: AuditoriaDesbloqueoComparativaMinAggregateInputType
+    _max?: AuditoriaDesbloqueoComparativaMaxAggregateInputType
+  }
+
+  export type AuditoriaDesbloqueoComparativaGroupByOutputType = {
+    id_auditoria: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo: Date
+    justificacion: string
+    _count: AuditoriaDesbloqueoComparativaCountAggregateOutputType | null
+    _min: AuditoriaDesbloqueoComparativaMinAggregateOutputType | null
+    _max: AuditoriaDesbloqueoComparativaMaxAggregateOutputType | null
+  }
+
+  type GetAuditoriaDesbloqueoComparativaGroupByPayload<T extends AuditoriaDesbloqueoComparativaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AuditoriaDesbloqueoComparativaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AuditoriaDesbloqueoComparativaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AuditoriaDesbloqueoComparativaGroupByOutputType[P]>
+            : GetScalarType<T[P], AuditoriaDesbloqueoComparativaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AuditoriaDesbloqueoComparativaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_auditoria?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    desbloqueado_por?: boolean
+    timestamp_desbloqueo?: boolean
+    justificacion?: boolean
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["auditoriaDesbloqueoComparativa"]>
+
+  export type AuditoriaDesbloqueoComparativaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_auditoria?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    desbloqueado_por?: boolean
+    timestamp_desbloqueo?: boolean
+    justificacion?: boolean
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["auditoriaDesbloqueoComparativa"]>
+
+  export type AuditoriaDesbloqueoComparativaSelectScalar = {
+    id_auditoria?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    desbloqueado_por?: boolean
+    timestamp_desbloqueo?: boolean
+    justificacion?: boolean
+  }
+
+  export type AuditoriaDesbloqueoComparativaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }
+  export type AuditoriaDesbloqueoComparativaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }
+
+  export type $AuditoriaDesbloqueoComparativaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AuditoriaDesbloqueoComparativa"
+    objects: {
+      cuadro: Prisma.$CuadroComparativoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_auditoria: string
+      tenant_id: string
+      proyecto_id: string
+      cuadro_id: string
+      desbloqueado_por: string
+      timestamp_desbloqueo: Date
+      justificacion: string
+    }, ExtArgs["result"]["auditoriaDesbloqueoComparativa"]>
+    composites: {}
+  }
+
+  type AuditoriaDesbloqueoComparativaGetPayload<S extends boolean | null | undefined | AuditoriaDesbloqueoComparativaDefaultArgs> = $Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload, S>
+
+  type AuditoriaDesbloqueoComparativaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<AuditoriaDesbloqueoComparativaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: AuditoriaDesbloqueoComparativaCountAggregateInputType | true
+    }
+
+  export interface AuditoriaDesbloqueoComparativaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuditoriaDesbloqueoComparativa'], meta: { name: 'AuditoriaDesbloqueoComparativa' } }
+    /**
+     * Find zero or one AuditoriaDesbloqueoComparativa that matches the filter.
+     * @param {AuditoriaDesbloqueoComparativaFindUniqueArgs} args - Arguments to find a AuditoriaDesbloqueoComparativa
+     * @example
+     * // Get one AuditoriaDesbloqueoComparativa
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AuditoriaDesbloqueoComparativaFindUniqueArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaFindUniqueArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one AuditoriaDesbloqueoComparativa that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {AuditoriaDesbloqueoComparativaFindUniqueOrThrowArgs} args - Arguments to find a AuditoriaDesbloqueoComparativa
+     * @example
+     * // Get one AuditoriaDesbloqueoComparativa
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AuditoriaDesbloqueoComparativaFindUniqueOrThrowArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first AuditoriaDesbloqueoComparativa that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaFindFirstArgs} args - Arguments to find a AuditoriaDesbloqueoComparativa
+     * @example
+     * // Get one AuditoriaDesbloqueoComparativa
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AuditoriaDesbloqueoComparativaFindFirstArgs>(args?: SelectSubset<T, AuditoriaDesbloqueoComparativaFindFirstArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first AuditoriaDesbloqueoComparativa that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaFindFirstOrThrowArgs} args - Arguments to find a AuditoriaDesbloqueoComparativa
+     * @example
+     * // Get one AuditoriaDesbloqueoComparativa
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AuditoriaDesbloqueoComparativaFindFirstOrThrowArgs>(args?: SelectSubset<T, AuditoriaDesbloqueoComparativaFindFirstOrThrowArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more AuditoriaDesbloqueoComparativas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AuditoriaDesbloqueoComparativas
+     * const auditoriaDesbloqueoComparativas = await prisma.auditoriaDesbloqueoComparativa.findMany()
+     * 
+     * // Get first 10 AuditoriaDesbloqueoComparativas
+     * const auditoriaDesbloqueoComparativas = await prisma.auditoriaDesbloqueoComparativa.findMany({ take: 10 })
+     * 
+     * // Only select the `id_auditoria`
+     * const auditoriaDesbloqueoComparativaWithId_auditoriaOnly = await prisma.auditoriaDesbloqueoComparativa.findMany({ select: { id_auditoria: true } })
+     * 
+     */
+    findMany<T extends AuditoriaDesbloqueoComparativaFindManyArgs>(args?: SelectSubset<T, AuditoriaDesbloqueoComparativaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a AuditoriaDesbloqueoComparativa.
+     * @param {AuditoriaDesbloqueoComparativaCreateArgs} args - Arguments to create a AuditoriaDesbloqueoComparativa.
+     * @example
+     * // Create one AuditoriaDesbloqueoComparativa
+     * const AuditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.create({
+     *   data: {
+     *     // ... data to create a AuditoriaDesbloqueoComparativa
+     *   }
+     * })
+     * 
+     */
+    create<T extends AuditoriaDesbloqueoComparativaCreateArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaCreateArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many AuditoriaDesbloqueoComparativas.
+     * @param {AuditoriaDesbloqueoComparativaCreateManyArgs} args - Arguments to create many AuditoriaDesbloqueoComparativas.
+     * @example
+     * // Create many AuditoriaDesbloqueoComparativas
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AuditoriaDesbloqueoComparativaCreateManyArgs>(args?: SelectSubset<T, AuditoriaDesbloqueoComparativaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AuditoriaDesbloqueoComparativas and returns the data saved in the database.
+     * @param {AuditoriaDesbloqueoComparativaCreateManyAndReturnArgs} args - Arguments to create many AuditoriaDesbloqueoComparativas.
+     * @example
+     * // Create many AuditoriaDesbloqueoComparativas
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AuditoriaDesbloqueoComparativas and only return the `id_auditoria`
+     * const auditoriaDesbloqueoComparativaWithId_auditoriaOnly = await prisma.auditoriaDesbloqueoComparativa.createManyAndReturn({ 
+     *   select: { id_auditoria: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AuditoriaDesbloqueoComparativaCreateManyAndReturnArgs>(args?: SelectSubset<T, AuditoriaDesbloqueoComparativaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a AuditoriaDesbloqueoComparativa.
+     * @param {AuditoriaDesbloqueoComparativaDeleteArgs} args - Arguments to delete one AuditoriaDesbloqueoComparativa.
+     * @example
+     * // Delete one AuditoriaDesbloqueoComparativa
+     * const AuditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.delete({
+     *   where: {
+     *     // ... filter to delete one AuditoriaDesbloqueoComparativa
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AuditoriaDesbloqueoComparativaDeleteArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaDeleteArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one AuditoriaDesbloqueoComparativa.
+     * @param {AuditoriaDesbloqueoComparativaUpdateArgs} args - Arguments to update one AuditoriaDesbloqueoComparativa.
+     * @example
+     * // Update one AuditoriaDesbloqueoComparativa
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AuditoriaDesbloqueoComparativaUpdateArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaUpdateArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more AuditoriaDesbloqueoComparativas.
+     * @param {AuditoriaDesbloqueoComparativaDeleteManyArgs} args - Arguments to filter AuditoriaDesbloqueoComparativas to delete.
+     * @example
+     * // Delete a few AuditoriaDesbloqueoComparativas
+     * const { count } = await prisma.auditoriaDesbloqueoComparativa.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AuditoriaDesbloqueoComparativaDeleteManyArgs>(args?: SelectSubset<T, AuditoriaDesbloqueoComparativaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuditoriaDesbloqueoComparativas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AuditoriaDesbloqueoComparativas
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AuditoriaDesbloqueoComparativaUpdateManyArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AuditoriaDesbloqueoComparativa.
+     * @param {AuditoriaDesbloqueoComparativaUpsertArgs} args - Arguments to update or create a AuditoriaDesbloqueoComparativa.
+     * @example
+     * // Update or create a AuditoriaDesbloqueoComparativa
+     * const auditoriaDesbloqueoComparativa = await prisma.auditoriaDesbloqueoComparativa.upsert({
+     *   create: {
+     *     // ... data to create a AuditoriaDesbloqueoComparativa
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AuditoriaDesbloqueoComparativa we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AuditoriaDesbloqueoComparativaUpsertArgs>(args: SelectSubset<T, AuditoriaDesbloqueoComparativaUpsertArgs<ExtArgs>>): Prisma__AuditoriaDesbloqueoComparativaClient<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of AuditoriaDesbloqueoComparativas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaCountArgs} args - Arguments to filter AuditoriaDesbloqueoComparativas to count.
+     * @example
+     * // Count the number of AuditoriaDesbloqueoComparativas
+     * const count = await prisma.auditoriaDesbloqueoComparativa.count({
+     *   where: {
+     *     // ... the filter for the AuditoriaDesbloqueoComparativas we want to count
+     *   }
+     * })
+    **/
+    count<T extends AuditoriaDesbloqueoComparativaCountArgs>(
+      args?: Subset<T, AuditoriaDesbloqueoComparativaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AuditoriaDesbloqueoComparativaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AuditoriaDesbloqueoComparativa.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AuditoriaDesbloqueoComparativaAggregateArgs>(args: Subset<T, AuditoriaDesbloqueoComparativaAggregateArgs>): Prisma.PrismaPromise<GetAuditoriaDesbloqueoComparativaAggregateType<T>>
+
+    /**
+     * Group by AuditoriaDesbloqueoComparativa.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaDesbloqueoComparativaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AuditoriaDesbloqueoComparativaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AuditoriaDesbloqueoComparativaGroupByArgs['orderBy'] }
+        : { orderBy?: AuditoriaDesbloqueoComparativaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AuditoriaDesbloqueoComparativaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuditoriaDesbloqueoComparativaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AuditoriaDesbloqueoComparativa model
+   */
+  readonly fields: AuditoriaDesbloqueoComparativaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AuditoriaDesbloqueoComparativa.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AuditoriaDesbloqueoComparativaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuadro<T extends CuadroComparativoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativoDefaultArgs<ExtArgs>>): Prisma__CuadroComparativoClient<$Result.GetResult<Prisma.$CuadroComparativoPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AuditoriaDesbloqueoComparativa model
+   */ 
+  interface AuditoriaDesbloqueoComparativaFieldRefs {
+    readonly id_auditoria: FieldRef<"AuditoriaDesbloqueoComparativa", 'String'>
+    readonly tenant_id: FieldRef<"AuditoriaDesbloqueoComparativa", 'String'>
+    readonly proyecto_id: FieldRef<"AuditoriaDesbloqueoComparativa", 'String'>
+    readonly cuadro_id: FieldRef<"AuditoriaDesbloqueoComparativa", 'String'>
+    readonly desbloqueado_por: FieldRef<"AuditoriaDesbloqueoComparativa", 'String'>
+    readonly timestamp_desbloqueo: FieldRef<"AuditoriaDesbloqueoComparativa", 'DateTime'>
+    readonly justificacion: FieldRef<"AuditoriaDesbloqueoComparativa", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AuditoriaDesbloqueoComparativa findUnique
+   */
+  export type AuditoriaDesbloqueoComparativaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaDesbloqueoComparativa to fetch.
+     */
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa findUniqueOrThrow
+   */
+  export type AuditoriaDesbloqueoComparativaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaDesbloqueoComparativa to fetch.
+     */
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa findFirst
+   */
+  export type AuditoriaDesbloqueoComparativaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaDesbloqueoComparativa to fetch.
+     */
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaDesbloqueoComparativas to fetch.
+     */
+    orderBy?: AuditoriaDesbloqueoComparativaOrderByWithRelationInput | AuditoriaDesbloqueoComparativaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuditoriaDesbloqueoComparativas.
+     */
+    cursor?: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaDesbloqueoComparativas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaDesbloqueoComparativas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditoriaDesbloqueoComparativas.
+     */
+    distinct?: AuditoriaDesbloqueoComparativaScalarFieldEnum | AuditoriaDesbloqueoComparativaScalarFieldEnum[]
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa findFirstOrThrow
+   */
+  export type AuditoriaDesbloqueoComparativaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaDesbloqueoComparativa to fetch.
+     */
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaDesbloqueoComparativas to fetch.
+     */
+    orderBy?: AuditoriaDesbloqueoComparativaOrderByWithRelationInput | AuditoriaDesbloqueoComparativaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuditoriaDesbloqueoComparativas.
+     */
+    cursor?: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaDesbloqueoComparativas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaDesbloqueoComparativas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditoriaDesbloqueoComparativas.
+     */
+    distinct?: AuditoriaDesbloqueoComparativaScalarFieldEnum | AuditoriaDesbloqueoComparativaScalarFieldEnum[]
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa findMany
+   */
+  export type AuditoriaDesbloqueoComparativaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaDesbloqueoComparativas to fetch.
+     */
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaDesbloqueoComparativas to fetch.
+     */
+    orderBy?: AuditoriaDesbloqueoComparativaOrderByWithRelationInput | AuditoriaDesbloqueoComparativaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AuditoriaDesbloqueoComparativas.
+     */
+    cursor?: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaDesbloqueoComparativas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaDesbloqueoComparativas.
+     */
+    skip?: number
+    distinct?: AuditoriaDesbloqueoComparativaScalarFieldEnum | AuditoriaDesbloqueoComparativaScalarFieldEnum[]
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa create
+   */
+  export type AuditoriaDesbloqueoComparativaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AuditoriaDesbloqueoComparativa.
+     */
+    data: XOR<AuditoriaDesbloqueoComparativaCreateInput, AuditoriaDesbloqueoComparativaUncheckedCreateInput>
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa createMany
+   */
+  export type AuditoriaDesbloqueoComparativaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AuditoriaDesbloqueoComparativas.
+     */
+    data: AuditoriaDesbloqueoComparativaCreateManyInput | AuditoriaDesbloqueoComparativaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa createManyAndReturn
+   */
+  export type AuditoriaDesbloqueoComparativaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many AuditoriaDesbloqueoComparativas.
+     */
+    data: AuditoriaDesbloqueoComparativaCreateManyInput | AuditoriaDesbloqueoComparativaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa update
+   */
+  export type AuditoriaDesbloqueoComparativaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AuditoriaDesbloqueoComparativa.
+     */
+    data: XOR<AuditoriaDesbloqueoComparativaUpdateInput, AuditoriaDesbloqueoComparativaUncheckedUpdateInput>
+    /**
+     * Choose, which AuditoriaDesbloqueoComparativa to update.
+     */
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa updateMany
+   */
+  export type AuditoriaDesbloqueoComparativaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AuditoriaDesbloqueoComparativas.
+     */
+    data: XOR<AuditoriaDesbloqueoComparativaUpdateManyMutationInput, AuditoriaDesbloqueoComparativaUncheckedUpdateManyInput>
+    /**
+     * Filter which AuditoriaDesbloqueoComparativas to update
+     */
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa upsert
+   */
+  export type AuditoriaDesbloqueoComparativaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AuditoriaDesbloqueoComparativa to update in case it exists.
+     */
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    /**
+     * In case the AuditoriaDesbloqueoComparativa found by the `where` argument doesn't exist, create a new AuditoriaDesbloqueoComparativa with this data.
+     */
+    create: XOR<AuditoriaDesbloqueoComparativaCreateInput, AuditoriaDesbloqueoComparativaUncheckedCreateInput>
+    /**
+     * In case the AuditoriaDesbloqueoComparativa was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AuditoriaDesbloqueoComparativaUpdateInput, AuditoriaDesbloqueoComparativaUncheckedUpdateInput>
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa delete
+   */
+  export type AuditoriaDesbloqueoComparativaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
+    /**
+     * Filter which AuditoriaDesbloqueoComparativa to delete.
+     */
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa deleteMany
+   */
+  export type AuditoriaDesbloqueoComparativaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuditoriaDesbloqueoComparativas to delete
+     */
+    where?: AuditoriaDesbloqueoComparativaWhereInput
+  }
+
+  /**
+   * AuditoriaDesbloqueoComparativa without action
+   */
+  export type AuditoriaDesbloqueoComparativaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaDesbloqueoComparativa
+     */
+    select?: AuditoriaDesbloqueoComparativaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaDesbloqueoComparativaInclude<ExtArgs> | null
   }
 
 
@@ -13202,6 +14368,8 @@ export namespace Prisma {
     evaluacion_tecnica: string | null
     comentario_tecnico: string | null
     valor_ofrecido_spec: string | null
+    pregunta_residente: string | null
+    respuesta_compras: string | null
     aprobacion_gt: string | null
     comentario_gt: string | null
   }
@@ -13219,6 +14387,8 @@ export namespace Prisma {
     evaluacion_tecnica: string | null
     comentario_tecnico: string | null
     valor_ofrecido_spec: string | null
+    pregunta_residente: string | null
+    respuesta_compras: string | null
     aprobacion_gt: string | null
     comentario_gt: string | null
   }
@@ -13236,6 +14406,8 @@ export namespace Prisma {
     evaluacion_tecnica: number
     comentario_tecnico: number
     valor_ofrecido_spec: number
+    pregunta_residente: number
+    respuesta_compras: number
     aprobacion_gt: number
     comentario_gt: number
     _all: number
@@ -13263,6 +14435,8 @@ export namespace Prisma {
     evaluacion_tecnica?: true
     comentario_tecnico?: true
     valor_ofrecido_spec?: true
+    pregunta_residente?: true
+    respuesta_compras?: true
     aprobacion_gt?: true
     comentario_gt?: true
   }
@@ -13280,6 +14454,8 @@ export namespace Prisma {
     evaluacion_tecnica?: true
     comentario_tecnico?: true
     valor_ofrecido_spec?: true
+    pregunta_residente?: true
+    respuesta_compras?: true
     aprobacion_gt?: true
     comentario_gt?: true
   }
@@ -13297,6 +14473,8 @@ export namespace Prisma {
     evaluacion_tecnica?: true
     comentario_tecnico?: true
     valor_ofrecido_spec?: true
+    pregunta_residente?: true
+    respuesta_compras?: true
     aprobacion_gt?: true
     comentario_gt?: true
     _all?: true
@@ -13401,6 +14579,8 @@ export namespace Prisma {
     evaluacion_tecnica: string
     comentario_tecnico: string | null
     valor_ofrecido_spec: string | null
+    pregunta_residente: string | null
+    respuesta_compras: string | null
     aprobacion_gt: string
     comentario_gt: string | null
     _count: ComparativaDetalleCountAggregateOutputType | null
@@ -13437,6 +14617,8 @@ export namespace Prisma {
     evaluacion_tecnica?: boolean
     comentario_tecnico?: boolean
     valor_ofrecido_spec?: boolean
+    pregunta_residente?: boolean
+    respuesta_compras?: boolean
     aprobacion_gt?: boolean
     comentario_gt?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
@@ -13456,6 +14638,8 @@ export namespace Prisma {
     evaluacion_tecnica?: boolean
     comentario_tecnico?: boolean
     valor_ofrecido_spec?: boolean
+    pregunta_residente?: boolean
+    respuesta_compras?: boolean
     aprobacion_gt?: boolean
     comentario_gt?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
@@ -13475,6 +14659,8 @@ export namespace Prisma {
     evaluacion_tecnica?: boolean
     comentario_tecnico?: boolean
     valor_ofrecido_spec?: boolean
+    pregunta_residente?: boolean
+    respuesta_compras?: boolean
     aprobacion_gt?: boolean
     comentario_gt?: boolean
   }
@@ -13507,6 +14693,14 @@ export namespace Prisma {
       evaluacion_tecnica: string
       comentario_tecnico: string | null
       valor_ofrecido_spec: string | null
+      /**
+       * Pregunta del Residente cuando marcó "?" — dispara nueva revisión del cuadro
+       */
+      pregunta_residente: string | null
+      /**
+       * Respuesta de Compras a la pregunta del Residente — visible en la revisión siguiente
+       */
+      respuesta_compras: string | null
       aprobacion_gt: string
       comentario_gt: string | null
     }, ExtArgs["result"]["comparativaDetalle"]>
@@ -13916,6 +15110,8 @@ export namespace Prisma {
     readonly evaluacion_tecnica: FieldRef<"ComparativaDetalle", 'String'>
     readonly comentario_tecnico: FieldRef<"ComparativaDetalle", 'String'>
     readonly valor_ofrecido_spec: FieldRef<"ComparativaDetalle", 'String'>
+    readonly pregunta_residente: FieldRef<"ComparativaDetalle", 'String'>
+    readonly respuesta_compras: FieldRef<"ComparativaDetalle", 'String'>
     readonly aprobacion_gt: FieldRef<"ComparativaDetalle", 'String'>
     readonly comentario_gt: FieldRef<"ComparativaDetalle", 'String'>
   }
@@ -22312,7 +23508,8 @@ export namespace Prisma {
     prioridad: 'prioridad',
     estado: 'estado',
     tipo: 'tipo',
-    observaciones: 'observaciones'
+    observaciones: 'observaciones',
+    concepto_id: 'concepto_id'
   };
 
   export type RequisicionScalarFieldEnum = (typeof RequisicionScalarFieldEnum)[keyof typeof RequisicionScalarFieldEnum]
@@ -22329,6 +23526,8 @@ export namespace Prisma {
     descripcion_libre: 'descripcion_libre',
     unidad_libre: 'unidad_libre',
     es_imprevisto: 'es_imprevisto',
+    especificacion_marca_modelo: 'especificacion_marca_modelo',
+    especificacion_detalle: 'especificacion_detalle',
     cantidad_presupuestada: 'cantidad_presupuestada',
     concepto_origen_id: 'concepto_origen_id',
     justificacion: 'justificacion'
@@ -22366,7 +23565,8 @@ export namespace Prisma {
     subtotal: 'subtotal',
     iva: 'iva',
     total: 'total',
-    presupuesto_id: 'presupuesto_id'
+    presupuesto_id: 'presupuesto_id',
+    requisicion_id: 'requisicion_id'
   };
 
   export type OrdenCompraScalarFieldEnum = (typeof OrdenCompraScalarFieldEnum)[keyof typeof OrdenCompraScalarFieldEnum]
@@ -22401,6 +23601,8 @@ export namespace Prisma {
     fecha_firma: 'fecha_firma',
     primera_opcion_proveedor_id: 'primera_opcion_proveedor_id',
     segunda_opcion_proveedor_id: 'segunda_opcion_proveedor_id',
+    veredicto_residente: 'veredicto_residente',
+    proveedores_sugeridos: 'proveedores_sugeridos',
     evaluacion_residente_id: 'evaluacion_residente_id',
     fecha_evaluacion_tecnica: 'fecha_evaluacion_tecnica',
     gerente_tecnico_id: 'gerente_tecnico_id',
@@ -22409,6 +23611,19 @@ export namespace Prisma {
   };
 
   export type CuadroComparativoScalarFieldEnum = (typeof CuadroComparativoScalarFieldEnum)[keyof typeof CuadroComparativoScalarFieldEnum]
+
+
+  export const AuditoriaDesbloqueoComparativaScalarFieldEnum: {
+    id_auditoria: 'id_auditoria',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    cuadro_id: 'cuadro_id',
+    desbloqueado_por: 'desbloqueado_por',
+    timestamp_desbloqueo: 'timestamp_desbloqueo',
+    justificacion: 'justificacion'
+  };
+
+  export type AuditoriaDesbloqueoComparativaScalarFieldEnum = (typeof AuditoriaDesbloqueoComparativaScalarFieldEnum)[keyof typeof AuditoriaDesbloqueoComparativaScalarFieldEnum]
 
 
   export const ComparativaLineaScalarFieldEnum: {
@@ -22438,6 +23653,8 @@ export namespace Prisma {
     evaluacion_tecnica: 'evaluacion_tecnica',
     comentario_tecnico: 'comentario_tecnico',
     valor_ofrecido_spec: 'valor_ofrecido_spec',
+    pregunta_residente: 'pregunta_residente',
+    respuesta_compras: 'respuesta_compras',
     aprobacion_gt: 'aprobacion_gt',
     comentario_gt: 'comentario_gt'
   };
@@ -22981,6 +24198,7 @@ export namespace Prisma {
     estado?: StringFilter<"Requisicion"> | string
     tipo?: StringFilter<"Requisicion"> | string
     observaciones?: StringNullableFilter<"Requisicion"> | string | null
+    concepto_id?: UuidNullableFilter<"Requisicion"> | string | null
     items?: RequisicionItemListRelationFilter
   }
 
@@ -22995,6 +24213,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrderInput | SortOrder
+    concepto_id?: SortOrderInput | SortOrder
     items?: RequisicionItemOrderByRelationAggregateInput
   }
 
@@ -23013,6 +24232,7 @@ export namespace Prisma {
     estado?: StringFilter<"Requisicion"> | string
     tipo?: StringFilter<"Requisicion"> | string
     observaciones?: StringNullableFilter<"Requisicion"> | string | null
+    concepto_id?: UuidNullableFilter<"Requisicion"> | string | null
     items?: RequisicionItemListRelationFilter
   }, "id_requisicion" | "tenant_id_codigo">
 
@@ -23027,6 +24247,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrderInput | SortOrder
+    concepto_id?: SortOrderInput | SortOrder
     _count?: RequisicionCountOrderByAggregateInput
     _max?: RequisicionMaxOrderByAggregateInput
     _min?: RequisicionMinOrderByAggregateInput
@@ -23046,6 +24267,7 @@ export namespace Prisma {
     estado?: StringWithAggregatesFilter<"Requisicion"> | string
     tipo?: StringWithAggregatesFilter<"Requisicion"> | string
     observaciones?: StringNullableWithAggregatesFilter<"Requisicion"> | string | null
+    concepto_id?: UuidNullableWithAggregatesFilter<"Requisicion"> | string | null
   }
 
   export type RequisicionItemWhereInput = {
@@ -23062,6 +24284,8 @@ export namespace Prisma {
     descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
+    especificacion_marca_modelo?: StringNullableFilter<"RequisicionItem"> | string | null
+    especificacion_detalle?: StringNullableFilter<"RequisicionItem"> | string | null
     cantidad_presupuestada?: DecimalNullableFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: UuidNullableFilter<"RequisicionItem"> | string | null
     justificacion?: StringNullableFilter<"RequisicionItem"> | string | null
@@ -23079,6 +24303,8 @@ export namespace Prisma {
     descripcion_libre?: SortOrderInput | SortOrder
     unidad_libre?: SortOrderInput | SortOrder
     es_imprevisto?: SortOrder
+    especificacion_marca_modelo?: SortOrderInput | SortOrder
+    especificacion_detalle?: SortOrderInput | SortOrder
     cantidad_presupuestada?: SortOrderInput | SortOrder
     concepto_origen_id?: SortOrderInput | SortOrder
     justificacion?: SortOrderInput | SortOrder
@@ -23099,6 +24325,8 @@ export namespace Prisma {
     descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
+    especificacion_marca_modelo?: StringNullableFilter<"RequisicionItem"> | string | null
+    especificacion_detalle?: StringNullableFilter<"RequisicionItem"> | string | null
     cantidad_presupuestada?: DecimalNullableFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: UuidNullableFilter<"RequisicionItem"> | string | null
     justificacion?: StringNullableFilter<"RequisicionItem"> | string | null
@@ -23116,6 +24344,8 @@ export namespace Prisma {
     descripcion_libre?: SortOrderInput | SortOrder
     unidad_libre?: SortOrderInput | SortOrder
     es_imprevisto?: SortOrder
+    especificacion_marca_modelo?: SortOrderInput | SortOrder
+    especificacion_detalle?: SortOrderInput | SortOrder
     cantidad_presupuestada?: SortOrderInput | SortOrder
     concepto_origen_id?: SortOrderInput | SortOrder
     justificacion?: SortOrderInput | SortOrder
@@ -23140,6 +24370,8 @@ export namespace Prisma {
     descripcion_libre?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolWithAggregatesFilter<"RequisicionItem"> | boolean
+    especificacion_marca_modelo?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
+    especificacion_detalle?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     cantidad_presupuestada?: DecimalNullableWithAggregatesFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: UuidNullableWithAggregatesFilter<"RequisicionItem"> | string | null
     justificacion?: StringNullableWithAggregatesFilter<"RequisicionItem"> | string | null
@@ -23242,6 +24474,7 @@ export namespace Prisma {
     iva?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     presupuesto_id?: UuidNullableFilter<"OrdenCompra"> | string | null
+    requisicion_id?: UuidNullableFilter<"OrdenCompra"> | string | null
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
     items?: OrdenCompraItemListRelationFilter
   }
@@ -23260,6 +24493,7 @@ export namespace Prisma {
     iva?: SortOrder
     total?: SortOrder
     presupuesto_id?: SortOrderInput | SortOrder
+    requisicion_id?: SortOrderInput | SortOrder
     proveedor?: ProveedorOrderByWithRelationInput
     items?: OrdenCompraItemOrderByRelationAggregateInput
   }
@@ -23282,6 +24516,7 @@ export namespace Prisma {
     iva?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     presupuesto_id?: UuidNullableFilter<"OrdenCompra"> | string | null
+    requisicion_id?: UuidNullableFilter<"OrdenCompra"> | string | null
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
     items?: OrdenCompraItemListRelationFilter
   }, "id_orden" | "tenant_id_codigo">
@@ -23300,6 +24535,7 @@ export namespace Prisma {
     iva?: SortOrder
     total?: SortOrder
     presupuesto_id?: SortOrderInput | SortOrder
+    requisicion_id?: SortOrderInput | SortOrder
     _count?: OrdenCompraCountOrderByAggregateInput
     _avg?: OrdenCompraAvgOrderByAggregateInput
     _max?: OrdenCompraMaxOrderByAggregateInput
@@ -23324,6 +24560,7 @@ export namespace Prisma {
     iva?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     presupuesto_id?: UuidNullableWithAggregatesFilter<"OrdenCompra"> | string | null
+    requisicion_id?: UuidNullableWithAggregatesFilter<"OrdenCompra"> | string | null
   }
 
   export type OrdenCompraItemWhereInput = {
@@ -23416,6 +24653,8 @@ export namespace Prisma {
     fecha_firma?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
     primera_opcion_proveedor_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
     segunda_opcion_proveedor_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
+    veredicto_residente?: StringNullableFilter<"CuadroComparativo"> | string | null
+    proveedores_sugeridos?: StringNullableFilter<"CuadroComparativo"> | string | null
     evaluacion_residente_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
     fecha_evaluacion_tecnica?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
     gerente_tecnico_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
@@ -23424,6 +24663,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleListRelationFilter
     lineas?: ComparativaLineaListRelationFilter
     aclaraciones?: AclaracionComparativaListRelationFilter
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaListRelationFilter
   }
 
   export type CuadroComparativoOrderByWithRelationInput = {
@@ -23441,6 +24681,8 @@ export namespace Prisma {
     fecha_firma?: SortOrderInput | SortOrder
     primera_opcion_proveedor_id?: SortOrderInput | SortOrder
     segunda_opcion_proveedor_id?: SortOrderInput | SortOrder
+    veredicto_residente?: SortOrderInput | SortOrder
+    proveedores_sugeridos?: SortOrderInput | SortOrder
     evaluacion_residente_id?: SortOrderInput | SortOrder
     fecha_evaluacion_tecnica?: SortOrderInput | SortOrder
     gerente_tecnico_id?: SortOrderInput | SortOrder
@@ -23449,6 +24691,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleOrderByRelationAggregateInput
     lineas?: ComparativaLineaOrderByRelationAggregateInput
     aclaraciones?: AclaracionComparativaOrderByRelationAggregateInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaOrderByRelationAggregateInput
   }
 
   export type CuadroComparativoWhereUniqueInput = Prisma.AtLeast<{
@@ -23470,6 +24713,8 @@ export namespace Prisma {
     fecha_firma?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
     primera_opcion_proveedor_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
     segunda_opcion_proveedor_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
+    veredicto_residente?: StringNullableFilter<"CuadroComparativo"> | string | null
+    proveedores_sugeridos?: StringNullableFilter<"CuadroComparativo"> | string | null
     evaluacion_residente_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
     fecha_evaluacion_tecnica?: DateTimeNullableFilter<"CuadroComparativo"> | Date | string | null
     gerente_tecnico_id?: UuidNullableFilter<"CuadroComparativo"> | string | null
@@ -23478,6 +24723,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleListRelationFilter
     lineas?: ComparativaLineaListRelationFilter
     aclaraciones?: AclaracionComparativaListRelationFilter
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaListRelationFilter
   }, "id_cuadro" | "tenant_id_codigo">
 
   export type CuadroComparativoOrderByWithAggregationInput = {
@@ -23495,6 +24741,8 @@ export namespace Prisma {
     fecha_firma?: SortOrderInput | SortOrder
     primera_opcion_proveedor_id?: SortOrderInput | SortOrder
     segunda_opcion_proveedor_id?: SortOrderInput | SortOrder
+    veredicto_residente?: SortOrderInput | SortOrder
+    proveedores_sugeridos?: SortOrderInput | SortOrder
     evaluacion_residente_id?: SortOrderInput | SortOrder
     fecha_evaluacion_tecnica?: SortOrderInput | SortOrder
     gerente_tecnico_id?: SortOrderInput | SortOrder
@@ -23523,11 +24771,78 @@ export namespace Prisma {
     fecha_firma?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
     primera_opcion_proveedor_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
     segunda_opcion_proveedor_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+    veredicto_residente?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+    proveedores_sugeridos?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
     evaluacion_residente_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
     fecha_evaluacion_tecnica?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
     gerente_tecnico_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
     fecha_aprobacion_gt?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
     comentario_gt_general?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+  }
+
+  export type AuditoriaDesbloqueoComparativaWhereInput = {
+    AND?: AuditoriaDesbloqueoComparativaWhereInput | AuditoriaDesbloqueoComparativaWhereInput[]
+    OR?: AuditoriaDesbloqueoComparativaWhereInput[]
+    NOT?: AuditoriaDesbloqueoComparativaWhereInput | AuditoriaDesbloqueoComparativaWhereInput[]
+    id_auditoria?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    tenant_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    proyecto_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    cuadro_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    desbloqueado_por?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    timestamp_desbloqueo?: DateTimeFilter<"AuditoriaDesbloqueoComparativa"> | Date | string
+    justificacion?: StringFilter<"AuditoriaDesbloqueoComparativa"> | string
+    cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
+  }
+
+  export type AuditoriaDesbloqueoComparativaOrderByWithRelationInput = {
+    id_auditoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    desbloqueado_por?: SortOrder
+    timestamp_desbloqueo?: SortOrder
+    justificacion?: SortOrder
+    cuadro?: CuadroComparativoOrderByWithRelationInput
+  }
+
+  export type AuditoriaDesbloqueoComparativaWhereUniqueInput = Prisma.AtLeast<{
+    id_auditoria?: string
+    AND?: AuditoriaDesbloqueoComparativaWhereInput | AuditoriaDesbloqueoComparativaWhereInput[]
+    OR?: AuditoriaDesbloqueoComparativaWhereInput[]
+    NOT?: AuditoriaDesbloqueoComparativaWhereInput | AuditoriaDesbloqueoComparativaWhereInput[]
+    tenant_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    proyecto_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    cuadro_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    desbloqueado_por?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    timestamp_desbloqueo?: DateTimeFilter<"AuditoriaDesbloqueoComparativa"> | Date | string
+    justificacion?: StringFilter<"AuditoriaDesbloqueoComparativa"> | string
+    cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
+  }, "id_auditoria">
+
+  export type AuditoriaDesbloqueoComparativaOrderByWithAggregationInput = {
+    id_auditoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    desbloqueado_por?: SortOrder
+    timestamp_desbloqueo?: SortOrder
+    justificacion?: SortOrder
+    _count?: AuditoriaDesbloqueoComparativaCountOrderByAggregateInput
+    _max?: AuditoriaDesbloqueoComparativaMaxOrderByAggregateInput
+    _min?: AuditoriaDesbloqueoComparativaMinOrderByAggregateInput
+  }
+
+  export type AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput = {
+    AND?: AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput | AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput[]
+    OR?: AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput[]
+    NOT?: AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput | AuditoriaDesbloqueoComparativaScalarWhereWithAggregatesInput[]
+    id_auditoria?: UuidWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | string
+    tenant_id?: UuidWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | string
+    cuadro_id?: UuidWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | string
+    desbloqueado_por?: UuidWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | string
+    timestamp_desbloqueo?: DateTimeWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | Date | string
+    justificacion?: StringWithAggregatesFilter<"AuditoriaDesbloqueoComparativa"> | string
   }
 
   export type ComparativaLineaWhereInput = {
@@ -23617,6 +24932,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
     valor_ofrecido_spec?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    pregunta_residente?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    respuesta_compras?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
@@ -23636,6 +24953,8 @@ export namespace Prisma {
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrderInput | SortOrder
     valor_ofrecido_spec?: SortOrderInput | SortOrder
+    pregunta_residente?: SortOrderInput | SortOrder
+    respuesta_compras?: SortOrderInput | SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrderInput | SortOrder
     cuadro?: CuadroComparativoOrderByWithRelationInput
@@ -23658,6 +24977,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
     valor_ofrecido_spec?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    pregunta_residente?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    respuesta_compras?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
@@ -23677,6 +24998,8 @@ export namespace Prisma {
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrderInput | SortOrder
     valor_ofrecido_spec?: SortOrderInput | SortOrder
+    pregunta_residente?: SortOrderInput | SortOrder
+    respuesta_compras?: SortOrderInput | SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrderInput | SortOrder
     _count?: ComparativaDetalleCountOrderByAggregateInput
@@ -23702,6 +25025,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringWithAggregatesFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
     valor_ofrecido_spec?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    pregunta_residente?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    respuesta_compras?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringWithAggregatesFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
   }
@@ -24696,6 +26021,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    concepto_id?: string | null
     items?: RequisicionItemCreateNestedManyWithoutRequisicionInput
   }
 
@@ -24710,6 +26036,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    concepto_id?: string | null
     items?: RequisicionItemUncheckedCreateNestedManyWithoutRequisicionInput
   }
 
@@ -24724,6 +26051,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: RequisicionItemUpdateManyWithoutRequisicionNestedInput
   }
 
@@ -24738,6 +26066,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: RequisicionItemUncheckedUpdateManyWithoutRequisicionNestedInput
   }
 
@@ -24752,6 +26081,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    concepto_id?: string | null
   }
 
   export type RequisicionUpdateManyMutationInput = {
@@ -24765,6 +26095,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionUncheckedUpdateManyInput = {
@@ -24778,6 +26109,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionItemCreateInput = {
@@ -24790,6 +26122,8 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: string | null
+    especificacion_detalle?: string | null
     cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: string | null
     justificacion?: string | null
@@ -24807,6 +26141,8 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: string | null
+    especificacion_detalle?: string | null
     cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: string | null
     justificacion?: string | null
@@ -24822,6 +26158,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24839,6 +26177,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24855,6 +26195,8 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: string | null
+    especificacion_detalle?: string | null
     cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: string | null
     justificacion?: string | null
@@ -24870,6 +26212,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24886,6 +26230,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24995,6 +26341,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
     proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
     items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
   }
@@ -25013,6 +26360,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
     items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
   }
 
@@ -25029,6 +26377,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
     items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
   }
@@ -25047,6 +26396,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
   }
 
@@ -25064,6 +26414,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
   }
 
   export type OrdenCompraUpdateManyMutationInput = {
@@ -25079,6 +26430,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrdenCompraUncheckedUpdateManyInput = {
@@ -25095,6 +26447,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrdenCompraItemCreateInput = {
@@ -25188,6 +26541,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -25196,6 +26551,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateInput = {
@@ -25213,6 +26569,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -25221,6 +26579,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUpdateInput = {
@@ -25238,6 +26597,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25246,6 +26607,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateInput = {
@@ -25263,6 +26625,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25271,6 +26635,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoCreateManyInput = {
@@ -25288,6 +26653,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -25310,6 +26677,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25332,11 +26701,82 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AuditoriaDesbloqueoComparativaCreateInput = {
+    id_auditoria?: string
+    tenant_id: string
+    proyecto_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo?: Date | string
+    justificacion: string
+    cuadro: CuadroComparativoCreateNestedOneWithoutAuditoria_desbloqueosInput
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedCreateInput = {
+    id_auditoria?: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo?: Date | string
+    justificacion: string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUpdateInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+    cuadro?: CuadroComparativoUpdateOneRequiredWithoutAuditoria_desbloqueosNestedInput
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedUpdateInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AuditoriaDesbloqueoComparativaCreateManyInput = {
+    id_auditoria?: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo?: Date | string
+    justificacion: string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUpdateManyMutationInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedUpdateManyInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
   }
 
   export type ComparativaLineaCreateInput = {
@@ -25426,6 +26866,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutDetallesInput
@@ -25445,6 +26887,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
   }
@@ -25460,6 +26904,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput
@@ -25479,6 +26925,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -25496,6 +26944,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
   }
@@ -25511,6 +26961,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -25528,6 +26980,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -26717,6 +28171,18 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type RequisicionItemListRelationFilter = {
     every?: RequisicionItemWhereInput
     some?: RequisicionItemWhereInput
@@ -26743,6 +28209,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrder
+    concepto_id?: SortOrder
   }
 
   export type RequisicionMaxOrderByAggregateInput = {
@@ -26756,6 +28223,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrder
+    concepto_id?: SortOrder
   }
 
   export type RequisicionMinOrderByAggregateInput = {
@@ -26769,9 +28237,10 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrder
+    concepto_id?: SortOrder
   }
 
-  export type UuidNullableFilter<$PrismaModel = never> = {
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
     notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -26780,7 +28249,10 @@ export namespace Prisma {
     gt?: string | StringFieldRefInput<$PrismaModel>
     gte?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type RequisicionRelationFilter = {
@@ -26799,6 +28271,8 @@ export namespace Prisma {
     descripcion_libre?: SortOrder
     unidad_libre?: SortOrder
     es_imprevisto?: SortOrder
+    especificacion_marca_modelo?: SortOrder
+    especificacion_detalle?: SortOrder
     cantidad_presupuestada?: SortOrder
     concepto_origen_id?: SortOrder
     justificacion?: SortOrder
@@ -26820,6 +28294,8 @@ export namespace Prisma {
     descripcion_libre?: SortOrder
     unidad_libre?: SortOrder
     es_imprevisto?: SortOrder
+    especificacion_marca_modelo?: SortOrder
+    especificacion_detalle?: SortOrder
     cantidad_presupuestada?: SortOrder
     concepto_origen_id?: SortOrder
     justificacion?: SortOrder
@@ -26836,6 +28312,8 @@ export namespace Prisma {
     descripcion_libre?: SortOrder
     unidad_libre?: SortOrder
     es_imprevisto?: SortOrder
+    especificacion_marca_modelo?: SortOrder
+    especificacion_detalle?: SortOrder
     cantidad_presupuestada?: SortOrder
     concepto_origen_id?: SortOrder
     justificacion?: SortOrder
@@ -26844,21 +28322,6 @@ export namespace Prisma {
   export type RequisicionItemSumOrderByAggregateInput = {
     cantidad?: SortOrder
     cantidad_presupuestada?: SortOrder
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type AsignacionExtraConceptoTenant_idRequisicion_item_idCompoundUniqueInput = {
@@ -26942,6 +28405,7 @@ export namespace Prisma {
     iva?: SortOrder
     total?: SortOrder
     presupuesto_id?: SortOrder
+    requisicion_id?: SortOrder
   }
 
   export type OrdenCompraAvgOrderByAggregateInput = {
@@ -26965,6 +28429,7 @@ export namespace Prisma {
     iva?: SortOrder
     total?: SortOrder
     presupuesto_id?: SortOrder
+    requisicion_id?: SortOrder
   }
 
   export type OrdenCompraMinOrderByAggregateInput = {
@@ -26981,6 +28446,7 @@ export namespace Prisma {
     iva?: SortOrder
     total?: SortOrder
     presupuesto_id?: SortOrder
+    requisicion_id?: SortOrder
   }
 
   export type OrdenCompraSumOrderByAggregateInput = {
@@ -27063,11 +28529,21 @@ export namespace Prisma {
     none?: AclaracionComparativaWhereInput
   }
 
+  export type AuditoriaDesbloqueoComparativaListRelationFilter = {
+    every?: AuditoriaDesbloqueoComparativaWhereInput
+    some?: AuditoriaDesbloqueoComparativaWhereInput
+    none?: AuditoriaDesbloqueoComparativaWhereInput
+  }
+
   export type ComparativaLineaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type AclaracionComparativaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AuditoriaDesbloqueoComparativaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -27091,6 +28567,8 @@ export namespace Prisma {
     fecha_firma?: SortOrder
     primera_opcion_proveedor_id?: SortOrder
     segunda_opcion_proveedor_id?: SortOrder
+    veredicto_residente?: SortOrder
+    proveedores_sugeridos?: SortOrder
     evaluacion_residente_id?: SortOrder
     fecha_evaluacion_tecnica?: SortOrder
     gerente_tecnico_id?: SortOrder
@@ -27113,6 +28591,8 @@ export namespace Prisma {
     fecha_firma?: SortOrder
     primera_opcion_proveedor_id?: SortOrder
     segunda_opcion_proveedor_id?: SortOrder
+    veredicto_residente?: SortOrder
+    proveedores_sugeridos?: SortOrder
     evaluacion_residente_id?: SortOrder
     fecha_evaluacion_tecnica?: SortOrder
     gerente_tecnico_id?: SortOrder
@@ -27135,6 +28615,8 @@ export namespace Prisma {
     fecha_firma?: SortOrder
     primera_opcion_proveedor_id?: SortOrder
     segunda_opcion_proveedor_id?: SortOrder
+    veredicto_residente?: SortOrder
+    proveedores_sugeridos?: SortOrder
     evaluacion_residente_id?: SortOrder
     fecha_evaluacion_tecnica?: SortOrder
     gerente_tecnico_id?: SortOrder
@@ -27159,6 +28641,36 @@ export namespace Prisma {
   export type CuadroComparativoRelationFilter = {
     is?: CuadroComparativoWhereInput
     isNot?: CuadroComparativoWhereInput
+  }
+
+  export type AuditoriaDesbloqueoComparativaCountOrderByAggregateInput = {
+    id_auditoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    desbloqueado_por?: SortOrder
+    timestamp_desbloqueo?: SortOrder
+    justificacion?: SortOrder
+  }
+
+  export type AuditoriaDesbloqueoComparativaMaxOrderByAggregateInput = {
+    id_auditoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    desbloqueado_por?: SortOrder
+    timestamp_desbloqueo?: SortOrder
+    justificacion?: SortOrder
+  }
+
+  export type AuditoriaDesbloqueoComparativaMinOrderByAggregateInput = {
+    id_auditoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    desbloqueado_por?: SortOrder
+    timestamp_desbloqueo?: SortOrder
+    justificacion?: SortOrder
   }
 
   export type ComparativaLineaCuadro_idInsumo_idCompoundUniqueInput = {
@@ -27212,6 +28724,8 @@ export namespace Prisma {
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrder
     valor_ofrecido_spec?: SortOrder
+    pregunta_residente?: SortOrder
+    respuesta_compras?: SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrder
   }
@@ -27233,6 +28747,8 @@ export namespace Prisma {
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrder
     valor_ofrecido_spec?: SortOrder
+    pregunta_residente?: SortOrder
+    respuesta_compras?: SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrder
   }
@@ -27250,6 +28766,8 @@ export namespace Prisma {
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrder
     valor_ofrecido_spec?: SortOrder
+    pregunta_residente?: SortOrder
+    respuesta_compras?: SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrder
   }
@@ -28041,6 +29559,13 @@ export namespace Prisma {
     connect?: AclaracionComparativaWhereUniqueInput | AclaracionComparativaWhereUniqueInput[]
   }
 
+  export type AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput = {
+    create?: XOR<AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput> | AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput[] | AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput | AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput[]
+    createMany?: AuditoriaDesbloqueoComparativaCreateManyCuadroInputEnvelope
+    connect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+  }
+
   export type ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
@@ -28060,6 +29585,13 @@ export namespace Prisma {
     connectOrCreate?: AclaracionComparativaCreateOrConnectWithoutCuadroInput | AclaracionComparativaCreateOrConnectWithoutCuadroInput[]
     createMany?: AclaracionComparativaCreateManyCuadroInputEnvelope
     connect?: AclaracionComparativaWhereUniqueInput | AclaracionComparativaWhereUniqueInput[]
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput = {
+    create?: XOR<AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput> | AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput[] | AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput | AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput[]
+    createMany?: AuditoriaDesbloqueoComparativaCreateManyCuadroInputEnvelope
+    connect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -28108,6 +29640,20 @@ export namespace Prisma {
     deleteMany?: AclaracionComparativaScalarWhereInput | AclaracionComparativaScalarWhereInput[]
   }
 
+  export type AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput = {
+    create?: XOR<AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput> | AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput[] | AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput | AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput[]
+    upsert?: AuditoriaDesbloqueoComparativaUpsertWithWhereUniqueWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpsertWithWhereUniqueWithoutCuadroInput[]
+    createMany?: AuditoriaDesbloqueoComparativaCreateManyCuadroInputEnvelope
+    set?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    disconnect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    delete?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    connect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    update?: AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput[]
+    updateMany?: AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput[]
+    deleteMany?: AuditoriaDesbloqueoComparativaScalarWhereInput | AuditoriaDesbloqueoComparativaScalarWhereInput[]
+  }
+
   export type ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
@@ -28148,6 +29694,34 @@ export namespace Prisma {
     update?: AclaracionComparativaUpdateWithWhereUniqueWithoutCuadroInput | AclaracionComparativaUpdateWithWhereUniqueWithoutCuadroInput[]
     updateMany?: AclaracionComparativaUpdateManyWithWhereWithoutCuadroInput | AclaracionComparativaUpdateManyWithWhereWithoutCuadroInput[]
     deleteMany?: AclaracionComparativaScalarWhereInput | AclaracionComparativaScalarWhereInput[]
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput = {
+    create?: XOR<AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput> | AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput[] | AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput | AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput[]
+    upsert?: AuditoriaDesbloqueoComparativaUpsertWithWhereUniqueWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpsertWithWhereUniqueWithoutCuadroInput[]
+    createMany?: AuditoriaDesbloqueoComparativaCreateManyCuadroInputEnvelope
+    set?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    disconnect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    delete?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    connect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+    update?: AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput[]
+    updateMany?: AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput[]
+    deleteMany?: AuditoriaDesbloqueoComparativaScalarWhereInput | AuditoriaDesbloqueoComparativaScalarWhereInput[]
+  }
+
+  export type CuadroComparativoCreateNestedOneWithoutAuditoria_desbloqueosInput = {
+    create?: XOR<CuadroComparativoCreateWithoutAuditoria_desbloqueosInput, CuadroComparativoUncheckedCreateWithoutAuditoria_desbloqueosInput>
+    connectOrCreate?: CuadroComparativoCreateOrConnectWithoutAuditoria_desbloqueosInput
+    connect?: CuadroComparativoWhereUniqueInput
+  }
+
+  export type CuadroComparativoUpdateOneRequiredWithoutAuditoria_desbloqueosNestedInput = {
+    create?: XOR<CuadroComparativoCreateWithoutAuditoria_desbloqueosInput, CuadroComparativoUncheckedCreateWithoutAuditoria_desbloqueosInput>
+    connectOrCreate?: CuadroComparativoCreateOrConnectWithoutAuditoria_desbloqueosInput
+    upsert?: CuadroComparativoUpsertWithoutAuditoria_desbloqueosInput
+    connect?: CuadroComparativoWhereUniqueInput
+    update?: XOR<XOR<CuadroComparativoUpdateToOneWithWhereWithoutAuditoria_desbloqueosInput, CuadroComparativoUpdateWithoutAuditoria_desbloqueosInput>, CuadroComparativoUncheckedUpdateWithoutAuditoria_desbloqueosInput>
   }
 
   export type CuadroComparativoCreateNestedOneWithoutLineasInput = {
@@ -28609,6 +30183,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
     items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
   }
 
@@ -28625,6 +30200,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
     items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
   }
 
@@ -28649,6 +30225,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutDetallesInput
@@ -28666,6 +30244,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
   }
@@ -28783,6 +30363,7 @@ export namespace Prisma {
     iva?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     total?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     presupuesto_id?: UuidNullableFilter<"OrdenCompra"> | string | null
+    requisicion_id?: UuidNullableFilter<"OrdenCompra"> | string | null
   }
 
   export type ComparativaDetalleUpsertWithWhereUniqueWithoutProveedorInput = {
@@ -28817,6 +30398,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
     valor_ofrecido_spec?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    pregunta_residente?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    respuesta_compras?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
   }
@@ -29088,6 +30671,8 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: string | null
+    especificacion_detalle?: string | null
     cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: string | null
     justificacion?: string | null
@@ -29103,6 +30688,8 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: string | null
+    especificacion_detalle?: string | null
     cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: string | null
     justificacion?: string | null
@@ -29148,6 +30735,8 @@ export namespace Prisma {
     descripcion_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     unidad_libre?: StringNullableFilter<"RequisicionItem"> | string | null
     es_imprevisto?: BoolFilter<"RequisicionItem"> | boolean
+    especificacion_marca_modelo?: StringNullableFilter<"RequisicionItem"> | string | null
+    especificacion_detalle?: StringNullableFilter<"RequisicionItem"> | string | null
     cantidad_presupuestada?: DecimalNullableFilter<"RequisicionItem"> | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: UuidNullableFilter<"RequisicionItem"> | string | null
     justificacion?: StringNullableFilter<"RequisicionItem"> | string | null
@@ -29164,6 +30753,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    concepto_id?: string | null
   }
 
   export type RequisicionUncheckedCreateWithoutItemsInput = {
@@ -29177,6 +30767,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    concepto_id?: string | null
   }
 
   export type RequisicionCreateOrConnectWithoutItemsInput = {
@@ -29206,6 +30797,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RequisicionUncheckedUpdateWithoutItemsInput = {
@@ -29219,6 +30811,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProveedorCreateWithoutOrdenesInput = {
@@ -29390,6 +30983,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
     proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
   }
 
@@ -29407,6 +31001,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
   }
 
   export type OrdenCompraCreateOrConnectWithoutItemsInput = {
@@ -29438,6 +31033,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
   }
 
@@ -29455,6 +31051,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateWithoutCuadroInput = {
@@ -29468,6 +31065,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
     proveedor: ProveedorCreateNestedOneWithoutComparativasInput
@@ -29485,6 +31084,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
   }
@@ -29562,6 +31163,34 @@ export namespace Prisma {
 
   export type AclaracionComparativaCreateManyCuadroInputEnvelope = {
     data: AclaracionComparativaCreateManyCuadroInput | AclaracionComparativaCreateManyCuadroInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput = {
+    id_auditoria?: string
+    tenant_id: string
+    proyecto_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo?: Date | string
+    justificacion: string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput = {
+    id_auditoria?: string
+    tenant_id: string
+    proyecto_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo?: Date | string
+    justificacion: string
+  }
+
+  export type AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput = {
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    create: XOR<AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput>
+  }
+
+  export type AuditoriaDesbloqueoComparativaCreateManyCuadroInputEnvelope = {
+    data: AuditoriaDesbloqueoComparativaCreateManyCuadroInput | AuditoriaDesbloqueoComparativaCreateManyCuadroInput[]
     skipDuplicates?: boolean
   }
 
@@ -29644,6 +31273,159 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"AclaracionComparativa"> | Date | string
   }
 
+  export type AuditoriaDesbloqueoComparativaUpsertWithWhereUniqueWithoutCuadroInput = {
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    update: XOR<AuditoriaDesbloqueoComparativaUpdateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedUpdateWithoutCuadroInput>
+    create: XOR<AuditoriaDesbloqueoComparativaCreateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedCreateWithoutCuadroInput>
+  }
+
+  export type AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput = {
+    where: AuditoriaDesbloqueoComparativaWhereUniqueInput
+    data: XOR<AuditoriaDesbloqueoComparativaUpdateWithoutCuadroInput, AuditoriaDesbloqueoComparativaUncheckedUpdateWithoutCuadroInput>
+  }
+
+  export type AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput = {
+    where: AuditoriaDesbloqueoComparativaScalarWhereInput
+    data: XOR<AuditoriaDesbloqueoComparativaUpdateManyMutationInput, AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroInput>
+  }
+
+  export type AuditoriaDesbloqueoComparativaScalarWhereInput = {
+    AND?: AuditoriaDesbloqueoComparativaScalarWhereInput | AuditoriaDesbloqueoComparativaScalarWhereInput[]
+    OR?: AuditoriaDesbloqueoComparativaScalarWhereInput[]
+    NOT?: AuditoriaDesbloqueoComparativaScalarWhereInput | AuditoriaDesbloqueoComparativaScalarWhereInput[]
+    id_auditoria?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    tenant_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    proyecto_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    cuadro_id?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    desbloqueado_por?: UuidFilter<"AuditoriaDesbloqueoComparativa"> | string
+    timestamp_desbloqueo?: DateTimeFilter<"AuditoriaDesbloqueoComparativa"> | Date | string
+    justificacion?: StringFilter<"AuditoriaDesbloqueoComparativa"> | string
+  }
+
+  export type CuadroComparativoCreateWithoutAuditoria_desbloqueosInput = {
+    id_cuadro?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    codigo: string
+    fecha_creacion?: Date | string
+    estado?: string
+    notas?: string | null
+    revision?: string
+    revision_padre_id?: string | null
+    firmado_por?: string | null
+    fecha_firma?: Date | string | null
+    primera_opcion_proveedor_id?: string | null
+    segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
+    detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
+    lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
+    aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
+  }
+
+  export type CuadroComparativoUncheckedCreateWithoutAuditoria_desbloqueosInput = {
+    id_cuadro?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    codigo: string
+    fecha_creacion?: Date | string
+    estado?: string
+    notas?: string | null
+    revision?: string
+    revision_padre_id?: string | null
+    firmado_por?: string | null
+    fecha_firma?: Date | string | null
+    primera_opcion_proveedor_id?: string | null
+    segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
+    detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
+    lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
+    aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
+  }
+
+  export type CuadroComparativoCreateOrConnectWithoutAuditoria_desbloqueosInput = {
+    where: CuadroComparativoWhereUniqueInput
+    create: XOR<CuadroComparativoCreateWithoutAuditoria_desbloqueosInput, CuadroComparativoUncheckedCreateWithoutAuditoria_desbloqueosInput>
+  }
+
+  export type CuadroComparativoUpsertWithoutAuditoria_desbloqueosInput = {
+    update: XOR<CuadroComparativoUpdateWithoutAuditoria_desbloqueosInput, CuadroComparativoUncheckedUpdateWithoutAuditoria_desbloqueosInput>
+    create: XOR<CuadroComparativoCreateWithoutAuditoria_desbloqueosInput, CuadroComparativoUncheckedCreateWithoutAuditoria_desbloqueosInput>
+    where?: CuadroComparativoWhereInput
+  }
+
+  export type CuadroComparativoUpdateToOneWithWhereWithoutAuditoria_desbloqueosInput = {
+    where?: CuadroComparativoWhereInput
+    data: XOR<CuadroComparativoUpdateWithoutAuditoria_desbloqueosInput, CuadroComparativoUncheckedUpdateWithoutAuditoria_desbloqueosInput>
+  }
+
+  export type CuadroComparativoUpdateWithoutAuditoria_desbloqueosInput = {
+    id_cuadro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revision?: StringFieldUpdateOperationsInput | string
+    revision_padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    firmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
+    lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
+    aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
+  }
+
+  export type CuadroComparativoUncheckedUpdateWithoutAuditoria_desbloqueosInput = {
+    id_cuadro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revision?: StringFieldUpdateOperationsInput | string
+    revision_padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    firmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
+    lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
+    aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+  }
+
   export type CuadroComparativoCreateWithoutLineasInput = {
     id_cuadro?: string
     tenant_id: string
@@ -29659,6 +31441,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -29666,6 +31450,7 @@ export namespace Prisma {
     comentario_gt_general?: string | null
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutLineasInput = {
@@ -29683,6 +31468,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -29690,6 +31477,7 @@ export namespace Prisma {
     comentario_gt_general?: string | null
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutLineasInput = {
@@ -29723,6 +31511,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29730,6 +31520,7 @@ export namespace Prisma {
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutLineasInput = {
@@ -29747,6 +31538,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29754,6 +31547,7 @@ export namespace Prisma {
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoCreateWithoutDetallesInput = {
@@ -29771,6 +31565,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -29778,6 +31574,7 @@ export namespace Prisma {
     comentario_gt_general?: string | null
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutDetallesInput = {
@@ -29795,6 +31592,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -29802,6 +31601,7 @@ export namespace Prisma {
     comentario_gt_general?: string | null
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutDetallesInput = {
@@ -29880,6 +31680,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29887,6 +31689,7 @@ export namespace Prisma {
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutDetallesInput = {
@@ -29904,6 +31707,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29911,6 +31716,7 @@ export namespace Prisma {
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type ProveedorUpsertWithoutComparativasInput = {
@@ -29979,6 +31785,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -29986,6 +31794,7 @@ export namespace Prisma {
     comentario_gt_general?: string | null
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutAclaracionesInput = {
@@ -30003,6 +31812,8 @@ export namespace Prisma {
     fecha_firma?: Date | string | null
     primera_opcion_proveedor_id?: string | null
     segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
     evaluacion_residente_id?: string | null
     fecha_evaluacion_tecnica?: Date | string | null
     gerente_tecnico_id?: string | null
@@ -30010,6 +31821,7 @@ export namespace Prisma {
     comentario_gt_general?: string | null
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutAclaracionesInput = {
@@ -30043,6 +31855,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30050,6 +31864,7 @@ export namespace Prisma {
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutAclaracionesInput = {
@@ -30067,6 +31882,8 @@ export namespace Prisma {
     fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
     segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
     evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30074,6 +31891,7 @@ export namespace Prisma {
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type SolicitudCotizacionProveedorCreateWithoutSolicitudInput = {
@@ -30378,6 +32196,7 @@ export namespace Prisma {
     iva: Decimal | DecimalJsLike | number | string
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
+    requisicion_id?: string | null
   }
 
   export type ComparativaDetalleCreateManyProveedorInput = {
@@ -30392,6 +32211,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
   }
@@ -30434,6 +32255,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
   }
 
@@ -30450,6 +32272,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
   }
 
@@ -30466,6 +32289,7 @@ export namespace Prisma {
     iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUpdateWithoutProveedorInput = {
@@ -30479,6 +32303,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput
@@ -30496,6 +32322,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -30512,6 +32340,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -30601,6 +32431,8 @@ export namespace Prisma {
     descripcion_libre?: string | null
     unidad_libre?: string | null
     es_imprevisto?: boolean
+    especificacion_marca_modelo?: string | null
+    especificacion_detalle?: string | null
     cantidad_presupuestada?: Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: string | null
     justificacion?: string | null
@@ -30616,6 +32448,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30631,6 +32465,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30646,6 +32482,8 @@ export namespace Prisma {
     descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
     unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     es_imprevisto?: BoolFieldUpdateOperationsInput | boolean
+    especificacion_marca_modelo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificacion_detalle?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad_presupuestada?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
     justificacion?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30703,6 +32541,8 @@ export namespace Prisma {
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
     valor_ofrecido_spec?: string | null
+    pregunta_residente?: string | null
+    respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
   }
@@ -30730,6 +32570,15 @@ export namespace Prisma {
     created_at?: Date | string
   }
 
+  export type AuditoriaDesbloqueoComparativaCreateManyCuadroInput = {
+    id_auditoria?: string
+    tenant_id: string
+    proyecto_id: string
+    desbloqueado_por: string
+    timestamp_desbloqueo?: Date | string
+    justificacion: string
+  }
+
   export type ComparativaDetalleUpdateWithoutCuadroInput = {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
@@ -30741,6 +32590,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutComparativasNestedInput
@@ -30758,6 +32609,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -30774,6 +32627,8 @@ export namespace Prisma {
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
     valor_ofrecido_spec?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -30845,6 +32700,33 @@ export namespace Prisma {
     mensaje?: StringFieldUpdateOperationsInput | string
     resuelta?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUpdateWithoutCuadroInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedUpdateWithoutCuadroInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroInput = {
+    id_auditoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    desbloqueado_por?: StringFieldUpdateOperationsInput | string
+    timestamp_desbloqueo?: DateTimeFieldUpdateOperationsInput | Date | string
+    justificacion?: StringFieldUpdateOperationsInput | string
   }
 
   export type SolicitudCotizacionProveedorCreateManySolicitudInput = {
@@ -31020,6 +32902,10 @@ export namespace Prisma {
      * @deprecated Use CuadroComparativoDefaultArgs instead
      */
     export type CuadroComparativoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuadroComparativoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use AuditoriaDesbloqueoComparativaDefaultArgs instead
+     */
+    export type AuditoriaDesbloqueoComparativaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AuditoriaDesbloqueoComparativaDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ComparativaLineaDefaultArgs instead
      */

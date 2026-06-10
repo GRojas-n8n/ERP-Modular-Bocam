@@ -122,6 +122,27 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.CategoriaGastoScalarFieldEnum = {
+  id_categoria: 'id_categoria',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  nombre: 'nombre',
+  es_predefinida: 'es_predefinida',
+  activa: 'activa',
+  created_at: 'created_at'
+};
+
+exports.Prisma.ProyectoCostosConfigScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  estado: 'estado',
+  activado_por: 'activado_por',
+  fecha_activacion: 'fecha_activacion',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.InsumoScalarFieldEnum = {
   id: 'id',
   tenant_id: 'tenant_id',
@@ -130,6 +151,7 @@ exports.Prisma.InsumoScalarFieldEnum = {
   unidad_medida: 'unidad_medida',
   tipo_insumo: 'tipo_insumo',
   costo_base: 'costo_base',
+  categoria_gasto_id: 'categoria_gasto_id',
   activo: 'activo',
   created_at: 'created_at',
   updated_at: 'updated_at'
@@ -221,6 +243,8 @@ exports.EstadoPresupuesto = exports.$Enums.EstadoPresupuesto = {
 };
 
 exports.Prisma.ModelName = {
+  CategoriaGasto: 'CategoriaGasto',
+  ProyectoCostosConfig: 'ProyectoCostosConfig',
   Insumo: 'Insumo',
   PresupuestoBase: 'PresupuestoBase',
   Concepto: 'Concepto',

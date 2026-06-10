@@ -14,6 +14,19 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
 /**
+ * Model CategoriaGasto
+ * Catálogo de categorías de gasto por proyecto — gestionadas por Control de Proyectos.
+ * Predefinidas por el sistema (seed); personalizables por tenant antes de activar el proyecto.
+ * Congeladas una vez que el proyecto pasa a estado ACTIVO.
+ */
+export type CategoriaGasto = $Result.DefaultSelection<Prisma.$CategoriaGastoPayload>
+/**
+ * Model ProyectoCostosConfig
+ * Configuración de control de costos por proyecto.
+ * Almacena el estado CONFIGURACION/ACTIVO/CERRADO para congelar categorías.
+ */
+export type ProyectoCostosConfig = $Result.DefaultSelection<Prisma.$ProyectoCostosConfigPayload>
+/**
  * Model Insumo
  * Catálogo Maestro de Insumos: Materiales, Mano de Obra, Equipo, Subcontratos.
  * Tabla maestra con aislamiento por tenant_id (RLS).
@@ -86,8 +99,8 @@ export const EstadoPresupuesto: typeof $Enums.EstadoPresupuesto
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Insumos
- * const insumos = await prisma.insumo.findMany()
+ * // Fetch zero or more CategoriaGastos
+ * const categoriaGastos = await prisma.categoriaGasto.findMany()
  * ```
  *
  * 
@@ -107,8 +120,8 @@ export class PrismaClient<
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Insumos
-   * const insumos = await prisma.insumo.findMany()
+   * // Fetch zero or more CategoriaGastos
+   * const categoriaGastos = await prisma.categoriaGasto.findMany()
    * ```
    *
    * 
@@ -203,6 +216,26 @@ export class PrismaClient<
   $extends: $Extensions.ExtendsHook<"extends", Prisma.TypeMapCb, ExtArgs>
 
       /**
+   * `prisma.categoriaGasto`: Exposes CRUD operations for the **CategoriaGasto** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CategoriaGastos
+    * const categoriaGastos = await prisma.categoriaGasto.findMany()
+    * ```
+    */
+  get categoriaGasto(): Prisma.CategoriaGastoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.proyectoCostosConfig`: Exposes CRUD operations for the **ProyectoCostosConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProyectoCostosConfigs
+    * const proyectoCostosConfigs = await prisma.proyectoCostosConfig.findMany()
+    * ```
+    */
+  get proyectoCostosConfig(): Prisma.ProyectoCostosConfigDelegate<ExtArgs>;
+
+  /**
    * `prisma.insumo`: Exposes CRUD operations for the **Insumo** model.
     * Example usage:
     * ```ts
@@ -692,6 +725,8 @@ export namespace Prisma {
 
 
   export const ModelName: {
+    CategoriaGasto: 'CategoriaGasto',
+    ProyectoCostosConfig: 'ProyectoCostosConfig',
     Insumo: 'Insumo',
     PresupuestoBase: 'PresupuestoBase',
     Concepto: 'Concepto',
@@ -712,10 +747,150 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "fichaTecnicaInsumo"
+      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "fichaTecnicaInsumo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
+      CategoriaGasto: {
+        payload: Prisma.$CategoriaGastoPayload<ExtArgs>
+        fields: Prisma.CategoriaGastoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CategoriaGastoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CategoriaGastoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>
+          }
+          findFirst: {
+            args: Prisma.CategoriaGastoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CategoriaGastoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>
+          }
+          findMany: {
+            args: Prisma.CategoriaGastoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>[]
+          }
+          create: {
+            args: Prisma.CategoriaGastoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>
+          }
+          createMany: {
+            args: Prisma.CategoriaGastoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CategoriaGastoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>[]
+          }
+          delete: {
+            args: Prisma.CategoriaGastoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>
+          }
+          update: {
+            args: Prisma.CategoriaGastoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>
+          }
+          deleteMany: {
+            args: Prisma.CategoriaGastoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CategoriaGastoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CategoriaGastoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CategoriaGastoPayload>
+          }
+          aggregate: {
+            args: Prisma.CategoriaGastoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCategoriaGasto>
+          }
+          groupBy: {
+            args: Prisma.CategoriaGastoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CategoriaGastoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CategoriaGastoCountArgs<ExtArgs>
+            result: $Utils.Optional<CategoriaGastoCountAggregateOutputType> | number
+          }
+        }
+      }
+      ProyectoCostosConfig: {
+        payload: Prisma.$ProyectoCostosConfigPayload<ExtArgs>
+        fields: Prisma.ProyectoCostosConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProyectoCostosConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProyectoCostosConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.ProyectoCostosConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProyectoCostosConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>
+          }
+          findMany: {
+            args: Prisma.ProyectoCostosConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>[]
+          }
+          create: {
+            args: Prisma.ProyectoCostosConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>
+          }
+          createMany: {
+            args: Prisma.ProyectoCostosConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProyectoCostosConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.ProyectoCostosConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>
+          }
+          update: {
+            args: Prisma.ProyectoCostosConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProyectoCostosConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProyectoCostosConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ProyectoCostosConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoCostosConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.ProyectoCostosConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProyectoCostosConfig>
+          }
+          groupBy: {
+            args: Prisma.ProyectoCostosConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProyectoCostosConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProyectoCostosConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<ProyectoCostosConfigCountAggregateOutputType> | number
+          }
+        }
+      }
       Insumo: {
         payload: Prisma.$InsumoPayload<ExtArgs>
         fields: Prisma.InsumoFieldRefs
@@ -1223,6 +1398,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type CategoriaGastoCountOutputType
+   */
+
+  export type CategoriaGastoCountOutputType = {
+    insumos: number
+  }
+
+  export type CategoriaGastoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    insumos?: boolean | CategoriaGastoCountOutputTypeCountInsumosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CategoriaGastoCountOutputType without action
+   */
+  export type CategoriaGastoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGastoCountOutputType
+     */
+    select?: CategoriaGastoCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CategoriaGastoCountOutputType without action
+   */
+  export type CategoriaGastoCountOutputTypeCountInsumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InsumoWhereInput
+  }
+
+
+  /**
    * Count Type InsumoCountOutputType
    */
 
@@ -1320,6 +1526,1892 @@ export namespace Prisma {
    */
 
   /**
+   * Model CategoriaGasto
+   */
+
+  export type AggregateCategoriaGasto = {
+    _count: CategoriaGastoCountAggregateOutputType | null
+    _min: CategoriaGastoMinAggregateOutputType | null
+    _max: CategoriaGastoMaxAggregateOutputType | null
+  }
+
+  export type CategoriaGastoMinAggregateOutputType = {
+    id_categoria: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    nombre: string | null
+    es_predefinida: boolean | null
+    activa: boolean | null
+    created_at: Date | null
+  }
+
+  export type CategoriaGastoMaxAggregateOutputType = {
+    id_categoria: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    nombre: string | null
+    es_predefinida: boolean | null
+    activa: boolean | null
+    created_at: Date | null
+  }
+
+  export type CategoriaGastoCountAggregateOutputType = {
+    id_categoria: number
+    tenant_id: number
+    proyecto_id: number
+    nombre: number
+    es_predefinida: number
+    activa: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type CategoriaGastoMinAggregateInputType = {
+    id_categoria?: true
+    tenant_id?: true
+    proyecto_id?: true
+    nombre?: true
+    es_predefinida?: true
+    activa?: true
+    created_at?: true
+  }
+
+  export type CategoriaGastoMaxAggregateInputType = {
+    id_categoria?: true
+    tenant_id?: true
+    proyecto_id?: true
+    nombre?: true
+    es_predefinida?: true
+    activa?: true
+    created_at?: true
+  }
+
+  export type CategoriaGastoCountAggregateInputType = {
+    id_categoria?: true
+    tenant_id?: true
+    proyecto_id?: true
+    nombre?: true
+    es_predefinida?: true
+    activa?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type CategoriaGastoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CategoriaGasto to aggregate.
+     */
+    where?: CategoriaGastoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CategoriaGastos to fetch.
+     */
+    orderBy?: CategoriaGastoOrderByWithRelationInput | CategoriaGastoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CategoriaGastoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CategoriaGastos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CategoriaGastos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CategoriaGastos
+    **/
+    _count?: true | CategoriaGastoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CategoriaGastoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CategoriaGastoMaxAggregateInputType
+  }
+
+  export type GetCategoriaGastoAggregateType<T extends CategoriaGastoAggregateArgs> = {
+        [P in keyof T & keyof AggregateCategoriaGasto]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCategoriaGasto[P]>
+      : GetScalarType<T[P], AggregateCategoriaGasto[P]>
+  }
+
+
+
+
+  export type CategoriaGastoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CategoriaGastoWhereInput
+    orderBy?: CategoriaGastoOrderByWithAggregationInput | CategoriaGastoOrderByWithAggregationInput[]
+    by: CategoriaGastoScalarFieldEnum[] | CategoriaGastoScalarFieldEnum
+    having?: CategoriaGastoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CategoriaGastoCountAggregateInputType | true
+    _min?: CategoriaGastoMinAggregateInputType
+    _max?: CategoriaGastoMaxAggregateInputType
+  }
+
+  export type CategoriaGastoGroupByOutputType = {
+    id_categoria: string
+    tenant_id: string
+    proyecto_id: string
+    nombre: string
+    es_predefinida: boolean
+    activa: boolean
+    created_at: Date
+    _count: CategoriaGastoCountAggregateOutputType | null
+    _min: CategoriaGastoMinAggregateOutputType | null
+    _max: CategoriaGastoMaxAggregateOutputType | null
+  }
+
+  type GetCategoriaGastoGroupByPayload<T extends CategoriaGastoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CategoriaGastoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CategoriaGastoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CategoriaGastoGroupByOutputType[P]>
+            : GetScalarType<T[P], CategoriaGastoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CategoriaGastoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_categoria?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    nombre?: boolean
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: boolean
+    insumos?: boolean | CategoriaGasto$insumosArgs<ExtArgs>
+    _count?: boolean | CategoriaGastoCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["categoriaGasto"]>
+
+  export type CategoriaGastoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_categoria?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    nombre?: boolean
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["categoriaGasto"]>
+
+  export type CategoriaGastoSelectScalar = {
+    id_categoria?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    nombre?: boolean
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: boolean
+  }
+
+  export type CategoriaGastoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    insumos?: boolean | CategoriaGasto$insumosArgs<ExtArgs>
+    _count?: boolean | CategoriaGastoCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CategoriaGastoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $CategoriaGastoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CategoriaGasto"
+    objects: {
+      insumos: Prisma.$InsumoPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_categoria: string
+      tenant_id: string
+      proyecto_id: string
+      nombre: string
+      es_predefinida: boolean
+      activa: boolean
+      created_at: Date
+    }, ExtArgs["result"]["categoriaGasto"]>
+    composites: {}
+  }
+
+  type CategoriaGastoGetPayload<S extends boolean | null | undefined | CategoriaGastoDefaultArgs> = $Result.GetResult<Prisma.$CategoriaGastoPayload, S>
+
+  type CategoriaGastoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CategoriaGastoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CategoriaGastoCountAggregateInputType | true
+    }
+
+  export interface CategoriaGastoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CategoriaGasto'], meta: { name: 'CategoriaGasto' } }
+    /**
+     * Find zero or one CategoriaGasto that matches the filter.
+     * @param {CategoriaGastoFindUniqueArgs} args - Arguments to find a CategoriaGasto
+     * @example
+     * // Get one CategoriaGasto
+     * const categoriaGasto = await prisma.categoriaGasto.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CategoriaGastoFindUniqueArgs>(args: SelectSubset<T, CategoriaGastoFindUniqueArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one CategoriaGasto that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CategoriaGastoFindUniqueOrThrowArgs} args - Arguments to find a CategoriaGasto
+     * @example
+     * // Get one CategoriaGasto
+     * const categoriaGasto = await prisma.categoriaGasto.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CategoriaGastoFindUniqueOrThrowArgs>(args: SelectSubset<T, CategoriaGastoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first CategoriaGasto that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoFindFirstArgs} args - Arguments to find a CategoriaGasto
+     * @example
+     * // Get one CategoriaGasto
+     * const categoriaGasto = await prisma.categoriaGasto.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CategoriaGastoFindFirstArgs>(args?: SelectSubset<T, CategoriaGastoFindFirstArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first CategoriaGasto that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoFindFirstOrThrowArgs} args - Arguments to find a CategoriaGasto
+     * @example
+     * // Get one CategoriaGasto
+     * const categoriaGasto = await prisma.categoriaGasto.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CategoriaGastoFindFirstOrThrowArgs>(args?: SelectSubset<T, CategoriaGastoFindFirstOrThrowArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more CategoriaGastos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CategoriaGastos
+     * const categoriaGastos = await prisma.categoriaGasto.findMany()
+     * 
+     * // Get first 10 CategoriaGastos
+     * const categoriaGastos = await prisma.categoriaGasto.findMany({ take: 10 })
+     * 
+     * // Only select the `id_categoria`
+     * const categoriaGastoWithId_categoriaOnly = await prisma.categoriaGasto.findMany({ select: { id_categoria: true } })
+     * 
+     */
+    findMany<T extends CategoriaGastoFindManyArgs>(args?: SelectSubset<T, CategoriaGastoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a CategoriaGasto.
+     * @param {CategoriaGastoCreateArgs} args - Arguments to create a CategoriaGasto.
+     * @example
+     * // Create one CategoriaGasto
+     * const CategoriaGasto = await prisma.categoriaGasto.create({
+     *   data: {
+     *     // ... data to create a CategoriaGasto
+     *   }
+     * })
+     * 
+     */
+    create<T extends CategoriaGastoCreateArgs>(args: SelectSubset<T, CategoriaGastoCreateArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many CategoriaGastos.
+     * @param {CategoriaGastoCreateManyArgs} args - Arguments to create many CategoriaGastos.
+     * @example
+     * // Create many CategoriaGastos
+     * const categoriaGasto = await prisma.categoriaGasto.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CategoriaGastoCreateManyArgs>(args?: SelectSubset<T, CategoriaGastoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CategoriaGastos and returns the data saved in the database.
+     * @param {CategoriaGastoCreateManyAndReturnArgs} args - Arguments to create many CategoriaGastos.
+     * @example
+     * // Create many CategoriaGastos
+     * const categoriaGasto = await prisma.categoriaGasto.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CategoriaGastos and only return the `id_categoria`
+     * const categoriaGastoWithId_categoriaOnly = await prisma.categoriaGasto.createManyAndReturn({ 
+     *   select: { id_categoria: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CategoriaGastoCreateManyAndReturnArgs>(args?: SelectSubset<T, CategoriaGastoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a CategoriaGasto.
+     * @param {CategoriaGastoDeleteArgs} args - Arguments to delete one CategoriaGasto.
+     * @example
+     * // Delete one CategoriaGasto
+     * const CategoriaGasto = await prisma.categoriaGasto.delete({
+     *   where: {
+     *     // ... filter to delete one CategoriaGasto
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CategoriaGastoDeleteArgs>(args: SelectSubset<T, CategoriaGastoDeleteArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one CategoriaGasto.
+     * @param {CategoriaGastoUpdateArgs} args - Arguments to update one CategoriaGasto.
+     * @example
+     * // Update one CategoriaGasto
+     * const categoriaGasto = await prisma.categoriaGasto.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CategoriaGastoUpdateArgs>(args: SelectSubset<T, CategoriaGastoUpdateArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more CategoriaGastos.
+     * @param {CategoriaGastoDeleteManyArgs} args - Arguments to filter CategoriaGastos to delete.
+     * @example
+     * // Delete a few CategoriaGastos
+     * const { count } = await prisma.categoriaGasto.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CategoriaGastoDeleteManyArgs>(args?: SelectSubset<T, CategoriaGastoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CategoriaGastos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CategoriaGastos
+     * const categoriaGasto = await prisma.categoriaGasto.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CategoriaGastoUpdateManyArgs>(args: SelectSubset<T, CategoriaGastoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CategoriaGasto.
+     * @param {CategoriaGastoUpsertArgs} args - Arguments to update or create a CategoriaGasto.
+     * @example
+     * // Update or create a CategoriaGasto
+     * const categoriaGasto = await prisma.categoriaGasto.upsert({
+     *   create: {
+     *     // ... data to create a CategoriaGasto
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CategoriaGasto we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CategoriaGastoUpsertArgs>(args: SelectSubset<T, CategoriaGastoUpsertArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of CategoriaGastos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoCountArgs} args - Arguments to filter CategoriaGastos to count.
+     * @example
+     * // Count the number of CategoriaGastos
+     * const count = await prisma.categoriaGasto.count({
+     *   where: {
+     *     // ... the filter for the CategoriaGastos we want to count
+     *   }
+     * })
+    **/
+    count<T extends CategoriaGastoCountArgs>(
+      args?: Subset<T, CategoriaGastoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CategoriaGastoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CategoriaGasto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CategoriaGastoAggregateArgs>(args: Subset<T, CategoriaGastoAggregateArgs>): Prisma.PrismaPromise<GetCategoriaGastoAggregateType<T>>
+
+    /**
+     * Group by CategoriaGasto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CategoriaGastoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CategoriaGastoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CategoriaGastoGroupByArgs['orderBy'] }
+        : { orderBy?: CategoriaGastoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CategoriaGastoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCategoriaGastoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CategoriaGasto model
+   */
+  readonly fields: CategoriaGastoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CategoriaGasto.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CategoriaGastoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    insumos<T extends CategoriaGasto$insumosArgs<ExtArgs> = {}>(args?: Subset<T, CategoriaGasto$insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InsumoPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CategoriaGasto model
+   */ 
+  interface CategoriaGastoFieldRefs {
+    readonly id_categoria: FieldRef<"CategoriaGasto", 'String'>
+    readonly tenant_id: FieldRef<"CategoriaGasto", 'String'>
+    readonly proyecto_id: FieldRef<"CategoriaGasto", 'String'>
+    readonly nombre: FieldRef<"CategoriaGasto", 'String'>
+    readonly es_predefinida: FieldRef<"CategoriaGasto", 'Boolean'>
+    readonly activa: FieldRef<"CategoriaGasto", 'Boolean'>
+    readonly created_at: FieldRef<"CategoriaGasto", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CategoriaGasto findUnique
+   */
+  export type CategoriaGastoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * Filter, which CategoriaGasto to fetch.
+     */
+    where: CategoriaGastoWhereUniqueInput
+  }
+
+  /**
+   * CategoriaGasto findUniqueOrThrow
+   */
+  export type CategoriaGastoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * Filter, which CategoriaGasto to fetch.
+     */
+    where: CategoriaGastoWhereUniqueInput
+  }
+
+  /**
+   * CategoriaGasto findFirst
+   */
+  export type CategoriaGastoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * Filter, which CategoriaGasto to fetch.
+     */
+    where?: CategoriaGastoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CategoriaGastos to fetch.
+     */
+    orderBy?: CategoriaGastoOrderByWithRelationInput | CategoriaGastoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CategoriaGastos.
+     */
+    cursor?: CategoriaGastoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CategoriaGastos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CategoriaGastos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CategoriaGastos.
+     */
+    distinct?: CategoriaGastoScalarFieldEnum | CategoriaGastoScalarFieldEnum[]
+  }
+
+  /**
+   * CategoriaGasto findFirstOrThrow
+   */
+  export type CategoriaGastoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * Filter, which CategoriaGasto to fetch.
+     */
+    where?: CategoriaGastoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CategoriaGastos to fetch.
+     */
+    orderBy?: CategoriaGastoOrderByWithRelationInput | CategoriaGastoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CategoriaGastos.
+     */
+    cursor?: CategoriaGastoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CategoriaGastos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CategoriaGastos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CategoriaGastos.
+     */
+    distinct?: CategoriaGastoScalarFieldEnum | CategoriaGastoScalarFieldEnum[]
+  }
+
+  /**
+   * CategoriaGasto findMany
+   */
+  export type CategoriaGastoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * Filter, which CategoriaGastos to fetch.
+     */
+    where?: CategoriaGastoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CategoriaGastos to fetch.
+     */
+    orderBy?: CategoriaGastoOrderByWithRelationInput | CategoriaGastoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CategoriaGastos.
+     */
+    cursor?: CategoriaGastoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CategoriaGastos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CategoriaGastos.
+     */
+    skip?: number
+    distinct?: CategoriaGastoScalarFieldEnum | CategoriaGastoScalarFieldEnum[]
+  }
+
+  /**
+   * CategoriaGasto create
+   */
+  export type CategoriaGastoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CategoriaGasto.
+     */
+    data: XOR<CategoriaGastoCreateInput, CategoriaGastoUncheckedCreateInput>
+  }
+
+  /**
+   * CategoriaGasto createMany
+   */
+  export type CategoriaGastoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CategoriaGastos.
+     */
+    data: CategoriaGastoCreateManyInput | CategoriaGastoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CategoriaGasto createManyAndReturn
+   */
+  export type CategoriaGastoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many CategoriaGastos.
+     */
+    data: CategoriaGastoCreateManyInput | CategoriaGastoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CategoriaGasto update
+   */
+  export type CategoriaGastoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CategoriaGasto.
+     */
+    data: XOR<CategoriaGastoUpdateInput, CategoriaGastoUncheckedUpdateInput>
+    /**
+     * Choose, which CategoriaGasto to update.
+     */
+    where: CategoriaGastoWhereUniqueInput
+  }
+
+  /**
+   * CategoriaGasto updateMany
+   */
+  export type CategoriaGastoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CategoriaGastos.
+     */
+    data: XOR<CategoriaGastoUpdateManyMutationInput, CategoriaGastoUncheckedUpdateManyInput>
+    /**
+     * Filter which CategoriaGastos to update
+     */
+    where?: CategoriaGastoWhereInput
+  }
+
+  /**
+   * CategoriaGasto upsert
+   */
+  export type CategoriaGastoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CategoriaGasto to update in case it exists.
+     */
+    where: CategoriaGastoWhereUniqueInput
+    /**
+     * In case the CategoriaGasto found by the `where` argument doesn't exist, create a new CategoriaGasto with this data.
+     */
+    create: XOR<CategoriaGastoCreateInput, CategoriaGastoUncheckedCreateInput>
+    /**
+     * In case the CategoriaGasto was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CategoriaGastoUpdateInput, CategoriaGastoUncheckedUpdateInput>
+  }
+
+  /**
+   * CategoriaGasto delete
+   */
+  export type CategoriaGastoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    /**
+     * Filter which CategoriaGasto to delete.
+     */
+    where: CategoriaGastoWhereUniqueInput
+  }
+
+  /**
+   * CategoriaGasto deleteMany
+   */
+  export type CategoriaGastoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CategoriaGastos to delete
+     */
+    where?: CategoriaGastoWhereInput
+  }
+
+  /**
+   * CategoriaGasto.insumos
+   */
+  export type CategoriaGasto$insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Insumo
+     */
+    select?: InsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    where?: InsumoWhereInput
+    orderBy?: InsumoOrderByWithRelationInput | InsumoOrderByWithRelationInput[]
+    cursor?: InsumoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InsumoScalarFieldEnum | InsumoScalarFieldEnum[]
+  }
+
+  /**
+   * CategoriaGasto without action
+   */
+  export type CategoriaGastoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ProyectoCostosConfig
+   */
+
+  export type AggregateProyectoCostosConfig = {
+    _count: ProyectoCostosConfigCountAggregateOutputType | null
+    _min: ProyectoCostosConfigMinAggregateOutputType | null
+    _max: ProyectoCostosConfigMaxAggregateOutputType | null
+  }
+
+  export type ProyectoCostosConfigMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    estado: string | null
+    activado_por: string | null
+    fecha_activacion: Date | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ProyectoCostosConfigMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    estado: string | null
+    activado_por: string | null
+    fecha_activacion: Date | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ProyectoCostosConfigCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    estado: number
+    activado_por: number
+    fecha_activacion: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ProyectoCostosConfigMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    estado?: true
+    activado_por?: true
+    fecha_activacion?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ProyectoCostosConfigMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    estado?: true
+    activado_por?: true
+    fecha_activacion?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ProyectoCostosConfigCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    estado?: true
+    activado_por?: true
+    fecha_activacion?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ProyectoCostosConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProyectoCostosConfig to aggregate.
+     */
+    where?: ProyectoCostosConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoCostosConfigs to fetch.
+     */
+    orderBy?: ProyectoCostosConfigOrderByWithRelationInput | ProyectoCostosConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProyectoCostosConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoCostosConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoCostosConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProyectoCostosConfigs
+    **/
+    _count?: true | ProyectoCostosConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProyectoCostosConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProyectoCostosConfigMaxAggregateInputType
+  }
+
+  export type GetProyectoCostosConfigAggregateType<T extends ProyectoCostosConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateProyectoCostosConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProyectoCostosConfig[P]>
+      : GetScalarType<T[P], AggregateProyectoCostosConfig[P]>
+  }
+
+
+
+
+  export type ProyectoCostosConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProyectoCostosConfigWhereInput
+    orderBy?: ProyectoCostosConfigOrderByWithAggregationInput | ProyectoCostosConfigOrderByWithAggregationInput[]
+    by: ProyectoCostosConfigScalarFieldEnum[] | ProyectoCostosConfigScalarFieldEnum
+    having?: ProyectoCostosConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProyectoCostosConfigCountAggregateInputType | true
+    _min?: ProyectoCostosConfigMinAggregateInputType
+    _max?: ProyectoCostosConfigMaxAggregateInputType
+  }
+
+  export type ProyectoCostosConfigGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    estado: string
+    activado_por: string | null
+    fecha_activacion: Date | null
+    created_at: Date
+    updated_at: Date
+    _count: ProyectoCostosConfigCountAggregateOutputType | null
+    _min: ProyectoCostosConfigMinAggregateOutputType | null
+    _max: ProyectoCostosConfigMaxAggregateOutputType | null
+  }
+
+  type GetProyectoCostosConfigGroupByPayload<T extends ProyectoCostosConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProyectoCostosConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProyectoCostosConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProyectoCostosConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], ProyectoCostosConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProyectoCostosConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    estado?: boolean
+    activado_por?: boolean
+    fecha_activacion?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["proyectoCostosConfig"]>
+
+  export type ProyectoCostosConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    estado?: boolean
+    activado_por?: boolean
+    fecha_activacion?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["proyectoCostosConfig"]>
+
+  export type ProyectoCostosConfigSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    estado?: boolean
+    activado_por?: boolean
+    fecha_activacion?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $ProyectoCostosConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ProyectoCostosConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      estado: string
+      activado_por: string | null
+      fecha_activacion: Date | null
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["proyectoCostosConfig"]>
+    composites: {}
+  }
+
+  type ProyectoCostosConfigGetPayload<S extends boolean | null | undefined | ProyectoCostosConfigDefaultArgs> = $Result.GetResult<Prisma.$ProyectoCostosConfigPayload, S>
+
+  type ProyectoCostosConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ProyectoCostosConfigFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ProyectoCostosConfigCountAggregateInputType | true
+    }
+
+  export interface ProyectoCostosConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProyectoCostosConfig'], meta: { name: 'ProyectoCostosConfig' } }
+    /**
+     * Find zero or one ProyectoCostosConfig that matches the filter.
+     * @param {ProyectoCostosConfigFindUniqueArgs} args - Arguments to find a ProyectoCostosConfig
+     * @example
+     * // Get one ProyectoCostosConfig
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProyectoCostosConfigFindUniqueArgs>(args: SelectSubset<T, ProyectoCostosConfigFindUniqueArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ProyectoCostosConfig that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ProyectoCostosConfigFindUniqueOrThrowArgs} args - Arguments to find a ProyectoCostosConfig
+     * @example
+     * // Get one ProyectoCostosConfig
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProyectoCostosConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, ProyectoCostosConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ProyectoCostosConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigFindFirstArgs} args - Arguments to find a ProyectoCostosConfig
+     * @example
+     * // Get one ProyectoCostosConfig
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProyectoCostosConfigFindFirstArgs>(args?: SelectSubset<T, ProyectoCostosConfigFindFirstArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ProyectoCostosConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigFindFirstOrThrowArgs} args - Arguments to find a ProyectoCostosConfig
+     * @example
+     * // Get one ProyectoCostosConfig
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProyectoCostosConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, ProyectoCostosConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ProyectoCostosConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProyectoCostosConfigs
+     * const proyectoCostosConfigs = await prisma.proyectoCostosConfig.findMany()
+     * 
+     * // Get first 10 ProyectoCostosConfigs
+     * const proyectoCostosConfigs = await prisma.proyectoCostosConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const proyectoCostosConfigWithIdOnly = await prisma.proyectoCostosConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ProyectoCostosConfigFindManyArgs>(args?: SelectSubset<T, ProyectoCostosConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ProyectoCostosConfig.
+     * @param {ProyectoCostosConfigCreateArgs} args - Arguments to create a ProyectoCostosConfig.
+     * @example
+     * // Create one ProyectoCostosConfig
+     * const ProyectoCostosConfig = await prisma.proyectoCostosConfig.create({
+     *   data: {
+     *     // ... data to create a ProyectoCostosConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProyectoCostosConfigCreateArgs>(args: SelectSubset<T, ProyectoCostosConfigCreateArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ProyectoCostosConfigs.
+     * @param {ProyectoCostosConfigCreateManyArgs} args - Arguments to create many ProyectoCostosConfigs.
+     * @example
+     * // Create many ProyectoCostosConfigs
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProyectoCostosConfigCreateManyArgs>(args?: SelectSubset<T, ProyectoCostosConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ProyectoCostosConfigs and returns the data saved in the database.
+     * @param {ProyectoCostosConfigCreateManyAndReturnArgs} args - Arguments to create many ProyectoCostosConfigs.
+     * @example
+     * // Create many ProyectoCostosConfigs
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ProyectoCostosConfigs and only return the `id`
+     * const proyectoCostosConfigWithIdOnly = await prisma.proyectoCostosConfig.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProyectoCostosConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, ProyectoCostosConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ProyectoCostosConfig.
+     * @param {ProyectoCostosConfigDeleteArgs} args - Arguments to delete one ProyectoCostosConfig.
+     * @example
+     * // Delete one ProyectoCostosConfig
+     * const ProyectoCostosConfig = await prisma.proyectoCostosConfig.delete({
+     *   where: {
+     *     // ... filter to delete one ProyectoCostosConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProyectoCostosConfigDeleteArgs>(args: SelectSubset<T, ProyectoCostosConfigDeleteArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ProyectoCostosConfig.
+     * @param {ProyectoCostosConfigUpdateArgs} args - Arguments to update one ProyectoCostosConfig.
+     * @example
+     * // Update one ProyectoCostosConfig
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProyectoCostosConfigUpdateArgs>(args: SelectSubset<T, ProyectoCostosConfigUpdateArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ProyectoCostosConfigs.
+     * @param {ProyectoCostosConfigDeleteManyArgs} args - Arguments to filter ProyectoCostosConfigs to delete.
+     * @example
+     * // Delete a few ProyectoCostosConfigs
+     * const { count } = await prisma.proyectoCostosConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProyectoCostosConfigDeleteManyArgs>(args?: SelectSubset<T, ProyectoCostosConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProyectoCostosConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProyectoCostosConfigs
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProyectoCostosConfigUpdateManyArgs>(args: SelectSubset<T, ProyectoCostosConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ProyectoCostosConfig.
+     * @param {ProyectoCostosConfigUpsertArgs} args - Arguments to update or create a ProyectoCostosConfig.
+     * @example
+     * // Update or create a ProyectoCostosConfig
+     * const proyectoCostosConfig = await prisma.proyectoCostosConfig.upsert({
+     *   create: {
+     *     // ... data to create a ProyectoCostosConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProyectoCostosConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProyectoCostosConfigUpsertArgs>(args: SelectSubset<T, ProyectoCostosConfigUpsertArgs<ExtArgs>>): Prisma__ProyectoCostosConfigClient<$Result.GetResult<Prisma.$ProyectoCostosConfigPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ProyectoCostosConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigCountArgs} args - Arguments to filter ProyectoCostosConfigs to count.
+     * @example
+     * // Count the number of ProyectoCostosConfigs
+     * const count = await prisma.proyectoCostosConfig.count({
+     *   where: {
+     *     // ... the filter for the ProyectoCostosConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProyectoCostosConfigCountArgs>(
+      args?: Subset<T, ProyectoCostosConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProyectoCostosConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProyectoCostosConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProyectoCostosConfigAggregateArgs>(args: Subset<T, ProyectoCostosConfigAggregateArgs>): Prisma.PrismaPromise<GetProyectoCostosConfigAggregateType<T>>
+
+    /**
+     * Group by ProyectoCostosConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoCostosConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProyectoCostosConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProyectoCostosConfigGroupByArgs['orderBy'] }
+        : { orderBy?: ProyectoCostosConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProyectoCostosConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProyectoCostosConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ProyectoCostosConfig model
+   */
+  readonly fields: ProyectoCostosConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProyectoCostosConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProyectoCostosConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ProyectoCostosConfig model
+   */ 
+  interface ProyectoCostosConfigFieldRefs {
+    readonly id: FieldRef<"ProyectoCostosConfig", 'String'>
+    readonly tenant_id: FieldRef<"ProyectoCostosConfig", 'String'>
+    readonly proyecto_id: FieldRef<"ProyectoCostosConfig", 'String'>
+    readonly estado: FieldRef<"ProyectoCostosConfig", 'String'>
+    readonly activado_por: FieldRef<"ProyectoCostosConfig", 'String'>
+    readonly fecha_activacion: FieldRef<"ProyectoCostosConfig", 'DateTime'>
+    readonly created_at: FieldRef<"ProyectoCostosConfig", 'DateTime'>
+    readonly updated_at: FieldRef<"ProyectoCostosConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ProyectoCostosConfig findUnique
+   */
+  export type ProyectoCostosConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoCostosConfig to fetch.
+     */
+    where: ProyectoCostosConfigWhereUniqueInput
+  }
+
+  /**
+   * ProyectoCostosConfig findUniqueOrThrow
+   */
+  export type ProyectoCostosConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoCostosConfig to fetch.
+     */
+    where: ProyectoCostosConfigWhereUniqueInput
+  }
+
+  /**
+   * ProyectoCostosConfig findFirst
+   */
+  export type ProyectoCostosConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoCostosConfig to fetch.
+     */
+    where?: ProyectoCostosConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoCostosConfigs to fetch.
+     */
+    orderBy?: ProyectoCostosConfigOrderByWithRelationInput | ProyectoCostosConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProyectoCostosConfigs.
+     */
+    cursor?: ProyectoCostosConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoCostosConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoCostosConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProyectoCostosConfigs.
+     */
+    distinct?: ProyectoCostosConfigScalarFieldEnum | ProyectoCostosConfigScalarFieldEnum[]
+  }
+
+  /**
+   * ProyectoCostosConfig findFirstOrThrow
+   */
+  export type ProyectoCostosConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoCostosConfig to fetch.
+     */
+    where?: ProyectoCostosConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoCostosConfigs to fetch.
+     */
+    orderBy?: ProyectoCostosConfigOrderByWithRelationInput | ProyectoCostosConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProyectoCostosConfigs.
+     */
+    cursor?: ProyectoCostosConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoCostosConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoCostosConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProyectoCostosConfigs.
+     */
+    distinct?: ProyectoCostosConfigScalarFieldEnum | ProyectoCostosConfigScalarFieldEnum[]
+  }
+
+  /**
+   * ProyectoCostosConfig findMany
+   */
+  export type ProyectoCostosConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoCostosConfigs to fetch.
+     */
+    where?: ProyectoCostosConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoCostosConfigs to fetch.
+     */
+    orderBy?: ProyectoCostosConfigOrderByWithRelationInput | ProyectoCostosConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProyectoCostosConfigs.
+     */
+    cursor?: ProyectoCostosConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoCostosConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoCostosConfigs.
+     */
+    skip?: number
+    distinct?: ProyectoCostosConfigScalarFieldEnum | ProyectoCostosConfigScalarFieldEnum[]
+  }
+
+  /**
+   * ProyectoCostosConfig create
+   */
+  export type ProyectoCostosConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * The data needed to create a ProyectoCostosConfig.
+     */
+    data: XOR<ProyectoCostosConfigCreateInput, ProyectoCostosConfigUncheckedCreateInput>
+  }
+
+  /**
+   * ProyectoCostosConfig createMany
+   */
+  export type ProyectoCostosConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProyectoCostosConfigs.
+     */
+    data: ProyectoCostosConfigCreateManyInput | ProyectoCostosConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProyectoCostosConfig createManyAndReturn
+   */
+  export type ProyectoCostosConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ProyectoCostosConfigs.
+     */
+    data: ProyectoCostosConfigCreateManyInput | ProyectoCostosConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProyectoCostosConfig update
+   */
+  export type ProyectoCostosConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * The data needed to update a ProyectoCostosConfig.
+     */
+    data: XOR<ProyectoCostosConfigUpdateInput, ProyectoCostosConfigUncheckedUpdateInput>
+    /**
+     * Choose, which ProyectoCostosConfig to update.
+     */
+    where: ProyectoCostosConfigWhereUniqueInput
+  }
+
+  /**
+   * ProyectoCostosConfig updateMany
+   */
+  export type ProyectoCostosConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProyectoCostosConfigs.
+     */
+    data: XOR<ProyectoCostosConfigUpdateManyMutationInput, ProyectoCostosConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which ProyectoCostosConfigs to update
+     */
+    where?: ProyectoCostosConfigWhereInput
+  }
+
+  /**
+   * ProyectoCostosConfig upsert
+   */
+  export type ProyectoCostosConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * The filter to search for the ProyectoCostosConfig to update in case it exists.
+     */
+    where: ProyectoCostosConfigWhereUniqueInput
+    /**
+     * In case the ProyectoCostosConfig found by the `where` argument doesn't exist, create a new ProyectoCostosConfig with this data.
+     */
+    create: XOR<ProyectoCostosConfigCreateInput, ProyectoCostosConfigUncheckedCreateInput>
+    /**
+     * In case the ProyectoCostosConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProyectoCostosConfigUpdateInput, ProyectoCostosConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * ProyectoCostosConfig delete
+   */
+  export type ProyectoCostosConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+    /**
+     * Filter which ProyectoCostosConfig to delete.
+     */
+    where: ProyectoCostosConfigWhereUniqueInput
+  }
+
+  /**
+   * ProyectoCostosConfig deleteMany
+   */
+  export type ProyectoCostosConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProyectoCostosConfigs to delete
+     */
+    where?: ProyectoCostosConfigWhereInput
+  }
+
+  /**
+   * ProyectoCostosConfig without action
+   */
+  export type ProyectoCostosConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoCostosConfig
+     */
+    select?: ProyectoCostosConfigSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Model Insumo
    */
 
@@ -1347,6 +3439,7 @@ export namespace Prisma {
     unidad_medida: string | null
     tipo_insumo: $Enums.TipoInsumo | null
     costo_base: Decimal | null
+    categoria_gasto_id: string | null
     activo: boolean | null
     created_at: Date | null
     updated_at: Date | null
@@ -1360,6 +3453,7 @@ export namespace Prisma {
     unidad_medida: string | null
     tipo_insumo: $Enums.TipoInsumo | null
     costo_base: Decimal | null
+    categoria_gasto_id: string | null
     activo: boolean | null
     created_at: Date | null
     updated_at: Date | null
@@ -1373,6 +3467,7 @@ export namespace Prisma {
     unidad_medida: number
     tipo_insumo: number
     costo_base: number
+    categoria_gasto_id: number
     activo: number
     created_at: number
     updated_at: number
@@ -1396,6 +3491,7 @@ export namespace Prisma {
     unidad_medida?: true
     tipo_insumo?: true
     costo_base?: true
+    categoria_gasto_id?: true
     activo?: true
     created_at?: true
     updated_at?: true
@@ -1409,6 +3505,7 @@ export namespace Prisma {
     unidad_medida?: true
     tipo_insumo?: true
     costo_base?: true
+    categoria_gasto_id?: true
     activo?: true
     created_at?: true
     updated_at?: true
@@ -1422,6 +3519,7 @@ export namespace Prisma {
     unidad_medida?: true
     tipo_insumo?: true
     costo_base?: true
+    categoria_gasto_id?: true
     activo?: true
     created_at?: true
     updated_at?: true
@@ -1522,6 +3620,7 @@ export namespace Prisma {
     unidad_medida: string
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal
+    categoria_gasto_id: string | null
     activo: boolean
     created_at: Date
     updated_at: Date
@@ -1554,9 +3653,11 @@ export namespace Prisma {
     unidad_medida?: boolean
     tipo_insumo?: boolean
     costo_base?: boolean
+    categoria_gasto_id?: boolean
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
+    categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
     concepto_insumos?: boolean | Insumo$concepto_insumosArgs<ExtArgs>
     _count?: boolean | InsumoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["insumo"]>
@@ -1569,9 +3670,11 @@ export namespace Prisma {
     unidad_medida?: boolean
     tipo_insumo?: boolean
     costo_base?: boolean
+    categoria_gasto_id?: boolean
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
+    categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
   }, ExtArgs["result"]["insumo"]>
 
   export type InsumoSelectScalar = {
@@ -1582,20 +3685,25 @@ export namespace Prisma {
     unidad_medida?: boolean
     tipo_insumo?: boolean
     costo_base?: boolean
+    categoria_gasto_id?: boolean
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
 
   export type InsumoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
     concepto_insumos?: boolean | Insumo$concepto_insumosArgs<ExtArgs>
     _count?: boolean | InsumoCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type InsumoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type InsumoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
+  }
 
   export type $InsumoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Insumo"
     objects: {
+      categoria_gasto: Prisma.$CategoriaGastoPayload<ExtArgs> | null
       concepto_insumos: Prisma.$ConceptoInsumoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -1606,6 +3714,10 @@ export namespace Prisma {
       unidad_medida: string
       tipo_insumo: $Enums.TipoInsumo
       costo_base: Prisma.Decimal
+      /**
+       * Categoría de gasto asignada por Control de Proyectos (nullable hasta clasificar)
+       */
+      categoria_gasto_id: string | null
       activo: boolean
       created_at: Date
       updated_at: Date
@@ -1973,6 +4085,7 @@ export namespace Prisma {
    */
   export interface Prisma__InsumoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    categoria_gasto<T extends Insumo$categoria_gastoArgs<ExtArgs> = {}>(args?: Subset<T, Insumo$categoria_gastoArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     concepto_insumos<T extends Insumo$concepto_insumosArgs<ExtArgs> = {}>(args?: Subset<T, Insumo$concepto_insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2010,6 +4123,7 @@ export namespace Prisma {
     readonly unidad_medida: FieldRef<"Insumo", 'String'>
     readonly tipo_insumo: FieldRef<"Insumo", 'TipoInsumo'>
     readonly costo_base: FieldRef<"Insumo", 'Decimal'>
+    readonly categoria_gasto_id: FieldRef<"Insumo", 'String'>
     readonly activo: FieldRef<"Insumo", 'Boolean'>
     readonly created_at: FieldRef<"Insumo", 'DateTime'>
     readonly updated_at: FieldRef<"Insumo", 'DateTime'>
@@ -2234,6 +4348,10 @@ export namespace Prisma {
      */
     data: InsumoCreateManyInput | InsumoCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2324,6 +4442,21 @@ export namespace Prisma {
      * Filter which Insumos to delete
      */
     where?: InsumoWhereInput
+  }
+
+  /**
+   * Insumo.categoria_gasto
+   */
+  export type Insumo$categoria_gastoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CategoriaGasto
+     */
+    select?: CategoriaGastoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaGastoInclude<ExtArgs> | null
+    where?: CategoriaGastoWhereInput
   }
 
   /**
@@ -6540,6 +8673,33 @@ export namespace Prisma {
   export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+  export const CategoriaGastoScalarFieldEnum: {
+    id_categoria: 'id_categoria',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    nombre: 'nombre',
+    es_predefinida: 'es_predefinida',
+    activa: 'activa',
+    created_at: 'created_at'
+  };
+
+  export type CategoriaGastoScalarFieldEnum = (typeof CategoriaGastoScalarFieldEnum)[keyof typeof CategoriaGastoScalarFieldEnum]
+
+
+  export const ProyectoCostosConfigScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    estado: 'estado',
+    activado_por: 'activado_por',
+    fecha_activacion: 'fecha_activacion',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ProyectoCostosConfigScalarFieldEnum = (typeof ProyectoCostosConfigScalarFieldEnum)[keyof typeof ProyectoCostosConfigScalarFieldEnum]
+
+
   export const InsumoScalarFieldEnum: {
     id: 'id',
     tenant_id: 'tenant_id',
@@ -6548,6 +8708,7 @@ export namespace Prisma {
     unidad_medida: 'unidad_medida',
     tipo_insumo: 'tipo_insumo',
     costo_base: 'costo_base',
+    categoria_gasto_id: 'categoria_gasto_id',
     activo: 'activo',
     created_at: 'created_at',
     updated_at: 'updated_at'
@@ -6667,6 +8828,27 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
    * Reference to a field of type 'TipoInsumo'
    */
   export type EnumTipoInsumoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoInsumo'>
@@ -6691,27 +8873,6 @@ export namespace Prisma {
    * Reference to a field of type 'Decimal[]'
    */
   export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime'
-   */
-  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime[]'
-   */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 
@@ -6760,6 +8921,139 @@ export namespace Prisma {
    */
 
 
+  export type CategoriaGastoWhereInput = {
+    AND?: CategoriaGastoWhereInput | CategoriaGastoWhereInput[]
+    OR?: CategoriaGastoWhereInput[]
+    NOT?: CategoriaGastoWhereInput | CategoriaGastoWhereInput[]
+    id_categoria?: UuidFilter<"CategoriaGasto"> | string
+    tenant_id?: UuidFilter<"CategoriaGasto"> | string
+    proyecto_id?: UuidFilter<"CategoriaGasto"> | string
+    nombre?: StringFilter<"CategoriaGasto"> | string
+    es_predefinida?: BoolFilter<"CategoriaGasto"> | boolean
+    activa?: BoolFilter<"CategoriaGasto"> | boolean
+    created_at?: DateTimeFilter<"CategoriaGasto"> | Date | string
+    insumos?: InsumoListRelationFilter
+  }
+
+  export type CategoriaGastoOrderByWithRelationInput = {
+    id_categoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    nombre?: SortOrder
+    es_predefinida?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    insumos?: InsumoOrderByRelationAggregateInput
+  }
+
+  export type CategoriaGastoWhereUniqueInput = Prisma.AtLeast<{
+    id_categoria?: string
+    AND?: CategoriaGastoWhereInput | CategoriaGastoWhereInput[]
+    OR?: CategoriaGastoWhereInput[]
+    NOT?: CategoriaGastoWhereInput | CategoriaGastoWhereInput[]
+    tenant_id?: UuidFilter<"CategoriaGasto"> | string
+    proyecto_id?: UuidFilter<"CategoriaGasto"> | string
+    nombre?: StringFilter<"CategoriaGasto"> | string
+    es_predefinida?: BoolFilter<"CategoriaGasto"> | boolean
+    activa?: BoolFilter<"CategoriaGasto"> | boolean
+    created_at?: DateTimeFilter<"CategoriaGasto"> | Date | string
+    insumos?: InsumoListRelationFilter
+  }, "id_categoria">
+
+  export type CategoriaGastoOrderByWithAggregationInput = {
+    id_categoria?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    nombre?: SortOrder
+    es_predefinida?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    _count?: CategoriaGastoCountOrderByAggregateInput
+    _max?: CategoriaGastoMaxOrderByAggregateInput
+    _min?: CategoriaGastoMinOrderByAggregateInput
+  }
+
+  export type CategoriaGastoScalarWhereWithAggregatesInput = {
+    AND?: CategoriaGastoScalarWhereWithAggregatesInput | CategoriaGastoScalarWhereWithAggregatesInput[]
+    OR?: CategoriaGastoScalarWhereWithAggregatesInput[]
+    NOT?: CategoriaGastoScalarWhereWithAggregatesInput | CategoriaGastoScalarWhereWithAggregatesInput[]
+    id_categoria?: UuidWithAggregatesFilter<"CategoriaGasto"> | string
+    tenant_id?: UuidWithAggregatesFilter<"CategoriaGasto"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"CategoriaGasto"> | string
+    nombre?: StringWithAggregatesFilter<"CategoriaGasto"> | string
+    es_predefinida?: BoolWithAggregatesFilter<"CategoriaGasto"> | boolean
+    activa?: BoolWithAggregatesFilter<"CategoriaGasto"> | boolean
+    created_at?: DateTimeWithAggregatesFilter<"CategoriaGasto"> | Date | string
+  }
+
+  export type ProyectoCostosConfigWhereInput = {
+    AND?: ProyectoCostosConfigWhereInput | ProyectoCostosConfigWhereInput[]
+    OR?: ProyectoCostosConfigWhereInput[]
+    NOT?: ProyectoCostosConfigWhereInput | ProyectoCostosConfigWhereInput[]
+    id?: UuidFilter<"ProyectoCostosConfig"> | string
+    tenant_id?: UuidFilter<"ProyectoCostosConfig"> | string
+    proyecto_id?: UuidFilter<"ProyectoCostosConfig"> | string
+    estado?: StringFilter<"ProyectoCostosConfig"> | string
+    activado_por?: UuidNullableFilter<"ProyectoCostosConfig"> | string | null
+    fecha_activacion?: DateTimeNullableFilter<"ProyectoCostosConfig"> | Date | string | null
+    created_at?: DateTimeFilter<"ProyectoCostosConfig"> | Date | string
+    updated_at?: DateTimeFilter<"ProyectoCostosConfig"> | Date | string
+  }
+
+  export type ProyectoCostosConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    estado?: SortOrder
+    activado_por?: SortOrderInput | SortOrder
+    fecha_activacion?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoCostosConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_proyecto_costos_config?: ProyectoCostosConfigUq_proyecto_costos_configCompoundUniqueInput
+    AND?: ProyectoCostosConfigWhereInput | ProyectoCostosConfigWhereInput[]
+    OR?: ProyectoCostosConfigWhereInput[]
+    NOT?: ProyectoCostosConfigWhereInput | ProyectoCostosConfigWhereInput[]
+    tenant_id?: UuidFilter<"ProyectoCostosConfig"> | string
+    proyecto_id?: UuidFilter<"ProyectoCostosConfig"> | string
+    estado?: StringFilter<"ProyectoCostosConfig"> | string
+    activado_por?: UuidNullableFilter<"ProyectoCostosConfig"> | string | null
+    fecha_activacion?: DateTimeNullableFilter<"ProyectoCostosConfig"> | Date | string | null
+    created_at?: DateTimeFilter<"ProyectoCostosConfig"> | Date | string
+    updated_at?: DateTimeFilter<"ProyectoCostosConfig"> | Date | string
+  }, "id" | "uq_proyecto_costos_config">
+
+  export type ProyectoCostosConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    estado?: SortOrder
+    activado_por?: SortOrderInput | SortOrder
+    fecha_activacion?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: ProyectoCostosConfigCountOrderByAggregateInput
+    _max?: ProyectoCostosConfigMaxOrderByAggregateInput
+    _min?: ProyectoCostosConfigMinOrderByAggregateInput
+  }
+
+  export type ProyectoCostosConfigScalarWhereWithAggregatesInput = {
+    AND?: ProyectoCostosConfigScalarWhereWithAggregatesInput | ProyectoCostosConfigScalarWhereWithAggregatesInput[]
+    OR?: ProyectoCostosConfigScalarWhereWithAggregatesInput[]
+    NOT?: ProyectoCostosConfigScalarWhereWithAggregatesInput | ProyectoCostosConfigScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ProyectoCostosConfig"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ProyectoCostosConfig"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"ProyectoCostosConfig"> | string
+    estado?: StringWithAggregatesFilter<"ProyectoCostosConfig"> | string
+    activado_por?: UuidNullableWithAggregatesFilter<"ProyectoCostosConfig"> | string | null
+    fecha_activacion?: DateTimeNullableWithAggregatesFilter<"ProyectoCostosConfig"> | Date | string | null
+    created_at?: DateTimeWithAggregatesFilter<"ProyectoCostosConfig"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"ProyectoCostosConfig"> | Date | string
+  }
+
   export type InsumoWhereInput = {
     AND?: InsumoWhereInput | InsumoWhereInput[]
     OR?: InsumoWhereInput[]
@@ -6771,9 +9065,11 @@ export namespace Prisma {
     unidad_medida?: StringFilter<"Insumo"> | string
     tipo_insumo?: EnumTipoInsumoFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: UuidNullableFilter<"Insumo"> | string | null
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
+    categoria_gasto?: XOR<CategoriaGastoNullableRelationFilter, CategoriaGastoWhereInput> | null
     concepto_insumos?: ConceptoInsumoListRelationFilter
   }
 
@@ -6785,9 +9081,11 @@ export namespace Prisma {
     unidad_medida?: SortOrder
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
+    categoria_gasto_id?: SortOrderInput | SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    categoria_gasto?: CategoriaGastoOrderByWithRelationInput
     concepto_insumos?: ConceptoInsumoOrderByRelationAggregateInput
   }
 
@@ -6803,9 +9101,11 @@ export namespace Prisma {
     unidad_medida?: StringFilter<"Insumo"> | string
     tipo_insumo?: EnumTipoInsumoFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: UuidNullableFilter<"Insumo"> | string | null
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
+    categoria_gasto?: XOR<CategoriaGastoNullableRelationFilter, CategoriaGastoWhereInput> | null
     concepto_insumos?: ConceptoInsumoListRelationFilter
   }, "id" | "uq_insumo_tenant_clave">
 
@@ -6817,6 +9117,7 @@ export namespace Prisma {
     unidad_medida?: SortOrder
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
+    categoria_gasto_id?: SortOrderInput | SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -6838,6 +9139,7 @@ export namespace Prisma {
     unidad_medida?: StringWithAggregatesFilter<"Insumo"> | string
     tipo_insumo?: EnumTipoInsumoWithAggregatesFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalWithAggregatesFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: UuidNullableWithAggregatesFilter<"Insumo"> | string | null
     activo?: BoolWithAggregatesFilter<"Insumo"> | boolean
     created_at?: DateTimeWithAggregatesFilter<"Insumo"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Insumo"> | Date | string
@@ -7190,6 +9492,157 @@ export namespace Prisma {
     created_at?: DateTimeWithAggregatesFilter<"FichaTecnicaInsumo"> | Date | string
   }
 
+  export type CategoriaGastoCreateInput = {
+    id_categoria?: string
+    tenant_id: string
+    proyecto_id: string
+    nombre: string
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: Date | string
+    insumos?: InsumoCreateNestedManyWithoutCategoria_gastoInput
+  }
+
+  export type CategoriaGastoUncheckedCreateInput = {
+    id_categoria?: string
+    tenant_id: string
+    proyecto_id: string
+    nombre: string
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: Date | string
+    insumos?: InsumoUncheckedCreateNestedManyWithoutCategoria_gastoInput
+  }
+
+  export type CategoriaGastoUpdateInput = {
+    id_categoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    es_predefinida?: BoolFieldUpdateOperationsInput | boolean
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: InsumoUpdateManyWithoutCategoria_gastoNestedInput
+  }
+
+  export type CategoriaGastoUncheckedUpdateInput = {
+    id_categoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    es_predefinida?: BoolFieldUpdateOperationsInput | boolean
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: InsumoUncheckedUpdateManyWithoutCategoria_gastoNestedInput
+  }
+
+  export type CategoriaGastoCreateManyInput = {
+    id_categoria?: string
+    tenant_id: string
+    proyecto_id: string
+    nombre: string
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: Date | string
+  }
+
+  export type CategoriaGastoUpdateManyMutationInput = {
+    id_categoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    es_predefinida?: BoolFieldUpdateOperationsInput | boolean
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CategoriaGastoUncheckedUpdateManyInput = {
+    id_categoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    es_predefinida?: BoolFieldUpdateOperationsInput | boolean
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoCostosConfigCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    estado?: string
+    activado_por?: string | null
+    fecha_activacion?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ProyectoCostosConfigUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    estado?: string
+    activado_por?: string | null
+    fecha_activacion?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ProyectoCostosConfigUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    activado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_activacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoCostosConfigUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    activado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_activacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoCostosConfigCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    estado?: string
+    activado_por?: string | null
+    fecha_activacion?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ProyectoCostosConfigUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    activado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_activacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoCostosConfigUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    activado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_activacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type InsumoCreateInput = {
     id?: string
     tenant_id: string
@@ -7201,6 +9654,7 @@ export namespace Prisma {
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
+    categoria_gasto?: CategoriaGastoCreateNestedOneWithoutInsumosInput
     concepto_insumos?: ConceptoInsumoCreateNestedManyWithoutInsumoInput
   }
 
@@ -7212,6 +9666,7 @@ export namespace Prisma {
     unidad_medida: string
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -7229,6 +9684,7 @@ export namespace Prisma {
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria_gasto?: CategoriaGastoUpdateOneWithoutInsumosNestedInput
     concepto_insumos?: ConceptoInsumoUpdateManyWithoutInsumoNestedInput
   }
 
@@ -7240,6 +9696,7 @@ export namespace Prisma {
     unidad_medida?: StringFieldUpdateOperationsInput | string
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7254,6 +9711,7 @@ export namespace Prisma {
     unidad_medida: string
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -7280,6 +9738,7 @@ export namespace Prisma {
     unidad_medida?: StringFieldUpdateOperationsInput | string
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7702,24 +10161,6 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
-  export type EnumTipoInsumoFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoInsumoFilter<$PrismaModel> | $Enums.TipoInsumo
-  }
-
-  export type DecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-  }
-
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -7736,66 +10177,44 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
-  export type ConceptoInsumoListRelationFilter = {
-    every?: ConceptoInsumoWhereInput
-    some?: ConceptoInsumoWhereInput
-    none?: ConceptoInsumoWhereInput
+  export type InsumoListRelationFilter = {
+    every?: InsumoWhereInput
+    some?: InsumoWhereInput
+    none?: InsumoWhereInput
   }
 
-  export type ConceptoInsumoOrderByRelationAggregateInput = {
+  export type InsumoOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
-  export type InsumoUq_insumo_tenant_claveCompoundUniqueInput = {
-    tenant_id: string
-    clave: string
-  }
-
-  export type InsumoCountOrderByAggregateInput = {
-    id?: SortOrder
+  export type CategoriaGastoCountOrderByAggregateInput = {
+    id_categoria?: SortOrder
     tenant_id?: SortOrder
-    clave?: SortOrder
-    descripcion?: SortOrder
-    unidad_medida?: SortOrder
-    tipo_insumo?: SortOrder
-    costo_base?: SortOrder
-    activo?: SortOrder
+    proyecto_id?: SortOrder
+    nombre?: SortOrder
+    es_predefinida?: SortOrder
+    activa?: SortOrder
     created_at?: SortOrder
-    updated_at?: SortOrder
   }
 
-  export type InsumoAvgOrderByAggregateInput = {
-    costo_base?: SortOrder
-  }
-
-  export type InsumoMaxOrderByAggregateInput = {
-    id?: SortOrder
+  export type CategoriaGastoMaxOrderByAggregateInput = {
+    id_categoria?: SortOrder
     tenant_id?: SortOrder
-    clave?: SortOrder
-    descripcion?: SortOrder
-    unidad_medida?: SortOrder
-    tipo_insumo?: SortOrder
-    costo_base?: SortOrder
-    activo?: SortOrder
+    proyecto_id?: SortOrder
+    nombre?: SortOrder
+    es_predefinida?: SortOrder
+    activa?: SortOrder
     created_at?: SortOrder
-    updated_at?: SortOrder
   }
 
-  export type InsumoMinOrderByAggregateInput = {
-    id?: SortOrder
+  export type CategoriaGastoMinOrderByAggregateInput = {
+    id_categoria?: SortOrder
     tenant_id?: SortOrder
-    clave?: SortOrder
-    descripcion?: SortOrder
-    unidad_medida?: SortOrder
-    tipo_insumo?: SortOrder
-    costo_base?: SortOrder
-    activo?: SortOrder
+    proyecto_id?: SortOrder
+    nombre?: SortOrder
+    es_predefinida?: SortOrder
+    activa?: SortOrder
     created_at?: SortOrder
-    updated_at?: SortOrder
-  }
-
-  export type InsumoSumOrderByAggregateInput = {
-    costo_base?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -7831,6 +10250,211 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
+  export type ProyectoCostosConfigUq_proyecto_costos_configCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+  }
+
+  export type ProyectoCostosConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    estado?: SortOrder
+    activado_por?: SortOrder
+    fecha_activacion?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoCostosConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    estado?: SortOrder
+    activado_por?: SortOrder
+    fecha_activacion?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoCostosConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    estado?: SortOrder
+    activado_por?: SortOrder
+    fecha_activacion?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumTipoInsumoFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoInsumoFilter<$PrismaModel> | $Enums.TipoInsumo
+  }
+
+  export type DecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type CategoriaGastoNullableRelationFilter = {
+    is?: CategoriaGastoWhereInput | null
+    isNot?: CategoriaGastoWhereInput | null
+  }
+
+  export type ConceptoInsumoListRelationFilter = {
+    every?: ConceptoInsumoWhereInput
+    some?: ConceptoInsumoWhereInput
+    none?: ConceptoInsumoWhereInput
+  }
+
+  export type ConceptoInsumoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type InsumoUq_insumo_tenant_claveCompoundUniqueInput = {
+    tenant_id: string
+    clave: string
+  }
+
+  export type InsumoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    tipo_insumo?: SortOrder
+    costo_base?: SortOrder
+    categoria_gasto_id?: SortOrder
+    activo?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type InsumoAvgOrderByAggregateInput = {
+    costo_base?: SortOrder
+  }
+
+  export type InsumoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    tipo_insumo?: SortOrder
+    costo_base?: SortOrder
+    categoria_gasto_id?: SortOrder
+    activo?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type InsumoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    tipo_insumo?: SortOrder
+    costo_base?: SortOrder
+    categoria_gasto_id?: SortOrder
+    activo?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type InsumoSumOrderByAggregateInput = {
+    costo_base?: SortOrder
+  }
+
   export type EnumTipoInsumoWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
     in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
@@ -7857,28 +10481,6 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -7897,38 +10499,10 @@ export namespace Prisma {
     not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
   }
 
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type ConceptoListRelationFilter = {
     every?: ConceptoWhereInput
     some?: ConceptoWhereInput
     none?: ConceptoWhereInput
-  }
-
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
   }
 
   export type ConceptoOrderByRelationAggregateInput = {
@@ -8008,35 +10582,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
     _max?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type PresupuestoBaseRelationFilter = {
@@ -8250,6 +10795,74 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type InsumoCreateNestedManyWithoutCategoria_gastoInput = {
+    create?: XOR<InsumoCreateWithoutCategoria_gastoInput, InsumoUncheckedCreateWithoutCategoria_gastoInput> | InsumoCreateWithoutCategoria_gastoInput[] | InsumoUncheckedCreateWithoutCategoria_gastoInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutCategoria_gastoInput | InsumoCreateOrConnectWithoutCategoria_gastoInput[]
+    createMany?: InsumoCreateManyCategoria_gastoInputEnvelope
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+  }
+
+  export type InsumoUncheckedCreateNestedManyWithoutCategoria_gastoInput = {
+    create?: XOR<InsumoCreateWithoutCategoria_gastoInput, InsumoUncheckedCreateWithoutCategoria_gastoInput> | InsumoCreateWithoutCategoria_gastoInput[] | InsumoUncheckedCreateWithoutCategoria_gastoInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutCategoria_gastoInput | InsumoCreateOrConnectWithoutCategoria_gastoInput[]
+    createMany?: InsumoCreateManyCategoria_gastoInputEnvelope
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type InsumoUpdateManyWithoutCategoria_gastoNestedInput = {
+    create?: XOR<InsumoCreateWithoutCategoria_gastoInput, InsumoUncheckedCreateWithoutCategoria_gastoInput> | InsumoCreateWithoutCategoria_gastoInput[] | InsumoUncheckedCreateWithoutCategoria_gastoInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutCategoria_gastoInput | InsumoCreateOrConnectWithoutCategoria_gastoInput[]
+    upsert?: InsumoUpsertWithWhereUniqueWithoutCategoria_gastoInput | InsumoUpsertWithWhereUniqueWithoutCategoria_gastoInput[]
+    createMany?: InsumoCreateManyCategoria_gastoInputEnvelope
+    set?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    disconnect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    delete?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    update?: InsumoUpdateWithWhereUniqueWithoutCategoria_gastoInput | InsumoUpdateWithWhereUniqueWithoutCategoria_gastoInput[]
+    updateMany?: InsumoUpdateManyWithWhereWithoutCategoria_gastoInput | InsumoUpdateManyWithWhereWithoutCategoria_gastoInput[]
+    deleteMany?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
+  }
+
+  export type InsumoUncheckedUpdateManyWithoutCategoria_gastoNestedInput = {
+    create?: XOR<InsumoCreateWithoutCategoria_gastoInput, InsumoUncheckedCreateWithoutCategoria_gastoInput> | InsumoCreateWithoutCategoria_gastoInput[] | InsumoUncheckedCreateWithoutCategoria_gastoInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutCategoria_gastoInput | InsumoCreateOrConnectWithoutCategoria_gastoInput[]
+    upsert?: InsumoUpsertWithWhereUniqueWithoutCategoria_gastoInput | InsumoUpsertWithWhereUniqueWithoutCategoria_gastoInput[]
+    createMany?: InsumoCreateManyCategoria_gastoInputEnvelope
+    set?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    disconnect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    delete?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    update?: InsumoUpdateWithWhereUniqueWithoutCategoria_gastoInput | InsumoUpdateWithWhereUniqueWithoutCategoria_gastoInput[]
+    updateMany?: InsumoUpdateManyWithWhereWithoutCategoria_gastoInput | InsumoUpdateManyWithWhereWithoutCategoria_gastoInput[]
+    deleteMany?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type CategoriaGastoCreateNestedOneWithoutInsumosInput = {
+    create?: XOR<CategoriaGastoCreateWithoutInsumosInput, CategoriaGastoUncheckedCreateWithoutInsumosInput>
+    connectOrCreate?: CategoriaGastoCreateOrConnectWithoutInsumosInput
+    connect?: CategoriaGastoWhereUniqueInput
+  }
+
   export type ConceptoInsumoCreateNestedManyWithoutInsumoInput = {
     create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
     connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
@@ -8264,10 +10877,6 @@ export namespace Prisma {
     connect?: ConceptoInsumoWhereUniqueInput | ConceptoInsumoWhereUniqueInput[]
   }
 
-  export type StringFieldUpdateOperationsInput = {
-    set?: string
-  }
-
   export type EnumTipoInsumoFieldUpdateOperationsInput = {
     set?: $Enums.TipoInsumo
   }
@@ -8280,12 +10889,14 @@ export namespace Prisma {
     divide?: Decimal | DecimalJsLike | number | string
   }
 
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
-  }
-
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
+  export type CategoriaGastoUpdateOneWithoutInsumosNestedInput = {
+    create?: XOR<CategoriaGastoCreateWithoutInsumosInput, CategoriaGastoUncheckedCreateWithoutInsumosInput>
+    connectOrCreate?: CategoriaGastoCreateOrConnectWithoutInsumosInput
+    upsert?: CategoriaGastoUpsertWithoutInsumosInput
+    disconnect?: CategoriaGastoWhereInput | boolean
+    delete?: CategoriaGastoWhereInput | boolean
+    connect?: CategoriaGastoWhereUniqueInput
+    update?: XOR<XOR<CategoriaGastoUpdateToOneWithWhereWithoutInsumosInput, CategoriaGastoUpdateWithoutInsumosInput>, CategoriaGastoUncheckedUpdateWithoutInsumosInput>
   }
 
   export type ConceptoInsumoUpdateManyWithoutInsumoNestedInput = {
@@ -8340,14 +10951,6 @@ export namespace Prisma {
 
   export type EnumEstadoPresupuestoFieldUpdateOperationsInput = {
     set?: $Enums.EstadoPresupuesto
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type ConceptoUpdateManyWithoutPresupuestoNestedInput = {
@@ -8487,24 +11090,6 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
-  export type NestedEnumTipoInsumoFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoInsumoFilter<$PrismaModel> | $Enums.TipoInsumo
-  }
-
-  export type NestedDecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-  }
-
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -8563,32 +11148,6 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
-  export type NestedEnumTipoInsumoWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoInsumoWithAggregatesFilter<$PrismaModel> | $Enums.TipoInsumo
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumTipoInsumoFilter<$PrismaModel>
-    _max?: NestedEnumTipoInsumoFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
-  }
-
   export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
@@ -8611,13 +11170,6 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type NestedEnumEstadoPresupuestoFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoPresupuesto | EnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    in?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
-  }
-
   export type NestedUuidNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -8638,43 +11190,6 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
-  export type NestedEnumEstadoPresupuestoWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoPresupuesto | EnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    in?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    not?: NestedEnumEstadoPresupuestoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoPresupuesto
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
-    _max?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
   }
 
   export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -8730,6 +11245,94 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumTipoInsumoFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoInsumoFilter<$PrismaModel> | $Enums.TipoInsumo
+  }
+
+  export type NestedDecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NestedEnumTipoInsumoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoInsumo | EnumTipoInsumoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoInsumo[] | ListEnumTipoInsumoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoInsumoWithAggregatesFilter<$PrismaModel> | $Enums.TipoInsumo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTipoInsumoFilter<$PrismaModel>
+    _max?: NestedEnumTipoInsumoFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEstadoPresupuestoFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPresupuesto | EnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumEstadoPresupuestoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPresupuesto | EnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPresupuestoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoPresupuesto
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
+    _max?: NestedEnumEstadoPresupuestoFilter<$PrismaModel>
+  }
+
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -8745,6 +11348,102 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type InsumoCreateWithoutCategoria_gastoInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    concepto_insumos?: ConceptoInsumoCreateNestedManyWithoutInsumoInput
+  }
+
+  export type InsumoUncheckedCreateWithoutCategoria_gastoInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    concepto_insumos?: ConceptoInsumoUncheckedCreateNestedManyWithoutInsumoInput
+  }
+
+  export type InsumoCreateOrConnectWithoutCategoria_gastoInput = {
+    where: InsumoWhereUniqueInput
+    create: XOR<InsumoCreateWithoutCategoria_gastoInput, InsumoUncheckedCreateWithoutCategoria_gastoInput>
+  }
+
+  export type InsumoCreateManyCategoria_gastoInputEnvelope = {
+    data: InsumoCreateManyCategoria_gastoInput | InsumoCreateManyCategoria_gastoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InsumoUpsertWithWhereUniqueWithoutCategoria_gastoInput = {
+    where: InsumoWhereUniqueInput
+    update: XOR<InsumoUpdateWithoutCategoria_gastoInput, InsumoUncheckedUpdateWithoutCategoria_gastoInput>
+    create: XOR<InsumoCreateWithoutCategoria_gastoInput, InsumoUncheckedCreateWithoutCategoria_gastoInput>
+  }
+
+  export type InsumoUpdateWithWhereUniqueWithoutCategoria_gastoInput = {
+    where: InsumoWhereUniqueInput
+    data: XOR<InsumoUpdateWithoutCategoria_gastoInput, InsumoUncheckedUpdateWithoutCategoria_gastoInput>
+  }
+
+  export type InsumoUpdateManyWithWhereWithoutCategoria_gastoInput = {
+    where: InsumoScalarWhereInput
+    data: XOR<InsumoUpdateManyMutationInput, InsumoUncheckedUpdateManyWithoutCategoria_gastoInput>
+  }
+
+  export type InsumoScalarWhereInput = {
+    AND?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
+    OR?: InsumoScalarWhereInput[]
+    NOT?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
+    id?: UuidFilter<"Insumo"> | string
+    tenant_id?: UuidFilter<"Insumo"> | string
+    clave?: StringFilter<"Insumo"> | string
+    descripcion?: StringFilter<"Insumo"> | string
+    unidad_medida?: StringFilter<"Insumo"> | string
+    tipo_insumo?: EnumTipoInsumoFilter<"Insumo"> | $Enums.TipoInsumo
+    costo_base?: DecimalFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: UuidNullableFilter<"Insumo"> | string | null
+    activo?: BoolFilter<"Insumo"> | boolean
+    created_at?: DateTimeFilter<"Insumo"> | Date | string
+    updated_at?: DateTimeFilter<"Insumo"> | Date | string
+  }
+
+  export type CategoriaGastoCreateWithoutInsumosInput = {
+    id_categoria?: string
+    tenant_id: string
+    proyecto_id: string
+    nombre: string
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: Date | string
+  }
+
+  export type CategoriaGastoUncheckedCreateWithoutInsumosInput = {
+    id_categoria?: string
+    tenant_id: string
+    proyecto_id: string
+    nombre: string
+    es_predefinida?: boolean
+    activa?: boolean
+    created_at?: Date | string
+  }
+
+  export type CategoriaGastoCreateOrConnectWithoutInsumosInput = {
+    where: CategoriaGastoWhereUniqueInput
+    create: XOR<CategoriaGastoCreateWithoutInsumosInput, CategoriaGastoUncheckedCreateWithoutInsumosInput>
   }
 
   export type ConceptoInsumoCreateWithoutInsumoInput = {
@@ -8781,6 +11480,37 @@ export namespace Prisma {
   export type ConceptoInsumoCreateManyInsumoInputEnvelope = {
     data: ConceptoInsumoCreateManyInsumoInput | ConceptoInsumoCreateManyInsumoInput[]
     skipDuplicates?: boolean
+  }
+
+  export type CategoriaGastoUpsertWithoutInsumosInput = {
+    update: XOR<CategoriaGastoUpdateWithoutInsumosInput, CategoriaGastoUncheckedUpdateWithoutInsumosInput>
+    create: XOR<CategoriaGastoCreateWithoutInsumosInput, CategoriaGastoUncheckedCreateWithoutInsumosInput>
+    where?: CategoriaGastoWhereInput
+  }
+
+  export type CategoriaGastoUpdateToOneWithWhereWithoutInsumosInput = {
+    where?: CategoriaGastoWhereInput
+    data: XOR<CategoriaGastoUpdateWithoutInsumosInput, CategoriaGastoUncheckedUpdateWithoutInsumosInput>
+  }
+
+  export type CategoriaGastoUpdateWithoutInsumosInput = {
+    id_categoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    es_predefinida?: BoolFieldUpdateOperationsInput | boolean
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CategoriaGastoUncheckedUpdateWithoutInsumosInput = {
+    id_categoria?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    es_predefinida?: BoolFieldUpdateOperationsInput | boolean
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput = {
@@ -9056,6 +11786,7 @@ export namespace Prisma {
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
+    categoria_gasto?: CategoriaGastoCreateNestedOneWithoutInsumosInput
   }
 
   export type InsumoUncheckedCreateWithoutConcepto_insumosInput = {
@@ -9066,6 +11797,7 @@ export namespace Prisma {
     unidad_medida: string
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -9139,9 +11871,65 @@ export namespace Prisma {
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria_gasto?: CategoriaGastoUpdateOneWithoutInsumosNestedInput
   }
 
   export type InsumoUncheckedUpdateWithoutConcepto_insumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InsumoCreateManyCategoria_gastoInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type InsumoUpdateWithoutCategoria_gastoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_insumos?: ConceptoInsumoUpdateManyWithoutInsumoNestedInput
+  }
+
+  export type InsumoUncheckedUpdateWithoutCategoria_gastoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_insumos?: ConceptoInsumoUncheckedUpdateManyWithoutInsumoNestedInput
+  }
+
+  export type InsumoUncheckedUpdateManyWithoutCategoria_gastoInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     clave?: StringFieldUpdateOperationsInput | string
@@ -9322,6 +12110,10 @@ export namespace Prisma {
    * Aliases for legacy arg types
    */
     /**
+     * @deprecated Use CategoriaGastoCountOutputTypeDefaultArgs instead
+     */
+    export type CategoriaGastoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CategoriaGastoCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use InsumoCountOutputTypeDefaultArgs instead
      */
     export type InsumoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InsumoCountOutputTypeDefaultArgs<ExtArgs>
@@ -9333,6 +12125,14 @@ export namespace Prisma {
      * @deprecated Use ConceptoCountOutputTypeDefaultArgs instead
      */
     export type ConceptoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CategoriaGastoDefaultArgs instead
+     */
+    export type CategoriaGastoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CategoriaGastoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ProyectoCostosConfigDefaultArgs instead
+     */
+    export type ProyectoCostosConfigArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProyectoCostosConfigDefaultArgs<ExtArgs>
     /**
      * @deprecated Use InsumoDefaultArgs instead
      */

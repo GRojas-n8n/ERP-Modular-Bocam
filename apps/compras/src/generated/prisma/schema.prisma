@@ -98,11 +98,15 @@ model Requisicion {
   tipo            String   @default("NORMAL") @db.VarChar(20)
   observaciones   String?  @db.Text
 
+  /// Partida del catálogo de conceptos a la que pertenece esta requisición (obligatorio en nuevas reqs)
+  concepto_id String? @db.Uuid
+
   items RequisicionItem[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
   @@index([tenant_id, tipo])
+  @@index([tenant_id, concepto_id], name: "idx_req_concepto")
   @@map("requisiciones")
 }
 
@@ -121,6 +125,12 @@ model RequisicionItem {
   unidad_libre      String? @db.VarChar(20)
   /// Marcador de ítem imprevisto (sin insumo_id en catálogo)
   es_imprevisto     Boolean @default(false)
+
+  // ── Especificaciones técnicas (Residente — v1 manual) ────────────────────
+  /// Marca o modelo de referencia indicado por el Residente al crear la req
+  especificacion_marca_modelo String? @db.VarChar(200)
+  /// Especificaciones técnicas libres indicadas por el Residente
+  especificacion_detalle      String? @db.Text
 
   // ── Trazabilidad de presupuesto ──────────────────────────────────────────
   /// Cantidad presupuestada para este insumo en el proyecto (snapshot al crear req)
@@ -173,12 +183,15 @@ model OrdenCompra {
   iva            Decimal  @db.Decimal(18, 2)
   total          Decimal  @db.Decimal(18, 2)
   presupuesto_id String?  @db.Uuid // Referencia externa al Módulo de Finanzas
+  /// Requisición que originó esta OC — para cálculo de acumulados por partida
+  requisicion_id String?  @db.Uuid
 
   proveedor Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
   items     OrdenCompraItem[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
+  @@index([tenant_id, requisicion_id], name: "idx_oc_requisicion")
   @@map("ordenes_compra")
 }
 
@@ -224,6 +237,12 @@ model CuadroComparativo {
   primera_opcion_proveedor_id String? @db.Uuid
   segunda_opcion_proveedor_id String? @db.Uuid
 
+  // ── Veredicto técnico del Residente (antes de firma) ────────────────────
+  /// Texto libre de veredicto general del Residente — obligatorio para firmar
+  veredicto_residente   String? @db.Text
+  /// UUIDs de proveedores recomendados — JSON array serializado
+  proveedores_sugeridos String? @db.Text
+
   // ── Auditoría evaluación técnica (Residente) ─────────────────────────────
   evaluacion_residente_id  String?   @db.Uuid
   fecha_evaluacion_tecnica DateTime?
@@ -233,13 +252,31 @@ model CuadroComparativo {
   fecha_aprobacion_gt   DateTime?
   comentario_gt_general String?   @db.Text
 
-  detalles     ComparativaDetalle[]
-  lineas       ComparativaLinea[]
-  aclaraciones AclaracionComparativa[]
+  detalles              ComparativaDetalle[]
+  lineas                ComparativaLinea[]
+  aclaraciones          AclaracionComparativa[]
+  auditoria_desbloqueos AuditoriaDesbloqueoComparativa[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
   @@map("cuadros_comparativos")
+}
+
+// ── Auditoría de desbloqueos de cuadros firmados ─────────────────────────────
+// Cada vez que un admin desbloquea un cuadro FIRMADO_BLOQUEADO queda un registro inmutable.
+model AuditoriaDesbloqueoComparativa {
+  id_auditoria         String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  proyecto_id          String   @db.Uuid
+  cuadro_id            String   @db.Uuid
+  desbloqueado_por     String   @db.Uuid
+  timestamp_desbloqueo DateTime @default(now())
+  justificacion        String   @db.Text
+
+  cuadro CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
+
+  @@index([tenant_id, cuadro_id])
+  @@map("auditoria_desbloqueo_comparativa")
 }
 
 // --- Detalles técnicos por partida (cuadro × insumo) ---
@@ -280,6 +317,12 @@ model ComparativaDetalle {
   evaluacion_tecnica  String  @default("PENDIENTE")
   comentario_tecnico  String? @db.Text
   valor_ofrecido_spec String? @db.Text // Lo que el proveedor ofrece (texto libre de Compras)
+
+  // ── Pregunta del Residente (cuando marca "?") y respuesta de Compras ────────
+  /// Pregunta del Residente cuando marcó "?" — dispara nueva revisión del cuadro
+  pregunta_residente String? @db.Text
+  /// Respuesta de Compras a la pregunta del Residente — visible en la revisión siguiente
+  respuesta_compras  String? @db.Text
 
   // ── Aprobación del Gerente Técnico ────────────────────────────────────────
   // Valores: PENDIENTE | APROBADO | RECHAZADO

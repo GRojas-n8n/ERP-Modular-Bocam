@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { DEMO_BITACORAS, DEMO_AVANCES, DEMO_ESTIMACIONES } from '../lib/demoData';
@@ -31,6 +31,8 @@ import {
   IconClock,
   IconFileText,
   IconPlus,
+  IconRefreshCw,
+  IconSearch,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 
@@ -76,12 +78,30 @@ interface Estimacion {
   avances: any[];
 }
 
-type TabId = 'bitacoras' | 'avances' | 'estimaciones';
+type TabId = 'bitacoras' | 'avances' | 'estimaciones' | 'configuracion' | 'costos';
+
+interface InsumoClasif {
+  id: string;
+  clave: string;
+  descripcion: string;
+  tipo_insumo: string;
+  categoria_gasto_id: string | null;
+  categoria_gasto_nombre: string | null;
+}
+
+interface CategoriaGastoItem {
+  id_categoria: string;
+  nombre: string;
+  es_predefinida: boolean;
+  insumos_count: number;
+}
 
 export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant } = useTenant();
+  const { tenant, user, currentProjectId } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
   const activeTab: TabId = (activeSubView as TabId) || 'bitacoras';
+  const roles: string[] = user?.role ?? [];
+  const canConfig = roles.some(r => ['control_obra', 'admin'].includes(r));
   const [bitacoras, setBitacoras] = useState<Bitacora[]>([]);
   const [avances, setAvances] = useState<AvanceFisico[]>([]);
   const [estimaciones, setEstimaciones] = useState<Estimacion[]>([]);
@@ -116,6 +136,103 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     periodo_fin: new Date().toISOString().split('T')[0],
   });
 
+  // ── Configuración: clasificación de insumos ──────────────────────────────
+  const [insumosClasif, setInsumosClasif] = useState<InsumoClasif[]>([]);
+  const [categoriasConfig, setCategoriasConfig] = useState<CategoriaGastoItem[]>([]);
+  const [loadingConfig, setLoadingConfig] = useState(false);
+  const [clasifSearch, setClasifSearch] = useState('');
+  const [autoClasifLoading, setAutoClasifLoading] = useState(false);
+  const [bulkTipoTarget, setBulkTipoTarget] = useState<Record<string, string>>({});
+
+  const loadConfiguracion = async () => {
+    if (!currentProjectId) return;
+    setLoadingConfig(true);
+    try {
+      const [insRes, catRes] = await Promise.allSettled([
+        api.get('/api/v1/gerencia-tecnica/insumos'),
+        api.get(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/categorias-gasto`),
+      ]);
+      if (insRes.status === 'fulfilled') {
+        const raw: any[] = insRes.value.data?.data || [];
+        setInsumosClasif(raw.map(i => ({
+          id: i.id,
+          clave: i.clave,
+          descripcion: i.descripcion,
+          tipo_insumo: i.tipo_insumo,
+          categoria_gasto_id: i.categoria_gasto_id ?? null,
+          categoria_gasto_nombre: i.categoria_gasto_nombre ?? null,
+        })));
+      }
+      if (catRes.status === 'fulfilled') {
+        setCategoriasConfig(catRes.value.data?.data?.categorias || []);
+      }
+    } catch { /* silencioso */ }
+    finally { setLoadingConfig(false); }
+  };
+
+  const handleAutoClasif = async () => {
+    if (!currentProjectId) return;
+    setAutoClasifLoading(true);
+    try {
+      const sinCategoria = insumosClasif.filter(i => !i.categoria_gasto_id);
+      if (sinCategoria.length === 0) return;
+      const MAPA: Record<string, string> = {
+        MATERIAL: 'Materiales',
+        EQUIPO: 'Equipo Mayor',
+        SUBCONTRATO: 'Servicios y Subcontratos',
+        MANO_DE_OBRA: 'Mano de Obra Subcontratada',
+        INDIRECTO: 'Indirectos y Gastos Generales',
+      };
+      const clasificaciones: { insumo_id: string; categoria_gasto_id: string }[] = [];
+      for (const ins of sinCategoria) {
+        const nombreTarget = MAPA[ins.tipo_insumo];
+        if (!nombreTarget) continue;
+        const cat = categoriasConfig.find(c => c.nombre === nombreTarget);
+        if (cat) clasificaciones.push({ insumo_id: ins.id, categoria_gasto_id: cat.id_categoria });
+      }
+      if (clasificaciones.length > 0) {
+        await api.put('/api/v1/gerencia-tecnica/insumos/clasificacion-bulk', { clasificaciones });
+      }
+      await loadConfiguracion();
+    } catch { /* silencioso */ }
+    finally { setAutoClasifLoading(false); }
+  };
+
+  const handleBulkTipo = async (tipo: string) => {
+    const catId = bulkTipoTarget[tipo];
+    if (!catId) return;
+    const targets = insumosClasif.filter(i => i.tipo_insumo === tipo);
+    try {
+      await api.put('/api/v1/gerencia-tecnica/insumos/clasificacion-bulk', {
+        clasificaciones: targets.map(i => ({ insumo_id: i.id, categoria_gasto_id: catId })),
+      });
+      await loadConfiguracion();
+    } catch { /* silencioso */ }
+  };
+
+  const handleCatChange = async (insumoId: string, catId: string) => {
+    try {
+      await api.put(`/api/v1/gerencia-tecnica/insumos/${insumoId}/categoria`, { categoria_gasto_id: catId || null });
+      setInsumosClasif(prev => prev.map(i => i.id === insumoId
+        ? { ...i, categoria_gasto_id: catId || null, categoria_gasto_nombre: categoriasConfig.find(c => c.id_categoria === catId)?.nombre ?? null }
+        : i));
+    } catch { /* silencioso */ }
+  };
+
+  const insumosPorTipo = useMemo(() => {
+    const map: Record<string, InsumoClasif[]> = {};
+    const q = clasifSearch.toLowerCase();
+    const filtered = q ? insumosClasif.filter(i => i.clave.toLowerCase().includes(q) || i.descripcion.toLowerCase().includes(q)) : insumosClasif;
+    for (const ins of filtered) {
+      if (!map[ins.tipo_insumo]) map[ins.tipo_insumo] = [];
+      map[ins.tipo_insumo].push(ins);
+    }
+    return map;
+  }, [insumosClasif, clasifSearch]);
+
+  const totalClasif = insumosClasif.filter(i => i.categoria_gasto_id).length;
+  const totalSin = insumosClasif.length - totalClasif;
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -139,6 +256,57 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'configuracion' && canConfig && !isDemo) loadConfiguracion();
+  }, [activeTab]);
+
+  // ── Tab Costos: resumen por categoría ────────────────────────────────────
+  interface CostosCategoriaRow {
+    nombre: string;
+    presupuesto: number;
+    comprometido: number;
+    pagado: number;
+    pct_comp: number;
+    pct_pag: number;
+  }
+  const [costosCategorias, setCostosCategorias] = useState<CostosCategoriaRow[]>([]);
+  const [costosWbsCO, setCostosWbsCO] = useState<any[]>([]);
+  const [loadingCostos, setLoadingCostos] = useState(false);
+
+  const loadCostosCO = async () => {
+    if (!currentProjectId) return;
+    setLoadingCostos(true);
+    try {
+      const [catRes, wbsRes] = await Promise.allSettled([
+        api.get(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/costos-categorias`),
+        api.get(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/costos-wbs`),
+      ]);
+      if (catRes.status === 'fulfilled') {
+        const rows: any[] = catRes.value.data?.data ?? [];
+        setCostosCategorias(rows.map((r: any) => ({
+          nombre: r.nombre,
+          presupuesto: Number(r.presupuesto ?? 0),
+          comprometido: Number(r.comprometido ?? 0),
+          pagado: Number(r.pagado ?? 0),
+          pct_comp: Number(r.presupuesto) > 0 ? (Number(r.comprometido) / Number(r.presupuesto)) * 100 : 0,
+          pct_pag:  Number(r.presupuesto) > 0 ? (Number(r.pagado) / Number(r.presupuesto)) * 100 : 0,
+        })));
+      }
+      if (wbsRes.status === 'fulfilled') {
+        const conceptos: any[] = wbsRes.value.data?.data?.conceptos ?? [];
+        setCostosWbsCO(conceptos.map((c: any) => ({
+          ...c,
+          semaforo: c.semaforo === 'ambar' ? 'amarillo' : (c.semaforo ?? 'sin_dato'),
+        })));
+      }
+    } catch { /* silencioso */ }
+    finally { setLoadingCostos(false); }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'costos' && !isDemo) loadCostosCO();
+  }, [activeTab]);
 
   const handleSubmitBitacora = async () => {
     if (!bitForm.frente_trabajo || !bitForm.actividades_realizadas) return;
@@ -495,6 +663,243 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                 ))
               )}
             </div>
+          )}
+
+          {/* ── TAB: Costos (resumen por categoría) ───────────────────────────── */}
+          {activeTab === 'costos' && (
+            loadingCostos ? (
+              <Card className="border-border/40">
+                <CardContent className="flex h-64 flex-col items-center justify-center gap-3">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-500/10 border-t-sky-600" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Calculando costos...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* KPI cards */}
+                {(() => {
+                  const totalPres = costosCategorias.reduce((s, r) => s + r.presupuesto, 0);
+                  const totalComp = costosCategorias.reduce((s, r) => s + r.comprometido, 0);
+                  const totalPag  = costosCategorias.reduce((s, r) => s + r.pagado, 0);
+                  const avFisico  = avances.length > 0 ? avances.reduce((s, a) => s + Number(a.porcentaje_avance), 0) / avances.length : 0;
+                  const fmt = (n: number) => `$${n.toLocaleString('es-MX', { maximumFractionDigits: 0 })}`;
+                  return (
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                      {[
+                        { label: 'Presupuesto Total', value: fmt(totalPres), color: 'text-sky-600', bg: 'bg-sky-500/10' },
+                        { label: 'Comprometido',     value: fmt(totalComp), color: 'text-amber-600',bg: 'bg-amber-500/10' },
+                        { label: 'Pagado',           value: fmt(totalPag),  color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                        { label: '% Avance Físico',  value: `${avFisico.toFixed(1)}%`, color: 'text-violet-600', bg: 'bg-violet-500/10' },
+                      ].map(kpi => (
+                        <Card key={kpi.label} className="rounded-2xl border-border/30 p-5">
+                          <CardContent className="p-0">
+                            <div className={cn('mb-3 flex h-10 w-10 items-center justify-center rounded-xl', kpi.bg)}>
+                              <span className={cn('text-base font-black', kpi.color)}>$</span>
+                            </div>
+                            <div className={cn('mb-0.5 text-xl font-black tracking-tighter', kpi.color)}>{kpi.value}</div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{kpi.label}</div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Barras por categoría */}
+                {costosCategorias.length > 0 && (
+                  <Card className="overflow-hidden border-border/40">
+                    <CardHeader className="border-b border-border/30 bg-muted/20 px-5 py-3">
+                      <CardTitle className="text-xs font-black uppercase tracking-widest">Progreso por Categoría</CardTitle>
+                    </CardHeader>
+                    <CardContent className="divide-y divide-border/20 p-0">
+                      {costosCategorias.map(cat => (
+                        <div key={cat.nombre} className="px-5 py-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-foreground">{cat.nombre}</span>
+                            <div className="flex items-center gap-3 text-[10px]">
+                              <span className="text-amber-700 font-mono font-black">${cat.comprometido.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</span>
+                              <span className="text-muted-foreground">/</span>
+                              <span className="font-mono text-muted-foreground">${cat.presupuesto.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</span>
+                            </div>
+                          </div>
+                          <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+                            <div className="absolute h-full rounded-full bg-emerald-500/60 transition-all" style={{ width: `${Math.min(cat.pct_pag, 100)}%` }} />
+                            <div className="absolute h-full rounded-full bg-amber-500/80 transition-all" style={{ width: `${Math.min(cat.pct_comp, 100)}%` }} />
+                          </div>
+                          <div className="flex gap-4 text-[9px] text-muted-foreground">
+                            <span>🟡 Comprometido {cat.pct_comp.toFixed(1)}%</span>
+                            <span>🟢 Pagado {cat.pct_pag.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Alertas de desviación */}
+                {(() => {
+                  const alertas = costosWbsCO.filter((r: any) => r.semaforo === 'rojo' || r.semaforo === 'amarillo');
+                  if (alertas.length === 0) return null;
+                  return (
+                    <Card className="overflow-hidden border-border/40">
+                      <CardHeader className="border-b border-border/30 bg-muted/20 px-5 py-3">
+                        <CardTitle className="text-xs font-black uppercase tracking-widest">Alertas de Desviación</CardTitle>
+                      </CardHeader>
+                      <CardContent className="divide-y divide-border/20 p-0">
+                        {alertas.map((r: any) => (
+                          <div key={r.concepto_id} className="flex items-center gap-3 px-5 py-3">
+                            <span className="shrink-0 text-base">{r.semaforo === 'rojo' ? '🔴' : '🟡'}</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-xs font-bold">[{r.clave}] {r.descripcion}</p>
+                              <p className="text-[10px] text-muted-foreground">% Económico: {r.pct_economico?.toFixed(1) ?? '—'}%</p>
+                            </div>
+                            <div className="text-right text-[10px]">
+                              <p className="font-mono font-black text-amber-700">${Number(r.comprometido).toLocaleString('es-MX', { maximumFractionDigits: 0 })}</p>
+                              <p className="text-muted-foreground">comprometido</p>
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
+
+                {costosCategorias.length === 0 && costosWbsCO.length === 0 && (
+                  <EmptyStatePanel
+                    title="Sin datos de costos"
+                    description="Asigna categorías a los insumos y crea requisiciones con partida para ver el resumen."
+                  />
+                )}
+              </div>
+            )
+          )}
+
+          {/* ── TAB: Configuración (clasificación de insumos) ──────────────────── */}
+          {activeTab === 'configuracion' && canConfig && (
+            loadingConfig ? (
+              <Card className="border-border/40">
+                <CardContent className="flex h-64 flex-col items-center justify-center gap-3">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-500/10 border-t-sky-600" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Cargando insumos...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* ── Barra de progreso ── */}
+                <Card className="border-border/40">
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-black text-foreground">{totalClasif}/{insumosClasif.length} insumos clasificados</p>
+                        <p className="text-[10px] text-muted-foreground">{totalSin} sin categoría asignada</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          className="h-8 gap-1.5 rounded-xl border-sky-500/20 px-3 text-[10px] font-black uppercase tracking-widest text-sky-600 hover:bg-sky-500/5"
+                          onClick={handleAutoClasif}
+                          disabled={autoClasifLoading || totalSin === 0}
+                        >
+                          <IconRefreshCw className={cn('h-3 w-3', autoClasifLoading && 'animate-spin')} />
+                          {autoClasifLoading ? 'Clasificando...' : 'Auto-clasificar'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="h-8 gap-1.5 rounded-xl px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/40"
+                          onClick={loadConfiguracion}
+                        >
+                          <IconRefreshCw className="h-3 w-3" /> Actualizar
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-sky-500 transition-all duration-500"
+                        style={{ width: insumosClasif.length > 0 ? `${(totalClasif / insumosClasif.length) * 100}%` : '0%' }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* ── Búsqueda ── */}
+                <div className="relative max-w-sm">
+                  <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9 text-xs"
+                    placeholder="Buscar insumo por clave o nombre..."
+                    value={clasifSearch}
+                    onChange={e => setClasifSearch(e.target.value)}
+                  />
+                </div>
+
+                {/* ── Grupos por tipo_insumo ── */}
+                {Object.entries(insumosPorTipo).map(([tipo, insumos]) => (
+                  <Card key={tipo} className="overflow-hidden border-border/40">
+                    <CardHeader className="border-b border-border/30 bg-muted/20 px-5 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <CardTitle className="text-xs font-black uppercase tracking-widest text-foreground">{tipo}</CardTitle>
+                          <SectionBadge className="rounded-full px-2 py-0.5 text-[9px]">
+                            {insumos.filter(i => i.categoria_gasto_id).length}/{insumos.length}
+                          </SectionBadge>
+                        </div>
+                        {/* Aplicar a todo el grupo */}
+                        <div className="flex items-center gap-2">
+                          <select
+                            className="rounded-xl border border-border/40 bg-muted/30 px-3 py-1.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                            value={bulkTipoTarget[tipo] ?? ''}
+                            onChange={e => setBulkTipoTarget(prev => ({ ...prev, [tipo]: e.target.value }))}
+                          >
+                            <option value="">Seleccionar categoría...</option>
+                            {categoriasConfig.map(c => (
+                              <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>
+                            ))}
+                          </select>
+                          <Button
+                            variant="outline"
+                            className="h-7 gap-1 rounded-xl border-sky-500/20 px-2.5 text-[9px] font-black text-sky-600 hover:bg-sky-500/5 disabled:opacity-40"
+                            disabled={!bulkTipoTarget[tipo]}
+                            onClick={() => handleBulkTipo(tipo)}
+                          >
+                            Aplicar a todos
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="divide-y divide-border/20 p-0">
+                      {insumos.map(ins => (
+                        <div key={ins.id} className={cn(
+                          'flex flex-wrap items-center gap-3 px-5 py-3',
+                          !ins.categoria_gasto_id && 'bg-amber-500/5'
+                        )}>
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[9px] font-black text-muted-foreground">{ins.clave}</span>
+                          <span className="flex-1 min-w-0 truncate text-xs text-foreground">{ins.descripcion}</span>
+                          <select
+                            className="shrink-0 rounded-xl border border-border/40 bg-muted/30 px-2.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                            value={ins.categoria_gasto_id ?? ''}
+                            onChange={e => handleCatChange(ins.id, e.target.value)}
+                          >
+                            <option value="">Sin categoría</option>
+                            {categoriasConfig.map(c => (
+                              <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>
+                            ))}
+                          </select>
+                          {!ins.categoria_gasto_id && (
+                            <span className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black text-amber-700">
+                              Sin clasificar
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {insumosClasif.length === 0 && !loadingConfig && (
+                  <EmptyStatePanel title="Sin insumos en el catálogo" description="Importa el catálogo de insumos desde Gerencia Técnica primero." />
+                )}
+              </div>
+            )
           )}
         </>
       )}

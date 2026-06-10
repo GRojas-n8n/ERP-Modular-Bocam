@@ -116,10 +116,14 @@ app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => 
 app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const { codigo, items, observaciones, prioridad, tipo } = req.body;
+    const { codigo, items, observaciones, prioridad, tipo, concepto_id } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la requisición.' });
+    }
+
+    if (!concepto_id) {
+      return res.status(400).json({ success: false, message: 'concepto_id es obligatorio. Selecciona la partida del catálogo de conceptos.' });
     }
 
     const tipoReq: string = tipo === 'IMPREVISTO' ? 'IMPREVISTO' : 'NORMAL';
@@ -152,6 +156,7 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
           estado:        'PENDIENTE',
           tipo:          tipoReq,
           observaciones,
+          concepto_id:   concepto_id || null,
           items: {
             create: items.map((item: any) => ({
               tenant_id:              tenantId,
@@ -165,6 +170,8 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
               cantidad_presupuestada: item.cantidad_presupuestada != null ? Number(item.cantidad_presupuestada) : null,
               concepto_origen_id:     item.concepto_origen_id    || null,
               justificacion:          item.justificacion         || null,
+              especificacion_marca_modelo: item.especificacion_marca_modelo || null,
+              especificacion_detalle:      item.especificacion_detalle      || null,
             }))
           }
         },
@@ -243,6 +250,46 @@ app.patch(
     } catch (error: any) {
       logError(req, 'compras', 'compras.requisicion_aprobar_error', 'Error al aprobar requisición', { error_message: error.message });
       res.status(400).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── PATCH: editar specs inline (marca/modelo + detalle) de un ítem ───────────
+
+app.patch(
+  '/api/v1/compras/requisiciones/:reqId/items/:itemId/specs',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId, itemId } = req.params;
+      const { especificacion_marca_modelo, especificacion_detalle } = req.body as {
+        especificacion_marca_modelo?: string;
+        especificacion_detalle?: string;
+      };
+
+      const updated = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const item = await prisma.requisicionItem.findFirst({
+            where: { id_item: itemId, requisicion_id: reqId, tenant_id: tenantId },
+          });
+          if (!item) throw Object.assign(new Error('Ítem no encontrado'), { statusCode: 404 });
+          return prisma.requisicionItem.update({
+            where: { id_item: itemId },
+            data: {
+              especificacion_marca_modelo: especificacion_marca_modelo ?? item.especificacion_marca_modelo,
+              especificacion_detalle:      especificacion_detalle      ?? item.especificacion_detalle,
+            },
+          });
+        }
+      );
+
+      res.json({ success: true, data: updated });
+    } catch (error: any) {
+      const status = error.statusCode ?? 500;
+      logError(req, 'compras', 'compras.requisicion.item.specs.error', 'Error al actualizar specs de ítem', { error_message: error.message });
+      res.status(status).json({ success: false, message: error.message });
     }
   }
 );
@@ -1618,20 +1665,30 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           }
         }
 
-        // Para lineas con detalle_req_id, buscar especificaciones individuales
+        // Para lineas con detalle_req_id, buscar especificaciones y specs inline del Residente
         const detalleReqIds = lineas.filter(l => l.detalle_req_id).map(l => l.detalle_req_id!);
-        const especificaciones = detalleReqIds.length > 0
-          ? await prisma.especificacionDetalleReq.findMany({
-              where: { tenant_id: tenantId, detalle_id: { in: detalleReqIds } },
-              orderBy: { orden: 'asc' },
-            })
-          : [];
+        const [especificaciones, reqItems] = await Promise.all([
+          detalleReqIds.length > 0
+            ? prisma.especificacionDetalleReq.findMany({
+                where: { tenant_id: tenantId, detalle_id: { in: detalleReqIds } },
+                orderBy: { orden: 'asc' },
+              })
+            : Promise.resolve([]),
+          detalleReqIds.length > 0
+            ? prisma.requisicionItem.findMany({
+                where: { id_item: { in: detalleReqIds }, tenant_id: tenantId },
+                select: { id_item: true, especificacion_marca_modelo: true, especificacion_detalle: true },
+              })
+            : Promise.resolve([]),
+        ]);
 
-        const specsMap = new Map<string, typeof especificaciones>();
+        type EspecificacionItem = (typeof especificaciones)[number];
+        const specsMap = new Map<string, EspecificacionItem[]>();
         for (const s of especificaciones) {
           if (!specsMap.has(s.detalle_id)) specsMap.set(s.detalle_id, []);
           specsMap.get(s.detalle_id)!.push(s);
         }
+        const reqItemsMap = new Map(reqItems.map(i => [i.id_item, i]));
 
         const lineasDetalle = lineas.map(l => ({
           insumo_id: l.insumo_id,
@@ -1639,6 +1696,9 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           especificaciones_requeridas: l.especificaciones_requeridas,
           detalle_req_id: l.detalle_req_id,
           especificaciones: l.detalle_req_id ? (specsMap.get(l.detalle_req_id) ?? []) : [],
+          // Specs inline capturadas por el Residente en la requisición
+          especificacion_marca_modelo: l.detalle_req_id ? (reqItemsMap.get(l.detalle_req_id)?.especificacion_marca_modelo ?? null) : null,
+          especificacion_detalle: l.detalle_req_id ? (reqItemsMap.get(l.detalle_req_id)?.especificacion_detalle ?? null) : null,
         }));
 
         const detallesConCount = cuadro.detalles.map(d => ({
@@ -1757,6 +1817,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
 
         return {
           comparativaId: comparativa.id_cuadro,
+          requisicionId: comparativa.requisicion_id,
           proveedorId: ganador.proveedor_id,
           insumoId: ganador.insumo_id,
           subtotal,
@@ -1792,6 +1853,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           total: orderSeed.montoTotal,
           estado: OC_STATUS.PENDIENTE_FINANZAS,
           presupuesto_id,
+          requisicion_id: orderSeed.requisicionId || null,
           items: {
             create: [{
               tenant_id: tenantId,
@@ -2052,6 +2114,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
           // Verificar que el cuadro existe
           const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id } });
           if (!cuadro) throw new Error('Cuadro comparativo no encontrado.');
+          if (cuadro.estado === 'FIRMADO_BLOQUEADO') throw new Error('COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.');
           if (cuadro.estado !== 'BORRADOR') throw new Error(`El cuadro está en estado ${cuadro.estado} y no puede modificarse.`);
 
           // Eliminar detalles anteriores para hacer un reemplazo limpio
@@ -2129,6 +2192,9 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-evaluacion',
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
+          if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.' });
+          }
           if (cuadro.estado !== 'BORRADOR') {
             return res.status(400).json({
               success: false,
@@ -2177,6 +2243,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
           evaluacion_tecnica: string;
           comentario_tecnico?: string;
           valor_ofrecido_spec?: string;
+          pregunta_residente?: string;
         }[];
       };
 
@@ -2211,7 +2278,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
-          if (cuadro.estado === 'LOCKED') {
+          if (cuadro.estado === 'LOCKED' || cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: Este cuadro está firmado y no puede modificarse.' });
           }
 
@@ -2240,6 +2307,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
                 data: {
                   evaluacion_tecnica: ev.evaluacion_tecnica,
                   comentario_tecnico: ev.comentario_tecnico?.trim() ?? null,
+                  pregunta_residente: ev.evaluacion_tecnica === '?' ? (ev.pregunta_residente?.trim() ?? ev.comentario_tecnico?.trim() ?? null) : null,
                   ...(ev.valor_ofrecido_spec !== undefined
                     ? { valor_ofrecido_spec: ev.valor_ofrecido_spec.trim() || null }
                     : {}),
@@ -2313,6 +2381,9 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
+          if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.' });
+          }
           const ESTADOS_ENVIABLES = new Set(['EVALUADO_TECNICAMENTE', 'LOCKED']);
           if (!ESTADOS_ENVIABLES.has(cuadro.estado)) {
             return res.status(400).json({
@@ -2493,6 +2564,62 @@ app.get('/api/v1/compras/ordenes-compra/reconciliacion/pendientes', requireRoles
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// GET /api/v1/compras/proyectos/:proyecto_id/acumulado-por-concepto
+// Endpoint interno: retorna comprometido y pagado por concepto_id para el módulo gerencia-tecnica.
+app.get(
+  '/api/v1/compras/proyectos/:proyecto_id/acumulado-por-concepto',
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        // OCs comprometidas (EMITIDA, APROBADA, PAGADA) con req vinculada
+        const ocsComprometidas = await prisma.ordenCompra.findMany({
+          where: {
+            tenant_id: tenantId,
+            proyecto_id: proyectoId,
+            estado: { in: ['EMITIDA', 'APROBADA', 'PAGADA'] },
+            requisicion_id: { not: null },
+          },
+          select: { total: true, estado: true, requisicion_id: true },
+        });
+
+        // Obtener concepto_id por requisicion_id
+        const reqIds = [...new Set(ocsComprometidas.map(o => o.requisicion_id!))];
+        const reqs = reqIds.length > 0
+          ? await prisma.requisicion.findMany({
+              where: { id_requisicion: { in: reqIds } },
+              select: { id_requisicion: true, concepto_id: true },
+            })
+          : [];
+        const reqToConcepto = new Map(reqs.map(r => [r.id_requisicion, r.concepto_id]));
+
+        // Acumular por concepto_id
+        const acumulado = new Map<string, { comprometido: number; pagado: number }>();
+        for (const oc of ocsComprometidas) {
+          const conceptoId = reqToConcepto.get(oc.requisicion_id!);
+          if (!conceptoId) continue;
+          const prev = acumulado.get(conceptoId) ?? { comprometido: 0, pagado: 0 };
+          const total = Number(oc.total);
+          prev.comprometido += total;
+          if (oc.estado === 'PAGADA') prev.pagado += total;
+          acumulado.set(conceptoId, prev);
+        }
+
+        return [...acumulado.entries()].map(([concepto_id, vals]) => ({
+          concepto_id,
+          comprometido: Math.round(vals.comprometido * 100) / 100,
+          pagado: Math.round(vals.pagado * 100) / 100,
+        }));
+      });
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
 
 app.get('/api/v1/compras/resumen-dashboard',
   requireRoles('superintendent', 'admin'),
@@ -3553,8 +3680,8 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id } });
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
-          if (cuadro.estado === 'LOCKED') {
-            return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: No se puede modificar un cuadro firmado.' });
+          if (cuadro.estado === 'LOCKED' || cuadro.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: No se puede modificar un cuadro firmado.' });
           }
           if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
             return res.status(400).json({ success: false, message: `Estado inválido para selección: ${cuadro.estado}` });
@@ -3592,13 +3719,24 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
   }
 );
 
-// 5.1 POST firmar — Residente firma y bloquea el cuadro (LOCKED)
+// 5.1 POST firmar — Residente firma y bloquea el cuadro (FIRMADO_BLOQUEADO)
 app.post('/api/v1/compras/comparativas/:id/firmar',
   requireRoles('resident', 'residencia', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
+      const { veredicto_residente, proveedores_sugeridos } = req.body as {
+        veredicto_residente?: string;
+        proveedores_sugeridos?: string[];
+      };
+
+      if (!veredicto_residente?.trim()) {
+        return res.status(400).json({ success: false, message: 'VEREDICTO_REQUERIDO: Debes escribir el veredicto técnico antes de firmar.' });
+      }
+      if (!proveedores_sugeridos || proveedores_sugeridos.length === 0) {
+        return res.status(400).json({ success: false, message: 'PROVEEDOR_SUGERIDO_REQUERIDO: Debes seleccionar al menos un proveedor recomendado antes de firmar.' });
+      }
 
       const data = await createTenantContext(
         { tenantId, proyectoId, userId },
@@ -3609,6 +3747,10 @@ app.post('/api/v1/compras/comparativas/:id/firmar',
           });
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(400).json({ success: false, message: 'El cuadro ya está firmado y bloqueado.' });
+          }
 
           if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
             return res.status(400).json({
@@ -3629,7 +3771,7 @@ app.post('/api/v1/compras/comparativas/:id/firmar',
           if (conPregunta) {
             return res.status(400).json({
               success: false,
-              message: 'EVALUACION_CON_PREGUNTAS_ABIERTAS: Hay renglones con aclaraciones pendientes (?). Resuelve todas las preguntas antes de firmar.',
+              message: 'EVALUACION_CON_PREGUNTAS_ABIERTAS: Hay renglones con preguntas pendientes (?). Usa "Enviar preguntas" para crear una nueva revisión.',
             });
           }
 
@@ -3657,11 +3799,13 @@ app.post('/api/v1/compras/comparativas/:id/firmar',
           const cuadroFirmado = await prisma.cuadroComparativo.update({
             where: { id_cuadro: id },
             data: {
-              estado: 'LOCKED',
+              estado: 'FIRMADO_BLOQUEADO',
               firmado_por: userId,
               fecha_firma: new Date(),
               evaluacion_residente_id: userId,
               fecha_evaluacion_tecnica: new Date(),
+              veredicto_residente: veredicto_residente.trim(),
+              proveedores_sugeridos: JSON.stringify(proveedores_sugeridos),
             },
             include: { detalles: { include: { proveedor: true } } },
           });
@@ -3716,6 +3860,9 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
 
           if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
+          if (cuadroOriginal.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.' });
+          }
           const ESTADOS_VALIDOS = new Set(['EN_EVALUACION_TECNICA', 'LOCKED']);
           if (!ESTADOS_VALIDOS.has(cuadroOriginal.estado)) {
             return res.status(400).json({
@@ -3839,7 +3986,7 @@ app.post('/api/v1/compras/comparativas/:id/aclaraciones',
           });
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
-          const ESTADOS_BLOQUEADOS = new Set(['LOCKED', 'SUPERSEDIDO', 'CERRADO']);
+          const ESTADOS_BLOQUEADOS = new Set(['LOCKED', 'FIRMADO_BLOQUEADO', 'SUPERSEDIDO', 'CERRADO']);
           if (ESTADOS_BLOQUEADOS.has(cuadro.estado)) {
             return res.status(403).json({
               success: false,
@@ -3935,6 +4082,11 @@ app.patch('/api/v1/compras/comparativas/:id/aclaraciones/:aid',
             return res.status(404).json({ success: false, message: 'Aclaración no encontrada.' });
           }
 
+          const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id }, select: { estado: true } });
+          if (cuadro?.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado.' });
+          }
+
           const roles: string[] = (req as any).securityContext?.roles ?? [];
           const esAdmin = roles.includes('admin');
           if (!esAdmin && aclaracion.autor_id !== userId) {
@@ -4011,6 +4163,331 @@ app.post(
       res.status(201).json({ success: true, data });
     } catch (error: any) {
       logError(req, 'compras', 'compras.anotacion_spec.crear.error', 'Error al crear anotación de especificación', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── POST revision-con-preguntas — Residente guarda eval con "?" y crea revisión ──
+app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { evaluaciones } = req.body as {
+        evaluaciones: {
+          detalle_id: string;
+          evaluacion_tecnica: string;
+          comentario_tecnico?: string;
+          pregunta_residente?: string;
+        }[];
+      };
+
+      if (!Array.isArray(evaluaciones) || evaluaciones.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere el array evaluaciones.' });
+      }
+      const tienePreguntas = evaluaciones.some(e => e.evaluacion_tecnica === '?');
+      if (!tienePreguntas) {
+        return res.status(400).json({ success: false, message: 'Debe haber al menos un renglón con "?" para crear una revisión con preguntas.' });
+      }
+      for (const ev of evaluaciones) {
+        if (ev.evaluacion_tecnica === '?' && !ev.pregunta_residente?.trim()) {
+          return res.status(400).json({ success: false, message: `El renglón ${ev.detalle_id} tiene "?" pero no tiene pregunta_residente.` });
+        }
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadroOriginal = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true, lineas: true },
+          });
+          if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (cuadroOriginal.estado !== 'EN_EVALUACION_TECNICA') {
+            return res.status(400).json({ success: false, message: `El cuadro debe estar en EN_EVALUACION_TECNICA. Estado actual: ${cuadroOriginal.estado}` });
+          }
+
+          // 1. Guardar evaluaciones en el cuadro original (incluyendo pregunta_residente)
+          await Promise.all(evaluaciones.map(ev =>
+            prisma.comparativaDetalle.update({
+              where: { id_detalle: ev.detalle_id },
+              data: {
+                evaluacion_tecnica: ev.evaluacion_tecnica,
+                comentario_tecnico: ev.comentario_tecnico?.trim() ?? null,
+                pregunta_residente: ev.evaluacion_tecnica === '?' ? ev.pregunta_residente!.trim() : null,
+              },
+            })
+          ));
+
+          // 2. Calcular siguiente letra de revisión
+          const revActual = cuadroOriginal.revision || 'A';
+          const siguienteRev = String.fromCharCode(revActual.charCodeAt(0) + 1);
+          const codigoNuevo = cuadroOriginal.codigo.replace(`-Rev${revActual}`, '') + `-Rev${siguienteRev}`;
+
+          // 3. Transicionar el original a REVISION_SOLICITADA y crear nueva revisión
+          await prisma.cuadroComparativo.update({ where: { id_cuadro: id }, data: { estado: 'REVISION_SOLICITADA' } });
+
+          const nuevoCuadro = await prisma.cuadroComparativo.create({
+            data: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              requisicion_id: cuadroOriginal.requisicion_id,
+              codigo: codigoNuevo,
+              estado: 'BORRADOR',
+              notas: cuadroOriginal.notas,
+              revision: siguienteRev,
+              revision_padre_id: id,
+            },
+          });
+
+          // 4. Clonar detalles — copiar precios, heredar pregunta_residente para los "?", reset evaluaciones a PENDIENTE
+          const detalleMap = new Map(cuadroOriginal.detalles.map(d => [d.id_detalle, d]));
+          const evalMap = new Map(evaluaciones.map(e => [e.detalle_id, e]));
+          if (cuadroOriginal.detalles.length > 0) {
+            await prisma.comparativaDetalle.createMany({
+              data: cuadroOriginal.detalles.map(d => {
+                const evActual = evalMap.get(d.id_detalle);
+                return {
+                  tenant_id: d.tenant_id,
+                  proyecto_id: d.proyecto_id,
+                  cuadro_id: nuevoCuadro.id_cuadro,
+                  proveedor_id: d.proveedor_id,
+                  insumo_id: d.insumo_id,
+                  precio_ofertado: d.precio_ofertado,
+                  tiempo_entrega: d.tiempo_entrega,
+                  es_ganador: false,
+                  evaluacion_tecnica: 'PENDIENTE',
+                  comentario_tecnico: null,
+                  valor_ofrecido_spec: d.valor_ofrecido_spec,
+                  // Heredar pregunta del Residente para que Compras pueda responder
+                  pregunta_residente: evActual?.evaluacion_tecnica === '?' ? evActual.pregunta_residente?.trim() ?? null : null,
+                  respuesta_compras: null,
+                  aprobacion_gt: 'PENDIENTE',
+                  comentario_gt: null,
+                };
+              }),
+            });
+          }
+
+          // 5. Clonar líneas de especificación
+          if (cuadroOriginal.lineas.length > 0) {
+            await prisma.comparativaLinea.createMany({
+              data: cuadroOriginal.lineas.map(l => ({
+                tenant_id: l.tenant_id,
+                proyecto_id: l.proyecto_id,
+                cuadro_id: nuevoCuadro.id_cuadro,
+                insumo_id: l.insumo_id,
+                marca_modelo_ref: l.marca_modelo_ref,
+                especificaciones_requeridas: l.especificaciones_requeridas,
+                detalle_req_id: l.detalle_req_id,
+              })),
+            });
+          }
+
+          logInfo(req, 'compras', 'compras.comparativa.revision_con_preguntas', 'Revisión con preguntas creada por Residente', {
+            cuadro_original_id: id,
+            nuevo_cuadro_id: nuevoCuadro.id_cuadro,
+            revision_nueva: siguienteRev,
+            preguntas: evaluaciones.filter(e => e.evaluacion_tecnica === '?').length,
+          });
+
+          return { nueva_revision_id: nuevoCuadro.id_cuadro, revision_label: siguienteRev };
+        }
+      );
+
+      if (res.headersSent) return;
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.revision_con_preguntas.error', 'Error al crear revisión con preguntas', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── PUT responder-preguntas — Compras responde las preguntas del Residente ────
+app.put('/api/v1/compras/comparativas/:id/responder-preguntas',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { respuestas } = req.body as {
+        respuestas: { detalle_id: string; respuesta_compras: string }[];
+      };
+
+      if (!Array.isArray(respuestas) || respuestas.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere el array respuestas.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true, revision_padre_id: true, tenant_id: true },
+          });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          }
+          if (cuadro.estado !== 'BORRADOR') {
+            return res.status(400).json({ success: false, message: 'Solo se pueden responder preguntas en un cuadro en estado BORRADOR.' });
+          }
+          if (!cuadro.revision_padre_id) {
+            return res.status(400).json({ success: false, message: 'Este cuadro no es una revisión — no tiene preguntas del Residente.' });
+          }
+
+          await Promise.all(respuestas.map(r =>
+            prisma.comparativaDetalle.update({
+              where: { id_detalle: r.detalle_id },
+              data: { respuesta_compras: r.respuesta_compras?.trim() ?? null },
+            })
+          ));
+
+          logInfo(req, 'compras', 'compras.comparativa.respuestas_guardadas', 'Compras respondió preguntas del Residente', { cuadro_id: id, respuestas: respuestas.length });
+          return { cuadro_id: id, respuestas_guardadas: respuestas.length };
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.responder_preguntas.error', 'Error al guardar respuestas', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── PUT veredicto — Residente guarda veredicto y proveedores sugeridos ────────
+app.put('/api/v1/compras/comparativas/:id/veredicto',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { veredicto_residente, proveedores_sugeridos } = req.body as {
+        veredicto_residente: string;
+        proveedores_sugeridos: string[];
+      };
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true, tenant_id: true },
+          });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          }
+          if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
+            return res.status(400).json({ success: false, message: `Solo se puede guardar veredicto en estado EN_EVALUACION_TECNICA. Estado actual: ${cuadro.estado}` });
+          }
+
+          return prisma.cuadroComparativo.update({
+            where: { id_cuadro: id },
+            data: {
+              veredicto_residente: veredicto_residente?.trim() ?? null,
+              proveedores_sugeridos: Array.isArray(proveedores_sugeridos) ? JSON.stringify(proveedores_sugeridos) : null,
+            },
+            select: { id_cuadro: true, veredicto_residente: true, proveedores_sugeridos: true },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.veredicto.error', 'Error al guardar veredicto', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── POST desbloquear — Admin desbloquea un cuadro FIRMADO_BLOQUEADO ───────────
+app.post('/api/v1/compras/comparativas/:id/desbloquear',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { justificacion } = req.body as { justificacion: string };
+
+      if (!justificacion?.trim() || justificacion.trim().length < 10) {
+        return res.status(400).json({ success: false, message: 'La justificación es obligatoria y debe tener al menos 10 caracteres.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true, tenant_id: true, codigo: true },
+          });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          }
+          if (cuadro.estado !== 'FIRMADO_BLOQUEADO') {
+            return res.status(400).json({ success: false, message: `Solo se puede desbloquear un cuadro en estado FIRMADO_BLOQUEADO. Estado actual: ${cuadro.estado}` });
+          }
+
+          const [cuadroActualizado] = await prisma.$transaction([
+            prisma.cuadroComparativo.update({
+              where: { id_cuadro: id },
+              data: { estado: 'EN_EVALUACION_TECNICA' },
+              include: { detalles: { include: { proveedor: true } } },
+            }),
+            prisma.auditoriaDesbloqueoComparativa.create({
+              data: {
+                tenant_id: tenantId,
+                proyecto_id: proyectoId,
+                cuadro_id: id,
+                desbloqueado_por: userId,
+                justificacion: justificacion.trim(),
+              },
+            }),
+          ]);
+
+          logInfo(req, 'compras', 'compras.comparativa.desbloqueada', 'Cuadro FIRMADO_BLOQUEADO desbloqueado por admin', {
+            cuadro_id: id,
+            codigo: cuadro.codigo,
+            admin_id: userId,
+            justificacion: justificacion.trim(),
+          });
+
+          return cuadroActualizado;
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.desbloquear.error', 'Error al desbloquear cuadro', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── GET auditoria-desbloqueos — Admin consulta historial de desbloqueos ───────
+app.get('/api/v1/compras/comparativas/:id/auditoria-desbloqueos',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.auditoriaDesbloqueoComparativa.findMany({
+          where: { cuadro_id: id, tenant_id: tenantId },
+          orderBy: { timestamp_desbloqueo: 'desc' },
+        })
+      );
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.auditoria_desbloqueos.error', 'Error al obtener historial de desbloqueos', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }

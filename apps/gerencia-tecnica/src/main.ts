@@ -85,9 +85,24 @@ app.get('/api/v1/gerencia-tecnica/insumos', async (req: Request, res: Response) 
     const insumos = await db.insumo.findMany({
       where: { activo: true },
       orderBy: { clave: 'asc' },
+      include: {
+        categoria_gasto: { select: { id_categoria: true, nombre: true } },
+      },
     });
 
-    res.json(createApiResponse(insumos, tenantId, proyectoId));
+    const data = insumos.map((i: any) => ({
+      id: i.id,
+      clave: i.clave,
+      descripcion: i.descripcion,
+      unidad_medida: i.unidad_medida,
+      tipo_insumo: i.tipo_insumo,
+      costo_base: Number(i.costo_base),
+      activo: i.activo,
+      categoria_gasto_id: i.categoria_gasto_id,
+      categoria_gasto_nombre: i.categoria_gasto?.nombre ?? null,
+    }));
+
+    res.json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en GET /insumos:', error.message);
     res.status(500).json(
@@ -995,6 +1010,502 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   }
   next(err);
 });
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CATEGORÍAS DE GASTO — Control de Proyectos
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const CATEGORIAS_PREDEFINIDAS = [
+  'Materiales',
+  'Equipo Mayor',
+  'Herramienta y Equipo Menor',
+  'Servicios y Subcontratos',
+  'Agua',
+  'Rentas',
+  'EPP (Equipo de Protección Personal)',
+  'Mano de Obra Subcontratada',
+  'Indirectos y Gastos Generales',
+  'Otros',
+];
+
+// Mapeo automático tipo_insumo → nombre de categoría predefinida
+const MAPA_TIPO_CATEGORIA: Record<string, string> = {
+  MATERIAL:     'Materiales',
+  EQUIPO:       'Equipo Mayor',
+  SUBCONTRATO:  'Servicios y Subcontratos',
+  MANO_DE_OBRA: 'Mano de Obra Subcontratada',
+  INDIRECTO:    'Indirectos y Gastos Generales',
+};
+
+async function getOrCreateProyectoConfig(db: any, tenantId: string, proyectoId: string) {
+  let config = await db.proyectoCostosConfig.findUnique({
+    where: { uq_proyecto_costos_config: { tenant_id: tenantId, proyecto_id: proyectoId } },
+  });
+  if (!config) {
+    config = await db.proyectoCostosConfig.create({
+      data: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'CONFIGURACION' },
+    });
+    // Seed 10 categorías predefinidas al primer acceso
+    const existing = await db.categoriaGasto.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
+    if (existing === 0) {
+      await db.categoriaGasto.createMany({
+        data: CATEGORIAS_PREDEFINIDAS.map(nombre => ({
+          tenant_id: tenantId,
+          proyecto_id: proyectoId,
+          nombre,
+          es_predefinida: true,
+          activa: true,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  }
+  return config;
+}
+
+// GET /api/v1/gerencia-tecnica/proyectos/:proyecto_id/categorias-gasto
+app.get(
+  '/api/v1/gerencia-tecnica/proyectos/:proyecto_id/categorias-gasto',
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      await getOrCreateProyectoConfig(db, tenantId, proyectoId);
+
+      const categorias = await db.categoriaGasto.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, activa: true },
+        orderBy: { nombre: 'asc' },
+      });
+
+      // Contar insumos por categoría
+      const counts = await db.insumo.groupBy({
+        by: ['categoria_gasto_id'],
+        where: { tenant_id: tenantId, activo: true, categoria_gasto_id: { not: null } },
+        _count: { _all: true },
+      });
+      const countMap = new Map(counts.map((c: any) => [c.categoria_gasto_id, c._count._all]));
+
+      const config = await db.proyectoCostosConfig.findUnique({
+        where: { uq_proyecto_costos_config: { tenant_id: tenantId, proyecto_id: proyectoId } },
+      });
+
+      res.json({
+        success: true,
+        data: {
+          estado_proyecto: config?.estado ?? 'CONFIGURACION',
+          categorias: categorias.map((c: any) => ({
+            ...c,
+            insumos_count: countMap.get(c.id_categoria) ?? 0,
+          })),
+        },
+      });
+    } catch (error: any) {
+      console.error('[GT] Error en GET /categorias-gasto:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// POST /api/v1/gerencia-tecnica/proyectos/:proyecto_id/categorias-gasto
+app.post(
+  '/api/v1/gerencia-tecnica/proyectos/:proyecto_id/categorias-gasto',
+  requireRoles('control_obra', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { nombre } = req.body;
+      if (!nombre?.trim()) return res.status(400).json({ success: false, message: 'nombre es requerido.' });
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const config = await getOrCreateProyectoConfig(db, tenantId, proyectoId);
+
+      if (config.estado === 'ACTIVO') {
+        return res.status(403).json({ success: false, message: 'PROYECTO_ACTIVO: categorías congeladas.' });
+      }
+
+      const categoria = await db.categoriaGasto.create({
+        data: { tenant_id: tenantId, proyecto_id: proyectoId, nombre: nombre.trim(), es_predefinida: false },
+      });
+      res.status(201).json({ success: true, data: categoria });
+    } catch (error: any) {
+      console.error('[GT] Error en POST /categorias-gasto:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// PUT /api/v1/gerencia-tecnica/categorias-gasto/:id
+app.put(
+  '/api/v1/gerencia-tecnica/categorias-gasto/:id',
+  requireRoles('control_obra', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id } = req.params;
+      const { nombre } = req.body;
+      if (!nombre?.trim()) return res.status(400).json({ success: false, message: 'nombre es requerido.' });
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const cat = await db.categoriaGasto.findFirst({ where: { id_categoria: id, tenant_id: tenantId } });
+      if (!cat) return res.status(404).json({ success: false, message: 'Categoría no encontrada.' });
+
+      const config = await getOrCreateProyectoConfig(db, tenantId, cat.proyecto_id);
+      if (config.estado === 'ACTIVO') {
+        return res.status(403).json({ success: false, message: 'PROYECTO_ACTIVO: categorías congeladas.' });
+      }
+
+      const actualizada = await db.categoriaGasto.update({
+        where: { id_categoria: id },
+        data: { nombre: nombre.trim() },
+      });
+      res.json({ success: true, data: actualizada });
+    } catch (error: any) {
+      console.error('[GT] Error en PUT /categorias-gasto/:id:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// DELETE /api/v1/gerencia-tecnica/categorias-gasto/:id
+app.delete(
+  '/api/v1/gerencia-tecnica/categorias-gasto/:id',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const cat = await db.categoriaGasto.findFirst({ where: { id_categoria: id, tenant_id: tenantId } });
+      if (!cat) return res.status(404).json({ success: false, message: 'Categoría no encontrada.' });
+
+      const config = await getOrCreateProyectoConfig(db, tenantId, cat.proyecto_id);
+      if (config.estado === 'ACTIVO') {
+        return res.status(403).json({ success: false, message: 'PROYECTO_ACTIVO: categorías congeladas.' });
+      }
+
+      const enUso = await db.insumo.count({ where: { tenant_id: tenantId, categoria_gasto_id: id } });
+      if (enUso > 0) {
+        return res.status(409).json({ success: false, message: `No se puede eliminar: ${enUso} insumo(s) usan esta categoría.` });
+      }
+
+      await db.categoriaGasto.update({ where: { id_categoria: id }, data: { activa: false } });
+      res.json({ success: true, message: 'Categoría eliminada.' });
+    } catch (error: any) {
+      console.error('[GT] Error en DELETE /categorias-gasto/:id:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// PUT /api/v1/gerencia-tecnica/proyectos/:id/estado-costos
+app.put(
+  '/api/v1/gerencia-tecnica/proyectos/:id/estado-costos',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { estado } = req.body;
+      const ESTADOS_VALIDOS = ['CONFIGURACION', 'ACTIVO', 'CERRADO'];
+      if (!ESTADOS_VALIDOS.includes(estado)) {
+        return res.status(400).json({ success: false, message: `estado debe ser uno de: ${ESTADOS_VALIDOS.join(', ')}` });
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const config = await getOrCreateProyectoConfig(db, tenantId, proyectoId);
+
+      // Transiciones válidas: CONFIGURACION→ACTIVO, ACTIVO→CERRADO
+      const transicionesValidas: Record<string, string[]> = {
+        CONFIGURACION: ['ACTIVO'],
+        ACTIVO: ['CERRADO'],
+        CERRADO: [],
+      };
+      if (!transicionesValidas[config.estado]?.includes(estado)) {
+        return res.status(409).json({
+          success: false,
+          message: `Transición inválida: ${config.estado} → ${estado}`,
+        });
+      }
+
+      const actualizado = await db.proyectoCostosConfig.update({
+        where: { uq_proyecto_costos_config: { tenant_id: tenantId, proyecto_id: proyectoId } },
+        data: {
+          estado,
+          ...(estado === 'ACTIVO' && { activado_por: userId, fecha_activacion: new Date() }),
+        },
+      });
+      res.json({ success: true, data: actualizado });
+    } catch (error: any) {
+      console.error('[GT] Error en PUT /proyectos/:id/estado-costos:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CLASIFICACIÓN DE INSUMOS — Control de Proyectos
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// PUT /api/v1/gerencia-tecnica/insumos/clasificacion-bulk
+app.put(
+  '/api/v1/gerencia-tecnica/insumos/clasificacion-bulk',
+  requireRoles('control_obra', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { items } = req.body; // Array<{ insumo_id, categoria_gasto_id }>
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere un array items no vacío.' });
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      let actualizados = 0;
+      let omitidos = 0;
+
+      for (const { insumo_id, categoria_gasto_id } of items) {
+        if (!insumo_id) { omitidos++; continue; }
+        try {
+          await db.insumo.update({
+            where: { id: insumo_id },
+            data: { categoria_gasto_id: categoria_gasto_id || null },
+          });
+          actualizados++;
+        } catch (_) {
+          omitidos++;
+        }
+      }
+
+      res.json({ success: true, data: { actualizados, omitidos } });
+    } catch (error: any) {
+      console.error('[GT] Error en PUT /insumos/clasificacion-bulk:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// PUT /api/v1/gerencia-tecnica/insumos/:id/categoria
+app.put(
+  '/api/v1/gerencia-tecnica/insumos/:id/categoria',
+  requireRoles('control_obra', 'gerencia_tecnica', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id } = req.params;
+      const { categoria_gasto_id } = req.body;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const insumo = await db.insumo.findFirst({ where: { id, activo: true } });
+      if (!insumo) return res.status(404).json({ success: false, message: 'Insumo no encontrado.' });
+
+      const actualizado = await db.insumo.update({
+        where: { id },
+        data: { categoria_gasto_id: categoria_gasto_id || null },
+      });
+      res.json({ success: true, data: actualizado });
+    } catch (error: any) {
+      console.error('[GT] Error en PUT /insumos/:id/categoria:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// COSTOS WBS — Acumulados por partida y categoría
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const COMPRAS_URL = (process.env.COMPRAS_URL || 'http://localhost:3002/api/v1/compras').replace(/\/$/, '');
+
+// GET /api/v1/gerencia-tecnica/proyectos/:proyecto_id/costos-wbs
+app.get(
+  '/api/v1/gerencia-tecnica/proyectos/:proyecto_id/costos-wbs',
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      // 1. Obtener conceptos del presupuesto activo
+      const presupuesto = await db.presupuestoBase.findFirst({
+        where: { proyecto_id: proyectoId },
+        orderBy: { created_at: 'desc' },
+        include: {
+          conceptos: {
+            orderBy: { clave: 'asc' },
+            select: { id: true, clave: true, descripcion: true, unidad_medida: true, cantidad: true, precio_unitario: true, importe: true },
+          },
+        },
+      });
+
+      if (!presupuesto) {
+        return res.json({ success: true, data: { conceptos: [], presupuesto_total: 0 } });
+      }
+
+      // 2. Obtener acumulados de compras via HTTP (degradación elegante)
+      let acumulados: Array<{ concepto_id: string; comprometido: number; pagado: number }> = [];
+      try {
+        const { default: axios } = await import('axios');
+        const resp = await axios.get(`${COMPRAS_URL}/proyectos/${proyectoId}/acumulado-por-concepto`, {
+          headers: { Authorization: req.headers.authorization || '' },
+          timeout: 5000,
+        });
+        acumulados = resp.data?.data ?? [];
+      } catch (_) {
+        // compras offline o sin datos — degradación elegante
+      }
+
+      const acumuladoMap = new Map(acumulados.map(a => [a.concepto_id, a]));
+
+      // 3. Calcular semáforo y armar respuesta
+      const conceptos = presupuesto.conceptos.map((c: any) => {
+        const presupuesto_c = Number(c.importe);
+        const acum = acumuladoMap.get(c.id);
+        const comprometido = acum?.comprometido ?? 0;
+        const pagado = acum?.pagado ?? 0;
+        const pct_economico = presupuesto_c > 0 ? (comprometido / presupuesto_c) * 100 : 0;
+
+        let semaforo: string;
+        if (pct_economico <= 110) semaforo = 'verde';
+        else if (pct_economico <= 130) semaforo = 'ambar';
+        else semaforo = 'rojo';
+
+        return {
+          id: c.id,
+          clave: c.clave,
+          descripcion: c.descripcion,
+          unidad_medida: c.unidad_medida,
+          cantidad: Number(c.cantidad),
+          precio_unitario: Number(c.precio_unitario),
+          presupuesto: presupuesto_c,
+          comprometido,
+          pagado,
+          disponible: presupuesto_c - comprometido,
+          pct_economico: Math.round(pct_economico * 10) / 10,
+          semaforo,
+        };
+      });
+
+      const totales = conceptos.reduce(
+        (acc: any, c: any) => {
+          acc.presupuesto_total += c.presupuesto;
+          acc.comprometido_total += c.comprometido;
+          acc.pagado_total += c.pagado;
+          return acc;
+        },
+        { presupuesto_total: 0, comprometido_total: 0, pagado_total: 0 }
+      );
+
+      res.json({ success: true, data: { ...totales, conceptos } });
+    } catch (error: any) {
+      console.error('[GT] Error en GET /costos-wbs:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// GET /api/v1/gerencia-tecnica/proyectos/:proyecto_id/costos-categorias
+app.get(
+  '/api/v1/gerencia-tecnica/proyectos/:proyecto_id/costos-categorias',
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      await getOrCreateProyectoConfig(db, tenantId, proyectoId);
+
+      const categorias = await db.categoriaGasto.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, activa: true },
+        orderBy: { nombre: 'asc' },
+      });
+
+      // Obtener acumulados por concepto desde compras
+      let acumulados: Array<{ concepto_id: string; comprometido: number; pagado: number }> = [];
+      try {
+        const { default: axios } = await import('axios');
+        const resp = await axios.get(`${COMPRAS_URL}/proyectos/${proyectoId}/acumulado-por-concepto`, {
+          headers: { Authorization: req.headers.authorization || '' },
+          timeout: 5000,
+        });
+        acumulados = resp.data?.data ?? [];
+      } catch (_) { /* degradación elegante */ }
+
+      // Obtener conceptos con insumos para hacer el cruce categoría→concepto
+      const presupuesto = await db.presupuestoBase.findFirst({
+        where: { proyecto_id: proyectoId },
+        orderBy: { created_at: 'desc' },
+        include: {
+          conceptos: {
+            select: { id: true, importe: true, insumos: { select: { insumo_id: true } } },
+          },
+        },
+      });
+
+      // Obtener categorías por insumo_id
+      const insumosConCat = await db.insumo.findMany({
+        where: { tenant_id: tenantId, activo: true, categoria_gasto_id: { not: null } },
+        select: { id: true, categoria_gasto_id: true },
+      });
+      const insumoToCat = new Map(insumosConCat.map((i: any) => [i.id, i.categoria_gasto_id]));
+
+      // Distribuir presupuesto de cada concepto entre sus insumos por categoría
+      const catPresupuesto = new Map<string, number>();
+      if (presupuesto) {
+        for (const concepto of presupuesto.conceptos) {
+          const importeConcepto = Number(concepto.importe);
+          const insumoIds = concepto.insumos.map((ci: any) => ci.insumo_id);
+          const catIds = [...new Set(insumoIds.map((id: string) => insumoToCat.get(id)).filter(Boolean))] as string[];
+          if (catIds.length === 0) continue;
+          const portion = importeConcepto / catIds.length;
+          for (const catId of catIds) {
+            catPresupuesto.set(catId, (catPresupuesto.get(catId) ?? 0) + portion);
+          }
+        }
+      }
+
+      // Distribuir acumulados (comprometido/pagado) de igual forma
+      const catComprometido = new Map<string, number>();
+      const catPagado = new Map<string, number>();
+      const acumuladoMap = new Map(acumulados.map(a => [a.concepto_id, a]));
+
+      if (presupuesto) {
+        for (const concepto of presupuesto.conceptos) {
+          const acum = acumuladoMap.get(concepto.id);
+          if (!acum) continue;
+          const insumoIds = concepto.insumos.map((ci: any) => ci.insumo_id);
+          const catIds = [...new Set(insumoIds.map((id: string) => insumoToCat.get(id)).filter(Boolean))] as string[];
+          if (catIds.length === 0) continue;
+          for (const catId of catIds) {
+            catComprometido.set(catId, (catComprometido.get(catId) ?? 0) + (acum.comprometido / catIds.length));
+            catPagado.set(catId, (catPagado.get(catId) ?? 0) + (acum.pagado / catIds.length));
+          }
+        }
+      }
+
+      const resultado = categorias.map((c: any) => {
+        const presupuesto_c = catPresupuesto.get(c.id_categoria) ?? 0;
+        const comprometido = catComprometido.get(c.id_categoria) ?? 0;
+        const pagado = catPagado.get(c.id_categoria) ?? 0;
+        return {
+          id_categoria: c.id_categoria,
+          nombre: c.nombre,
+          es_predefinida: c.es_predefinida,
+          presupuesto: Math.round(presupuesto_c * 100) / 100,
+          comprometido: Math.round(comprometido * 100) / 100,
+          pagado: Math.round(pagado * 100) / 100,
+          disponible: Math.round((presupuesto_c - comprometido) * 100) / 100,
+          pct_comprometido: presupuesto_c > 0 ? Math.round((comprometido / presupuesto_c) * 1000) / 10 : 0,
+        };
+      });
+
+      res.json({ success: true, data: resultado });
+    } catch (error: any) {
+      console.error('[GT] Error en GET /costos-categorias:', error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)

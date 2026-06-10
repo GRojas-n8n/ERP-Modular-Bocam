@@ -176,7 +176,8 @@ exports.Prisma.RequisicionScalarFieldEnum = {
   prioridad: 'prioridad',
   estado: 'estado',
   tipo: 'tipo',
-  observaciones: 'observaciones'
+  observaciones: 'observaciones',
+  concepto_id: 'concepto_id'
 };
 
 exports.Prisma.RequisicionItemScalarFieldEnum = {
@@ -190,6 +191,8 @@ exports.Prisma.RequisicionItemScalarFieldEnum = {
   descripcion_libre: 'descripcion_libre',
   unidad_libre: 'unidad_libre',
   es_imprevisto: 'es_imprevisto',
+  especificacion_marca_modelo: 'especificacion_marca_modelo',
+  especificacion_detalle: 'especificacion_detalle',
   cantidad_presupuestada: 'cantidad_presupuestada',
   concepto_origen_id: 'concepto_origen_id',
   justificacion: 'justificacion'
@@ -221,7 +224,8 @@ exports.Prisma.OrdenCompraScalarFieldEnum = {
   subtotal: 'subtotal',
   iva: 'iva',
   total: 'total',
-  presupuesto_id: 'presupuesto_id'
+  presupuesto_id: 'presupuesto_id',
+  requisicion_id: 'requisicion_id'
 };
 
 exports.Prisma.OrdenCompraItemScalarFieldEnum = {
@@ -250,11 +254,23 @@ exports.Prisma.CuadroComparativoScalarFieldEnum = {
   fecha_firma: 'fecha_firma',
   primera_opcion_proveedor_id: 'primera_opcion_proveedor_id',
   segunda_opcion_proveedor_id: 'segunda_opcion_proveedor_id',
+  veredicto_residente: 'veredicto_residente',
+  proveedores_sugeridos: 'proveedores_sugeridos',
   evaluacion_residente_id: 'evaluacion_residente_id',
   fecha_evaluacion_tecnica: 'fecha_evaluacion_tecnica',
   gerente_tecnico_id: 'gerente_tecnico_id',
   fecha_aprobacion_gt: 'fecha_aprobacion_gt',
   comentario_gt_general: 'comentario_gt_general'
+};
+
+exports.Prisma.AuditoriaDesbloqueoComparativaScalarFieldEnum = {
+  id_auditoria: 'id_auditoria',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  cuadro_id: 'cuadro_id',
+  desbloqueado_por: 'desbloqueado_por',
+  timestamp_desbloqueo: 'timestamp_desbloqueo',
+  justificacion: 'justificacion'
 };
 
 exports.Prisma.ComparativaLineaScalarFieldEnum = {
@@ -281,6 +297,8 @@ exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   evaluacion_tecnica: 'evaluacion_tecnica',
   comentario_tecnico: 'comentario_tecnico',
   valor_ofrecido_spec: 'valor_ofrecido_spec',
+  pregunta_residente: 'pregunta_residente',
+  respuesta_compras: 'respuesta_compras',
   aprobacion_gt: 'aprobacion_gt',
   comentario_gt: 'comentario_gt'
 };
@@ -418,6 +436,7 @@ exports.Prisma.ModelName = {
   OrdenCompra: 'OrdenCompra',
   OrdenCompraItem: 'OrdenCompraItem',
   CuadroComparativo: 'CuadroComparativo',
+  AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
   ComparativaLinea: 'ComparativaLinea',
   ComparativaDetalle: 'ComparativaDetalle',
   AclaracionComparativa: 'AclaracionComparativa',

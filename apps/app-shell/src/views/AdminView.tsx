@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
+import { cn } from '@bocam/ui-core';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -263,9 +264,17 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
 };
 
 // ─── AdminView ────────────────────────────────────────────────────────────────
+interface CategoriaAdmin {
+  id_categoria: string;
+  nombre: string;
+  es_predefinida: boolean;
+  activa: boolean;
+  insumos_count: number;
+}
+
 export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { refreshUser } = useTenant();
-  const activeTab = (activeSubView as 'usuarios' | 'proyectos') || 'usuarios';
+  const { refreshUser, currentProjectId } = useTenant();
+  const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias') || 'usuarios';
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -274,6 +283,71 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | undefined>();
   const [editingProyecto, setEditingProyecto] = useState<Proyecto | undefined>();
+
+  // ── Categorías de gasto ───────────────────────────────────────────────────
+  const [categorias, setCategorias] = useState<CategoriaAdmin[]>([]);
+  const [proyectoCostosEstado, setProyectoCostosEstado] = useState<'CONFIGURACION' | 'ACTIVO' | 'CERRADO' | null>(null);
+  const [loadingCat, setLoadingCat] = useState(false);
+  const [nuevaCatNombre, setNuevaCatNombre] = useState('');
+  const [editCatId, setEditCatId] = useState<string | null>(null);
+  const [editCatNombre, setEditCatNombre] = useState('');
+  const [savingCat, setSavingCat] = useState(false);
+  const [confirmActivar, setConfirmActivar] = useState(false);
+  const [activandoProyecto, setActivandoProyecto] = useState(false);
+
+  const loadCategorias = useCallback(async () => {
+    if (!currentProjectId) return;
+    setLoadingCat(true);
+    try {
+      const res = await api.get(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/categorias-gasto`);
+      const d = res.data?.data ?? {};
+      setCategorias(d.categorias ?? []);
+      setProyectoCostosEstado(d.estado_proyecto ?? null);
+    } catch { /* silencioso */ }
+    finally { setLoadingCat(false); }
+  }, [currentProjectId]);
+
+  const handleCrearCategoria = async () => {
+    if (!nuevaCatNombre.trim() || !currentProjectId) return;
+    setSavingCat(true);
+    try {
+      await api.post(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/categorias-gasto`, { nombre: nuevaCatNombre.trim() });
+      setNuevaCatNombre('');
+      await loadCategorias();
+    } catch { /* silencioso */ }
+    finally { setSavingCat(false); }
+  };
+
+  const handleEditarCategoria = async (id: string) => {
+    if (!editCatNombre.trim()) return;
+    setSavingCat(true);
+    try {
+      await api.put(`/api/v1/gerencia-tecnica/categorias-gasto/${id}`, { nombre: editCatNombre.trim() });
+      setEditCatId(null);
+      await loadCategorias();
+    } catch { /* silencioso */ }
+    finally { setSavingCat(false); }
+  };
+
+  const handleEliminarCategoria = async (id: string) => {
+    setSavingCat(true);
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/categorias-gasto/${id}`);
+      await loadCategorias();
+    } catch { /* silencioso */ }
+    finally { setSavingCat(false); }
+  };
+
+  const handleActivarProyecto = async () => {
+    if (!currentProjectId) return;
+    setActivandoProyecto(true);
+    try {
+      await api.put(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/estado-costos`, { estado: 'ACTIVO' });
+      setConfirmActivar(false);
+      await loadCategorias();
+    } catch { /* silencioso */ }
+    finally { setActivandoProyecto(false); }
+  };
 
   const loadAll = useCallback(async () => {
     setLoading(true); setError(null);
@@ -289,6 +363,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   }, []);
 
   useEffect(() => { void loadAll(); }, [loadAll]);
+  useEffect(() => { if (activeTab === 'categorias') loadCategorias(); }, [activeTab]);
 
   return (
     <div className="space-y-6">
@@ -300,12 +375,14 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
             Gestión de usuarios, roles y proyectos
           </p>
         </div>
-        <button
-          onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
-          className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
-        >
-          + {activeTab === 'usuarios' ? 'Nuevo Usuario' : 'Nuevo Proyecto'}
-        </button>
+        {activeTab !== 'categorias' && (
+          <button
+            onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
+          >
+            + {activeTab === 'usuarios' ? 'Nuevo Usuario' : 'Nuevo Proyecto'}
+          </button>
+        )}
       </div>
 
 
@@ -377,6 +454,155 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
               ))}
             </div>
           )}
+        </div>
+      ) : activeTab === 'categorias' ? (
+        /* ── Categorías de Gasto ── */
+        <div className="space-y-6">
+          {/* Estado del proyecto */}
+          <div className="flex items-center justify-between rounded-2xl border border-border/40 bg-card px-5 py-4">
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado del proyecto de costos</p>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'rounded-lg border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest',
+                  proyectoCostosEstado === 'CONFIGURACION' && 'border-sky-500/30 bg-sky-500/10 text-sky-700',
+                  proyectoCostosEstado === 'ACTIVO' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
+                  proyectoCostosEstado === 'CERRADO' && 'border-muted/30 bg-muted/30 text-muted-foreground',
+                  !proyectoCostosEstado && 'border-muted/30 bg-muted/30 text-muted-foreground',
+                )}>
+                  {proyectoCostosEstado ?? 'Cargando...'}
+                </span>
+                {proyectoCostosEstado === 'CONFIGURACION' && (
+                  <p className="text-[10px] text-muted-foreground">Las categorías se pueden editar</p>
+                )}
+                {proyectoCostosEstado === 'ACTIVO' && (
+                  <p className="text-[10px] text-muted-foreground">Categorías congeladas</p>
+                )}
+              </div>
+            </div>
+            {proyectoCostosEstado === 'CONFIGURACION' && (
+              <button
+                onClick={() => setConfirmActivar(true)}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-500"
+              >
+                Activar Proyecto
+              </button>
+            )}
+          </div>
+
+          {/* Lista de categorías */}
+          <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
+            <div className="border-b border-border/30 px-5 py-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Categorías de Gasto ({categorias.length})
+              </p>
+            </div>
+            {loadingCat ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-6 w-6 animate-spin rounded-full border-4 border-sky-500/10 border-t-sky-600" />
+              </div>
+            ) : categorias.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">Sin categorías — se crearán automáticamente al acceder</div>
+            ) : (
+              <div className="divide-y divide-border/20">
+                {categorias.map(cat => (
+                  <div key={cat.id_categoria} className={cn('flex items-center gap-3 px-5 py-3', !cat.activa && 'opacity-50')}>
+                    {editCatId === cat.id_categoria ? (
+                      <>
+                        <input
+                          className="flex-1 rounded-xl border border-sky-500/40 bg-muted/30 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-500/40"
+                          value={editCatNombre}
+                          onChange={e => setEditCatNombre(e.target.value)}
+                          autoFocus
+                        />
+                        <button onClick={() => handleEditarCategoria(cat.id_categoria)} disabled={savingCat}
+                          className="rounded-xl bg-sky-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-sky-500 disabled:opacity-50">
+                          Guardar
+                        </button>
+                        <button onClick={() => setEditCatId(null)}
+                          className="rounded-xl border border-border/40 px-3 py-1.5 text-[10px] font-black hover:bg-muted/50">
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-foreground">{cat.nombre}</span>
+                            {cat.es_predefinida && (
+                              <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">Sistema</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">{cat.insumos_count} insumo{cat.insumos_count !== 1 ? 's' : ''}</p>
+                        </div>
+                        <button
+                          onClick={() => { setEditCatId(cat.id_categoria); setEditCatNombre(cat.nombre); }}
+                          disabled={proyectoCostosEstado !== 'CONFIGURACION'}
+                          className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Editar
+                        </button>
+                        {!cat.es_predefinida && (
+                          <button
+                            onClick={() => handleEliminarCategoria(cat.id_categoria)}
+                            disabled={proyectoCostosEstado !== 'CONFIGURACION' || cat.insumos_count > 0 || savingCat}
+                            className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Nueva categoría */}
+          {proyectoCostosEstado === 'CONFIGURACION' && (
+            <div className="rounded-2xl border border-dashed border-emerald-500/30 bg-emerald-500/5 p-5 space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Nueva Categoría</p>
+              <div className="flex gap-3">
+                <input
+                  className="flex-1 rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                  placeholder="Ej: Concreto Hidráulico"
+                  value={nuevaCatNombre}
+                  onChange={e => setNuevaCatNombre(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCrearCategoria()}
+                />
+                <button
+                  onClick={handleCrearCategoria}
+                  disabled={!nuevaCatNombre.trim() || savingCat}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  {savingCat ? '...' : 'Agregar'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Modal de confirmación: Activar Proyecto */}
+      {confirmActivar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-border/40 bg-card p-6 shadow-2xl space-y-4">
+            <h2 className="text-sm font-black uppercase tracking-widest">¿Activar proyecto?</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Al activar el proyecto, las categorías de gasto quedarán <strong>congeladas</strong> y no podrán modificarse. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmActivar(false)}
+                className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black hover:bg-muted/50">
+                Cancelar
+              </button>
+              <button onClick={handleActivarProyecto} disabled={activandoProyecto}
+                className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-500 disabled:opacity-50">
+                {activandoProyecto ? 'Activando...' : 'Confirmar Activación'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

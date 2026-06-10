@@ -63,6 +63,8 @@ interface RequisicionItem {
   descripcion_libre: string | null;
   unidad_libre: string | null;
   es_imprevisto: boolean;
+  especificacion_marca_modelo?: string | null;
+  especificacion_detalle?: string | null;
 }
 
 interface Requisicion {
@@ -74,6 +76,16 @@ interface Requisicion {
   estado: string;
   tipo?: string; // 'NORMAL' | 'IMPREVISTO'
   items?: RequisicionItem[];
+  concepto_id?: string | null;
+  concepto_clave?: string | null;
+  concepto_descripcion?: string | null;
+}
+
+interface ConceptoSimpleC {
+  id: string;
+  clave: string;
+  descripcion: string;
+  unidad_medida: string;
 }
 
 interface Insumo {
@@ -263,6 +275,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [calSubmitting, setCalSubmitting] = useState(false);
 
   const [activeReqId, setActiveReqId] = useState<string | null>(null);
+  const [comparativaModo, setComparativaModo] = useState<'compras' | 'residente'>('compras');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [aprobando, setAprobando] = useState<string | null>(null);
@@ -332,6 +345,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     notas: '',
   });
 
+  // ── Partida / concepto para nueva req ────────────────────────────────────
+  const [conceptosCompras, setConceptosCompras] = useState<ConceptoSimpleC[]>([]);
+  const [reqConceptoId, setReqConceptoId] = useState<string | null>(null);
+  const [reqConceptoClave, setReqConceptoClave] = useState('');
+  const [reqConceptoDesc, setReqConceptoDesc] = useState('');
+  const [reqConceptoSearch, setReqConceptoSearch] = useState('');
+  const [reqFiltroConcepto, setReqFiltroConcepto] = useState('');
+
   // Búsqueda de insumo por item de requisición
   const [itemSearch, setItemSearch] = useState<string[]>([]);
   const [itemDropdown, setItemDropdown] = useState<number | null>(null);
@@ -357,7 +378,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         setPendientesGT(demoComps.filter(c => c.estado === 'EN_APROBACION_GT'));
         return;
       }
-      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes, alertasRes] = await Promise.allSettled([
+      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes, alertasRes, presRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
         api.get('/api/v1/gerencia-tecnica/insumos'),
         api.get('/api/v1/compras/almacen/inventario'),
@@ -368,6 +389,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
         api.get('/api/v1/compras/proveedores').catch(() => null),
         api.get('/api/v1/compras/alertas/cotizacion-pendiente').catch(() => null),
+        api.get('/api/v1/gerencia-tecnica/presupuesto/activo').catch(() => null),
       ]);
       // Colectar datos normalizados para las dependencias entre entidades
       let insumosNormalizados: Insumo[] = [];
@@ -397,6 +419,9 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           prioridad:   r.prioridad ?? 'NORMAL',
           estado:      r.estado,
           tipo:        r.tipo,
+          concepto_id:           r.concepto_id ?? null,
+          concepto_clave:        r.concepto_clave ?? null,
+          concepto_descripcion:  r.concepto_descripcion ?? null,
           items:       (r.items || []).map((it: any) => ({
             id:               it.id_item ?? it.id,
             insumo_id:        it.insumo_id,
@@ -471,6 +496,15 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       }
       if (alertasRes.status === 'fulfilled' && alertasRes.value) {
         setAlertasCotizacion(alertasRes.value.data?.data || []);
+      }
+      if (presRes.status === 'fulfilled' && presRes.value) {
+        const conceptosRaw: any[] = presRes.value.data?.data?.conceptos ?? [];
+        setConceptosCompras(conceptosRaw.map((c: any) => ({
+          id:           c.id,
+          clave:        c.clave,
+          descripcion:  c.descripcion,
+          unidad_medida: c.unidad_medida,
+        })));
       }
     } catch {
       setError('Error al conectar con el modulo de Compras.');
@@ -573,6 +607,10 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       alert(isImprevisto ? 'Agrega al menos un ítem con descripción y cantidad.' : 'Agrega al menos un insumo con cantidad.');
       return;
     }
+    if (!reqConceptoId) {
+      alert('Selecciona la partida del catálogo antes de crear la requisición.');
+      return;
+    }
     if (isDemo) {
       const folio = `REQ-${new Date().getFullYear()}-${String(requisiciones.length + 41).padStart(3, '0')}`;
       notify({
@@ -589,6 +627,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       await api.post('/api/v1/compras/requisiciones', {
         tipo:            reqForm.tipo,
         prioridad:       reqForm.prioridad,
+        concepto_id:     reqConceptoId,
         observaciones:   reqForm.notas || undefined,
         items: isImprevisto
           ? validItems.map(i => ({
@@ -618,6 +657,10 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     setReqForm({ tipo: 'NORMAL', prioridad: 'MEDIA', fecha_requerida: '', notas: '', items: [{ insumo_id: '', insumo_label: '', cantidad: '', notas: '', descripcion_libre: '', unidad_libre: 'PZA' }] });
     setItemSearch([]);
     setItemDropdown(null);
+    setReqConceptoId(null);
+    setReqConceptoClave('');
+    setReqConceptoDesc('');
+    setReqConceptoSearch('');
   };
 
   const addItem = () => {
@@ -1310,11 +1353,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               comparativa={comp}
               insumos={insumos}
               isDemo={isDemo}
-              onBack={() => setActiveReqId(null)}
+              onBack={() => { setActiveReqId(null); setComparativaModo('compras'); }}
               onUpdate={updateComparativa}
               onExportOcPdf={oc => exportarOcPdf(oc, comp)}
               onExportComparativaPdf={() => exportarComparativaPdf(comp)}
               proveedoresCatalogo={proveedoresList.map(p => ({ id: p.id_proveedor, razon_social: p.razon_social, rfc: p.rfc_tax_id }))}
+              modo={comparativaModo}
             />
           );
         })()
@@ -1363,8 +1407,32 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </div>
                   </div>
                 )}
+              {/* ── Filtro por partida ─────────────────────────────────────── */}
+              {conceptosCompras.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1 max-w-xs">
+                    <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <select
+                      className="w-full appearance-none rounded-xl border border-border/40 bg-muted/30 pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                      value={reqFiltroConcepto}
+                      onChange={e => setReqFiltroConcepto(e.target.value)}
+                    >
+                      <option value="">Todas las partidas</option>
+                      {conceptosCompras.map(c => (
+                        <option key={c.id} value={c.id}>[{c.clave}] {c.descripcion}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {reqFiltroConcepto && (
+                    <button type="button" onClick={() => setReqFiltroConcepto('')}
+                      className="flex items-center gap-1 rounded-xl border border-border/30 px-3 py-2 text-[10px] text-muted-foreground hover:bg-muted/40">
+                      <IconX className="h-3 w-3" /> Limpiar
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {requisiciones.map(req => {
+                {requisiciones.filter(req => !reqFiltroConcepto || req.concepto_id === reqFiltroConcepto).map(req => {
                   const hasComp = comparativas.some(c => c.requisicion_id === req.id);
                   const compEstado = comparativas.find(c => c.requisicion_id === req.id)?.estado;
                   return (
@@ -1414,6 +1482,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             </div>
                           </div>
                         </div>
+                        {req.concepto_clave && (
+                          <p className="text-[10px] font-mono text-emerald-700 truncate">
+                            [{req.concepto_clave}] {req.concepto_descripcion}
+                          </p>
+                        )}
                         {/* Botón "Aprobar" para Procurement en requisiciones PENDIENTE/BORRADOR */}
                         {isProcurement && ['PENDIENTE', 'BORRADOR'].includes(req.estado) && (
                           <Button
@@ -2057,7 +2130,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         </div>
                       </div>
                       <Button
-                        onClick={() => setActiveReqId(cc.requisicion_id)}
+                        onClick={() => { setComparativaModo('residente'); setActiveReqId(cc.requisicion_id); }}
                         className="rounded-xl bg-amber-500 px-4 text-xs font-black text-white hover:bg-amber-400"
                       >
                         Evaluar →
@@ -2455,6 +2528,35 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             accentColor="sky"
           >
             <div className="space-y-5 p-1">
+              {/* ── Partidas de la requisición (solo lectura) ── */}
+              {(req?.items ?? []).length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Partidas ({req!.items!.length})
+                  </p>
+                  {req!.items!.map((item, idx) => {
+                    const info = insumos.find(i => i.id === item.insumo_id);
+                    const desc = info?.descripcion ?? item.descripcion_libre ?? '—';
+                    return (
+                      <div key={item.id} className={cn('rounded-xl border px-3 py-2', idx % 2 === 0 ? 'border-border/40 bg-muted/20' : 'border-border/30 bg-transparent')}>
+                        <div className="flex items-start gap-2">
+                          <span className="shrink-0 rounded bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-black text-sky-700">{idx + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-semibold text-foreground truncate">{desc}</p>
+                            <p className="text-[9px] text-muted-foreground">{item.cantidad} {item.unidad_libre ?? info?.unidad ?? ''}</p>
+                            {item.especificacion_marca_modelo && (
+                              <p className="mt-0.5 text-[9px] text-indigo-700 font-medium">Ref: {item.especificacion_marca_modelo}</p>
+                            )}
+                            {item.especificacion_detalle && (
+                              <p className="mt-0.5 text-[9px] text-muted-foreground whitespace-pre-line">{item.especificacion_detalle}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {/* ── Si ya existe solicitud, mostrar estado de proveedores ── */}
               {solic ? (
                 <div className="space-y-3">
@@ -2668,6 +2770,66 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       >
         <div className="space-y-5">
 
+          {/* ── Selector partida del catálogo ── */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Partida del catálogo <span className="text-red-500">*</span>
+            </label>
+            {reqConceptoId ? (
+              <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-emerald-700">[{reqConceptoClave}] {reqConceptoDesc}</p>
+                </div>
+                <button type="button" onClick={() => { setReqConceptoId(null); setReqConceptoClave(''); setReqConceptoDesc(''); setReqConceptoSearch(''); }}
+                  className="ml-2 shrink-0 text-muted-foreground hover:text-foreground">
+                  <IconX className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="relative">
+                  <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    className="w-full rounded-xl border border-border/40 bg-muted/30 pl-9 pr-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                    placeholder="Buscar partida por clave o descripción..."
+                    value={reqConceptoSearch}
+                    onChange={e => setReqConceptoSearch(e.target.value)}
+                  />
+                </div>
+                {conceptosCompras.length === 0 ? (
+                  <p className="text-[10px] text-muted-foreground px-1">Sin presupuesto activo. Crea el presupuesto en Gerencia Técnica primero.</p>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-border/30 bg-card">
+                    {conceptosCompras
+                      .filter(c => {
+                        const q = reqConceptoSearch.toLowerCase();
+                        return !q || c.clave.toLowerCase().includes(q) || c.descripcion.toLowerCase().includes(q);
+                      })
+                      .slice(0, 20)
+                      .map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setReqConceptoId(c.id); setReqConceptoClave(c.clave); setReqConceptoDesc(c.descripcion); setReqConceptoSearch(''); }}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/60 first:rounded-t-xl last:rounded-b-xl border-b border-border/20 last:border-0"
+                        >
+                          <span className="shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{c.clave}</span>
+                          <span className="flex-1 truncate text-xs">{c.descripcion}</span>
+                          <span className="shrink-0 text-[9px] text-muted-foreground">{c.unidad_medida}</span>
+                        </button>
+                      ))}
+                    {conceptosCompras.filter(c => {
+                      const q = reqConceptoSearch.toLowerCase();
+                      return !q || c.clave.toLowerCase().includes(q) || c.descripcion.toLowerCase().includes(q);
+                    }).length === 0 && (
+                      <div className="px-4 py-3 text-xs text-muted-foreground">Sin resultados</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* ── Selector tipo: NORMAL / IMPREVISTO ── */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de requisición</label>
@@ -2853,7 +3015,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
           <div className="border-t border-border/40 pt-4">
             <SubmitButton
-              label={reqForm.tipo === 'IMPREVISTO' ? 'Crear Req. Imprevisto' : 'Crear Requisición'}
+              label={!reqConceptoId ? 'Selecciona la partida del catálogo' : reqForm.tipo === 'IMPREVISTO' ? 'Crear Req. Imprevisto' : 'Crear Requisición'}
               loading={formLoading}
               color={reqForm.tipo === 'IMPREVISTO' ? 'amber' : 'emerald'}
               onClick={handleSubmitRequisicion}

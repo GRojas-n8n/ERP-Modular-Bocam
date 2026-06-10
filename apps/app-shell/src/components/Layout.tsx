@@ -87,8 +87,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
     name: 'Gerencia Técnica', icon: IconBriefcase, id: 'insumos',
     roles: ['gerencia_tecnica'],
     subItems: [
-      { id: 'catalogo', label: 'Catálogo de Obra', icon: IconBriefcase },
-      { id: 'insumos',  label: 'Insumos',          icon: IconPackage },
+      { id: 'catalogo',       label: 'Catálogo de Obra',  icon: IconBriefcase },
+      { id: 'insumos',        label: 'Insumos',           icon: IconPackage },
+      { id: 'control-costos', label: 'Control de Costos', icon: IconTrendingUp },
     ],
   },
   {
@@ -110,9 +111,11 @@ const ALL_NAV_ITEMS: NavItem[] = [
     name: 'Control de Obra', icon: IconFileText, id: 'control-obra',
     roles: ['control_obra'],
     subItems: [
-      { id: 'bitacoras',    label: 'Bitácoras',       icon: IconFileText },
-      { id: 'avances',      label: 'Avances Físicos', icon: IconTrendingUp },
-      { id: 'estimaciones', label: 'Estimaciones',    icon: IconActivity },
+      { id: 'bitacoras',     label: 'Bitácoras',       icon: IconFileText },
+      { id: 'avances',       label: 'Avances Físicos', icon: IconTrendingUp },
+      { id: 'estimaciones',  label: 'Estimaciones',    icon: IconActivity },
+      { id: 'costos',        label: 'Costos',          icon: IconTrendingUp },
+      { id: 'configuracion', label: 'Configuración',   icon: IconBriefcase },
     ],
   },
   {
@@ -160,8 +163,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
     name: 'Administración', icon: IconSettings, id: 'admin',
     roles: ['admin'],
     subItems: [
-      { id: 'usuarios',  label: 'Usuarios',  icon: IconUsers },
-      { id: 'proyectos', label: 'Proyectos', icon: IconBriefcase },
+      { id: 'usuarios',   label: 'Usuarios',           icon: IconUsers },
+      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase },
+      { id: 'categorias', label: 'Categorías de Gasto', icon: IconTrendingUp },
     ],
   },
 ];

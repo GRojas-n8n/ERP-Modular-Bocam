@@ -49,7 +49,7 @@ interface FichaTecnicaInsumo {
   created_at: string;
 }
 
-type ActiveTab = 'catalogo' | 'insumos';
+type ActiveTab = 'catalogo' | 'insumos' | 'control-costos';
 
 type TipoInsumo = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
 
@@ -716,6 +716,54 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [preReqObservaciones,  setPreReqObservaciones]  = useState('');
   const [enviandoPreReq,       setEnviandoPreReq]       = useState(false);
 
+  // ── Estado: Control de Costos WBS ────────────────────────────────────────
+  interface CostosWbsRow {
+    concepto_id: string;
+    clave: string;
+    descripcion: string;
+    unidad_medida: string;
+    presupuesto: number;
+    comprometido: number;
+    pagado: number;
+    pct_economico: number | null;
+    pct_fisico: number | null;
+    semaforo: 'verde' | 'amarillo' | 'rojo' | 'sin_dato';
+    categorias: { nombre: string; comprometido: number; pagado: number }[];
+    requisiciones: { folio: string; estado: string; monto: number }[];
+  }
+  const [costosWbs, setCostosWbs] = useState<CostosWbsRow[]>([]);
+  const [costosLoading, setCostosLoading] = useState(false);
+  const [costosExpandedId, setCostosExpandedId] = useState<string | null>(null);
+  const [costosFiltroCategoria, setCostosFiltroCategoria] = useState('');
+  const [costosFiltroDes, setCostosFiltroDes] = useState(false);
+  const [costosCategoriasDisp, setCostosCategoriasDisp] = useState<string[]>([]);
+
+  const loadCostosWbs = async () => {
+    if (!currentProjectId) return;
+    setCostosLoading(true);
+    try {
+      const res = await api.get(`/api/v1/gerencia-tecnica/proyectos/${currentProjectId}/costos-wbs`);
+      const raw: any[] = res.data?.data?.conceptos ?? [];
+      const rows: CostosWbsRow[] = raw.map((c: any) => ({
+        concepto_id: c.id,
+        clave: c.clave,
+        descripcion: c.descripcion,
+        unidad_medida: c.unidad_medida,
+        presupuesto: Number(c.presupuesto ?? 0),
+        comprometido: Number(c.comprometido ?? 0),
+        pagado: Number(c.pagado ?? 0),
+        pct_economico: c.pct_economico ?? null,
+        pct_fisico: null,
+        semaforo: c.semaforo === 'ambar' ? 'amarillo' : (c.semaforo ?? 'sin_dato'),
+        categorias: [],
+        requisiciones: [],
+      }));
+      setCostosWbs(rows);
+      setCostosCategoriasDisp([]);
+    } catch { /* silencioso */ }
+    finally { setCostosLoading(false); }
+  };
+
   // ── Estado: Fichas técnicas de insumo ────────────────────────────────────
   const [insumoFichasId,   setInsumoFichasId]   = useState<string | null>(null);
   const [fichasInsumo,     setFichasInsumo]     = useState<FichaTecnicaInsumo[]>([]);
@@ -936,6 +984,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   useEffect(() => { void fetchPresupuesto(); }, []);
   useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab]);
 
   // ── Abrir panel de Take-off para un concepto ──────────────────────────────
   const handleAbrirTakeoff = async (concepto: Concepto) => {
@@ -1306,11 +1355,13 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
               <div>
                 <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
-                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : 'Insumos'}
+                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : activeTab === 'control-costos' ? 'Control de Costos' : 'Insumos'}
                 </h1>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {activeTab === 'catalogo'
                     ? 'Conceptos de obra · Presupuesto base del proyecto'
+                    : activeTab === 'control-costos'
+                    ? 'Acumulados por partida · Comprometido vs. Presupuesto'
                     : 'Catálogo maestro de insumos · Materiales, M.O., Equipo'}
                 </p>
               </div>
@@ -1758,6 +1809,182 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               )}
             </div>
           </>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TAB 3: CONTROL DE COSTOS                                           */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'control-costos' && (
+          <div className="space-y-6 px-4 md:px-8 pb-12">
+            {costosLoading ? (
+              <div className="flex h-64 flex-col items-center justify-center gap-3">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500/10 border-t-indigo-600" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Calculando acumulados...</p>
+              </div>
+            ) : (
+              <>
+                {/* KPI Cards */}
+                {(() => {
+                  const totalPres = costosWbs.reduce((s, r) => s + r.presupuesto, 0);
+                  const totalComp = costosWbs.reduce((s, r) => s + r.comprometido, 0);
+                  const totalPag = costosWbs.reduce((s, r) => s + r.pagado, 0);
+                  const enRiesgo = costosWbs.filter(r => r.semaforo === 'rojo').length;
+                  const fmt = (n: number) => `$${n.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                  return (
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                      {[
+                        { label: 'Presupuesto Total', value: fmt(totalPres), color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
+                        { label: 'Comprometido',     value: fmt(totalComp), color: 'text-amber-600',  bg: 'bg-amber-500/10' },
+                        { label: 'Pagado',           value: fmt(totalPag),  color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                        { label: 'Partidas en Riesgo', value: String(enRiesgo), color: 'text-red-600', bg: 'bg-red-500/10' },
+                      ].map(kpi => (
+                        <div key={kpi.label} className="rounded-2xl border border-border/30 bg-card p-5">
+                          <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${kpi.bg}`}>
+                            <span className={`text-lg font-black ${kpi.color}`}>$</span>
+                          </div>
+                          <div className={`mb-0.5 text-xl font-black tracking-tighter ${kpi.color}`}>{kpi.value}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{kpi.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Filtros */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <select
+                    className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
+                    value={costosFiltroCategoria}
+                    onChange={e => setCostosFiltroCategoria(e.target.value)}
+                  >
+                    <option value="">Todas las categorías</option>
+                    {costosCategoriasDisp.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={costosFiltroDes}
+                      onChange={e => setCostosFiltroDes(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded"
+                    />
+                    Solo con desviación
+                  </label>
+                  <button
+                    onClick={() => loadCostosWbs()}
+                    className="ml-auto flex items-center gap-1.5 rounded-xl border border-border/40 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/40"
+                  >
+                    Actualizar
+                  </button>
+                </div>
+
+                {/* Tabla WBS */}
+                <div className="overflow-hidden rounded-2xl border border-border/30 bg-card shadow-sm">
+                  <table className="w-full min-w-[900px] text-xs">
+                    <thead className="border-b border-border/30 bg-muted/20">
+                      <tr>
+                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Clave</th>
+                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descripción</th>
+                        <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Presupuesto</th>
+                        <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Comprometido</th>
+                        <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pagado</th>
+                        <th className="px-5 py-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">% Económico</th>
+                        <th className="px-5 py-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Semáforo</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {costosWbs
+                        .filter(r => {
+                          if (costosFiltroCategoria && !r.categorias.some(c => c.nombre === costosFiltroCategoria)) return false;
+                          if (costosFiltroDes && r.semaforo !== 'rojo' && r.semaforo !== 'amarillo') return false;
+                          return true;
+                        })
+                        .map(row => {
+                          const isExp = costosExpandedId === row.concepto_id;
+                          const fmt = (n: number) => `$${n.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                          const sem = {
+                            verde:   { label: '🟢', cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20' },
+                            amarillo:{ label: '🟡', cls: 'text-amber-700 bg-amber-500/10 border-amber-500/20' },
+                            rojo:    { label: '🔴', cls: 'text-red-700 bg-red-500/10 border-red-500/20' },
+                            sin_dato:{ label: '⚪', cls: 'text-muted-foreground bg-muted/30 border-border/30' },
+                          }[row.semaforo];
+                          return (
+                            <>
+                              <tr
+                                key={row.concepto_id}
+                                className="cursor-pointer hover:bg-muted/20 transition-colors"
+                                onClick={() => setCostosExpandedId(isExp ? null : row.concepto_id)}
+                              >
+                                <td className="px-5 py-3 font-mono text-[10px] font-black text-indigo-700">{row.clave}</td>
+                                <td className="max-w-[250px] truncate px-5 py-3 text-xs font-medium">{row.descripcion}</td>
+                                <td className="px-5 py-3 text-right font-mono text-xs font-bold">{fmt(row.presupuesto)}</td>
+                                <td className="px-5 py-3 text-right font-mono text-xs font-bold text-amber-700">{fmt(row.comprometido)}</td>
+                                <td className="px-5 py-3 text-right font-mono text-xs font-bold text-emerald-700">{fmt(row.pagado)}</td>
+                                <td className="px-5 py-3 text-center text-xs font-black">
+                                  {row.pct_economico != null ? `${row.pct_economico.toFixed(1)}%` : '—'}
+                                </td>
+                                <td className="px-5 py-3 text-center">
+                                  <span className={`rounded-lg border px-2 py-0.5 text-[9px] font-black ${sem.cls}`}>
+                                    {sem.label}
+                                  </span>
+                                </td>
+                              </tr>
+                              {isExp && (
+                                <tr key={`${row.concepto_id}-exp`} className="bg-muted/10">
+                                  <td colSpan={7} className="px-8 py-4">
+                                    <div className="space-y-3">
+                                      {row.categorias.length > 0 && (
+                                        <div>
+                                          <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Desglose por categoría</p>
+                                          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                                            {row.categorias.map(cat => (
+                                              <div key={cat.nombre} className="flex items-center justify-between rounded-xl border border-border/30 bg-card px-3 py-2">
+                                                <span className="text-[10px] font-bold text-foreground">{cat.nombre}</span>
+                                                <div className="flex gap-3 text-[10px]">
+                                                  <span className="text-amber-700">{fmt(cat.comprometido)}</span>
+                                                  <span className="text-emerald-700">{fmt(cat.pagado)}</span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {row.requisiciones.length > 0 && (
+                                        <div>
+                                          <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Requisiciones vinculadas</p>
+                                          <div className="space-y-1">
+                                            {row.requisiciones.map(req => (
+                                              <div key={req.folio} className="flex items-center justify-between rounded-xl border border-border/20 bg-card px-3 py-2">
+                                                <span className="font-mono text-[10px] font-black text-indigo-700">{req.folio}</span>
+                                                <span className="text-[9px] text-muted-foreground">{req.estado}</span>
+                                                <span className="font-mono text-[10px] font-bold text-amber-700">{fmt(req.monto)}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {row.categorias.length === 0 && row.requisiciones.length === 0 && (
+                                        <p className="text-[10px] text-muted-foreground">Sin requisiciones vinculadas a esta partida.</p>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </>
+                          );
+                        })}
+                      {costosWbs.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-5 py-12 text-center text-xs text-muted-foreground">
+                            Sin datos de costos. Crea requisiciones con partida asignada para ver acumulados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
