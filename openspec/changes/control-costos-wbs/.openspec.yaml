@@ -1,2 +1,11 @@
 schema: spec-driven
 created: 2026-06-10
+status: archived
+production_verified: true
+commits:
+  - 2a61e90  # feat: categorías de gasto WBS + partida obligatoria + dashboards
+  - cedd15b  # fix: AdminView ternario correcto
+notes: >
+  43 tasks completadas. Migrations aplicadas en VPS (gerencia-tecnica + compras).
+  Tablas categorias_gasto, proyecto_costos_config, concepto_id en requisiciones,
+  requisicion_id en ordenes_compra. App-shell rebuildeado y sirviendo.

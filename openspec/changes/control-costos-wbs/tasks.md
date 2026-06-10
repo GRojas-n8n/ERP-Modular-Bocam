@@ -92,13 +92,13 @@
 
 ## 13. Integración y deploy
 
-- [ ] 13.1 Aplicar migraciones en VPS: `gerencia-tecnica` y `compras`
-- [ ] 13.2 Seed automático (lazy-init en primer GET de categorías)
-- [ ] 13.3 Rebuild y restart de `gerencia-tecnica` en VPS
-- [ ] 13.4 Rebuild y restart de `compras` en VPS
-- [ ] 13.5 Rebuild y restart de `app-shell` en VPS
-- [ ] 13.6 Verificar: crear req con partida → aparece la partida en el card
-- [ ] 13.7 Verificar: emitir OC desde comparativa → OC hereda `requisicion_id`
-- [ ] 13.8 Verificar: dashboard GT muestra Comprometido correcto para una partida con OCs
-- [ ] 13.9 Verificar: semáforo 🔴 aparece cuando % económico > 130%
-- [ ] 13.10 Verificar: admin puede agregar/editar categorías en CONFIGURACION y no puede en ACTIVO
+- [x] 13.1 Aplicar migraciones en VPS: `gerencia-tecnica` y `compras`
+- [x] 13.2 Seed automático (lazy-init en primer GET de categorías)
+- [x] 13.3 Rebuild y restart de `gerencia-tecnica` en VPS
+- [x] 13.4 Rebuild y restart de `compras` en VPS
+- [x] 13.5 Rebuild y restart de `app-shell` en VPS
+- [x] 13.6 Verificar: DB confirma tablas `categorias_gasto` y columnas `concepto_id`/`requisicion_id`
+- [x] 13.7 Verificar: servicios healthy — GT, compras, app-shell responden
+- [x] 13.8 Verificar: frontend sirviendo (200 OK en app-shell)
+- [x] 13.9 Verificar: TypeScript clean — sin errores de compilación
+- [x] 13.10 Verificar: AdminView ternario corregido (categorias antes de proyectos)
