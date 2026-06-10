@@ -356,6 +356,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [insumosSeleccionados, setInsumosSeleccionados] = useState<InsumoSeleccionado[]>([]);
   const [loadingInsumos,       setLoadingInsumos]       = useState(false);
   const [specInputs,           setSpecInputs]           = useState<Record<number, string>>({});
+  // IDs de insumos del APU de la partida seleccionada — null = sin filtro (IMPREVISTO o sin partida)
+  const [insumosDePartidaIds,  setInsumosDePartidaIds]  = useState<Set<string> | null>(null);
+  const [loadingInsumosPartida,setLoadingInsumosPartida]= useState(false);
 
   // ── Carga inicial ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -483,6 +486,29 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     };
     fetchComposicion();
   }, [conceptoSeleccionado]);
+
+  // ── Cargar IDs de la composición al seleccionar partida en modo INSUMO ──────
+  useEffect(() => {
+    if (!reqConceptoId || reqTipo !== 'INSUMO') { setInsumosDePartidaIds(null); return; }
+    let cancelled = false;
+    const fetch = async () => {
+      setLoadingInsumosPartida(true);
+      try {
+        const res = await api.get(`/api/v1/gerencia-tecnica/conceptos/${reqConceptoId}/composicion`);
+        const items: any[] = res.data?.data ?? [];
+        if (!cancelled) {
+          const ids = new Set(items.map((ci: any) => ci.insumo_id).filter(Boolean) as string[]);
+          setInsumosDePartidaIds(ids.size > 0 ? ids : null);
+        }
+      } catch {
+        if (!cancelled) setInsumosDePartidaIds(null);
+      } finally {
+        if (!cancelled) setLoadingInsumosPartida(false);
+      }
+    };
+    void fetch();
+    return () => { cancelled = true; };
+  }, [reqConceptoId, reqTipo]);
 
   // ── Recalcular totales cuando cambia la cantidad ──────────────────────────
   useEffect(() => {
@@ -1606,7 +1632,10 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                 {(['MATERIAL', 'EQUIPO', 'SERVICIO'] as const).map(tab => {
                   const tabLabels = { MATERIAL: '🧱 Material', EQUIPO: '🏗 Equipo', SERVICIO: '🔧 Servicio' };
                   const typeMap = { MATERIAL: 'MATERIAL', EQUIPO: 'EQUIPO', SERVICIO: 'SUBCONTRATO' };
-                  const count = insumosAll.filter(i => i.tipo_insumo === typeMap[tab]).length;
+                  const count = insumosAll
+                    .filter(i => i.tipo_insumo === typeMap[tab])
+                    .filter(i => !insumosDePartidaIds || insumosDePartidaIds.has(i.insumo_id))
+                    .length;
                   return (
                     <button
                       key={tab}
@@ -1638,17 +1667,21 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
               </div>
 
               {/* Catálogo filtrado */}
-              {loadingInsumos ? (
+              {loadingInsumos || loadingInsumosPartida ? (
                 <div className="text-center py-4">
                   <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-600" />
-                  <p className="mt-2 text-[10px] text-muted-foreground">Cargando catálogo...</p>
+                  <p className="mt-2 text-[10px] text-muted-foreground">
+                    {loadingInsumosPartida ? 'Cargando insumos de la partida...' : 'Cargando catálogo...'}
+                  </p>
                 </div>
               ) : (() => {
                 const typeMap: Record<'MATERIAL' | 'EQUIPO' | 'SERVICIO', string> = {
                   MATERIAL: 'MATERIAL', EQUIPO: 'EQUIPO', SERVICIO: 'SUBCONTRATO',
                 };
                 const tipoTarget = typeMap[insumoTabTipo];
-                const filtrados = insumosAll
+                const porPartida = insumosAll
+                  .filter(i => !insumosDePartidaIds || insumosDePartidaIds.has(i.insumo_id));
+                const filtrados = porPartida
                   .filter(i => i.tipo_insumo === tipoTarget)
                   .filter(i => {
                     if (!insumoSearch.trim()) return true;
@@ -1657,10 +1690,14 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                   })
                   .filter(i => !insumosSeleccionados.find(s => s.insumo_id === i.insumo_id))
                   .slice(0, 15);
-                if (insumosAll.filter(i => i.tipo_insumo === tipoTarget).length === 0) {
+                const totalDeTipo = porPartida.filter(i => i.tipo_insumo === tipoTarget).length;
+                if (totalDeTipo === 0) {
                   return (
                     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[10px] text-amber-700">
-                      Este proyecto no tiene insumos de tipo {insumoTabTipo} en el catálogo. Usa la opción <strong>Imprevisto</strong>.
+                      {insumosDePartidaIds
+                        ? <>Esta partida no tiene insumos de tipo <strong>{insumoTabTipo}</strong> en su APU. Prueba con otro tipo o usa <strong>Imprevisto</strong>.</>
+                        : <>Este proyecto no tiene insumos de tipo {insumoTabTipo} en el catálogo. Usa la opción <strong>Imprevisto</strong>.</>
+                      }
                     </div>
                   );
                 }
