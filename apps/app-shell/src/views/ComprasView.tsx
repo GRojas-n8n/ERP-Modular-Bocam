@@ -903,6 +903,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         insumo_unidad:      info?.unidad ?? item.unidad_libre ?? '—',
         cantidad:           item.cantidad,
         precios:            {},
+        tiempos:            {},
         ganador:            null,
         evaluacion_tecnica: 'PENDIENTE' as const,
       };
