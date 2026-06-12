@@ -1,2 +1,12 @@
 schema: spec-driven
 created: 2026-06-11
+status: archived
+production_verified: true
+production_verified_date: 2026-06-12
+commits:
+  - 4c1af59
+notes: |
+  21/21 tasks completos. Tablas recepciones_oc + recepcion_oc_items migradas en VPS.
+  Flujo verificado: EMITIDA → PARCIALMENTE_RECIBIDA → RECIBIDA.
+  Evento compras.oc_recibida_total publicado correctamente al cerrar OC.
+  Pre-existing bug fix: GET /comparativas/:id ahora retorna ordenes_compra (antes siempre []).

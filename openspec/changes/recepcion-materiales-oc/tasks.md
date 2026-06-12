@@ -42,9 +42,9 @@
 
 ## 10. Deploy y verificación
 
-- [ ] 10.1 Migrar en VPS: `docker exec bocam-vps-compras npx prisma migrate deploy`
-- [ ] 10.2 Rebuild imagen compras y restart: `docker compose -f docker-compose.vps.yml up -d --build compras`
-- [ ] 10.3 No es necesario rebuild de app-shell si ya está publicado (el frontend se sirve como build estático — verificar si se requiere rebuild del app-shell también)
-- [ ] 10.4 Verificar: registrar una recepción parcial desde ComprasView y confirmar que la OC cambia a `PARCIALMENTE_RECIBIDA`
-- [ ] 10.5 Verificar: registrar segunda recepción que completa todas las líneas y confirmar que la OC cambia a `RECIBIDA`
-- [ ] 10.6 Verificar: el evento `compras.oc_recibida_total` aparece en los logs del contenedor al cerrar la OC
+- [x] 10.1 Migrar en VPS: migración pre-existente `20260610153011_add_specs_req_item` bloqueaba el deploy (relation "proveedores" already exists). Resuelta con `--applied`. Nueva migración `20260612120000_add_recepcion_oc` copiada y aplicada exitosamente. Tablas `recepciones_oc` y `recepcion_oc_items` creadas en BD.
+- [x] 10.2 Rebuild imagen compras y restart: completado. Contenedor healthy, puerto 3002 responde `/health`. Logs confirman startup correcto con RabbitMQ conectado.
+- [x] 10.3 Rebuild app-shell: completado. Frontend actualizado con los nuevos componentes de recepción.
+- [x] 10.4 Verificar: recepción parcial (5/10 unidades ítem 1, ítem 2 sin recibir) → `nuevo_estado_oc: "PARCIALMENTE_RECIBIDA"` ✓ confirmado vía POST API
+- [x] 10.5 Verificar: segunda recepción completando todas las líneas → `nuevo_estado_oc: "RECIBIDA"` ✓ confirmado vía POST API
+- [x] 10.6 Verificar: `[EventBus:compras] 📤 Publicado: compras.oc_recibida_total` aparece en logs del contenedor al cerrar OC ✓ confirmado
