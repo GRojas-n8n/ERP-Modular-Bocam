@@ -114,6 +114,29 @@ export interface FichaTecnica {
   created_at: string;
 }
 
+export interface OcItemEnComparativa {
+  id_item: string;
+  insumo_id: string;
+  cantidad: number;
+  precio_unitario: number;
+  importe: number;
+  cantidad_acumulada_recibida: number;
+  porcentaje_recibido: number;
+}
+
+export interface OrdenCompraEnComparativa {
+  id_orden: string;
+  codigo: string;
+  estado: string;
+  proveedor_nombre: string;
+  proveedor_id: string;
+  total: number;
+  subtotal?: number;
+  iva?: number;
+  fecha_emision?: string;
+  items: OcItemEnComparativa[];
+}
+
 export type EstadoComparativa =
   | 'BORRADOR'
   | 'EN_EVALUACION_TECNICA'
@@ -146,7 +169,7 @@ export interface ComparativaLocal {
   lineas: CotizacionLinea[];
   lineas_detalle?: LineaDetalleTecnico[];
   anotaciones_spec?: AnotacionSpec[];
-  ordenes_compra: { codigo: string; proveedor_nombre: string; total: number }[];
+  ordenes_compra: OrdenCompraEnComparativa[];
 }
 
 // ─── Colores por proveedor (A, B, C) ─────────────────────────────────────────
@@ -180,6 +203,16 @@ const EVAL_STYLE: Record<string, string> = {
   '?':       'border-indigo-500/30 bg-indigo-500/10 text-indigo-700',
   APROBADO:  'border-green-500/30 bg-green-500/10 text-green-700',
   RECHAZADO: 'border-red-500/30 bg-red-500/10 text-red-700',
+};
+
+const OC_ESTADO_STYLE: Record<string, { badge: string; label: string }> = {
+  BORRADOR:              { badge: 'border-slate-400/30 bg-slate-400/10 text-slate-500',       label: 'Borrador' },
+  PENDIENTE:             { badge: 'border-amber-400/30 bg-amber-400/10 text-amber-600',       label: 'Pendiente' },
+  APROBADA:              { badge: 'border-blue-400/30 bg-blue-400/10 text-blue-600',          label: 'Aprobada' },
+  EMITIDA:               { badge: 'border-green-500/30 bg-green-500/10 text-green-700',       label: 'Emitida' },
+  PARCIALMENTE_RECIBIDA: { badge: 'border-amber-500/30 bg-amber-500/10 text-amber-700',       label: 'En recepción' },
+  RECIBIDA:              { badge: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700', label: 'Recibida ✓' },
+  CANCELADA:             { badge: 'border-red-500/30 bg-red-500/10 text-red-600',             label: 'Cancelada' },
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -297,6 +330,90 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [anotacionPanel, setAnotacionPanel] = useState<{ especId: string; especDesc: string; proveedorId: string; proveedorNombre: string } | null>(null);
   const [anotacionForm, setAnotacionForm] = useState<{ tipo: 'pregunta' | 'respuesta'; texto: string }>({ tipo: 'pregunta', texto: '' });
   const [guardandoAnotacion, setGuardandoAnotacion] = useState(false);
+
+  // ── Recepción de materiales contra OC ───────────────────────────────────────
+  type RecepcionLinea = { cantidad_recibida: string; nota_discrepancia: string };
+  const [recepcionPanelOcId, setRecepcionPanelOcId] = useState<string | null>(null);
+  const [recepcionFecha, setRecepcionFecha] = useState('');
+  const [recepcionNotas, setRecepcionNotas] = useState('');
+  const [recepcionLineas, setRecepcionLineas] = useState<Record<string, RecepcionLinea>>({});
+  const [guardandoRecepcion, setGuardandoRecepcion] = useState(false);
+  const ocFetchedRef = useRef(false);
+  // compRef keeps latest comp to avoid stale closures in async callbacks
+  const compRef = useRef(comp);
+  compRef.current = comp;
+
+  // Fetch OC data (with acumulados) when the detail opens — the list endpoint omits this
+  useEffect(() => {
+    if (isDemo || ocFetchedRef.current) return;
+    ocFetchedRef.current = true;
+    const id = compRef.current.id;
+    api.get(`/api/v1/compras/comparativas/${id}`)
+      .then(resp => {
+        if (resp.data?.data?.ordenes_compra) {
+          onUpdate({ ...compRef.current, ordenes_compra: resp.data.data.ordenes_compra });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Init recepción form when panel opens
+  useEffect(() => {
+    if (!recepcionPanelOcId) return;
+    const oc = comp.ordenes_compra.find(o => o.id_orden === recepcionPanelOcId);
+    if (!oc) return;
+    const initial: Record<string, RecepcionLinea> = {};
+    for (const item of oc.items) {
+      const pendiente = Math.max(0, item.cantidad - item.cantidad_acumulada_recibida);
+      initial[item.id_item] = {
+        cantidad_recibida: pendiente > 0 ? String(Math.round(pendiente * 10000) / 10000) : '0',
+        nota_discrepancia: '',
+      };
+    }
+    setRecepcionLineas(initial);
+    setRecepcionFecha(new Date().toISOString().slice(0, 10));
+    setRecepcionNotas('');
+  }, [recepcionPanelOcId]);
+
+  const handleSubmitRecepcion = async () => {
+    if (!recepcionPanelOcId) return;
+    const itemsPayload = Object.entries(recepcionLineas)
+      .filter(([, v]) => parseFloat(v.cantidad_recibida) > 0)
+      .map(([id_item, v]) => ({
+        orden_item_id: id_item,
+        cantidad_recibida: parseFloat(v.cantidad_recibida),
+        nota_discrepancia: v.nota_discrepancia.trim() || undefined,
+      }));
+    if (itemsPayload.length === 0) {
+      notify({ type: 'error', title: 'Sin ítems', message: 'Ingresa al menos una cantidad mayor a 0.' });
+      return;
+    }
+    setGuardandoRecepcion(true);
+    try {
+      const resp = await api.post(`/api/v1/compras/ordenes-compra/${recepcionPanelOcId}/recepciones`, {
+        fecha_recepcion: recepcionFecha,
+        notas: recepcionNotas.trim() || undefined,
+        items: itemsPayload,
+      });
+      const nuevoEstado = resp.data.data?.nuevo_estado_oc;
+      notify({
+        type: 'success',
+        title: 'Recepción registrada',
+        message: nuevoEstado === 'RECIBIDA' ? 'OC completamente recibida.' : 'Recepción parcial registrada.',
+      });
+      setRecepcionPanelOcId(null);
+      try {
+        const refreshResp = await api.get(`/api/v1/compras/comparativas/${compRef.current.id}`);
+        if (refreshResp.data?.data?.ordenes_compra) {
+          onUpdate({ ...compRef.current, ordenes_compra: refreshResp.data.data.ordenes_compra });
+        }
+      } catch (_) {}
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoRecepcion(false);
+    }
+  };
 
   // ── Asistente IA: lectura de cotización PDF ──────────────────────────────────
   interface RenglonEditable { descripcion: string; unidad: string; cantidad: string; precio_unitario: string; }
@@ -996,16 +1113,22 @@ export const ComparativaDetail: React.FC<Props> = ({
           if (!grupos[l.ganador]) grupos[l.ganador] = { nombre: prov.nombre, total: 0 };
           grupos[l.ganador].total += precio * l.cantidad;
         });
-        const ocs = Object.entries(grupos).map(([, v], i) => ({
+        const ocs: OrdenCompraEnComparativa[] = Object.entries(grupos).map(([, v], i) => ({
+          id_orden: `demo-oc-${i}`,
           codigo: `OC-2024-0${50 + i}`,
+          estado: 'EMITIDA',
           proveedor_nombre: v.nombre,
+          proveedor_id: '',
           total: v.total,
+          items: [],
         }));
         onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: ocs });
       } else {
-        const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, {});
-        const ocs = resp.data.data?.ordenes_compra || [];
-        onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: ocs });
+        await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, {});
+        // Refetch to get fresh OC data with full structure
+        const freshResp = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
+        const freshData = freshResp.data.data ?? {};
+        onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: freshData.ordenes_compra ?? [] });
       }
     } catch (err: any) {
       notify({ type: 'error', title: 'Error al generar OC', message: err.response?.data?.message ?? err.message });
@@ -1015,6 +1138,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   };
 
   const estadoInfo = ESTADO_STYLE[comp.estado] ?? ESTADO_STYLE.BORRADOR;
+  const ocList = comp.ordenes_compra;
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -1801,7 +1925,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       )}
 
       {/* Órdenes de Compra Generadas */}
-      {comp.ordenes_compra.length > 0 && (
+      {ocList.length > 0 && (
         <Card className="border-green-500/20 bg-green-500/5">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-tight text-green-700">
@@ -1809,34 +1933,89 @@ export const ComparativaDetail: React.FC<Props> = ({
               Órdenes de Compra Generadas
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 pt-0">
-            {comp.ordenes_compra.map(oc => (
-              <div key={oc.codigo} className="flex items-center justify-between rounded-xl border border-green-500/20 bg-background px-4 py-3">
-                <div>
-                  <div className="text-xs font-black text-green-700">{oc.codigo}</div>
-                  <div className="text-[11px] text-muted-foreground">{oc.proveedor_nombre}</div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-black text-foreground">
-                    {oc.total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
+          <CardContent className="space-y-4 pt-0">
+            {ocList.map(oc => {
+              const ocEstilo = OC_ESTADO_STYLE[oc.estado] ?? OC_ESTADO_STYLE.EMITIDA;
+              const canReceive = !isDemo && (roles.includes('procurement') || roles.includes('admin'))
+                && (oc.estado === 'EMITIDA' || oc.estado === 'PARCIALMENTE_RECIBIDA');
+              const insumosMapLocal = new Map(comp.lineas.map(l => [l.insumo_id, l.insumo_descripcion]));
+              return (
+                <div key={oc.id_orden ?? oc.codigo} className="rounded-xl border border-green-500/20 bg-background overflow-hidden">
+                  {/* Header de la OC */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-green-700">{oc.codigo}</span>
+                        <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', ocEstilo.badge)}>
+                          {ocEstilo.label}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">{oc.proveedor_nombre}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-black text-foreground">
+                        {oc.total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
+                      </div>
+                      {canReceive && (
+                        <button
+                          onClick={() => setRecepcionPanelOcId(oc.id_orden)}
+                          className="flex items-center gap-1 rounded-lg border border-amber-500/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <IconPackage className="h-3 w-3" />Recibir
+                        </button>
+                      )}
+                      {onExportOcPdf && !isDemo && (
+                        <button
+                          onClick={() => onExportOcPdf(oc)}
+                          title="Exportar OC como PDF"
+                          className="flex items-center gap-1 rounded-lg border border-green-500/30 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-green-700 hover:bg-green-500/10 transition-colors"
+                        >
+                          <IconDownload className="h-3 w-3" />PDF
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {onExportOcPdf && !isDemo && (
-                    <button
-                      onClick={() => onExportOcPdf(oc)}
-                      title="Exportar OC como PDF"
-                      className="flex items-center gap-1 rounded-lg border border-green-500/30 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-green-700 hover:bg-green-500/10 transition-colors"
-                    >
-                      <IconDownload className="h-3 w-3" />PDF
-                    </button>
+
+                  {/* Tabla de ítems con acumulados de recepción */}
+                  {oc.items.length > 0 && (
+                    <div className="border-t border-green-500/10 px-4 pb-3 pt-2">
+                      <p className="mb-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Líneas de la OC</p>
+                      <div className="space-y-1">
+                        {oc.items.map((item, idx) => (
+                          <div key={item.id_item} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 rounded-lg bg-muted/30 px-3 py-1.5 text-[10px]">
+                            <div className="truncate font-medium text-foreground/80">
+                              {insumosMapLocal.get(item.insumo_id) ?? `Ítem ${idx + 1}`}
+                            </div>
+                            <div className="text-right text-muted-foreground whitespace-nowrap">
+                              {Number(item.cantidad).toLocaleString()} u
+                            </div>
+                            <div className={cn('text-right font-bold whitespace-nowrap', item.porcentaje_recibido >= 100 ? 'text-emerald-600' : item.porcentaje_recibido > 0 ? 'text-amber-600' : 'text-muted-foreground/50')}>
+                              {item.cantidad_acumulada_recibida > 0 ? `${Number(item.cantidad_acumulada_recibida).toLocaleString()} recib.` : '—'}
+                            </div>
+                            <div className="w-12 text-right font-black whitespace-nowrap">
+                              {item.porcentaje_recibido > 0 ? (
+                                <span className={cn(item.porcentaje_recibido >= 100 ? 'text-emerald-600' : 'text-amber-600')}>
+                                  {item.porcentaje_recibido}%
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground/40">0%</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
+            {/* Footer: total + PDF comparativa */}
             <div className="flex items-center justify-between rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-green-700">Total comprometido</span>
               <div className="flex items-center gap-3">
                 <span className="text-base font-black text-green-700">
-                  {comp.ordenes_compra.reduce((s, oc) => s + oc.total, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
+                  {ocList.reduce((s, oc) => s + oc.total, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 })}
                 </span>
                 {onExportComparativaPdf && !isDemo && (
                   <button
@@ -2541,6 +2720,119 @@ export const ComparativaDetail: React.FC<Props> = ({
           );
         })()}
       </SideSheet>
+
+      {/* ── SideSheet: Registrar Recepción de OC ────────────────────────────── */}
+      {(() => {
+        const ocParaRecepcion = ocList.find(o => o.id_orden === recepcionPanelOcId);
+        const insumosMapLocal = new Map(comp.lineas.map(l => [l.insumo_id, l.insumo_descripcion]));
+        return (
+          <SideSheet
+            isOpen={!!recepcionPanelOcId}
+            onClose={() => setRecepcionPanelOcId(null)}
+            title={`Registrar recepción — ${ocParaRecepcion?.codigo ?? ''}`}
+            description="Indica las cantidades físicamente recibidas por línea de la OC"
+            maxWidthClassName="max-w-2xl"
+          >
+            {ocParaRecepcion && (
+              <div className="space-y-5">
+                {/* Fecha + Notas */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Fecha de recepción *</label>
+                    <Input
+                      type="date"
+                      value={recepcionFecha}
+                      onChange={e => setRecepcionFecha(e.target.value)}
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Notas (opcional)</label>
+                    <Input
+                      placeholder="Notas de la recepción…"
+                      value={recepcionNotas}
+                      onChange={e => setRecepcionNotas(e.target.value)}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Tabla de líneas */}
+                <div>
+                  <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Líneas a recibir</p>
+                  <div className="space-y-2">
+                    {ocParaRecepcion.items.map((item, idx) => {
+                      const pendiente = Math.max(0, item.cantidad - item.cantidad_acumulada_recibida);
+                      const linea = recepcionLineas[item.id_item] ?? { cantidad_recibida: '0', nota_discrepancia: '' };
+                      const desc = insumosMapLocal.get(item.insumo_id) ?? `Ítem ${idx + 1}`;
+                      return (
+                        <div key={item.id_item} className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-foreground truncate">{desc}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                Pedido: {Number(item.cantidad).toLocaleString()} · Ya recibido: {Number(item.cantidad_acumulada_recibida).toLocaleString()} · Pendiente: <span className="font-bold text-amber-600">{pendiente.toLocaleString()}</span>
+                              </p>
+                            </div>
+                            <div className="shrink-0 w-28">
+                              <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Cant. recibida</label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max={pendiente}
+                                step="0.0001"
+                                value={linea.cantidad_recibida}
+                                onChange={e => setRecepcionLineas(prev => ({
+                                  ...prev,
+                                  [item.id_item]: { ...linea, cantidad_recibida: e.target.value },
+                                }))}
+                                className="text-xs text-right"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Nota de discrepancia (opcional)</label>
+                            <Input
+                              placeholder="Cantidad distinta, daño, etc."
+                              value={linea.nota_discrepancia}
+                              onChange={e => setRecepcionLineas(prev => ({
+                                ...prev,
+                                [item.id_item]: { ...linea, nota_discrepancia: e.target.value },
+                              }))}
+                              className="text-xs"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Acciones */}
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/50">
+                  <Button
+                    variant="outline"
+                    onClick={() => setRecepcionPanelOcId(null)}
+                    disabled={guardandoRecepcion}
+                    className="text-xs"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSubmitRecepcion}
+                    disabled={guardandoRecepcion}
+                    className="rounded-xl bg-amber-600 text-white text-xs font-black hover:bg-amber-500 disabled:opacity-40"
+                  >
+                    {guardandoRecepcion
+                      ? <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Registrando…</>
+                      : <><IconPackage className="h-4 w-4" />Registrar recepción</>}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </SideSheet>
+        );
+      })()}
 
     </div>
   );

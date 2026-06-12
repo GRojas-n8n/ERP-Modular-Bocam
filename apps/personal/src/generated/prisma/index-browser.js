@@ -145,6 +145,11 @@ exports.Prisma.EmpleadoScalarFieldEnum = {
   contacto_emergencia: 'contacto_emergencia',
   certificaciones: 'certificaciones',
   estado: 'estado',
+  modo_asistencia: 'modo_asistencia',
+  tipo_jornada: 'tipo_jornada',
+  hora_entrada_programada: 'hora_entrada_programada',
+  hora_salida_programada: 'hora_salida_programada',
+  horas_jornada: 'horas_jornada',
   cuadrilla_id: 'cuadrilla_id',
   created_at: 'created_at',
   updated_at: 'updated_at'
@@ -218,7 +223,11 @@ exports.Prisma.PreNominaDetalleScalarFieldEnum = {
   deduccion_isr: 'deduccion_isr',
   otras_deducciones: 'otras_deducciones',
   total_deducciones: 'total_deducciones',
-  neto_a_pagar: 'neto_a_pagar'
+  neto_a_pagar: 'neto_a_pagar',
+  horas_normales: 'horas_normales',
+  monto_he_doble: 'monto_he_doble',
+  monto_he_triple: 'monto_he_triple',
+  origen_horas: 'origen_horas'
 };
 
 exports.Prisma.RegistroAsistenciaScalarFieldEnum = {
@@ -232,6 +241,12 @@ exports.Prisma.RegistroAsistenciaScalarFieldEnum = {
   tipo_registro: 'tipo_registro',
   horas_extra: 'horas_extra',
   registrado_por: 'registrado_por',
+  hora_entrada: 'hora_entrada',
+  hora_salida: 'hora_salida',
+  horas_trabajadas: 'horas_trabajadas',
+  horas_normales: 'horas_normales',
+  horas_extra_dia: 'horas_extra_dia',
+  origen_horas: 'origen_horas',
   created_at: 'created_at'
 };
 

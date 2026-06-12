@@ -176,7 +176,7 @@ model OrdenCompra {
   proveedor_id   String   @db.Uuid
   codigo         String   @db.VarChar(50) // Ej. OC-2026-001
   fecha_emision  DateTime @default(now())
-  estado         String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, RECIBIDA, CANCELADA
+  estado         String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, PARCIALMENTE_RECIBIDA, RECIBIDA, CANCELADA
   moneda         String   @default("MXN")
   tipo_cambio    Decimal  @default(1.0) @db.Decimal(18, 4)
   subtotal       Decimal  @db.Decimal(18, 2)
@@ -186,8 +186,9 @@ model OrdenCompra {
   /// Requisición que originó esta OC — para cálculo de acumulados por partida
   requisicion_id String?  @db.Uuid
 
-  proveedor Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
-  items     OrdenCompraItem[]
+  proveedor   Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
+  items       OrdenCompraItem[]
+  recepciones RecepcionOC[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
@@ -209,6 +210,38 @@ model OrdenCompraItem {
 
   @@index([tenant_id, orden_id])
   @@map("ordenes_compra_items")
+}
+
+model RecepcionOC {
+  id_recepcion    String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  orden_id        String   @db.Uuid
+  fecha_recepcion DateTime @default(now())
+  recibido_por    String   @db.Uuid
+  notas           String?
+  created_at      DateTime @default(now())
+
+  orden OrdenCompra       @relation(fields: [orden_id], references: [id_orden], onDelete: Cascade)
+  items RecepcionOCItem[]
+
+  @@index([tenant_id, orden_id])
+  @@map("recepciones_oc")
+}
+
+model RecepcionOCItem {
+  id_recepcion_item String  @id @default(uuid()) @db.Uuid
+  tenant_id         String  @db.Uuid
+  proyecto_id       String  @db.Uuid
+  recepcion_id      String  @db.Uuid
+  orden_item_id     String  @db.Uuid
+  cantidad_recibida Decimal @db.Decimal(18, 4)
+  nota_discrepancia String?
+
+  recepcion RecepcionOC @relation(fields: [recepcion_id], references: [id_recepcion], onDelete: Cascade)
+
+  @@index([tenant_id, recepcion_id])
+  @@map("recepcion_oc_items")
 }
 
 // --- Operativo: Cuadros Comparativos ---

@@ -54,6 +54,16 @@ export type OrdenCompra = $Result.DefaultSelection<Prisma.$OrdenCompraPayload>
  */
 export type OrdenCompraItem = $Result.DefaultSelection<Prisma.$OrdenCompraItemPayload>
 /**
+ * Model RecepcionOC
+ * 
+ */
+export type RecepcionOC = $Result.DefaultSelection<Prisma.$RecepcionOCPayload>
+/**
+ * Model RecepcionOCItem
+ * 
+ */
+export type RecepcionOCItem = $Result.DefaultSelection<Prisma.$RecepcionOCItemPayload>
+/**
  * Model CuadroComparativo
  * 
  */
@@ -316,6 +326,26 @@ export class PrismaClient<
     * ```
     */
   get ordenCompraItem(): Prisma.OrdenCompraItemDelegate<ExtArgs>;
+
+  /**
+   * `prisma.recepcionOC`: Exposes CRUD operations for the **RecepcionOC** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RecepcionOCS
+    * const recepcionOCS = await prisma.recepcionOC.findMany()
+    * ```
+    */
+  get recepcionOC(): Prisma.RecepcionOCDelegate<ExtArgs>;
+
+  /**
+   * `prisma.recepcionOCItem`: Exposes CRUD operations for the **RecepcionOCItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RecepcionOCItems
+    * const recepcionOCItems = await prisma.recepcionOCItem.findMany()
+    * ```
+    */
+  get recepcionOCItem(): Prisma.RecepcionOCItemDelegate<ExtArgs>;
 
   /**
    * `prisma.cuadroComparativo`: Exposes CRUD operations for the **CuadroComparativo** model.
@@ -885,6 +915,8 @@ export namespace Prisma {
     AsignacionExtraConcepto: 'AsignacionExtraConcepto',
     OrdenCompra: 'OrdenCompra',
     OrdenCompraItem: 'OrdenCompraItem',
+    RecepcionOC: 'RecepcionOC',
+    RecepcionOCItem: 'RecepcionOCItem',
     CuadroComparativo: 'CuadroComparativo',
     AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
     ComparativaLinea: 'ComparativaLinea',
@@ -912,7 +944,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "cuadroComparativo" | "auditoriaDesbloqueoComparativa" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
+      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "recepcionOC" | "recepcionOCItem" | "cuadroComparativo" | "auditoriaDesbloqueoComparativa" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError" | "itemInventario" | "movimientoAlmacen"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1473,6 +1505,146 @@ export namespace Prisma {
           count: {
             args: Prisma.OrdenCompraItemCountArgs<ExtArgs>
             result: $Utils.Optional<OrdenCompraItemCountAggregateOutputType> | number
+          }
+        }
+      }
+      RecepcionOC: {
+        payload: Prisma.$RecepcionOCPayload<ExtArgs>
+        fields: Prisma.RecepcionOCFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RecepcionOCFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RecepcionOCFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>
+          }
+          findFirst: {
+            args: Prisma.RecepcionOCFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RecepcionOCFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>
+          }
+          findMany: {
+            args: Prisma.RecepcionOCFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>[]
+          }
+          create: {
+            args: Prisma.RecepcionOCCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>
+          }
+          createMany: {
+            args: Prisma.RecepcionOCCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RecepcionOCCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>[]
+          }
+          delete: {
+            args: Prisma.RecepcionOCDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>
+          }
+          update: {
+            args: Prisma.RecepcionOCUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>
+          }
+          deleteMany: {
+            args: Prisma.RecepcionOCDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RecepcionOCUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RecepcionOCUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCPayload>
+          }
+          aggregate: {
+            args: Prisma.RecepcionOCAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRecepcionOC>
+          }
+          groupBy: {
+            args: Prisma.RecepcionOCGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RecepcionOCGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RecepcionOCCountArgs<ExtArgs>
+            result: $Utils.Optional<RecepcionOCCountAggregateOutputType> | number
+          }
+        }
+      }
+      RecepcionOCItem: {
+        payload: Prisma.$RecepcionOCItemPayload<ExtArgs>
+        fields: Prisma.RecepcionOCItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RecepcionOCItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RecepcionOCItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>
+          }
+          findFirst: {
+            args: Prisma.RecepcionOCItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RecepcionOCItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>
+          }
+          findMany: {
+            args: Prisma.RecepcionOCItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>[]
+          }
+          create: {
+            args: Prisma.RecepcionOCItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>
+          }
+          createMany: {
+            args: Prisma.RecepcionOCItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RecepcionOCItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>[]
+          }
+          delete: {
+            args: Prisma.RecepcionOCItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>
+          }
+          update: {
+            args: Prisma.RecepcionOCItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.RecepcionOCItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RecepcionOCItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RecepcionOCItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecepcionOCItemPayload>
+          }
+          aggregate: {
+            args: Prisma.RecepcionOCItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRecepcionOCItem>
+          }
+          groupBy: {
+            args: Prisma.RecepcionOCItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RecepcionOCItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RecepcionOCItemCountArgs<ExtArgs>
+            result: $Utils.Optional<RecepcionOCItemCountAggregateOutputType> | number
           }
         }
       }
@@ -2567,10 +2739,12 @@ export namespace Prisma {
 
   export type OrdenCompraCountOutputType = {
     items: number
+    recepciones: number
   }
 
   export type OrdenCompraCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     items?: boolean | OrdenCompraCountOutputTypeCountItemsArgs
+    recepciones?: boolean | OrdenCompraCountOutputTypeCountRecepcionesArgs
   }
 
   // Custom InputTypes
@@ -2589,6 +2763,44 @@ export namespace Prisma {
    */
   export type OrdenCompraCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrdenCompraItemWhereInput
+  }
+
+  /**
+   * OrdenCompraCountOutputType without action
+   */
+  export type OrdenCompraCountOutputTypeCountRecepcionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecepcionOCWhereInput
+  }
+
+
+  /**
+   * Count Type RecepcionOCCountOutputType
+   */
+
+  export type RecepcionOCCountOutputType = {
+    items: number
+  }
+
+  export type RecepcionOCCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | RecepcionOCCountOutputTypeCountItemsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RecepcionOCCountOutputType without action
+   */
+  export type RecepcionOCCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCCountOutputType
+     */
+    select?: RecepcionOCCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RecepcionOCCountOutputType without action
+   */
+  export type RecepcionOCCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecepcionOCItemWhereInput
   }
 
 
@@ -9348,6 +9560,7 @@ export namespace Prisma {
     requisicion_id?: boolean
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
     items?: boolean | OrdenCompra$itemsArgs<ExtArgs>
+    recepciones?: boolean | OrdenCompra$recepcionesArgs<ExtArgs>
     _count?: boolean | OrdenCompraCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["ordenCompra"]>
 
@@ -9389,6 +9602,7 @@ export namespace Prisma {
   export type OrdenCompraInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
     items?: boolean | OrdenCompra$itemsArgs<ExtArgs>
+    recepciones?: boolean | OrdenCompra$recepcionesArgs<ExtArgs>
     _count?: boolean | OrdenCompraCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrdenCompraIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9400,6 +9614,7 @@ export namespace Prisma {
     objects: {
       proveedor: Prisma.$ProveedorPayload<ExtArgs>
       items: Prisma.$OrdenCompraItemPayload<ExtArgs>[]
+      recepciones: Prisma.$RecepcionOCPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_orden: string
@@ -9785,6 +10000,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     proveedor<T extends ProveedorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProveedorDefaultArgs<ExtArgs>>): Prisma__ProveedorClient<$Result.GetResult<Prisma.$ProveedorPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     items<T extends OrdenCompra$itemsArgs<ExtArgs> = {}>(args?: Subset<T, OrdenCompra$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenCompraItemPayload<ExtArgs>, T, "findMany"> | Null>
+    recepciones<T extends OrdenCompra$recepcionesArgs<ExtArgs> = {}>(args?: Subset<T, OrdenCompra$recepcionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -10163,6 +10379,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: OrdenCompraItemScalarFieldEnum | OrdenCompraItemScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenCompra.recepciones
+   */
+  export type OrdenCompra$recepcionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    where?: RecepcionOCWhereInput
+    orderBy?: RecepcionOCOrderByWithRelationInput | RecepcionOCOrderByWithRelationInput[]
+    cursor?: RecepcionOCWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecepcionOCScalarFieldEnum | RecepcionOCScalarFieldEnum[]
   }
 
   /**
@@ -11188,6 +11424,1992 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: OrdenCompraItemInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RecepcionOC
+   */
+
+  export type AggregateRecepcionOC = {
+    _count: RecepcionOCCountAggregateOutputType | null
+    _min: RecepcionOCMinAggregateOutputType | null
+    _max: RecepcionOCMaxAggregateOutputType | null
+  }
+
+  export type RecepcionOCMinAggregateOutputType = {
+    id_recepcion: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    orden_id: string | null
+    fecha_recepcion: Date | null
+    recibido_por: string | null
+    notas: string | null
+    created_at: Date | null
+  }
+
+  export type RecepcionOCMaxAggregateOutputType = {
+    id_recepcion: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    orden_id: string | null
+    fecha_recepcion: Date | null
+    recibido_por: string | null
+    notas: string | null
+    created_at: Date | null
+  }
+
+  export type RecepcionOCCountAggregateOutputType = {
+    id_recepcion: number
+    tenant_id: number
+    proyecto_id: number
+    orden_id: number
+    fecha_recepcion: number
+    recibido_por: number
+    notas: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type RecepcionOCMinAggregateInputType = {
+    id_recepcion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    orden_id?: true
+    fecha_recepcion?: true
+    recibido_por?: true
+    notas?: true
+    created_at?: true
+  }
+
+  export type RecepcionOCMaxAggregateInputType = {
+    id_recepcion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    orden_id?: true
+    fecha_recepcion?: true
+    recibido_por?: true
+    notas?: true
+    created_at?: true
+  }
+
+  export type RecepcionOCCountAggregateInputType = {
+    id_recepcion?: true
+    tenant_id?: true
+    proyecto_id?: true
+    orden_id?: true
+    fecha_recepcion?: true
+    recibido_por?: true
+    notas?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type RecepcionOCAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecepcionOC to aggregate.
+     */
+    where?: RecepcionOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCS to fetch.
+     */
+    orderBy?: RecepcionOCOrderByWithRelationInput | RecepcionOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RecepcionOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RecepcionOCS
+    **/
+    _count?: true | RecepcionOCCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RecepcionOCMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RecepcionOCMaxAggregateInputType
+  }
+
+  export type GetRecepcionOCAggregateType<T extends RecepcionOCAggregateArgs> = {
+        [P in keyof T & keyof AggregateRecepcionOC]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRecepcionOC[P]>
+      : GetScalarType<T[P], AggregateRecepcionOC[P]>
+  }
+
+
+
+
+  export type RecepcionOCGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecepcionOCWhereInput
+    orderBy?: RecepcionOCOrderByWithAggregationInput | RecepcionOCOrderByWithAggregationInput[]
+    by: RecepcionOCScalarFieldEnum[] | RecepcionOCScalarFieldEnum
+    having?: RecepcionOCScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RecepcionOCCountAggregateInputType | true
+    _min?: RecepcionOCMinAggregateInputType
+    _max?: RecepcionOCMaxAggregateInputType
+  }
+
+  export type RecepcionOCGroupByOutputType = {
+    id_recepcion: string
+    tenant_id: string
+    proyecto_id: string
+    orden_id: string
+    fecha_recepcion: Date
+    recibido_por: string
+    notas: string | null
+    created_at: Date
+    _count: RecepcionOCCountAggregateOutputType | null
+    _min: RecepcionOCMinAggregateOutputType | null
+    _max: RecepcionOCMaxAggregateOutputType | null
+  }
+
+  type GetRecepcionOCGroupByPayload<T extends RecepcionOCGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RecepcionOCGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RecepcionOCGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RecepcionOCGroupByOutputType[P]>
+            : GetScalarType<T[P], RecepcionOCGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RecepcionOCSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_recepcion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    orden_id?: boolean
+    fecha_recepcion?: boolean
+    recibido_por?: boolean
+    notas?: boolean
+    created_at?: boolean
+    orden?: boolean | OrdenCompraDefaultArgs<ExtArgs>
+    items?: boolean | RecepcionOC$itemsArgs<ExtArgs>
+    _count?: boolean | RecepcionOCCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recepcionOC"]>
+
+  export type RecepcionOCSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_recepcion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    orden_id?: boolean
+    fecha_recepcion?: boolean
+    recibido_por?: boolean
+    notas?: boolean
+    created_at?: boolean
+    orden?: boolean | OrdenCompraDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recepcionOC"]>
+
+  export type RecepcionOCSelectScalar = {
+    id_recepcion?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    orden_id?: boolean
+    fecha_recepcion?: boolean
+    recibido_por?: boolean
+    notas?: boolean
+    created_at?: boolean
+  }
+
+  export type RecepcionOCInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    orden?: boolean | OrdenCompraDefaultArgs<ExtArgs>
+    items?: boolean | RecepcionOC$itemsArgs<ExtArgs>
+    _count?: boolean | RecepcionOCCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RecepcionOCIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    orden?: boolean | OrdenCompraDefaultArgs<ExtArgs>
+  }
+
+  export type $RecepcionOCPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RecepcionOC"
+    objects: {
+      orden: Prisma.$OrdenCompraPayload<ExtArgs>
+      items: Prisma.$RecepcionOCItemPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_recepcion: string
+      tenant_id: string
+      proyecto_id: string
+      orden_id: string
+      fecha_recepcion: Date
+      recibido_por: string
+      notas: string | null
+      created_at: Date
+    }, ExtArgs["result"]["recepcionOC"]>
+    composites: {}
+  }
+
+  type RecepcionOCGetPayload<S extends boolean | null | undefined | RecepcionOCDefaultArgs> = $Result.GetResult<Prisma.$RecepcionOCPayload, S>
+
+  type RecepcionOCCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RecepcionOCFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RecepcionOCCountAggregateInputType | true
+    }
+
+  export interface RecepcionOCDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RecepcionOC'], meta: { name: 'RecepcionOC' } }
+    /**
+     * Find zero or one RecepcionOC that matches the filter.
+     * @param {RecepcionOCFindUniqueArgs} args - Arguments to find a RecepcionOC
+     * @example
+     * // Get one RecepcionOC
+     * const recepcionOC = await prisma.recepcionOC.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RecepcionOCFindUniqueArgs>(args: SelectSubset<T, RecepcionOCFindUniqueArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RecepcionOC that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RecepcionOCFindUniqueOrThrowArgs} args - Arguments to find a RecepcionOC
+     * @example
+     * // Get one RecepcionOC
+     * const recepcionOC = await prisma.recepcionOC.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RecepcionOCFindUniqueOrThrowArgs>(args: SelectSubset<T, RecepcionOCFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RecepcionOC that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCFindFirstArgs} args - Arguments to find a RecepcionOC
+     * @example
+     * // Get one RecepcionOC
+     * const recepcionOC = await prisma.recepcionOC.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RecepcionOCFindFirstArgs>(args?: SelectSubset<T, RecepcionOCFindFirstArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RecepcionOC that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCFindFirstOrThrowArgs} args - Arguments to find a RecepcionOC
+     * @example
+     * // Get one RecepcionOC
+     * const recepcionOC = await prisma.recepcionOC.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RecepcionOCFindFirstOrThrowArgs>(args?: SelectSubset<T, RecepcionOCFindFirstOrThrowArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RecepcionOCS that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RecepcionOCS
+     * const recepcionOCS = await prisma.recepcionOC.findMany()
+     * 
+     * // Get first 10 RecepcionOCS
+     * const recepcionOCS = await prisma.recepcionOC.findMany({ take: 10 })
+     * 
+     * // Only select the `id_recepcion`
+     * const recepcionOCWithId_recepcionOnly = await prisma.recepcionOC.findMany({ select: { id_recepcion: true } })
+     * 
+     */
+    findMany<T extends RecepcionOCFindManyArgs>(args?: SelectSubset<T, RecepcionOCFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RecepcionOC.
+     * @param {RecepcionOCCreateArgs} args - Arguments to create a RecepcionOC.
+     * @example
+     * // Create one RecepcionOC
+     * const RecepcionOC = await prisma.recepcionOC.create({
+     *   data: {
+     *     // ... data to create a RecepcionOC
+     *   }
+     * })
+     * 
+     */
+    create<T extends RecepcionOCCreateArgs>(args: SelectSubset<T, RecepcionOCCreateArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RecepcionOCS.
+     * @param {RecepcionOCCreateManyArgs} args - Arguments to create many RecepcionOCS.
+     * @example
+     * // Create many RecepcionOCS
+     * const recepcionOC = await prisma.recepcionOC.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RecepcionOCCreateManyArgs>(args?: SelectSubset<T, RecepcionOCCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RecepcionOCS and returns the data saved in the database.
+     * @param {RecepcionOCCreateManyAndReturnArgs} args - Arguments to create many RecepcionOCS.
+     * @example
+     * // Create many RecepcionOCS
+     * const recepcionOC = await prisma.recepcionOC.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RecepcionOCS and only return the `id_recepcion`
+     * const recepcionOCWithId_recepcionOnly = await prisma.recepcionOC.createManyAndReturn({ 
+     *   select: { id_recepcion: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RecepcionOCCreateManyAndReturnArgs>(args?: SelectSubset<T, RecepcionOCCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RecepcionOC.
+     * @param {RecepcionOCDeleteArgs} args - Arguments to delete one RecepcionOC.
+     * @example
+     * // Delete one RecepcionOC
+     * const RecepcionOC = await prisma.recepcionOC.delete({
+     *   where: {
+     *     // ... filter to delete one RecepcionOC
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RecepcionOCDeleteArgs>(args: SelectSubset<T, RecepcionOCDeleteArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RecepcionOC.
+     * @param {RecepcionOCUpdateArgs} args - Arguments to update one RecepcionOC.
+     * @example
+     * // Update one RecepcionOC
+     * const recepcionOC = await prisma.recepcionOC.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RecepcionOCUpdateArgs>(args: SelectSubset<T, RecepcionOCUpdateArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RecepcionOCS.
+     * @param {RecepcionOCDeleteManyArgs} args - Arguments to filter RecepcionOCS to delete.
+     * @example
+     * // Delete a few RecepcionOCS
+     * const { count } = await prisma.recepcionOC.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RecepcionOCDeleteManyArgs>(args?: SelectSubset<T, RecepcionOCDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RecepcionOCS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RecepcionOCS
+     * const recepcionOC = await prisma.recepcionOC.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RecepcionOCUpdateManyArgs>(args: SelectSubset<T, RecepcionOCUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RecepcionOC.
+     * @param {RecepcionOCUpsertArgs} args - Arguments to update or create a RecepcionOC.
+     * @example
+     * // Update or create a RecepcionOC
+     * const recepcionOC = await prisma.recepcionOC.upsert({
+     *   create: {
+     *     // ... data to create a RecepcionOC
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RecepcionOC we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RecepcionOCUpsertArgs>(args: SelectSubset<T, RecepcionOCUpsertArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RecepcionOCS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCCountArgs} args - Arguments to filter RecepcionOCS to count.
+     * @example
+     * // Count the number of RecepcionOCS
+     * const count = await prisma.recepcionOC.count({
+     *   where: {
+     *     // ... the filter for the RecepcionOCS we want to count
+     *   }
+     * })
+    **/
+    count<T extends RecepcionOCCountArgs>(
+      args?: Subset<T, RecepcionOCCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RecepcionOCCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RecepcionOC.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RecepcionOCAggregateArgs>(args: Subset<T, RecepcionOCAggregateArgs>): Prisma.PrismaPromise<GetRecepcionOCAggregateType<T>>
+
+    /**
+     * Group by RecepcionOC.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RecepcionOCGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RecepcionOCGroupByArgs['orderBy'] }
+        : { orderBy?: RecepcionOCGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RecepcionOCGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRecepcionOCGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RecepcionOC model
+   */
+  readonly fields: RecepcionOCFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RecepcionOC.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RecepcionOCClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    orden<T extends OrdenCompraDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrdenCompraDefaultArgs<ExtArgs>>): Prisma__OrdenCompraClient<$Result.GetResult<Prisma.$OrdenCompraPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    items<T extends RecepcionOC$itemsArgs<ExtArgs> = {}>(args?: Subset<T, RecepcionOC$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RecepcionOC model
+   */ 
+  interface RecepcionOCFieldRefs {
+    readonly id_recepcion: FieldRef<"RecepcionOC", 'String'>
+    readonly tenant_id: FieldRef<"RecepcionOC", 'String'>
+    readonly proyecto_id: FieldRef<"RecepcionOC", 'String'>
+    readonly orden_id: FieldRef<"RecepcionOC", 'String'>
+    readonly fecha_recepcion: FieldRef<"RecepcionOC", 'DateTime'>
+    readonly recibido_por: FieldRef<"RecepcionOC", 'String'>
+    readonly notas: FieldRef<"RecepcionOC", 'String'>
+    readonly created_at: FieldRef<"RecepcionOC", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RecepcionOC findUnique
+   */
+  export type RecepcionOCFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOC to fetch.
+     */
+    where: RecepcionOCWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOC findUniqueOrThrow
+   */
+  export type RecepcionOCFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOC to fetch.
+     */
+    where: RecepcionOCWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOC findFirst
+   */
+  export type RecepcionOCFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOC to fetch.
+     */
+    where?: RecepcionOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCS to fetch.
+     */
+    orderBy?: RecepcionOCOrderByWithRelationInput | RecepcionOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecepcionOCS.
+     */
+    cursor?: RecepcionOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecepcionOCS.
+     */
+    distinct?: RecepcionOCScalarFieldEnum | RecepcionOCScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOC findFirstOrThrow
+   */
+  export type RecepcionOCFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOC to fetch.
+     */
+    where?: RecepcionOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCS to fetch.
+     */
+    orderBy?: RecepcionOCOrderByWithRelationInput | RecepcionOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecepcionOCS.
+     */
+    cursor?: RecepcionOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecepcionOCS.
+     */
+    distinct?: RecepcionOCScalarFieldEnum | RecepcionOCScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOC findMany
+   */
+  export type RecepcionOCFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOCS to fetch.
+     */
+    where?: RecepcionOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCS to fetch.
+     */
+    orderBy?: RecepcionOCOrderByWithRelationInput | RecepcionOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RecepcionOCS.
+     */
+    cursor?: RecepcionOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCS.
+     */
+    skip?: number
+    distinct?: RecepcionOCScalarFieldEnum | RecepcionOCScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOC create
+   */
+  export type RecepcionOCCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RecepcionOC.
+     */
+    data: XOR<RecepcionOCCreateInput, RecepcionOCUncheckedCreateInput>
+  }
+
+  /**
+   * RecepcionOC createMany
+   */
+  export type RecepcionOCCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RecepcionOCS.
+     */
+    data: RecepcionOCCreateManyInput | RecepcionOCCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RecepcionOC createManyAndReturn
+   */
+  export type RecepcionOCCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RecepcionOCS.
+     */
+    data: RecepcionOCCreateManyInput | RecepcionOCCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RecepcionOC update
+   */
+  export type RecepcionOCUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RecepcionOC.
+     */
+    data: XOR<RecepcionOCUpdateInput, RecepcionOCUncheckedUpdateInput>
+    /**
+     * Choose, which RecepcionOC to update.
+     */
+    where: RecepcionOCWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOC updateMany
+   */
+  export type RecepcionOCUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RecepcionOCS.
+     */
+    data: XOR<RecepcionOCUpdateManyMutationInput, RecepcionOCUncheckedUpdateManyInput>
+    /**
+     * Filter which RecepcionOCS to update
+     */
+    where?: RecepcionOCWhereInput
+  }
+
+  /**
+   * RecepcionOC upsert
+   */
+  export type RecepcionOCUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RecepcionOC to update in case it exists.
+     */
+    where: RecepcionOCWhereUniqueInput
+    /**
+     * In case the RecepcionOC found by the `where` argument doesn't exist, create a new RecepcionOC with this data.
+     */
+    create: XOR<RecepcionOCCreateInput, RecepcionOCUncheckedCreateInput>
+    /**
+     * In case the RecepcionOC was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RecepcionOCUpdateInput, RecepcionOCUncheckedUpdateInput>
+  }
+
+  /**
+   * RecepcionOC delete
+   */
+  export type RecepcionOCDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+    /**
+     * Filter which RecepcionOC to delete.
+     */
+    where: RecepcionOCWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOC deleteMany
+   */
+  export type RecepcionOCDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecepcionOCS to delete
+     */
+    where?: RecepcionOCWhereInput
+  }
+
+  /**
+   * RecepcionOC.items
+   */
+  export type RecepcionOC$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    where?: RecepcionOCItemWhereInput
+    orderBy?: RecepcionOCItemOrderByWithRelationInput | RecepcionOCItemOrderByWithRelationInput[]
+    cursor?: RecepcionOCItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecepcionOCItemScalarFieldEnum | RecepcionOCItemScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOC without action
+   */
+  export type RecepcionOCDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOC
+     */
+    select?: RecepcionOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RecepcionOCItem
+   */
+
+  export type AggregateRecepcionOCItem = {
+    _count: RecepcionOCItemCountAggregateOutputType | null
+    _avg: RecepcionOCItemAvgAggregateOutputType | null
+    _sum: RecepcionOCItemSumAggregateOutputType | null
+    _min: RecepcionOCItemMinAggregateOutputType | null
+    _max: RecepcionOCItemMaxAggregateOutputType | null
+  }
+
+  export type RecepcionOCItemAvgAggregateOutputType = {
+    cantidad_recibida: Decimal | null
+  }
+
+  export type RecepcionOCItemSumAggregateOutputType = {
+    cantidad_recibida: Decimal | null
+  }
+
+  export type RecepcionOCItemMinAggregateOutputType = {
+    id_recepcion_item: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    recepcion_id: string | null
+    orden_item_id: string | null
+    cantidad_recibida: Decimal | null
+    nota_discrepancia: string | null
+  }
+
+  export type RecepcionOCItemMaxAggregateOutputType = {
+    id_recepcion_item: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    recepcion_id: string | null
+    orden_item_id: string | null
+    cantidad_recibida: Decimal | null
+    nota_discrepancia: string | null
+  }
+
+  export type RecepcionOCItemCountAggregateOutputType = {
+    id_recepcion_item: number
+    tenant_id: number
+    proyecto_id: number
+    recepcion_id: number
+    orden_item_id: number
+    cantidad_recibida: number
+    nota_discrepancia: number
+    _all: number
+  }
+
+
+  export type RecepcionOCItemAvgAggregateInputType = {
+    cantidad_recibida?: true
+  }
+
+  export type RecepcionOCItemSumAggregateInputType = {
+    cantidad_recibida?: true
+  }
+
+  export type RecepcionOCItemMinAggregateInputType = {
+    id_recepcion_item?: true
+    tenant_id?: true
+    proyecto_id?: true
+    recepcion_id?: true
+    orden_item_id?: true
+    cantidad_recibida?: true
+    nota_discrepancia?: true
+  }
+
+  export type RecepcionOCItemMaxAggregateInputType = {
+    id_recepcion_item?: true
+    tenant_id?: true
+    proyecto_id?: true
+    recepcion_id?: true
+    orden_item_id?: true
+    cantidad_recibida?: true
+    nota_discrepancia?: true
+  }
+
+  export type RecepcionOCItemCountAggregateInputType = {
+    id_recepcion_item?: true
+    tenant_id?: true
+    proyecto_id?: true
+    recepcion_id?: true
+    orden_item_id?: true
+    cantidad_recibida?: true
+    nota_discrepancia?: true
+    _all?: true
+  }
+
+  export type RecepcionOCItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecepcionOCItem to aggregate.
+     */
+    where?: RecepcionOCItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCItems to fetch.
+     */
+    orderBy?: RecepcionOCItemOrderByWithRelationInput | RecepcionOCItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RecepcionOCItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RecepcionOCItems
+    **/
+    _count?: true | RecepcionOCItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RecepcionOCItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RecepcionOCItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RecepcionOCItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RecepcionOCItemMaxAggregateInputType
+  }
+
+  export type GetRecepcionOCItemAggregateType<T extends RecepcionOCItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateRecepcionOCItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRecepcionOCItem[P]>
+      : GetScalarType<T[P], AggregateRecepcionOCItem[P]>
+  }
+
+
+
+
+  export type RecepcionOCItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecepcionOCItemWhereInput
+    orderBy?: RecepcionOCItemOrderByWithAggregationInput | RecepcionOCItemOrderByWithAggregationInput[]
+    by: RecepcionOCItemScalarFieldEnum[] | RecepcionOCItemScalarFieldEnum
+    having?: RecepcionOCItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RecepcionOCItemCountAggregateInputType | true
+    _avg?: RecepcionOCItemAvgAggregateInputType
+    _sum?: RecepcionOCItemSumAggregateInputType
+    _min?: RecepcionOCItemMinAggregateInputType
+    _max?: RecepcionOCItemMaxAggregateInputType
+  }
+
+  export type RecepcionOCItemGroupByOutputType = {
+    id_recepcion_item: string
+    tenant_id: string
+    proyecto_id: string
+    recepcion_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal
+    nota_discrepancia: string | null
+    _count: RecepcionOCItemCountAggregateOutputType | null
+    _avg: RecepcionOCItemAvgAggregateOutputType | null
+    _sum: RecepcionOCItemSumAggregateOutputType | null
+    _min: RecepcionOCItemMinAggregateOutputType | null
+    _max: RecepcionOCItemMaxAggregateOutputType | null
+  }
+
+  type GetRecepcionOCItemGroupByPayload<T extends RecepcionOCItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RecepcionOCItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RecepcionOCItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RecepcionOCItemGroupByOutputType[P]>
+            : GetScalarType<T[P], RecepcionOCItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RecepcionOCItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_recepcion_item?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    recepcion_id?: boolean
+    orden_item_id?: boolean
+    cantidad_recibida?: boolean
+    nota_discrepancia?: boolean
+    recepcion?: boolean | RecepcionOCDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recepcionOCItem"]>
+
+  export type RecepcionOCItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_recepcion_item?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    recepcion_id?: boolean
+    orden_item_id?: boolean
+    cantidad_recibida?: boolean
+    nota_discrepancia?: boolean
+    recepcion?: boolean | RecepcionOCDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recepcionOCItem"]>
+
+  export type RecepcionOCItemSelectScalar = {
+    id_recepcion_item?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    recepcion_id?: boolean
+    orden_item_id?: boolean
+    cantidad_recibida?: boolean
+    nota_discrepancia?: boolean
+  }
+
+  export type RecepcionOCItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    recepcion?: boolean | RecepcionOCDefaultArgs<ExtArgs>
+  }
+  export type RecepcionOCItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    recepcion?: boolean | RecepcionOCDefaultArgs<ExtArgs>
+  }
+
+  export type $RecepcionOCItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RecepcionOCItem"
+    objects: {
+      recepcion: Prisma.$RecepcionOCPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_recepcion_item: string
+      tenant_id: string
+      proyecto_id: string
+      recepcion_id: string
+      orden_item_id: string
+      cantidad_recibida: Prisma.Decimal
+      nota_discrepancia: string | null
+    }, ExtArgs["result"]["recepcionOCItem"]>
+    composites: {}
+  }
+
+  type RecepcionOCItemGetPayload<S extends boolean | null | undefined | RecepcionOCItemDefaultArgs> = $Result.GetResult<Prisma.$RecepcionOCItemPayload, S>
+
+  type RecepcionOCItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RecepcionOCItemFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RecepcionOCItemCountAggregateInputType | true
+    }
+
+  export interface RecepcionOCItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RecepcionOCItem'], meta: { name: 'RecepcionOCItem' } }
+    /**
+     * Find zero or one RecepcionOCItem that matches the filter.
+     * @param {RecepcionOCItemFindUniqueArgs} args - Arguments to find a RecepcionOCItem
+     * @example
+     * // Get one RecepcionOCItem
+     * const recepcionOCItem = await prisma.recepcionOCItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RecepcionOCItemFindUniqueArgs>(args: SelectSubset<T, RecepcionOCItemFindUniqueArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RecepcionOCItem that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RecepcionOCItemFindUniqueOrThrowArgs} args - Arguments to find a RecepcionOCItem
+     * @example
+     * // Get one RecepcionOCItem
+     * const recepcionOCItem = await prisma.recepcionOCItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RecepcionOCItemFindUniqueOrThrowArgs>(args: SelectSubset<T, RecepcionOCItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RecepcionOCItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemFindFirstArgs} args - Arguments to find a RecepcionOCItem
+     * @example
+     * // Get one RecepcionOCItem
+     * const recepcionOCItem = await prisma.recepcionOCItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RecepcionOCItemFindFirstArgs>(args?: SelectSubset<T, RecepcionOCItemFindFirstArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RecepcionOCItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemFindFirstOrThrowArgs} args - Arguments to find a RecepcionOCItem
+     * @example
+     * // Get one RecepcionOCItem
+     * const recepcionOCItem = await prisma.recepcionOCItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RecepcionOCItemFindFirstOrThrowArgs>(args?: SelectSubset<T, RecepcionOCItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RecepcionOCItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RecepcionOCItems
+     * const recepcionOCItems = await prisma.recepcionOCItem.findMany()
+     * 
+     * // Get first 10 RecepcionOCItems
+     * const recepcionOCItems = await prisma.recepcionOCItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id_recepcion_item`
+     * const recepcionOCItemWithId_recepcion_itemOnly = await prisma.recepcionOCItem.findMany({ select: { id_recepcion_item: true } })
+     * 
+     */
+    findMany<T extends RecepcionOCItemFindManyArgs>(args?: SelectSubset<T, RecepcionOCItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RecepcionOCItem.
+     * @param {RecepcionOCItemCreateArgs} args - Arguments to create a RecepcionOCItem.
+     * @example
+     * // Create one RecepcionOCItem
+     * const RecepcionOCItem = await prisma.recepcionOCItem.create({
+     *   data: {
+     *     // ... data to create a RecepcionOCItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends RecepcionOCItemCreateArgs>(args: SelectSubset<T, RecepcionOCItemCreateArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RecepcionOCItems.
+     * @param {RecepcionOCItemCreateManyArgs} args - Arguments to create many RecepcionOCItems.
+     * @example
+     * // Create many RecepcionOCItems
+     * const recepcionOCItem = await prisma.recepcionOCItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RecepcionOCItemCreateManyArgs>(args?: SelectSubset<T, RecepcionOCItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RecepcionOCItems and returns the data saved in the database.
+     * @param {RecepcionOCItemCreateManyAndReturnArgs} args - Arguments to create many RecepcionOCItems.
+     * @example
+     * // Create many RecepcionOCItems
+     * const recepcionOCItem = await prisma.recepcionOCItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RecepcionOCItems and only return the `id_recepcion_item`
+     * const recepcionOCItemWithId_recepcion_itemOnly = await prisma.recepcionOCItem.createManyAndReturn({ 
+     *   select: { id_recepcion_item: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RecepcionOCItemCreateManyAndReturnArgs>(args?: SelectSubset<T, RecepcionOCItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RecepcionOCItem.
+     * @param {RecepcionOCItemDeleteArgs} args - Arguments to delete one RecepcionOCItem.
+     * @example
+     * // Delete one RecepcionOCItem
+     * const RecepcionOCItem = await prisma.recepcionOCItem.delete({
+     *   where: {
+     *     // ... filter to delete one RecepcionOCItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RecepcionOCItemDeleteArgs>(args: SelectSubset<T, RecepcionOCItemDeleteArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RecepcionOCItem.
+     * @param {RecepcionOCItemUpdateArgs} args - Arguments to update one RecepcionOCItem.
+     * @example
+     * // Update one RecepcionOCItem
+     * const recepcionOCItem = await prisma.recepcionOCItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RecepcionOCItemUpdateArgs>(args: SelectSubset<T, RecepcionOCItemUpdateArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RecepcionOCItems.
+     * @param {RecepcionOCItemDeleteManyArgs} args - Arguments to filter RecepcionOCItems to delete.
+     * @example
+     * // Delete a few RecepcionOCItems
+     * const { count } = await prisma.recepcionOCItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RecepcionOCItemDeleteManyArgs>(args?: SelectSubset<T, RecepcionOCItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RecepcionOCItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RecepcionOCItems
+     * const recepcionOCItem = await prisma.recepcionOCItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RecepcionOCItemUpdateManyArgs>(args: SelectSubset<T, RecepcionOCItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RecepcionOCItem.
+     * @param {RecepcionOCItemUpsertArgs} args - Arguments to update or create a RecepcionOCItem.
+     * @example
+     * // Update or create a RecepcionOCItem
+     * const recepcionOCItem = await prisma.recepcionOCItem.upsert({
+     *   create: {
+     *     // ... data to create a RecepcionOCItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RecepcionOCItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RecepcionOCItemUpsertArgs>(args: SelectSubset<T, RecepcionOCItemUpsertArgs<ExtArgs>>): Prisma__RecepcionOCItemClient<$Result.GetResult<Prisma.$RecepcionOCItemPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RecepcionOCItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemCountArgs} args - Arguments to filter RecepcionOCItems to count.
+     * @example
+     * // Count the number of RecepcionOCItems
+     * const count = await prisma.recepcionOCItem.count({
+     *   where: {
+     *     // ... the filter for the RecepcionOCItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends RecepcionOCItemCountArgs>(
+      args?: Subset<T, RecepcionOCItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RecepcionOCItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RecepcionOCItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RecepcionOCItemAggregateArgs>(args: Subset<T, RecepcionOCItemAggregateArgs>): Prisma.PrismaPromise<GetRecepcionOCItemAggregateType<T>>
+
+    /**
+     * Group by RecepcionOCItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecepcionOCItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RecepcionOCItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RecepcionOCItemGroupByArgs['orderBy'] }
+        : { orderBy?: RecepcionOCItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RecepcionOCItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRecepcionOCItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RecepcionOCItem model
+   */
+  readonly fields: RecepcionOCItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RecepcionOCItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RecepcionOCItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    recepcion<T extends RecepcionOCDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RecepcionOCDefaultArgs<ExtArgs>>): Prisma__RecepcionOCClient<$Result.GetResult<Prisma.$RecepcionOCPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RecepcionOCItem model
+   */ 
+  interface RecepcionOCItemFieldRefs {
+    readonly id_recepcion_item: FieldRef<"RecepcionOCItem", 'String'>
+    readonly tenant_id: FieldRef<"RecepcionOCItem", 'String'>
+    readonly proyecto_id: FieldRef<"RecepcionOCItem", 'String'>
+    readonly recepcion_id: FieldRef<"RecepcionOCItem", 'String'>
+    readonly orden_item_id: FieldRef<"RecepcionOCItem", 'String'>
+    readonly cantidad_recibida: FieldRef<"RecepcionOCItem", 'Decimal'>
+    readonly nota_discrepancia: FieldRef<"RecepcionOCItem", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RecepcionOCItem findUnique
+   */
+  export type RecepcionOCItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOCItem to fetch.
+     */
+    where: RecepcionOCItemWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOCItem findUniqueOrThrow
+   */
+  export type RecepcionOCItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOCItem to fetch.
+     */
+    where: RecepcionOCItemWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOCItem findFirst
+   */
+  export type RecepcionOCItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOCItem to fetch.
+     */
+    where?: RecepcionOCItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCItems to fetch.
+     */
+    orderBy?: RecepcionOCItemOrderByWithRelationInput | RecepcionOCItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecepcionOCItems.
+     */
+    cursor?: RecepcionOCItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecepcionOCItems.
+     */
+    distinct?: RecepcionOCItemScalarFieldEnum | RecepcionOCItemScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOCItem findFirstOrThrow
+   */
+  export type RecepcionOCItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOCItem to fetch.
+     */
+    where?: RecepcionOCItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCItems to fetch.
+     */
+    orderBy?: RecepcionOCItemOrderByWithRelationInput | RecepcionOCItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecepcionOCItems.
+     */
+    cursor?: RecepcionOCItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecepcionOCItems.
+     */
+    distinct?: RecepcionOCItemScalarFieldEnum | RecepcionOCItemScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOCItem findMany
+   */
+  export type RecepcionOCItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * Filter, which RecepcionOCItems to fetch.
+     */
+    where?: RecepcionOCItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecepcionOCItems to fetch.
+     */
+    orderBy?: RecepcionOCItemOrderByWithRelationInput | RecepcionOCItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RecepcionOCItems.
+     */
+    cursor?: RecepcionOCItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecepcionOCItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecepcionOCItems.
+     */
+    skip?: number
+    distinct?: RecepcionOCItemScalarFieldEnum | RecepcionOCItemScalarFieldEnum[]
+  }
+
+  /**
+   * RecepcionOCItem create
+   */
+  export type RecepcionOCItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RecepcionOCItem.
+     */
+    data: XOR<RecepcionOCItemCreateInput, RecepcionOCItemUncheckedCreateInput>
+  }
+
+  /**
+   * RecepcionOCItem createMany
+   */
+  export type RecepcionOCItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RecepcionOCItems.
+     */
+    data: RecepcionOCItemCreateManyInput | RecepcionOCItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RecepcionOCItem createManyAndReturn
+   */
+  export type RecepcionOCItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RecepcionOCItems.
+     */
+    data: RecepcionOCItemCreateManyInput | RecepcionOCItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RecepcionOCItem update
+   */
+  export type RecepcionOCItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RecepcionOCItem.
+     */
+    data: XOR<RecepcionOCItemUpdateInput, RecepcionOCItemUncheckedUpdateInput>
+    /**
+     * Choose, which RecepcionOCItem to update.
+     */
+    where: RecepcionOCItemWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOCItem updateMany
+   */
+  export type RecepcionOCItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RecepcionOCItems.
+     */
+    data: XOR<RecepcionOCItemUpdateManyMutationInput, RecepcionOCItemUncheckedUpdateManyInput>
+    /**
+     * Filter which RecepcionOCItems to update
+     */
+    where?: RecepcionOCItemWhereInput
+  }
+
+  /**
+   * RecepcionOCItem upsert
+   */
+  export type RecepcionOCItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RecepcionOCItem to update in case it exists.
+     */
+    where: RecepcionOCItemWhereUniqueInput
+    /**
+     * In case the RecepcionOCItem found by the `where` argument doesn't exist, create a new RecepcionOCItem with this data.
+     */
+    create: XOR<RecepcionOCItemCreateInput, RecepcionOCItemUncheckedCreateInput>
+    /**
+     * In case the RecepcionOCItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RecepcionOCItemUpdateInput, RecepcionOCItemUncheckedUpdateInput>
+  }
+
+  /**
+   * RecepcionOCItem delete
+   */
+  export type RecepcionOCItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
+    /**
+     * Filter which RecepcionOCItem to delete.
+     */
+    where: RecepcionOCItemWhereUniqueInput
+  }
+
+  /**
+   * RecepcionOCItem deleteMany
+   */
+  export type RecepcionOCItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecepcionOCItems to delete
+     */
+    where?: RecepcionOCItemWhereInput
+  }
+
+  /**
+   * RecepcionOCItem without action
+   */
+  export type RecepcionOCItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecepcionOCItem
+     */
+    select?: RecepcionOCItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecepcionOCItemInclude<ExtArgs> | null
   }
 
 
@@ -23586,6 +25808,33 @@ export namespace Prisma {
   export type OrdenCompraItemScalarFieldEnum = (typeof OrdenCompraItemScalarFieldEnum)[keyof typeof OrdenCompraItemScalarFieldEnum]
 
 
+  export const RecepcionOCScalarFieldEnum: {
+    id_recepcion: 'id_recepcion',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    orden_id: 'orden_id',
+    fecha_recepcion: 'fecha_recepcion',
+    recibido_por: 'recibido_por',
+    notas: 'notas',
+    created_at: 'created_at'
+  };
+
+  export type RecepcionOCScalarFieldEnum = (typeof RecepcionOCScalarFieldEnum)[keyof typeof RecepcionOCScalarFieldEnum]
+
+
+  export const RecepcionOCItemScalarFieldEnum: {
+    id_recepcion_item: 'id_recepcion_item',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    recepcion_id: 'recepcion_id',
+    orden_item_id: 'orden_item_id',
+    cantidad_recibida: 'cantidad_recibida',
+    nota_discrepancia: 'nota_discrepancia'
+  };
+
+  export type RecepcionOCItemScalarFieldEnum = (typeof RecepcionOCItemScalarFieldEnum)[keyof typeof RecepcionOCItemScalarFieldEnum]
+
+
   export const CuadroComparativoScalarFieldEnum: {
     id_cuadro: 'id_cuadro',
     tenant_id: 'tenant_id',
@@ -24477,6 +26726,7 @@ export namespace Prisma {
     requisicion_id?: UuidNullableFilter<"OrdenCompra"> | string | null
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
     items?: OrdenCompraItemListRelationFilter
+    recepciones?: RecepcionOCListRelationFilter
   }
 
   export type OrdenCompraOrderByWithRelationInput = {
@@ -24496,6 +26746,7 @@ export namespace Prisma {
     requisicion_id?: SortOrderInput | SortOrder
     proveedor?: ProveedorOrderByWithRelationInput
     items?: OrdenCompraItemOrderByRelationAggregateInput
+    recepciones?: RecepcionOCOrderByRelationAggregateInput
   }
 
   export type OrdenCompraWhereUniqueInput = Prisma.AtLeast<{
@@ -24519,6 +26770,7 @@ export namespace Prisma {
     requisicion_id?: UuidNullableFilter<"OrdenCompra"> | string | null
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
     items?: OrdenCompraItemListRelationFilter
+    recepciones?: RecepcionOCListRelationFilter
   }, "id_orden" | "tenant_id_codigo">
 
   export type OrdenCompraOrderByWithAggregationInput = {
@@ -24633,6 +26885,146 @@ export namespace Prisma {
     cantidad?: DecimalWithAggregatesFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalWithAggregatesFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     importe?: DecimalWithAggregatesFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type RecepcionOCWhereInput = {
+    AND?: RecepcionOCWhereInput | RecepcionOCWhereInput[]
+    OR?: RecepcionOCWhereInput[]
+    NOT?: RecepcionOCWhereInput | RecepcionOCWhereInput[]
+    id_recepcion?: UuidFilter<"RecepcionOC"> | string
+    tenant_id?: UuidFilter<"RecepcionOC"> | string
+    proyecto_id?: UuidFilter<"RecepcionOC"> | string
+    orden_id?: UuidFilter<"RecepcionOC"> | string
+    fecha_recepcion?: DateTimeFilter<"RecepcionOC"> | Date | string
+    recibido_por?: UuidFilter<"RecepcionOC"> | string
+    notas?: StringNullableFilter<"RecepcionOC"> | string | null
+    created_at?: DateTimeFilter<"RecepcionOC"> | Date | string
+    orden?: XOR<OrdenCompraRelationFilter, OrdenCompraWhereInput>
+    items?: RecepcionOCItemListRelationFilter
+  }
+
+  export type RecepcionOCOrderByWithRelationInput = {
+    id_recepcion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    orden_id?: SortOrder
+    fecha_recepcion?: SortOrder
+    recibido_por?: SortOrder
+    notas?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    orden?: OrdenCompraOrderByWithRelationInput
+    items?: RecepcionOCItemOrderByRelationAggregateInput
+  }
+
+  export type RecepcionOCWhereUniqueInput = Prisma.AtLeast<{
+    id_recepcion?: string
+    AND?: RecepcionOCWhereInput | RecepcionOCWhereInput[]
+    OR?: RecepcionOCWhereInput[]
+    NOT?: RecepcionOCWhereInput | RecepcionOCWhereInput[]
+    tenant_id?: UuidFilter<"RecepcionOC"> | string
+    proyecto_id?: UuidFilter<"RecepcionOC"> | string
+    orden_id?: UuidFilter<"RecepcionOC"> | string
+    fecha_recepcion?: DateTimeFilter<"RecepcionOC"> | Date | string
+    recibido_por?: UuidFilter<"RecepcionOC"> | string
+    notas?: StringNullableFilter<"RecepcionOC"> | string | null
+    created_at?: DateTimeFilter<"RecepcionOC"> | Date | string
+    orden?: XOR<OrdenCompraRelationFilter, OrdenCompraWhereInput>
+    items?: RecepcionOCItemListRelationFilter
+  }, "id_recepcion">
+
+  export type RecepcionOCOrderByWithAggregationInput = {
+    id_recepcion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    orden_id?: SortOrder
+    fecha_recepcion?: SortOrder
+    recibido_por?: SortOrder
+    notas?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    _count?: RecepcionOCCountOrderByAggregateInput
+    _max?: RecepcionOCMaxOrderByAggregateInput
+    _min?: RecepcionOCMinOrderByAggregateInput
+  }
+
+  export type RecepcionOCScalarWhereWithAggregatesInput = {
+    AND?: RecepcionOCScalarWhereWithAggregatesInput | RecepcionOCScalarWhereWithAggregatesInput[]
+    OR?: RecepcionOCScalarWhereWithAggregatesInput[]
+    NOT?: RecepcionOCScalarWhereWithAggregatesInput | RecepcionOCScalarWhereWithAggregatesInput[]
+    id_recepcion?: UuidWithAggregatesFilter<"RecepcionOC"> | string
+    tenant_id?: UuidWithAggregatesFilter<"RecepcionOC"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"RecepcionOC"> | string
+    orden_id?: UuidWithAggregatesFilter<"RecepcionOC"> | string
+    fecha_recepcion?: DateTimeWithAggregatesFilter<"RecepcionOC"> | Date | string
+    recibido_por?: UuidWithAggregatesFilter<"RecepcionOC"> | string
+    notas?: StringNullableWithAggregatesFilter<"RecepcionOC"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"RecepcionOC"> | Date | string
+  }
+
+  export type RecepcionOCItemWhereInput = {
+    AND?: RecepcionOCItemWhereInput | RecepcionOCItemWhereInput[]
+    OR?: RecepcionOCItemWhereInput[]
+    NOT?: RecepcionOCItemWhereInput | RecepcionOCItemWhereInput[]
+    id_recepcion_item?: UuidFilter<"RecepcionOCItem"> | string
+    tenant_id?: UuidFilter<"RecepcionOCItem"> | string
+    proyecto_id?: UuidFilter<"RecepcionOCItem"> | string
+    recepcion_id?: UuidFilter<"RecepcionOCItem"> | string
+    orden_item_id?: UuidFilter<"RecepcionOCItem"> | string
+    cantidad_recibida?: DecimalFilter<"RecepcionOCItem"> | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: StringNullableFilter<"RecepcionOCItem"> | string | null
+    recepcion?: XOR<RecepcionOCRelationFilter, RecepcionOCWhereInput>
+  }
+
+  export type RecepcionOCItemOrderByWithRelationInput = {
+    id_recepcion_item?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    recepcion_id?: SortOrder
+    orden_item_id?: SortOrder
+    cantidad_recibida?: SortOrder
+    nota_discrepancia?: SortOrderInput | SortOrder
+    recepcion?: RecepcionOCOrderByWithRelationInput
+  }
+
+  export type RecepcionOCItemWhereUniqueInput = Prisma.AtLeast<{
+    id_recepcion_item?: string
+    AND?: RecepcionOCItemWhereInput | RecepcionOCItemWhereInput[]
+    OR?: RecepcionOCItemWhereInput[]
+    NOT?: RecepcionOCItemWhereInput | RecepcionOCItemWhereInput[]
+    tenant_id?: UuidFilter<"RecepcionOCItem"> | string
+    proyecto_id?: UuidFilter<"RecepcionOCItem"> | string
+    recepcion_id?: UuidFilter<"RecepcionOCItem"> | string
+    orden_item_id?: UuidFilter<"RecepcionOCItem"> | string
+    cantidad_recibida?: DecimalFilter<"RecepcionOCItem"> | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: StringNullableFilter<"RecepcionOCItem"> | string | null
+    recepcion?: XOR<RecepcionOCRelationFilter, RecepcionOCWhereInput>
+  }, "id_recepcion_item">
+
+  export type RecepcionOCItemOrderByWithAggregationInput = {
+    id_recepcion_item?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    recepcion_id?: SortOrder
+    orden_item_id?: SortOrder
+    cantidad_recibida?: SortOrder
+    nota_discrepancia?: SortOrderInput | SortOrder
+    _count?: RecepcionOCItemCountOrderByAggregateInput
+    _avg?: RecepcionOCItemAvgOrderByAggregateInput
+    _max?: RecepcionOCItemMaxOrderByAggregateInput
+    _min?: RecepcionOCItemMinOrderByAggregateInput
+    _sum?: RecepcionOCItemSumOrderByAggregateInput
+  }
+
+  export type RecepcionOCItemScalarWhereWithAggregatesInput = {
+    AND?: RecepcionOCItemScalarWhereWithAggregatesInput | RecepcionOCItemScalarWhereWithAggregatesInput[]
+    OR?: RecepcionOCItemScalarWhereWithAggregatesInput[]
+    NOT?: RecepcionOCItemScalarWhereWithAggregatesInput | RecepcionOCItemScalarWhereWithAggregatesInput[]
+    id_recepcion_item?: UuidWithAggregatesFilter<"RecepcionOCItem"> | string
+    tenant_id?: UuidWithAggregatesFilter<"RecepcionOCItem"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"RecepcionOCItem"> | string
+    recepcion_id?: UuidWithAggregatesFilter<"RecepcionOCItem"> | string
+    orden_item_id?: UuidWithAggregatesFilter<"RecepcionOCItem"> | string
+    cantidad_recibida?: DecimalWithAggregatesFilter<"RecepcionOCItem"> | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: StringNullableWithAggregatesFilter<"RecepcionOCItem"> | string | null
   }
 
   export type CuadroComparativoWhereInput = {
@@ -26344,6 +28736,7 @@ export namespace Prisma {
     requisicion_id?: string | null
     proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
     items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
+    recepciones?: RecepcionOCCreateNestedManyWithoutOrdenInput
   }
 
   export type OrdenCompraUncheckedCreateInput = {
@@ -26362,6 +28755,7 @@ export namespace Prisma {
     presupuesto_id?: string | null
     requisicion_id?: string | null
     items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
+    recepciones?: RecepcionOCUncheckedCreateNestedManyWithoutOrdenInput
   }
 
   export type OrdenCompraUpdateInput = {
@@ -26380,6 +28774,7 @@ export namespace Prisma {
     requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
     items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
+    recepciones?: RecepcionOCUpdateManyWithoutOrdenNestedInput
   }
 
   export type OrdenCompraUncheckedUpdateInput = {
@@ -26398,6 +28793,7 @@ export namespace Prisma {
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
+    recepciones?: RecepcionOCUncheckedUpdateManyWithoutOrdenNestedInput
   }
 
   export type OrdenCompraCreateManyInput = {
@@ -26524,6 +28920,155 @@ export namespace Prisma {
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type RecepcionOCCreateInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+    orden: OrdenCompraCreateNestedOneWithoutRecepcionesInput
+    items?: RecepcionOCItemCreateNestedManyWithoutRecepcionInput
+  }
+
+  export type RecepcionOCUncheckedCreateInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+    items?: RecepcionOCItemUncheckedCreateNestedManyWithoutRecepcionInput
+  }
+
+  export type RecepcionOCUpdateInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    orden?: OrdenCompraUpdateOneRequiredWithoutRecepcionesNestedInput
+    items?: RecepcionOCItemUpdateManyWithoutRecepcionNestedInput
+  }
+
+  export type RecepcionOCUncheckedUpdateInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: RecepcionOCItemUncheckedUpdateManyWithoutRecepcionNestedInput
+  }
+
+  export type RecepcionOCCreateManyInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+  }
+
+  export type RecepcionOCUpdateManyMutationInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecepcionOCUncheckedUpdateManyInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecepcionOCItemCreateInput = {
+    id_recepcion_item?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: string | null
+    recepcion: RecepcionOCCreateNestedOneWithoutItemsInput
+  }
+
+  export type RecepcionOCItemUncheckedCreateInput = {
+    id_recepcion_item?: string
+    tenant_id: string
+    proyecto_id: string
+    recepcion_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: string | null
+  }
+
+  export type RecepcionOCItemUpdateInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion?: RecepcionOCUpdateOneRequiredWithoutItemsNestedInput
+  }
+
+  export type RecepcionOCItemUncheckedUpdateInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    recepcion_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RecepcionOCItemCreateManyInput = {
+    id_recepcion_item?: string
+    tenant_id: string
+    proyecto_id: string
+    recepcion_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: string | null
+  }
+
+  export type RecepcionOCItemUpdateManyMutationInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RecepcionOCItemUncheckedUpdateManyInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    recepcion_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CuadroComparativoCreateInput = {
@@ -28382,7 +30927,17 @@ export namespace Prisma {
     none?: OrdenCompraItemWhereInput
   }
 
+  export type RecepcionOCListRelationFilter = {
+    every?: RecepcionOCWhereInput
+    some?: RecepcionOCWhereInput
+    none?: RecepcionOCWhereInput
+  }
+
   export type OrdenCompraItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RecepcionOCOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -28504,6 +31059,92 @@ export namespace Prisma {
     cantidad?: SortOrder
     precio_unitario?: SortOrder
     importe?: SortOrder
+  }
+
+  export type RecepcionOCItemListRelationFilter = {
+    every?: RecepcionOCItemWhereInput
+    some?: RecepcionOCItemWhereInput
+    none?: RecepcionOCItemWhereInput
+  }
+
+  export type RecepcionOCItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RecepcionOCCountOrderByAggregateInput = {
+    id_recepcion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    orden_id?: SortOrder
+    fecha_recepcion?: SortOrder
+    recibido_por?: SortOrder
+    notas?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RecepcionOCMaxOrderByAggregateInput = {
+    id_recepcion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    orden_id?: SortOrder
+    fecha_recepcion?: SortOrder
+    recibido_por?: SortOrder
+    notas?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RecepcionOCMinOrderByAggregateInput = {
+    id_recepcion?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    orden_id?: SortOrder
+    fecha_recepcion?: SortOrder
+    recibido_por?: SortOrder
+    notas?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type RecepcionOCRelationFilter = {
+    is?: RecepcionOCWhereInput
+    isNot?: RecepcionOCWhereInput
+  }
+
+  export type RecepcionOCItemCountOrderByAggregateInput = {
+    id_recepcion_item?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    recepcion_id?: SortOrder
+    orden_item_id?: SortOrder
+    cantidad_recibida?: SortOrder
+    nota_discrepancia?: SortOrder
+  }
+
+  export type RecepcionOCItemAvgOrderByAggregateInput = {
+    cantidad_recibida?: SortOrder
+  }
+
+  export type RecepcionOCItemMaxOrderByAggregateInput = {
+    id_recepcion_item?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    recepcion_id?: SortOrder
+    orden_item_id?: SortOrder
+    cantidad_recibida?: SortOrder
+    nota_discrepancia?: SortOrder
+  }
+
+  export type RecepcionOCItemMinOrderByAggregateInput = {
+    id_recepcion_item?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    recepcion_id?: SortOrder
+    orden_item_id?: SortOrder
+    cantidad_recibida?: SortOrder
+    nota_discrepancia?: SortOrder
+  }
+
+  export type RecepcionOCItemSumOrderByAggregateInput = {
+    cantidad_recibida?: SortOrder
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -29481,11 +32122,25 @@ export namespace Prisma {
     connect?: OrdenCompraItemWhereUniqueInput | OrdenCompraItemWhereUniqueInput[]
   }
 
+  export type RecepcionOCCreateNestedManyWithoutOrdenInput = {
+    create?: XOR<RecepcionOCCreateWithoutOrdenInput, RecepcionOCUncheckedCreateWithoutOrdenInput> | RecepcionOCCreateWithoutOrdenInput[] | RecepcionOCUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: RecepcionOCCreateOrConnectWithoutOrdenInput | RecepcionOCCreateOrConnectWithoutOrdenInput[]
+    createMany?: RecepcionOCCreateManyOrdenInputEnvelope
+    connect?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+  }
+
   export type OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput = {
     create?: XOR<OrdenCompraItemCreateWithoutOrdenInput, OrdenCompraItemUncheckedCreateWithoutOrdenInput> | OrdenCompraItemCreateWithoutOrdenInput[] | OrdenCompraItemUncheckedCreateWithoutOrdenInput[]
     connectOrCreate?: OrdenCompraItemCreateOrConnectWithoutOrdenInput | OrdenCompraItemCreateOrConnectWithoutOrdenInput[]
     createMany?: OrdenCompraItemCreateManyOrdenInputEnvelope
     connect?: OrdenCompraItemWhereUniqueInput | OrdenCompraItemWhereUniqueInput[]
+  }
+
+  export type RecepcionOCUncheckedCreateNestedManyWithoutOrdenInput = {
+    create?: XOR<RecepcionOCCreateWithoutOrdenInput, RecepcionOCUncheckedCreateWithoutOrdenInput> | RecepcionOCCreateWithoutOrdenInput[] | RecepcionOCUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: RecepcionOCCreateOrConnectWithoutOrdenInput | RecepcionOCCreateOrConnectWithoutOrdenInput[]
+    createMany?: RecepcionOCCreateManyOrdenInputEnvelope
+    connect?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
   }
 
   export type ProveedorUpdateOneRequiredWithoutOrdenesNestedInput = {
@@ -29510,6 +32165,20 @@ export namespace Prisma {
     deleteMany?: OrdenCompraItemScalarWhereInput | OrdenCompraItemScalarWhereInput[]
   }
 
+  export type RecepcionOCUpdateManyWithoutOrdenNestedInput = {
+    create?: XOR<RecepcionOCCreateWithoutOrdenInput, RecepcionOCUncheckedCreateWithoutOrdenInput> | RecepcionOCCreateWithoutOrdenInput[] | RecepcionOCUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: RecepcionOCCreateOrConnectWithoutOrdenInput | RecepcionOCCreateOrConnectWithoutOrdenInput[]
+    upsert?: RecepcionOCUpsertWithWhereUniqueWithoutOrdenInput | RecepcionOCUpsertWithWhereUniqueWithoutOrdenInput[]
+    createMany?: RecepcionOCCreateManyOrdenInputEnvelope
+    set?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    disconnect?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    delete?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    connect?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    update?: RecepcionOCUpdateWithWhereUniqueWithoutOrdenInput | RecepcionOCUpdateWithWhereUniqueWithoutOrdenInput[]
+    updateMany?: RecepcionOCUpdateManyWithWhereWithoutOrdenInput | RecepcionOCUpdateManyWithWhereWithoutOrdenInput[]
+    deleteMany?: RecepcionOCScalarWhereInput | RecepcionOCScalarWhereInput[]
+  }
+
   export type OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput = {
     create?: XOR<OrdenCompraItemCreateWithoutOrdenInput, OrdenCompraItemUncheckedCreateWithoutOrdenInput> | OrdenCompraItemCreateWithoutOrdenInput[] | OrdenCompraItemUncheckedCreateWithoutOrdenInput[]
     connectOrCreate?: OrdenCompraItemCreateOrConnectWithoutOrdenInput | OrdenCompraItemCreateOrConnectWithoutOrdenInput[]
@@ -29524,6 +32193,20 @@ export namespace Prisma {
     deleteMany?: OrdenCompraItemScalarWhereInput | OrdenCompraItemScalarWhereInput[]
   }
 
+  export type RecepcionOCUncheckedUpdateManyWithoutOrdenNestedInput = {
+    create?: XOR<RecepcionOCCreateWithoutOrdenInput, RecepcionOCUncheckedCreateWithoutOrdenInput> | RecepcionOCCreateWithoutOrdenInput[] | RecepcionOCUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: RecepcionOCCreateOrConnectWithoutOrdenInput | RecepcionOCCreateOrConnectWithoutOrdenInput[]
+    upsert?: RecepcionOCUpsertWithWhereUniqueWithoutOrdenInput | RecepcionOCUpsertWithWhereUniqueWithoutOrdenInput[]
+    createMany?: RecepcionOCCreateManyOrdenInputEnvelope
+    set?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    disconnect?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    delete?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    connect?: RecepcionOCWhereUniqueInput | RecepcionOCWhereUniqueInput[]
+    update?: RecepcionOCUpdateWithWhereUniqueWithoutOrdenInput | RecepcionOCUpdateWithWhereUniqueWithoutOrdenInput[]
+    updateMany?: RecepcionOCUpdateManyWithWhereWithoutOrdenInput | RecepcionOCUpdateManyWithWhereWithoutOrdenInput[]
+    deleteMany?: RecepcionOCScalarWhereInput | RecepcionOCScalarWhereInput[]
+  }
+
   export type OrdenCompraCreateNestedOneWithoutItemsInput = {
     create?: XOR<OrdenCompraCreateWithoutItemsInput, OrdenCompraUncheckedCreateWithoutItemsInput>
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutItemsInput
@@ -29536,6 +32219,76 @@ export namespace Prisma {
     upsert?: OrdenCompraUpsertWithoutItemsInput
     connect?: OrdenCompraWhereUniqueInput
     update?: XOR<XOR<OrdenCompraUpdateToOneWithWhereWithoutItemsInput, OrdenCompraUpdateWithoutItemsInput>, OrdenCompraUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type OrdenCompraCreateNestedOneWithoutRecepcionesInput = {
+    create?: XOR<OrdenCompraCreateWithoutRecepcionesInput, OrdenCompraUncheckedCreateWithoutRecepcionesInput>
+    connectOrCreate?: OrdenCompraCreateOrConnectWithoutRecepcionesInput
+    connect?: OrdenCompraWhereUniqueInput
+  }
+
+  export type RecepcionOCItemCreateNestedManyWithoutRecepcionInput = {
+    create?: XOR<RecepcionOCItemCreateWithoutRecepcionInput, RecepcionOCItemUncheckedCreateWithoutRecepcionInput> | RecepcionOCItemCreateWithoutRecepcionInput[] | RecepcionOCItemUncheckedCreateWithoutRecepcionInput[]
+    connectOrCreate?: RecepcionOCItemCreateOrConnectWithoutRecepcionInput | RecepcionOCItemCreateOrConnectWithoutRecepcionInput[]
+    createMany?: RecepcionOCItemCreateManyRecepcionInputEnvelope
+    connect?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+  }
+
+  export type RecepcionOCItemUncheckedCreateNestedManyWithoutRecepcionInput = {
+    create?: XOR<RecepcionOCItemCreateWithoutRecepcionInput, RecepcionOCItemUncheckedCreateWithoutRecepcionInput> | RecepcionOCItemCreateWithoutRecepcionInput[] | RecepcionOCItemUncheckedCreateWithoutRecepcionInput[]
+    connectOrCreate?: RecepcionOCItemCreateOrConnectWithoutRecepcionInput | RecepcionOCItemCreateOrConnectWithoutRecepcionInput[]
+    createMany?: RecepcionOCItemCreateManyRecepcionInputEnvelope
+    connect?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+  }
+
+  export type OrdenCompraUpdateOneRequiredWithoutRecepcionesNestedInput = {
+    create?: XOR<OrdenCompraCreateWithoutRecepcionesInput, OrdenCompraUncheckedCreateWithoutRecepcionesInput>
+    connectOrCreate?: OrdenCompraCreateOrConnectWithoutRecepcionesInput
+    upsert?: OrdenCompraUpsertWithoutRecepcionesInput
+    connect?: OrdenCompraWhereUniqueInput
+    update?: XOR<XOR<OrdenCompraUpdateToOneWithWhereWithoutRecepcionesInput, OrdenCompraUpdateWithoutRecepcionesInput>, OrdenCompraUncheckedUpdateWithoutRecepcionesInput>
+  }
+
+  export type RecepcionOCItemUpdateManyWithoutRecepcionNestedInput = {
+    create?: XOR<RecepcionOCItemCreateWithoutRecepcionInput, RecepcionOCItemUncheckedCreateWithoutRecepcionInput> | RecepcionOCItemCreateWithoutRecepcionInput[] | RecepcionOCItemUncheckedCreateWithoutRecepcionInput[]
+    connectOrCreate?: RecepcionOCItemCreateOrConnectWithoutRecepcionInput | RecepcionOCItemCreateOrConnectWithoutRecepcionInput[]
+    upsert?: RecepcionOCItemUpsertWithWhereUniqueWithoutRecepcionInput | RecepcionOCItemUpsertWithWhereUniqueWithoutRecepcionInput[]
+    createMany?: RecepcionOCItemCreateManyRecepcionInputEnvelope
+    set?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    disconnect?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    delete?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    connect?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    update?: RecepcionOCItemUpdateWithWhereUniqueWithoutRecepcionInput | RecepcionOCItemUpdateWithWhereUniqueWithoutRecepcionInput[]
+    updateMany?: RecepcionOCItemUpdateManyWithWhereWithoutRecepcionInput | RecepcionOCItemUpdateManyWithWhereWithoutRecepcionInput[]
+    deleteMany?: RecepcionOCItemScalarWhereInput | RecepcionOCItemScalarWhereInput[]
+  }
+
+  export type RecepcionOCItemUncheckedUpdateManyWithoutRecepcionNestedInput = {
+    create?: XOR<RecepcionOCItemCreateWithoutRecepcionInput, RecepcionOCItemUncheckedCreateWithoutRecepcionInput> | RecepcionOCItemCreateWithoutRecepcionInput[] | RecepcionOCItemUncheckedCreateWithoutRecepcionInput[]
+    connectOrCreate?: RecepcionOCItemCreateOrConnectWithoutRecepcionInput | RecepcionOCItemCreateOrConnectWithoutRecepcionInput[]
+    upsert?: RecepcionOCItemUpsertWithWhereUniqueWithoutRecepcionInput | RecepcionOCItemUpsertWithWhereUniqueWithoutRecepcionInput[]
+    createMany?: RecepcionOCItemCreateManyRecepcionInputEnvelope
+    set?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    disconnect?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    delete?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    connect?: RecepcionOCItemWhereUniqueInput | RecepcionOCItemWhereUniqueInput[]
+    update?: RecepcionOCItemUpdateWithWhereUniqueWithoutRecepcionInput | RecepcionOCItemUpdateWithWhereUniqueWithoutRecepcionInput[]
+    updateMany?: RecepcionOCItemUpdateManyWithWhereWithoutRecepcionInput | RecepcionOCItemUpdateManyWithWhereWithoutRecepcionInput[]
+    deleteMany?: RecepcionOCItemScalarWhereInput | RecepcionOCItemScalarWhereInput[]
+  }
+
+  export type RecepcionOCCreateNestedOneWithoutItemsInput = {
+    create?: XOR<RecepcionOCCreateWithoutItemsInput, RecepcionOCUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: RecepcionOCCreateOrConnectWithoutItemsInput
+    connect?: RecepcionOCWhereUniqueInput
+  }
+
+  export type RecepcionOCUpdateOneRequiredWithoutItemsNestedInput = {
+    create?: XOR<RecepcionOCCreateWithoutItemsInput, RecepcionOCUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: RecepcionOCCreateOrConnectWithoutItemsInput
+    upsert?: RecepcionOCUpsertWithoutItemsInput
+    connect?: RecepcionOCWhereUniqueInput
+    update?: XOR<XOR<RecepcionOCUpdateToOneWithWhereWithoutItemsInput, RecepcionOCUpdateWithoutItemsInput>, RecepcionOCUncheckedUpdateWithoutItemsInput>
   }
 
   export type ComparativaDetalleCreateNestedManyWithoutCuadroInput = {
@@ -30185,6 +32938,7 @@ export namespace Prisma {
     presupuesto_id?: string | null
     requisicion_id?: string | null
     items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
+    recepciones?: RecepcionOCCreateNestedManyWithoutOrdenInput
   }
 
   export type OrdenCompraUncheckedCreateWithoutProveedorInput = {
@@ -30202,6 +32956,7 @@ export namespace Prisma {
     presupuesto_id?: string | null
     requisicion_id?: string | null
     items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
+    recepciones?: RecepcionOCUncheckedCreateNestedManyWithoutOrdenInput
   }
 
   export type OrdenCompraCreateOrConnectWithoutProveedorInput = {
@@ -30889,6 +33644,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RecepcionOCCreateWithoutOrdenInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+    items?: RecepcionOCItemCreateNestedManyWithoutRecepcionInput
+  }
+
+  export type RecepcionOCUncheckedCreateWithoutOrdenInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+    items?: RecepcionOCItemUncheckedCreateNestedManyWithoutRecepcionInput
+  }
+
+  export type RecepcionOCCreateOrConnectWithoutOrdenInput = {
+    where: RecepcionOCWhereUniqueInput
+    create: XOR<RecepcionOCCreateWithoutOrdenInput, RecepcionOCUncheckedCreateWithoutOrdenInput>
+  }
+
+  export type RecepcionOCCreateManyOrdenInputEnvelope = {
+    data: RecepcionOCCreateManyOrdenInput | RecepcionOCCreateManyOrdenInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ProveedorUpsertWithoutOrdenesInput = {
     update: XOR<ProveedorUpdateWithoutOrdenesInput, ProveedorUncheckedUpdateWithoutOrdenesInput>
     create: XOR<ProveedorCreateWithoutOrdenesInput, ProveedorUncheckedCreateWithoutOrdenesInput>
@@ -30970,6 +33757,36 @@ export namespace Prisma {
     importe?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
   }
 
+  export type RecepcionOCUpsertWithWhereUniqueWithoutOrdenInput = {
+    where: RecepcionOCWhereUniqueInput
+    update: XOR<RecepcionOCUpdateWithoutOrdenInput, RecepcionOCUncheckedUpdateWithoutOrdenInput>
+    create: XOR<RecepcionOCCreateWithoutOrdenInput, RecepcionOCUncheckedCreateWithoutOrdenInput>
+  }
+
+  export type RecepcionOCUpdateWithWhereUniqueWithoutOrdenInput = {
+    where: RecepcionOCWhereUniqueInput
+    data: XOR<RecepcionOCUpdateWithoutOrdenInput, RecepcionOCUncheckedUpdateWithoutOrdenInput>
+  }
+
+  export type RecepcionOCUpdateManyWithWhereWithoutOrdenInput = {
+    where: RecepcionOCScalarWhereInput
+    data: XOR<RecepcionOCUpdateManyMutationInput, RecepcionOCUncheckedUpdateManyWithoutOrdenInput>
+  }
+
+  export type RecepcionOCScalarWhereInput = {
+    AND?: RecepcionOCScalarWhereInput | RecepcionOCScalarWhereInput[]
+    OR?: RecepcionOCScalarWhereInput[]
+    NOT?: RecepcionOCScalarWhereInput | RecepcionOCScalarWhereInput[]
+    id_recepcion?: UuidFilter<"RecepcionOC"> | string
+    tenant_id?: UuidFilter<"RecepcionOC"> | string
+    proyecto_id?: UuidFilter<"RecepcionOC"> | string
+    orden_id?: UuidFilter<"RecepcionOC"> | string
+    fecha_recepcion?: DateTimeFilter<"RecepcionOC"> | Date | string
+    recibido_por?: UuidFilter<"RecepcionOC"> | string
+    notas?: StringNullableFilter<"RecepcionOC"> | string | null
+    created_at?: DateTimeFilter<"RecepcionOC"> | Date | string
+  }
+
   export type OrdenCompraCreateWithoutItemsInput = {
     id_orden?: string
     tenant_id: string
@@ -30985,6 +33802,7 @@ export namespace Prisma {
     presupuesto_id?: string | null
     requisicion_id?: string | null
     proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
+    recepciones?: RecepcionOCCreateNestedManyWithoutOrdenInput
   }
 
   export type OrdenCompraUncheckedCreateWithoutItemsInput = {
@@ -31002,6 +33820,7 @@ export namespace Prisma {
     total: Decimal | DecimalJsLike | number | string
     presupuesto_id?: string | null
     requisicion_id?: string | null
+    recepciones?: RecepcionOCUncheckedCreateNestedManyWithoutOrdenInput
   }
 
   export type OrdenCompraCreateOrConnectWithoutItemsInput = {
@@ -31035,6 +33854,7 @@ export namespace Prisma {
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
+    recepciones?: RecepcionOCUpdateManyWithoutOrdenNestedInput
   }
 
   export type OrdenCompraUncheckedUpdateWithoutItemsInput = {
@@ -31052,6 +33872,212 @@ export namespace Prisma {
     total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepciones?: RecepcionOCUncheckedUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type OrdenCompraCreateWithoutRecepcionesInput = {
+    id_orden?: string
+    tenant_id: string
+    proyecto_id: string
+    codigo: string
+    fecha_emision?: Date | string
+    estado?: string
+    moneda?: string
+    tipo_cambio?: Decimal | DecimalJsLike | number | string
+    subtotal: Decimal | DecimalJsLike | number | string
+    iva: Decimal | DecimalJsLike | number | string
+    total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
+    requisicion_id?: string | null
+    proveedor: ProveedorCreateNestedOneWithoutOrdenesInput
+    items?: OrdenCompraItemCreateNestedManyWithoutOrdenInput
+  }
+
+  export type OrdenCompraUncheckedCreateWithoutRecepcionesInput = {
+    id_orden?: string
+    tenant_id: string
+    proyecto_id: string
+    proveedor_id: string
+    codigo: string
+    fecha_emision?: Date | string
+    estado?: string
+    moneda?: string
+    tipo_cambio?: Decimal | DecimalJsLike | number | string
+    subtotal: Decimal | DecimalJsLike | number | string
+    iva: Decimal | DecimalJsLike | number | string
+    total: Decimal | DecimalJsLike | number | string
+    presupuesto_id?: string | null
+    requisicion_id?: string | null
+    items?: OrdenCompraItemUncheckedCreateNestedManyWithoutOrdenInput
+  }
+
+  export type OrdenCompraCreateOrConnectWithoutRecepcionesInput = {
+    where: OrdenCompraWhereUniqueInput
+    create: XOR<OrdenCompraCreateWithoutRecepcionesInput, OrdenCompraUncheckedCreateWithoutRecepcionesInput>
+  }
+
+  export type RecepcionOCItemCreateWithoutRecepcionInput = {
+    id_recepcion_item?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: string | null
+  }
+
+  export type RecepcionOCItemUncheckedCreateWithoutRecepcionInput = {
+    id_recepcion_item?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: string | null
+  }
+
+  export type RecepcionOCItemCreateOrConnectWithoutRecepcionInput = {
+    where: RecepcionOCItemWhereUniqueInput
+    create: XOR<RecepcionOCItemCreateWithoutRecepcionInput, RecepcionOCItemUncheckedCreateWithoutRecepcionInput>
+  }
+
+  export type RecepcionOCItemCreateManyRecepcionInputEnvelope = {
+    data: RecepcionOCItemCreateManyRecepcionInput | RecepcionOCItemCreateManyRecepcionInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrdenCompraUpsertWithoutRecepcionesInput = {
+    update: XOR<OrdenCompraUpdateWithoutRecepcionesInput, OrdenCompraUncheckedUpdateWithoutRecepcionesInput>
+    create: XOR<OrdenCompraCreateWithoutRecepcionesInput, OrdenCompraUncheckedCreateWithoutRecepcionesInput>
+    where?: OrdenCompraWhereInput
+  }
+
+  export type OrdenCompraUpdateToOneWithWhereWithoutRecepcionesInput = {
+    where?: OrdenCompraWhereInput
+    data: XOR<OrdenCompraUpdateWithoutRecepcionesInput, OrdenCompraUncheckedUpdateWithoutRecepcionesInput>
+  }
+
+  export type OrdenCompraUpdateWithoutRecepcionesInput = {
+    id_orden?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedor?: ProveedorUpdateOneRequiredWithoutOrdenesNestedInput
+    items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type OrdenCompraUncheckedUpdateWithoutRecepcionesInput = {
+    id_orden?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    iva?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type RecepcionOCItemUpsertWithWhereUniqueWithoutRecepcionInput = {
+    where: RecepcionOCItemWhereUniqueInput
+    update: XOR<RecepcionOCItemUpdateWithoutRecepcionInput, RecepcionOCItemUncheckedUpdateWithoutRecepcionInput>
+    create: XOR<RecepcionOCItemCreateWithoutRecepcionInput, RecepcionOCItemUncheckedCreateWithoutRecepcionInput>
+  }
+
+  export type RecepcionOCItemUpdateWithWhereUniqueWithoutRecepcionInput = {
+    where: RecepcionOCItemWhereUniqueInput
+    data: XOR<RecepcionOCItemUpdateWithoutRecepcionInput, RecepcionOCItemUncheckedUpdateWithoutRecepcionInput>
+  }
+
+  export type RecepcionOCItemUpdateManyWithWhereWithoutRecepcionInput = {
+    where: RecepcionOCItemScalarWhereInput
+    data: XOR<RecepcionOCItemUpdateManyMutationInput, RecepcionOCItemUncheckedUpdateManyWithoutRecepcionInput>
+  }
+
+  export type RecepcionOCItemScalarWhereInput = {
+    AND?: RecepcionOCItemScalarWhereInput | RecepcionOCItemScalarWhereInput[]
+    OR?: RecepcionOCItemScalarWhereInput[]
+    NOT?: RecepcionOCItemScalarWhereInput | RecepcionOCItemScalarWhereInput[]
+    id_recepcion_item?: UuidFilter<"RecepcionOCItem"> | string
+    tenant_id?: UuidFilter<"RecepcionOCItem"> | string
+    proyecto_id?: UuidFilter<"RecepcionOCItem"> | string
+    recepcion_id?: UuidFilter<"RecepcionOCItem"> | string
+    orden_item_id?: UuidFilter<"RecepcionOCItem"> | string
+    cantidad_recibida?: DecimalFilter<"RecepcionOCItem"> | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: StringNullableFilter<"RecepcionOCItem"> | string | null
+  }
+
+  export type RecepcionOCCreateWithoutItemsInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+    orden: OrdenCompraCreateNestedOneWithoutRecepcionesInput
+  }
+
+  export type RecepcionOCUncheckedCreateWithoutItemsInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+  }
+
+  export type RecepcionOCCreateOrConnectWithoutItemsInput = {
+    where: RecepcionOCWhereUniqueInput
+    create: XOR<RecepcionOCCreateWithoutItemsInput, RecepcionOCUncheckedCreateWithoutItemsInput>
+  }
+
+  export type RecepcionOCUpsertWithoutItemsInput = {
+    update: XOR<RecepcionOCUpdateWithoutItemsInput, RecepcionOCUncheckedUpdateWithoutItemsInput>
+    create: XOR<RecepcionOCCreateWithoutItemsInput, RecepcionOCUncheckedCreateWithoutItemsInput>
+    where?: RecepcionOCWhereInput
+  }
+
+  export type RecepcionOCUpdateToOneWithWhereWithoutItemsInput = {
+    where?: RecepcionOCWhereInput
+    data: XOR<RecepcionOCUpdateWithoutItemsInput, RecepcionOCUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type RecepcionOCUpdateWithoutItemsInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    orden?: OrdenCompraUpdateOneRequiredWithoutRecepcionesNestedInput
+  }
+
+  export type RecepcionOCUncheckedUpdateWithoutItemsInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ComparativaDetalleCreateWithoutCuadroInput = {
@@ -32257,6 +35283,7 @@ export namespace Prisma {
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUpdateManyWithoutOrdenNestedInput
+    recepciones?: RecepcionOCUpdateManyWithoutOrdenNestedInput
   }
 
   export type OrdenCompraUncheckedUpdateWithoutProveedorInput = {
@@ -32274,6 +35301,7 @@ export namespace Prisma {
     presupuesto_id?: NullableStringFieldUpdateOperationsInput | string | null
     requisicion_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrdenCompraItemUncheckedUpdateManyWithoutOrdenNestedInput
+    recepciones?: RecepcionOCUncheckedUpdateManyWithoutOrdenNestedInput
   }
 
   export type OrdenCompraUncheckedUpdateManyWithoutProveedorInput = {
@@ -32499,6 +35527,16 @@ export namespace Prisma {
     importe: Decimal | DecimalJsLike | number | string
   }
 
+  export type RecepcionOCCreateManyOrdenInput = {
+    id_recepcion?: string
+    tenant_id: string
+    proyecto_id: string
+    fecha_recepcion?: Date | string
+    recibido_por: string
+    notas?: string | null
+    created_at?: Date | string
+  }
+
   export type OrdenCompraItemUpdateWithoutOrdenInput = {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
@@ -32527,6 +35565,74 @@ export namespace Prisma {
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type RecepcionOCUpdateWithoutOrdenInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: RecepcionOCItemUpdateManyWithoutRecepcionNestedInput
+  }
+
+  export type RecepcionOCUncheckedUpdateWithoutOrdenInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: RecepcionOCItemUncheckedUpdateManyWithoutRecepcionNestedInput
+  }
+
+  export type RecepcionOCUncheckedUpdateManyWithoutOrdenInput = {
+    id_recepcion?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fecha_recepcion?: DateTimeFieldUpdateOperationsInput | Date | string
+    recibido_por?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecepcionOCItemCreateManyRecepcionInput = {
+    id_recepcion_item?: string
+    tenant_id: string
+    proyecto_id: string
+    orden_item_id: string
+    cantidad_recibida: Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: string | null
+  }
+
+  export type RecepcionOCItemUpdateWithoutRecepcionInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RecepcionOCItemUncheckedUpdateWithoutRecepcionInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RecepcionOCItemUncheckedUpdateManyWithoutRecepcionInput = {
+    id_recepcion_item?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    orden_item_id?: StringFieldUpdateOperationsInput | string
+    cantidad_recibida?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    nota_discrepancia?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateManyCuadroInput = {
@@ -32855,6 +35961,10 @@ export namespace Prisma {
      */
     export type OrdenCompraCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrdenCompraCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use RecepcionOCCountOutputTypeDefaultArgs instead
+     */
+    export type RecepcionOCCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RecepcionOCCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use CuadroComparativoCountOutputTypeDefaultArgs instead
      */
     export type CuadroComparativoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
@@ -32898,6 +36008,14 @@ export namespace Prisma {
      * @deprecated Use OrdenCompraItemDefaultArgs instead
      */
     export type OrdenCompraItemArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrdenCompraItemDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RecepcionOCDefaultArgs instead
+     */
+    export type RecepcionOCArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RecepcionOCDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RecepcionOCItemDefaultArgs instead
+     */
+    export type RecepcionOCItemArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RecepcionOCItemDefaultArgs<ExtArgs>
     /**
      * @deprecated Use CuadroComparativoDefaultArgs instead
      */

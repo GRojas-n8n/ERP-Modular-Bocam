@@ -239,6 +239,27 @@ exports.Prisma.OrdenCompraItemScalarFieldEnum = {
   importe: 'importe'
 };
 
+exports.Prisma.RecepcionOCScalarFieldEnum = {
+  id_recepcion: 'id_recepcion',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  orden_id: 'orden_id',
+  fecha_recepcion: 'fecha_recepcion',
+  recibido_por: 'recibido_por',
+  notas: 'notas',
+  created_at: 'created_at'
+};
+
+exports.Prisma.RecepcionOCItemScalarFieldEnum = {
+  id_recepcion_item: 'id_recepcion_item',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  recepcion_id: 'recepcion_id',
+  orden_item_id: 'orden_item_id',
+  cantidad_recibida: 'cantidad_recibida',
+  nota_discrepancia: 'nota_discrepancia'
+};
+
 exports.Prisma.CuadroComparativoScalarFieldEnum = {
   id_cuadro: 'id_cuadro',
   tenant_id: 'tenant_id',
@@ -435,6 +456,8 @@ exports.Prisma.ModelName = {
   AsignacionExtraConcepto: 'AsignacionExtraConcepto',
   OrdenCompra: 'OrdenCompra',
   OrdenCompraItem: 'OrdenCompraItem',
+  RecepcionOC: 'RecepcionOC',
+  RecepcionOCItem: 'RecepcionOCItem',
   CuadroComparativo: 'CuadroComparativo',
   AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
   ComparativaLinea: 'ComparativaLinea',

@@ -85,9 +85,33 @@ const OC_STATUS = {
   PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
   ERROR_FINANZAS: 'ERROR_FINANZAS',
   EMITIDA: 'EMITIDA',
+  PARCIALMENTE_RECIBIDA: 'PARCIALMENTE_RECIBIDA',
+  RECIBIDA: 'RECIBIDA',
   CANCELACION_PENDIENTE: 'CANCELACION_PENDIENTE',
   CANCELADA: 'CANCELADA',
 } as const;
+
+// Calcula el nuevo estado de la OC basado en acumulados de recepciones.
+// Retorna 'PARCIALMENTE_RECIBIDA' si alguna línea no está completa,
+// 'RECIBIDA' si todas las líneas superan o igualan su cantidad pedida.
+async function calcularEstadoOC(orderId: string, prisma: any): Promise<string> {
+  const items = await prisma.ordenCompraItem.findMany({ where: { orden_id: orderId } });
+  if (items.length === 0) return OC_STATUS.RECIBIDA;
+
+  const recepciones = await prisma.recepcionOCItem.findMany({ where: { orden_item_id: { in: items.map((i: any) => i.id_item) } } });
+
+  const acumulados = new Map<string, number>();
+  for (const r of recepciones) {
+    const prev = acumulados.get(r.orden_item_id) ?? 0;
+    acumulados.set(r.orden_item_id, prev + Number(r.cantidad_recibida));
+  }
+
+  for (const item of items) {
+    const recibido = acumulados.get(item.id_item) ?? 0;
+    if (recibido < Number(item.cantidad)) return OC_STATUS.PARCIALMENTE_RECIBIDA;
+  }
+  return OC_STATUS.RECIBIDA;
+}
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
@@ -1109,6 +1133,220 @@ app.get('/api/v1/compras/ordenes-compra', async (req: Request, res: Response) =>
   }
 });
 
+// --- Recepción de materiales contra OC ---
+
+app.get('/api/v1/compras/ordenes-compra/:id',
+  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica', 'finance'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const orden = await prisma.ordenCompra.findUnique({
+            where: { id_orden: id },
+            include: { items: true, proveedor: true },
+          });
+          if (!orden) return null;
+
+          const recepciones = await prisma.recepcionOCItem.findMany({
+            where: { orden_item_id: { in: orden.items.map((i: any) => i.id_item) } },
+          });
+
+          const acumulados = new Map<string, number>();
+          for (const r of recepciones) {
+            const prev = acumulados.get(r.orden_item_id) ?? 0;
+            acumulados.set(r.orden_item_id, prev + Number(r.cantidad_recibida));
+          }
+
+          return {
+            ...orden,
+            subtotal: Number(orden.subtotal),
+            iva: Number(orden.iva),
+            total: Number(orden.total),
+            tipo_cambio: Number(orden.tipo_cambio),
+            items: orden.items.map((item: any) => {
+              const recibido = acumulados.get(item.id_item) ?? 0;
+              const cantidad = Number(item.cantidad);
+              return {
+                ...item,
+                cantidad: Number(item.cantidad),
+                precio_unitario: Number(item.precio_unitario),
+                importe: Number(item.importe),
+                cantidad_acumulada_recibida: recibido,
+                porcentaje_recibido: cantidad > 0 ? Math.round((recibido / cantidad) * 1000) / 10 : 0,
+              };
+            }),
+          };
+        }
+      );
+
+      if (!data) return void res.status(404).json({ success: false, message: 'OC no encontrada.' });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.orden.get.error', 'Error al obtener OC', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get('/api/v1/compras/ordenes-compra/:id/recepciones',
+  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica', 'finance'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.recepcionOC.findMany({
+          where: { orden_id: id },
+          include: { items: true },
+          orderBy: { fecha_recepcion: 'desc' },
+        })
+      );
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.recepciones.list.error', 'Error al listar recepciones', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+      const { fecha_recepcion, notas, items: itemsBody } = req.body;
+
+      if (!Array.isArray(itemsBody) || itemsBody.length === 0) {
+        return void res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la recepción.' });
+      }
+
+      const result = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const orden = await prisma.ordenCompra.findUnique({
+            where: { id_orden: id },
+            include: { items: true },
+          });
+
+          if (!orden) return { error: 404, message: 'OC no encontrada.' };
+
+          const estadosPermitidos = [OC_STATUS.EMITIDA, OC_STATUS.PARCIALMENTE_RECIBIDA];
+          if (!estadosPermitidos.includes(orden.estado as any)) {
+            return { error: 400, message: 'Solo se pueden registrar recepciones en OC con estado EMITIDA o PARCIALMENTE_RECIBIDA.' };
+          }
+
+          // Calcular acumulados previos para validar cantidades
+          const prevRecepciones = await prisma.recepcionOCItem.findMany({
+            where: { orden_item_id: { in: orden.items.map((i: any) => i.id_item) } },
+          });
+          const acumuladosPrev = new Map<string, number>();
+          for (const r of prevRecepciones) {
+            const prev = acumuladosPrev.get(r.orden_item_id) ?? 0;
+            acumuladosPrev.set(r.orden_item_id, prev + Number(r.cantidad_recibida));
+          }
+
+          // Validar cada línea
+          for (const lineaBody of itemsBody) {
+            const ocItem = orden.items.find((i: any) => i.id_item === lineaBody.orden_item_id);
+            if (!ocItem) {
+              return { error: 400, message: `Ítem ${lineaBody.orden_item_id} no pertenece a esta OC.` };
+            }
+            const cantidadPedida = Number(ocItem.cantidad);
+            const yaRecibido = acumuladosPrev.get(ocItem.id_item) ?? 0;
+            const pendiente = cantidadPedida - yaRecibido;
+            const cantidadRecibida = Number(lineaBody.cantidad_recibida ?? 0);
+            if (cantidadRecibida <= 0) {
+              return { error: 400, message: `La cantidad_recibida del ítem ${lineaBody.orden_item_id} debe ser mayor a 0.` };
+            }
+            if (cantidadRecibida > pendiente + 0.00001) {
+              return { error: 400, message: `La cantidad recibida no puede superar la cantidad pedida en la línea ${lineaBody.orden_item_id}.` };
+            }
+          }
+
+          // Crear recepción
+          const recepcion = await prisma.recepcionOC.create({
+            data: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              orden_id: id,
+              fecha_recepcion: fecha_recepcion ? new Date(fecha_recepcion) : new Date(),
+              recibido_por: userId,
+              notas: notas ?? null,
+              items: {
+                create: itemsBody.map((l: any) => ({
+                  tenant_id: tenantId,
+                  proyecto_id: proyectoId,
+                  orden_item_id: l.orden_item_id,
+                  cantidad_recibida: l.cantidad_recibida,
+                  nota_discrepancia: l.nota_discrepancia ?? null,
+                })),
+              },
+            },
+            include: { items: true },
+          });
+
+          // Recalcular estado OC
+          const nuevoEstado = await calcularEstadoOC(id, prisma);
+          await prisma.ordenCompra.update({
+            where: { id_orden: id },
+            data: { estado: nuevoEstado },
+          });
+
+          return { recepcion, nuevoEstado, orden };
+        }
+      );
+
+      if ('error' in result) {
+        return void res.status(result.error as number).json({ success: false, message: result.message });
+      }
+
+      logInfo(req, 'compras', 'compras.recepcion.creada', 'Recepción de OC registrada', {
+        orden_id: id,
+        nuevo_estado: result.nuevoEstado,
+      });
+
+      // Publicar evento si la OC quedó completamente recibida (best-effort)
+      if (result.nuevoEstado === OC_STATUS.RECIBIDA) {
+        try {
+          await eventBus.publish({
+            event_type: 'compras.oc_recibida_total',
+            timestamp: new Date().toISOString(),
+            context: buildEventContext(req),
+            payload: {
+              id_orden: id,
+              codigo: result.orden.codigo,
+              proveedor_id: result.orden.proveedor_id,
+              total: Number(result.orden.total),
+              proyecto_id: result.orden.proyecto_id,
+            },
+          });
+        } catch (_) {
+          /* EventBus offline — degradación elegante. La OC ya fue marcada RECIBIDA. */
+        }
+      }
+
+      res.status(201).json({
+        success: true,
+        data: {
+          ...result.recepcion,
+          nuevo_estado_oc: result.nuevoEstado,
+        },
+      });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.recepcion.create.error', 'Error al registrar recepción', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 app.get('/api/v1/compras/proveedores', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1707,11 +1945,57 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           aclaraciones_count: aclaracionesCountMap.get(`${d.insumo_id}:${d.proveedor_id}`) ?? 0,
         }));
 
+        // Órdenes de Compra generadas desde esta comparativa (vinculadas por requisicion_id)
+        const ordenesRaw = (cuadro as any).requisicion_id
+          ? await prisma.ordenCompra.findMany({
+              where: { tenant_id: tenantId, requisicion_id: (cuadro as any).requisicion_id },
+              include: { items: true, proveedor: true },
+              orderBy: { fecha_emision: 'desc' },
+            })
+          : [];
+
+        // Acumulados de recepciones para todas las OC de esta comparativa
+        const todosItemIds = ordenesRaw.flatMap((o: any) => o.items.map((i: any) => i.id_item));
+        const todasRecepciones = todosItemIds.length > 0
+          ? await prisma.recepcionOCItem.findMany({ where: { orden_item_id: { in: todosItemIds } } })
+          : [];
+        const acumuladosMap = new Map<string, number>();
+        for (const r of todasRecepciones) {
+          const prev = acumuladosMap.get(r.orden_item_id) ?? 0;
+          acumuladosMap.set(r.orden_item_id, prev + Number(r.cantidad_recibida));
+        }
+
+        const ordenes_compra = ordenesRaw.map((o: any) => ({
+          id_orden: o.id_orden,
+          codigo: o.codigo,
+          estado: o.estado,
+          proveedor_nombre: o.proveedor?.razon_social ?? '',
+          proveedor_id: o.proveedor_id,
+          total: Number(o.total),
+          subtotal: Number(o.subtotal),
+          iva: Number(o.iva),
+          fecha_emision: o.fecha_emision,
+          items: o.items.map((item: any) => {
+            const recibido = acumuladosMap.get(item.id_item) ?? 0;
+            const cantidad = Number(item.cantidad);
+            return {
+              id_item: item.id_item,
+              insumo_id: item.insumo_id,
+              cantidad: Number(item.cantidad),
+              precio_unitario: Number(item.precio_unitario),
+              importe: Number(item.importe),
+              cantidad_acumulada_recibida: recibido,
+              porcentaje_recibido: cantidad > 0 ? Math.round((recibido / cantidad) * 1000) / 10 : 0,
+            };
+          }),
+        }));
+
         return {
           ...cuadro,
           detalles: detallesConCount,
           lineas_detalle: lineasDetalle,
           anotaciones_spec: anotacionesSpec,
+          ordenes_compra,
         };
       },
     );

@@ -1688,12 +1688,14 @@ export namespace Prisma {
     salario_diario: Decimal | null
     salario_integrado: Decimal | null
     salario_acordado: Decimal | null
+    horas_jornada: Decimal | null
   }
 
   export type EmpleadoSumAggregateOutputType = {
     salario_diario: Decimal | null
     salario_integrado: Decimal | null
     salario_acordado: Decimal | null
+    horas_jornada: Decimal | null
   }
 
   export type EmpleadoMinAggregateOutputType = {
@@ -1719,6 +1721,11 @@ export namespace Prisma {
     contacto_emergencia: string | null
     certificaciones: string | null
     estado: string | null
+    modo_asistencia: string | null
+    tipo_jornada: string | null
+    hora_entrada_programada: string | null
+    hora_salida_programada: string | null
+    horas_jornada: Decimal | null
     cuadrilla_id: string | null
     created_at: Date | null
     updated_at: Date | null
@@ -1747,6 +1754,11 @@ export namespace Prisma {
     contacto_emergencia: string | null
     certificaciones: string | null
     estado: string | null
+    modo_asistencia: string | null
+    tipo_jornada: string | null
+    hora_entrada_programada: string | null
+    hora_salida_programada: string | null
+    horas_jornada: Decimal | null
     cuadrilla_id: string | null
     created_at: Date | null
     updated_at: Date | null
@@ -1775,6 +1787,11 @@ export namespace Prisma {
     contacto_emergencia: number
     certificaciones: number
     estado: number
+    modo_asistencia: number
+    tipo_jornada: number
+    hora_entrada_programada: number
+    hora_salida_programada: number
+    horas_jornada: number
     cuadrilla_id: number
     created_at: number
     updated_at: number
@@ -1786,12 +1803,14 @@ export namespace Prisma {
     salario_diario?: true
     salario_integrado?: true
     salario_acordado?: true
+    horas_jornada?: true
   }
 
   export type EmpleadoSumAggregateInputType = {
     salario_diario?: true
     salario_integrado?: true
     salario_acordado?: true
+    horas_jornada?: true
   }
 
   export type EmpleadoMinAggregateInputType = {
@@ -1817,6 +1836,11 @@ export namespace Prisma {
     contacto_emergencia?: true
     certificaciones?: true
     estado?: true
+    modo_asistencia?: true
+    tipo_jornada?: true
+    hora_entrada_programada?: true
+    hora_salida_programada?: true
+    horas_jornada?: true
     cuadrilla_id?: true
     created_at?: true
     updated_at?: true
@@ -1845,6 +1869,11 @@ export namespace Prisma {
     contacto_emergencia?: true
     certificaciones?: true
     estado?: true
+    modo_asistencia?: true
+    tipo_jornada?: true
+    hora_entrada_programada?: true
+    hora_salida_programada?: true
+    horas_jornada?: true
     cuadrilla_id?: true
     created_at?: true
     updated_at?: true
@@ -1873,6 +1902,11 @@ export namespace Prisma {
     contacto_emergencia?: true
     certificaciones?: true
     estado?: true
+    modo_asistencia?: true
+    tipo_jornada?: true
+    hora_entrada_programada?: true
+    hora_salida_programada?: true
+    horas_jornada?: true
     cuadrilla_id?: true
     created_at?: true
     updated_at?: true
@@ -1988,6 +2022,11 @@ export namespace Prisma {
     contacto_emergencia: string | null
     certificaciones: string | null
     estado: string
+    modo_asistencia: string
+    tipo_jornada: string
+    hora_entrada_programada: string | null
+    hora_salida_programada: string | null
+    horas_jornada: Decimal
     cuadrilla_id: string | null
     created_at: Date
     updated_at: Date
@@ -2035,6 +2074,11 @@ export namespace Prisma {
     contacto_emergencia?: boolean
     certificaciones?: boolean
     estado?: boolean
+    modo_asistencia?: boolean
+    tipo_jornada?: boolean
+    hora_entrada_programada?: boolean
+    hora_salida_programada?: boolean
+    horas_jornada?: boolean
     cuadrilla_id?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -2067,6 +2111,11 @@ export namespace Prisma {
     contacto_emergencia?: boolean
     certificaciones?: boolean
     estado?: boolean
+    modo_asistencia?: boolean
+    tipo_jornada?: boolean
+    hora_entrada_programada?: boolean
+    hora_salida_programada?: boolean
+    horas_jornada?: boolean
     cuadrilla_id?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -2096,6 +2145,11 @@ export namespace Prisma {
     contacto_emergencia?: boolean
     certificaciones?: boolean
     estado?: boolean
+    modo_asistencia?: boolean
+    tipo_jornada?: boolean
+    hora_entrada_programada?: boolean
+    hora_salida_programada?: boolean
+    horas_jornada?: boolean
     cuadrilla_id?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -2141,6 +2195,11 @@ export namespace Prisma {
       contacto_emergencia: string | null
       certificaciones: string | null
       estado: string
+      modo_asistencia: string
+      tipo_jornada: string
+      hora_entrada_programada: string | null
+      hora_salida_programada: string | null
+      horas_jornada: Prisma.Decimal
       cuadrilla_id: string | null
       created_at: Date
       updated_at: Date
@@ -2562,6 +2621,11 @@ export namespace Prisma {
     readonly contacto_emergencia: FieldRef<"Empleado", 'String'>
     readonly certificaciones: FieldRef<"Empleado", 'String'>
     readonly estado: FieldRef<"Empleado", 'String'>
+    readonly modo_asistencia: FieldRef<"Empleado", 'String'>
+    readonly tipo_jornada: FieldRef<"Empleado", 'String'>
+    readonly hora_entrada_programada: FieldRef<"Empleado", 'String'>
+    readonly hora_salida_programada: FieldRef<"Empleado", 'String'>
+    readonly horas_jornada: FieldRef<"Empleado", 'Decimal'>
     readonly cuadrilla_id: FieldRef<"Empleado", 'String'>
     readonly created_at: FieldRef<"Empleado", 'DateTime'>
     readonly updated_at: FieldRef<"Empleado", 'DateTime'>
@@ -6254,6 +6318,9 @@ export namespace Prisma {
     otras_deducciones: Decimal | null
     total_deducciones: Decimal | null
     neto_a_pagar: Decimal | null
+    horas_normales: Decimal | null
+    monto_he_doble: Decimal | null
+    monto_he_triple: Decimal | null
   }
 
   export type PreNominaDetalleSumAggregateOutputType = {
@@ -6268,6 +6335,9 @@ export namespace Prisma {
     otras_deducciones: Decimal | null
     total_deducciones: Decimal | null
     neto_a_pagar: Decimal | null
+    horas_normales: Decimal | null
+    monto_he_doble: Decimal | null
+    monto_he_triple: Decimal | null
   }
 
   export type PreNominaDetalleMinAggregateOutputType = {
@@ -6288,6 +6358,10 @@ export namespace Prisma {
     otras_deducciones: Decimal | null
     total_deducciones: Decimal | null
     neto_a_pagar: Decimal | null
+    horas_normales: Decimal | null
+    monto_he_doble: Decimal | null
+    monto_he_triple: Decimal | null
+    origen_horas: string | null
   }
 
   export type PreNominaDetalleMaxAggregateOutputType = {
@@ -6308,6 +6382,10 @@ export namespace Prisma {
     otras_deducciones: Decimal | null
     total_deducciones: Decimal | null
     neto_a_pagar: Decimal | null
+    horas_normales: Decimal | null
+    monto_he_doble: Decimal | null
+    monto_he_triple: Decimal | null
+    origen_horas: string | null
   }
 
   export type PreNominaDetalleCountAggregateOutputType = {
@@ -6328,6 +6406,10 @@ export namespace Prisma {
     otras_deducciones: number
     total_deducciones: number
     neto_a_pagar: number
+    horas_normales: number
+    monto_he_doble: number
+    monto_he_triple: number
+    origen_horas: number
     _all: number
   }
 
@@ -6344,6 +6426,9 @@ export namespace Prisma {
     otras_deducciones?: true
     total_deducciones?: true
     neto_a_pagar?: true
+    horas_normales?: true
+    monto_he_doble?: true
+    monto_he_triple?: true
   }
 
   export type PreNominaDetalleSumAggregateInputType = {
@@ -6358,6 +6443,9 @@ export namespace Prisma {
     otras_deducciones?: true
     total_deducciones?: true
     neto_a_pagar?: true
+    horas_normales?: true
+    monto_he_doble?: true
+    monto_he_triple?: true
   }
 
   export type PreNominaDetalleMinAggregateInputType = {
@@ -6378,6 +6466,10 @@ export namespace Prisma {
     otras_deducciones?: true
     total_deducciones?: true
     neto_a_pagar?: true
+    horas_normales?: true
+    monto_he_doble?: true
+    monto_he_triple?: true
+    origen_horas?: true
   }
 
   export type PreNominaDetalleMaxAggregateInputType = {
@@ -6398,6 +6490,10 @@ export namespace Prisma {
     otras_deducciones?: true
     total_deducciones?: true
     neto_a_pagar?: true
+    horas_normales?: true
+    monto_he_doble?: true
+    monto_he_triple?: true
+    origen_horas?: true
   }
 
   export type PreNominaDetalleCountAggregateInputType = {
@@ -6418,6 +6514,10 @@ export namespace Prisma {
     otras_deducciones?: true
     total_deducciones?: true
     neto_a_pagar?: true
+    horas_normales?: true
+    monto_he_doble?: true
+    monto_he_triple?: true
+    origen_horas?: true
     _all?: true
   }
 
@@ -6525,6 +6625,10 @@ export namespace Prisma {
     otras_deducciones: Decimal
     total_deducciones: Decimal
     neto_a_pagar: Decimal
+    horas_normales: Decimal | null
+    monto_he_doble: Decimal
+    monto_he_triple: Decimal
+    origen_horas: string
     _count: PreNominaDetalleCountAggregateOutputType | null
     _avg: PreNominaDetalleAvgAggregateOutputType | null
     _sum: PreNominaDetalleSumAggregateOutputType | null
@@ -6564,6 +6668,10 @@ export namespace Prisma {
     otras_deducciones?: boolean
     total_deducciones?: boolean
     neto_a_pagar?: boolean
+    horas_normales?: boolean
+    monto_he_doble?: boolean
+    monto_he_triple?: boolean
+    origen_horas?: boolean
     prenomina?: boolean | PreNominaDefaultArgs<ExtArgs>
     empleado?: boolean | EmpleadoDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["preNominaDetalle"]>
@@ -6586,6 +6694,10 @@ export namespace Prisma {
     otras_deducciones?: boolean
     total_deducciones?: boolean
     neto_a_pagar?: boolean
+    horas_normales?: boolean
+    monto_he_doble?: boolean
+    monto_he_triple?: boolean
+    origen_horas?: boolean
     prenomina?: boolean | PreNominaDefaultArgs<ExtArgs>
     empleado?: boolean | EmpleadoDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["preNominaDetalle"]>
@@ -6608,6 +6720,10 @@ export namespace Prisma {
     otras_deducciones?: boolean
     total_deducciones?: boolean
     neto_a_pagar?: boolean
+    horas_normales?: boolean
+    monto_he_doble?: boolean
+    monto_he_triple?: boolean
+    origen_horas?: boolean
   }
 
   export type PreNominaDetalleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6643,6 +6759,10 @@ export namespace Prisma {
       otras_deducciones: Prisma.Decimal
       total_deducciones: Prisma.Decimal
       neto_a_pagar: Prisma.Decimal
+      horas_normales: Prisma.Decimal | null
+      monto_he_doble: Prisma.Decimal
+      monto_he_triple: Prisma.Decimal
+      origen_horas: string
     }, ExtArgs["result"]["preNominaDetalle"]>
     composites: {}
   }
@@ -7055,6 +7175,10 @@ export namespace Prisma {
     readonly otras_deducciones: FieldRef<"PreNominaDetalle", 'Decimal'>
     readonly total_deducciones: FieldRef<"PreNominaDetalle", 'Decimal'>
     readonly neto_a_pagar: FieldRef<"PreNominaDetalle", 'Decimal'>
+    readonly horas_normales: FieldRef<"PreNominaDetalle", 'Decimal'>
+    readonly monto_he_doble: FieldRef<"PreNominaDetalle", 'Decimal'>
+    readonly monto_he_triple: FieldRef<"PreNominaDetalle", 'Decimal'>
+    readonly origen_horas: FieldRef<"PreNominaDetalle", 'String'>
   }
     
 
@@ -7401,10 +7525,16 @@ export namespace Prisma {
 
   export type RegistroAsistenciaAvgAggregateOutputType = {
     horas_extra: Decimal | null
+    horas_trabajadas: Decimal | null
+    horas_normales: Decimal | null
+    horas_extra_dia: Decimal | null
   }
 
   export type RegistroAsistenciaSumAggregateOutputType = {
     horas_extra: Decimal | null
+    horas_trabajadas: Decimal | null
+    horas_normales: Decimal | null
+    horas_extra_dia: Decimal | null
   }
 
   export type RegistroAsistenciaMinAggregateOutputType = {
@@ -7418,6 +7548,12 @@ export namespace Prisma {
     tipo_registro: string | null
     horas_extra: Decimal | null
     registrado_por: string | null
+    hora_entrada: string | null
+    hora_salida: string | null
+    horas_trabajadas: Decimal | null
+    horas_normales: Decimal | null
+    horas_extra_dia: Decimal | null
+    origen_horas: string | null
     created_at: Date | null
   }
 
@@ -7432,6 +7568,12 @@ export namespace Prisma {
     tipo_registro: string | null
     horas_extra: Decimal | null
     registrado_por: string | null
+    hora_entrada: string | null
+    hora_salida: string | null
+    horas_trabajadas: Decimal | null
+    horas_normales: Decimal | null
+    horas_extra_dia: Decimal | null
+    origen_horas: string | null
     created_at: Date | null
   }
 
@@ -7446,6 +7588,12 @@ export namespace Prisma {
     tipo_registro: number
     horas_extra: number
     registrado_por: number
+    hora_entrada: number
+    hora_salida: number
+    horas_trabajadas: number
+    horas_normales: number
+    horas_extra_dia: number
+    origen_horas: number
     created_at: number
     _all: number
   }
@@ -7453,10 +7601,16 @@ export namespace Prisma {
 
   export type RegistroAsistenciaAvgAggregateInputType = {
     horas_extra?: true
+    horas_trabajadas?: true
+    horas_normales?: true
+    horas_extra_dia?: true
   }
 
   export type RegistroAsistenciaSumAggregateInputType = {
     horas_extra?: true
+    horas_trabajadas?: true
+    horas_normales?: true
+    horas_extra_dia?: true
   }
 
   export type RegistroAsistenciaMinAggregateInputType = {
@@ -7470,6 +7624,12 @@ export namespace Prisma {
     tipo_registro?: true
     horas_extra?: true
     registrado_por?: true
+    hora_entrada?: true
+    hora_salida?: true
+    horas_trabajadas?: true
+    horas_normales?: true
+    horas_extra_dia?: true
+    origen_horas?: true
     created_at?: true
   }
 
@@ -7484,6 +7644,12 @@ export namespace Prisma {
     tipo_registro?: true
     horas_extra?: true
     registrado_por?: true
+    hora_entrada?: true
+    hora_salida?: true
+    horas_trabajadas?: true
+    horas_normales?: true
+    horas_extra_dia?: true
+    origen_horas?: true
     created_at?: true
   }
 
@@ -7498,6 +7664,12 @@ export namespace Prisma {
     tipo_registro?: true
     horas_extra?: true
     registrado_por?: true
+    hora_entrada?: true
+    hora_salida?: true
+    horas_trabajadas?: true
+    horas_normales?: true
+    horas_extra_dia?: true
+    origen_horas?: true
     created_at?: true
     _all?: true
   }
@@ -7599,6 +7771,12 @@ export namespace Prisma {
     tipo_registro: string
     horas_extra: Decimal
     registrado_por: string
+    hora_entrada: string | null
+    hora_salida: string | null
+    horas_trabajadas: Decimal | null
+    horas_normales: Decimal | null
+    horas_extra_dia: Decimal | null
+    origen_horas: string
     created_at: Date
     _count: RegistroAsistenciaCountAggregateOutputType | null
     _avg: RegistroAsistenciaAvgAggregateOutputType | null
@@ -7632,6 +7810,12 @@ export namespace Prisma {
     tipo_registro?: boolean
     horas_extra?: boolean
     registrado_por?: boolean
+    hora_entrada?: boolean
+    hora_salida?: boolean
+    horas_trabajadas?: boolean
+    horas_normales?: boolean
+    horas_extra_dia?: boolean
+    origen_horas?: boolean
     created_at?: boolean
   }, ExtArgs["result"]["registroAsistencia"]>
 
@@ -7646,6 +7830,12 @@ export namespace Prisma {
     tipo_registro?: boolean
     horas_extra?: boolean
     registrado_por?: boolean
+    hora_entrada?: boolean
+    hora_salida?: boolean
+    horas_trabajadas?: boolean
+    horas_normales?: boolean
+    horas_extra_dia?: boolean
+    origen_horas?: boolean
     created_at?: boolean
   }, ExtArgs["result"]["registroAsistencia"]>
 
@@ -7660,6 +7850,12 @@ export namespace Prisma {
     tipo_registro?: boolean
     horas_extra?: boolean
     registrado_por?: boolean
+    hora_entrada?: boolean
+    hora_salida?: boolean
+    horas_trabajadas?: boolean
+    horas_normales?: boolean
+    horas_extra_dia?: boolean
+    origen_horas?: boolean
     created_at?: boolean
   }
 
@@ -7678,6 +7874,12 @@ export namespace Prisma {
       tipo_registro: string
       horas_extra: Prisma.Decimal
       registrado_por: string
+      hora_entrada: string | null
+      hora_salida: string | null
+      horas_trabajadas: Prisma.Decimal | null
+      horas_normales: Prisma.Decimal | null
+      horas_extra_dia: Prisma.Decimal | null
+      origen_horas: string
       created_at: Date
     }, ExtArgs["result"]["registroAsistencia"]>
     composites: {}
@@ -8082,6 +8284,12 @@ export namespace Prisma {
     readonly tipo_registro: FieldRef<"RegistroAsistencia", 'String'>
     readonly horas_extra: FieldRef<"RegistroAsistencia", 'Decimal'>
     readonly registrado_por: FieldRef<"RegistroAsistencia", 'String'>
+    readonly hora_entrada: FieldRef<"RegistroAsistencia", 'String'>
+    readonly hora_salida: FieldRef<"RegistroAsistencia", 'String'>
+    readonly horas_trabajadas: FieldRef<"RegistroAsistencia", 'Decimal'>
+    readonly horas_normales: FieldRef<"RegistroAsistencia", 'Decimal'>
+    readonly horas_extra_dia: FieldRef<"RegistroAsistencia", 'Decimal'>
+    readonly origen_horas: FieldRef<"RegistroAsistencia", 'String'>
     readonly created_at: FieldRef<"RegistroAsistencia", 'DateTime'>
   }
     
@@ -11477,6 +11685,11 @@ export namespace Prisma {
     contacto_emergencia: 'contacto_emergencia',
     certificaciones: 'certificaciones',
     estado: 'estado',
+    modo_asistencia: 'modo_asistencia',
+    tipo_jornada: 'tipo_jornada',
+    hora_entrada_programada: 'hora_entrada_programada',
+    hora_salida_programada: 'hora_salida_programada',
+    horas_jornada: 'horas_jornada',
     cuadrilla_id: 'cuadrilla_id',
     created_at: 'created_at',
     updated_at: 'updated_at'
@@ -11562,7 +11775,11 @@ export namespace Prisma {
     deduccion_isr: 'deduccion_isr',
     otras_deducciones: 'otras_deducciones',
     total_deducciones: 'total_deducciones',
-    neto_a_pagar: 'neto_a_pagar'
+    neto_a_pagar: 'neto_a_pagar',
+    horas_normales: 'horas_normales',
+    monto_he_doble: 'monto_he_doble',
+    monto_he_triple: 'monto_he_triple',
+    origen_horas: 'origen_horas'
   };
 
   export type PreNominaDetalleScalarFieldEnum = (typeof PreNominaDetalleScalarFieldEnum)[keyof typeof PreNominaDetalleScalarFieldEnum]
@@ -11579,6 +11796,12 @@ export namespace Prisma {
     tipo_registro: 'tipo_registro',
     horas_extra: 'horas_extra',
     registrado_por: 'registrado_por',
+    hora_entrada: 'hora_entrada',
+    hora_salida: 'hora_salida',
+    horas_trabajadas: 'horas_trabajadas',
+    horas_normales: 'horas_normales',
+    horas_extra_dia: 'horas_extra_dia',
+    origen_horas: 'origen_horas',
     created_at: 'created_at'
   };
 
@@ -11769,6 +11992,11 @@ export namespace Prisma {
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
     certificaciones?: StringNullableFilter<"Empleado"> | string | null
     estado?: StringFilter<"Empleado"> | string
+    modo_asistencia?: StringFilter<"Empleado"> | string
+    tipo_jornada?: StringFilter<"Empleado"> | string
+    hora_entrada_programada?: StringNullableFilter<"Empleado"> | string | null
+    hora_salida_programada?: StringNullableFilter<"Empleado"> | string | null
+    horas_jornada?: DecimalFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: UuidNullableFilter<"Empleado"> | string | null
     created_at?: DateTimeFilter<"Empleado"> | Date | string
     updated_at?: DateTimeFilter<"Empleado"> | Date | string
@@ -11800,6 +12028,11 @@ export namespace Prisma {
     contacto_emergencia?: SortOrderInput | SortOrder
     certificaciones?: SortOrderInput | SortOrder
     estado?: SortOrder
+    modo_asistencia?: SortOrder
+    tipo_jornada?: SortOrder
+    hora_entrada_programada?: SortOrderInput | SortOrder
+    hora_salida_programada?: SortOrderInput | SortOrder
+    horas_jornada?: SortOrder
     cuadrilla_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -11836,6 +12069,11 @@ export namespace Prisma {
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
     certificaciones?: StringNullableFilter<"Empleado"> | string | null
     estado?: StringFilter<"Empleado"> | string
+    modo_asistencia?: StringFilter<"Empleado"> | string
+    tipo_jornada?: StringFilter<"Empleado"> | string
+    hora_entrada_programada?: StringNullableFilter<"Empleado"> | string | null
+    hora_salida_programada?: StringNullableFilter<"Empleado"> | string | null
+    horas_jornada?: DecimalFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: UuidNullableFilter<"Empleado"> | string | null
     created_at?: DateTimeFilter<"Empleado"> | Date | string
     updated_at?: DateTimeFilter<"Empleado"> | Date | string
@@ -11867,6 +12105,11 @@ export namespace Prisma {
     contacto_emergencia?: SortOrderInput | SortOrder
     certificaciones?: SortOrderInput | SortOrder
     estado?: SortOrder
+    modo_asistencia?: SortOrder
+    tipo_jornada?: SortOrder
+    hora_entrada_programada?: SortOrderInput | SortOrder
+    hora_salida_programada?: SortOrderInput | SortOrder
+    horas_jornada?: SortOrder
     cuadrilla_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -11903,6 +12146,11 @@ export namespace Prisma {
     contacto_emergencia?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     certificaciones?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     estado?: StringWithAggregatesFilter<"Empleado"> | string
+    modo_asistencia?: StringWithAggregatesFilter<"Empleado"> | string
+    tipo_jornada?: StringWithAggregatesFilter<"Empleado"> | string
+    hora_entrada_programada?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
+    hora_salida_programada?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
+    horas_jornada?: DecimalWithAggregatesFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: UuidNullableWithAggregatesFilter<"Empleado"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"Empleado"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Empleado"> | Date | string
@@ -12241,6 +12489,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    horas_normales?: DecimalNullableFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFilter<"PreNominaDetalle"> | string
     prenomina?: XOR<PreNominaRelationFilter, PreNominaWhereInput>
     empleado?: XOR<EmpleadoRelationFilter, EmpleadoWhereInput>
   }
@@ -12263,6 +12515,10 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrderInput | SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
+    origen_horas?: SortOrder
     prenomina?: PreNominaOrderByWithRelationInput
     empleado?: EmpleadoOrderByWithRelationInput
   }
@@ -12288,6 +12544,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    horas_normales?: DecimalNullableFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFilter<"PreNominaDetalle"> | string
     prenomina?: XOR<PreNominaRelationFilter, PreNominaWhereInput>
     empleado?: XOR<EmpleadoRelationFilter, EmpleadoWhereInput>
   }, "id_detalle">
@@ -12310,6 +12570,10 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrderInput | SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
+    origen_horas?: SortOrder
     _count?: PreNominaDetalleCountOrderByAggregateInput
     _avg?: PreNominaDetalleAvgOrderByAggregateInput
     _max?: PreNominaDetalleMaxOrderByAggregateInput
@@ -12338,6 +12602,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    horas_normales?: DecimalNullableWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalWithAggregatesFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringWithAggregatesFilter<"PreNominaDetalle"> | string
   }
 
   export type RegistroAsistenciaWhereInput = {
@@ -12354,6 +12622,12 @@ export namespace Prisma {
     tipo_registro?: StringFilter<"RegistroAsistencia"> | string
     horas_extra?: DecimalFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string
     registrado_por?: UuidFilter<"RegistroAsistencia"> | string
+    hora_entrada?: StringNullableFilter<"RegistroAsistencia"> | string | null
+    hora_salida?: StringNullableFilter<"RegistroAsistencia"> | string | null
+    horas_trabajadas?: DecimalNullableFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: DecimalNullableFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: DecimalNullableFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringFilter<"RegistroAsistencia"> | string
     created_at?: DateTimeFilter<"RegistroAsistencia"> | Date | string
   }
 
@@ -12368,6 +12642,12 @@ export namespace Prisma {
     tipo_registro?: SortOrder
     horas_extra?: SortOrder
     registrado_por?: SortOrder
+    hora_entrada?: SortOrderInput | SortOrder
+    hora_salida?: SortOrderInput | SortOrder
+    horas_trabajadas?: SortOrderInput | SortOrder
+    horas_normales?: SortOrderInput | SortOrder
+    horas_extra_dia?: SortOrderInput | SortOrder
+    origen_horas?: SortOrder
     created_at?: SortOrder
   }
 
@@ -12386,6 +12666,12 @@ export namespace Prisma {
     tipo_registro?: StringFilter<"RegistroAsistencia"> | string
     horas_extra?: DecimalFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string
     registrado_por?: UuidFilter<"RegistroAsistencia"> | string
+    hora_entrada?: StringNullableFilter<"RegistroAsistencia"> | string | null
+    hora_salida?: StringNullableFilter<"RegistroAsistencia"> | string | null
+    horas_trabajadas?: DecimalNullableFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: DecimalNullableFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: DecimalNullableFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringFilter<"RegistroAsistencia"> | string
     created_at?: DateTimeFilter<"RegistroAsistencia"> | Date | string
   }, "id_registro" | "tenant_id_empleado_id_fecha">
 
@@ -12400,6 +12686,12 @@ export namespace Prisma {
     tipo_registro?: SortOrder
     horas_extra?: SortOrder
     registrado_por?: SortOrder
+    hora_entrada?: SortOrderInput | SortOrder
+    hora_salida?: SortOrderInput | SortOrder
+    horas_trabajadas?: SortOrderInput | SortOrder
+    horas_normales?: SortOrderInput | SortOrder
+    horas_extra_dia?: SortOrderInput | SortOrder
+    origen_horas?: SortOrder
     created_at?: SortOrder
     _count?: RegistroAsistenciaCountOrderByAggregateInput
     _avg?: RegistroAsistenciaAvgOrderByAggregateInput
@@ -12422,6 +12714,12 @@ export namespace Prisma {
     tipo_registro?: StringWithAggregatesFilter<"RegistroAsistencia"> | string
     horas_extra?: DecimalWithAggregatesFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string
     registrado_por?: UuidWithAggregatesFilter<"RegistroAsistencia"> | string
+    hora_entrada?: StringNullableWithAggregatesFilter<"RegistroAsistencia"> | string | null
+    hora_salida?: StringNullableWithAggregatesFilter<"RegistroAsistencia"> | string | null
+    horas_trabajadas?: DecimalNullableWithAggregatesFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: DecimalNullableWithAggregatesFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: DecimalNullableWithAggregatesFilter<"RegistroAsistencia"> | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringWithAggregatesFilter<"RegistroAsistencia"> | string
     created_at?: DateTimeWithAggregatesFilter<"RegistroAsistencia"> | Date | string
   }
 
@@ -12697,6 +12995,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
     cuadrilla?: CuadrillaCreateNestedOneWithoutMiembrosInput
@@ -12727,6 +13030,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     cuadrilla_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
@@ -12757,6 +13065,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     cuadrilla?: CuadrillaUpdateOneWithoutMiembrosNestedInput
@@ -12787,6 +13100,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12817,6 +13135,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     cuadrilla_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
@@ -12845,6 +13168,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12872,6 +13200,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13260,6 +13593,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
     prenomina: PreNominaCreateNestedOneWithoutDetallesInput
     empleado: EmpleadoCreateNestedOneWithoutPrenominasInput
   }
@@ -13282,6 +13619,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
   }
 
   export type PreNominaDetalleUpdateInput = {
@@ -13300,6 +13641,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
     prenomina?: PreNominaUpdateOneRequiredWithoutDetallesNestedInput
     empleado?: EmpleadoUpdateOneRequiredWithoutPrenominasNestedInput
   }
@@ -13322,6 +13667,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type PreNominaDetalleCreateManyInput = {
@@ -13342,6 +13691,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
   }
 
   export type PreNominaDetalleUpdateManyMutationInput = {
@@ -13360,6 +13713,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type PreNominaDetalleUncheckedUpdateManyInput = {
@@ -13380,6 +13737,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type RegistroAsistenciaCreateInput = {
@@ -13393,6 +13754,12 @@ export namespace Prisma {
     tipo_registro?: string
     horas_extra?: Decimal | DecimalJsLike | number | string
     registrado_por: string
+    hora_entrada?: string | null
+    hora_salida?: string | null
+    horas_trabajadas?: Decimal | DecimalJsLike | number | string | null
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: Decimal | DecimalJsLike | number | string | null
+    origen_horas?: string
     created_at?: Date | string
   }
 
@@ -13407,6 +13774,12 @@ export namespace Prisma {
     tipo_registro?: string
     horas_extra?: Decimal | DecimalJsLike | number | string
     registrado_por: string
+    hora_entrada?: string | null
+    hora_salida?: string | null
+    horas_trabajadas?: Decimal | DecimalJsLike | number | string | null
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: Decimal | DecimalJsLike | number | string | null
+    origen_horas?: string
     created_at?: Date | string
   }
 
@@ -13421,6 +13794,12 @@ export namespace Prisma {
     tipo_registro?: StringFieldUpdateOperationsInput | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     registrado_por?: StringFieldUpdateOperationsInput | string
+    hora_entrada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_trabajadas?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13435,6 +13814,12 @@ export namespace Prisma {
     tipo_registro?: StringFieldUpdateOperationsInput | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     registrado_por?: StringFieldUpdateOperationsInput | string
+    hora_entrada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_trabajadas?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13449,6 +13834,12 @@ export namespace Prisma {
     tipo_registro?: string
     horas_extra?: Decimal | DecimalJsLike | number | string
     registrado_por: string
+    hora_entrada?: string | null
+    hora_salida?: string | null
+    horas_trabajadas?: Decimal | DecimalJsLike | number | string | null
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: Decimal | DecimalJsLike | number | string | null
+    origen_horas?: string
     created_at?: Date | string
   }
 
@@ -13463,6 +13854,12 @@ export namespace Prisma {
     tipo_registro?: StringFieldUpdateOperationsInput | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     registrado_por?: StringFieldUpdateOperationsInput | string
+    hora_entrada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_trabajadas?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13477,6 +13874,12 @@ export namespace Prisma {
     tipo_registro?: StringFieldUpdateOperationsInput | string
     horas_extra?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     registrado_por?: StringFieldUpdateOperationsInput | string
+    hora_entrada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_trabajadas?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    horas_extra_dia?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    origen_horas?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13924,6 +14327,11 @@ export namespace Prisma {
     contacto_emergencia?: SortOrder
     certificaciones?: SortOrder
     estado?: SortOrder
+    modo_asistencia?: SortOrder
+    tipo_jornada?: SortOrder
+    hora_entrada_programada?: SortOrder
+    hora_salida_programada?: SortOrder
+    horas_jornada?: SortOrder
     cuadrilla_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -13933,6 +14341,7 @@ export namespace Prisma {
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
     salario_acordado?: SortOrder
+    horas_jornada?: SortOrder
   }
 
   export type EmpleadoMaxOrderByAggregateInput = {
@@ -13958,6 +14367,11 @@ export namespace Prisma {
     contacto_emergencia?: SortOrder
     certificaciones?: SortOrder
     estado?: SortOrder
+    modo_asistencia?: SortOrder
+    tipo_jornada?: SortOrder
+    hora_entrada_programada?: SortOrder
+    hora_salida_programada?: SortOrder
+    horas_jornada?: SortOrder
     cuadrilla_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -13986,6 +14400,11 @@ export namespace Prisma {
     contacto_emergencia?: SortOrder
     certificaciones?: SortOrder
     estado?: SortOrder
+    modo_asistencia?: SortOrder
+    tipo_jornada?: SortOrder
+    hora_entrada_programada?: SortOrder
+    hora_salida_programada?: SortOrder
+    horas_jornada?: SortOrder
     cuadrilla_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -13995,6 +14414,7 @@ export namespace Prisma {
     salario_diario?: SortOrder
     salario_integrado?: SortOrder
     salario_acordado?: SortOrder
+    horas_jornada?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -14387,6 +14807,10 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
+    origen_horas?: SortOrder
   }
 
   export type PreNominaDetalleAvgOrderByAggregateInput = {
@@ -14401,6 +14825,9 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
   }
 
   export type PreNominaDetalleMaxOrderByAggregateInput = {
@@ -14421,6 +14848,10 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
+    origen_horas?: SortOrder
   }
 
   export type PreNominaDetalleMinOrderByAggregateInput = {
@@ -14441,6 +14872,10 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
+    origen_horas?: SortOrder
   }
 
   export type PreNominaDetalleSumOrderByAggregateInput = {
@@ -14455,6 +14890,9 @@ export namespace Prisma {
     otras_deducciones?: SortOrder
     total_deducciones?: SortOrder
     neto_a_pagar?: SortOrder
+    horas_normales?: SortOrder
+    monto_he_doble?: SortOrder
+    monto_he_triple?: SortOrder
   }
 
   export type RegistroAsistenciaTenant_idEmpleado_idFechaCompoundUniqueInput = {
@@ -14474,11 +14912,20 @@ export namespace Prisma {
     tipo_registro?: SortOrder
     horas_extra?: SortOrder
     registrado_por?: SortOrder
+    hora_entrada?: SortOrder
+    hora_salida?: SortOrder
+    horas_trabajadas?: SortOrder
+    horas_normales?: SortOrder
+    horas_extra_dia?: SortOrder
+    origen_horas?: SortOrder
     created_at?: SortOrder
   }
 
   export type RegistroAsistenciaAvgOrderByAggregateInput = {
     horas_extra?: SortOrder
+    horas_trabajadas?: SortOrder
+    horas_normales?: SortOrder
+    horas_extra_dia?: SortOrder
   }
 
   export type RegistroAsistenciaMaxOrderByAggregateInput = {
@@ -14492,6 +14939,12 @@ export namespace Prisma {
     tipo_registro?: SortOrder
     horas_extra?: SortOrder
     registrado_por?: SortOrder
+    hora_entrada?: SortOrder
+    hora_salida?: SortOrder
+    horas_trabajadas?: SortOrder
+    horas_normales?: SortOrder
+    horas_extra_dia?: SortOrder
+    origen_horas?: SortOrder
     created_at?: SortOrder
   }
 
@@ -14506,11 +14959,20 @@ export namespace Prisma {
     tipo_registro?: SortOrder
     horas_extra?: SortOrder
     registrado_por?: SortOrder
+    hora_entrada?: SortOrder
+    hora_salida?: SortOrder
+    horas_trabajadas?: SortOrder
+    horas_normales?: SortOrder
+    horas_extra_dia?: SortOrder
+    origen_horas?: SortOrder
     created_at?: SortOrder
   }
 
   export type RegistroAsistenciaSumOrderByAggregateInput = {
     horas_extra?: SortOrder
+    horas_trabajadas?: SortOrder
+    horas_normales?: SortOrder
+    horas_extra_dia?: SortOrder
   }
 
   export type ConfigDeduccionEmpleadoTenant_idEmpleado_idCompoundUniqueInput = {
@@ -15436,6 +15898,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
     prenomina: PreNominaCreateNestedOneWithoutDetallesInput
   }
 
@@ -15456,6 +15922,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
   }
 
   export type PreNominaDetalleCreateOrConnectWithoutEmpleadoInput = {
@@ -15580,6 +16050,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    horas_normales?: DecimalNullableFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFilter<"PreNominaDetalle"> | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFilter<"PreNominaDetalle"> | string
   }
 
   export type EmpleadoCreateWithoutCuadrillaInput = {
@@ -15605,6 +16079,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
     asignaciones?: AsignacionFrenteCreateNestedManyWithoutEmpleadoInput
@@ -15634,6 +16113,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
     asignaciones?: AsignacionFrenteUncheckedCreateNestedManyWithoutEmpleadoInput
@@ -15730,6 +16214,11 @@ export namespace Prisma {
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
     certificaciones?: StringNullableFilter<"Empleado"> | string | null
     estado?: StringFilter<"Empleado"> | string
+    modo_asistencia?: StringFilter<"Empleado"> | string
+    tipo_jornada?: StringFilter<"Empleado"> | string
+    hora_entrada_programada?: StringNullableFilter<"Empleado"> | string | null
+    hora_salida_programada?: StringNullableFilter<"Empleado"> | string | null
+    horas_jornada?: DecimalFilter<"Empleado"> | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: UuidNullableFilter<"Empleado"> | string | null
     created_at?: DateTimeFilter<"Empleado"> | Date | string
     updated_at?: DateTimeFilter<"Empleado"> | Date | string
@@ -15774,6 +16263,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
     cuadrilla?: CuadrillaCreateNestedOneWithoutMiembrosInput
@@ -15803,6 +16297,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     cuadrilla_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
@@ -15883,6 +16382,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     cuadrilla?: CuadrillaUpdateOneWithoutMiembrosNestedInput
@@ -15912,6 +16416,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15975,6 +16484,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
     empleado: EmpleadoCreateNestedOneWithoutPrenominasInput
   }
 
@@ -15995,6 +16508,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
   }
 
   export type PreNominaDetalleCreateOrConnectWithoutPrenominaInput = {
@@ -16095,6 +16612,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
     cuadrilla?: CuadrillaCreateNestedOneWithoutMiembrosInput
@@ -16124,6 +16646,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     cuadrilla_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
@@ -16224,6 +16751,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     cuadrilla?: CuadrillaUpdateOneWithoutMiembrosNestedInput
@@ -16253,6 +16785,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     cuadrilla_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16433,6 +16970,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
   }
 
   export type AsignacionFrenteUpdateWithoutEmpleadoInput = {
@@ -16493,6 +17034,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
     prenomina?: PreNominaUpdateOneRequiredWithoutDetallesNestedInput
   }
 
@@ -16513,6 +17058,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type PreNominaDetalleUncheckedUpdateManyWithoutEmpleadoInput = {
@@ -16532,6 +17081,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type EmpleadoCreateManyCuadrillaInput = {
@@ -16557,6 +17110,11 @@ export namespace Prisma {
     contacto_emergencia?: string | null
     certificaciones?: string | null
     estado?: string
+    modo_asistencia?: string
+    tipo_jornada?: string
+    hora_entrada_programada?: string | null
+    hora_salida_programada?: string | null
+    horas_jornada?: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -16598,6 +17156,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     asignaciones?: AsignacionFrenteUpdateManyWithoutEmpleadoNestedInput
@@ -16627,6 +17190,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     asignaciones?: AsignacionFrenteUncheckedUpdateManyWithoutEmpleadoNestedInput
@@ -16656,6 +17224,11 @@ export namespace Prisma {
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    modo_asistencia?: StringFieldUpdateOperationsInput | string
+    tipo_jornada?: StringFieldUpdateOperationsInput | string
+    hora_entrada_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    hora_salida_programada?: NullableStringFieldUpdateOperationsInput | string | null
+    horas_jornada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16719,6 +17292,10 @@ export namespace Prisma {
     otras_deducciones?: Decimal | DecimalJsLike | number | string
     total_deducciones?: Decimal | DecimalJsLike | number | string
     neto_a_pagar: Decimal | DecimalJsLike | number | string
+    horas_normales?: Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: Decimal | DecimalJsLike | number | string
+    monto_he_triple?: Decimal | DecimalJsLike | number | string
+    origen_horas?: string
   }
 
   export type PreNominaDetalleUpdateWithoutPrenominaInput = {
@@ -16737,6 +17314,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
     empleado?: EmpleadoUpdateOneRequiredWithoutPrenominasNestedInput
   }
 
@@ -16757,6 +17338,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type PreNominaDetalleUncheckedUpdateManyWithoutPrenominaInput = {
@@ -16776,6 +17361,10 @@ export namespace Prisma {
     otras_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     total_deducciones?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     neto_a_pagar?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    horas_normales?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monto_he_doble?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_he_triple?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    origen_horas?: StringFieldUpdateOperationsInput | string
   }
 
   export type NominaComplementariaDetalleCreateManyComplementoInput = {

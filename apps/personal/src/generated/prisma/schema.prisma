@@ -58,6 +58,13 @@ model Empleado {
   // Estado
   estado String @default("ACTIVO") // ACTIVO, BAJA, SUSPENDIDO, VACACIONES
 
+  // Jornada laboral
+  modo_asistencia         String  @default("JORNADA_COMPLETA") // JORNADA_COMPLETA | POR_HORAS
+  tipo_jornada            String  @default("DIURNA") // DIURNA | NOCTURNA | MIXTA
+  hora_entrada_programada String? @db.VarChar(5) // HH:MM — obligatorio si POR_HORAS
+  hora_salida_programada  String? @db.VarChar(5) // HH:MM
+  horas_jornada           Decimal @default(8) @db.Decimal(4, 2) // Duración jornada normal
+
   // Relaciones
   cuadrilla_id String?            @db.Uuid
   cuadrilla    Cuadrilla?         @relation(fields: [cuadrilla_id], references: [id_cuadrilla])
@@ -177,7 +184,7 @@ model PreNominaDetalle {
   origen_dias        String  @default("ASISTENCIA") // ASISTENCIA | ESTIMADO
   dias_trabajados    Decimal @db.Decimal(4, 1)
   horas_extra        Decimal @default(0) @db.Decimal(6, 2)
-  salario_base       Decimal @db.Decimal(10, 2) // salario_diario × días
+  salario_base       Decimal @db.Decimal(10, 2) // salario_diario × días (JORNADA) o horas_normales × tarifa (POR_HORAS)
   monto_horas_extra  Decimal @default(0) @db.Decimal(10, 2)
   bonos              Decimal @default(0) @db.Decimal(10, 2)
   total_percepciones Decimal @db.Decimal(10, 2)
@@ -186,6 +193,12 @@ model PreNominaDetalle {
   otras_deducciones  Decimal @default(0) @db.Decimal(10, 2)
   total_deducciones  Decimal @default(0) @db.Decimal(10, 2)
   neto_a_pagar       Decimal @db.Decimal(10, 2)
+
+  // Campos exclusivos para modo POR_HORAS
+  horas_normales  Decimal? @db.Decimal(6, 2) // total horas normales del período
+  monto_he_doble  Decimal  @default(0) @db.Decimal(10, 2) // HE al 200% (primeras 9h/sem)
+  monto_he_triple Decimal  @default(0) @db.Decimal(10, 2) // HE al 300% (excedente 9h/sem)
+  origen_horas    String   @default("REAL") // REAL | ESTIMADO
 
   prenomina PreNomina @relation(fields: [prenomina_id], references: [id_prenomina], onDelete: Cascade)
   empleado  Empleado  @relation(fields: [empleado_id], references: [id_empleado])
@@ -210,6 +223,14 @@ model RegistroAsistencia {
   tipo_registro  String   @default("MANUAL") // QR | MANUAL
   horas_extra    Decimal  @default(0) @db.Decimal(4, 1)
   registrado_por String   @db.Uuid
+
+  // Campos de jornada POR_HORAS
+  hora_entrada     String?  @db.VarChar(5) // HH:MM — primer scan / manual
+  hora_salida      String?  @db.VarChar(5) // HH:MM — segundo scan / manual
+  horas_trabajadas Decimal? @db.Decimal(4, 2) // calculado: salida − entrada
+  horas_normales   Decimal? @db.Decimal(4, 2) // min(horas_trabajadas, jornada)
+  horas_extra_dia  Decimal? @db.Decimal(4, 2) // max(0, trabajadas − jornada)
+  origen_horas     String   @default("REAL") // REAL | ESTIMADO
 
   created_at DateTime @default(now())
 
