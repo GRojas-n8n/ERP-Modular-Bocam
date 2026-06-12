@@ -2073,49 +2073,69 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       });
     }
 
-    const orderSeed = await createTenantContext(
+    // ── 1.1–1.3: Cargar comparativa, lineas y cantidades reales de requisición ──
+    type DetalleGanador = { proveedor_id: string; insumo_id: string; precio_ofertado: { toNumber(): number } };
+    type GrupoProveedor = { detalles: DetalleGanador[]; subtotal: number };
+
+    const loteData = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
         const comparativa = await prisma.cuadroComparativo.findUnique({
           where: { id_cuadro: id },
-          // 5.2: filtrar solo detalles con aprobacion_gt=APROBADO y es_ganador=true
-          include: { detalles: { where: { es_ganador: true, aprobacion_gt: 'APROBADO' }, include: { proveedor: true } } }
+          include: { detalles: { where: { es_ganador: true, aprobacion_gt: 'APROBADO' } } }
         });
 
-        if (!comparativa) {
-          throw new Error('Cuadro comparativo no encontrado.');
-        }
-
-        // 5.1: solo se puede convertir si el cuadro fue aprobado por GT
+        if (!comparativa) throw new Error('Cuadro comparativo no encontrado.');
         if (comparativa.estado !== 'APROBADO_GT') {
           throw new Error(`La OC solo puede generarse de un cuadro aprobado por Gerencia Técnica. Estado actual: ${comparativa.estado}`);
         }
-
         if (comparativa.detalles.length === 0) {
           throw new Error('No hay renglones aprobados por Gerencia Técnica con proveedor ganador seleccionado.');
         }
 
-        const ganador = comparativa.detalles[0];
-        const subtotal = ganador.precio_ofertado.toNumber();
-        const montoTotal = subtotal * (1 + IVA_RATE);
+        // Lineas del cuadro para obtener detalle_req_id → cantidad real
+        const lineas = await prisma.comparativaLinea.findMany({ where: { cuadro_id: id, tenant_id: tenantId } });
+        const lineaMap = new Map(lineas.map((l: any) => [l.insumo_id, l.detalle_req_id as string | null]));
+
+        const detalleReqIds = [...new Set(lineas.map((l: any) => l.detalle_req_id).filter(Boolean))] as string[];
+        const reqItems = detalleReqIds.length > 0
+          ? await prisma.requisicionItem.findMany({ where: { id_item: { in: detalleReqIds }, tenant_id: tenantId } })
+          : [];
+        const cantidadMap = new Map(reqItems.map((i: any) => [i.id_item, Number(i.cantidad)]));
+
+        // 1.1: Agrupar detalles ganadores por proveedor_id
+        const grupos = new Map<string, GrupoProveedor>();
+        for (const d of comparativa.detalles) {
+          if (!grupos.has(d.proveedor_id)) grupos.set(d.proveedor_id, { detalles: [], subtotal: 0 });
+          const grupo = grupos.get(d.proveedor_id)!;
+          const detailReqId = lineaMap.get(d.insumo_id) ?? null;
+          const cantidad = detailReqId ? (cantidadMap.get(detailReqId) ?? 1) : 1;
+          grupo.detalles.push(d);
+          grupo.subtotal += d.precio_ofertado.toNumber() * cantidad;
+        }
+
+        // 1.4: Total agregado (con IVA) para verificación de suficiencia única
+        let totalAgregadoSinIva = 0;
+        for (const g of grupos.values()) totalAgregadoSinIva += g.subtotal;
+        const totalAgregado = totalAgregadoSinIva * (1 + IVA_RATE);
 
         return {
           comparativaId: comparativa.id_cuadro,
           requisicionId: comparativa.requisicion_id,
-          proveedorId: ganador.proveedor_id,
-          insumoId: ganador.insumo_id,
-          subtotal,
-          montoTotal,
+          grupos,
+          lineaMap,
+          cantidadMap,
+          totalAgregado,
         };
       }
     );
 
+    // 1.4: Verificación de suficiencia financiera sobre el total del lote
     try {
       const checkResp = await axios.get(`${FINANZAS_URL}/suficiencia`, {
-        params: { monto: orderSeed.montoTotal },
+        params: { monto: loteData.totalAgregado },
         headers: buildForwardHeaders(req, { Authorization: token || '' }),
       });
-
       if (!checkResp.data.success || !checkResp.data.data.tiene_suficiencia) {
         throw new Error('PRESUPUESTO_INSUFICIENTE: Finanzas reporta fondos insuficientes para este movimiento.');
       }
@@ -2124,159 +2144,124 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       throw new Error(`Error de validación financiera: ${errMsg}`);
     }
 
-    const oc = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => prisma.ordenCompra.create({
-        data: {
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
-          proveedor_id: orderSeed.proveedorId,
-          codigo: `OC-AUTO-${Date.now()}`,
-          subtotal: orderSeed.subtotal,
-          iva: orderSeed.subtotal * IVA_RATE,
-          total: orderSeed.montoTotal,
-          estado: OC_STATUS.PENDIENTE_FINANZAS,
-          presupuesto_id,
-          requisicion_id: orderSeed.requisicionId || null,
-          items: {
-            create: [{
-              tenant_id: tenantId,
-              proyecto_id: proyectoId,
-              insumo_id: orderSeed.insumoId,
-              cantidad: 1,
-              precio_unitario: orderSeed.subtotal,
-              importe: orderSeed.subtotal
-            }]
-          }
-        }
-      })
-    );
+    // 1.5–1.8: Crear una OC por proveedor con todos sus renglones
+    const timestamp = Date.now();
+    const ordenesCreadas: any[] = [];
+    const advertencias: string[] = [];
+    let idx = 0;
 
-    try {
-      await axios.post(`${FINANZAS_URL}/comprometer-fondos`, {
-        presupuesto_id,
-        monto: oc.total.toNumber(),
-        oc_id: oc.id_orden,
-        oc_codigo: oc.codigo,
-        concepto: `Compromiso por Orden de Compra ${oc.codigo}`
-      }, {
-        headers: buildForwardHeaders(req, { Authorization: token || '' }),
-      });
-    } catch (error: any) {
-      const errMsg = error.response?.data?.error?.message || error.message;
+    for (const [proveedorId, grupo] of loteData.grupos) {
+      idx++;
+      const codigoOC = `OC-AUTO-${timestamp}-${idx}`;
+      const subtotalGrupo = grupo.subtotal;
+      const ivaGrupo = subtotalGrupo * IVA_RATE;
+      const totalGrupo = subtotalGrupo + ivaGrupo;
 
-      await createTenantContext(
+      const oc = await createTenantContext(
         { tenantId, proyectoId, userId },
-        async (prisma) => {
-          await prisma.ordenCompra.update({
-            where: { id_orden: oc.id_orden },
-            data: { estado: OC_STATUS.ERROR_FINANZAS }
-          });
-        }
+        async (prisma) => prisma.ordenCompra.create({
+          data: {
+            tenant_id: tenantId,
+            proyecto_id: proyectoId,
+            proveedor_id: proveedorId,
+            codigo: codigoOC,
+            subtotal: subtotalGrupo,
+            iva: ivaGrupo,
+            total: totalGrupo,
+            estado: OC_STATUS.PENDIENTE_FINANZAS,
+            presupuesto_id,
+            requisicion_id: loteData.requisicionId || null,
+            items: {
+              create: grupo.detalles.map((d: DetalleGanador) => {
+                const detailReqId = loteData.lineaMap.get(d.insumo_id) ?? null;
+                const cantidad = detailReqId ? (loteData.cantidadMap.get(detailReqId) ?? 1) : 1;
+                const precioUnitario = d.precio_ofertado.toNumber();
+                return {
+                  tenant_id: tenantId,
+                  proyecto_id: proyectoId,
+                  insumo_id: d.insumo_id,
+                  cantidad,
+                  precio_unitario: precioUnitario,
+                  importe: cantidad * precioUnitario,
+                };
+              })
+            }
+          }
+        })
       );
 
-      // ── [ALERTA] 2.1 Persistir inconsistencia en BD (idempotente por @@unique[tenant_id, oc_id]) ──
-      await createTenantContext(
-        { tenantId, proyectoId, userId },
-        async (prisma) => {
+      // 1.6: Comprometer fondos individualmente — error no bloquea las demás OCs
+      let ocEmitida = false;
+      try {
+        await axios.post(`${FINANZAS_URL}/comprometer-fondos`, {
+          presupuesto_id,
+          monto: oc.total.toNumber(),
+          oc_id: oc.id_orden,
+          oc_codigo: oc.codigo,
+          concepto: `Compromiso por Orden de Compra ${oc.codigo}`
+        }, { headers: buildForwardHeaders(req, { Authorization: token || '' }) });
+
+        await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+          await prisma.ordenCompra.update({ where: { id_orden: oc.id_orden }, data: { estado: OC_STATUS.EMITIDA } });
+          await prisma.cuadroComparativo.update({ where: { id_cuadro: loteData.comparativaId }, data: { estado: 'CERRADO' } });
+        });
+        ocEmitida = true;
+      } catch (finError: any) {
+        const errMsg = finError.response?.data?.error?.message || finError.message;
+        await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+          await prisma.ordenCompra.update({ where: { id_orden: oc.id_orden }, data: { estado: OC_STATUS.ERROR_FINANZAS } });
           await prisma.alertaOcError.upsert({
             where: { tenant_id_oc_id: { tenant_id: tenantId, oc_id: oc.id_orden } },
             update: { error_message: errMsg, updated_at: new Date() },
-            create: {
-              tenant_id: tenantId,
-              proyecto_id: proyectoId,
-              oc_id: oc.id_orden,
-              oc_codigo: oc.codigo,
-              presupuesto_id: presupuesto_id ?? null,
-              error_message: errMsg,
-            },
+            create: { tenant_id: tenantId, proyecto_id: proyectoId, oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id: presupuesto_id ?? null, error_message: errMsg },
           });
-        }
-      );
-      logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada',
-        'Alerta de OC en ERROR_FINANZAS persistida en BD', {
-          oc_id: oc.id_orden,
-          oc_codigo: oc.codigo,
-          presupuesto_id,
         });
-
-      // ── [ALERTA] 2.2 + 2.3 Publicar evento al bus (best-effort, usa buildEventContext) ──
-      try {
-        await eventBus.publish({
-          event_type: 'compras.oc_error_finanzas',
-          timestamp: new Date().toISOString(),
-          context: buildEventContext(req),
-          payload: {
-            oc_id: oc.id_orden,
-            oc_codigo: oc.codigo,
-            presupuesto_id: presupuesto_id ?? null,
-            error_message: errMsg,
-          },
-        });
-      } catch (busError: any) {
-        logWarn(req, 'compras', 'compras.oc_error_finanzas.bus_offline',
-          'EventBus no disponible al publicar alerta — la alerta ya persiste en BD', {
-            oc_id: oc.id_orden,
-            bus_error: busError.message,
-          });
+        try {
+          await eventBus.publish({ event_type: 'compras.oc_error_finanzas', timestamp: new Date().toISOString(), context: buildEventContext(req), payload: { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id: presupuesto_id ?? null, error_message: errMsg } });
+        } catch (_) { /* best-effort */ }
+        advertencias.push(`${oc.codigo} quedó en ERROR_FINANZAS: ${errMsg}`);
+        logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada', 'Alerta de OC en ERROR_FINANZAS persistida en BD', { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id });
       }
 
-      return res.status(error.response?.status === 422 ? 422 : 502).json({
-        success: false,
-        code: 'COMPRAS_OC_PENDIENTE_RESOLUCION',
-        message: `La OC fue creada localmente pero Finanzas no confirmó el compromiso: ${errMsg}`,
-        data: {
-          oc_id: oc.id_orden,
-          codigo: oc.codigo,
-          estado: OC_STATUS.ERROR_FINANZAS
-        }
+      // 1.7: Publicar evento compras.oc_creada por cada OC emitida (best-effort)
+      if (ocEmitida) {
+        try {
+          await eventBus.publish({
+            event_type: 'compras.oc_creada',
+            timestamp: new Date().toISOString(),
+            context: buildEventContext(req),
+            payload: { oc_id: oc.id_orden, codigo: oc.codigo, total: oc.total.toNumber(), proveedor_id: oc.proveedor_id, proyecto_id: proyectoId },
+          });
+        } catch (_) { /* best-effort */ }
+      }
+
+      ordenesCreadas.push({
+        id_orden: oc.id_orden,
+        codigo: oc.codigo,
+        estado: ocEmitida ? OC_STATUS.EMITIDA : OC_STATUS.ERROR_FINANZAS,
+        proveedor_id: proveedorId,
+        total: oc.total.toNumber(),
       });
     }
 
-    const result = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const emitida = await prisma.ordenCompra.update({
-          where: { id_orden: oc.id_orden },
-          data: { estado: OC_STATUS.EMITIDA }
-        });
-
-        // 5.3: solo cerrar el cuadro cuando la OC queda EMITIDA (no en ERROR_FINANZAS)
-        await prisma.cuadroComparativo.update({
-          where: { id_cuadro: orderSeed.comparativaId },
-          data: { estado: 'CERRADO' }
-        });
-
-        await eventBus.publish({
-          event_type: 'compras.oc_creada',
-          timestamp: new Date().toISOString(),
-          context: buildEventContext(req),
-          payload: {
-            oc_id: emitida.id_orden,
-            codigo: emitida.codigo,
-            total: emitida.total.toNumber(),
-            proveedor_id: emitida.proveedor_id,
-            presupuesto_id: emitida.presupuesto_id,
-          },
-        });
-
-        return emitida;
-      }
-    );
-
-    logInfo(req, 'compras', 'compras.orden_compra.emitida', 'Orden de compra emitida y confirmada por Finanzas', {
-      comparativa_id: orderSeed.comparativaId,
-      oc_id: result.id_orden,
-      oc_codigo: result.codigo,
+    logInfo(req, 'compras', 'compras.orden_compra.lote_emitido', 'Lote de OCs generado desde cuadro comparativo', {
+      comparativa_id: loteData.comparativaId,
+      total_ocs: ordenesCreadas.length,
+      ocs_emitidas: ordenesCreadas.filter(o => o.estado === OC_STATUS.EMITIDA).length,
+      ocs_error: advertencias.length,
       presupuesto_id,
-      downstream_module: 'finanzas',
     });
-    res.json({ success: true, data: result });
+
+    // 1.8: Respuesta con todas las OCs (incluyendo las en ERROR_FINANZAS) y advertencias
+    return res.status(201).json({
+      success: true,
+      data: {
+        ordenes_compra: ordenesCreadas,
+        ...(advertencias.length > 0 ? { advertencias } : {}),
+      }
+    });
   } catch (error: any) {
-    logError(req, 'compras', 'compras.orden_compra.emitir.error', 'Error en conversion de comparativa a orden de compra', {
-      error_message: error.message,
-    });
-    console.error('[Compras] Error en conversión OC:', error.message);
+    logError(req, 'compras', 'compras.orden_compra.emitir.error', 'Error en conversion de comparativa a orden de compra', { error_message: error.message });
     res.status(error.message.includes('PRESUPUESTO_INSUFICIENTE') ? 422 : 500)
       .json({ success: false, message: error.message });
   }

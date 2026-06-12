@@ -56,6 +56,7 @@ export interface CotizacionLinea {
   insumo_unidad: string;
   cantidad: number;
   precios: Record<string, string>;
+  tiempos: Record<string, string | null>;
   ganador: string | null;
   // Evaluación técnica (Residente) — nuevos valores: C | NC | DA | ? | PENDIENTE; legacy: APROBADO | RECHAZADO
   evaluacion_tecnica?: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?' | 'APROBADO' | 'RECHAZADO';
@@ -342,6 +343,12 @@ export const ComparativaDetail: React.FC<Props> = ({
   // compRef keeps latest comp to avoid stale closures in async callbacks
   const compRef = useRef(comp);
   compRef.current = comp;
+
+  // Presupuesto resolution for convertir-oc (task 4.1)
+  type PresupuestoActivo = { id_presupuesto: string; nombre: string; monto_disponible: number };
+  const [presupuestos, setPresupuestos] = useState<PresupuestoActivo[]>([]);
+  const [selectedPresupuestoId, setSelectedPresupuestoId] = useState('');
+  const [showPresupuestoModal, setShowPresupuestoModal] = useState(false);
 
   // Fetch OC data (with acumulados) when the detail opens — the list endpoint omits this
   useEffect(() => {
@@ -784,6 +791,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       insumo_unidad: insumo.unidad,
       cantidad: Number(addLineaCantidad),
       precios: {},
+      tiempos: {},
       ganador: null,
     };
     onUpdate({ ...comp, estado: 'EN_PROCESO', lineas: [...comp.lineas, newLinea] });
@@ -1100,11 +1108,26 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
-  const handleAutorizar = async () => {
-    if (!canAuthorize) return;
+  const ejecutarConvertirOc = async (presupuestoId: string) => {
     setAutorizando(true);
     try {
-      if (isDemo) {
+      await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, { presupuesto_id: presupuestoId });
+      const freshResp = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
+      const freshData = freshResp.data.data ?? {};
+      onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: freshData.ordenes_compra ?? [] });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al generar OC', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setAutorizando(false);
+      setShowPresupuestoModal(false);
+    }
+  };
+
+  const handleAutorizar = async () => {
+    if (!canAuthorize) return;
+    if (isDemo) {
+      setAutorizando(true);
+      try {
         const grupos: Record<string, { nombre: string; total: number }> = {};
         comp.lineas.forEach(l => {
           if (!l.ganador) return;
@@ -1123,17 +1146,27 @@ export const ComparativaDetail: React.FC<Props> = ({
           items: [],
         }));
         onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: ocs });
-      } else {
-        await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, {});
-        // Refetch to get fresh OC data with full structure
-        const freshResp = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
-        const freshData = freshResp.data.data ?? {};
-        onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: freshData.ordenes_compra ?? [] });
+      } finally {
+        setAutorizando(false);
       }
+      return;
+    }
+    try {
+      const presResp = await api.get('/api/v1/finanzas/presupuestos');
+      const pres: PresupuestoActivo[] = presResp.data?.data ?? [];
+      if (pres.length === 0) {
+        notify({ type: 'error', title: 'Sin presupuesto activo', message: 'Contacta al módulo de Finanzas para asignar un presupuesto al proyecto.' });
+        return;
+      }
+      if (pres.length > 1) {
+        setPresupuestos(pres);
+        setSelectedPresupuestoId(pres[0].id_presupuesto);
+        setShowPresupuestoModal(true);
+        return;
+      }
+      await ejecutarConvertirOc(pres[0].id_presupuesto);
     } catch (err: any) {
       notify({ type: 'error', title: 'Error al generar OC', message: err.response?.data?.message ?? err.message });
-    } finally {
-      setAutorizando(false);
     }
   };
 
@@ -1552,6 +1585,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                     return (
                       <th key={prov.id} className="px-3 py-3 text-right text-[9px] font-black uppercase tracking-widest w-36" style={{ color: c.col }}>
                         {String.fromCharCode(65 + i)} · {prov.nombre.split(' ').slice(0, 2).join(' ')}
+                        <div className="text-[8px] font-medium normal-case tracking-normal text-muted-foreground mt-0.5">Precio · Tiempo</div>
                       </th>
                     );
                   })}
@@ -1686,6 +1720,11 @@ export const ComparativaDetail: React.FC<Props> = ({
                           {precio > 0 && (
                             <div className="mt-0.5 text-[9px] text-muted-foreground text-right">
                               = {subtotal.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 })}
+                            </div>
+                          )}
+                          {modo === 'compras' && (
+                            <div className="mt-0.5 text-[9px] text-sky-600 text-right font-medium">
+                              {linea.tiempos?.[prov.id] ?? '—'}
                             </div>
                           )}
                         </td>
@@ -2440,6 +2479,49 @@ export const ComparativaDetail: React.FC<Props> = ({
                 className="rounded-xl bg-red-700 px-6 font-black text-white hover:bg-red-600 disabled:opacity-40"
               >
                 {desbloqueando ? 'Desbloqueando...' : 'Confirmar desbloqueo'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Selección de presupuesto para convertir-oc ─────────────────── */}
+      {showPresupuestoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-card shadow-2xl overflow-hidden">
+            <div className="bg-blue-700 px-6 py-4">
+              <h2 className="text-sm font-black uppercase tracking-tight text-white">Seleccionar Presupuesto</h2>
+              <p className="text-[10px] text-blue-200/80 mt-0.5">Múltiples presupuestos activos — elige uno para asignar los fondos</p>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div className="space-y-2">
+                {presupuestos.map(p => (
+                  <button
+                    key={p.id_presupuesto}
+                    onClick={() => setSelectedPresupuestoId(p.id_presupuesto)}
+                    className={cn(
+                      'w-full rounded-2xl border px-4 py-3 text-left transition-all',
+                      selectedPresupuestoId === p.id_presupuesto
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-border/40 hover:border-blue-500/40',
+                    )}
+                  >
+                    <p className="text-xs font-bold text-foreground">{p.nombre}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Disponible: {p.monto_disponible.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
+              <Button onClick={() => setShowPresupuestoModal(false)} variant="outline" className="rounded-xl" disabled={autorizando}>Cancelar</Button>
+              <Button
+                onClick={() => ejecutarConvertirOc(selectedPresupuestoId)}
+                disabled={!selectedPresupuestoId || autorizando}
+                className="rounded-xl bg-blue-600 px-6 font-black text-white hover:bg-blue-500 disabled:opacity-40"
+              >
+                {autorizando ? 'Generando OC...' : 'Confirmar y generar OC'}
               </Button>
             </div>
           </div>

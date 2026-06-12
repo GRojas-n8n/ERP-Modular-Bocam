@@ -458,6 +458,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               insumo_unidad:       info?.unidad ?? '—',
               cantidad:            Number(d.cantidad ?? 0),
               precios:             {},
+              tiempos:             {},
               ganador:             d.es_ganador ? d.proveedor_id : null,
               evaluacion_tecnica:  d.evaluacion_tecnica ?? 'PENDIENTE',
               comentario_tecnico:  d.comentario_tecnico ?? undefined,
@@ -467,6 +468,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           }
           const linea = lineaMap.get(d.insumo_id)!;
           linea.precios[d.proveedor_id] = String(d.precio_ofertado);
+          linea.tiempos[d.proveedor_id] = d.tiempo_entrega ?? null;
           if (d.es_ganador) linea.ganador = d.proveedor_id;
         });
         return {
