@@ -1,4 +1,4 @@
-## ADDED Requirements
+Sp## ADDED Requirements
 
 ### Requirement: Estado PARCIALMENTE_RECIBIDA en la OC
 El sistema SHALL soportar el estado `PARCIALMENTE_RECIBIDA` en `OrdenCompra`, ubicado entre `EMITIDA` y `RECIBIDA` en el ciclo de vida. La UI SHALL mostrar este estado con etiqueta naranja/ámbar y descripción "Recepción en curso".

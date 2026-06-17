@@ -986,7 +986,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       await api.post(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion`, {
         dias_habiles: solicitudForm.dias_habiles,
         notas:        solicitudForm.notas || undefined,
-        proveedores:  solicitudForm.provsSeleccionados,
+        proveedores_ids: solicitudForm.provsSeleccionados,
       });
       await loadSolicitud(reqId);
       notify({ type: 'success', title: 'Solicitud de cotización enviada', message: `${solicitudForm.provsSeleccionados.length} proveedor(es) · plazo ${solicitudForm.dias_habiles} días hábiles` });
@@ -999,7 +999,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   const handleUploadScpPdf = async (file: File, reqId: string, scpId: string) => {
     const fd = new FormData();
-    fd.append('pdf', file);
+    fd.append('archivo', file);
     fd.append('estado', 'RESPONDIO');
     try {
       await api.put(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion/proveedores/${scpId}`, fd, {
