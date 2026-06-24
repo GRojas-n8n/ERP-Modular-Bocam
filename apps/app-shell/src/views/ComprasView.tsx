@@ -254,6 +254,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [comparativas, setComparativas] = useState<ComparativaLocal[]>([]);
   const [pendientesEval, setPendientesEval] = useState<ComparativaLocal[]>([]);
   const [pendientesGT, setPendientesGT] = useState<ComparativaLocal[]>([]);
+  const [filtroEstadoCiclo, setFiltroEstadoCiclo] = useState<string>('todos');
   const [proveedoresList, setProveedoresList] = useState<ProveedorCatalogo[]>([]);
   const [proveedoresSearch, setProveedoresSearch] = useState('');
   const [showProveedorForm, setShowProveedorForm] = useState(false);
@@ -1179,6 +1180,31 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
 
 
+  const FILTROS_CICLO = [
+    { id: 'todos',               label: 'Todos',                  color: 'slate' },
+    { id: 'pendiente-aprobacion',label: 'Pendiente aprobación',   color: 'amber' },
+    { id: 'lista-cotizar',       label: 'Lista para cotizar',     color: 'blue'  },
+    { id: 'cotizando',           label: 'Cotizando',              color: 'blue'  },
+    { id: 'evaluacion-tecnica',  label: 'En evaluación técnica',  color: 'orange'},
+    { id: 'pendiente-gt',        label: 'Pendiente GT',           color: 'violet'},
+    { id: 'autorizado',          label: 'Autorizado',             color: 'green' },
+  ];
+
+  const getIdCiclo = (req: Requisicion, comp?: ComparativaLocal): string => {
+    if (['PENDIENTE', 'BORRADOR'].includes(req.estado)) return 'pendiente-aprobacion';
+    if (req.estado === 'APROBADA') {
+      if (!comp) return 'lista-cotizar';
+      const s = comp.estado;
+      if (s === 'BORRADOR') return 'cotizando';
+      if (s === 'EN_EVALUACION_TECNICA') return 'evaluacion-tecnica';
+      if (s === 'EVALUADO_TECNICAMENTE') return 'pendiente-gt';
+      if (s === 'EN_APROBACION_GT') return 'pendiente-gt';
+      if (['APROBADO_GT', 'AUTORIZADA'].includes(s)) return 'autorizado';
+    }
+    if (req.estado === 'COMPRADA') return 'autorizado';
+    return 'todos';
+  };
+
   const getReqCycleStep = (req: Requisicion, comp?: ComparativaLocal) => {
     if (['PENDIENTE', 'BORRADOR'].includes(req.estado))
       return { label: '🟡 Pendiente de aprobación', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/20' };
@@ -1434,8 +1460,47 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   )}
                 </div>
               )}
+              {/* ── Filtro por estado del ciclo ───────────────────────────────── */}
+              <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
+                {FILTROS_CICLO.map(f => {
+                  const count = f.id === 'todos'
+                    ? requisiciones.length
+                    : requisiciones.filter(r => getIdCiclo(r, comparativas.find(c => c.requisicion_id === r.id)) === f.id).length;
+                  const isActive = filtroEstadoCiclo === f.id;
+                  const colorMap: Record<string, string> = {
+                    slate:  isActive ? 'bg-slate-500/20 text-slate-700 border-slate-500/40'  : '',
+                    amber:  isActive ? 'bg-amber-500/20 text-amber-700 border-amber-500/40'  : '',
+                    blue:   isActive ? 'bg-blue-500/20 text-blue-700 border-blue-500/40'     : '',
+                    orange: isActive ? 'bg-orange-500/20 text-orange-700 border-orange-500/40': '',
+                    violet: isActive ? 'bg-violet-500/20 text-violet-700 border-violet-500/40': '',
+                    green:  isActive ? 'bg-green-500/20 text-green-700 border-green-500/40'  : '',
+                  };
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setFiltroEstadoCiclo(f.id)}
+                      className={cn(
+                        'shrink-0 rounded-xl border px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors',
+                        isActive
+                          ? colorMap[f.color]
+                          : 'border-border/30 bg-muted/30 text-muted-foreground hover:bg-muted/50',
+                      )}
+                    >
+                      {f.label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {requisiciones.filter(req => !reqFiltroConcepto || req.concepto_id === reqFiltroConcepto).map(req => {
+                {requisiciones
+                  .filter(req => !reqFiltroConcepto || req.concepto_id === reqFiltroConcepto)
+                  .filter(req => {
+                    if (filtroEstadoCiclo === 'todos') return true;
+                    const comp = comparativas.find(c => c.requisicion_id === req.id);
+                    return getIdCiclo(req, comp) === filtroEstadoCiclo;
+                  })
+                  .map(req => {
                   const hasComp = comparativas.some(c => c.requisicion_id === req.id);
                   const compEstado = comparativas.find(c => c.requisicion_id === req.id)?.estado;
                   return (
