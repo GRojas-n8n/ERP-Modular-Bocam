@@ -32,7 +32,6 @@ import {
   IconCheckCircle2,
   IconClock,
   IconFileText,
-  IconLayers,
   IconPackage,
   IconPlus,
   IconScale,
