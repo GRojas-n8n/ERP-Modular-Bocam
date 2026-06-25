@@ -98,11 +98,18 @@ const ALL_NAV_ITEMS: NavItem[] = [
     subItems: [
       { id: 'requisiciones',   label: 'Requisiciones', icon: IconShoppingCart, roles: ['compras', 'procurement', 'superintendent'] },
       { id: 'catalogo',        label: 'Catálogo',       icon: IconPackage,      roles: ['compras', 'procurement', 'superintendent'] },
-      { id: 'almacen',         label: 'Almacén',        icon: IconLayers,       roles: ['compras', 'procurement', 'superintendent'] },
       { id: 'proveedores',     label: 'Proveedores',    icon: IconUsers,        roles: ['compras', 'procurement', 'superintendent'] },
       { id: 'pendientes-eval', label: 'Eval. Técnica',  icon: IconClock,        roles: ['resident', 'residencia', 'superintendent'] },
       { id: 'pendientes-gt',   label: 'Aprob. GT',      icon: IconCheckCircle2, roles: ['gerencia_tecnica', 'superintendent'] },
       { id: 'trazabilidad',    label: 'Trazabilidad',   icon: IconScale,        roles: ['compras', 'procurement', 'superintendent', 'gerencia_tecnica'] },
+    ],
+  },
+  {
+    name: 'Almacén', icon: IconLayers, id: 'almacen',
+    roles: ['warehouse', 'procurement', 'admin', 'superintendent'],
+    subItems: [
+      { id: 'inventario',   label: 'Inventario',   icon: IconLayers },
+      { id: 'movimientos',  label: 'Movimientos',  icon: IconPackage },
     ],
   },
   { name: 'Finanzas',     icon: IconWallet,         id: 'finanzas',     roles: ['finanzas'] },

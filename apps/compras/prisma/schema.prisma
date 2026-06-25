@@ -490,45 +490,6 @@ model AlertaOcError {
   @@map("alertas_oc_error")
 }
 
-// ── Almacén ──────────────────────────────────────────────────────────────────
-
-model ItemInventario {
-  id            String   @id @default(uuid()) @db.Uuid
-  tenant_id     String   @db.Uuid
-  proyecto_id   String   @db.Uuid
-  insumo_id     String?  @db.Uuid
-  clave         String   @db.VarChar(50)
-  descripcion   String   @db.VarChar(255)
-  unidad        String   @db.VarChar(20)
-  categoria     String   @db.VarChar(50)
-  stock_actual  Decimal  @default(0) @db.Decimal(18, 4)
-  stock_minimo  Decimal  @default(0) @db.Decimal(18, 4)
-  ubicacion     String?  @db.VarChar(100)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  movimientos   MovimientoAlmacen[]
-
-  @@index([tenant_id, proyecto_id])
-  @@map("inventario_almacen")
-}
-
-model MovimientoAlmacen {
-  id            String   @id @default(uuid()) @db.Uuid
-  tenant_id     String   @db.Uuid
-  proyecto_id   String   @db.Uuid
-  item_id       String   @db.Uuid
-  tipo          String   @db.VarChar(20)  // INGRESO | EGRESO | TRASPASO
-  cantidad      Decimal  @db.Decimal(18, 4)
-  unidad        String   @db.VarChar(20)
-  origen        String?  @db.VarChar(100)
-  destino       String?  @db.VarChar(100)
-  responsable   String?  @db.VarChar(100)
-  referencia    String?  @db.VarChar(50)
-  fecha         DateTime @default(now())
-
-  item          ItemInventario @relation(fields: [item_id], references: [id], onDelete: Cascade)
-
-  @@index([tenant_id, proyecto_id, fecha])
-  @@map("movimientos_almacen")
-}
+// ── Almacén → microservicio independiente apps/almacen (puerto 3012) ──────────
+// Los modelos ItemInventario y MovimientoAlmacen fueron migrados.
+// BD: ALMACEN_DATABASE_URL — Migración: docker compose exec almacen npx prisma migrate deploy

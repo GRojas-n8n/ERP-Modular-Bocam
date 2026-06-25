@@ -1,0 +1,60 @@
+// -----------------------------------------------------------------------------
+// Propiedad Intelectual: Constructora Bocam, S. A. de C.V.
+// Módulo: Almacén (Inventario y Movimientos)
+//
+// ARQUITECTURA:
+// Microservicio independiente separado de Compras.
+// Consumidor de eventos RabbitMQ: compras.oc_recibida_total / compras.oc_recibida_parcial
+// Las tablas son IDÉNTICAS a las que existían en compras, solo cambia el schema de BD.
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ItemInventario {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  proyecto_id   String   @db.Uuid
+  insumo_id     String?  @db.Uuid
+  clave         String   @db.VarChar(50)
+  descripcion   String   @db.VarChar(255)
+  unidad        String   @db.VarChar(20)
+  categoria     String   @db.VarChar(50)
+  stock_actual  Decimal  @default(0) @db.Decimal(18, 4)
+  stock_minimo  Decimal  @default(0) @db.Decimal(18, 4)
+  ubicacion     String?  @db.VarChar(100)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  movimientos   MovimientoAlmacen[]
+
+  @@index([tenant_id, proyecto_id])
+  @@map("inventario_almacen")
+}
+
+model MovimientoAlmacen {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  proyecto_id   String   @db.Uuid
+  item_id       String   @db.Uuid
+  tipo          String   @db.VarChar(20)  // INGRESO | EGRESO | TRASPASO
+  cantidad      Decimal  @db.Decimal(18, 4)
+  unidad        String   @db.VarChar(20)
+  origen        String?  @db.VarChar(100)
+  destino       String?  @db.VarChar(100)
+  responsable   String?  @db.VarChar(100)
+  referencia    String?  @db.VarChar(50)
+  fecha         DateTime @default(now())
+
+  item          ItemInventario @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id, proyecto_id, fecha])
+  @@map("movimientos_almacen")
+}
