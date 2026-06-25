@@ -3751,6 +3751,50 @@ app.get('/api/v1/compras/alertas/oc-error',
   }
 );
 
+// ─── Handler: finanzas.oc_pagada_total ───────────────────────────────────────
+export async function handleOcPagadaTotalEvent(event: BocamEvent): Promise<void> {
+  const { oc_id, pago_id } = event.payload as { oc_id?: string; pago_id?: string };
+  if (!oc_id) return;
+  try {
+    await createTenantContext(
+      { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+      async (prisma) => {
+        const oc = await prisma.ordenCompra.findUnique({ where: { id_orden: oc_id } });
+        if (!oc) return;
+        await prisma.ordenCompra.update({
+          where: { id_orden: oc_id },
+          data: { estado_pago: 'PAGADA' },
+        });
+        console.log(JSON.stringify({ action: 'compras.event.oc_pagada_total.applied', oc_id, pago_id }));
+      }
+    );
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'compras.event.oc_pagada_total.error', oc_id, error: err.message }));
+  }
+}
+
+// ─── Handler: finanzas.oc_pagada_parcial ─────────────────────────────────────
+export async function handleOcPagadaParcialEvent(event: BocamEvent): Promise<void> {
+  const { oc_id, pago_id } = event.payload as { oc_id?: string; pago_id?: string };
+  if (!oc_id) return;
+  try {
+    await createTenantContext(
+      { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+      async (prisma) => {
+        const oc = await prisma.ordenCompra.findUnique({ where: { id_orden: oc_id } });
+        if (!oc) return;
+        await prisma.ordenCompra.update({
+          where: { id_orden: oc_id },
+          data: { estado_pago: 'PAGO_PARCIAL' },
+        });
+        console.log(JSON.stringify({ action: 'compras.event.oc_pagada_parcial.applied', oc_id, pago_id }));
+      }
+    );
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'compras.event.oc_pagada_parcial.error', oc_id, error: err.message }));
+  }
+}
+
 setupSentryExpressHandler(app);
 
 export async function startServer() {
@@ -3764,7 +3808,9 @@ export async function startServer() {
   await eventBus.subscribe('finanzas.fondos_comprometidos', handleFondosComprometidosEvent);
   await eventBus.subscribe('finanzas.fondos_liberados', handleFondosLiberadosEvent);
   await eventBus.subscribe('finanzas.presupuesto_insuficiente', handlePresupuestoInsuficienteEvent);
-  console.log('[Compras] Eventos: compras.oc_creada, compras.oc_cancelada, finanzas.fondos_comprometidos, finanzas.fondos_liberados, finanzas.presupuesto_insuficiente');
+  await eventBus.subscribe('finanzas.oc_pagada_total', handleOcPagadaTotalEvent);
+  await eventBus.subscribe('finanzas.oc_pagada_parcial', handleOcPagadaParcialEvent);
+  console.log('[Compras] Eventos: finanzas.fondos_comprometidos, finanzas.fondos_liberados, finanzas.presupuesto_insuficiente, finanzas.oc_pagada_total, finanzas.oc_pagada_parcial');
   });
 }
 

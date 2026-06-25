@@ -59,6 +59,10 @@ export enum FinanzasEvents {
   TRANSFERENCIA_PRESUPUESTAL = 'finanzas.transferencia_presupuestal',
   /** Se liberaron fondos previamente comprometidos (ej. OC cancelada). */
   FONDOS_LIBERADOS = 'finanzas.fondos_liberados',
+  /** Se pagó una OC en su totalidad. */
+  OC_PAGADA_TOTAL = 'finanzas.oc_pagada_total',
+  /** Se registró un pago parcial de una OC. */
+  OC_PAGADA_PARCIAL = 'finanzas.oc_pagada_parcial',
 }
 
 // ─── Tipos de Eventos CONSUMIDOS por Finanzas ───────────────────────────────

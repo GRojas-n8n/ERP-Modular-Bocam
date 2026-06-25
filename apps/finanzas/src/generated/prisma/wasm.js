@@ -181,6 +181,59 @@ exports.Prisma.ProgramaPagosScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.CuentaBancariaScalarFieldEnum = {
+  id_cuenta: 'id_cuenta',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  banco: 'banco',
+  numero_cuenta: 'numero_cuenta',
+  clabe: 'clabe',
+  alias: 'alias',
+  moneda: 'moneda',
+  saldo: 'saldo',
+  activa: 'activa',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.ProyectoFinanzasScalarFieldEnum = {
+  id_proyecto_finanzas: 'id_proyecto_finanzas',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  anticipo_total: 'anticipo_total',
+  anticipo_usado: 'anticipo_usado',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.PagoOCScalarFieldEnum = {
+  id_pago: 'id_pago',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  fuente: 'fuente',
+  cuenta_id: 'cuenta_id',
+  tipo_pago: 'tipo_pago',
+  referencia: 'referencia',
+  concepto: 'concepto',
+  fecha_pago: 'fecha_pago',
+  monto_total: 'monto_total',
+  moneda: 'moneda',
+  usuario_id: 'usuario_id',
+  created_at: 'created_at'
+};
+
+exports.Prisma.DetallePagoOCScalarFieldEnum = {
+  id_detalle: 'id_detalle',
+  pago_id: 'pago_id',
+  oc_id: 'oc_id',
+  oc_codigo: 'oc_codigo',
+  proveedor_id: 'proveedor_id',
+  proveedor_nombre: 'proveedor_nombre',
+  monto_aplicado: 'monto_aplicado',
+  saldo_oc_antes: 'saldo_oc_antes',
+  saldo_oc_despues: 'saldo_oc_despues'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -200,7 +253,11 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   PresupuestoAsignado: 'PresupuestoAsignado',
   MovimientoPresupuestal: 'MovimientoPresupuestal',
-  ProgramaPagos: 'ProgramaPagos'
+  ProgramaPagos: 'ProgramaPagos',
+  CuentaBancaria: 'CuentaBancaria',
+  ProyectoFinanzas: 'ProyectoFinanzas',
+  PagoOC: 'PagoOC',
+  DetallePagoOC: 'DetallePagoOC'
 };
 
 /**

@@ -219,6 +219,7 @@ exports.Prisma.OrdenCompraScalarFieldEnum = {
   codigo: 'codigo',
   fecha_emision: 'fecha_emision',
   estado: 'estado',
+  estado_pago: 'estado_pago',
   moneda: 'moneda',
   tipo_cambio: 'tipo_cambio',
   subtotal: 'subtotal',

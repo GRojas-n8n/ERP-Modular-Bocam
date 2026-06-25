@@ -177,6 +177,7 @@ model OrdenCompra {
   codigo         String   @db.VarChar(50) // Ej. OC-2026-001
   fecha_emision  DateTime @default(now())
   estado         String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, PARCIALMENTE_RECIBIDA, RECIBIDA, CANCELADA
+  estado_pago    String   @default("PENDIENTE_PAGO") // PENDIENTE_PAGO, PAGO_PARCIAL, PAGADA
   moneda         String   @default("MXN")
   tipo_cambio    Decimal  @default(1.0) @db.Decimal(18, 4)
   subtotal       Decimal  @db.Decimal(18, 2)

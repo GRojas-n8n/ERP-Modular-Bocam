@@ -9310,6 +9310,7 @@ export namespace Prisma {
     codigo: string | null
     fecha_emision: Date | null
     estado: string | null
+    estado_pago: string | null
     moneda: string | null
     tipo_cambio: Decimal | null
     subtotal: Decimal | null
@@ -9327,6 +9328,7 @@ export namespace Prisma {
     codigo: string | null
     fecha_emision: Date | null
     estado: string | null
+    estado_pago: string | null
     moneda: string | null
     tipo_cambio: Decimal | null
     subtotal: Decimal | null
@@ -9344,6 +9346,7 @@ export namespace Prisma {
     codigo: number
     fecha_emision: number
     estado: number
+    estado_pago: number
     moneda: number
     tipo_cambio: number
     subtotal: number
@@ -9377,6 +9380,7 @@ export namespace Prisma {
     codigo?: true
     fecha_emision?: true
     estado?: true
+    estado_pago?: true
     moneda?: true
     tipo_cambio?: true
     subtotal?: true
@@ -9394,6 +9398,7 @@ export namespace Prisma {
     codigo?: true
     fecha_emision?: true
     estado?: true
+    estado_pago?: true
     moneda?: true
     tipo_cambio?: true
     subtotal?: true
@@ -9411,6 +9416,7 @@ export namespace Prisma {
     codigo?: true
     fecha_emision?: true
     estado?: true
+    estado_pago?: true
     moneda?: true
     tipo_cambio?: true
     subtotal?: true
@@ -9515,6 +9521,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision: Date
     estado: string
+    estado_pago: string
     moneda: string
     tipo_cambio: Decimal
     subtotal: Decimal
@@ -9551,6 +9558,7 @@ export namespace Prisma {
     codigo?: boolean
     fecha_emision?: boolean
     estado?: boolean
+    estado_pago?: boolean
     moneda?: boolean
     tipo_cambio?: boolean
     subtotal?: boolean
@@ -9572,6 +9580,7 @@ export namespace Prisma {
     codigo?: boolean
     fecha_emision?: boolean
     estado?: boolean
+    estado_pago?: boolean
     moneda?: boolean
     tipo_cambio?: boolean
     subtotal?: boolean
@@ -9590,6 +9599,7 @@ export namespace Prisma {
     codigo?: boolean
     fecha_emision?: boolean
     estado?: boolean
+    estado_pago?: boolean
     moneda?: boolean
     tipo_cambio?: boolean
     subtotal?: boolean
@@ -9624,6 +9634,7 @@ export namespace Prisma {
       codigo: string
       fecha_emision: Date
       estado: string
+      estado_pago: string
       moneda: string
       tipo_cambio: Prisma.Decimal
       subtotal: Prisma.Decimal
@@ -10037,6 +10048,7 @@ export namespace Prisma {
     readonly codigo: FieldRef<"OrdenCompra", 'String'>
     readonly fecha_emision: FieldRef<"OrdenCompra", 'DateTime'>
     readonly estado: FieldRef<"OrdenCompra", 'String'>
+    readonly estado_pago: FieldRef<"OrdenCompra", 'String'>
     readonly moneda: FieldRef<"OrdenCompra", 'String'>
     readonly tipo_cambio: FieldRef<"OrdenCompra", 'Decimal'>
     readonly subtotal: FieldRef<"OrdenCompra", 'Decimal'>
@@ -25782,6 +25794,7 @@ export namespace Prisma {
     codigo: 'codigo',
     fecha_emision: 'fecha_emision',
     estado: 'estado',
+    estado_pago: 'estado_pago',
     moneda: 'moneda',
     tipo_cambio: 'tipo_cambio',
     subtotal: 'subtotal',
@@ -26717,6 +26730,7 @@ export namespace Prisma {
     codigo?: StringFilter<"OrdenCompra"> | string
     fecha_emision?: DateTimeFilter<"OrdenCompra"> | Date | string
     estado?: StringFilter<"OrdenCompra"> | string
+    estado_pago?: StringFilter<"OrdenCompra"> | string
     moneda?: StringFilter<"OrdenCompra"> | string
     tipo_cambio?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
@@ -26737,6 +26751,7 @@ export namespace Prisma {
     codigo?: SortOrder
     fecha_emision?: SortOrder
     estado?: SortOrder
+    estado_pago?: SortOrder
     moneda?: SortOrder
     tipo_cambio?: SortOrder
     subtotal?: SortOrder
@@ -26761,6 +26776,7 @@ export namespace Prisma {
     codigo?: StringFilter<"OrdenCompra"> | string
     fecha_emision?: DateTimeFilter<"OrdenCompra"> | Date | string
     estado?: StringFilter<"OrdenCompra"> | string
+    estado_pago?: StringFilter<"OrdenCompra"> | string
     moneda?: StringFilter<"OrdenCompra"> | string
     tipo_cambio?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
@@ -26781,6 +26797,7 @@ export namespace Prisma {
     codigo?: SortOrder
     fecha_emision?: SortOrder
     estado?: SortOrder
+    estado_pago?: SortOrder
     moneda?: SortOrder
     tipo_cambio?: SortOrder
     subtotal?: SortOrder
@@ -26806,6 +26823,7 @@ export namespace Prisma {
     codigo?: StringWithAggregatesFilter<"OrdenCompra"> | string
     fecha_emision?: DateTimeWithAggregatesFilter<"OrdenCompra"> | Date | string
     estado?: StringWithAggregatesFilter<"OrdenCompra"> | string
+    estado_pago?: StringWithAggregatesFilter<"OrdenCompra"> | string
     moneda?: StringWithAggregatesFilter<"OrdenCompra"> | string
     tipo_cambio?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalWithAggregatesFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
@@ -28727,6 +28745,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -28747,6 +28766,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -28765,6 +28785,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28785,6 +28806,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28804,6 +28826,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -28820,6 +28843,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28837,6 +28861,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -30954,6 +30979,7 @@ export namespace Prisma {
     codigo?: SortOrder
     fecha_emision?: SortOrder
     estado?: SortOrder
+    estado_pago?: SortOrder
     moneda?: SortOrder
     tipo_cambio?: SortOrder
     subtotal?: SortOrder
@@ -30978,6 +31004,7 @@ export namespace Prisma {
     codigo?: SortOrder
     fecha_emision?: SortOrder
     estado?: SortOrder
+    estado_pago?: SortOrder
     moneda?: SortOrder
     tipo_cambio?: SortOrder
     subtotal?: SortOrder
@@ -30995,6 +31022,7 @@ export namespace Prisma {
     codigo?: SortOrder
     fecha_emision?: SortOrder
     estado?: SortOrder
+    estado_pago?: SortOrder
     moneda?: SortOrder
     tipo_cambio?: SortOrder
     subtotal?: SortOrder
@@ -32930,6 +32958,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -32948,6 +32977,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -33112,6 +33142,7 @@ export namespace Prisma {
     codigo?: StringFilter<"OrdenCompra"> | string
     fecha_emision?: DateTimeFilter<"OrdenCompra"> | Date | string
     estado?: StringFilter<"OrdenCompra"> | string
+    estado_pago?: StringFilter<"OrdenCompra"> | string
     moneda?: StringFilter<"OrdenCompra"> | string
     tipo_cambio?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFilter<"OrdenCompra"> | Decimal | DecimalJsLike | number | string
@@ -33794,6 +33825,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -33813,6 +33845,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -33846,6 +33879,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -33865,6 +33899,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -33882,6 +33917,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -33901,6 +33937,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -33962,6 +33999,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -33981,6 +34019,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -35216,6 +35255,7 @@ export namespace Prisma {
     codigo: string
     fecha_emision?: Date | string
     estado?: string
+    estado_pago?: string
     moneda?: string
     tipo_cambio?: Decimal | DecimalJsLike | number | string
     subtotal: Decimal | DecimalJsLike | number | string
@@ -35275,6 +35315,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -35293,6 +35334,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -35311,6 +35353,7 @@ export namespace Prisma {
     codigo?: StringFieldUpdateOperationsInput | string
     fecha_emision?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: StringFieldUpdateOperationsInput | string
+    estado_pago?: StringFieldUpdateOperationsInput | string
     moneda?: StringFieldUpdateOperationsInput | string
     tipo_cambio?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subtotal?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string

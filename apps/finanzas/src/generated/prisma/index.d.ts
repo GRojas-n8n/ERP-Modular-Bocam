@@ -28,6 +28,26 @@ export type MovimientoPresupuestal = $Result.DefaultSelection<Prisma.$Movimiento
  * 
  */
 export type ProgramaPagos = $Result.DefaultSelection<Prisma.$ProgramaPagosPayload>
+/**
+ * Model CuentaBancaria
+ * 
+ */
+export type CuentaBancaria = $Result.DefaultSelection<Prisma.$CuentaBancariaPayload>
+/**
+ * Model ProyectoFinanzas
+ * 
+ */
+export type ProyectoFinanzas = $Result.DefaultSelection<Prisma.$ProyectoFinanzasPayload>
+/**
+ * Model PagoOC
+ * 
+ */
+export type PagoOC = $Result.DefaultSelection<Prisma.$PagoOCPayload>
+/**
+ * Model DetallePagoOC
+ * 
+ */
+export type DetallePagoOC = $Result.DefaultSelection<Prisma.$DetallePagoOCPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -181,6 +201,46 @@ export class PrismaClient<
     * ```
     */
   get programaPagos(): Prisma.ProgramaPagosDelegate<ExtArgs>;
+
+  /**
+   * `prisma.cuentaBancaria`: Exposes CRUD operations for the **CuentaBancaria** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CuentaBancarias
+    * const cuentaBancarias = await prisma.cuentaBancaria.findMany()
+    * ```
+    */
+  get cuentaBancaria(): Prisma.CuentaBancariaDelegate<ExtArgs>;
+
+  /**
+   * `prisma.proyectoFinanzas`: Exposes CRUD operations for the **ProyectoFinanzas** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProyectoFinanzas
+    * const proyectoFinanzas = await prisma.proyectoFinanzas.findMany()
+    * ```
+    */
+  get proyectoFinanzas(): Prisma.ProyectoFinanzasDelegate<ExtArgs>;
+
+  /**
+   * `prisma.pagoOC`: Exposes CRUD operations for the **PagoOC** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PagoOCS
+    * const pagoOCS = await prisma.pagoOC.findMany()
+    * ```
+    */
+  get pagoOC(): Prisma.PagoOCDelegate<ExtArgs>;
+
+  /**
+   * `prisma.detallePagoOC`: Exposes CRUD operations for the **DetallePagoOC** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more DetallePagoOCS
+    * const detallePagoOCS = await prisma.detallePagoOC.findMany()
+    * ```
+    */
+  get detallePagoOC(): Prisma.DetallePagoOCDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -624,7 +684,11 @@ export namespace Prisma {
   export const ModelName: {
     PresupuestoAsignado: 'PresupuestoAsignado',
     MovimientoPresupuestal: 'MovimientoPresupuestal',
-    ProgramaPagos: 'ProgramaPagos'
+    ProgramaPagos: 'ProgramaPagos',
+    CuentaBancaria: 'CuentaBancaria',
+    ProyectoFinanzas: 'ProyectoFinanzas',
+    PagoOC: 'PagoOC',
+    DetallePagoOC: 'DetallePagoOC'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -640,7 +704,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "presupuestoAsignado" | "movimientoPresupuestal" | "programaPagos"
+      modelProps: "presupuestoAsignado" | "movimientoPresupuestal" | "programaPagos" | "cuentaBancaria" | "proyectoFinanzas" | "pagoOC" | "detallePagoOC"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -854,6 +918,286 @@ export namespace Prisma {
           }
         }
       }
+      CuentaBancaria: {
+        payload: Prisma.$CuentaBancariaPayload<ExtArgs>
+        fields: Prisma.CuentaBancariaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CuentaBancariaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CuentaBancariaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>
+          }
+          findFirst: {
+            args: Prisma.CuentaBancariaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CuentaBancariaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>
+          }
+          findMany: {
+            args: Prisma.CuentaBancariaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>[]
+          }
+          create: {
+            args: Prisma.CuentaBancariaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>
+          }
+          createMany: {
+            args: Prisma.CuentaBancariaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CuentaBancariaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>[]
+          }
+          delete: {
+            args: Prisma.CuentaBancariaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>
+          }
+          update: {
+            args: Prisma.CuentaBancariaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>
+          }
+          deleteMany: {
+            args: Prisma.CuentaBancariaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CuentaBancariaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CuentaBancariaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaBancariaPayload>
+          }
+          aggregate: {
+            args: Prisma.CuentaBancariaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCuentaBancaria>
+          }
+          groupBy: {
+            args: Prisma.CuentaBancariaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CuentaBancariaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CuentaBancariaCountArgs<ExtArgs>
+            result: $Utils.Optional<CuentaBancariaCountAggregateOutputType> | number
+          }
+        }
+      }
+      ProyectoFinanzas: {
+        payload: Prisma.$ProyectoFinanzasPayload<ExtArgs>
+        fields: Prisma.ProyectoFinanzasFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProyectoFinanzasFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProyectoFinanzasFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>
+          }
+          findFirst: {
+            args: Prisma.ProyectoFinanzasFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProyectoFinanzasFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>
+          }
+          findMany: {
+            args: Prisma.ProyectoFinanzasFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>[]
+          }
+          create: {
+            args: Prisma.ProyectoFinanzasCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>
+          }
+          createMany: {
+            args: Prisma.ProyectoFinanzasCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProyectoFinanzasCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>[]
+          }
+          delete: {
+            args: Prisma.ProyectoFinanzasDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>
+          }
+          update: {
+            args: Prisma.ProyectoFinanzasUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProyectoFinanzasDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProyectoFinanzasUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ProyectoFinanzasUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProyectoFinanzasPayload>
+          }
+          aggregate: {
+            args: Prisma.ProyectoFinanzasAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProyectoFinanzas>
+          }
+          groupBy: {
+            args: Prisma.ProyectoFinanzasGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProyectoFinanzasGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProyectoFinanzasCountArgs<ExtArgs>
+            result: $Utils.Optional<ProyectoFinanzasCountAggregateOutputType> | number
+          }
+        }
+      }
+      PagoOC: {
+        payload: Prisma.$PagoOCPayload<ExtArgs>
+        fields: Prisma.PagoOCFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PagoOCFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PagoOCFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>
+          }
+          findFirst: {
+            args: Prisma.PagoOCFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PagoOCFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>
+          }
+          findMany: {
+            args: Prisma.PagoOCFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>[]
+          }
+          create: {
+            args: Prisma.PagoOCCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>
+          }
+          createMany: {
+            args: Prisma.PagoOCCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PagoOCCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>[]
+          }
+          delete: {
+            args: Prisma.PagoOCDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>
+          }
+          update: {
+            args: Prisma.PagoOCUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>
+          }
+          deleteMany: {
+            args: Prisma.PagoOCDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PagoOCUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.PagoOCUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoOCPayload>
+          }
+          aggregate: {
+            args: Prisma.PagoOCAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePagoOC>
+          }
+          groupBy: {
+            args: Prisma.PagoOCGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PagoOCGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PagoOCCountArgs<ExtArgs>
+            result: $Utils.Optional<PagoOCCountAggregateOutputType> | number
+          }
+        }
+      }
+      DetallePagoOC: {
+        payload: Prisma.$DetallePagoOCPayload<ExtArgs>
+        fields: Prisma.DetallePagoOCFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DetallePagoOCFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DetallePagoOCFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>
+          }
+          findFirst: {
+            args: Prisma.DetallePagoOCFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DetallePagoOCFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>
+          }
+          findMany: {
+            args: Prisma.DetallePagoOCFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>[]
+          }
+          create: {
+            args: Prisma.DetallePagoOCCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>
+          }
+          createMany: {
+            args: Prisma.DetallePagoOCCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DetallePagoOCCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>[]
+          }
+          delete: {
+            args: Prisma.DetallePagoOCDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>
+          }
+          update: {
+            args: Prisma.DetallePagoOCUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>
+          }
+          deleteMany: {
+            args: Prisma.DetallePagoOCDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DetallePagoOCUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.DetallePagoOCUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DetallePagoOCPayload>
+          }
+          aggregate: {
+            args: Prisma.DetallePagoOCAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDetallePagoOC>
+          }
+          groupBy: {
+            args: Prisma.DetallePagoOCGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DetallePagoOCGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DetallePagoOCCountArgs<ExtArgs>
+            result: $Utils.Optional<DetallePagoOCCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1047,6 +1391,68 @@ export namespace Prisma {
    */
   export type PresupuestoAsignadoCountOutputTypeCountPrograma_pagosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProgramaPagosWhereInput
+  }
+
+
+  /**
+   * Count Type CuentaBancariaCountOutputType
+   */
+
+  export type CuentaBancariaCountOutputType = {
+    pagos: number
+  }
+
+  export type CuentaBancariaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    pagos?: boolean | CuentaBancariaCountOutputTypeCountPagosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CuentaBancariaCountOutputType without action
+   */
+  export type CuentaBancariaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancariaCountOutputType
+     */
+    select?: CuentaBancariaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CuentaBancariaCountOutputType without action
+   */
+  export type CuentaBancariaCountOutputTypeCountPagosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PagoOCWhereInput
+  }
+
+
+  /**
+   * Count Type PagoOCCountOutputType
+   */
+
+  export type PagoOCCountOutputType = {
+    detalles: number
+  }
+
+  export type PagoOCCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    detalles?: boolean | PagoOCCountOutputTypeCountDetallesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PagoOCCountOutputType without action
+   */
+  export type PagoOCCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOCCountOutputType
+     */
+    select?: PagoOCCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PagoOCCountOutputType without action
+   */
+  export type PagoOCCountOutputTypeCountDetallesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DetallePagoOCWhereInput
   }
 
 
@@ -4431,6 +4837,4139 @@ export namespace Prisma {
 
 
   /**
+   * Model CuentaBancaria
+   */
+
+  export type AggregateCuentaBancaria = {
+    _count: CuentaBancariaCountAggregateOutputType | null
+    _avg: CuentaBancariaAvgAggregateOutputType | null
+    _sum: CuentaBancariaSumAggregateOutputType | null
+    _min: CuentaBancariaMinAggregateOutputType | null
+    _max: CuentaBancariaMaxAggregateOutputType | null
+  }
+
+  export type CuentaBancariaAvgAggregateOutputType = {
+    saldo: Decimal | null
+  }
+
+  export type CuentaBancariaSumAggregateOutputType = {
+    saldo: Decimal | null
+  }
+
+  export type CuentaBancariaMinAggregateOutputType = {
+    id_cuenta: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    banco: string | null
+    numero_cuenta: string | null
+    clabe: string | null
+    alias: string | null
+    moneda: string | null
+    saldo: Decimal | null
+    activa: boolean | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type CuentaBancariaMaxAggregateOutputType = {
+    id_cuenta: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    banco: string | null
+    numero_cuenta: string | null
+    clabe: string | null
+    alias: string | null
+    moneda: string | null
+    saldo: Decimal | null
+    activa: boolean | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type CuentaBancariaCountAggregateOutputType = {
+    id_cuenta: number
+    tenant_id: number
+    proyecto_id: number
+    banco: number
+    numero_cuenta: number
+    clabe: number
+    alias: number
+    moneda: number
+    saldo: number
+    activa: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type CuentaBancariaAvgAggregateInputType = {
+    saldo?: true
+  }
+
+  export type CuentaBancariaSumAggregateInputType = {
+    saldo?: true
+  }
+
+  export type CuentaBancariaMinAggregateInputType = {
+    id_cuenta?: true
+    tenant_id?: true
+    proyecto_id?: true
+    banco?: true
+    numero_cuenta?: true
+    clabe?: true
+    alias?: true
+    moneda?: true
+    saldo?: true
+    activa?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type CuentaBancariaMaxAggregateInputType = {
+    id_cuenta?: true
+    tenant_id?: true
+    proyecto_id?: true
+    banco?: true
+    numero_cuenta?: true
+    clabe?: true
+    alias?: true
+    moneda?: true
+    saldo?: true
+    activa?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type CuentaBancariaCountAggregateInputType = {
+    id_cuenta?: true
+    tenant_id?: true
+    proyecto_id?: true
+    banco?: true
+    numero_cuenta?: true
+    clabe?: true
+    alias?: true
+    moneda?: true
+    saldo?: true
+    activa?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type CuentaBancariaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CuentaBancaria to aggregate.
+     */
+    where?: CuentaBancariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaBancarias to fetch.
+     */
+    orderBy?: CuentaBancariaOrderByWithRelationInput | CuentaBancariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CuentaBancariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaBancarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaBancarias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CuentaBancarias
+    **/
+    _count?: true | CuentaBancariaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CuentaBancariaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CuentaBancariaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CuentaBancariaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CuentaBancariaMaxAggregateInputType
+  }
+
+  export type GetCuentaBancariaAggregateType<T extends CuentaBancariaAggregateArgs> = {
+        [P in keyof T & keyof AggregateCuentaBancaria]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCuentaBancaria[P]>
+      : GetScalarType<T[P], AggregateCuentaBancaria[P]>
+  }
+
+
+
+
+  export type CuentaBancariaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CuentaBancariaWhereInput
+    orderBy?: CuentaBancariaOrderByWithAggregationInput | CuentaBancariaOrderByWithAggregationInput[]
+    by: CuentaBancariaScalarFieldEnum[] | CuentaBancariaScalarFieldEnum
+    having?: CuentaBancariaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CuentaBancariaCountAggregateInputType | true
+    _avg?: CuentaBancariaAvgAggregateInputType
+    _sum?: CuentaBancariaSumAggregateInputType
+    _min?: CuentaBancariaMinAggregateInputType
+    _max?: CuentaBancariaMaxAggregateInputType
+  }
+
+  export type CuentaBancariaGroupByOutputType = {
+    id_cuenta: string
+    tenant_id: string
+    proyecto_id: string | null
+    banco: string
+    numero_cuenta: string
+    clabe: string | null
+    alias: string
+    moneda: string
+    saldo: Decimal
+    activa: boolean
+    created_at: Date
+    updated_at: Date
+    _count: CuentaBancariaCountAggregateOutputType | null
+    _avg: CuentaBancariaAvgAggregateOutputType | null
+    _sum: CuentaBancariaSumAggregateOutputType | null
+    _min: CuentaBancariaMinAggregateOutputType | null
+    _max: CuentaBancariaMaxAggregateOutputType | null
+  }
+
+  type GetCuentaBancariaGroupByPayload<T extends CuentaBancariaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CuentaBancariaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CuentaBancariaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CuentaBancariaGroupByOutputType[P]>
+            : GetScalarType<T[P], CuentaBancariaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CuentaBancariaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_cuenta?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    banco?: boolean
+    numero_cuenta?: boolean
+    clabe?: boolean
+    alias?: boolean
+    moneda?: boolean
+    saldo?: boolean
+    activa?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    pagos?: boolean | CuentaBancaria$pagosArgs<ExtArgs>
+    _count?: boolean | CuentaBancariaCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cuentaBancaria"]>
+
+  export type CuentaBancariaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_cuenta?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    banco?: boolean
+    numero_cuenta?: boolean
+    clabe?: boolean
+    alias?: boolean
+    moneda?: boolean
+    saldo?: boolean
+    activa?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["cuentaBancaria"]>
+
+  export type CuentaBancariaSelectScalar = {
+    id_cuenta?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    banco?: boolean
+    numero_cuenta?: boolean
+    clabe?: boolean
+    alias?: boolean
+    moneda?: boolean
+    saldo?: boolean
+    activa?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type CuentaBancariaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    pagos?: boolean | CuentaBancaria$pagosArgs<ExtArgs>
+    _count?: boolean | CuentaBancariaCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CuentaBancariaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $CuentaBancariaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CuentaBancaria"
+    objects: {
+      pagos: Prisma.$PagoOCPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_cuenta: string
+      tenant_id: string
+      proyecto_id: string | null
+      banco: string
+      numero_cuenta: string
+      clabe: string | null
+      alias: string
+      moneda: string
+      saldo: Prisma.Decimal
+      activa: boolean
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["cuentaBancaria"]>
+    composites: {}
+  }
+
+  type CuentaBancariaGetPayload<S extends boolean | null | undefined | CuentaBancariaDefaultArgs> = $Result.GetResult<Prisma.$CuentaBancariaPayload, S>
+
+  type CuentaBancariaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CuentaBancariaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CuentaBancariaCountAggregateInputType | true
+    }
+
+  export interface CuentaBancariaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CuentaBancaria'], meta: { name: 'CuentaBancaria' } }
+    /**
+     * Find zero or one CuentaBancaria that matches the filter.
+     * @param {CuentaBancariaFindUniqueArgs} args - Arguments to find a CuentaBancaria
+     * @example
+     * // Get one CuentaBancaria
+     * const cuentaBancaria = await prisma.cuentaBancaria.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CuentaBancariaFindUniqueArgs>(args: SelectSubset<T, CuentaBancariaFindUniqueArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one CuentaBancaria that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CuentaBancariaFindUniqueOrThrowArgs} args - Arguments to find a CuentaBancaria
+     * @example
+     * // Get one CuentaBancaria
+     * const cuentaBancaria = await prisma.cuentaBancaria.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CuentaBancariaFindUniqueOrThrowArgs>(args: SelectSubset<T, CuentaBancariaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first CuentaBancaria that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaFindFirstArgs} args - Arguments to find a CuentaBancaria
+     * @example
+     * // Get one CuentaBancaria
+     * const cuentaBancaria = await prisma.cuentaBancaria.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CuentaBancariaFindFirstArgs>(args?: SelectSubset<T, CuentaBancariaFindFirstArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first CuentaBancaria that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaFindFirstOrThrowArgs} args - Arguments to find a CuentaBancaria
+     * @example
+     * // Get one CuentaBancaria
+     * const cuentaBancaria = await prisma.cuentaBancaria.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CuentaBancariaFindFirstOrThrowArgs>(args?: SelectSubset<T, CuentaBancariaFindFirstOrThrowArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more CuentaBancarias that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CuentaBancarias
+     * const cuentaBancarias = await prisma.cuentaBancaria.findMany()
+     * 
+     * // Get first 10 CuentaBancarias
+     * const cuentaBancarias = await prisma.cuentaBancaria.findMany({ take: 10 })
+     * 
+     * // Only select the `id_cuenta`
+     * const cuentaBancariaWithId_cuentaOnly = await prisma.cuentaBancaria.findMany({ select: { id_cuenta: true } })
+     * 
+     */
+    findMany<T extends CuentaBancariaFindManyArgs>(args?: SelectSubset<T, CuentaBancariaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a CuentaBancaria.
+     * @param {CuentaBancariaCreateArgs} args - Arguments to create a CuentaBancaria.
+     * @example
+     * // Create one CuentaBancaria
+     * const CuentaBancaria = await prisma.cuentaBancaria.create({
+     *   data: {
+     *     // ... data to create a CuentaBancaria
+     *   }
+     * })
+     * 
+     */
+    create<T extends CuentaBancariaCreateArgs>(args: SelectSubset<T, CuentaBancariaCreateArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many CuentaBancarias.
+     * @param {CuentaBancariaCreateManyArgs} args - Arguments to create many CuentaBancarias.
+     * @example
+     * // Create many CuentaBancarias
+     * const cuentaBancaria = await prisma.cuentaBancaria.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CuentaBancariaCreateManyArgs>(args?: SelectSubset<T, CuentaBancariaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CuentaBancarias and returns the data saved in the database.
+     * @param {CuentaBancariaCreateManyAndReturnArgs} args - Arguments to create many CuentaBancarias.
+     * @example
+     * // Create many CuentaBancarias
+     * const cuentaBancaria = await prisma.cuentaBancaria.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CuentaBancarias and only return the `id_cuenta`
+     * const cuentaBancariaWithId_cuentaOnly = await prisma.cuentaBancaria.createManyAndReturn({ 
+     *   select: { id_cuenta: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CuentaBancariaCreateManyAndReturnArgs>(args?: SelectSubset<T, CuentaBancariaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a CuentaBancaria.
+     * @param {CuentaBancariaDeleteArgs} args - Arguments to delete one CuentaBancaria.
+     * @example
+     * // Delete one CuentaBancaria
+     * const CuentaBancaria = await prisma.cuentaBancaria.delete({
+     *   where: {
+     *     // ... filter to delete one CuentaBancaria
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CuentaBancariaDeleteArgs>(args: SelectSubset<T, CuentaBancariaDeleteArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one CuentaBancaria.
+     * @param {CuentaBancariaUpdateArgs} args - Arguments to update one CuentaBancaria.
+     * @example
+     * // Update one CuentaBancaria
+     * const cuentaBancaria = await prisma.cuentaBancaria.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CuentaBancariaUpdateArgs>(args: SelectSubset<T, CuentaBancariaUpdateArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more CuentaBancarias.
+     * @param {CuentaBancariaDeleteManyArgs} args - Arguments to filter CuentaBancarias to delete.
+     * @example
+     * // Delete a few CuentaBancarias
+     * const { count } = await prisma.cuentaBancaria.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CuentaBancariaDeleteManyArgs>(args?: SelectSubset<T, CuentaBancariaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CuentaBancarias.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CuentaBancarias
+     * const cuentaBancaria = await prisma.cuentaBancaria.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CuentaBancariaUpdateManyArgs>(args: SelectSubset<T, CuentaBancariaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CuentaBancaria.
+     * @param {CuentaBancariaUpsertArgs} args - Arguments to update or create a CuentaBancaria.
+     * @example
+     * // Update or create a CuentaBancaria
+     * const cuentaBancaria = await prisma.cuentaBancaria.upsert({
+     *   create: {
+     *     // ... data to create a CuentaBancaria
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CuentaBancaria we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CuentaBancariaUpsertArgs>(args: SelectSubset<T, CuentaBancariaUpsertArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of CuentaBancarias.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaCountArgs} args - Arguments to filter CuentaBancarias to count.
+     * @example
+     * // Count the number of CuentaBancarias
+     * const count = await prisma.cuentaBancaria.count({
+     *   where: {
+     *     // ... the filter for the CuentaBancarias we want to count
+     *   }
+     * })
+    **/
+    count<T extends CuentaBancariaCountArgs>(
+      args?: Subset<T, CuentaBancariaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CuentaBancariaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CuentaBancaria.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CuentaBancariaAggregateArgs>(args: Subset<T, CuentaBancariaAggregateArgs>): Prisma.PrismaPromise<GetCuentaBancariaAggregateType<T>>
+
+    /**
+     * Group by CuentaBancaria.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaBancariaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CuentaBancariaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CuentaBancariaGroupByArgs['orderBy'] }
+        : { orderBy?: CuentaBancariaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CuentaBancariaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCuentaBancariaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CuentaBancaria model
+   */
+  readonly fields: CuentaBancariaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CuentaBancaria.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CuentaBancariaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    pagos<T extends CuentaBancaria$pagosArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancaria$pagosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CuentaBancaria model
+   */ 
+  interface CuentaBancariaFieldRefs {
+    readonly id_cuenta: FieldRef<"CuentaBancaria", 'String'>
+    readonly tenant_id: FieldRef<"CuentaBancaria", 'String'>
+    readonly proyecto_id: FieldRef<"CuentaBancaria", 'String'>
+    readonly banco: FieldRef<"CuentaBancaria", 'String'>
+    readonly numero_cuenta: FieldRef<"CuentaBancaria", 'String'>
+    readonly clabe: FieldRef<"CuentaBancaria", 'String'>
+    readonly alias: FieldRef<"CuentaBancaria", 'String'>
+    readonly moneda: FieldRef<"CuentaBancaria", 'String'>
+    readonly saldo: FieldRef<"CuentaBancaria", 'Decimal'>
+    readonly activa: FieldRef<"CuentaBancaria", 'Boolean'>
+    readonly created_at: FieldRef<"CuentaBancaria", 'DateTime'>
+    readonly updated_at: FieldRef<"CuentaBancaria", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CuentaBancaria findUnique
+   */
+  export type CuentaBancariaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaBancaria to fetch.
+     */
+    where: CuentaBancariaWhereUniqueInput
+  }
+
+  /**
+   * CuentaBancaria findUniqueOrThrow
+   */
+  export type CuentaBancariaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaBancaria to fetch.
+     */
+    where: CuentaBancariaWhereUniqueInput
+  }
+
+  /**
+   * CuentaBancaria findFirst
+   */
+  export type CuentaBancariaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaBancaria to fetch.
+     */
+    where?: CuentaBancariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaBancarias to fetch.
+     */
+    orderBy?: CuentaBancariaOrderByWithRelationInput | CuentaBancariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CuentaBancarias.
+     */
+    cursor?: CuentaBancariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaBancarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaBancarias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CuentaBancarias.
+     */
+    distinct?: CuentaBancariaScalarFieldEnum | CuentaBancariaScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaBancaria findFirstOrThrow
+   */
+  export type CuentaBancariaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaBancaria to fetch.
+     */
+    where?: CuentaBancariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaBancarias to fetch.
+     */
+    orderBy?: CuentaBancariaOrderByWithRelationInput | CuentaBancariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CuentaBancarias.
+     */
+    cursor?: CuentaBancariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaBancarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaBancarias.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CuentaBancarias.
+     */
+    distinct?: CuentaBancariaScalarFieldEnum | CuentaBancariaScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaBancaria findMany
+   */
+  export type CuentaBancariaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaBancarias to fetch.
+     */
+    where?: CuentaBancariaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaBancarias to fetch.
+     */
+    orderBy?: CuentaBancariaOrderByWithRelationInput | CuentaBancariaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CuentaBancarias.
+     */
+    cursor?: CuentaBancariaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaBancarias from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaBancarias.
+     */
+    skip?: number
+    distinct?: CuentaBancariaScalarFieldEnum | CuentaBancariaScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaBancaria create
+   */
+  export type CuentaBancariaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CuentaBancaria.
+     */
+    data: XOR<CuentaBancariaCreateInput, CuentaBancariaUncheckedCreateInput>
+  }
+
+  /**
+   * CuentaBancaria createMany
+   */
+  export type CuentaBancariaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CuentaBancarias.
+     */
+    data: CuentaBancariaCreateManyInput | CuentaBancariaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CuentaBancaria createManyAndReturn
+   */
+  export type CuentaBancariaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many CuentaBancarias.
+     */
+    data: CuentaBancariaCreateManyInput | CuentaBancariaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CuentaBancaria update
+   */
+  export type CuentaBancariaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CuentaBancaria.
+     */
+    data: XOR<CuentaBancariaUpdateInput, CuentaBancariaUncheckedUpdateInput>
+    /**
+     * Choose, which CuentaBancaria to update.
+     */
+    where: CuentaBancariaWhereUniqueInput
+  }
+
+  /**
+   * CuentaBancaria updateMany
+   */
+  export type CuentaBancariaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CuentaBancarias.
+     */
+    data: XOR<CuentaBancariaUpdateManyMutationInput, CuentaBancariaUncheckedUpdateManyInput>
+    /**
+     * Filter which CuentaBancarias to update
+     */
+    where?: CuentaBancariaWhereInput
+  }
+
+  /**
+   * CuentaBancaria upsert
+   */
+  export type CuentaBancariaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CuentaBancaria to update in case it exists.
+     */
+    where: CuentaBancariaWhereUniqueInput
+    /**
+     * In case the CuentaBancaria found by the `where` argument doesn't exist, create a new CuentaBancaria with this data.
+     */
+    create: XOR<CuentaBancariaCreateInput, CuentaBancariaUncheckedCreateInput>
+    /**
+     * In case the CuentaBancaria was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CuentaBancariaUpdateInput, CuentaBancariaUncheckedUpdateInput>
+  }
+
+  /**
+   * CuentaBancaria delete
+   */
+  export type CuentaBancariaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    /**
+     * Filter which CuentaBancaria to delete.
+     */
+    where: CuentaBancariaWhereUniqueInput
+  }
+
+  /**
+   * CuentaBancaria deleteMany
+   */
+  export type CuentaBancariaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CuentaBancarias to delete
+     */
+    where?: CuentaBancariaWhereInput
+  }
+
+  /**
+   * CuentaBancaria.pagos
+   */
+  export type CuentaBancaria$pagosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    where?: PagoOCWhereInput
+    orderBy?: PagoOCOrderByWithRelationInput | PagoOCOrderByWithRelationInput[]
+    cursor?: PagoOCWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PagoOCScalarFieldEnum | PagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaBancaria without action
+   */
+  export type CuentaBancariaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ProyectoFinanzas
+   */
+
+  export type AggregateProyectoFinanzas = {
+    _count: ProyectoFinanzasCountAggregateOutputType | null
+    _avg: ProyectoFinanzasAvgAggregateOutputType | null
+    _sum: ProyectoFinanzasSumAggregateOutputType | null
+    _min: ProyectoFinanzasMinAggregateOutputType | null
+    _max: ProyectoFinanzasMaxAggregateOutputType | null
+  }
+
+  export type ProyectoFinanzasAvgAggregateOutputType = {
+    anticipo_total: Decimal | null
+    anticipo_usado: Decimal | null
+  }
+
+  export type ProyectoFinanzasSumAggregateOutputType = {
+    anticipo_total: Decimal | null
+    anticipo_usado: Decimal | null
+  }
+
+  export type ProyectoFinanzasMinAggregateOutputType = {
+    id_proyecto_finanzas: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    anticipo_total: Decimal | null
+    anticipo_usado: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ProyectoFinanzasMaxAggregateOutputType = {
+    id_proyecto_finanzas: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    anticipo_total: Decimal | null
+    anticipo_usado: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ProyectoFinanzasCountAggregateOutputType = {
+    id_proyecto_finanzas: number
+    tenant_id: number
+    proyecto_id: number
+    anticipo_total: number
+    anticipo_usado: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ProyectoFinanzasAvgAggregateInputType = {
+    anticipo_total?: true
+    anticipo_usado?: true
+  }
+
+  export type ProyectoFinanzasSumAggregateInputType = {
+    anticipo_total?: true
+    anticipo_usado?: true
+  }
+
+  export type ProyectoFinanzasMinAggregateInputType = {
+    id_proyecto_finanzas?: true
+    tenant_id?: true
+    proyecto_id?: true
+    anticipo_total?: true
+    anticipo_usado?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ProyectoFinanzasMaxAggregateInputType = {
+    id_proyecto_finanzas?: true
+    tenant_id?: true
+    proyecto_id?: true
+    anticipo_total?: true
+    anticipo_usado?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ProyectoFinanzasCountAggregateInputType = {
+    id_proyecto_finanzas?: true
+    tenant_id?: true
+    proyecto_id?: true
+    anticipo_total?: true
+    anticipo_usado?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ProyectoFinanzasAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProyectoFinanzas to aggregate.
+     */
+    where?: ProyectoFinanzasWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoFinanzas to fetch.
+     */
+    orderBy?: ProyectoFinanzasOrderByWithRelationInput | ProyectoFinanzasOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProyectoFinanzasWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoFinanzas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoFinanzas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProyectoFinanzas
+    **/
+    _count?: true | ProyectoFinanzasCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ProyectoFinanzasAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProyectoFinanzasSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProyectoFinanzasMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProyectoFinanzasMaxAggregateInputType
+  }
+
+  export type GetProyectoFinanzasAggregateType<T extends ProyectoFinanzasAggregateArgs> = {
+        [P in keyof T & keyof AggregateProyectoFinanzas]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProyectoFinanzas[P]>
+      : GetScalarType<T[P], AggregateProyectoFinanzas[P]>
+  }
+
+
+
+
+  export type ProyectoFinanzasGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProyectoFinanzasWhereInput
+    orderBy?: ProyectoFinanzasOrderByWithAggregationInput | ProyectoFinanzasOrderByWithAggregationInput[]
+    by: ProyectoFinanzasScalarFieldEnum[] | ProyectoFinanzasScalarFieldEnum
+    having?: ProyectoFinanzasScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProyectoFinanzasCountAggregateInputType | true
+    _avg?: ProyectoFinanzasAvgAggregateInputType
+    _sum?: ProyectoFinanzasSumAggregateInputType
+    _min?: ProyectoFinanzasMinAggregateInputType
+    _max?: ProyectoFinanzasMaxAggregateInputType
+  }
+
+  export type ProyectoFinanzasGroupByOutputType = {
+    id_proyecto_finanzas: string
+    tenant_id: string
+    proyecto_id: string
+    anticipo_total: Decimal
+    anticipo_usado: Decimal
+    created_at: Date
+    updated_at: Date
+    _count: ProyectoFinanzasCountAggregateOutputType | null
+    _avg: ProyectoFinanzasAvgAggregateOutputType | null
+    _sum: ProyectoFinanzasSumAggregateOutputType | null
+    _min: ProyectoFinanzasMinAggregateOutputType | null
+    _max: ProyectoFinanzasMaxAggregateOutputType | null
+  }
+
+  type GetProyectoFinanzasGroupByPayload<T extends ProyectoFinanzasGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProyectoFinanzasGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProyectoFinanzasGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProyectoFinanzasGroupByOutputType[P]>
+            : GetScalarType<T[P], ProyectoFinanzasGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProyectoFinanzasSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_proyecto_finanzas?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    anticipo_total?: boolean
+    anticipo_usado?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["proyectoFinanzas"]>
+
+  export type ProyectoFinanzasSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_proyecto_finanzas?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    anticipo_total?: boolean
+    anticipo_usado?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["proyectoFinanzas"]>
+
+  export type ProyectoFinanzasSelectScalar = {
+    id_proyecto_finanzas?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    anticipo_total?: boolean
+    anticipo_usado?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $ProyectoFinanzasPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ProyectoFinanzas"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_proyecto_finanzas: string
+      tenant_id: string
+      proyecto_id: string
+      anticipo_total: Prisma.Decimal
+      anticipo_usado: Prisma.Decimal
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["proyectoFinanzas"]>
+    composites: {}
+  }
+
+  type ProyectoFinanzasGetPayload<S extends boolean | null | undefined | ProyectoFinanzasDefaultArgs> = $Result.GetResult<Prisma.$ProyectoFinanzasPayload, S>
+
+  type ProyectoFinanzasCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ProyectoFinanzasFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ProyectoFinanzasCountAggregateInputType | true
+    }
+
+  export interface ProyectoFinanzasDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProyectoFinanzas'], meta: { name: 'ProyectoFinanzas' } }
+    /**
+     * Find zero or one ProyectoFinanzas that matches the filter.
+     * @param {ProyectoFinanzasFindUniqueArgs} args - Arguments to find a ProyectoFinanzas
+     * @example
+     * // Get one ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProyectoFinanzasFindUniqueArgs>(args: SelectSubset<T, ProyectoFinanzasFindUniqueArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ProyectoFinanzas that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ProyectoFinanzasFindUniqueOrThrowArgs} args - Arguments to find a ProyectoFinanzas
+     * @example
+     * // Get one ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProyectoFinanzasFindUniqueOrThrowArgs>(args: SelectSubset<T, ProyectoFinanzasFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ProyectoFinanzas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasFindFirstArgs} args - Arguments to find a ProyectoFinanzas
+     * @example
+     * // Get one ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProyectoFinanzasFindFirstArgs>(args?: SelectSubset<T, ProyectoFinanzasFindFirstArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ProyectoFinanzas that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasFindFirstOrThrowArgs} args - Arguments to find a ProyectoFinanzas
+     * @example
+     * // Get one ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProyectoFinanzasFindFirstOrThrowArgs>(args?: SelectSubset<T, ProyectoFinanzasFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ProyectoFinanzas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.findMany()
+     * 
+     * // Get first 10 ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.findMany({ take: 10 })
+     * 
+     * // Only select the `id_proyecto_finanzas`
+     * const proyectoFinanzasWithId_proyecto_finanzasOnly = await prisma.proyectoFinanzas.findMany({ select: { id_proyecto_finanzas: true } })
+     * 
+     */
+    findMany<T extends ProyectoFinanzasFindManyArgs>(args?: SelectSubset<T, ProyectoFinanzasFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ProyectoFinanzas.
+     * @param {ProyectoFinanzasCreateArgs} args - Arguments to create a ProyectoFinanzas.
+     * @example
+     * // Create one ProyectoFinanzas
+     * const ProyectoFinanzas = await prisma.proyectoFinanzas.create({
+     *   data: {
+     *     // ... data to create a ProyectoFinanzas
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProyectoFinanzasCreateArgs>(args: SelectSubset<T, ProyectoFinanzasCreateArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ProyectoFinanzas.
+     * @param {ProyectoFinanzasCreateManyArgs} args - Arguments to create many ProyectoFinanzas.
+     * @example
+     * // Create many ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProyectoFinanzasCreateManyArgs>(args?: SelectSubset<T, ProyectoFinanzasCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ProyectoFinanzas and returns the data saved in the database.
+     * @param {ProyectoFinanzasCreateManyAndReturnArgs} args - Arguments to create many ProyectoFinanzas.
+     * @example
+     * // Create many ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ProyectoFinanzas and only return the `id_proyecto_finanzas`
+     * const proyectoFinanzasWithId_proyecto_finanzasOnly = await prisma.proyectoFinanzas.createManyAndReturn({ 
+     *   select: { id_proyecto_finanzas: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProyectoFinanzasCreateManyAndReturnArgs>(args?: SelectSubset<T, ProyectoFinanzasCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ProyectoFinanzas.
+     * @param {ProyectoFinanzasDeleteArgs} args - Arguments to delete one ProyectoFinanzas.
+     * @example
+     * // Delete one ProyectoFinanzas
+     * const ProyectoFinanzas = await prisma.proyectoFinanzas.delete({
+     *   where: {
+     *     // ... filter to delete one ProyectoFinanzas
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProyectoFinanzasDeleteArgs>(args: SelectSubset<T, ProyectoFinanzasDeleteArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ProyectoFinanzas.
+     * @param {ProyectoFinanzasUpdateArgs} args - Arguments to update one ProyectoFinanzas.
+     * @example
+     * // Update one ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProyectoFinanzasUpdateArgs>(args: SelectSubset<T, ProyectoFinanzasUpdateArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ProyectoFinanzas.
+     * @param {ProyectoFinanzasDeleteManyArgs} args - Arguments to filter ProyectoFinanzas to delete.
+     * @example
+     * // Delete a few ProyectoFinanzas
+     * const { count } = await prisma.proyectoFinanzas.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProyectoFinanzasDeleteManyArgs>(args?: SelectSubset<T, ProyectoFinanzasDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProyectoFinanzas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProyectoFinanzasUpdateManyArgs>(args: SelectSubset<T, ProyectoFinanzasUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ProyectoFinanzas.
+     * @param {ProyectoFinanzasUpsertArgs} args - Arguments to update or create a ProyectoFinanzas.
+     * @example
+     * // Update or create a ProyectoFinanzas
+     * const proyectoFinanzas = await prisma.proyectoFinanzas.upsert({
+     *   create: {
+     *     // ... data to create a ProyectoFinanzas
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProyectoFinanzas we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProyectoFinanzasUpsertArgs>(args: SelectSubset<T, ProyectoFinanzasUpsertArgs<ExtArgs>>): Prisma__ProyectoFinanzasClient<$Result.GetResult<Prisma.$ProyectoFinanzasPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ProyectoFinanzas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasCountArgs} args - Arguments to filter ProyectoFinanzas to count.
+     * @example
+     * // Count the number of ProyectoFinanzas
+     * const count = await prisma.proyectoFinanzas.count({
+     *   where: {
+     *     // ... the filter for the ProyectoFinanzas we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProyectoFinanzasCountArgs>(
+      args?: Subset<T, ProyectoFinanzasCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProyectoFinanzasCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProyectoFinanzas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProyectoFinanzasAggregateArgs>(args: Subset<T, ProyectoFinanzasAggregateArgs>): Prisma.PrismaPromise<GetProyectoFinanzasAggregateType<T>>
+
+    /**
+     * Group by ProyectoFinanzas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProyectoFinanzasGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProyectoFinanzasGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProyectoFinanzasGroupByArgs['orderBy'] }
+        : { orderBy?: ProyectoFinanzasGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProyectoFinanzasGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProyectoFinanzasGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ProyectoFinanzas model
+   */
+  readonly fields: ProyectoFinanzasFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProyectoFinanzas.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProyectoFinanzasClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ProyectoFinanzas model
+   */ 
+  interface ProyectoFinanzasFieldRefs {
+    readonly id_proyecto_finanzas: FieldRef<"ProyectoFinanzas", 'String'>
+    readonly tenant_id: FieldRef<"ProyectoFinanzas", 'String'>
+    readonly proyecto_id: FieldRef<"ProyectoFinanzas", 'String'>
+    readonly anticipo_total: FieldRef<"ProyectoFinanzas", 'Decimal'>
+    readonly anticipo_usado: FieldRef<"ProyectoFinanzas", 'Decimal'>
+    readonly created_at: FieldRef<"ProyectoFinanzas", 'DateTime'>
+    readonly updated_at: FieldRef<"ProyectoFinanzas", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ProyectoFinanzas findUnique
+   */
+  export type ProyectoFinanzasFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoFinanzas to fetch.
+     */
+    where: ProyectoFinanzasWhereUniqueInput
+  }
+
+  /**
+   * ProyectoFinanzas findUniqueOrThrow
+   */
+  export type ProyectoFinanzasFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoFinanzas to fetch.
+     */
+    where: ProyectoFinanzasWhereUniqueInput
+  }
+
+  /**
+   * ProyectoFinanzas findFirst
+   */
+  export type ProyectoFinanzasFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoFinanzas to fetch.
+     */
+    where?: ProyectoFinanzasWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoFinanzas to fetch.
+     */
+    orderBy?: ProyectoFinanzasOrderByWithRelationInput | ProyectoFinanzasOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProyectoFinanzas.
+     */
+    cursor?: ProyectoFinanzasWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoFinanzas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoFinanzas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProyectoFinanzas.
+     */
+    distinct?: ProyectoFinanzasScalarFieldEnum | ProyectoFinanzasScalarFieldEnum[]
+  }
+
+  /**
+   * ProyectoFinanzas findFirstOrThrow
+   */
+  export type ProyectoFinanzasFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoFinanzas to fetch.
+     */
+    where?: ProyectoFinanzasWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoFinanzas to fetch.
+     */
+    orderBy?: ProyectoFinanzasOrderByWithRelationInput | ProyectoFinanzasOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProyectoFinanzas.
+     */
+    cursor?: ProyectoFinanzasWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoFinanzas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoFinanzas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProyectoFinanzas.
+     */
+    distinct?: ProyectoFinanzasScalarFieldEnum | ProyectoFinanzasScalarFieldEnum[]
+  }
+
+  /**
+   * ProyectoFinanzas findMany
+   */
+  export type ProyectoFinanzasFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * Filter, which ProyectoFinanzas to fetch.
+     */
+    where?: ProyectoFinanzasWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProyectoFinanzas to fetch.
+     */
+    orderBy?: ProyectoFinanzasOrderByWithRelationInput | ProyectoFinanzasOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProyectoFinanzas.
+     */
+    cursor?: ProyectoFinanzasWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProyectoFinanzas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProyectoFinanzas.
+     */
+    skip?: number
+    distinct?: ProyectoFinanzasScalarFieldEnum | ProyectoFinanzasScalarFieldEnum[]
+  }
+
+  /**
+   * ProyectoFinanzas create
+   */
+  export type ProyectoFinanzasCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * The data needed to create a ProyectoFinanzas.
+     */
+    data: XOR<ProyectoFinanzasCreateInput, ProyectoFinanzasUncheckedCreateInput>
+  }
+
+  /**
+   * ProyectoFinanzas createMany
+   */
+  export type ProyectoFinanzasCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProyectoFinanzas.
+     */
+    data: ProyectoFinanzasCreateManyInput | ProyectoFinanzasCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProyectoFinanzas createManyAndReturn
+   */
+  export type ProyectoFinanzasCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ProyectoFinanzas.
+     */
+    data: ProyectoFinanzasCreateManyInput | ProyectoFinanzasCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProyectoFinanzas update
+   */
+  export type ProyectoFinanzasUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * The data needed to update a ProyectoFinanzas.
+     */
+    data: XOR<ProyectoFinanzasUpdateInput, ProyectoFinanzasUncheckedUpdateInput>
+    /**
+     * Choose, which ProyectoFinanzas to update.
+     */
+    where: ProyectoFinanzasWhereUniqueInput
+  }
+
+  /**
+   * ProyectoFinanzas updateMany
+   */
+  export type ProyectoFinanzasUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProyectoFinanzas.
+     */
+    data: XOR<ProyectoFinanzasUpdateManyMutationInput, ProyectoFinanzasUncheckedUpdateManyInput>
+    /**
+     * Filter which ProyectoFinanzas to update
+     */
+    where?: ProyectoFinanzasWhereInput
+  }
+
+  /**
+   * ProyectoFinanzas upsert
+   */
+  export type ProyectoFinanzasUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * The filter to search for the ProyectoFinanzas to update in case it exists.
+     */
+    where: ProyectoFinanzasWhereUniqueInput
+    /**
+     * In case the ProyectoFinanzas found by the `where` argument doesn't exist, create a new ProyectoFinanzas with this data.
+     */
+    create: XOR<ProyectoFinanzasCreateInput, ProyectoFinanzasUncheckedCreateInput>
+    /**
+     * In case the ProyectoFinanzas was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProyectoFinanzasUpdateInput, ProyectoFinanzasUncheckedUpdateInput>
+  }
+
+  /**
+   * ProyectoFinanzas delete
+   */
+  export type ProyectoFinanzasDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+    /**
+     * Filter which ProyectoFinanzas to delete.
+     */
+    where: ProyectoFinanzasWhereUniqueInput
+  }
+
+  /**
+   * ProyectoFinanzas deleteMany
+   */
+  export type ProyectoFinanzasDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProyectoFinanzas to delete
+     */
+    where?: ProyectoFinanzasWhereInput
+  }
+
+  /**
+   * ProyectoFinanzas without action
+   */
+  export type ProyectoFinanzasDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProyectoFinanzas
+     */
+    select?: ProyectoFinanzasSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PagoOC
+   */
+
+  export type AggregatePagoOC = {
+    _count: PagoOCCountAggregateOutputType | null
+    _avg: PagoOCAvgAggregateOutputType | null
+    _sum: PagoOCSumAggregateOutputType | null
+    _min: PagoOCMinAggregateOutputType | null
+    _max: PagoOCMaxAggregateOutputType | null
+  }
+
+  export type PagoOCAvgAggregateOutputType = {
+    monto_total: Decimal | null
+  }
+
+  export type PagoOCSumAggregateOutputType = {
+    monto_total: Decimal | null
+  }
+
+  export type PagoOCMinAggregateOutputType = {
+    id_pago: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    fuente: string | null
+    cuenta_id: string | null
+    tipo_pago: string | null
+    referencia: string | null
+    concepto: string | null
+    fecha_pago: Date | null
+    monto_total: Decimal | null
+    moneda: string | null
+    usuario_id: string | null
+    created_at: Date | null
+  }
+
+  export type PagoOCMaxAggregateOutputType = {
+    id_pago: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    fuente: string | null
+    cuenta_id: string | null
+    tipo_pago: string | null
+    referencia: string | null
+    concepto: string | null
+    fecha_pago: Date | null
+    monto_total: Decimal | null
+    moneda: string | null
+    usuario_id: string | null
+    created_at: Date | null
+  }
+
+  export type PagoOCCountAggregateOutputType = {
+    id_pago: number
+    tenant_id: number
+    proyecto_id: number
+    fuente: number
+    cuenta_id: number
+    tipo_pago: number
+    referencia: number
+    concepto: number
+    fecha_pago: number
+    monto_total: number
+    moneda: number
+    usuario_id: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type PagoOCAvgAggregateInputType = {
+    monto_total?: true
+  }
+
+  export type PagoOCSumAggregateInputType = {
+    monto_total?: true
+  }
+
+  export type PagoOCMinAggregateInputType = {
+    id_pago?: true
+    tenant_id?: true
+    proyecto_id?: true
+    fuente?: true
+    cuenta_id?: true
+    tipo_pago?: true
+    referencia?: true
+    concepto?: true
+    fecha_pago?: true
+    monto_total?: true
+    moneda?: true
+    usuario_id?: true
+    created_at?: true
+  }
+
+  export type PagoOCMaxAggregateInputType = {
+    id_pago?: true
+    tenant_id?: true
+    proyecto_id?: true
+    fuente?: true
+    cuenta_id?: true
+    tipo_pago?: true
+    referencia?: true
+    concepto?: true
+    fecha_pago?: true
+    monto_total?: true
+    moneda?: true
+    usuario_id?: true
+    created_at?: true
+  }
+
+  export type PagoOCCountAggregateInputType = {
+    id_pago?: true
+    tenant_id?: true
+    proyecto_id?: true
+    fuente?: true
+    cuenta_id?: true
+    tipo_pago?: true
+    referencia?: true
+    concepto?: true
+    fecha_pago?: true
+    monto_total?: true
+    moneda?: true
+    usuario_id?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type PagoOCAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PagoOC to aggregate.
+     */
+    where?: PagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoOCS to fetch.
+     */
+    orderBy?: PagoOCOrderByWithRelationInput | PagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PagoOCS
+    **/
+    _count?: true | PagoOCCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PagoOCAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PagoOCSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PagoOCMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PagoOCMaxAggregateInputType
+  }
+
+  export type GetPagoOCAggregateType<T extends PagoOCAggregateArgs> = {
+        [P in keyof T & keyof AggregatePagoOC]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePagoOC[P]>
+      : GetScalarType<T[P], AggregatePagoOC[P]>
+  }
+
+
+
+
+  export type PagoOCGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PagoOCWhereInput
+    orderBy?: PagoOCOrderByWithAggregationInput | PagoOCOrderByWithAggregationInput[]
+    by: PagoOCScalarFieldEnum[] | PagoOCScalarFieldEnum
+    having?: PagoOCScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PagoOCCountAggregateInputType | true
+    _avg?: PagoOCAvgAggregateInputType
+    _sum?: PagoOCSumAggregateInputType
+    _min?: PagoOCMinAggregateInputType
+    _max?: PagoOCMaxAggregateInputType
+  }
+
+  export type PagoOCGroupByOutputType = {
+    id_pago: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    cuenta_id: string | null
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date
+    monto_total: Decimal
+    moneda: string
+    usuario_id: string
+    created_at: Date
+    _count: PagoOCCountAggregateOutputType | null
+    _avg: PagoOCAvgAggregateOutputType | null
+    _sum: PagoOCSumAggregateOutputType | null
+    _min: PagoOCMinAggregateOutputType | null
+    _max: PagoOCMaxAggregateOutputType | null
+  }
+
+  type GetPagoOCGroupByPayload<T extends PagoOCGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PagoOCGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PagoOCGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PagoOCGroupByOutputType[P]>
+            : GetScalarType<T[P], PagoOCGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PagoOCSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_pago?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    fuente?: boolean
+    cuenta_id?: boolean
+    tipo_pago?: boolean
+    referencia?: boolean
+    concepto?: boolean
+    fecha_pago?: boolean
+    monto_total?: boolean
+    moneda?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+    cuenta?: boolean | PagoOC$cuentaArgs<ExtArgs>
+    detalles?: boolean | PagoOC$detallesArgs<ExtArgs>
+    _count?: boolean | PagoOCCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pagoOC"]>
+
+  export type PagoOCSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_pago?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    fuente?: boolean
+    cuenta_id?: boolean
+    tipo_pago?: boolean
+    referencia?: boolean
+    concepto?: boolean
+    fecha_pago?: boolean
+    monto_total?: boolean
+    moneda?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+    cuenta?: boolean | PagoOC$cuentaArgs<ExtArgs>
+  }, ExtArgs["result"]["pagoOC"]>
+
+  export type PagoOCSelectScalar = {
+    id_pago?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    fuente?: boolean
+    cuenta_id?: boolean
+    tipo_pago?: boolean
+    referencia?: boolean
+    concepto?: boolean
+    fecha_pago?: boolean
+    monto_total?: boolean
+    moneda?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }
+
+  export type PagoOCInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuenta?: boolean | PagoOC$cuentaArgs<ExtArgs>
+    detalles?: boolean | PagoOC$detallesArgs<ExtArgs>
+    _count?: boolean | PagoOCCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PagoOCIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuenta?: boolean | PagoOC$cuentaArgs<ExtArgs>
+  }
+
+  export type $PagoOCPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PagoOC"
+    objects: {
+      cuenta: Prisma.$CuentaBancariaPayload<ExtArgs> | null
+      detalles: Prisma.$DetallePagoOCPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_pago: string
+      tenant_id: string
+      proyecto_id: string
+      fuente: string
+      cuenta_id: string | null
+      tipo_pago: string
+      referencia: string
+      concepto: string
+      fecha_pago: Date
+      monto_total: Prisma.Decimal
+      moneda: string
+      usuario_id: string
+      created_at: Date
+    }, ExtArgs["result"]["pagoOC"]>
+    composites: {}
+  }
+
+  type PagoOCGetPayload<S extends boolean | null | undefined | PagoOCDefaultArgs> = $Result.GetResult<Prisma.$PagoOCPayload, S>
+
+  type PagoOCCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<PagoOCFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: PagoOCCountAggregateInputType | true
+    }
+
+  export interface PagoOCDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PagoOC'], meta: { name: 'PagoOC' } }
+    /**
+     * Find zero or one PagoOC that matches the filter.
+     * @param {PagoOCFindUniqueArgs} args - Arguments to find a PagoOC
+     * @example
+     * // Get one PagoOC
+     * const pagoOC = await prisma.pagoOC.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PagoOCFindUniqueArgs>(args: SelectSubset<T, PagoOCFindUniqueArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one PagoOC that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {PagoOCFindUniqueOrThrowArgs} args - Arguments to find a PagoOC
+     * @example
+     * // Get one PagoOC
+     * const pagoOC = await prisma.pagoOC.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PagoOCFindUniqueOrThrowArgs>(args: SelectSubset<T, PagoOCFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first PagoOC that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCFindFirstArgs} args - Arguments to find a PagoOC
+     * @example
+     * // Get one PagoOC
+     * const pagoOC = await prisma.pagoOC.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PagoOCFindFirstArgs>(args?: SelectSubset<T, PagoOCFindFirstArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first PagoOC that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCFindFirstOrThrowArgs} args - Arguments to find a PagoOC
+     * @example
+     * // Get one PagoOC
+     * const pagoOC = await prisma.pagoOC.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PagoOCFindFirstOrThrowArgs>(args?: SelectSubset<T, PagoOCFindFirstOrThrowArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more PagoOCS that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PagoOCS
+     * const pagoOCS = await prisma.pagoOC.findMany()
+     * 
+     * // Get first 10 PagoOCS
+     * const pagoOCS = await prisma.pagoOC.findMany({ take: 10 })
+     * 
+     * // Only select the `id_pago`
+     * const pagoOCWithId_pagoOnly = await prisma.pagoOC.findMany({ select: { id_pago: true } })
+     * 
+     */
+    findMany<T extends PagoOCFindManyArgs>(args?: SelectSubset<T, PagoOCFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a PagoOC.
+     * @param {PagoOCCreateArgs} args - Arguments to create a PagoOC.
+     * @example
+     * // Create one PagoOC
+     * const PagoOC = await prisma.pagoOC.create({
+     *   data: {
+     *     // ... data to create a PagoOC
+     *   }
+     * })
+     * 
+     */
+    create<T extends PagoOCCreateArgs>(args: SelectSubset<T, PagoOCCreateArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many PagoOCS.
+     * @param {PagoOCCreateManyArgs} args - Arguments to create many PagoOCS.
+     * @example
+     * // Create many PagoOCS
+     * const pagoOC = await prisma.pagoOC.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PagoOCCreateManyArgs>(args?: SelectSubset<T, PagoOCCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PagoOCS and returns the data saved in the database.
+     * @param {PagoOCCreateManyAndReturnArgs} args - Arguments to create many PagoOCS.
+     * @example
+     * // Create many PagoOCS
+     * const pagoOC = await prisma.pagoOC.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PagoOCS and only return the `id_pago`
+     * const pagoOCWithId_pagoOnly = await prisma.pagoOC.createManyAndReturn({ 
+     *   select: { id_pago: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PagoOCCreateManyAndReturnArgs>(args?: SelectSubset<T, PagoOCCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a PagoOC.
+     * @param {PagoOCDeleteArgs} args - Arguments to delete one PagoOC.
+     * @example
+     * // Delete one PagoOC
+     * const PagoOC = await prisma.pagoOC.delete({
+     *   where: {
+     *     // ... filter to delete one PagoOC
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PagoOCDeleteArgs>(args: SelectSubset<T, PagoOCDeleteArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one PagoOC.
+     * @param {PagoOCUpdateArgs} args - Arguments to update one PagoOC.
+     * @example
+     * // Update one PagoOC
+     * const pagoOC = await prisma.pagoOC.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PagoOCUpdateArgs>(args: SelectSubset<T, PagoOCUpdateArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more PagoOCS.
+     * @param {PagoOCDeleteManyArgs} args - Arguments to filter PagoOCS to delete.
+     * @example
+     * // Delete a few PagoOCS
+     * const { count } = await prisma.pagoOC.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PagoOCDeleteManyArgs>(args?: SelectSubset<T, PagoOCDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PagoOCS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PagoOCS
+     * const pagoOC = await prisma.pagoOC.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PagoOCUpdateManyArgs>(args: SelectSubset<T, PagoOCUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PagoOC.
+     * @param {PagoOCUpsertArgs} args - Arguments to update or create a PagoOC.
+     * @example
+     * // Update or create a PagoOC
+     * const pagoOC = await prisma.pagoOC.upsert({
+     *   create: {
+     *     // ... data to create a PagoOC
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PagoOC we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PagoOCUpsertArgs>(args: SelectSubset<T, PagoOCUpsertArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of PagoOCS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCCountArgs} args - Arguments to filter PagoOCS to count.
+     * @example
+     * // Count the number of PagoOCS
+     * const count = await prisma.pagoOC.count({
+     *   where: {
+     *     // ... the filter for the PagoOCS we want to count
+     *   }
+     * })
+    **/
+    count<T extends PagoOCCountArgs>(
+      args?: Subset<T, PagoOCCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PagoOCCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PagoOC.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PagoOCAggregateArgs>(args: Subset<T, PagoOCAggregateArgs>): Prisma.PrismaPromise<GetPagoOCAggregateType<T>>
+
+    /**
+     * Group by PagoOC.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoOCGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PagoOCGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PagoOCGroupByArgs['orderBy'] }
+        : { orderBy?: PagoOCGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PagoOCGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPagoOCGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PagoOC model
+   */
+  readonly fields: PagoOCFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PagoOC.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PagoOCClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuenta<T extends PagoOC$cuentaArgs<ExtArgs> = {}>(args?: Subset<T, PagoOC$cuentaArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    detalles<T extends PagoOC$detallesArgs<ExtArgs> = {}>(args?: Subset<T, PagoOC$detallesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PagoOC model
+   */ 
+  interface PagoOCFieldRefs {
+    readonly id_pago: FieldRef<"PagoOC", 'String'>
+    readonly tenant_id: FieldRef<"PagoOC", 'String'>
+    readonly proyecto_id: FieldRef<"PagoOC", 'String'>
+    readonly fuente: FieldRef<"PagoOC", 'String'>
+    readonly cuenta_id: FieldRef<"PagoOC", 'String'>
+    readonly tipo_pago: FieldRef<"PagoOC", 'String'>
+    readonly referencia: FieldRef<"PagoOC", 'String'>
+    readonly concepto: FieldRef<"PagoOC", 'String'>
+    readonly fecha_pago: FieldRef<"PagoOC", 'DateTime'>
+    readonly monto_total: FieldRef<"PagoOC", 'Decimal'>
+    readonly moneda: FieldRef<"PagoOC", 'String'>
+    readonly usuario_id: FieldRef<"PagoOC", 'String'>
+    readonly created_at: FieldRef<"PagoOC", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PagoOC findUnique
+   */
+  export type PagoOCFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which PagoOC to fetch.
+     */
+    where: PagoOCWhereUniqueInput
+  }
+
+  /**
+   * PagoOC findUniqueOrThrow
+   */
+  export type PagoOCFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which PagoOC to fetch.
+     */
+    where: PagoOCWhereUniqueInput
+  }
+
+  /**
+   * PagoOC findFirst
+   */
+  export type PagoOCFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which PagoOC to fetch.
+     */
+    where?: PagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoOCS to fetch.
+     */
+    orderBy?: PagoOCOrderByWithRelationInput | PagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PagoOCS.
+     */
+    cursor?: PagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PagoOCS.
+     */
+    distinct?: PagoOCScalarFieldEnum | PagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * PagoOC findFirstOrThrow
+   */
+  export type PagoOCFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which PagoOC to fetch.
+     */
+    where?: PagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoOCS to fetch.
+     */
+    orderBy?: PagoOCOrderByWithRelationInput | PagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PagoOCS.
+     */
+    cursor?: PagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PagoOCS.
+     */
+    distinct?: PagoOCScalarFieldEnum | PagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * PagoOC findMany
+   */
+  export type PagoOCFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which PagoOCS to fetch.
+     */
+    where?: PagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoOCS to fetch.
+     */
+    orderBy?: PagoOCOrderByWithRelationInput | PagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PagoOCS.
+     */
+    cursor?: PagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoOCS.
+     */
+    skip?: number
+    distinct?: PagoOCScalarFieldEnum | PagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * PagoOC create
+   */
+  export type PagoOCCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PagoOC.
+     */
+    data: XOR<PagoOCCreateInput, PagoOCUncheckedCreateInput>
+  }
+
+  /**
+   * PagoOC createMany
+   */
+  export type PagoOCCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PagoOCS.
+     */
+    data: PagoOCCreateManyInput | PagoOCCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PagoOC createManyAndReturn
+   */
+  export type PagoOCCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many PagoOCS.
+     */
+    data: PagoOCCreateManyInput | PagoOCCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PagoOC update
+   */
+  export type PagoOCUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PagoOC.
+     */
+    data: XOR<PagoOCUpdateInput, PagoOCUncheckedUpdateInput>
+    /**
+     * Choose, which PagoOC to update.
+     */
+    where: PagoOCWhereUniqueInput
+  }
+
+  /**
+   * PagoOC updateMany
+   */
+  export type PagoOCUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PagoOCS.
+     */
+    data: XOR<PagoOCUpdateManyMutationInput, PagoOCUncheckedUpdateManyInput>
+    /**
+     * Filter which PagoOCS to update
+     */
+    where?: PagoOCWhereInput
+  }
+
+  /**
+   * PagoOC upsert
+   */
+  export type PagoOCUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PagoOC to update in case it exists.
+     */
+    where: PagoOCWhereUniqueInput
+    /**
+     * In case the PagoOC found by the `where` argument doesn't exist, create a new PagoOC with this data.
+     */
+    create: XOR<PagoOCCreateInput, PagoOCUncheckedCreateInput>
+    /**
+     * In case the PagoOC was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PagoOCUpdateInput, PagoOCUncheckedUpdateInput>
+  }
+
+  /**
+   * PagoOC delete
+   */
+  export type PagoOCDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+    /**
+     * Filter which PagoOC to delete.
+     */
+    where: PagoOCWhereUniqueInput
+  }
+
+  /**
+   * PagoOC deleteMany
+   */
+  export type PagoOCDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PagoOCS to delete
+     */
+    where?: PagoOCWhereInput
+  }
+
+  /**
+   * PagoOC.cuenta
+   */
+  export type PagoOC$cuentaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    where?: CuentaBancariaWhereInput
+  }
+
+  /**
+   * PagoOC.detalles
+   */
+  export type PagoOC$detallesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    where?: DetallePagoOCWhereInput
+    orderBy?: DetallePagoOCOrderByWithRelationInput | DetallePagoOCOrderByWithRelationInput[]
+    cursor?: DetallePagoOCWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DetallePagoOCScalarFieldEnum | DetallePagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * PagoOC without action
+   */
+  export type PagoOCDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoOC
+     */
+    select?: PagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PagoOCInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model DetallePagoOC
+   */
+
+  export type AggregateDetallePagoOC = {
+    _count: DetallePagoOCCountAggregateOutputType | null
+    _avg: DetallePagoOCAvgAggregateOutputType | null
+    _sum: DetallePagoOCSumAggregateOutputType | null
+    _min: DetallePagoOCMinAggregateOutputType | null
+    _max: DetallePagoOCMaxAggregateOutputType | null
+  }
+
+  export type DetallePagoOCAvgAggregateOutputType = {
+    monto_aplicado: Decimal | null
+    saldo_oc_antes: Decimal | null
+    saldo_oc_despues: Decimal | null
+  }
+
+  export type DetallePagoOCSumAggregateOutputType = {
+    monto_aplicado: Decimal | null
+    saldo_oc_antes: Decimal | null
+    saldo_oc_despues: Decimal | null
+  }
+
+  export type DetallePagoOCMinAggregateOutputType = {
+    id_detalle: string | null
+    pago_id: string | null
+    oc_id: string | null
+    oc_codigo: string | null
+    proveedor_id: string | null
+    proveedor_nombre: string | null
+    monto_aplicado: Decimal | null
+    saldo_oc_antes: Decimal | null
+    saldo_oc_despues: Decimal | null
+  }
+
+  export type DetallePagoOCMaxAggregateOutputType = {
+    id_detalle: string | null
+    pago_id: string | null
+    oc_id: string | null
+    oc_codigo: string | null
+    proveedor_id: string | null
+    proveedor_nombre: string | null
+    monto_aplicado: Decimal | null
+    saldo_oc_antes: Decimal | null
+    saldo_oc_despues: Decimal | null
+  }
+
+  export type DetallePagoOCCountAggregateOutputType = {
+    id_detalle: number
+    pago_id: number
+    oc_id: number
+    oc_codigo: number
+    proveedor_id: number
+    proveedor_nombre: number
+    monto_aplicado: number
+    saldo_oc_antes: number
+    saldo_oc_despues: number
+    _all: number
+  }
+
+
+  export type DetallePagoOCAvgAggregateInputType = {
+    monto_aplicado?: true
+    saldo_oc_antes?: true
+    saldo_oc_despues?: true
+  }
+
+  export type DetallePagoOCSumAggregateInputType = {
+    monto_aplicado?: true
+    saldo_oc_antes?: true
+    saldo_oc_despues?: true
+  }
+
+  export type DetallePagoOCMinAggregateInputType = {
+    id_detalle?: true
+    pago_id?: true
+    oc_id?: true
+    oc_codigo?: true
+    proveedor_id?: true
+    proveedor_nombre?: true
+    monto_aplicado?: true
+    saldo_oc_antes?: true
+    saldo_oc_despues?: true
+  }
+
+  export type DetallePagoOCMaxAggregateInputType = {
+    id_detalle?: true
+    pago_id?: true
+    oc_id?: true
+    oc_codigo?: true
+    proveedor_id?: true
+    proveedor_nombre?: true
+    monto_aplicado?: true
+    saldo_oc_antes?: true
+    saldo_oc_despues?: true
+  }
+
+  export type DetallePagoOCCountAggregateInputType = {
+    id_detalle?: true
+    pago_id?: true
+    oc_id?: true
+    oc_codigo?: true
+    proveedor_id?: true
+    proveedor_nombre?: true
+    monto_aplicado?: true
+    saldo_oc_antes?: true
+    saldo_oc_despues?: true
+    _all?: true
+  }
+
+  export type DetallePagoOCAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DetallePagoOC to aggregate.
+     */
+    where?: DetallePagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DetallePagoOCS to fetch.
+     */
+    orderBy?: DetallePagoOCOrderByWithRelationInput | DetallePagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DetallePagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DetallePagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DetallePagoOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned DetallePagoOCS
+    **/
+    _count?: true | DetallePagoOCCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: DetallePagoOCAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: DetallePagoOCSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DetallePagoOCMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DetallePagoOCMaxAggregateInputType
+  }
+
+  export type GetDetallePagoOCAggregateType<T extends DetallePagoOCAggregateArgs> = {
+        [P in keyof T & keyof AggregateDetallePagoOC]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDetallePagoOC[P]>
+      : GetScalarType<T[P], AggregateDetallePagoOC[P]>
+  }
+
+
+
+
+  export type DetallePagoOCGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DetallePagoOCWhereInput
+    orderBy?: DetallePagoOCOrderByWithAggregationInput | DetallePagoOCOrderByWithAggregationInput[]
+    by: DetallePagoOCScalarFieldEnum[] | DetallePagoOCScalarFieldEnum
+    having?: DetallePagoOCScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DetallePagoOCCountAggregateInputType | true
+    _avg?: DetallePagoOCAvgAggregateInputType
+    _sum?: DetallePagoOCSumAggregateInputType
+    _min?: DetallePagoOCMinAggregateInputType
+    _max?: DetallePagoOCMaxAggregateInputType
+  }
+
+  export type DetallePagoOCGroupByOutputType = {
+    id_detalle: string
+    pago_id: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal
+    saldo_oc_antes: Decimal
+    saldo_oc_despues: Decimal
+    _count: DetallePagoOCCountAggregateOutputType | null
+    _avg: DetallePagoOCAvgAggregateOutputType | null
+    _sum: DetallePagoOCSumAggregateOutputType | null
+    _min: DetallePagoOCMinAggregateOutputType | null
+    _max: DetallePagoOCMaxAggregateOutputType | null
+  }
+
+  type GetDetallePagoOCGroupByPayload<T extends DetallePagoOCGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DetallePagoOCGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DetallePagoOCGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DetallePagoOCGroupByOutputType[P]>
+            : GetScalarType<T[P], DetallePagoOCGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DetallePagoOCSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_detalle?: boolean
+    pago_id?: boolean
+    oc_id?: boolean
+    oc_codigo?: boolean
+    proveedor_id?: boolean
+    proveedor_nombre?: boolean
+    monto_aplicado?: boolean
+    saldo_oc_antes?: boolean
+    saldo_oc_despues?: boolean
+    pago?: boolean | PagoOCDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["detallePagoOC"]>
+
+  export type DetallePagoOCSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_detalle?: boolean
+    pago_id?: boolean
+    oc_id?: boolean
+    oc_codigo?: boolean
+    proveedor_id?: boolean
+    proveedor_nombre?: boolean
+    monto_aplicado?: boolean
+    saldo_oc_antes?: boolean
+    saldo_oc_despues?: boolean
+    pago?: boolean | PagoOCDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["detallePagoOC"]>
+
+  export type DetallePagoOCSelectScalar = {
+    id_detalle?: boolean
+    pago_id?: boolean
+    oc_id?: boolean
+    oc_codigo?: boolean
+    proveedor_id?: boolean
+    proveedor_nombre?: boolean
+    monto_aplicado?: boolean
+    saldo_oc_antes?: boolean
+    saldo_oc_despues?: boolean
+  }
+
+  export type DetallePagoOCInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    pago?: boolean | PagoOCDefaultArgs<ExtArgs>
+  }
+  export type DetallePagoOCIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    pago?: boolean | PagoOCDefaultArgs<ExtArgs>
+  }
+
+  export type $DetallePagoOCPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "DetallePagoOC"
+    objects: {
+      pago: Prisma.$PagoOCPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_detalle: string
+      pago_id: string
+      oc_id: string
+      oc_codigo: string
+      proveedor_id: string
+      proveedor_nombre: string
+      monto_aplicado: Prisma.Decimal
+      saldo_oc_antes: Prisma.Decimal
+      saldo_oc_despues: Prisma.Decimal
+    }, ExtArgs["result"]["detallePagoOC"]>
+    composites: {}
+  }
+
+  type DetallePagoOCGetPayload<S extends boolean | null | undefined | DetallePagoOCDefaultArgs> = $Result.GetResult<Prisma.$DetallePagoOCPayload, S>
+
+  type DetallePagoOCCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<DetallePagoOCFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: DetallePagoOCCountAggregateInputType | true
+    }
+
+  export interface DetallePagoOCDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['DetallePagoOC'], meta: { name: 'DetallePagoOC' } }
+    /**
+     * Find zero or one DetallePagoOC that matches the filter.
+     * @param {DetallePagoOCFindUniqueArgs} args - Arguments to find a DetallePagoOC
+     * @example
+     * // Get one DetallePagoOC
+     * const detallePagoOC = await prisma.detallePagoOC.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DetallePagoOCFindUniqueArgs>(args: SelectSubset<T, DetallePagoOCFindUniqueArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one DetallePagoOC that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {DetallePagoOCFindUniqueOrThrowArgs} args - Arguments to find a DetallePagoOC
+     * @example
+     * // Get one DetallePagoOC
+     * const detallePagoOC = await prisma.detallePagoOC.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DetallePagoOCFindUniqueOrThrowArgs>(args: SelectSubset<T, DetallePagoOCFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first DetallePagoOC that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCFindFirstArgs} args - Arguments to find a DetallePagoOC
+     * @example
+     * // Get one DetallePagoOC
+     * const detallePagoOC = await prisma.detallePagoOC.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DetallePagoOCFindFirstArgs>(args?: SelectSubset<T, DetallePagoOCFindFirstArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first DetallePagoOC that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCFindFirstOrThrowArgs} args - Arguments to find a DetallePagoOC
+     * @example
+     * // Get one DetallePagoOC
+     * const detallePagoOC = await prisma.detallePagoOC.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DetallePagoOCFindFirstOrThrowArgs>(args?: SelectSubset<T, DetallePagoOCFindFirstOrThrowArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more DetallePagoOCS that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all DetallePagoOCS
+     * const detallePagoOCS = await prisma.detallePagoOC.findMany()
+     * 
+     * // Get first 10 DetallePagoOCS
+     * const detallePagoOCS = await prisma.detallePagoOC.findMany({ take: 10 })
+     * 
+     * // Only select the `id_detalle`
+     * const detallePagoOCWithId_detalleOnly = await prisma.detallePagoOC.findMany({ select: { id_detalle: true } })
+     * 
+     */
+    findMany<T extends DetallePagoOCFindManyArgs>(args?: SelectSubset<T, DetallePagoOCFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a DetallePagoOC.
+     * @param {DetallePagoOCCreateArgs} args - Arguments to create a DetallePagoOC.
+     * @example
+     * // Create one DetallePagoOC
+     * const DetallePagoOC = await prisma.detallePagoOC.create({
+     *   data: {
+     *     // ... data to create a DetallePagoOC
+     *   }
+     * })
+     * 
+     */
+    create<T extends DetallePagoOCCreateArgs>(args: SelectSubset<T, DetallePagoOCCreateArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many DetallePagoOCS.
+     * @param {DetallePagoOCCreateManyArgs} args - Arguments to create many DetallePagoOCS.
+     * @example
+     * // Create many DetallePagoOCS
+     * const detallePagoOC = await prisma.detallePagoOC.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DetallePagoOCCreateManyArgs>(args?: SelectSubset<T, DetallePagoOCCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many DetallePagoOCS and returns the data saved in the database.
+     * @param {DetallePagoOCCreateManyAndReturnArgs} args - Arguments to create many DetallePagoOCS.
+     * @example
+     * // Create many DetallePagoOCS
+     * const detallePagoOC = await prisma.detallePagoOC.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many DetallePagoOCS and only return the `id_detalle`
+     * const detallePagoOCWithId_detalleOnly = await prisma.detallePagoOC.createManyAndReturn({ 
+     *   select: { id_detalle: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DetallePagoOCCreateManyAndReturnArgs>(args?: SelectSubset<T, DetallePagoOCCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a DetallePagoOC.
+     * @param {DetallePagoOCDeleteArgs} args - Arguments to delete one DetallePagoOC.
+     * @example
+     * // Delete one DetallePagoOC
+     * const DetallePagoOC = await prisma.detallePagoOC.delete({
+     *   where: {
+     *     // ... filter to delete one DetallePagoOC
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DetallePagoOCDeleteArgs>(args: SelectSubset<T, DetallePagoOCDeleteArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one DetallePagoOC.
+     * @param {DetallePagoOCUpdateArgs} args - Arguments to update one DetallePagoOC.
+     * @example
+     * // Update one DetallePagoOC
+     * const detallePagoOC = await prisma.detallePagoOC.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DetallePagoOCUpdateArgs>(args: SelectSubset<T, DetallePagoOCUpdateArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more DetallePagoOCS.
+     * @param {DetallePagoOCDeleteManyArgs} args - Arguments to filter DetallePagoOCS to delete.
+     * @example
+     * // Delete a few DetallePagoOCS
+     * const { count } = await prisma.detallePagoOC.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DetallePagoOCDeleteManyArgs>(args?: SelectSubset<T, DetallePagoOCDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more DetallePagoOCS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many DetallePagoOCS
+     * const detallePagoOC = await prisma.detallePagoOC.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DetallePagoOCUpdateManyArgs>(args: SelectSubset<T, DetallePagoOCUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one DetallePagoOC.
+     * @param {DetallePagoOCUpsertArgs} args - Arguments to update or create a DetallePagoOC.
+     * @example
+     * // Update or create a DetallePagoOC
+     * const detallePagoOC = await prisma.detallePagoOC.upsert({
+     *   create: {
+     *     // ... data to create a DetallePagoOC
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the DetallePagoOC we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DetallePagoOCUpsertArgs>(args: SelectSubset<T, DetallePagoOCUpsertArgs<ExtArgs>>): Prisma__DetallePagoOCClient<$Result.GetResult<Prisma.$DetallePagoOCPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of DetallePagoOCS.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCCountArgs} args - Arguments to filter DetallePagoOCS to count.
+     * @example
+     * // Count the number of DetallePagoOCS
+     * const count = await prisma.detallePagoOC.count({
+     *   where: {
+     *     // ... the filter for the DetallePagoOCS we want to count
+     *   }
+     * })
+    **/
+    count<T extends DetallePagoOCCountArgs>(
+      args?: Subset<T, DetallePagoOCCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DetallePagoOCCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a DetallePagoOC.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DetallePagoOCAggregateArgs>(args: Subset<T, DetallePagoOCAggregateArgs>): Prisma.PrismaPromise<GetDetallePagoOCAggregateType<T>>
+
+    /**
+     * Group by DetallePagoOC.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DetallePagoOCGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DetallePagoOCGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DetallePagoOCGroupByArgs['orderBy'] }
+        : { orderBy?: DetallePagoOCGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DetallePagoOCGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDetallePagoOCGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the DetallePagoOC model
+   */
+  readonly fields: DetallePagoOCFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for DetallePagoOC.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DetallePagoOCClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    pago<T extends PagoOCDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PagoOCDefaultArgs<ExtArgs>>): Prisma__PagoOCClient<$Result.GetResult<Prisma.$PagoOCPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the DetallePagoOC model
+   */ 
+  interface DetallePagoOCFieldRefs {
+    readonly id_detalle: FieldRef<"DetallePagoOC", 'String'>
+    readonly pago_id: FieldRef<"DetallePagoOC", 'String'>
+    readonly oc_id: FieldRef<"DetallePagoOC", 'String'>
+    readonly oc_codigo: FieldRef<"DetallePagoOC", 'String'>
+    readonly proveedor_id: FieldRef<"DetallePagoOC", 'String'>
+    readonly proveedor_nombre: FieldRef<"DetallePagoOC", 'String'>
+    readonly monto_aplicado: FieldRef<"DetallePagoOC", 'Decimal'>
+    readonly saldo_oc_antes: FieldRef<"DetallePagoOC", 'Decimal'>
+    readonly saldo_oc_despues: FieldRef<"DetallePagoOC", 'Decimal'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * DetallePagoOC findUnique
+   */
+  export type DetallePagoOCFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which DetallePagoOC to fetch.
+     */
+    where: DetallePagoOCWhereUniqueInput
+  }
+
+  /**
+   * DetallePagoOC findUniqueOrThrow
+   */
+  export type DetallePagoOCFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which DetallePagoOC to fetch.
+     */
+    where: DetallePagoOCWhereUniqueInput
+  }
+
+  /**
+   * DetallePagoOC findFirst
+   */
+  export type DetallePagoOCFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which DetallePagoOC to fetch.
+     */
+    where?: DetallePagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DetallePagoOCS to fetch.
+     */
+    orderBy?: DetallePagoOCOrderByWithRelationInput | DetallePagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DetallePagoOCS.
+     */
+    cursor?: DetallePagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DetallePagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DetallePagoOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DetallePagoOCS.
+     */
+    distinct?: DetallePagoOCScalarFieldEnum | DetallePagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * DetallePagoOC findFirstOrThrow
+   */
+  export type DetallePagoOCFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which DetallePagoOC to fetch.
+     */
+    where?: DetallePagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DetallePagoOCS to fetch.
+     */
+    orderBy?: DetallePagoOCOrderByWithRelationInput | DetallePagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DetallePagoOCS.
+     */
+    cursor?: DetallePagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DetallePagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DetallePagoOCS.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DetallePagoOCS.
+     */
+    distinct?: DetallePagoOCScalarFieldEnum | DetallePagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * DetallePagoOC findMany
+   */
+  export type DetallePagoOCFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * Filter, which DetallePagoOCS to fetch.
+     */
+    where?: DetallePagoOCWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DetallePagoOCS to fetch.
+     */
+    orderBy?: DetallePagoOCOrderByWithRelationInput | DetallePagoOCOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing DetallePagoOCS.
+     */
+    cursor?: DetallePagoOCWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DetallePagoOCS from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DetallePagoOCS.
+     */
+    skip?: number
+    distinct?: DetallePagoOCScalarFieldEnum | DetallePagoOCScalarFieldEnum[]
+  }
+
+  /**
+   * DetallePagoOC create
+   */
+  export type DetallePagoOCCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * The data needed to create a DetallePagoOC.
+     */
+    data: XOR<DetallePagoOCCreateInput, DetallePagoOCUncheckedCreateInput>
+  }
+
+  /**
+   * DetallePagoOC createMany
+   */
+  export type DetallePagoOCCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many DetallePagoOCS.
+     */
+    data: DetallePagoOCCreateManyInput | DetallePagoOCCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * DetallePagoOC createManyAndReturn
+   */
+  export type DetallePagoOCCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many DetallePagoOCS.
+     */
+    data: DetallePagoOCCreateManyInput | DetallePagoOCCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * DetallePagoOC update
+   */
+  export type DetallePagoOCUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * The data needed to update a DetallePagoOC.
+     */
+    data: XOR<DetallePagoOCUpdateInput, DetallePagoOCUncheckedUpdateInput>
+    /**
+     * Choose, which DetallePagoOC to update.
+     */
+    where: DetallePagoOCWhereUniqueInput
+  }
+
+  /**
+   * DetallePagoOC updateMany
+   */
+  export type DetallePagoOCUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update DetallePagoOCS.
+     */
+    data: XOR<DetallePagoOCUpdateManyMutationInput, DetallePagoOCUncheckedUpdateManyInput>
+    /**
+     * Filter which DetallePagoOCS to update
+     */
+    where?: DetallePagoOCWhereInput
+  }
+
+  /**
+   * DetallePagoOC upsert
+   */
+  export type DetallePagoOCUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * The filter to search for the DetallePagoOC to update in case it exists.
+     */
+    where: DetallePagoOCWhereUniqueInput
+    /**
+     * In case the DetallePagoOC found by the `where` argument doesn't exist, create a new DetallePagoOC with this data.
+     */
+    create: XOR<DetallePagoOCCreateInput, DetallePagoOCUncheckedCreateInput>
+    /**
+     * In case the DetallePagoOC was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DetallePagoOCUpdateInput, DetallePagoOCUncheckedUpdateInput>
+  }
+
+  /**
+   * DetallePagoOC delete
+   */
+  export type DetallePagoOCDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+    /**
+     * Filter which DetallePagoOC to delete.
+     */
+    where: DetallePagoOCWhereUniqueInput
+  }
+
+  /**
+   * DetallePagoOC deleteMany
+   */
+  export type DetallePagoOCDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DetallePagoOCS to delete
+     */
+    where?: DetallePagoOCWhereInput
+  }
+
+  /**
+   * DetallePagoOC without action
+   */
+  export type DetallePagoOCDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DetallePagoOC
+     */
+    select?: DetallePagoOCSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DetallePagoOCInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -4512,6 +9051,71 @@ export namespace Prisma {
   export type ProgramaPagosScalarFieldEnum = (typeof ProgramaPagosScalarFieldEnum)[keyof typeof ProgramaPagosScalarFieldEnum]
 
 
+  export const CuentaBancariaScalarFieldEnum: {
+    id_cuenta: 'id_cuenta',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    banco: 'banco',
+    numero_cuenta: 'numero_cuenta',
+    clabe: 'clabe',
+    alias: 'alias',
+    moneda: 'moneda',
+    saldo: 'saldo',
+    activa: 'activa',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type CuentaBancariaScalarFieldEnum = (typeof CuentaBancariaScalarFieldEnum)[keyof typeof CuentaBancariaScalarFieldEnum]
+
+
+  export const ProyectoFinanzasScalarFieldEnum: {
+    id_proyecto_finanzas: 'id_proyecto_finanzas',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    anticipo_total: 'anticipo_total',
+    anticipo_usado: 'anticipo_usado',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ProyectoFinanzasScalarFieldEnum = (typeof ProyectoFinanzasScalarFieldEnum)[keyof typeof ProyectoFinanzasScalarFieldEnum]
+
+
+  export const PagoOCScalarFieldEnum: {
+    id_pago: 'id_pago',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    fuente: 'fuente',
+    cuenta_id: 'cuenta_id',
+    tipo_pago: 'tipo_pago',
+    referencia: 'referencia',
+    concepto: 'concepto',
+    fecha_pago: 'fecha_pago',
+    monto_total: 'monto_total',
+    moneda: 'moneda',
+    usuario_id: 'usuario_id',
+    created_at: 'created_at'
+  };
+
+  export type PagoOCScalarFieldEnum = (typeof PagoOCScalarFieldEnum)[keyof typeof PagoOCScalarFieldEnum]
+
+
+  export const DetallePagoOCScalarFieldEnum: {
+    id_detalle: 'id_detalle',
+    pago_id: 'pago_id',
+    oc_id: 'oc_id',
+    oc_codigo: 'oc_codigo',
+    proveedor_id: 'proveedor_id',
+    proveedor_nombre: 'proveedor_nombre',
+    monto_aplicado: 'monto_aplicado',
+    saldo_oc_antes: 'saldo_oc_antes',
+    saldo_oc_despues: 'saldo_oc_despues'
+  };
+
+  export type DetallePagoOCScalarFieldEnum = (typeof DetallePagoOCScalarFieldEnum)[keyof typeof DetallePagoOCScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -4580,6 +9184,13 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -4948,6 +9559,341 @@ export namespace Prisma {
     referencia_bancaria?: StringNullableWithAggregatesFilter<"ProgramaPagos"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"ProgramaPagos"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"ProgramaPagos"> | Date | string
+  }
+
+  export type CuentaBancariaWhereInput = {
+    AND?: CuentaBancariaWhereInput | CuentaBancariaWhereInput[]
+    OR?: CuentaBancariaWhereInput[]
+    NOT?: CuentaBancariaWhereInput | CuentaBancariaWhereInput[]
+    id_cuenta?: UuidFilter<"CuentaBancaria"> | string
+    tenant_id?: UuidFilter<"CuentaBancaria"> | string
+    proyecto_id?: UuidNullableFilter<"CuentaBancaria"> | string | null
+    banco?: StringFilter<"CuentaBancaria"> | string
+    numero_cuenta?: StringFilter<"CuentaBancaria"> | string
+    clabe?: StringNullableFilter<"CuentaBancaria"> | string | null
+    alias?: StringFilter<"CuentaBancaria"> | string
+    moneda?: StringFilter<"CuentaBancaria"> | string
+    saldo?: DecimalFilter<"CuentaBancaria"> | Decimal | DecimalJsLike | number | string
+    activa?: BoolFilter<"CuentaBancaria"> | boolean
+    created_at?: DateTimeFilter<"CuentaBancaria"> | Date | string
+    updated_at?: DateTimeFilter<"CuentaBancaria"> | Date | string
+    pagos?: PagoOCListRelationFilter
+  }
+
+  export type CuentaBancariaOrderByWithRelationInput = {
+    id_cuenta?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrderInput | SortOrder
+    banco?: SortOrder
+    numero_cuenta?: SortOrder
+    clabe?: SortOrderInput | SortOrder
+    alias?: SortOrder
+    moneda?: SortOrder
+    saldo?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    pagos?: PagoOCOrderByRelationAggregateInput
+  }
+
+  export type CuentaBancariaWhereUniqueInput = Prisma.AtLeast<{
+    id_cuenta?: string
+    AND?: CuentaBancariaWhereInput | CuentaBancariaWhereInput[]
+    OR?: CuentaBancariaWhereInput[]
+    NOT?: CuentaBancariaWhereInput | CuentaBancariaWhereInput[]
+    tenant_id?: UuidFilter<"CuentaBancaria"> | string
+    proyecto_id?: UuidNullableFilter<"CuentaBancaria"> | string | null
+    banco?: StringFilter<"CuentaBancaria"> | string
+    numero_cuenta?: StringFilter<"CuentaBancaria"> | string
+    clabe?: StringNullableFilter<"CuentaBancaria"> | string | null
+    alias?: StringFilter<"CuentaBancaria"> | string
+    moneda?: StringFilter<"CuentaBancaria"> | string
+    saldo?: DecimalFilter<"CuentaBancaria"> | Decimal | DecimalJsLike | number | string
+    activa?: BoolFilter<"CuentaBancaria"> | boolean
+    created_at?: DateTimeFilter<"CuentaBancaria"> | Date | string
+    updated_at?: DateTimeFilter<"CuentaBancaria"> | Date | string
+    pagos?: PagoOCListRelationFilter
+  }, "id_cuenta">
+
+  export type CuentaBancariaOrderByWithAggregationInput = {
+    id_cuenta?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrderInput | SortOrder
+    banco?: SortOrder
+    numero_cuenta?: SortOrder
+    clabe?: SortOrderInput | SortOrder
+    alias?: SortOrder
+    moneda?: SortOrder
+    saldo?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: CuentaBancariaCountOrderByAggregateInput
+    _avg?: CuentaBancariaAvgOrderByAggregateInput
+    _max?: CuentaBancariaMaxOrderByAggregateInput
+    _min?: CuentaBancariaMinOrderByAggregateInput
+    _sum?: CuentaBancariaSumOrderByAggregateInput
+  }
+
+  export type CuentaBancariaScalarWhereWithAggregatesInput = {
+    AND?: CuentaBancariaScalarWhereWithAggregatesInput | CuentaBancariaScalarWhereWithAggregatesInput[]
+    OR?: CuentaBancariaScalarWhereWithAggregatesInput[]
+    NOT?: CuentaBancariaScalarWhereWithAggregatesInput | CuentaBancariaScalarWhereWithAggregatesInput[]
+    id_cuenta?: UuidWithAggregatesFilter<"CuentaBancaria"> | string
+    tenant_id?: UuidWithAggregatesFilter<"CuentaBancaria"> | string
+    proyecto_id?: UuidNullableWithAggregatesFilter<"CuentaBancaria"> | string | null
+    banco?: StringWithAggregatesFilter<"CuentaBancaria"> | string
+    numero_cuenta?: StringWithAggregatesFilter<"CuentaBancaria"> | string
+    clabe?: StringNullableWithAggregatesFilter<"CuentaBancaria"> | string | null
+    alias?: StringWithAggregatesFilter<"CuentaBancaria"> | string
+    moneda?: StringWithAggregatesFilter<"CuentaBancaria"> | string
+    saldo?: DecimalWithAggregatesFilter<"CuentaBancaria"> | Decimal | DecimalJsLike | number | string
+    activa?: BoolWithAggregatesFilter<"CuentaBancaria"> | boolean
+    created_at?: DateTimeWithAggregatesFilter<"CuentaBancaria"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"CuentaBancaria"> | Date | string
+  }
+
+  export type ProyectoFinanzasWhereInput = {
+    AND?: ProyectoFinanzasWhereInput | ProyectoFinanzasWhereInput[]
+    OR?: ProyectoFinanzasWhereInput[]
+    NOT?: ProyectoFinanzasWhereInput | ProyectoFinanzasWhereInput[]
+    id_proyecto_finanzas?: UuidFilter<"ProyectoFinanzas"> | string
+    tenant_id?: UuidFilter<"ProyectoFinanzas"> | string
+    proyecto_id?: UuidFilter<"ProyectoFinanzas"> | string
+    anticipo_total?: DecimalFilter<"ProyectoFinanzas"> | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalFilter<"ProyectoFinanzas"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ProyectoFinanzas"> | Date | string
+    updated_at?: DateTimeFilter<"ProyectoFinanzas"> | Date | string
+  }
+
+  export type ProyectoFinanzasOrderByWithRelationInput = {
+    id_proyecto_finanzas?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoFinanzasWhereUniqueInput = Prisma.AtLeast<{
+    id_proyecto_finanzas?: string
+    tenant_id_proyecto_id?: ProyectoFinanzasTenant_idProyecto_idCompoundUniqueInput
+    AND?: ProyectoFinanzasWhereInput | ProyectoFinanzasWhereInput[]
+    OR?: ProyectoFinanzasWhereInput[]
+    NOT?: ProyectoFinanzasWhereInput | ProyectoFinanzasWhereInput[]
+    tenant_id?: UuidFilter<"ProyectoFinanzas"> | string
+    proyecto_id?: UuidFilter<"ProyectoFinanzas"> | string
+    anticipo_total?: DecimalFilter<"ProyectoFinanzas"> | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalFilter<"ProyectoFinanzas"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ProyectoFinanzas"> | Date | string
+    updated_at?: DateTimeFilter<"ProyectoFinanzas"> | Date | string
+  }, "id_proyecto_finanzas" | "tenant_id_proyecto_id">
+
+  export type ProyectoFinanzasOrderByWithAggregationInput = {
+    id_proyecto_finanzas?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: ProyectoFinanzasCountOrderByAggregateInput
+    _avg?: ProyectoFinanzasAvgOrderByAggregateInput
+    _max?: ProyectoFinanzasMaxOrderByAggregateInput
+    _min?: ProyectoFinanzasMinOrderByAggregateInput
+    _sum?: ProyectoFinanzasSumOrderByAggregateInput
+  }
+
+  export type ProyectoFinanzasScalarWhereWithAggregatesInput = {
+    AND?: ProyectoFinanzasScalarWhereWithAggregatesInput | ProyectoFinanzasScalarWhereWithAggregatesInput[]
+    OR?: ProyectoFinanzasScalarWhereWithAggregatesInput[]
+    NOT?: ProyectoFinanzasScalarWhereWithAggregatesInput | ProyectoFinanzasScalarWhereWithAggregatesInput[]
+    id_proyecto_finanzas?: UuidWithAggregatesFilter<"ProyectoFinanzas"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ProyectoFinanzas"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"ProyectoFinanzas"> | string
+    anticipo_total?: DecimalWithAggregatesFilter<"ProyectoFinanzas"> | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalWithAggregatesFilter<"ProyectoFinanzas"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeWithAggregatesFilter<"ProyectoFinanzas"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"ProyectoFinanzas"> | Date | string
+  }
+
+  export type PagoOCWhereInput = {
+    AND?: PagoOCWhereInput | PagoOCWhereInput[]
+    OR?: PagoOCWhereInput[]
+    NOT?: PagoOCWhereInput | PagoOCWhereInput[]
+    id_pago?: UuidFilter<"PagoOC"> | string
+    tenant_id?: UuidFilter<"PagoOC"> | string
+    proyecto_id?: UuidFilter<"PagoOC"> | string
+    fuente?: StringFilter<"PagoOC"> | string
+    cuenta_id?: UuidNullableFilter<"PagoOC"> | string | null
+    tipo_pago?: StringFilter<"PagoOC"> | string
+    referencia?: StringFilter<"PagoOC"> | string
+    concepto?: StringFilter<"PagoOC"> | string
+    fecha_pago?: DateTimeFilter<"PagoOC"> | Date | string
+    monto_total?: DecimalFilter<"PagoOC"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"PagoOC"> | string
+    usuario_id?: UuidFilter<"PagoOC"> | string
+    created_at?: DateTimeFilter<"PagoOC"> | Date | string
+    cuenta?: XOR<CuentaBancariaNullableRelationFilter, CuentaBancariaWhereInput> | null
+    detalles?: DetallePagoOCListRelationFilter
+  }
+
+  export type PagoOCOrderByWithRelationInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    fuente?: SortOrder
+    cuenta_id?: SortOrderInput | SortOrder
+    tipo_pago?: SortOrder
+    referencia?: SortOrder
+    concepto?: SortOrder
+    fecha_pago?: SortOrder
+    monto_total?: SortOrder
+    moneda?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+    cuenta?: CuentaBancariaOrderByWithRelationInput
+    detalles?: DetallePagoOCOrderByRelationAggregateInput
+  }
+
+  export type PagoOCWhereUniqueInput = Prisma.AtLeast<{
+    id_pago?: string
+    AND?: PagoOCWhereInput | PagoOCWhereInput[]
+    OR?: PagoOCWhereInput[]
+    NOT?: PagoOCWhereInput | PagoOCWhereInput[]
+    tenant_id?: UuidFilter<"PagoOC"> | string
+    proyecto_id?: UuidFilter<"PagoOC"> | string
+    fuente?: StringFilter<"PagoOC"> | string
+    cuenta_id?: UuidNullableFilter<"PagoOC"> | string | null
+    tipo_pago?: StringFilter<"PagoOC"> | string
+    referencia?: StringFilter<"PagoOC"> | string
+    concepto?: StringFilter<"PagoOC"> | string
+    fecha_pago?: DateTimeFilter<"PagoOC"> | Date | string
+    monto_total?: DecimalFilter<"PagoOC"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"PagoOC"> | string
+    usuario_id?: UuidFilter<"PagoOC"> | string
+    created_at?: DateTimeFilter<"PagoOC"> | Date | string
+    cuenta?: XOR<CuentaBancariaNullableRelationFilter, CuentaBancariaWhereInput> | null
+    detalles?: DetallePagoOCListRelationFilter
+  }, "id_pago">
+
+  export type PagoOCOrderByWithAggregationInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    fuente?: SortOrder
+    cuenta_id?: SortOrderInput | SortOrder
+    tipo_pago?: SortOrder
+    referencia?: SortOrder
+    concepto?: SortOrder
+    fecha_pago?: SortOrder
+    monto_total?: SortOrder
+    moneda?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+    _count?: PagoOCCountOrderByAggregateInput
+    _avg?: PagoOCAvgOrderByAggregateInput
+    _max?: PagoOCMaxOrderByAggregateInput
+    _min?: PagoOCMinOrderByAggregateInput
+    _sum?: PagoOCSumOrderByAggregateInput
+  }
+
+  export type PagoOCScalarWhereWithAggregatesInput = {
+    AND?: PagoOCScalarWhereWithAggregatesInput | PagoOCScalarWhereWithAggregatesInput[]
+    OR?: PagoOCScalarWhereWithAggregatesInput[]
+    NOT?: PagoOCScalarWhereWithAggregatesInput | PagoOCScalarWhereWithAggregatesInput[]
+    id_pago?: UuidWithAggregatesFilter<"PagoOC"> | string
+    tenant_id?: UuidWithAggregatesFilter<"PagoOC"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"PagoOC"> | string
+    fuente?: StringWithAggregatesFilter<"PagoOC"> | string
+    cuenta_id?: UuidNullableWithAggregatesFilter<"PagoOC"> | string | null
+    tipo_pago?: StringWithAggregatesFilter<"PagoOC"> | string
+    referencia?: StringWithAggregatesFilter<"PagoOC"> | string
+    concepto?: StringWithAggregatesFilter<"PagoOC"> | string
+    fecha_pago?: DateTimeWithAggregatesFilter<"PagoOC"> | Date | string
+    monto_total?: DecimalWithAggregatesFilter<"PagoOC"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringWithAggregatesFilter<"PagoOC"> | string
+    usuario_id?: UuidWithAggregatesFilter<"PagoOC"> | string
+    created_at?: DateTimeWithAggregatesFilter<"PagoOC"> | Date | string
+  }
+
+  export type DetallePagoOCWhereInput = {
+    AND?: DetallePagoOCWhereInput | DetallePagoOCWhereInput[]
+    OR?: DetallePagoOCWhereInput[]
+    NOT?: DetallePagoOCWhereInput | DetallePagoOCWhereInput[]
+    id_detalle?: UuidFilter<"DetallePagoOC"> | string
+    pago_id?: UuidFilter<"DetallePagoOC"> | string
+    oc_id?: UuidFilter<"DetallePagoOC"> | string
+    oc_codigo?: StringFilter<"DetallePagoOC"> | string
+    proveedor_id?: UuidFilter<"DetallePagoOC"> | string
+    proveedor_nombre?: StringFilter<"DetallePagoOC"> | string
+    monto_aplicado?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    pago?: XOR<PagoOCRelationFilter, PagoOCWhereInput>
+  }
+
+  export type DetallePagoOCOrderByWithRelationInput = {
+    id_detalle?: SortOrder
+    pago_id?: SortOrder
+    oc_id?: SortOrder
+    oc_codigo?: SortOrder
+    proveedor_id?: SortOrder
+    proveedor_nombre?: SortOrder
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+    pago?: PagoOCOrderByWithRelationInput
+  }
+
+  export type DetallePagoOCWhereUniqueInput = Prisma.AtLeast<{
+    id_detalle?: string
+    pago_id_oc_id?: DetallePagoOCPago_idOc_idCompoundUniqueInput
+    AND?: DetallePagoOCWhereInput | DetallePagoOCWhereInput[]
+    OR?: DetallePagoOCWhereInput[]
+    NOT?: DetallePagoOCWhereInput | DetallePagoOCWhereInput[]
+    pago_id?: UuidFilter<"DetallePagoOC"> | string
+    oc_id?: UuidFilter<"DetallePagoOC"> | string
+    oc_codigo?: StringFilter<"DetallePagoOC"> | string
+    proveedor_id?: UuidFilter<"DetallePagoOC"> | string
+    proveedor_nombre?: StringFilter<"DetallePagoOC"> | string
+    monto_aplicado?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    pago?: XOR<PagoOCRelationFilter, PagoOCWhereInput>
+  }, "id_detalle" | "pago_id_oc_id">
+
+  export type DetallePagoOCOrderByWithAggregationInput = {
+    id_detalle?: SortOrder
+    pago_id?: SortOrder
+    oc_id?: SortOrder
+    oc_codigo?: SortOrder
+    proveedor_id?: SortOrder
+    proveedor_nombre?: SortOrder
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+    _count?: DetallePagoOCCountOrderByAggregateInput
+    _avg?: DetallePagoOCAvgOrderByAggregateInput
+    _max?: DetallePagoOCMaxOrderByAggregateInput
+    _min?: DetallePagoOCMinOrderByAggregateInput
+    _sum?: DetallePagoOCSumOrderByAggregateInput
+  }
+
+  export type DetallePagoOCScalarWhereWithAggregatesInput = {
+    AND?: DetallePagoOCScalarWhereWithAggregatesInput | DetallePagoOCScalarWhereWithAggregatesInput[]
+    OR?: DetallePagoOCScalarWhereWithAggregatesInput[]
+    NOT?: DetallePagoOCScalarWhereWithAggregatesInput | DetallePagoOCScalarWhereWithAggregatesInput[]
+    id_detalle?: UuidWithAggregatesFilter<"DetallePagoOC"> | string
+    pago_id?: UuidWithAggregatesFilter<"DetallePagoOC"> | string
+    oc_id?: UuidWithAggregatesFilter<"DetallePagoOC"> | string
+    oc_codigo?: StringWithAggregatesFilter<"DetallePagoOC"> | string
+    proveedor_id?: UuidWithAggregatesFilter<"DetallePagoOC"> | string
+    proveedor_nombre?: StringWithAggregatesFilter<"DetallePagoOC"> | string
+    monto_aplicado?: DecimalWithAggregatesFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalWithAggregatesFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalWithAggregatesFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
   }
 
   export type PresupuestoAsignadoCreateInput = {
@@ -5367,6 +10313,383 @@ export namespace Prisma {
     referencia_bancaria?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaBancariaCreateInput = {
+    id_cuenta?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    banco: string
+    numero_cuenta: string
+    clabe?: string | null
+    alias: string
+    moneda?: string
+    saldo?: Decimal | DecimalJsLike | number | string
+    activa?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    pagos?: PagoOCCreateNestedManyWithoutCuentaInput
+  }
+
+  export type CuentaBancariaUncheckedCreateInput = {
+    id_cuenta?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    banco: string
+    numero_cuenta: string
+    clabe?: string | null
+    alias: string
+    moneda?: string
+    saldo?: Decimal | DecimalJsLike | number | string
+    activa?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    pagos?: PagoOCUncheckedCreateNestedManyWithoutCuentaInput
+  }
+
+  export type CuentaBancariaUpdateInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    banco?: StringFieldUpdateOperationsInput | string
+    numero_cuenta?: StringFieldUpdateOperationsInput | string
+    clabe?: NullableStringFieldUpdateOperationsInput | string | null
+    alias?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    saldo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    pagos?: PagoOCUpdateManyWithoutCuentaNestedInput
+  }
+
+  export type CuentaBancariaUncheckedUpdateInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    banco?: StringFieldUpdateOperationsInput | string
+    numero_cuenta?: StringFieldUpdateOperationsInput | string
+    clabe?: NullableStringFieldUpdateOperationsInput | string | null
+    alias?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    saldo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    pagos?: PagoOCUncheckedUpdateManyWithoutCuentaNestedInput
+  }
+
+  export type CuentaBancariaCreateManyInput = {
+    id_cuenta?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    banco: string
+    numero_cuenta: string
+    clabe?: string | null
+    alias: string
+    moneda?: string
+    saldo?: Decimal | DecimalJsLike | number | string
+    activa?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CuentaBancariaUpdateManyMutationInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    banco?: StringFieldUpdateOperationsInput | string
+    numero_cuenta?: StringFieldUpdateOperationsInput | string
+    clabe?: NullableStringFieldUpdateOperationsInput | string | null
+    alias?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    saldo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaBancariaUncheckedUpdateManyInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    banco?: StringFieldUpdateOperationsInput | string
+    numero_cuenta?: StringFieldUpdateOperationsInput | string
+    clabe?: NullableStringFieldUpdateOperationsInput | string | null
+    alias?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    saldo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoFinanzasCreateInput = {
+    id_proyecto_finanzas?: string
+    tenant_id: string
+    proyecto_id: string
+    anticipo_total?: Decimal | DecimalJsLike | number | string
+    anticipo_usado?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ProyectoFinanzasUncheckedCreateInput = {
+    id_proyecto_finanzas?: string
+    tenant_id: string
+    proyecto_id: string
+    anticipo_total?: Decimal | DecimalJsLike | number | string
+    anticipo_usado?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ProyectoFinanzasUpdateInput = {
+    id_proyecto_finanzas?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    anticipo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoFinanzasUncheckedUpdateInput = {
+    id_proyecto_finanzas?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    anticipo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoFinanzasCreateManyInput = {
+    id_proyecto_finanzas?: string
+    tenant_id: string
+    proyecto_id: string
+    anticipo_total?: Decimal | DecimalJsLike | number | string
+    anticipo_usado?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ProyectoFinanzasUpdateManyMutationInput = {
+    id_proyecto_finanzas?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    anticipo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProyectoFinanzasUncheckedUpdateManyInput = {
+    id_proyecto_finanzas?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    anticipo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    anticipo_usado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PagoOCCreateInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+    cuenta?: CuentaBancariaCreateNestedOneWithoutPagosInput
+    detalles?: DetallePagoOCCreateNestedManyWithoutPagoInput
+  }
+
+  export type PagoOCUncheckedCreateInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    cuenta_id?: string | null
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+    detalles?: DetallePagoOCUncheckedCreateNestedManyWithoutPagoInput
+  }
+
+  export type PagoOCUpdateInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuenta?: CuentaBancariaUpdateOneWithoutPagosNestedInput
+    detalles?: DetallePagoOCUpdateManyWithoutPagoNestedInput
+  }
+
+  export type PagoOCUncheckedUpdateInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    cuenta_id?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    detalles?: DetallePagoOCUncheckedUpdateManyWithoutPagoNestedInput
+  }
+
+  export type PagoOCCreateManyInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    cuenta_id?: string | null
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type PagoOCUpdateManyMutationInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PagoOCUncheckedUpdateManyInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    cuenta_id?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DetallePagoOCCreateInput = {
+    id_detalle?: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal | DecimalJsLike | number | string
+    saldo_oc_antes: Decimal | DecimalJsLike | number | string
+    saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    pago: PagoOCCreateNestedOneWithoutDetallesInput
+  }
+
+  export type DetallePagoOCUncheckedCreateInput = {
+    id_detalle?: string
+    pago_id: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal | DecimalJsLike | number | string
+    saldo_oc_antes: Decimal | DecimalJsLike | number | string
+    saldo_oc_despues: Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUpdateInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pago?: PagoOCUpdateOneRequiredWithoutDetallesNestedInput
+  }
+
+  export type DetallePagoOCUncheckedUpdateInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    pago_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCCreateManyInput = {
+    id_detalle?: string
+    pago_id: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal | DecimalJsLike | number | string
+    saldo_oc_antes: Decimal | DecimalJsLike | number | string
+    saldo_oc_despues: Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUpdateManyMutationInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUncheckedUpdateManyInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    pago_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -5811,6 +11134,256 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type PagoOCListRelationFilter = {
+    every?: PagoOCWhereInput
+    some?: PagoOCWhereInput
+    none?: PagoOCWhereInput
+  }
+
+  export type PagoOCOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CuentaBancariaCountOrderByAggregateInput = {
+    id_cuenta?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    banco?: SortOrder
+    numero_cuenta?: SortOrder
+    clabe?: SortOrder
+    alias?: SortOrder
+    moneda?: SortOrder
+    saldo?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CuentaBancariaAvgOrderByAggregateInput = {
+    saldo?: SortOrder
+  }
+
+  export type CuentaBancariaMaxOrderByAggregateInput = {
+    id_cuenta?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    banco?: SortOrder
+    numero_cuenta?: SortOrder
+    clabe?: SortOrder
+    alias?: SortOrder
+    moneda?: SortOrder
+    saldo?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CuentaBancariaMinOrderByAggregateInput = {
+    id_cuenta?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    banco?: SortOrder
+    numero_cuenta?: SortOrder
+    clabe?: SortOrder
+    alias?: SortOrder
+    moneda?: SortOrder
+    saldo?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CuentaBancariaSumOrderByAggregateInput = {
+    saldo?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type ProyectoFinanzasTenant_idProyecto_idCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+  }
+
+  export type ProyectoFinanzasCountOrderByAggregateInput = {
+    id_proyecto_finanzas?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoFinanzasAvgOrderByAggregateInput = {
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+  }
+
+  export type ProyectoFinanzasMaxOrderByAggregateInput = {
+    id_proyecto_finanzas?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoFinanzasMinOrderByAggregateInput = {
+    id_proyecto_finanzas?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ProyectoFinanzasSumOrderByAggregateInput = {
+    anticipo_total?: SortOrder
+    anticipo_usado?: SortOrder
+  }
+
+  export type CuentaBancariaNullableRelationFilter = {
+    is?: CuentaBancariaWhereInput | null
+    isNot?: CuentaBancariaWhereInput | null
+  }
+
+  export type DetallePagoOCListRelationFilter = {
+    every?: DetallePagoOCWhereInput
+    some?: DetallePagoOCWhereInput
+    none?: DetallePagoOCWhereInput
+  }
+
+  export type DetallePagoOCOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PagoOCCountOrderByAggregateInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    fuente?: SortOrder
+    cuenta_id?: SortOrder
+    tipo_pago?: SortOrder
+    referencia?: SortOrder
+    concepto?: SortOrder
+    fecha_pago?: SortOrder
+    monto_total?: SortOrder
+    moneda?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoOCAvgOrderByAggregateInput = {
+    monto_total?: SortOrder
+  }
+
+  export type PagoOCMaxOrderByAggregateInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    fuente?: SortOrder
+    cuenta_id?: SortOrder
+    tipo_pago?: SortOrder
+    referencia?: SortOrder
+    concepto?: SortOrder
+    fecha_pago?: SortOrder
+    monto_total?: SortOrder
+    moneda?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoOCMinOrderByAggregateInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    fuente?: SortOrder
+    cuenta_id?: SortOrder
+    tipo_pago?: SortOrder
+    referencia?: SortOrder
+    concepto?: SortOrder
+    fecha_pago?: SortOrder
+    monto_total?: SortOrder
+    moneda?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoOCSumOrderByAggregateInput = {
+    monto_total?: SortOrder
+  }
+
+  export type PagoOCRelationFilter = {
+    is?: PagoOCWhereInput
+    isNot?: PagoOCWhereInput
+  }
+
+  export type DetallePagoOCPago_idOc_idCompoundUniqueInput = {
+    pago_id: string
+    oc_id: string
+  }
+
+  export type DetallePagoOCCountOrderByAggregateInput = {
+    id_detalle?: SortOrder
+    pago_id?: SortOrder
+    oc_id?: SortOrder
+    oc_codigo?: SortOrder
+    proveedor_id?: SortOrder
+    proveedor_nombre?: SortOrder
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+  }
+
+  export type DetallePagoOCAvgOrderByAggregateInput = {
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+  }
+
+  export type DetallePagoOCMaxOrderByAggregateInput = {
+    id_detalle?: SortOrder
+    pago_id?: SortOrder
+    oc_id?: SortOrder
+    oc_codigo?: SortOrder
+    proveedor_id?: SortOrder
+    proveedor_nombre?: SortOrder
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+  }
+
+  export type DetallePagoOCMinOrderByAggregateInput = {
+    id_detalle?: SortOrder
+    pago_id?: SortOrder
+    oc_id?: SortOrder
+    oc_codigo?: SortOrder
+    proveedor_id?: SortOrder
+    proveedor_nombre?: SortOrder
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+  }
+
+  export type DetallePagoOCSumOrderByAggregateInput = {
+    monto_aplicado?: SortOrder
+    saldo_oc_antes?: SortOrder
+    saldo_oc_despues?: SortOrder
+  }
+
   export type MovimientoPresupuestalCreateNestedManyWithoutPresupuestoInput = {
     create?: XOR<MovimientoPresupuestalCreateWithoutPresupuestoInput, MovimientoPresupuestalUncheckedCreateWithoutPresupuestoInput> | MovimientoPresupuestalCreateWithoutPresupuestoInput[] | MovimientoPresupuestalUncheckedCreateWithoutPresupuestoInput[]
     connectOrCreate?: MovimientoPresupuestalCreateOrConnectWithoutPresupuestoInput | MovimientoPresupuestalCreateOrConnectWithoutPresupuestoInput[]
@@ -5945,6 +11518,124 @@ export namespace Prisma {
     upsert?: PresupuestoAsignadoUpsertWithoutPrograma_pagosInput
     connect?: PresupuestoAsignadoWhereUniqueInput
     update?: XOR<XOR<PresupuestoAsignadoUpdateToOneWithWhereWithoutPrograma_pagosInput, PresupuestoAsignadoUpdateWithoutPrograma_pagosInput>, PresupuestoAsignadoUncheckedUpdateWithoutPrograma_pagosInput>
+  }
+
+  export type PagoOCCreateNestedManyWithoutCuentaInput = {
+    create?: XOR<PagoOCCreateWithoutCuentaInput, PagoOCUncheckedCreateWithoutCuentaInput> | PagoOCCreateWithoutCuentaInput[] | PagoOCUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: PagoOCCreateOrConnectWithoutCuentaInput | PagoOCCreateOrConnectWithoutCuentaInput[]
+    createMany?: PagoOCCreateManyCuentaInputEnvelope
+    connect?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+  }
+
+  export type PagoOCUncheckedCreateNestedManyWithoutCuentaInput = {
+    create?: XOR<PagoOCCreateWithoutCuentaInput, PagoOCUncheckedCreateWithoutCuentaInput> | PagoOCCreateWithoutCuentaInput[] | PagoOCUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: PagoOCCreateOrConnectWithoutCuentaInput | PagoOCCreateOrConnectWithoutCuentaInput[]
+    createMany?: PagoOCCreateManyCuentaInputEnvelope
+    connect?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type PagoOCUpdateManyWithoutCuentaNestedInput = {
+    create?: XOR<PagoOCCreateWithoutCuentaInput, PagoOCUncheckedCreateWithoutCuentaInput> | PagoOCCreateWithoutCuentaInput[] | PagoOCUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: PagoOCCreateOrConnectWithoutCuentaInput | PagoOCCreateOrConnectWithoutCuentaInput[]
+    upsert?: PagoOCUpsertWithWhereUniqueWithoutCuentaInput | PagoOCUpsertWithWhereUniqueWithoutCuentaInput[]
+    createMany?: PagoOCCreateManyCuentaInputEnvelope
+    set?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    disconnect?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    delete?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    connect?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    update?: PagoOCUpdateWithWhereUniqueWithoutCuentaInput | PagoOCUpdateWithWhereUniqueWithoutCuentaInput[]
+    updateMany?: PagoOCUpdateManyWithWhereWithoutCuentaInput | PagoOCUpdateManyWithWhereWithoutCuentaInput[]
+    deleteMany?: PagoOCScalarWhereInput | PagoOCScalarWhereInput[]
+  }
+
+  export type PagoOCUncheckedUpdateManyWithoutCuentaNestedInput = {
+    create?: XOR<PagoOCCreateWithoutCuentaInput, PagoOCUncheckedCreateWithoutCuentaInput> | PagoOCCreateWithoutCuentaInput[] | PagoOCUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: PagoOCCreateOrConnectWithoutCuentaInput | PagoOCCreateOrConnectWithoutCuentaInput[]
+    upsert?: PagoOCUpsertWithWhereUniqueWithoutCuentaInput | PagoOCUpsertWithWhereUniqueWithoutCuentaInput[]
+    createMany?: PagoOCCreateManyCuentaInputEnvelope
+    set?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    disconnect?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    delete?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    connect?: PagoOCWhereUniqueInput | PagoOCWhereUniqueInput[]
+    update?: PagoOCUpdateWithWhereUniqueWithoutCuentaInput | PagoOCUpdateWithWhereUniqueWithoutCuentaInput[]
+    updateMany?: PagoOCUpdateManyWithWhereWithoutCuentaInput | PagoOCUpdateManyWithWhereWithoutCuentaInput[]
+    deleteMany?: PagoOCScalarWhereInput | PagoOCScalarWhereInput[]
+  }
+
+  export type CuentaBancariaCreateNestedOneWithoutPagosInput = {
+    create?: XOR<CuentaBancariaCreateWithoutPagosInput, CuentaBancariaUncheckedCreateWithoutPagosInput>
+    connectOrCreate?: CuentaBancariaCreateOrConnectWithoutPagosInput
+    connect?: CuentaBancariaWhereUniqueInput
+  }
+
+  export type DetallePagoOCCreateNestedManyWithoutPagoInput = {
+    create?: XOR<DetallePagoOCCreateWithoutPagoInput, DetallePagoOCUncheckedCreateWithoutPagoInput> | DetallePagoOCCreateWithoutPagoInput[] | DetallePagoOCUncheckedCreateWithoutPagoInput[]
+    connectOrCreate?: DetallePagoOCCreateOrConnectWithoutPagoInput | DetallePagoOCCreateOrConnectWithoutPagoInput[]
+    createMany?: DetallePagoOCCreateManyPagoInputEnvelope
+    connect?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+  }
+
+  export type DetallePagoOCUncheckedCreateNestedManyWithoutPagoInput = {
+    create?: XOR<DetallePagoOCCreateWithoutPagoInput, DetallePagoOCUncheckedCreateWithoutPagoInput> | DetallePagoOCCreateWithoutPagoInput[] | DetallePagoOCUncheckedCreateWithoutPagoInput[]
+    connectOrCreate?: DetallePagoOCCreateOrConnectWithoutPagoInput | DetallePagoOCCreateOrConnectWithoutPagoInput[]
+    createMany?: DetallePagoOCCreateManyPagoInputEnvelope
+    connect?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+  }
+
+  export type CuentaBancariaUpdateOneWithoutPagosNestedInput = {
+    create?: XOR<CuentaBancariaCreateWithoutPagosInput, CuentaBancariaUncheckedCreateWithoutPagosInput>
+    connectOrCreate?: CuentaBancariaCreateOrConnectWithoutPagosInput
+    upsert?: CuentaBancariaUpsertWithoutPagosInput
+    disconnect?: CuentaBancariaWhereInput | boolean
+    delete?: CuentaBancariaWhereInput | boolean
+    connect?: CuentaBancariaWhereUniqueInput
+    update?: XOR<XOR<CuentaBancariaUpdateToOneWithWhereWithoutPagosInput, CuentaBancariaUpdateWithoutPagosInput>, CuentaBancariaUncheckedUpdateWithoutPagosInput>
+  }
+
+  export type DetallePagoOCUpdateManyWithoutPagoNestedInput = {
+    create?: XOR<DetallePagoOCCreateWithoutPagoInput, DetallePagoOCUncheckedCreateWithoutPagoInput> | DetallePagoOCCreateWithoutPagoInput[] | DetallePagoOCUncheckedCreateWithoutPagoInput[]
+    connectOrCreate?: DetallePagoOCCreateOrConnectWithoutPagoInput | DetallePagoOCCreateOrConnectWithoutPagoInput[]
+    upsert?: DetallePagoOCUpsertWithWhereUniqueWithoutPagoInput | DetallePagoOCUpsertWithWhereUniqueWithoutPagoInput[]
+    createMany?: DetallePagoOCCreateManyPagoInputEnvelope
+    set?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    disconnect?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    delete?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    connect?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    update?: DetallePagoOCUpdateWithWhereUniqueWithoutPagoInput | DetallePagoOCUpdateWithWhereUniqueWithoutPagoInput[]
+    updateMany?: DetallePagoOCUpdateManyWithWhereWithoutPagoInput | DetallePagoOCUpdateManyWithWhereWithoutPagoInput[]
+    deleteMany?: DetallePagoOCScalarWhereInput | DetallePagoOCScalarWhereInput[]
+  }
+
+  export type DetallePagoOCUncheckedUpdateManyWithoutPagoNestedInput = {
+    create?: XOR<DetallePagoOCCreateWithoutPagoInput, DetallePagoOCUncheckedCreateWithoutPagoInput> | DetallePagoOCCreateWithoutPagoInput[] | DetallePagoOCUncheckedCreateWithoutPagoInput[]
+    connectOrCreate?: DetallePagoOCCreateOrConnectWithoutPagoInput | DetallePagoOCCreateOrConnectWithoutPagoInput[]
+    upsert?: DetallePagoOCUpsertWithWhereUniqueWithoutPagoInput | DetallePagoOCUpsertWithWhereUniqueWithoutPagoInput[]
+    createMany?: DetallePagoOCCreateManyPagoInputEnvelope
+    set?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    disconnect?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    delete?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    connect?: DetallePagoOCWhereUniqueInput | DetallePagoOCWhereUniqueInput[]
+    update?: DetallePagoOCUpdateWithWhereUniqueWithoutPagoInput | DetallePagoOCUpdateWithWhereUniqueWithoutPagoInput[]
+    updateMany?: DetallePagoOCUpdateManyWithWhereWithoutPagoInput | DetallePagoOCUpdateManyWithWhereWithoutPagoInput[]
+    deleteMany?: DetallePagoOCScalarWhereInput | DetallePagoOCScalarWhereInput[]
+  }
+
+  export type PagoOCCreateNestedOneWithoutDetallesInput = {
+    create?: XOR<PagoOCCreateWithoutDetallesInput, PagoOCUncheckedCreateWithoutDetallesInput>
+    connectOrCreate?: PagoOCCreateOrConnectWithoutDetallesInput
+    connect?: PagoOCWhereUniqueInput
+  }
+
+  export type PagoOCUpdateOneRequiredWithoutDetallesNestedInput = {
+    create?: XOR<PagoOCCreateWithoutDetallesInput, PagoOCUncheckedCreateWithoutDetallesInput>
+    connectOrCreate?: PagoOCCreateOrConnectWithoutDetallesInput
+    upsert?: PagoOCUpsertWithoutDetallesInput
+    connect?: PagoOCWhereUniqueInput
+    update?: XOR<XOR<PagoOCUpdateToOneWithWhereWithoutDetallesInput, PagoOCUpdateWithoutDetallesInput>, PagoOCUncheckedUpdateWithoutDetallesInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -6156,6 +11847,19 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type MovimientoPresupuestalCreateWithoutPresupuestoInput = {
@@ -6514,6 +12218,302 @@ export namespace Prisma {
     movimientos?: MovimientoPresupuestalUncheckedUpdateManyWithoutPresupuestoNestedInput
   }
 
+  export type PagoOCCreateWithoutCuentaInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+    detalles?: DetallePagoOCCreateNestedManyWithoutPagoInput
+  }
+
+  export type PagoOCUncheckedCreateWithoutCuentaInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+    detalles?: DetallePagoOCUncheckedCreateNestedManyWithoutPagoInput
+  }
+
+  export type PagoOCCreateOrConnectWithoutCuentaInput = {
+    where: PagoOCWhereUniqueInput
+    create: XOR<PagoOCCreateWithoutCuentaInput, PagoOCUncheckedCreateWithoutCuentaInput>
+  }
+
+  export type PagoOCCreateManyCuentaInputEnvelope = {
+    data: PagoOCCreateManyCuentaInput | PagoOCCreateManyCuentaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PagoOCUpsertWithWhereUniqueWithoutCuentaInput = {
+    where: PagoOCWhereUniqueInput
+    update: XOR<PagoOCUpdateWithoutCuentaInput, PagoOCUncheckedUpdateWithoutCuentaInput>
+    create: XOR<PagoOCCreateWithoutCuentaInput, PagoOCUncheckedCreateWithoutCuentaInput>
+  }
+
+  export type PagoOCUpdateWithWhereUniqueWithoutCuentaInput = {
+    where: PagoOCWhereUniqueInput
+    data: XOR<PagoOCUpdateWithoutCuentaInput, PagoOCUncheckedUpdateWithoutCuentaInput>
+  }
+
+  export type PagoOCUpdateManyWithWhereWithoutCuentaInput = {
+    where: PagoOCScalarWhereInput
+    data: XOR<PagoOCUpdateManyMutationInput, PagoOCUncheckedUpdateManyWithoutCuentaInput>
+  }
+
+  export type PagoOCScalarWhereInput = {
+    AND?: PagoOCScalarWhereInput | PagoOCScalarWhereInput[]
+    OR?: PagoOCScalarWhereInput[]
+    NOT?: PagoOCScalarWhereInput | PagoOCScalarWhereInput[]
+    id_pago?: UuidFilter<"PagoOC"> | string
+    tenant_id?: UuidFilter<"PagoOC"> | string
+    proyecto_id?: UuidFilter<"PagoOC"> | string
+    fuente?: StringFilter<"PagoOC"> | string
+    cuenta_id?: UuidNullableFilter<"PagoOC"> | string | null
+    tipo_pago?: StringFilter<"PagoOC"> | string
+    referencia?: StringFilter<"PagoOC"> | string
+    concepto?: StringFilter<"PagoOC"> | string
+    fecha_pago?: DateTimeFilter<"PagoOC"> | Date | string
+    monto_total?: DecimalFilter<"PagoOC"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"PagoOC"> | string
+    usuario_id?: UuidFilter<"PagoOC"> | string
+    created_at?: DateTimeFilter<"PagoOC"> | Date | string
+  }
+
+  export type CuentaBancariaCreateWithoutPagosInput = {
+    id_cuenta?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    banco: string
+    numero_cuenta: string
+    clabe?: string | null
+    alias: string
+    moneda?: string
+    saldo?: Decimal | DecimalJsLike | number | string
+    activa?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CuentaBancariaUncheckedCreateWithoutPagosInput = {
+    id_cuenta?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    banco: string
+    numero_cuenta: string
+    clabe?: string | null
+    alias: string
+    moneda?: string
+    saldo?: Decimal | DecimalJsLike | number | string
+    activa?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CuentaBancariaCreateOrConnectWithoutPagosInput = {
+    where: CuentaBancariaWhereUniqueInput
+    create: XOR<CuentaBancariaCreateWithoutPagosInput, CuentaBancariaUncheckedCreateWithoutPagosInput>
+  }
+
+  export type DetallePagoOCCreateWithoutPagoInput = {
+    id_detalle?: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal | DecimalJsLike | number | string
+    saldo_oc_antes: Decimal | DecimalJsLike | number | string
+    saldo_oc_despues: Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUncheckedCreateWithoutPagoInput = {
+    id_detalle?: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal | DecimalJsLike | number | string
+    saldo_oc_antes: Decimal | DecimalJsLike | number | string
+    saldo_oc_despues: Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCCreateOrConnectWithoutPagoInput = {
+    where: DetallePagoOCWhereUniqueInput
+    create: XOR<DetallePagoOCCreateWithoutPagoInput, DetallePagoOCUncheckedCreateWithoutPagoInput>
+  }
+
+  export type DetallePagoOCCreateManyPagoInputEnvelope = {
+    data: DetallePagoOCCreateManyPagoInput | DetallePagoOCCreateManyPagoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CuentaBancariaUpsertWithoutPagosInput = {
+    update: XOR<CuentaBancariaUpdateWithoutPagosInput, CuentaBancariaUncheckedUpdateWithoutPagosInput>
+    create: XOR<CuentaBancariaCreateWithoutPagosInput, CuentaBancariaUncheckedCreateWithoutPagosInput>
+    where?: CuentaBancariaWhereInput
+  }
+
+  export type CuentaBancariaUpdateToOneWithWhereWithoutPagosInput = {
+    where?: CuentaBancariaWhereInput
+    data: XOR<CuentaBancariaUpdateWithoutPagosInput, CuentaBancariaUncheckedUpdateWithoutPagosInput>
+  }
+
+  export type CuentaBancariaUpdateWithoutPagosInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    banco?: StringFieldUpdateOperationsInput | string
+    numero_cuenta?: StringFieldUpdateOperationsInput | string
+    clabe?: NullableStringFieldUpdateOperationsInput | string | null
+    alias?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    saldo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaBancariaUncheckedUpdateWithoutPagosInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    banco?: StringFieldUpdateOperationsInput | string
+    numero_cuenta?: StringFieldUpdateOperationsInput | string
+    clabe?: NullableStringFieldUpdateOperationsInput | string | null
+    alias?: StringFieldUpdateOperationsInput | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    saldo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DetallePagoOCUpsertWithWhereUniqueWithoutPagoInput = {
+    where: DetallePagoOCWhereUniqueInput
+    update: XOR<DetallePagoOCUpdateWithoutPagoInput, DetallePagoOCUncheckedUpdateWithoutPagoInput>
+    create: XOR<DetallePagoOCCreateWithoutPagoInput, DetallePagoOCUncheckedCreateWithoutPagoInput>
+  }
+
+  export type DetallePagoOCUpdateWithWhereUniqueWithoutPagoInput = {
+    where: DetallePagoOCWhereUniqueInput
+    data: XOR<DetallePagoOCUpdateWithoutPagoInput, DetallePagoOCUncheckedUpdateWithoutPagoInput>
+  }
+
+  export type DetallePagoOCUpdateManyWithWhereWithoutPagoInput = {
+    where: DetallePagoOCScalarWhereInput
+    data: XOR<DetallePagoOCUpdateManyMutationInput, DetallePagoOCUncheckedUpdateManyWithoutPagoInput>
+  }
+
+  export type DetallePagoOCScalarWhereInput = {
+    AND?: DetallePagoOCScalarWhereInput | DetallePagoOCScalarWhereInput[]
+    OR?: DetallePagoOCScalarWhereInput[]
+    NOT?: DetallePagoOCScalarWhereInput | DetallePagoOCScalarWhereInput[]
+    id_detalle?: UuidFilter<"DetallePagoOC"> | string
+    pago_id?: UuidFilter<"DetallePagoOC"> | string
+    oc_id?: UuidFilter<"DetallePagoOC"> | string
+    oc_codigo?: StringFilter<"DetallePagoOC"> | string
+    proveedor_id?: UuidFilter<"DetallePagoOC"> | string
+    proveedor_nombre?: StringFilter<"DetallePagoOC"> | string
+    monto_aplicado?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type PagoOCCreateWithoutDetallesInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+    cuenta?: CuentaBancariaCreateNestedOneWithoutPagosInput
+  }
+
+  export type PagoOCUncheckedCreateWithoutDetallesInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    cuenta_id?: string | null
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type PagoOCCreateOrConnectWithoutDetallesInput = {
+    where: PagoOCWhereUniqueInput
+    create: XOR<PagoOCCreateWithoutDetallesInput, PagoOCUncheckedCreateWithoutDetallesInput>
+  }
+
+  export type PagoOCUpsertWithoutDetallesInput = {
+    update: XOR<PagoOCUpdateWithoutDetallesInput, PagoOCUncheckedUpdateWithoutDetallesInput>
+    create: XOR<PagoOCCreateWithoutDetallesInput, PagoOCUncheckedCreateWithoutDetallesInput>
+    where?: PagoOCWhereInput
+  }
+
+  export type PagoOCUpdateToOneWithWhereWithoutDetallesInput = {
+    where?: PagoOCWhereInput
+    data: XOR<PagoOCUpdateWithoutDetallesInput, PagoOCUncheckedUpdateWithoutDetallesInput>
+  }
+
+  export type PagoOCUpdateWithoutDetallesInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuenta?: CuentaBancariaUpdateOneWithoutPagosNestedInput
+  }
+
+  export type PagoOCUncheckedUpdateWithoutDetallesInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    cuenta_id?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MovimientoPresupuestalCreateManyPresupuestoInput = {
     id_movimiento?: string
     tenant_id: string
@@ -6674,6 +12674,112 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PagoOCCreateManyCuentaInput = {
+    id_pago?: string
+    tenant_id: string
+    proyecto_id: string
+    fuente: string
+    tipo_pago: string
+    referencia: string
+    concepto: string
+    fecha_pago: Date | string
+    monto_total: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type PagoOCUpdateWithoutCuentaInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    detalles?: DetallePagoOCUpdateManyWithoutPagoNestedInput
+  }
+
+  export type PagoOCUncheckedUpdateWithoutCuentaInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    detalles?: DetallePagoOCUncheckedUpdateManyWithoutPagoNestedInput
+  }
+
+  export type PagoOCUncheckedUpdateManyWithoutCuentaInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    fuente?: StringFieldUpdateOperationsInput | string
+    tipo_pago?: StringFieldUpdateOperationsInput | string
+    referencia?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    fecha_pago?: DateTimeFieldUpdateOperationsInput | Date | string
+    monto_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DetallePagoOCCreateManyPagoInput = {
+    id_detalle?: string
+    oc_id: string
+    oc_codigo: string
+    proveedor_id: string
+    proveedor_nombre: string
+    monto_aplicado: Decimal | DecimalJsLike | number | string
+    saldo_oc_antes: Decimal | DecimalJsLike | number | string
+    saldo_oc_despues: Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUpdateWithoutPagoInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUncheckedUpdateWithoutPagoInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type DetallePagoOCUncheckedUpdateManyWithoutPagoInput = {
+    id_detalle?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    proveedor_nombre?: StringFieldUpdateOperationsInput | string
+    monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
 
 
   /**
@@ -6683,6 +12789,14 @@ export namespace Prisma {
      * @deprecated Use PresupuestoAsignadoCountOutputTypeDefaultArgs instead
      */
     export type PresupuestoAsignadoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PresupuestoAsignadoCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CuentaBancariaCountOutputTypeDefaultArgs instead
+     */
+    export type CuentaBancariaCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuentaBancariaCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use PagoOCCountOutputTypeDefaultArgs instead
+     */
+    export type PagoOCCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PagoOCCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use PresupuestoAsignadoDefaultArgs instead
      */
@@ -6695,6 +12809,22 @@ export namespace Prisma {
      * @deprecated Use ProgramaPagosDefaultArgs instead
      */
     export type ProgramaPagosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProgramaPagosDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CuentaBancariaDefaultArgs instead
+     */
+    export type CuentaBancariaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuentaBancariaDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ProyectoFinanzasDefaultArgs instead
+     */
+    export type ProyectoFinanzasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProyectoFinanzasDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use PagoOCDefaultArgs instead
+     */
+    export type PagoOCArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PagoOCDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use DetallePagoOCDefaultArgs instead
+     */
+    export type DetallePagoOCArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = DetallePagoOCDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

@@ -123,3 +123,87 @@ model ProgramaPagos {
   @@index([tenant_id, fecha_programada])
   @@map("programa_pagos")
 }
+
+// ─── Cuentas Bancarias ───────────────────────────────────────────────────────
+model CuentaBancaria {
+  id_cuenta   String  @id @default(uuid()) @db.Uuid
+  tenant_id   String  @db.Uuid
+  proyecto_id String? @db.Uuid // null = cuenta de empresa, no de proyecto
+
+  banco         String  @db.VarChar(100)
+  numero_cuenta String  @db.VarChar(50)
+  clabe         String? @db.VarChar(18)
+  alias         String  @db.VarChar(100)
+  moneda        String  @default("MXN") @db.VarChar(5)
+  saldo         Decimal @default(0) @db.Decimal(18, 2)
+  activa        Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  pagos PagoOC[]
+
+  @@index([tenant_id])
+  @@map("cuentas_bancarias")
+}
+
+// ─── Anticipo por Proyecto ────────────────────────────────────────────────────
+model ProyectoFinanzas {
+  id_proyecto_finanzas String @id @default(uuid()) @db.Uuid
+  tenant_id            String @db.Uuid
+  proyecto_id          String @db.Uuid
+
+  anticipo_total Decimal @default(0) @db.Decimal(18, 2)
+  anticipo_usado Decimal @default(0) @db.Decimal(18, 2)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([tenant_id, proyecto_id])
+  @@index([tenant_id, proyecto_id])
+  @@map("proyectos_finanzas")
+}
+
+// ─── Pago de OC ──────────────────────────────────────────────────────────────
+model PagoOC {
+  id_pago     String @id @default(uuid()) @db.Uuid
+  tenant_id   String @db.Uuid
+  proyecto_id String @db.Uuid
+
+  fuente      String // ANTICIPO | CUENTA_BANCARIA
+  cuenta_id   String?  @db.Uuid
+  tipo_pago   String // TRANSFERENCIA | CHEQUE | EFECTIVO | SPEI
+  referencia  String   @db.VarChar(100)
+  concepto    String   @db.VarChar(500)
+  fecha_pago  DateTime
+  monto_total Decimal  @db.Decimal(18, 2)
+  moneda      String   @default("MXN") @db.VarChar(5)
+
+  usuario_id String   @db.Uuid
+  created_at DateTime @default(now())
+
+  cuenta   CuentaBancaria? @relation(fields: [cuenta_id], references: [id_cuenta])
+  detalles DetallePagoOC[]
+
+  @@index([tenant_id, proyecto_id])
+  @@map("pagos_oc")
+}
+
+// ─── Detalle de Pago (1 pago → N OCs) ────────────────────────────────────────
+model DetallePagoOC {
+  id_detalle       String  @id @default(uuid()) @db.Uuid
+  pago_id          String  @db.Uuid
+  oc_id            String  @db.Uuid // referencia inter-módulo (compras)
+  oc_codigo        String  @db.VarChar(50)
+  proveedor_id     String  @db.Uuid
+  proveedor_nombre String  @db.VarChar(255)
+  monto_aplicado   Decimal @db.Decimal(18, 2)
+  saldo_oc_antes   Decimal @db.Decimal(18, 2)
+  saldo_oc_despues Decimal @db.Decimal(18, 2)
+
+  pago PagoOC @relation(fields: [pago_id], references: [id_pago], onDelete: Cascade)
+
+  @@unique([pago_id, oc_id])
+  @@index([oc_id])
+  @@map("detalles_pago_oc")
+}

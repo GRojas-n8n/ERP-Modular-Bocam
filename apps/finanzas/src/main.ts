@@ -39,7 +39,7 @@ import {
 import type { PrismaClient } from './generated/prisma';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
-import { createAuthMiddleware, requireEnv, requireProjectAccess } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
@@ -1469,6 +1469,316 @@ app.get('/api/v1/finanzas/dashboard', async (req: Request, res: Response) => {
     res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al cargar dashboard financiero.'));
   }
 });
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CUENTAS BANCARIAS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/finanzas/cuentas-bancarias',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).cuentaBancaria.findMany({
+          where: { tenant_id: tenantId, activa: true },
+          orderBy: { banco: 'asc' },
+        });
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.post('/api/v1/finanzas/cuentas-bancarias',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { banco, numero_cuenta, clabe, alias, moneda, saldo, proyecto_id } = req.body;
+      if (!banco || !numero_cuenta || !alias) {
+        return res.status(400).json({ success: false, message: 'banco, numero_cuenta y alias son obligatorios.' });
+      }
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).cuentaBancaria.create({
+          data: {
+            tenant_id:     tenantId,
+            proyecto_id:   proyecto_id ?? null,
+            banco,
+            numero_cuenta,
+            clabe:         clabe ?? null,
+            alias,
+            moneda:        moneda ?? 'MXN',
+            saldo:         saldo ? Number(saldo) : 0,
+          },
+        });
+      });
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.patch('/api/v1/finanzas/cuentas-bancarias/:id',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { banco, numero_cuenta, clabe, alias, moneda, saldo } = req.body;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).cuentaBancaria.update({
+          where: { id_cuenta: id },
+          data: {
+            ...(banco         !== undefined ? { banco }         : {}),
+            ...(numero_cuenta !== undefined ? { numero_cuenta } : {}),
+            ...(clabe         !== undefined ? { clabe }         : {}),
+            ...(alias         !== undefined ? { alias }         : {}),
+            ...(moneda        !== undefined ? { moneda }        : {}),
+            ...(saldo         !== undefined ? { saldo: Number(saldo) } : {}),
+          },
+        });
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.delete('/api/v1/finanzas/cuentas-bancarias/:id',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const tiene = await (prisma as any).pagoOC.count({ where: { cuenta_id: id } });
+        if (tiene > 0) {
+          const err: any = new Error('No se puede eliminar: la cuenta tiene pagos registrados.');
+          err.status = 409;
+          throw err;
+        }
+        return (prisma as any).cuentaBancaria.update({
+          where: { id_cuenta: id },
+          data: { activa: false },
+        });
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(error.status ?? 500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ANTICIPO POR PROYECTO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { proyectoId: pId } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).proyectoFinanzas.findFirst({
+          where: { tenant_id: tenantId, proyecto_id: pId },
+        }) ?? { anticipo_total: 0, anticipo_usado: 0, disponible: 0 };
+      });
+      const record = data as any;
+      res.json({ success: true, data: { ...record, disponible: Number(record.anticipo_total ?? 0) - Number(record.anticipo_usado ?? 0) } });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.post('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { proyectoId: pId } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { anticipo_total } = req.body;
+      if (anticipo_total === undefined) {
+        return res.status(400).json({ success: false, message: 'anticipo_total es obligatorio.' });
+      }
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).proyectoFinanzas.upsert({
+          where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: pId } },
+          update: { anticipo_total: Number(anticipo_total) },
+          create: { tenant_id: tenantId, proyecto_id: pId, anticipo_total: Number(anticipo_total), anticipo_usado: 0 },
+        });
+      });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PAGOS DE OCS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/finanzas/pagos-oc',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { proyectoId: pId, proveedorId } = req.query as Record<string, string | undefined>;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).pagoOC.findMany({
+          where: {
+            tenant_id:  tenantId,
+            ...(pId          ? { proyecto_id: pId }            : {}),
+          },
+          include: {
+            detalles: true,
+            cuenta:   { select: { banco: true, alias: true } },
+          },
+          orderBy: { created_at: 'desc' },
+        });
+      });
+      const result = proveedorId
+        ? (data as any[]).filter((p: any) => p.detalles.some((d: any) => d.proveedor_id === proveedorId))
+        : data;
+      res.json({ success: true, data: result });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.get('/api/v1/finanzas/pagos-oc/:id',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return (prisma as any).pagoOC.findFirst({
+          where: { id_pago: id, tenant_id: tenantId },
+          include: { detalles: true, cuenta: true },
+        });
+      });
+      if (!data) return res.status(404).json({ success: false, message: 'Pago no encontrado.' });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.post('/api/v1/finanzas/pagos-oc',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId: ctxPid, userId } = req.securityContext;
+      const { fuente, cuenta_id, tipo_pago, referencia, concepto, fecha_pago, proyecto_id, detalles } = req.body;
+
+      if (!fuente || !tipo_pago || !referencia || !concepto || !fecha_pago || !proyecto_id || !Array.isArray(detalles) || detalles.length === 0) {
+        return res.status(400).json({ success: false, message: 'Faltan campos obligatorios.' });
+      }
+      if (!['ANTICIPO', 'CUENTA_BANCARIA'].includes(fuente)) {
+        return res.status(400).json({ success: false, message: 'fuente debe ser ANTICIPO o CUENTA_BANCARIA.' });
+      }
+      if (fuente === 'CUENTA_BANCARIA' && !cuenta_id) {
+        return res.status(400).json({ success: false, message: 'cuenta_id es requerido para fuente CUENTA_BANCARIA.' });
+      }
+
+      const montoTotal = (detalles as any[]).reduce((sum: number, d: any) => sum + Number(d.monto_aplicado), 0);
+
+      const data = await createTenantContext({ tenantId, proyectoId: ctxPid, userId }, async (prisma) => {
+        return (prisma as any).$transaction(async (tx: any) => {
+          // Validar y descontar fuente
+          if (fuente === 'ANTICIPO') {
+            const pf = await tx.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyecto_id } });
+            const disponible = Number(pf?.anticipo_total ?? 0) - Number(pf?.anticipo_usado ?? 0);
+            if (disponible < montoTotal) {
+              throw Object.assign(new Error(`Anticipo insuficiente. Disponible: $${disponible.toFixed(2)}, Requerido: $${montoTotal.toFixed(2)}`), { status: 422 });
+            }
+            if (pf) {
+              await tx.proyectoFinanzas.update({
+                where: { id_proyecto_finanzas: pf.id_proyecto_finanzas },
+                data: { anticipo_usado: { increment: montoTotal } },
+              });
+            }
+          } else {
+            const cuenta = await tx.cuentaBancaria.findFirst({ where: { id_cuenta: cuenta_id, tenant_id: tenantId, activa: true } });
+            if (!cuenta) throw Object.assign(new Error('Cuenta bancaria no encontrada.'), { status: 404 });
+            if (Number(cuenta.saldo) < montoTotal) {
+              throw Object.assign(new Error(`Saldo insuficiente. Disponible: $${Number(cuenta.saldo).toFixed(2)}, Requerido: $${montoTotal.toFixed(2)}`), { status: 422 });
+            }
+            await tx.cuentaBancaria.update({
+              where: { id_cuenta: cuenta_id },
+              data: { saldo: { decrement: montoTotal } },
+            });
+          }
+
+          // Crear pago
+          const pago = await tx.pagoOC.create({
+            data: {
+              tenant_id:   tenantId,
+              proyecto_id: proyecto_id,
+              fuente,
+              cuenta_id:   fuente === 'CUENTA_BANCARIA' ? cuenta_id : null,
+              tipo_pago,
+              referencia,
+              concepto,
+              fecha_pago:  new Date(fecha_pago),
+              monto_total: montoTotal,
+              moneda:      'MXN',
+              usuario_id:  userId,
+              detalles: {
+                create: (detalles as any[]).map((d: any) => ({
+                  oc_id:            d.oc_id,
+                  oc_codigo:        d.oc_codigo ?? d.oc_id.slice(0, 8),
+                  proveedor_id:     d.proveedor_id,
+                  proveedor_nombre: d.proveedor_nombre ?? '',
+                  monto_aplicado:   Number(d.monto_aplicado),
+                  saldo_oc_antes:   Number(d.saldo_oc_antes ?? 0),
+                  saldo_oc_despues: Number(d.saldo_oc_despues ?? 0),
+                })),
+              },
+            },
+            include: { detalles: true },
+          });
+
+          return pago;
+        });
+      });
+
+      // Publicar eventos por OC pagada
+      const correlationId = getCorrelationId(req);
+      const context = { tenant_id: tenantId, proyecto_id: proyecto_id, user_id: userId, correlation_id: correlationId };
+      for (const d of (data as any).detalles) {
+        const isPagadaTotal = Number(d.saldo_oc_despues) <= 0;
+        await publishFinanceDomainEvent(
+          isPagadaTotal ? FinanzasEvents.OC_PAGADA_TOTAL : FinanzasEvents.OC_PAGADA_PARCIAL,
+          context,
+          {
+            oc_id:           d.oc_id,
+            oc_codigo:       d.oc_codigo,
+            proveedor_id:    d.proveedor_id,
+            monto_aplicado:  d.monto_aplicado,
+            saldo_pendiente: d.saldo_oc_despues,
+            pago_id:         (data as any).id_pago,
+          } as any,
+        );
+      }
+
+      logInfo(req, 'finanzas', 'finanzas.pago_oc.created', 'Pago OC registrado', { pago_id: (data as any).id_pago, monto: montoTotal });
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      res.status(error.status ?? 500).json({ success: false, message: error.message });
+    }
+  }
+);
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)

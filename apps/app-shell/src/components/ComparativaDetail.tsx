@@ -129,6 +129,7 @@ export interface OrdenCompraEnComparativa {
   id_orden: string;
   codigo: string;
   estado: string;
+  estado_pago?: string;
   proveedor_nombre: string;
   proveedor_id: string;
   total: number;
@@ -1988,6 +1989,14 @@ export const ComparativaDetail: React.FC<Props> = ({
                         <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', ocEstilo.badge)}>
                           {ocEstilo.label}
                         </span>
+                        {oc.estado_pago && oc.estado_pago !== 'PENDIENTE_PAGO' && (
+                          <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest',
+                            oc.estado_pago === 'PAGADA'       ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700' :
+                            oc.estado_pago === 'PAGO_PARCIAL' ? 'border-amber-500/20 bg-amber-500/10 text-amber-700' : ''
+                          )}>
+                            {oc.estado_pago === 'PAGADA' ? 'Pagada' : 'Pago parcial'}
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-muted-foreground">{oc.proveedor_nombre}</div>
                     </div>

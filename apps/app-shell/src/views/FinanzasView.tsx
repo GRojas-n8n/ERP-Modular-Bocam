@@ -199,6 +199,31 @@ export const FinanzasView: React.FC = () => {
   // ── Panel Nuevo Presupuesto ──────────────────────────────────────────────
   const [panelOpen, setPanelOpen] = useState(false);
   const [guardando, setGuardando] = useState(false);
+
+  // ── Pagos OC ──────────────────────────────────────────────────────────────
+  const [pagosOC, setPagosOC] = useState<Array<{
+    id_pago: string; fuente: string; tipo_pago: string; referencia: string; concepto: string;
+    fecha_pago: string; monto_total: number; detalles: Array<{ oc_codigo: string; proveedor_nombre: string; monto_aplicado: number }>;
+    cuenta?: { banco: string; alias: string } | null;
+  }>>([]);
+  const [showPagoModal, setShowPagoModal] = useState(false);
+  const [guardandoPago, setGuardandoPago] = useState(false);
+  const [pagoForm, setPagoForm] = useState({
+    fuente: 'ANTICIPO' as 'ANTICIPO' | 'CUENTA_BANCARIA',
+    cuenta_id: '',
+    tipo_pago: 'TRANSFERENCIA',
+    referencia: '',
+    concepto: '',
+    fecha_pago: new Date().toISOString().slice(0, 10),
+    oc_id: '',
+    oc_codigo: '',
+    proveedor_id: '',
+    proveedor_nombre: '',
+    monto_aplicado: '',
+    saldo_oc_antes: 0,
+  });
+  const [pagoError, setPagoError] = useState<string | null>(null);
+  const [cuentasBancarias, setCuentasBancarias] = useState<Array<{ id_cuenta: string; alias: string; banco: string; saldo: number }>>([]);
   const [form, setForm] = useState({
     codigo: '',
     descripcion: '',
@@ -249,15 +274,21 @@ export const FinanzasView: React.FC = () => {
     try {
       setLoading(true);
       if (tenant?.id === 'iretum-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
-      const [dashRes, pagosRes, presRes] = await Promise.all([
+      const [dashRes, pagosRes, presRes, pagosOCRes, cuentasRes] = await Promise.allSettled([
         api.get('/api/v1/finanzas/dashboard'),
         api.get('/api/v1/finanzas/pagos'),
         api.get('/api/v1/finanzas/presupuestos'),
+        api.get('/api/v1/finanzas/pagos-oc'),
+        api.get('/api/v1/finanzas/cuentas-bancarias'),
       ]);
-      setResumen(dashRes.data.data.resumen_presupuestal);
-      setDashAlertas(dashRes.data.data.alertas ?? []);
-      setPagos(pagosRes.data.data);
-      setPresupuestos(presRes.data.data ?? []);
+      if (dashRes.status === 'fulfilled') {
+        setResumen(dashRes.value.data.data.resumen_presupuestal);
+        setDashAlertas(dashRes.value.data.data.alertas ?? []);
+      }
+      if (pagosRes.status === 'fulfilled') setPagos(pagosRes.value.data.data);
+      if (presRes.status === 'fulfilled') setPresupuestos(presRes.value.data.data ?? []);
+      if (pagosOCRes.status === 'fulfilled') setPagosOC(pagosOCRes.value.data.data ?? []);
+      if (cuentasRes.status === 'fulfilled') setCuentasBancarias(cuentasRes.value.data.data ?? []);
     } catch (err: any) {
       console.error('Error fetching finanzas data:', err);
       setError('Error al conectar con el modulo de Finanzas Central.');
@@ -267,6 +298,42 @@ export const FinanzasView: React.FC = () => {
   };
 
   useEffect(() => { void fetchData(); }, []);
+
+  const handleGuardarPagoOC = async () => {
+    if (!pagoForm.referencia || !pagoForm.concepto || !pagoForm.oc_id || !pagoForm.monto_aplicado) {
+      setPagoError('Referencia, concepto, OC y monto son obligatorios.');
+      return;
+    }
+    setGuardandoPago(true);
+    setPagoError(null);
+    try {
+      await api.post('/api/v1/finanzas/pagos-oc', {
+        fuente:          pagoForm.fuente,
+        cuenta_id:       pagoForm.fuente === 'CUENTA_BANCARIA' ? pagoForm.cuenta_id : undefined,
+        tipo_pago:       pagoForm.tipo_pago,
+        referencia:      pagoForm.referencia,
+        concepto:        pagoForm.concepto,
+        fecha_pago:      pagoForm.fecha_pago,
+        proyecto_id:     undefined, // tomado del JWT
+        detalles: [{
+          oc_id:            pagoForm.oc_id,
+          oc_codigo:        pagoForm.oc_codigo,
+          proveedor_id:     pagoForm.proveedor_id,
+          proveedor_nombre: pagoForm.proveedor_nombre,
+          monto_aplicado:   Number(pagoForm.monto_aplicado),
+          saldo_oc_antes:   pagoForm.saldo_oc_antes,
+          saldo_oc_despues: Math.max(0, pagoForm.saldo_oc_antes - Number(pagoForm.monto_aplicado)),
+        }],
+      });
+      notify({ type: 'success', title: 'Pago registrado', message: `Pago ${pagoForm.referencia} registrado exitosamente.` });
+      setShowPagoModal(false);
+      void fetchData();
+    } catch (err: any) {
+      setPagoError(err.response?.data?.message ?? 'Error al registrar el pago.');
+    } finally {
+      setGuardandoPago(false);
+    }
+  };
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-MX', {
@@ -783,6 +850,145 @@ export const FinanzasView: React.FC = () => {
           )}
         </div>
         </>
+      )}
+
+      {/* ── Sección: Pagos de Órdenes de Compra ─────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-widest">Pagos de OCs</h2>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Registro de pagos a proveedores por órdenes de compra
+            </p>
+          </div>
+          <Button
+            className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700"
+            onClick={() => { setPagoError(null); setShowPagoModal(true); }}
+          >
+            <IconPlus className="h-3.5 w-3.5" />
+            Registrar Pago
+          </Button>
+        </div>
+
+        {pagosOC.length === 0 ? (
+          <EmptyStatePanel
+            title="Sin pagos registrados"
+            description="Registra el primer pago de una OC usando anticipo o cuenta bancaria."
+          />
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Fecha</TableHeader>
+                  <TableHeader>Referencia</TableHeader>
+                  <TableHeader>Fuente</TableHeader>
+                  <TableHeader>OCs cubiertas</TableHeader>
+                  <TableHeader className="text-right">Total</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {pagosOC.map(p => (
+                  <TableRow key={p.id_pago}>
+                    <TableCell className="text-xs">{new Date(p.fecha_pago).toLocaleDateString('es-MX')}</TableCell>
+                    <TableCell className="font-mono text-xs">{p.referencia}</TableCell>
+                    <TableCell>
+                      <SectionBadge className={`rounded-full px-2 py-0.5 text-[10px] ${p.fuente === 'ANTICIPO' ? 'border-sky-500/20 bg-sky-500/10 text-sky-700' : 'border-violet-500/20 bg-violet-500/10 text-violet-700'}`}>
+                        {p.fuente === 'ANTICIPO' ? 'Anticipo' : p.cuenta?.alias ?? 'Cuenta'}
+                      </SectionBadge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.detalles.map(d => d.oc_codigo).join(', ')}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-emerald-700">
+                      {formatCurrency(Number(p.monto_total))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </div>
+
+      {/* ── Modal: Registrar Pago OC ─────────────────────────────────────── */}
+      {showPagoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPagoModal(false)}>
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-foreground">Registrar Pago OC</h2>
+
+            {pagoError && (
+              <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-bold text-red-500">{pagoError}</div>
+            )}
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fuente *</label>
+                  <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.fuente} onChange={e => setPagoForm(f => ({ ...f, fuente: e.target.value as 'ANTICIPO' | 'CUENTA_BANCARIA' }))}>
+                    <option value="ANTICIPO">Anticipo</option>
+                    <option value="CUENTA_BANCARIA">Cuenta Bancaria</option>
+                  </select>
+                </div>
+                {pagoForm.fuente === 'CUENTA_BANCARIA' && (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cuenta *</label>
+                    <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.cuenta_id} onChange={e => setPagoForm(f => ({ ...f, cuenta_id: e.target.value }))}>
+                      <option value="">Seleccionar...</option>
+                      {cuentasBancarias.map(c => <option key={c.id_cuenta} value={c.id_cuenta}>{c.alias} — {formatCurrency(c.saldo)}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de Pago *</label>
+                  <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.tipo_pago} onChange={e => setPagoForm(f => ({ ...f, tipo_pago: e.target.value }))}>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="SPEI">SPEI</option>
+                    <option value="CHEQUE">Cheque</option>
+                    <option value="EFECTIVO">Efectivo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha Pago *</label>
+                  <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.fecha_pago} onChange={e => setPagoForm(f => ({ ...f, fecha_pago: e.target.value }))} />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Referencia bancaria *</label>
+                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono" placeholder="TRF-2026-001" value={pagoForm.referencia} onChange={e => setPagoForm(f => ({ ...f, referencia: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Concepto *</label>
+                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" placeholder="Pago materiales factura F-001" value={pagoForm.concepto} onChange={e => setPagoForm(f => ({ ...f, concepto: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">ID de OC (UUID) *</label>
+                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={pagoForm.oc_id} onChange={e => setPagoForm(f => ({ ...f, oc_id: e.target.value }))} />
+                <p className="mt-1 text-[10px] text-muted-foreground">Copia el UUID de la OC desde la sección Compras</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código OC</label>
+                  <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" placeholder="OC-2026-001" value={pagoForm.oc_codigo} onChange={e => setPagoForm(f => ({ ...f, oc_codigo: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monto Aplicado *</label>
+                  <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" placeholder="0.00" value={pagoForm.monto_aplicado} onChange={e => setPagoForm(f => ({ ...f, monto_aplicado: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <Button className="flex-1 rounded-xl bg-emerald-600 text-xs font-black uppercase text-white hover:bg-emerald-700" onClick={handleGuardarPagoOC}>
+                {guardandoPago ? 'Guardando...' : 'Registrar Pago'}
+              </Button>
+              <Button className="flex-1 rounded-xl border border-border text-xs font-black uppercase" onClick={() => setShowPagoModal(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── SlidePanel: Nuevo Presupuesto Asignado ──────────────────────── */}
