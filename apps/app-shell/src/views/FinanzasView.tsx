@@ -191,6 +191,7 @@ export const FinanzasView: React.FC = () => {
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [pagos, setPagos] = useState<PagoProgramado[]>([]);
   const [presupuestos, setPresupuestos] = useState<PresupuestoAsignado[]>([]);
+  const [dashAlertas, setDashAlertas] = useState<Array<{ tipo: string; mensaje: string; severidad: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -254,6 +255,7 @@ export const FinanzasView: React.FC = () => {
         api.get('/api/v1/finanzas/presupuestos'),
       ]);
       setResumen(dashRes.data.data.resumen_presupuestal);
+      setDashAlertas(dashRes.data.data.alertas ?? []);
       setPagos(pagosRes.data.data);
       setPresupuestos(presRes.data.data ?? []);
     } catch (err: any) {
@@ -481,6 +483,25 @@ export const FinanzasView: React.FC = () => {
               </Card>
             ))}
           </div>
+
+          {/* Alertas del dashboard */}
+          {dashAlertas.length > 0 && (
+            <div className="space-y-2">
+              {dashAlertas.map((a, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${
+                    a.severidad === 'critical'
+                      ? 'border-red-500/30 bg-red-500/5 text-red-700'
+                      : 'border-amber-500/30 bg-amber-500/5 text-amber-700'
+                  }`}
+                >
+                  <IconAlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs font-bold">{a.mensaje}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">

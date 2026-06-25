@@ -353,6 +353,18 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [reqConceptoDesc, setReqConceptoDesc] = useState('');
   const [reqConceptoSearch, setReqConceptoSearch] = useState('');
   const [reqFiltroConcepto, setReqFiltroConcepto] = useState('');
+  const [dashboardData, setDashboardData] = useState<{
+    kpis: { total_requisiciones: number; pendiente_aprobacion: number; lista_cotizar: number; cotizando: number; pendiente_gt: number; ocs_emitidas: number; ocs_pendientes_recibir: number };
+    alertas: Array<{ tipo: string; req_id: string; folio: string; dias_vencida: number }>;
+    actividad_reciente: Array<{ id: string; folio: string; concepto: string; estado: string; updated_at: string }>;
+  } | null>(null);
+  const [gtDashboardData, setGtDashboardData] = useState<{
+    pendientes_revision: number; en_evaluacion_tecnica: number; aprobados_este_mes: number;
+    monto_comprometido: number;
+    alertas: Array<{ comparativa_id: string; folio: string; proyecto: string; dias_en_espera: number; mensaje: string }>;
+    reciente: Array<{ comparativa_id: string; folio: string; proyecto: string; estado: string; fecha: string }>;
+    parcial: boolean;
+  } | null>(null);
 
   // Búsqueda de insumo por item de requisición
   const [itemSearch, setItemSearch] = useState<string[]>([]);
@@ -379,7 +391,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         setPendientesGT(demoComps.filter(c => c.estado === 'EN_APROBACION_GT'));
         return;
       }
-      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes, alertasRes, presRes] = await Promise.allSettled([
+      const [reqRes, insRes, invRes, movRes, compRes, evalRes, gtRes, provRes, alertasRes, presRes, dashRes, gtDashRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
         api.get('/api/v1/gerencia-tecnica/insumos'),
         api.get('/api/v1/compras/almacen/inventario'),
@@ -391,6 +403,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         api.get('/api/v1/compras/proveedores').catch(() => null),
         api.get('/api/v1/compras/alertas/cotizacion-pendiente').catch(() => null),
         api.get('/api/v1/gerencia-tecnica/presupuesto/activo').catch(() => null),
+        api.get('/api/v1/compras/dashboard').catch(() => null),
+        api.get('/api/v1/gerencia-tecnica/dashboard').catch(() => null),
       ]);
       // Colectar datos normalizados para las dependencias entre entidades
       let insumosNormalizados: Insumo[] = [];
@@ -508,6 +522,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           descripcion:  c.descripcion,
           unidad_medida: c.unidad_medida,
         })));
+      }
+      if (dashRes.status === 'fulfilled' && dashRes.value?.data?.data) {
+        setDashboardData(dashRes.value.data.data);
+      }
+      if (gtDashRes.status === 'fulfilled' && gtDashRes.value?.data?.data) {
+        setGtDashboardData(gtDashRes.value.data.data);
       }
     } catch {
       setError('Error al conectar con el modulo de Compras.');
@@ -1331,13 +1351,33 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         )}
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — desde /api/v1/compras/dashboard cuando disponible, fallback a conteos locales */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: 'Requisiciones',    value: String(requisiciones.length),   color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: IconShoppingCart },
-          { label: 'Pendientes',       value: String(reqPendientes),           color: 'text-amber-600',   bg: 'bg-amber-500/10',   icon: IconClock },
-          { label: 'Insumos catálogo', value: String(insumos.length),          color: 'text-blue-600',    bg: 'bg-blue-500/10',    icon: IconPackage },
-          { label: 'Alm. con alerta',  value: String(almacenAlerta.length),    color: 'text-red-500',     bg: 'bg-red-500/10',     icon: IconAlertCircle },
+          {
+            label: 'Requisiciones',
+            value: String(dashboardData?.kpis.total_requisiciones ?? requisiciones.length),
+            color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: IconShoppingCart,
+          },
+          {
+            label: 'Pdte. aprobación',
+            value: String(dashboardData?.kpis.pendiente_aprobacion ?? reqPendientes),
+            color: (dashboardData?.kpis.pendiente_aprobacion ?? reqPendientes) > 0 ? 'text-amber-600' : 'text-emerald-600',
+            bg: (dashboardData?.kpis.pendiente_aprobacion ?? reqPendientes) > 0 ? 'bg-amber-500/10' : 'bg-emerald-500/10',
+            icon: IconClock,
+          },
+          {
+            label: 'Pdte. GT',
+            value: String(dashboardData?.kpis.pendiente_gt ?? 0),
+            color: (dashboardData?.kpis.pendiente_gt ?? 0) > 0 ? 'text-amber-600' : 'text-slate-500',
+            bg: (dashboardData?.kpis.pendiente_gt ?? 0) > 0 ? 'bg-amber-500/10' : 'bg-slate-500/10',
+            icon: IconAlertCircle,
+          },
+          {
+            label: 'OCs por recibir',
+            value: String(dashboardData?.kpis.ocs_pendientes_recibir ?? 0),
+            color: 'text-blue-600', bg: 'bg-blue-500/10', icon: IconPackage,
+          },
         ].map(kpi => (
           <Card key={kpi.label} className="rounded-2xl border-border/30 p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg">
             <CardContent className="p-0">
@@ -1350,6 +1390,51 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </Card>
         ))}
       </div>
+
+      {/* Alertas del dashboard — cotizaciones vencidas */}
+      {dashboardData && dashboardData.alertas.length > 0 && (
+        <Card className="rounded-2xl border-amber-500/30 bg-amber-500/5">
+          <CardContent className="p-4 space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+              ⚠ {dashboardData.alertas.length} cotización{dashboardData.alertas.length !== 1 ? 'es' : ''} vencida{dashboardData.alertas.length !== 1 ? 's' : ''}
+            </p>
+            {dashboardData.alertas.map((a) => (
+              <div key={a.req_id} className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2">
+                <span className="text-xs font-semibold text-amber-800">{a.folio} · {a.dias_vencida} día{a.dias_vencida !== 1 ? 's' : ''} vencida</span>
+                <button
+                  onClick={() => setSolicitudPanelReqId(a.req_id)}
+                  className="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-900"
+                >
+                  Ver →
+                </button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Actividad reciente */}
+      {dashboardData && dashboardData.actividad_reciente.length > 0 && (
+        <Card className="rounded-2xl border-border/30">
+          <CardContent className="p-4">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Actividad reciente</p>
+            <div className="space-y-1">
+              {dashboardData.actividad_reciente.map((r) => (
+                <div key={r.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-muted/40">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-foreground">{r.folio}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">{r.concepto || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{r.estado}</span>
+                    <span className="text-[10px] text-muted-foreground">{new Date(r.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
 
       {/* Content */}
@@ -2213,6 +2298,43 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           {/* ── 9.2 TAB: Pendientes de Aprobación GT ──────────────────────────── */}
           {activeTab === 'pendientes-gt' && (
             <div className="space-y-4">
+              {/* Dashboard GT */}
+              {gtDashboardData && (
+                <div className="space-y-3">
+                  {gtDashboardData.parcial && (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">⚠ Datos parcialmente disponibles</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    {[
+                      { label: 'Pdte. revisión', value: gtDashboardData.pendientes_revision, alert: gtDashboardData.pendientes_revision > 0 },
+                      { label: 'En eval. técnica', value: gtDashboardData.en_evaluacion_tecnica, alert: false },
+                      { label: 'Aprobados/mes', value: gtDashboardData.aprobados_este_mes, alert: false },
+                      { label: 'Comprometido', value: `$${(gtDashboardData.monto_comprometido / 1000).toFixed(0)}k`, alert: false },
+                    ].map(kpi => (
+                      <Card key={kpi.label} className={`rounded-2xl border-border/30 p-4 ${kpi.alert ? 'border-amber-500/30 bg-amber-500/5' : ''}`}>
+                        <CardContent className="p-0">
+                          <div className={`text-2xl font-black tracking-tighter ${kpi.alert ? 'text-amber-600' : 'text-violet-600'}`}>{kpi.value}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{kpi.label}</div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  {gtDashboardData.alertas.length > 0 && (
+                    <Card className="rounded-2xl border-amber-500/30 bg-amber-500/5">
+                      <CardContent className="p-4 space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">⚠ Cuadros esperando más de 3 días</p>
+                        {gtDashboardData.alertas.map((a) => (
+                          <div key={a.comparativa_id} className="rounded-xl bg-amber-500/10 px-3 py-2">
+                            <span className="text-xs font-semibold text-amber-800">{a.folio} · {a.dias_en_espera} días en espera</span>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <p className="text-[10px] font-black uppercase tracking-widest text-violet-700">
                   Cuadros comparativos pendientes de tu aprobación como Gerencia Técnica

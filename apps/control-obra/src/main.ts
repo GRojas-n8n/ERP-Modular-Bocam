@@ -50,6 +50,7 @@ app.use(createObservabilityMiddleware('control-obra'));
 const PORT = process.env.PORT || 3005;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
+const COMPRAS_URL  = process.env.COMPRAS_URL  || 'http://localhost:3002/api/v1/compras';
 initSentry(process.env.SENTRY_DSN || '', 'control-obra');
 const ESTIMACION_STATUS = {
   PENDIENTE_FINANZAS: EstadoEstimacion.PENDIENTE_CONFIRMACION_FINANZAS,
@@ -902,11 +903,12 @@ app.post('/api/v1/control-obra/estimaciones/:id/reconciliar-finanzas', async (re
 app.get('/api/v1/control-obra/dashboard', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
+    const authHeader = req.headers.authorization ?? '';
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        const [totalBitacoras, totalAvances, avancesPendientes, avancesValidados, estimaciones] = await Promise.all([
+        const [totalBitacoras, totalAvances, avancesPendientes, avancesValidados, estimaciones, avgAvance, estimacionesPendientes] = await Promise.all([
           prisma.bitacoraObra.count(),
           prisma.avanceFisico.count(),
           prisma.avanceFisico.count({ where: { estado: EstadoAvance.PENDIENTE } }),
@@ -916,9 +918,48 @@ app.get('/api/v1/control-obra/dashboard', async (req: Request, res: Response) =>
             orderBy: { numero_estimacion: 'desc' },
             take: 5,
           }),
+          prisma.avanceFisico.aggregate({ where: { estado: EstadoAvance.VALIDADO }, _avg: { porcentaje_avance: true } }),
+          prisma.estimacion.count({ where: { estado: { in: ['BORRADOR', 'EN_REVISION'] } } }),
         ]);
 
+        const avanceFisicoPct = Math.round(Number(avgAvance._avg.porcentaje_avance) || 0);
+
+        // Llamada backend-to-backend a Finanzas para avance financiero
+        let avanceFinancieroPct: number | null = null;
+        let parcial = false;
+        try {
+          const resp = await axios.get(`${FINANZAS_URL}/presupuestos`, {
+            headers: { authorization: authHeader },
+            timeout: 3000,
+          });
+          const presupuestos: any[] = resp.data?.data ?? [];
+          const totalAutorizado = presupuestos.reduce((s: number, p: any) => s + Number(p.monto_autorizado ?? 0), 0);
+          const totalEjercido   = presupuestos.reduce((s: number, p: any) => s + Number(p.monto_ejercido ?? 0), 0);
+          avanceFinancieroPct = totalAutorizado > 0 ? Math.round((totalEjercido / totalAutorizado) * 100) : 0;
+        } catch {
+          parcial = true;
+        }
+
+        const alertas: any[] = [];
+        if (avanceFinancieroPct !== null && avanceFisicoPct > 0) {
+          const delta = avanceFisicoPct - avanceFinancieroPct;
+          if (avanceFinancieroPct > avanceFisicoPct + 15) {
+            alertas.push({ tipo: 'DESVIACION_FINANCIERA', mensaje: `Avance financiero supera al físico en ${Math.abs(delta)}%`, severidad: 'critical' });
+          }
+        }
+        if (avancesPendientes > 2) {
+          alertas.push({ tipo: 'AVANCES_PENDIENTES', mensaje: `${avancesPendientes} avances físicos pendientes de validación`, severidad: 'warning' });
+        }
+
         return {
+          avance_general: {
+            fisico_pct:      avanceFisicoPct,
+            financiero_pct:  avanceFinancieroPct,
+            delta_pct:       avanceFinancieroPct !== null ? avanceFisicoPct - avanceFinancieroPct : null,
+          },
+          estimaciones_pendientes: estimacionesPendientes,
+          alertas,
+          parcial,
           resumen: {
             total_bitacoras: totalBitacoras,
             total_avances: totalAvances,
@@ -960,6 +1001,81 @@ app.get('/api/v1/control-obra/resumen-dashboard',
           avance_pct:               Math.round(Number(avgAvance._avg.porcentaje_avance) || 0),
         };
       });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ─── Dashboard Residente ─────────────────────────────────────────────────────
+app.get('/api/v1/control-obra/dashboard/residente',
+  requireRoles('residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const authHeader = req.headers['authorization'] as string | undefined;
+      const now = new Date();
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const estimacionesPendientes = await prisma.estimacion.count({
+          where: { estado: { in: ['BORRADOR', 'EN_REVISION'] } },
+        });
+
+        let misReqs = 0;
+        let ocsPorRecibir: Array<{ id: string; folio: string; proveedor: string; monto: number; estado: string }> = [];
+        let parcial = false;
+        try {
+          const [reqRes, ocRes] = await Promise.allSettled([
+            axios.get(`${COMPRAS_URL}/requisiciones`, {
+              headers: authHeader ? { Authorization: authHeader } : {},
+              timeout: 3000,
+            }),
+            axios.get(`${COMPRAS_URL}/ordenes-compra`, {
+              headers: authHeader ? { Authorization: authHeader } : {},
+              params: { estado: 'EMITIDA,PARCIALMENTE_RECIBIDA' },
+              timeout: 3000,
+            }),
+          ]);
+
+          if (reqRes.status === 'fulfilled') {
+            const reqs = (reqRes.value.data?.data ?? []) as any[];
+            misReqs = reqs.filter((r: any) => r.creado_por === userId || r.solicitante_id === userId).length;
+          } else {
+            parcial = true;
+          }
+
+          if (ocRes.status === 'fulfilled') {
+            const ocs = (ocRes.value.data?.data ?? []) as any[];
+            ocsPorRecibir = ocs.slice(0, 5).map((oc: any) => ({
+              id:        oc.id_orden_compra,
+              folio:     oc.codigo ?? oc.id_orden_compra.slice(0, 8),
+              proveedor: oc.proveedor_nombre ?? oc.proveedor_id,
+              monto:     Number(oc.total ?? 0),
+              estado:    oc.estado,
+            }));
+          } else {
+            parcial = true;
+          }
+        } catch {
+          parcial = true;
+        }
+
+        const alertas: Array<{ tipo: string; mensaje: string; severidad: string }> = [];
+        if (estimacionesPendientes > 0) {
+          alertas.push({ tipo: 'ESTIMACIONES_PENDIENTES', mensaje: `${estimacionesPendientes} estimacion(es) pendiente(s) de revisión`, severidad: 'advertencia' });
+        }
+
+        return {
+          mis_requisiciones:       misReqs,
+          estimaciones_pendientes: estimacionesPendientes,
+          ocs_por_recibir:         ocsPorRecibir,
+          alertas,
+          parcial,
+          generado_at:             now.toISOString(),
+        };
+      });
+
       res.json({ success: true, data });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });

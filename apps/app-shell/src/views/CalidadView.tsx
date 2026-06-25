@@ -64,6 +64,12 @@ interface DashboardData {
   documentos_por_tipo: Record<TipoDoc, number>;
   versiones_pendientes_revision: number;
   versiones_en_borrador_sin_archivo: number;
+  // NCs e ISO 9001
+  ncs_abiertas?: number;
+  ncs_vencidas?: number;
+  auditorias_programadas?: number;
+  indice_calidad?: number;
+  alertas?: Array<{ nc_id: string; folio: string; descripcion: string; severidad: string }>;
 }
 
 // ── Estilos por estado/tipo ───────────────────────────────────────────────────
@@ -308,6 +314,46 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </Card>
         ))}
       </div>
+
+      {/* KPIs ISO 9001: NCs y Auditorías */}
+      {dashboard && (dashboard.ncs_abiertas !== undefined) && (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Card className={`rounded-2xl border p-4 ${(dashboard.ncs_abiertas ?? 0) > 0 ? 'border-red-500/20 bg-red-500/5' : 'border-border/30'}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">NCs Abiertas</p>
+            <p className={`mt-1 text-3xl font-black ${(dashboard.ncs_abiertas ?? 0) > 0 ? 'text-red-600' : 'text-foreground'}`}>
+              {dashboard.ncs_abiertas ?? 0}
+            </p>
+          </Card>
+          <Card className={`rounded-2xl border p-4 ${(dashboard.ncs_vencidas ?? 0) > 0 ? 'border-red-500/30 bg-red-500/10' : 'border-border/30'}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">NCs Vencidas</p>
+            <p className={`mt-1 text-3xl font-black ${(dashboard.ncs_vencidas ?? 0) > 0 ? 'text-red-700' : 'text-foreground'}`}>
+              {dashboard.ncs_vencidas ?? 0}
+            </p>
+          </Card>
+          <Card className="rounded-2xl border border-border/30 p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Auditorías próx. 30d</p>
+            <p className="mt-1 text-3xl font-black text-foreground">{dashboard.auditorias_programadas ?? 0}</p>
+          </Card>
+          <Card className={`rounded-2xl border p-4 ${(dashboard.indice_calidad ?? 100) < 80 ? 'border-amber-500/20 bg-amber-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Índice Calidad</p>
+            <p className={`mt-1 text-3xl font-black ${(dashboard.indice_calidad ?? 100) < 80 ? 'text-amber-700' : 'text-emerald-700'}`}>
+              {dashboard.indice_calidad ?? 100}%
+            </p>
+          </Card>
+        </div>
+      )}
+
+      {/* Alertas NCs vencidas */}
+      {dashboard?.alertas && dashboard.alertas.length > 0 && (
+        <div className="space-y-2">
+          {dashboard.alertas.map((a) => (
+            <div key={a.nc_id} className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-red-700">
+              <IconAlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs font-bold">[{a.folio}] {a.descripcion}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Pendientes de acción */}
       {dashboard && (dashboard.versiones_pendientes_revision > 0 || dashboard.versiones_en_borrador_sin_archivo > 0) && (

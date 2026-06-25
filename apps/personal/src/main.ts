@@ -574,12 +574,17 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      const [totalEmpleados, empleadosActivos, totalCuadrillas, asignacionesActivas, ultimaPrenomina] = await Promise.all([
+      const hoy = new Date();
+      const inicioDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+      const finDia    = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000);
+
+      const [totalEmpleados, empleadosActivos, totalCuadrillas, asignacionesActivas, ultimaPrenomina, asistenciaHoy] = await Promise.all([
         prisma.empleado.count(),
         prisma.empleado.count({ where: { estado: 'ACTIVO' } }),
         prisma.cuadrilla.count({ where: { estado: 'ACTIVA' } }),
         prisma.asignacionFrente.count({ where: { estado: 'ACTIVA' } }),
         prisma.preNomina.findFirst({ orderBy: { periodo_inicio: 'desc' }, select: { codigo: true, estado: true, total_neto: true, total_empleados: true } }),
+        prisma.registroAsistencia.count({ where: { fecha: { gte: inicioDia, lt: finDia }, estado: { in: ['PRESENTE', 'MEDIO_DIA', 'POR_HORAS'] } } }),
       ]);
 
       const porCategoria = await prisma.empleado.groupBy({
@@ -588,15 +593,30 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
         _count: true,
       });
 
+      const ausenciasHoy = Math.max(0, empleadosActivos - asistenciaHoy);
+      const alertas: Array<{ tipo: string; mensaje: string; severidad: string }> = [];
+      if (ausenciasHoy > 0) {
+        alertas.push({ tipo: 'AUSENCIAS', mensaje: `${ausenciasHoy} empleado(s) sin asistencia registrada hoy`, severidad: ausenciasHoy > 5 ? 'critica' : 'advertencia' });
+      }
+      if (ultimaPrenomina?.estado === 'PENDIENTE') {
+        alertas.push({ tipo: 'PRENOMINA_PENDIENTE', mensaje: `Pre-nómina ${ultimaPrenomina.codigo} pendiente de autorización`, severidad: 'advertencia' });
+      }
+
       return {
         resumen: {
-          total_empleados: totalEmpleados,
-          empleados_activos: empleadosActivos,
-          cuadrillas_activas: totalCuadrillas,
+          total_empleados:      totalEmpleados,
+          empleados_activos:    empleadosActivos,
+          cuadrillas_activas:   totalCuadrillas,
           asignaciones_activas: asignacionesActivas,
+        },
+        asistencia_hoy: {
+          presentes:  asistenciaHoy,
+          ausentes:   ausenciasHoy,
+          pct_asistencia: empleadosActivos > 0 ? Math.round((asistenciaHoy / empleadosActivos) * 100) : 0,
         },
         distribucion_categoria: porCategoria.map((c: any) => ({ categoria: c.categoria, cantidad: c._count })),
         ultima_prenomina: ultimaPrenomina,
+        alertas,
       };
     });
 

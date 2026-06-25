@@ -2919,6 +2919,81 @@ app.get('/api/v1/compras/resumen-dashboard',
   }
 );
 
+app.get('/api/v1/compras/dashboard',
+  requireRoles('superintendent', 'procurement', 'admin', 'resident'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const now = new Date();
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const [
+          totalReq, pendienteAprobacion, listaParaCotizar,
+          cotizando, pendienteGt,
+          ocsEmitidas, ocsPendientesRecibir,
+          solicitudesVencidas, actividadReciente,
+        ] = await Promise.all([
+          prisma.requisicion.count(),
+          prisma.requisicion.count({ where: { estado: 'PENDIENTE' } }),
+          prisma.requisicion.count({ where: { estado: 'APROBADA' } }),
+          prisma.cuadroComparativo.count({
+            where: { estado: { in: ['BORRADOR', 'CON_SOLICITUD', 'EN_COTIZACION', 'EN_EVALUACION_TECNICA'] } },
+          }),
+          prisma.cuadroComparativo.count({
+            where: { estado: { in: ['EVALUADO_TECNICAMENTE', 'EN_APROBACION_GT'] } },
+          }),
+          prisma.ordenCompra.count({ where: { estado: 'EMITIDA' } }),
+          prisma.ordenCompra.count({ where: { estado: { in: ['EMITIDA', 'PARCIALMENTE_RECIBIDA'] } } }),
+          prisma.solicitudCotizacion.findMany({
+            where: { fecha_limite: { lt: now } },
+            select: { id_solicitud: true, requisicion_id: true, fecha_limite: true },
+          }),
+          prisma.requisicion.findMany({
+            orderBy: { fecha_solicitud: 'desc' },
+            take: 5,
+            select: { id_requisicion: true, codigo: true, observaciones: true, estado: true, fecha_solicitud: true },
+          }),
+        ]);
+
+        const alertas = solicitudesVencidas.map((s) => {
+          const msVencida = now.getTime() - s.fecha_limite.getTime();
+          const diasVencida = Math.floor(msVencida / (1000 * 60 * 60 * 24));
+          return {
+            tipo: 'cotizacion_vencida',
+            req_id: s.requisicion_id,
+            folio: s.id_solicitud,
+            dias_vencida: diasVencida,
+          };
+        });
+
+        return {
+          kpis: {
+            total_requisiciones:       totalReq,
+            pendiente_aprobacion:      pendienteAprobacion,
+            lista_cotizar:             listaParaCotizar,
+            cotizando,
+            pendiente_gt:              pendienteGt,
+            ocs_emitidas:              ocsEmitidas,
+            ocs_pendientes_recibir:    ocsPendientesRecibir,
+          },
+          alertas,
+          actividad_reciente: actividadReciente.map((r) => ({
+            id:         r.id_requisicion,
+            folio:      r.codigo,
+            concepto:   r.observaciones ?? '',
+            estado:     r.estado,
+            updated_at: r.fecha_solicitud.toISOString(),
+          })),
+        };
+      });
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'compras', timestamp: new Date().toISOString() });
 });

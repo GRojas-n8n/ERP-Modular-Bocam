@@ -1508,6 +1508,90 @@ app.get(
 );
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DASHBOARD — GT (consulta Compras vía HTTP interno)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get(
+  '/api/v1/gerencia-tecnica/dashboard',
+  requireRoles('superintendent', 'admin', 'technical', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const authHeader = req.headers.authorization ?? '';
+      const TIMEOUT_MS = 3000;
+
+      let pendientesRevision = 0;
+      let enEvaluacionTecnica = 0;
+      let aprobadosEsteMes = 0;
+      let montoComprometido = 0;
+      let alertas: any[] = [];
+      let reciente: any[] = [];
+      let parcial = false;
+
+      try {
+        const { default: axios } = await import('axios');
+        const resp = await axios.get(`${COMPRAS_URL}/comparativas/pendientes-gt`, {
+          headers: { authorization: authHeader },
+          timeout: TIMEOUT_MS,
+        });
+        const comparativas: any[] = resp.data?.data ?? [];
+        const now = new Date();
+        const primeroDiaMes = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        pendientesRevision   = comparativas.filter((c: any) => c.estado === 'EN_APROBACION_GT').length;
+        enEvaluacionTecnica  = comparativas.filter((c: any) => c.estado === 'EVALUADO_TECNICAMENTE').length;
+        aprobadosEsteMes     = comparativas.filter((c: any) =>
+          c.estado === 'APROBADO_GT' && new Date(c.fecha_aprobacion_gt ?? c.updated_at ?? 0) >= primeroDiaMes
+        ).length;
+        montoComprometido    = comparativas
+          .filter((c: any) => c.estado === 'APROBADO_GT')
+          .reduce((sum: number, c: any) => sum + Number(c.monto_total ?? 0), 0);
+
+        const alertaThresholdMs = 3 * 24 * 60 * 60 * 1000;
+        alertas = comparativas
+          .filter((c: any) => c.estado === 'EN_APROBACION_GT' && c.updated_at &&
+            now.getTime() - new Date(c.updated_at).getTime() > alertaThresholdMs)
+          .map((c: any) => ({
+            comparativa_id: c.id_cuadro ?? c.id,
+            folio:          c.codigo,
+            proyecto:       c.proyecto_id,
+            dias_en_espera: Math.floor((now.getTime() - new Date(c.updated_at).getTime()) / (1000 * 60 * 60 * 24)),
+            mensaje:        `Cuadro esperando aprobación GT por ${Math.floor((now.getTime() - new Date(c.updated_at).getTime()) / (1000 * 60 * 60 * 24))} días`,
+          }));
+
+        reciente = comparativas
+          .filter((c: any) => c.estado === 'APROBADO_GT')
+          .sort((a: any, b: any) => new Date(b.fecha_aprobacion_gt ?? 0).getTime() - new Date(a.fecha_aprobacion_gt ?? 0).getTime())
+          .slice(0, 5)
+          .map((c: any) => ({
+            comparativa_id: c.id_cuadro ?? c.id,
+            folio:          c.codigo,
+            proyecto:       c.proyecto_id,
+            estado:         c.estado,
+            fecha:          c.fecha_aprobacion_gt ?? c.updated_at,
+          }));
+      } catch {
+        parcial = true;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          pendientes_revision:    pendientesRevision,
+          en_evaluacion_tecnica:  enEvaluacionTecnica,
+          aprobados_este_mes:     aprobadosEsteMes,
+          monto_comprometido:     montoComprometido,
+          alertas,
+          reciente,
+          parcial,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {

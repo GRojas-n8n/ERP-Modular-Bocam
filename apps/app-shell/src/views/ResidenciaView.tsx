@@ -30,6 +30,7 @@ import {
   cn,
 } from '@bocam/ui-core';
 import {
+  IconAlertCircle,
   IconCheckCircle2,
   IconClipboardCheck,
   IconClock,
@@ -349,6 +350,14 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
 
   const [sinPresupuesto, setSinPresupuesto] = useState(false);
 
+  const [dashData, setDashData] = useState<{
+    mis_requisiciones: number;
+    estimaciones_pendientes: number;
+    ocs_por_recibir: Array<{ id: string; folio: string; proveedor: string; monto: number; estado: string }>;
+    alertas: Array<{ tipo: string; mensaje: string; severidad: string }>;
+    parcial: boolean;
+  } | null>(null);
+
   // Por Insumo state
   const [insumosAll,           setInsumosAll]           = useState<InsumoReq[]>([]);
   const [insumoSearch,         setInsumoSearch]         = useState('');
@@ -371,14 +380,16 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     }
     const fetchData = async () => {
       try {
-        const [, nomRes] = await Promise.allSettled([
+        const [nomRes, dashRes] = await Promise.allSettled([
           api.get('/api/v1/personal/prenominas'),
-          api.get('/api/v1/personal/prenominas'),
+          api.get('/api/v1/control-obra/dashboard/residente'),
         ]);
-        // Estimaciones (módulo residencia pendiente de backend real)
         setEstimaciones([]);
         if (nomRes.status === 'fulfilled') {
           setPrenominas((nomRes.value.data as any)?.data ?? []);
+        }
+        if (dashRes.status === 'fulfilled' && (dashRes.value.data as any)?.data) {
+          setDashData((dashRes.value.data as any).data);
         }
       } catch { /* silencioso */ } finally { setLoading(false); }
     };
@@ -916,6 +927,70 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
         </div>
         <p className="text-xs text-muted-foreground">Estimaciones · Aprobación de nómina · Control de asistencia QR</p>
       </div>
+
+      {/* ── Dashboard Residente ─────────────────────────────────────────── */}
+      {dashData && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Card>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Mis Requisiciones</p>
+                <p className="mt-1 text-xl font-black text-foreground">{dashData.mis_requisiciones}</p>
+                <p className="text-[10px] text-muted-foreground">enviadas</p>
+              </CardContent>
+            </Card>
+            <Card className={dashData.estimaciones_pendientes > 0 ? 'border-amber-500/20 bg-amber-500/5' : ''}>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Est. Pendientes</p>
+                <p className={cn('mt-1 text-xl font-black', dashData.estimaciones_pendientes > 0 ? 'text-amber-700' : 'text-foreground')}>
+                  {dashData.estimaciones_pendientes}
+                </p>
+                <p className="text-[10px] text-muted-foreground">por revisión</p>
+              </CardContent>
+            </Card>
+            <Card className={dashData.ocs_por_recibir.length > 0 ? 'border-sky-500/20 bg-sky-500/5' : ''}>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">OCs por Recibir</p>
+                <p className={cn('mt-1 text-xl font-black', dashData.ocs_por_recibir.length > 0 ? 'text-sky-700' : 'text-foreground')}>
+                  {dashData.ocs_por_recibir.length}
+                </p>
+                <p className="text-[10px] text-muted-foreground">{dashData.parcial ? '— datos parciales' : 'emitidas o parciales'}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {dashData.ocs_por_recibir.length > 0 && (
+            <div className="rounded-2xl border border-border/40 bg-card">
+              <div className="px-4 py-3 border-b border-border/30">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">OCs Pendientes de Recibir</p>
+              </div>
+              {dashData.ocs_por_recibir.map((oc) => (
+                <div key={oc.id} className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-border/20 last:border-0">
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{oc.folio}</p>
+                    <p className="text-[10px] text-muted-foreground">{oc.proveedor}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-foreground">{new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(oc.monto)}</p>
+                    <p className="text-[10px] text-sky-600 font-medium">{oc.estado}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {dashData.alertas.length > 0 && (
+            <div className="space-y-2">
+              {dashData.alertas.map((a, i) => (
+                <div key={i} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${a.severidad === 'critica' ? 'border-red-500/30 bg-red-500/5 text-red-700' : 'border-amber-500/30 bg-amber-500/5 text-amber-700'}`}>
+                  <IconAlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs font-bold">{a.mensaje}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── KPIs dinámicos por tab ─────────────────────────────────────── */}
       {activeTab === 'estimaciones' && (

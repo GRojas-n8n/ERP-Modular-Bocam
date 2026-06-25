@@ -159,6 +159,12 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [prenominas, setPrenominas] = useState<PreNomina[]>([]);
   const [pases, setPases] = useState<PaseAcceso[]>([]);
   const [nominaDetalle, setNominaDetalle] = useState<{ pn: PreNomina; detalles: PreNominaDetalle[] } | null>(null);
+  const [dashData, setDashData] = useState<{
+    resumen: { total_empleados: number; empleados_activos: number; cuadrillas_activas: number; asignaciones_activas: number };
+    asistencia_hoy: { presentes: number; ausentes: number; pct_asistencia: number };
+    ultima_prenomina: { codigo: string; estado: string; total_neto: number; total_empleados: number } | null;
+    alertas: Array<{ tipo: string; mensaje: string; severidad: string }>;
+  } | null>(null);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [generandoComplemento, setGenerandoComplemento] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -173,17 +179,19 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       try {
         setLoading(true);
         if (tenant?.id === 'iretum-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); setPases(DEMO_PASES); return; }
-        const [empRes, cuaRes, pnRes, pasesRes] = await Promise.allSettled([
+        const [empRes, cuaRes, pnRes, pasesRes, dashRes] = await Promise.allSettled([
           api.get('/api/v1/personal/empleados'),
           api.get('/api/v1/personal/cuadrillas'),
           api.get('/api/v1/personal/prenominas'),
           api.get('/api/v1/personal/pases-acceso'),
+          api.get('/api/v1/personal/dashboard'),
         ]);
 
         if (empRes.status === 'fulfilled') setEmpleados(empRes.value.data?.data || []);
         if (cuaRes.status === 'fulfilled') setCuadrillas(cuaRes.value.data?.data || []);
         if (pnRes.status === 'fulfilled') setPrenominas(pnRes.value.data?.data || []);
         if (pasesRes.status === 'fulfilled') setPases(pasesRes.value.data?.data || []);
+        if (dashRes.status === 'fulfilled' && dashRes.value?.data?.data) setDashData(dashRes.value.data.data);
       } catch {
         setError('Error al conectar con el modulo de Personal.');
       } finally {
@@ -438,6 +446,58 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         </div>
       )}
 
+
+      {/* ── Dashboard KPIs ───────────────────────────────────────────────────── */}
+      {dashData && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Card className="rounded-2xl border-border/30 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Empleados Activos</p>
+              <p className="mt-1 text-3xl font-black text-foreground">{dashData.resumen.empleados_activos}</p>
+              <p className="text-[10px] text-muted-foreground">de {dashData.resumen.total_empleados} en plantilla</p>
+            </Card>
+            <Card className={`rounded-2xl border p-4 ${dashData.asistencia_hoy.pct_asistencia < 70 ? 'border-amber-500/20 bg-amber-500/5' : 'border-border/30'}`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Asistencia Hoy</p>
+              <p className={`mt-1 text-3xl font-black ${dashData.asistencia_hoy.pct_asistencia < 70 ? 'text-amber-700' : 'text-foreground'}`}>
+                {dashData.asistencia_hoy.pct_asistencia}%
+              </p>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-violet-500" style={{ width: `${dashData.asistencia_hoy.pct_asistencia}%` }} />
+              </div>
+            </Card>
+            <Card className="rounded-2xl border-border/30 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Presentes Hoy</p>
+              <p className="mt-1 text-3xl font-black text-emerald-600">{dashData.asistencia_hoy.presentes}</p>
+              <p className="text-[10px] text-muted-foreground">{dashData.asistencia_hoy.ausentes} ausentes</p>
+            </Card>
+            {dashData.ultima_prenomina ? (
+              <Card className={`rounded-2xl border p-4 ${dashData.ultima_prenomina.estado === 'PENDIENTE' ? 'border-amber-500/20 bg-amber-500/5' : 'border-border/30'}`}>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Última Nómina</p>
+                <p className={`mt-1 text-sm font-black ${dashData.ultima_prenomina.estado === 'PENDIENTE' ? 'text-amber-700' : 'text-foreground'}`}>
+                  {dashData.ultima_prenomina.codigo}
+                </p>
+                <p className="text-[10px] text-muted-foreground">{dashData.ultima_prenomina.estado} · {dashData.ultima_prenomina.total_empleados} emp.</p>
+              </Card>
+            ) : (
+              <Card className="rounded-2xl border-border/30 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Última Nómina</p>
+                <p className="mt-1 text-sm font-black text-muted-foreground">Sin pre-nóminas</p>
+              </Card>
+            )}
+          </div>
+
+          {dashData.alertas.length > 0 && (
+            <div className="space-y-2">
+              {dashData.alertas.map((a, i) => (
+                <div key={i} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${a.severidad === 'critica' ? 'border-red-500/30 bg-red-500/5 text-red-700' : 'border-amber-500/30 bg-amber-500/5 text-amber-700'}`}>
+                  <IconAlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs font-bold">{a.mensaje}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <Card className="border-border/40">

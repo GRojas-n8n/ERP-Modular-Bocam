@@ -107,6 +107,13 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [estimaciones, setEstimaciones] = useState<Estimacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [dashData, setDashData] = useState<{
+    avance_general: { fisico_pct: number; financiero_pct: number; delta_pct: number };
+    estimaciones_pendientes: number;
+    alertas: Array<{ tipo: string; mensaje: string; severidad: string }>;
+    parcial: boolean;
+  } | null>(null);
   const [showBitacoraForm, setShowBitacoraForm] = useState(false);
   const [showAvanceForm, setShowAvanceForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -237,15 +244,17 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     try {
       setLoading(true);
       if (tenant?.id === 'iretum-demo') { setBitacoras(DEMO_BITACORAS as Bitacora[]); setAvances(DEMO_AVANCES as AvanceFisico[]); setEstimaciones(DEMO_ESTIMACIONES as Estimacion[]); return; }
-      const [bitRes, avRes, estRes] = await Promise.allSettled([
+      const [bitRes, avRes, estRes, dashRes] = await Promise.allSettled([
         api.get('/api/v1/control-obra/bitacoras'),
         api.get('/api/v1/control-obra/avances'),
         api.get('/api/v1/control-obra/estimaciones'),
+        api.get('/api/v1/control-obra/dashboard'),
       ]);
 
       if (bitRes.status === 'fulfilled') setBitacoras(bitRes.value.data?.data || []);
       if (avRes.status === 'fulfilled') setAvances(avRes.value.data?.data || []);
       if (estRes.status === 'fulfilled') setEstimaciones(estRes.value.data?.data || []);
+      if (dashRes.status === 'fulfilled' && dashRes.value?.data?.data) setDashData(dashRes.value.data.data);
     } catch {
       setError('Error al conectar con el modulo de Control de Obra.');
     } finally {
@@ -443,6 +452,62 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
         )}
       </div>
 
+
+      {/* ── Dashboard KPIs ──────────────────────────────────────────────────── */}
+      {dashData && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {/* Avance físico */}
+            <Card className="rounded-2xl border-sky-500/20 bg-sky-500/5 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-sky-600">Avance Físico</p>
+              <p className="mt-1 text-3xl font-black text-foreground">{dashData.avance_general.fisico_pct.toFixed(1)}%</p>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-sky-100">
+                <div className="h-full rounded-full bg-sky-500" style={{ width: `${Math.min(dashData.avance_general.fisico_pct, 100)}%` }} />
+              </div>
+            </Card>
+            {/* Avance financiero */}
+            <Card className="rounded-2xl border-border/30 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Avance Financiero</p>
+              <p className="mt-1 text-3xl font-black text-foreground">{dashData.avance_general.financiero_pct.toFixed(1)}%</p>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(dashData.avance_general.financiero_pct, 100)}%` }} />
+              </div>
+            </Card>
+            {/* Delta */}
+            <Card className={`rounded-2xl border p-4 ${dashData.avance_general.delta_pct < -5 ? 'border-red-500/20 bg-red-500/5' : dashData.avance_general.delta_pct > 5 ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-border/30'}`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Delta Físico-Fin.</p>
+              <p className={`mt-1 text-3xl font-black ${dashData.avance_general.delta_pct < -5 ? 'text-red-600' : dashData.avance_general.delta_pct > 5 ? 'text-emerald-600' : 'text-foreground'}`}>
+                {dashData.avance_general.delta_pct >= 0 ? '+' : ''}{dashData.avance_general.delta_pct.toFixed(1)}%
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{dashData.avance_general.delta_pct < -5 ? 'Desviación financiera' : dashData.avance_general.delta_pct > 5 ? 'Adelanto físico' : 'Equilibrado'}</p>
+            </Card>
+            {/* Estimaciones pendientes */}
+            <Card className={`rounded-2xl border p-4 ${dashData.estimaciones_pendientes > 0 ? 'border-amber-500/20 bg-amber-500/5' : 'border-border/30'}`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Est. Pendientes</p>
+              <p className={`mt-1 text-3xl font-black ${dashData.estimaciones_pendientes > 0 ? 'text-amber-700' : 'text-foreground'}`}>
+                {dashData.estimaciones_pendientes}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">por validar</p>
+            </Card>
+          </div>
+
+          {/* Alertas */}
+          {dashData.alertas.length > 0 && (
+            <div className="space-y-2">
+              {dashData.alertas.map((a, i) => (
+                <div key={i} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${a.severidad === 'critica' ? 'border-red-500/30 bg-red-500/5 text-red-700' : 'border-amber-500/30 bg-amber-500/5 text-amber-700'}`}>
+                  <IconAlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs font-bold">{a.mensaje}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {dashData.parcial && (
+            <p className="text-[10px] text-muted-foreground italic">* Datos de presupuesto no disponibles — avance financiero puede estar incompleto</p>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <Card className="border-border/40">

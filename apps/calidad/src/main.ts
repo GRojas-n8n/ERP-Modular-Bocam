@@ -307,23 +307,57 @@ app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superinte
     const { tenantId, userId } = req.securityContext;
 
     const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
-      const [docsPorEstado, docsPorTipo, versionesPendientes, versionesSinArchivo] = await Promise.all([
+      const now = new Date();
+      const primerDiaMes = new Date(now.getFullYear(), now.getMonth(), 1);
+      const en30Dias = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      const [
+        docsPorEstado, docsPorTipo, versionesPendientes, versionesSinArchivo,
+        ncsAbiertas, ncsVencidas, auditoriasProgramadas,
+        ncsTotal, ncsCerradasEnPlazo,
+        ncsVencidasDetalle,
+      ] = await Promise.all([
         prisma.documento.groupBy({ by: ['estado_actual'], where: { tenant_id: tenantId }, _count: { _all: true } }),
         prisma.documento.groupBy({ by: ['tipo'],          where: { tenant_id: tenantId }, _count: { _all: true } }),
         prisma.versionDocumento.count({ where: { tenant_id: tenantId, estado: 'EN_REVISION' } }),
         prisma.versionDocumento.count({ where: { tenant_id: tenantId, estado: 'BORRADOR', archivo_ruta: null } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: { not: 'CERRADA' } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: { not: 'CERRADA' }, fecha_limite: { lt: now } } }),
+        prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, estado: 'PROGRAMADA', fecha_inicio: { gte: now, lte: en30Dias } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, created_at: { gte: primerDiaMes } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: 'CERRADA', fecha_cierre: { gte: primerDiaMes }, fecha_limite: { not: null } } }),
+        prisma.noConformidad.findMany({
+          where: { tenant_id: tenantId, estado: { not: 'CERRADA' }, fecha_limite: { lt: now } },
+          select: { id_nc: true, codigo: true, fecha_limite: true },
+          take: 5,
+        }),
       ]);
 
       const porEstado: Record<string, number> = { BORRADOR: 0, EN_REVISION: 0, VIGENTE: 0, OBSOLETO: 0 };
       docsPorEstado.forEach(r => { porEstado[r.estado_actual] = r._count._all; });
-
       const porTipo: Record<string, number> = {};
       TIPOS_DOCUMENTO.forEach(t => { porTipo[t] = 0; });
       docsPorTipo.forEach(r => { porTipo[r.tipo] = r._count._all; });
 
+      const indiceCalidad = ncsTotal > 0 ? Math.round((ncsCerradasEnPlazo / ncsTotal) * 100) : 100;
+
+      const alertas = ncsVencidasDetalle.map((nc: any) => ({
+        nc_id:        nc.id_nc,
+        folio:        nc.codigo,
+        descripcion:  `No conformidad vencida desde ${new Date(nc.fecha_limite).toLocaleDateString('es-MX')}`,
+        severidad:    'critica',
+      }));
+
       return {
+        // KPIs de NCs e ISO 9001
+        ncs_abiertas:            ncsAbiertas,
+        ncs_vencidas:            ncsVencidas,
+        auditorias_programadas:  auditoriasProgramadas,
+        indice_calidad:          indiceCalidad,
+        alertas,
+        // Documentos (datos legacy — no eliminados para no romper)
         documentos_por_estado: porEstado,
-        total_documentos: Object.values(porEstado).reduce((a, b) => a + b, 0),
+        total_documentos: Object.values(porEstado).reduce((a: number, b: number) => a + b, 0),
         documentos_por_tipo: porTipo,
         versiones_pendientes_revision: versionesPendientes,
         versiones_en_borrador_sin_archivo: versionesSinArchivo,

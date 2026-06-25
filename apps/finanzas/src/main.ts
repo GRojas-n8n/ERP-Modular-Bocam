@@ -1431,6 +1431,22 @@ app.get('/api/v1/finanzas/dashboard', async (req: Request, res: Response) => {
           },
         });
 
+        const alertas: Array<{ tipo: string; mensaje: string; severidad: string }> = [];
+        if (resumenPresupuestal.porcentaje_ejercido > 80) {
+          alertas.push({
+            tipo: 'PRESUPUESTO_BAJO',
+            mensaje: `Presupuesto ejercido al ${resumenPresupuestal.porcentaje_ejercido}% — disponibilidad limitada`,
+            severidad: resumenPresupuestal.porcentaje_ejercido > 90 ? 'critical' : 'warning',
+          });
+        }
+        if (pagosVencidos > 0) {
+          alertas.push({
+            tipo: 'PAGOS_VENCIDOS',
+            mensaje: `${pagosVencidos} pago${pagosVencidos !== 1 ? 's' : ''} vencido${pagosVencidos !== 1 ? 's' : ''} sin procesar`,
+            severidad: 'critical',
+          });
+        }
+
         return {
           resumen_presupuestal: resumenPresupuestal,
           pagos_proximos: {
@@ -1440,6 +1456,9 @@ app.get('/api/v1/finanzas/dashboard', async (req: Request, res: Response) => {
           },
           pagos_vencidos: pagosVencidos,
           ultimos_movimientos: ultimosMovimientos,
+          alertas,
+          cuentas_bancarias: [],
+          ocs_por_pagar: 0,
         };
       }
     );
