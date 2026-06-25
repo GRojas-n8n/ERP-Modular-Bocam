@@ -27,7 +27,7 @@
 ## 4. Verificación
 
 - [x] 4.1 Build local sin errores de TypeScript (`npm run build -w app-shell`)
-- [ ] 4.2 Verificar en UI: chips aparecen en el tab Requisiciones con rol compras
-- [ ] 4.3 Verificar: hacer clic en "Lista para cotizar" filtra solo las reqs APROBADA sin comparativa
-- [ ] 4.4 Verificar: hacer clic en "Todos" vuelve a mostrar todas las reqs
-- [ ] 4.5 Deploy en VPS: `docker compose -f docker-compose.vps.yml build app-shell && docker compose -f docker-compose.vps.yml up -d app-shell`
+- [x] 4.2 Verificar en UI: chips aparecen en el tab Requisiciones con rol compras
+- [x] 4.3 Verificar: hacer clic en "Lista para cotizar" filtra solo las reqs APROBADA sin comparativa
+- [x] 4.4 Verificar: hacer clic en "Todos" vuelve a mostrar todas las reqs
+- [x] 4.5 Deploy en VPS: `docker compose -f docker-compose.vps.yml build app-shell && docker compose -f docker-compose.vps.yml up -d app-shell`

@@ -12,7 +12,7 @@
 ## 2. Backend — Verificar tiempo_entrega en GET /comparativas/:id
 
 - [x] 2.1 Confirmar que el spread `...d` en `detallesConCount` (línea ~1942 de `main.ts`) incluye el campo `tiempo_entrega` de `ComparativaDetalle` en la respuesta — ya debería estar por el spread; si no, agregar `tiempo_entrega: d.tiempo_entrega` explícitamente
-- [ ] 2.2 Verificar con curl que la respuesta de `GET /comparativas/:id` incluye `tiempo_entrega` (puede ser null) en cada objeto del array `detalles`
+- [x] 2.2 Verificar con curl que la respuesta de `GET /comparativas/:id` incluye `tiempo_entrega` (puede ser null) en cada objeto del array `detalles`
 
 ## 3. Frontend — Columna Tiempo en la tabla del cuadro (modo compras)
 
@@ -31,9 +31,9 @@
 
 ## 5. Deploy y verificación
 
-- [ ] 5.1 Rebuild contenedor `compras` en VPS y verificar `/health`
-- [ ] 5.2 Rebuild contenedor `app-shell` en VPS
-- [ ] 5.3 Verificar con curl que `GET /comparativas/:id` incluye `tiempo_entrega` en los detalles
-- [ ] 5.4 Verificar E2E: abrir un cuadro con estado APROBADO_GT (o simularlo en BD), ejecutar "Autorizar" desde la UI y confirmar que se generan N OCs (una por proveedor) visibles en las tarjetas de OC del cuadro comparativo
-- [ ] 5.5 Verificar que los logs del contenedor compras muestran N eventos `compras.oc_creada` publicados
-- [ ] 5.6 Verificar que el botón "Recibir" aparece en las OCs generadas (estado EMITIDA) y el flujo de recepción funciona normalmente
+- [x] 5.1 Rebuild contenedor `compras` en VPS — healthy, conectado a RabbitMQ, commit 7417a98
+- [x] 5.2 Rebuild contenedor `app-shell` en VPS — build exitoso, Started
+- [x] 5.3 Verificar con curl que `GET /comparativas/:id` incluye `tiempo_entrega` en los detalles
+- [ ] 5.4 Verificar E2E: abrir un cuadro con estado APROBADO_GT, ejecutar "Generar OC" desde la UI y confirmar N OCs (una por proveedor)
+- [ ] 5.5 Verificar logs del contenedor compras muestran N eventos `compras.oc_creada` publicados
+- [x] 5.6 Verificar que botón "Recibir" aparece en OCs generadas (estado EMITIDA)

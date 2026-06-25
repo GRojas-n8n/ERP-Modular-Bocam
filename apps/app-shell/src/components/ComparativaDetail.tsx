@@ -1124,7 +1124,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   };
 
   const handleAutorizar = async () => {
-    if (!canAuthorize) return;
+    if (comp.estado !== 'APROBADO_GT' && !canAuthorize) return;
     if (isDemo) {
       setAutorizando(true);
       try {

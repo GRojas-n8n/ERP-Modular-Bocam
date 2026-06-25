@@ -1591,8 +1591,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                   </span>
                                 </div>
                               )}
-                              {/* Botón de solicitud de cotización */}
-                              {isProcurement && (
+                              {/* Botón de solicitud de cotización — oculto si el cuadro ya fue aprobado/generado */}
+                              {isProcurement && !['APROBADO_GT', 'AUTORIZADA', 'EN_APROBACION_GT'].includes(compEstado ?? '') && (
                                 <Button
                                   onClick={() => handleOpenSolicitudPanel(req)}
                                   variant="outline"
