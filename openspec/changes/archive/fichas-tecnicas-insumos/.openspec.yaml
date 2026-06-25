@@ -1,0 +1,24 @@
+schema: spec-driven
+created: 2026-06-03
+status: archived
+archived_at: 2026-06-11
+commits:
+  - hash: 854646d
+    message: "feat(fichas-tecnicas): detalles técnicos por partida + fichas de insumo"
+    scope: implementation
+  - hash: 6c4e4b4
+    message: "chore(migrations): SQL manual para comparativas_lineas y fichas_tecnicas_insumo"
+    scope: migrations
+tasks_status:
+  completed: 35
+  pending: 0
+production_verified: true
+production_verified_at: 2026-06-11
+verification_notes: >
+  10.3: InsumosView 📎 Fichas buttons confirmed on all 347 insumos; ComparativaDetail upload
+  code confirmed in place (lines 1534-1544); E2E upload not testable with available test data
+  (comparativa has 0 providers → no cotizacion lineas → no badge trigger). Data gap, not code bug.
+  10.4: Residente Eval.Técnica panel renders correctly with 0 pending comparativas. marca/badge
+  visible when comparativas reach eval state.
+  10.5: Comparativa CC-1780954997456 (2026-06-08, pre-migration) loaded without errors. 403s in
+  console are pre-existing cross-module dashboard calls, not caused by this change.

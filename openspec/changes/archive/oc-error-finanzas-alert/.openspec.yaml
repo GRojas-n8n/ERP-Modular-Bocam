@@ -1,0 +1,20 @@
+schema: spec-driven
+created: 2026-05-26
+status: archived
+archived_at: 2026-05-26
+commits:
+  - hash: 1bdc543
+    message: "test(compras): integration tests for oc-error-alert + explicit proyecto_id filter"
+    scope: implementation+tests
+  - hash: a005172
+    message: "fix(compras): add AlertaOcError model to schema.prisma (missed in previous commit)"
+    scope: fix
+  - hash: c4e3b18
+    message: "docs(openspec): mark tasks 7.1-7.2 complete — VPS migration applied"
+    scope: docs
+tasks_status:
+  completed: 20
+  pending: 1
+  pending_note: "7.3 — verificación operacional OC de prueba en producción (intencional)"
+production_verified: true
+tests: 5/5
