@@ -52,9 +52,9 @@
 
 ## 9. E2E y verificación en VPS
 
-- [ ] 9.1 Ejecutar `prisma migrate deploy` en el container `finanzas` en VPS — verificar que la migración agrega columnas sin errores
-- [ ] 9.2 Verificar `GET /api/v1/gerencia-tecnica/reportes/control-presupuestal?proyectoId=<uuid>` retorna datos correctos con el proyecto de prueba en iretum.com
-- [ ] 9.3 Verificar que el tab "Control Presupuestal" aparece en GT y la tabla carga con datos del presupuesto
-- [ ] 9.4 Verificar exportación PDF descarga un archivo válido desde iretum.com
-- [ ] 9.5 Verificar exportación XLSX descarga un archivo válido desde iretum.com
-- [ ] 9.6 Verificar que el widget resumen de presupuesto aparece en ComprasView tab trazabilidad
+- [x] 9.1 Ejecutar `prisma migrate deploy` en el container `finanzas` en VPS — verificar que la migración agrega columnas sin errores
+- [x] 9.2 Verificar `GET /api/v1/gerencia-tecnica/reportes/control-presupuestal?proyectoId=<uuid>` retorna datos correctos con el proyecto de prueba en iretum.com
+- [x] 9.3 Verificar que el tab "Control Presupuestal" aparece en GT y la tabla carga con datos del presupuesto
+- [x] 9.4 Verificar exportación PDF descarga un archivo válido desde iretum.com
+- [x] 9.5 Verificar exportación XLSX descarga un archivo válido desde iretum.com
+- [x] 9.6 Verificar que el widget resumen de presupuesto aparece en ComprasView tab trazabilidad

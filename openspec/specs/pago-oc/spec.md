@@ -39,6 +39,8 @@ model DetallePagoOC {
   oc_folio       String   // almacenado para display sin consultar Compras
   proveedor      String   // almacenado para display
   monto_aplicado Decimal  @db.Decimal(15,2)
+  concepto_id    String?  @db.Uuid         // UUID del Concepto (partida APU) en GT — nullable
+  concepto_clave String?  @db.VarChar(100) // clave desnormalizada para display
   @@map("detalles_pago_oc")
 }
 ```
@@ -62,10 +64,12 @@ POST /api/v1/finanzas/pagos
       oc_id: string,
       oc_folio: string,
       proveedor: string,
-      monto_aplicado: number
+      monto_aplicado: number,
+      concepto_id?: string,       // UUID del Concepto (partida APU) en GT — opcional
+      concepto_clave?: string     // clave desnormalizada — opcional
     }>
   }
-  → 201 PagoOC creado con detalles
+  → 201 PagoOC creado con detalles (incluye concepto_id/concepto_clave en respuesta)
 
 GET  /api/v1/finanzas/pagos/:id
   → PagoOC con detalles
