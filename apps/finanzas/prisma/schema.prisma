@@ -200,10 +200,14 @@ model DetallePagoOC {
   monto_aplicado  Decimal  @db.Decimal(18, 2)
   saldo_oc_antes  Decimal  @db.Decimal(18, 2)
   saldo_oc_despues Decimal @db.Decimal(18, 2)
+  // Trazabilidad WBS: concepto (partida APU) de GT — desnormalizado para reportes sin B2B
+  concepto_id     String?  @db.Uuid
+  concepto_clave  String?  @db.VarChar(100)
 
   pago            PagoOC   @relation(fields: [pago_id], references: [id_pago], onDelete: Cascade)
 
   @@unique([pago_id, oc_id])
   @@index([oc_id])
+  @@index([concepto_id])
   @@map("detalles_pago_oc")
 }

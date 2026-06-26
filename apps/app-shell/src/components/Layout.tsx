@@ -89,7 +89,8 @@ const ALL_NAV_ITEMS: NavItem[] = [
     subItems: [
       { id: 'catalogo',       label: 'Catálogo de Obra',  icon: IconBriefcase },
       { id: 'insumos',        label: 'Insumos',           icon: IconPackage },
-      { id: 'control-costos', label: 'Control de Costos', icon: IconTrendingUp },
+      { id: 'control-costos',       label: 'Control de Costos',    icon: IconTrendingUp },
+      { id: 'control-presupuestal', label: 'Control Presupuestal', icon: IconWallet },
     ],
   },
   {

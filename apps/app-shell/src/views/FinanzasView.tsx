@@ -221,6 +221,7 @@ export const FinanzasView: React.FC = () => {
     proveedor_nombre: '',
     monto_aplicado: '',
     saldo_oc_antes: 0,
+    concepto_id: '' as string | null,
   });
   const [pagoError, setPagoError] = useState<string | null>(null);
   const [cuentasBancarias, setCuentasBancarias] = useState<Array<{ id_cuenta: string; alias: string; banco: string; saldo: number }>>([]);
@@ -323,6 +324,7 @@ export const FinanzasView: React.FC = () => {
           monto_aplicado:   Number(pagoForm.monto_aplicado),
           saldo_oc_antes:   pagoForm.saldo_oc_antes,
           saldo_oc_despues: Math.max(0, pagoForm.saldo_oc_antes - Number(pagoForm.monto_aplicado)),
+          concepto_id:      pagoForm.concepto_id ?? null,
         }],
       });
       notify({ type: 'success', title: 'Pago registrado', message: `Pago ${pagoForm.referencia} registrado exitosamente.` });
@@ -333,6 +335,15 @@ export const FinanzasView: React.FC = () => {
     } finally {
       setGuardandoPago(false);
     }
+  };
+
+  const resolveOcConcepto = async (ocId: string) => {
+    if (!ocId) return;
+    try {
+      const res = await api.get(`/api/v1/compras/ordenes-compra/${ocId}`);
+      const concepto_id = res.data.data?.concepto_id ?? null;
+      setPagoForm(f => ({ ...f, concepto_id }));
+    } catch { /* silencioso — concepto_id queda null */ }
   };
 
   const formatCurrency = (amount: number) =>
@@ -964,7 +975,7 @@ export const FinanzasView: React.FC = () => {
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">ID de OC (UUID) *</label>
-                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={pagoForm.oc_id} onChange={e => setPagoForm(f => ({ ...f, oc_id: e.target.value }))} />
+                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={pagoForm.oc_id} onChange={e => setPagoForm(f => ({ ...f, oc_id: e.target.value, concepto_id: null }))} onBlur={e => void resolveOcConcepto(e.target.value)} />
                 <p className="mt-1 text-[10px] text-muted-foreground">Copia el UUID de la OC desde la sección Compras</p>
               </div>
               <div className="grid grid-cols-2 gap-4">

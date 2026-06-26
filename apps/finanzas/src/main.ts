@@ -1743,6 +1743,8 @@ app.post('/api/v1/finanzas/pagos-oc',
                   monto_aplicado:   Number(d.monto_aplicado),
                   saldo_oc_antes:   Number(d.saldo_oc_antes ?? 0),
                   saldo_oc_despues: Number(d.saldo_oc_despues ?? 0),
+                  concepto_id:      d.concepto_id   ?? null,
+                  concepto_clave:   d.concepto_clave ?? null,
                 })),
               },
             },
@@ -1776,6 +1778,64 @@ app.post('/api/v1/finanzas/pagos-oc',
       res.status(201).json({ success: true, data });
     } catch (error: any) {
       res.status(error.status ?? 500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// REPORTES B2B (solo consumo interno desde otros microservicios)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function requireInternalService(serviceName: string) {
+  return (req: Request, res: Response, next: any) => {
+    const header = req.headers['x-internal-service'];
+    if (header !== serviceName) {
+      res.status(403).json({ success: false, message: 'Acceso restringido a servicios internos.' });
+      return;
+    }
+    next();
+  };
+}
+
+// GET /api/v1/finanzas/reportes/pagado-por-concepto?proyectoId=<uuid>
+// Agrega SUM(monto_aplicado) por concepto_id para reporte de control presupuestal.
+// Uso: B2B desde gerencia-tecnica.
+app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
+  requireInternalService('gerencia-tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const proyectoId = (req.query.proyectoId ?? req.query.proyecto_id) as string;
+
+      if (!proyectoId) {
+        res.status(400).json({ success: false, message: 'proyectoId es requerido.' });
+        return;
+      }
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const rows = await (prisma as any).$queryRaw`
+          SELECT
+            concepto_id,
+            concepto_clave,
+            SUM(monto_aplicado)::numeric  AS monto_pagado,
+            COUNT(*)::int                 AS count_pagos
+          FROM detalles_pago_oc d
+          JOIN pagos_oc p ON p.id_pago = d.pago_id
+          WHERE p.tenant_id = ${tenantId}::uuid
+            AND p.proyecto_id = ${proyectoId}::uuid
+          GROUP BY concepto_id, concepto_clave
+        `;
+        return (rows as any[]).map((r: any) => ({
+          concepto_id:    r.concepto_id ?? null,
+          concepto_clave: r.concepto_clave ?? null,
+          monto_pagado:   Number(r.monto_pagado),
+          count_pagos:    Number(r.count_pagos),
+        }));
+      });
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 );

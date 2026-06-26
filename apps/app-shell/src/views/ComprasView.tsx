@@ -252,6 +252,34 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [asignSubmitting, setAsignSubmitting] = useState(false);
   const [expandedConceptoId, setExpandedConceptoId] = useState<string | null>(null);
 
+  // ── Widget Resumen Presupuestal (Task 7) ─────────────────────────────────
+  interface ResumenCP {
+    total_presupuestado: number; total_comprometido: number;
+    total_pagado: number; total_disponible: number; pct_ejercido: number;
+    parcial: boolean;
+  }
+  const [cpResumen, setCpResumen] = useState<ResumenCP | null>(null);
+  const [cpResumenLoading, setCpResumenLoading] = useState(false);
+
+  const loadCpResumen = async () => {
+    const proyectoId = user?.projects?.[0]?.id;
+    if (!proyectoId) return;
+    setCpResumenLoading(true);
+    try {
+      const res = await api.get(`/api/v1/gerencia-tecnica/reportes/control-presupuestal?proyectoId=${proyectoId}`);
+      const d = res.data.data ?? res.data;
+      setCpResumen({
+        total_presupuestado: d.total_presupuestado,
+        total_comprometido:  d.total_comprometido,
+        total_pagado:        d.total_pagado,
+        total_disponible:    d.total_disponible,
+        pct_ejercido:        d.pct_ejercido,
+        parcial:             d.parcial,
+      });
+    } catch { /* silencioso — widget opcional */ }
+    finally { setCpResumenLoading(false); }
+  };
+
   // ── Solicitud de Cotización ──────────────────────────────────────────────
   const [solicitudesMap, setSolicitudesMap] = useState<Record<string, SolicitudCotizacion>>({});
   const [alertasCotizacion, setAlertasCotizacion] = useState<AlertaCotizacion[]>([]);
@@ -464,7 +492,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   useEffect(() => { fetchData(); }, []);
-  useEffect(() => { if (activeTab === 'trazabilidad') loadTrazabilidad(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab]);
 
   // Cerrar dropdown al hacer clic afuera (requisición)
   useEffect(() => {
@@ -1899,8 +1927,50 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             const contadores = { ROJO: 0, AMARILLO: 0, VERDE: 0, EXTRA: 0 };
             trazabilidad.forEach(m => { contadores[m.semaforo] = (contadores[m.semaforo] ?? 0) + 1; });
 
+            const enRiesgo = cpResumen
+              ? cpResumen.total_comprometido > cpResumen.total_presupuestado * 0.85
+              : false;
+
             return (
               <div className="space-y-4">
+                {/* ── Widget resumen presupuestal (Tasks 7.1–7.3) ──────────── */}
+                {cpResumen && (
+                  <div className={`rounded-2xl border p-4 ${enRiesgo ? 'border-red-500/30 bg-red-500/5' : 'border-border/30 bg-card'}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Presupuesto del Proyecto
+                        {cpResumen.parcial && <span className="ml-2 text-amber-600">(datos parciales)</span>}
+                      </p>
+                      {enRiesgo && (
+                        <span className="rounded-full bg-red-500 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
+                          Presupuesto en riesgo
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                      {[
+                        { label: 'Presupuestado', val: cpResumen.total_presupuestado, color: 'text-foreground' },
+                        { label: 'Comprometido',  val: cpResumen.total_comprometido,  color: enRiesgo ? 'text-red-600' : 'text-amber-600' },
+                        { label: 'Pagado',        val: cpResumen.total_pagado,         color: 'text-emerald-600' },
+                        { label: 'Disponible',    val: cpResumen.total_disponible,     color: cpResumen.total_disponible < 0 ? 'text-destructive' : 'text-indigo-600' },
+                        { label: '% Ejercido',    val: null, pct: cpResumen.pct_ejercido, color: 'text-primary' },
+                      ].map(k => (
+                        <div key={k.label} className="text-center">
+                          <p className={`text-sm font-black ${k.color}`}>
+                            {k.pct !== undefined ? `${k.pct}%` : formatMXN(k.val!)}
+                          </p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{k.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {cpResumenLoading && !cpResumen && (
+                  <div className="rounded-2xl border border-border/30 bg-card p-4 text-center text-[10px] text-muted-foreground">
+                    Cargando resumen presupuestal…
+                  </div>
+                )}
+
                 {/* Filtros semáforo */}
                 <div className="flex flex-wrap items-center gap-2">
                   {(['TODOS', 'ROJO', 'AMARILLO', 'VERDE', 'EXTRA'] as const).map(f => (

@@ -49,7 +49,7 @@ interface FichaTecnicaInsumo {
   created_at: string;
 }
 
-type ActiveTab = 'catalogo' | 'insumos' | 'control-costos';
+type ActiveTab = 'catalogo' | 'insumos' | 'control-costos' | 'control-presupuestal';
 
 type TipoInsumo = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
 
@@ -738,6 +738,64 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [costosFiltroDes, setCostosFiltroDes] = useState(false);
   const [costosCategoriasDisp, setCostosCategoriasDisp] = useState<string[]>([]);
 
+  // ── Estado Tab 4: Control Presupuestal ───────────────────────────────────
+  interface PartidaCP {
+    concepto_id: string; clave: string; descripcion: string;
+    categoria_predominante: string | null;
+    presupuestado: number; comprometido: number; pagado: number;
+    disponible: number; pct_ejercido: number;
+  }
+  interface ReporteCP {
+    proyectoId: string; presupuesto_id: string | null;
+    total_presupuestado: number; total_comprometido: number;
+    total_pagado: number; total_disponible: number; pct_ejercido: number;
+    parcial: boolean; advertencias: string[];
+    partidas: PartidaCP[];
+    sin_partida_comprometido: number; sin_partida_pagado: number;
+  }
+  const [cpData, setCpData] = useState<ReporteCP | null>(null);
+  const [cpLoading, setCpLoading] = useState(false);
+  const [cpError, setCpError] = useState<string | null>(null);
+  const [cpCategoria, setCpCategoria] = useState('');
+  const [cpExporting, setCpExporting] = useState<'PDF' | 'XLSX' | null>(null);
+
+  const loadControlPresupuestal = async () => {
+    if (!currentProjectId) return;
+    setCpLoading(true);
+    setCpError(null);
+    try {
+      const params = cpCategoria ? `?categoria=${cpCategoria}` : '';
+      const res = await api.get(`/api/v1/gerencia-tecnica/reportes/control-presupuestal${params}`);
+      setCpData(res.data.data ?? res.data);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al cargar reporte.';
+      setCpError(msg);
+    } finally {
+      setCpLoading(false);
+    }
+  };
+
+  const exportarCP = async (formato: 'PDF' | 'XLSX') => {
+    setCpExporting(formato);
+    try {
+      const resp = await api.post(
+        '/api/v1/gerencia-tecnica/reportes/control-presupuestal/export',
+        { formato, categoria: cpCategoria || undefined },
+        { responseType: 'blob' }
+      );
+      const ext = formato === 'PDF' ? 'pdf' : 'xlsx';
+      const url = URL.createObjectURL(resp.data as Blob);
+      const a = document.createElement('a'); a.href = url;
+      a.download = `control-presupuestal.${ext}`;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 200);
+    } catch {
+      notify({ type: 'error', title: 'Error al exportar', message: 'No se pudo generar el archivo.' });
+    } finally {
+      setCpExporting(null);
+    }
+  };
+
   const loadCostosWbs = async () => {
     if (!currentProjectId) return;
     setCostosLoading(true);
@@ -985,6 +1043,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { void fetchPresupuesto(); }, []);
   useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
   useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab]);
 
   // ── Abrir panel de Take-off para un concepto ──────────────────────────────
   const handleAbrirTakeoff = async (concepto: Concepto) => {
@@ -1355,13 +1414,15 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
               <div>
                 <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
-                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : activeTab === 'control-costos' ? 'Control de Costos' : 'Insumos'}
+                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : activeTab === 'control-costos' ? 'Control de Costos' : activeTab === 'control-presupuestal' ? 'Control Presupuestal' : 'Insumos'}
                 </h1>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {activeTab === 'catalogo'
                     ? 'Conceptos de obra · Presupuesto base del proyecto'
                     : activeTab === 'control-costos'
                     ? 'Acumulados por partida · Comprometido vs. Presupuesto'
+                    : activeTab === 'control-presupuestal'
+                    ? 'Presupuestado vs. Comprometido vs. Pagado por partida'
                     : 'Catálogo maestro de insumos · Materiales, M.O., Equipo'}
                 </p>
               </div>
@@ -1976,6 +2037,152 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <tr>
                           <td colSpan={7} className="px-5 py-12 text-center text-xs text-muted-foreground">
                             Sin datos de costos. Crea requisiciones con partida asignada para ver acumulados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TAB 4: CONTROL PRESUPUESTAL                                       */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'control-presupuestal' && (
+          <div className="space-y-6 px-4 md:px-8 pb-12">
+            {/* Banner datos parciales (6.5) */}
+            {cpData?.parcial && (
+              <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                <IconAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                <div>
+                  <p className="text-[11px] font-bold text-amber-700">Datos parciales</p>
+                  <p className="text-[10px] text-amber-600">{cpData.advertencias.join(' · ')}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Filtro + exportar (6.3 + 6.6) */}
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                value={cpCategoria}
+                onChange={e => { setCpCategoria(e.target.value); }}
+                className="rounded-xl border border-border/50 bg-card px-3 py-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Todas las categorías</option>
+                <option value="MATERIAL">Material</option>
+                <option value="MANO_DE_OBRA">Mano de obra</option>
+                <option value="EQUIPO">Equipo</option>
+                <option value="SUBCONTRATO">Subcontrato</option>
+                <option value="INDIRECTO">Indirecto</option>
+              </select>
+              <button
+                onClick={() => void loadControlPresupuestal()}
+                disabled={cpLoading}
+                className="rounded-xl border border-border/50 bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-muted/50 disabled:opacity-50"
+              >
+                {cpLoading ? 'Cargando…' : 'Actualizar'}
+              </button>
+              <div className="ml-auto flex gap-2">
+                <button
+                  onClick={() => void exportarCP('PDF')}
+                  disabled={!cpData || !!cpExporting}
+                  className="rounded-xl border border-border/50 bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-muted/50 disabled:opacity-40"
+                >
+                  {cpExporting === 'PDF' ? 'Generando…' : 'Exportar PDF'}
+                </button>
+                <button
+                  onClick={() => void exportarCP('XLSX')}
+                  disabled={!cpData || !!cpExporting}
+                  className="rounded-xl border border-border/50 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-500/20 disabled:opacity-40"
+                >
+                  {cpExporting === 'XLSX' ? 'Generando…' : 'Exportar Excel'}
+                </button>
+              </div>
+            </div>
+
+            {cpLoading && (
+              <div className="flex h-64 flex-col items-center justify-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+                <p className="text-xs text-muted-foreground">Cargando reporte…</p>
+              </div>
+            )}
+
+            {cpError && !cpLoading && (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6 text-center">
+                <p className="text-sm font-bold text-destructive">{cpError}</p>
+              </div>
+            )}
+
+            {/* KPI totales (6.2) */}
+            {cpData && !cpLoading && (
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  {[
+                    { label: 'Presupuestado', val: cpData.total_presupuestado, color: 'text-foreground' },
+                    { label: 'Comprometido',  val: cpData.total_comprometido,  color: 'text-amber-600' },
+                    { label: 'Pagado',        val: cpData.total_pagado,         color: 'text-emerald-600' },
+                    { label: 'Disponible',    val: cpData.total_disponible,     color: cpData.total_disponible < 0 ? 'text-destructive' : 'text-indigo-600' },
+                    { label: '% Ejercido',    val: null, pct: cpData.pct_ejercido, color: 'text-primary' },
+                  ].map(k => (
+                    <div key={k.label} className="rounded-2xl border border-border/30 bg-card p-4 text-center">
+                      <p className={`text-lg font-black ${k.color}`}>
+                        {k.pct !== undefined ? `${k.pct}%` : formatMXN(k.val!)}
+                      </p>
+                      <p className="mt-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{k.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tabla de partidas (6.2 + 6.4) */}
+                <div className="overflow-x-auto rounded-2xl border border-border/30">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border/30 bg-muted/30">
+                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[9px] text-muted-foreground">Clave</th>
+                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[9px] text-muted-foreground">Descripción</th>
+                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[9px] text-muted-foreground">Categoría</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Presupuestado</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Comprometido</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Pagado</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Disponible</th>
+                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">% Ejerc.</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {cpData.partidas.map(p => {
+                        const isRisk = p.comprometido > p.presupuestado * 0.9;
+                        return (
+                          <tr key={p.concepto_id} className={isRisk ? 'bg-amber-500/5' : 'hover:bg-muted/20'}>
+                            <td className="px-4 py-2.5 font-mono font-bold text-foreground">{p.clave}</td>
+                            <td className="px-4 py-2.5 text-foreground max-w-[220px] truncate">{p.descripcion}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{p.categoria_predominante ?? '—'}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold text-foreground">{formatMXN(p.presupuestado)}</td>
+                            <td className={`px-4 py-2.5 text-right font-mono font-bold ${isRisk ? 'text-amber-700' : 'text-amber-600'}`}>{formatMXN(p.comprometido)}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-600">{formatMXN(p.pagado)}</td>
+                            <td className={`px-4 py-2.5 text-right font-mono font-bold ${p.disponible < 0 ? 'text-destructive' : 'text-indigo-600'}`}>{formatMXN(p.disponible)}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold text-primary">{p.pct_ejercido}%</td>
+                          </tr>
+                        );
+                      })}
+                      {/* Fila sin partida (6.4) */}
+                      {((cpData.sin_partida_comprometido ?? 0) + (cpData.sin_partida_pagado ?? 0)) > 0 && (
+                        <tr className="bg-muted/10 italic">
+                          <td className="px-4 py-2.5 font-mono text-muted-foreground text-[10px]">—</td>
+                          <td className="px-4 py-2.5 text-muted-foreground text-[10px]">[Sin partida asignada]</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">—</td>
+                          <td className="px-4 py-2.5 text-right text-muted-foreground">—</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-amber-600">{formatMXN(cpData.sin_partida_comprometido ?? 0)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-emerald-600">{formatMXN(cpData.sin_partida_pagado ?? 0)}</td>
+                          <td className="px-4 py-2.5 text-right text-muted-foreground">—</td>
+                          <td className="px-4 py-2.5 text-right text-muted-foreground">—</td>
+                        </tr>
+                      )}
+                      {cpData.partidas.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="px-5 py-12 text-center text-xs text-muted-foreground">
+                            Sin partidas en el presupuesto activo.
                           </td>
                         </tr>
                       )}

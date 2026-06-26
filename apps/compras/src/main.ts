@@ -1154,8 +1154,19 @@ app.get('/api/v1/compras/ordenes-compra/:id',
             acumulados.set(r.orden_item_id, prev + Number(r.cantidad_recibida));
           }
 
+          // Resolver concepto_id desde la requisición origen
+          let concepto_id: string | null = null;
+          if (orden.requisicion_id) {
+            const req = await (prisma as any).requisicion.findUnique({
+              where: { id_requisicion: orden.requisicion_id },
+              select: { concepto_id: true },
+            });
+            concepto_id = req?.concepto_id ?? null;
+          }
+
           return {
             ...orden,
+            concepto_id,
             subtotal: Number(orden.subtotal),
             iva: Number(orden.iva),
             total: Number(orden.total),
@@ -2978,6 +2989,65 @@ app.get('/api/v1/compras/dashboard',
             updated_at: r.fecha_solicitud.toISOString(),
           })),
         };
+      });
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// REPORTES B2B (solo consumo interno desde otros microservicios)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function requireInternalService(serviceName: string) {
+  return (req: Request, res: Response, next: any) => {
+    const header = req.headers['x-internal-service'];
+    if (header !== serviceName) {
+      res.status(403).json({ success: false, message: 'Acceso restringido a servicios internos.' });
+      return;
+    }
+    next();
+  };
+}
+
+// GET /api/v1/compras/reportes/ocs-por-concepto?proyectoId=<uuid>
+// Agrega SUM(total) de OCs activas por concepto_id de la requisición origen.
+// Estados comprometidos: EMITIDA, PARCIALMENTE_RECIBIDA, RECIBIDA.
+// Uso: B2B desde gerencia-tecnica.
+app.get('/api/v1/compras/reportes/ocs-por-concepto',
+  requireInternalService('gerencia-tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const proyectoId = (req.query.proyectoId ?? req.query.proyecto_id) as string;
+
+      if (!proyectoId) {
+        res.status(400).json({ success: false, message: 'proyectoId es requerido.' });
+        return;
+      }
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const rows = await (prisma as any).$queryRaw`
+          SELECT
+            r.concepto_id,
+            SUM(oc.total)::numeric   AS monto_comprometido,
+            COUNT(oc.id_orden)::int  AS count_ocs
+          FROM ordenes_compra oc
+          JOIN requisiciones r ON r.id_requisicion = oc.requisicion_id
+          WHERE oc.tenant_id  = ${tenantId}::uuid
+            AND oc.proyecto_id = ${proyectoId}::uuid
+            AND oc.estado IN ('EMITIDA', 'PARCIALMENTE_RECIBIDA', 'RECIBIDA')
+            AND r.concepto_id IS NOT NULL
+          GROUP BY r.concepto_id
+        `;
+        return (rows as any[]).map((r: any) => ({
+          concepto_id:         r.concepto_id,
+          monto_comprometido:  Number(r.monto_comprometido),
+          count_ocs:           Number(r.count_ocs),
+        }));
       });
 
       res.json({ success: true, data });

@@ -12,6 +12,7 @@ import { generateComparativaPdf } from './generators/comparativa-pdf';
 import { generatePrenominaPdf } from './generators/prenomina-pdf';
 import { generatePrenominaExcel } from './generators/prenomina-excel';
 import { generatePresupuestoExcel } from './generators/presupuesto-excel';
+import { generateControlPresupuestalPdf, generateControlPresupuestalExcel } from './generators/control-presupuestal';
 
 const PORT       = process.env.PORT       || 3010;
 const JWT_SECRET = requireEnv('JWT_SECRET');
@@ -124,6 +125,36 @@ app.post('/api/v1/reportes/presupuesto-excel',
       await generatePresupuestoExcel(presupuesto, res);
     } catch (error: any) {
       logError(req, 'reportes', 'reportes.presupuesto-excel.error', 'Error generando Presupuesto Excel', { error_message: error.message });
+      if (!res.headersSent) res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── POST /control-presupuestal/export ────────────────────────────────────────
+app.post('/api/v1/reportes/control-presupuestal/export',
+  async (req: Request, res: Response) => {
+    try {
+      const { formato, datos } = req.body;
+      if (!formato || !datos) {
+        return res.status(400).json({ success: false, message: 'Se requieren formato y datos en el body.' });
+      }
+      if (!['PDF', 'XLSX'].includes(formato)) {
+        return res.status(400).json({ success: false, message: 'Formato no soportado. Use PDF o XLSX.' });
+      }
+
+      if (formato === 'PDF') {
+        const doc = generateControlPresupuestalPdf(datos);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="control-presupuestal.pdf"');
+        doc.pipe(res);
+        doc.end();
+      } else {
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="control-presupuestal.xlsx"');
+        await generateControlPresupuestalExcel(datos, res);
+      }
+    } catch (error: any) {
+      logError(req, 'reportes', 'reportes.control-presupuestal.error', 'Error generando Control Presupuestal', { error_message: error.message });
       if (!res.headersSent) res.status(500).json({ success: false, message: error.message });
     }
   }

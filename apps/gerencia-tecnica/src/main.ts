@@ -1592,6 +1592,259 @@ app.get(
 );
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// REPORTE DE CONTROL PRESUPUESTAL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const CP_COMPRAS_URL  = process.env.COMPRAS_SERVICE_URL  || 'http://compras:3002';
+const FINANZAS_URL = process.env.FINANZAS_SERVICE_URL || 'http://finanzas:3004';
+const REPORTES_URL = process.env.REPORTES_SERVICE_URL || 'http://reportes:3010';
+
+type TipoInsumoCP = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
+
+interface PartidaCP {
+  concepto_id:           string;
+  clave:                 string;
+  descripcion:           string;
+  categoria_predominante: TipoInsumoCP | null;
+  presupuestado:         number;
+  comprometido:          number;
+  pagado:                number;
+  disponible:            number;
+  pct_ejercido:          number;
+}
+
+async function buildControlPresupuestal(
+  tenantId: string,
+  proyectoId: string,
+  userId: string,
+  authHeader: string,
+  categoria?: TipoInsumoCP,
+): Promise<{
+  proyectoId: string;
+  presupuesto_id: string | null;
+  total_presupuestado: number;
+  total_comprometido: number;
+  total_pagado: number;
+  total_disponible: number;
+  pct_ejercido: number;
+  parcial: boolean;
+  advertencias: string[];
+  partidas: PartidaCP[];
+  sin_partida_comprometido: number;
+  sin_partida_pagado: number;
+}> {
+  // 1. Obtener presupuesto activo y sus conceptos desde BD local
+  const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+  const presupuestoData = await db.presupuestoBase.findFirst({
+    where: { estado: { in: ['APROBADO', 'LIBERADO', 'CONGELADO'] } },
+    include: {
+      conceptos: {
+        where: { importe: { gt: 0 } },
+        include: {
+          insumos: { select: { tipo_insumo: true, costo_unitario: true, cantidad: true } },
+        },
+        orderBy: { clave: 'asc' },
+      },
+    },
+  });
+
+  if (!presupuestoData) {
+    return {
+      proyectoId, presupuesto_id: null,
+      total_presupuestado: 0, total_comprometido: 0, total_pagado: 0,
+      total_disponible: 0, pct_ejercido: 0, parcial: false,
+      advertencias: ['Sin presupuesto activo para este proyecto'],
+      partidas: [], sin_partida_comprometido: 0, sin_partida_pagado: 0,
+    };
+  }
+
+  const advertencias: string[] = [];
+  let comprometidoMap = new Map<string, number>();
+  let pagadoMap       = new Map<string, number>();
+  let sinPartidaComprometido = 0;
+  let sinPartidaPagado       = 0;
+
+  // 2. Llamadas B2B en paralelo con timeout 5s
+  const b2bHeaders = {
+    Authorization:        authHeader,
+    'Content-Type':       'application/json',
+    'X-Internal-Service': 'gerencia-tecnica',
+    'x-tenant-id':        tenantId,
+    'x-proyecto-id':      proyectoId,
+  };
+
+  const fetchWithTimeout = (url: string, opts: RequestInit, ms = 5000) => {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+  };
+
+  const [resCompras, resFinanzas] = await Promise.allSettled([
+    fetchWithTimeout(
+      `${CP_COMPRAS_URL}/api/v1/compras/reportes/ocs-por-concepto?proyectoId=${proyectoId}`,
+      { headers: b2bHeaders }
+    ),
+    fetchWithTimeout(
+      `${FINANZAS_URL}/api/v1/finanzas/reportes/pagado-por-concepto?proyectoId=${proyectoId}`,
+      { headers: b2bHeaders }
+    ),
+  ]);
+
+  if (resCompras.status === 'fulfilled' && resCompras.value.ok) {
+    const json = await resCompras.value.json() as { success: boolean; data: any[] };
+    if (json.success) {
+      for (const row of json.data) {
+        comprometidoMap.set(row.concepto_id, Number(row.monto_comprometido));
+      }
+    }
+  } else {
+    advertencias.push('Compras no disponible: montos comprometidos no incluidos');
+  }
+
+  if (resFinanzas.status === 'fulfilled' && resFinanzas.value.ok) {
+    const json = await resFinanzas.value.json() as { success: boolean; data: any[] };
+    if (json.success) {
+      for (const row of json.data) {
+        if (row.concepto_id === null) {
+          sinPartidaPagado = Number(row.monto_pagado);
+        } else {
+          pagadoMap.set(row.concepto_id, Number(row.monto_pagado));
+        }
+      }
+    }
+  } else {
+    advertencias.push('Finanzas no disponible: montos pagados no incluidos');
+  }
+
+  // 3. Calcular categoría predominante por concepto (mayor costo acumulado de sus insumos APU)
+  const categoriaPredominante = (insumos: Array<{ tipo_insumo: string; costo_unitario: any; cantidad: any }>): TipoInsumoCP | null => {
+    const acum: Record<string, number> = {};
+    for (const ins of insumos) {
+      const tipo = ins.tipo_insumo as TipoInsumoCP;
+      acum[tipo] = (acum[tipo] || 0) + Number(ins.costo_unitario) * Number(ins.cantidad);
+    }
+    const entries = Object.entries(acum);
+    if (entries.length === 0) return null;
+    return entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] as TipoInsumoCP;
+  };
+
+  // 4. Armar partidas
+  let partidas: PartidaCP[] = presupuestoData.conceptos.map((c) => {
+    const presupuestado = Number(c.importe);
+    const comprometido  = comprometidoMap.get(c.id) || 0;
+    const pagado        = pagadoMap.get(c.id) || 0;
+    const disponible    = presupuestado - comprometido;
+    const pct_ejercido  = presupuestado > 0 ? Math.round((pagado / presupuestado) * 100) : 0;
+    return {
+      concepto_id:           c.id,
+      clave:                 c.clave,
+      descripcion:           c.descripcion,
+      categoria_predominante: categoriaPredominante(c.insumos),
+      presupuestado,
+      comprometido,
+      pagado,
+      disponible,
+      pct_ejercido,
+    };
+  });
+
+  // Filtro por categoría si se pide
+  if (categoria) {
+    partidas = partidas.filter((p) => p.categoria_predominante === categoria);
+  }
+
+  const total_presupuestado = partidas.reduce((s, p) => s + p.presupuestado, 0);
+  const total_comprometido  = partidas.reduce((s, p) => s + p.comprometido, 0) + sinPartidaComprometido;
+  const total_pagado        = partidas.reduce((s, p) => s + p.pagado, 0) + sinPartidaPagado;
+  const total_disponible    = total_presupuestado - total_comprometido;
+  const pct_ejercido        = total_presupuestado > 0
+    ? Math.round((total_pagado / total_presupuestado) * 100)
+    : 0;
+
+  return {
+    proyectoId,
+    presupuesto_id:     presupuestoData.id,
+    total_presupuestado,
+    total_comprometido,
+    total_pagado,
+    total_disponible,
+    pct_ejercido,
+    parcial:            advertencias.length > 0,
+    advertencias,
+    partidas,
+    sin_partida_comprometido: sinPartidaComprometido,
+    sin_partida_pagado:       sinPartidaPagado,
+  };
+}
+
+// GET /api/v1/gerencia-tecnica/reportes/control-presupuestal
+app.get('/api/v1/gerencia-tecnica/reportes/control-presupuestal', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const categoria = req.query.categoria as TipoInsumoCP | undefined;
+    const authHeader = req.headers.authorization || '';
+
+    const data = await buildControlPresupuestal(tenantId, proyectoId, userId, authHeader, categoria);
+
+    if (data.advertencias.some((a) => a.includes('Sin presupuesto activo'))) {
+      res.status(404).json(createApiError('GT_NO_PRESUPUESTO', data.advertencias[0]));
+      return;
+    }
+
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[GT] Error en control-presupuestal:', error.message);
+    res.status(500).json(createApiError('GT_INTERNAL_ERROR', 'Error al generar reporte de control presupuestal.'));
+  }
+});
+
+// POST /api/v1/gerencia-tecnica/reportes/control-presupuestal/export
+app.post('/api/v1/gerencia-tecnica/reportes/control-presupuestal/export', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { formato = 'PDF', categoria } = req.body;
+
+    if (!['PDF', 'XLSX'].includes(formato)) {
+      res.status(400).json(createApiError('GT_INVALID_FORMAT', 'Formato no soportado. Use PDF o XLSX.'));
+      return;
+    }
+
+    const authHeader = req.headers.authorization || '';
+    const datos = await buildControlPresupuestal(tenantId, proyectoId, userId, authHeader, categoria);
+
+    const reportesRes = await fetch(`${REPORTES_URL}/api/v1/reportes/control-presupuestal/export`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        Authorization:   authHeader,
+        'x-tenant-id':   tenantId,
+        'x-proyecto-id': proyectoId,
+      },
+      body: JSON.stringify({ formato, datos }),
+    });
+
+    if (!reportesRes.ok) {
+      const err = await reportesRes.text();
+      res.status(502).json(createApiError('GT_EXPORT_ERROR', `Error al exportar: ${err}`));
+      return;
+    }
+
+    const contentType = formato === 'PDF'
+      ? 'application/pdf'
+      : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const ext = formato === 'PDF' ? 'pdf' : 'xlsx';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="control-presupuestal.${ext}"`);
+    const buffer = Buffer.from(await reportesRes.arrayBuffer());
+    res.send(buffer);
+  } catch (error: any) {
+    console.error('[GT] Error exportando control-presupuestal:', error.message);
+    res.status(500).json(createApiError('GT_INTERNAL_ERROR', 'Error al exportar reporte.'));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {
