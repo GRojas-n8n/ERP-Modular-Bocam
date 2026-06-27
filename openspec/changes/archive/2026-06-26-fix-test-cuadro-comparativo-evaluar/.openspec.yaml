@@ -1,0 +1,11 @@
+schema: standard-change
+name: fix-test-cuadro-comparativo-evaluar
+title: "Fix test: cuadro-comparativo evaluar usa valor legacy 'APROBADO' en lugar de 'C'"
+type: test
+status: active
+created: "2026-06-27"
+priority: medium
+artifacts:
+  tasks:
+    file: tasks.md
+    done: false

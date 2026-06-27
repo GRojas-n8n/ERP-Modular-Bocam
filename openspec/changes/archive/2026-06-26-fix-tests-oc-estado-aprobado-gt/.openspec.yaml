@@ -1,0 +1,11 @@
+schema: standard-change
+name: fix-tests-oc-estado-aprobado-gt
+title: "Fix tests: seeds de comparativa deben tener estado APROBADO_GT"
+type: test
+status: active
+created: "2026-06-27"
+priority: high
+artifacts:
+  tasks:
+    file: tasks.md
+    done: false
