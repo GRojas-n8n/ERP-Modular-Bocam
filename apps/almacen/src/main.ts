@@ -373,6 +373,10 @@ async function handleOcRecibida(event: BocamEvent, cantidadField: 'cantidad_reci
   }
 }
 
+// Exports for testing
+export const handleOcRecibidaTotal   = (e: BocamEvent) => handleOcRecibida(e, 'cantidad_recibida');
+export const handleOcRecibidaParcial = (e: BocamEvent) => handleOcRecibida(e, 'cantidad_recibida_parcial');
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -392,8 +396,8 @@ export async function startServer() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     await eventBus.connect();
-    await eventBus.subscribe('compras.oc_recibida_total',   (e) => handleOcRecibida(e, 'cantidad_recibida'));
-    await eventBus.subscribe('compras.oc_recibida_parcial', (e) => handleOcRecibida(e, 'cantidad_recibida_parcial'));
+    await eventBus.subscribe('compras.oc_recibida_total',   handleOcRecibidaTotal);
+    await eventBus.subscribe('compras.oc_recibida_parcial', handleOcRecibidaParcial);
     console.log('[Almacén] Suscrito a: compras.oc_recibida_total, compras.oc_recibida_parcial');
   });
 }

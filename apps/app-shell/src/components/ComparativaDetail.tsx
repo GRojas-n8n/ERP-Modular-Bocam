@@ -346,7 +346,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   compRef.current = comp;
 
   // Presupuesto resolution for convertir-oc (task 4.1)
-  type PresupuestoActivo = { id_presupuesto: string; nombre: string; monto_disponible: number };
+  type PresupuestoActivo = { id_presupuesto: string; codigo: string; descripcion: string; monto_disponible: number };
   const [presupuestos, setPresupuestos] = useState<PresupuestoActivo[]>([]);
   const [selectedPresupuestoId, setSelectedPresupuestoId] = useState('');
   const [showPresupuestoModal, setShowPresupuestoModal] = useState(false);
@@ -2515,7 +2515,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                         : 'border-border/40 hover:border-blue-500/40',
                     )}
                   >
-                    <p className="text-xs font-bold text-foreground">{p.nombre}</p>
+                    <p className="text-xs font-bold text-foreground">{p.codigo} — {p.descripcion}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       Disponible: {p.monto_disponible.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                     </p>

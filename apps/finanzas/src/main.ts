@@ -174,6 +174,7 @@ app.get('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) => 
       { tenantId, proyectoId, userId },
       async (prisma) => {
         return await prisma.presupuestoAsignado.findMany({
+          where: { estatus: 'ACTIVO' },
           include: {
             _count: { select: { movimientos: true, programa_pagos: true } },
           },
