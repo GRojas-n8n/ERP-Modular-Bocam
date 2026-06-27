@@ -97,7 +97,11 @@ async function seedComparativa() {
       proyecto_id: proyectoId,
       requisicion_id: randomUUID(),
       codigo: `CC-E2E-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      estado: 'ABIERTO',
+      estado: 'APROBADO_GT',
+      evaluacion_residente_id: randomUUID(),
+      fecha_evaluacion_tecnica: new Date(),
+      gerente_tecnico_id: randomUUID(),
+      fecha_aprobacion_gt: new Date(),
       detalles: {
         create: [
           {
@@ -108,6 +112,7 @@ async function seedComparativa() {
             precio_ofertado: '2500.0000',
             tiempo_entrega: '5 dias',
             es_ganador: true,
+            aprobacion_gt: 'APROBADO',
           },
         ],
       },
@@ -302,11 +307,11 @@ async function testComparativaToOcFlow() {
   try {
     const { response } = await convertirComparativa(seeded);
 
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 201);
     const payload = await response.json();
     assert.equal(payload.success, true);
-    assert.equal(payload.data.estado, 'EMITIDA');
-    assert.equal(payload.data.proveedor_id, seeded.proveedorId);
+    assert.equal(payload.data.ordenes_compra[0].estado, 'EMITIDA');
+    assert.equal(payload.data.ordenes_compra[0].proveedor_id, seeded.proveedorId);
     assert.equal(financeCalls.length, 2);
     assert.equal(financeCalls[0]?.method, 'GET');
     assert.equal(financeCalls[0]?.path, '/api/v1/finanzas/suficiencia');
@@ -315,7 +320,7 @@ async function testComparativaToOcFlow() {
     assert.equal(financeCalls[1]?.body.presupuesto_id, seeded.presupuestoId);
 
     const persistedOc = await prisma.ordenCompra.findUnique({
-      where: { id_orden: payload.data.id_orden },
+      where: { id_orden: payload.data.ordenes_compra[0].id_orden },
       include: { items: true },
     });
     const persistedComparativa = await prisma.cuadroComparativo.findUnique({
@@ -337,9 +342,9 @@ async function testOcCancelFlow() {
 
   try {
     const { token, response } = await convertirComparativa(seeded);
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 201);
     const conversionPayload = await response.json();
-    const ocId = conversionPayload.data.id_orden;
+    const ocId = conversionPayload.data.ordenes_compra[0].id_orden;
 
     financeCalls = [];
 

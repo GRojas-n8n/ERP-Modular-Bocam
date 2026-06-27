@@ -139,7 +139,11 @@ async function seedComparativaConGanador(tenantIdOverride?: string) {
       proyecto_id: proyectoId,
       requisicion_id: randomUUID(),
       codigo: `CC-ALT-${Date.now()}-${Math.floor(Math.random() * 9999)}`,
-      estado: 'ABIERTO',
+      estado: 'APROBADO_GT',
+      evaluacion_residente_id: randomUUID(),
+      fecha_evaluacion_tecnica: new Date(),
+      gerente_tecnico_id: randomUUID(),
+      fecha_aprobacion_gt: new Date(),
       detalles: {
         create: [{
           tenant_id: tenantId,
@@ -148,6 +152,7 @@ async function seedComparativaConGanador(tenantIdOverride?: string) {
           insumo_id: randomUUID(),
           precio_ofertado: '1000.0000',
           es_ganador: true,
+          aprobacion_gt: 'APROBADO',
         }],
       },
     },
@@ -181,14 +186,14 @@ async function testAlertaGeneradaEnFalloSincrono() {
       }
     );
 
-    // La OC debe quedar en estado inconsistente y la respuesta debe ser 502
-    assert.equal(response.status, 502, 'Debe retornar 502 cuando Finanzas falla');
+    // La OC queda en ERROR_FINANZAS; el endpoint retorna 201 con advertencias
+    assert.equal(response.status, 201, 'El endpoint retorna 201 incluso con fallo parcial en Finanzas');
     const body = (await response.json()) as any;
-    assert.equal(body.success, false);
-    assert.equal(body.data.estado, 'ERROR_FINANZAS');
+    assert.equal(body.success, true);
+    assert.equal(body.data.ordenes_compra[0].estado, 'ERROR_FINANZAS');
 
-    const ocId = body.data.oc_id;
-    assert.ok(ocId, 'La respuesta debe incluir oc_id para rastrear la alerta');
+    const ocId = body.data.ordenes_compra[0].id_orden;
+    assert.ok(ocId, 'La respuesta debe incluir id_orden para rastrear la alerta');
 
     // ─── Verificación principal del spec ──────────────────────────────────
     const alerta = await prisma.alertaOcError.findFirst({
@@ -236,9 +241,9 @@ async function testAlertaReferenciaOcIdCorrecto() {
       }
     );
 
-    assert.equal(response.status, 502);
+    assert.equal(response.status, 201);
     const body = (await response.json()) as any;
-    const ocId = body.data.oc_id as string;
+    const ocId = body.data.ordenes_compra[0].id_orden as string;
 
     const alerta = await prisma.alertaOcError.findFirst({
       where: { oc_id: ocId, tenant_id: seeded.tenantId },
@@ -246,7 +251,7 @@ async function testAlertaReferenciaOcIdCorrecto() {
 
     assert.ok(alerta, 'Alerta debe existir');
     assert.equal(alerta.oc_id, ocId, 'La alerta debe referenciar exactamente el oc_id de la OC creada');
-    assert.equal(alerta.oc_codigo, body.data.codigo, 'oc_codigo en la alerta debe coincidir con el de la OC');
+    assert.equal(alerta.oc_codigo, body.data.ordenes_compra[0].codigo, 'oc_codigo en la alerta debe coincidir con el de la OC');
 
     console.log('ok - alerta registrada con oc_id y oc_codigo correctos (proxy de compras.oc_error_finanzas)');
   } finally {

@@ -9,10 +9,12 @@ import {
 } from '../../src/main';
 
 const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://user:password@127.0.0.1:5672';
-const comprasDbUrl = process.env.DATABASE_URL || 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=compras';
-const finanzasDbUrl = comprasDbUrl.includes('schema=compras')
-  ? comprasDbUrl.replace('schema=compras', 'schema=finanzas')
-  : 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=finanzas';
+const comprasDbUrl = process.env.COMPRAS_DATABASE_URL || process.env.DATABASE_URL || 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=compras';
+const finanzasDbUrl = process.env.FINANZAS_DATABASE_URL || (
+  comprasDbUrl.includes('schema=compras')
+    ? comprasDbUrl.replace('schema=compras', 'schema=finanzas')
+    : 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=finanzas'
+);
 const comprasPrisma = new ComprasPrismaClient({
   datasources: {
     db: {

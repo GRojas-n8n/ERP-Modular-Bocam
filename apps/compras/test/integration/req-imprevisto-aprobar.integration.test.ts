@@ -100,12 +100,13 @@ async function test91() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
+      concepto_id: randomUUID(),
       tipo: 'IMPREVISTO',
       prioridad: 'ALTA',
       observaciones: 'Material no previsto en presupuesto',
       items: [
-        { descripcion_libre: 'Varilla 3/8"', unidad_libre: 'TON', cantidad: 2, es_imprevisto: true },
-        { descripcion_libre: 'Arena gruesa',  unidad_libre: 'M3',  cantidad: 5, es_imprevisto: true },
+        { descripcion_libre: 'Varilla 3/8"', unidad_libre: 'TON', cantidad: 2, es_imprevisto: true, justificacion: 'Material adicional por cambio de diseño' },
+        { descripcion_libre: 'Arena gruesa',  unidad_libre: 'M3',  cantidad: 5, es_imprevisto: true, justificacion: 'Material adicional por cambio de diseño' },
       ],
     }),
   });
@@ -134,6 +135,7 @@ async function test92() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
+      concepto_id: randomUUID(),
       tipo: 'IMPREVISTO',
       items: [{
         insumo_id: insumoId,
@@ -141,6 +143,7 @@ async function test92() {
         unidad_libre: 'M3',
         cantidad: 10,
         es_imprevisto: true,
+        justificacion: 'Concreto adicional por cambio de especificación',
       }],
     }),
   });
