@@ -24,21 +24,21 @@ const VALID_VALUES = new Set(['C', 'NC', 'DA', '?', 'PENDIENTE']);
 
 ## Tasks
 
-- [ ] 1. En `testHappyPathCompleto`, Paso 2 (`PATCH /evaluar`):
+- [x] 1. En `testHappyPathCompleto`, Paso 2 (`PATCH /evaluar`):
   - Cambiar `evaluacion_tecnica: 'APROBADO'` → `evaluacion_tecnica: 'C'`
   - `'C'` = Cumple (equivalente semántico de APROBADO en el nuevo vocabulario)
   - Ajustar la aserción `b2.data.detalles[0].evaluacion_tecnica` → `'C'` (ya no `'APROBADO'`)
 
-- [ ] 2. Buscar si otros tests en el mismo archivo usan valores legacy (`'APROBADO'`, `'RECHAZADO'`)
+- [x] 2. Buscar si otros tests en el mismo archivo usan valores legacy (`'APROBADO'`, `'RECHAZADO'`)
   y actualizarlos al nuevo vocabulario:
   - `'APROBADO'` → `'C'`
   - `'RECHAZADO'` → `'NC'`
 
-- [ ] 3. Revisar `seedCuadroEnAprobacionGT()`: tiene `evaluacion_tecnica: 'APROBADO'` en
+- [x] 3. Revisar `seedCuadroEnAprobacionGT()`: tiene `evaluacion_tecnica: 'APROBADO'` en
   el detalle seed (línea ~175). Si la BD tiene un check constraint, actualizar a `'C'`
   (o verificar que el schema lo permita como valor legacy).
 
-- [ ] 4. Correr el test en VPS y verificar PASS:
+- [x] 4. Correr el test en VPS y verificar PASS:
   ```bash
   DATABASE_URL=postgresql://bocam_admin:S77S.52p-016t4t5n7nt@172.18.0.3:5432/bocam_compras \
   JWT_SECRET=bocam-e2e-secret \

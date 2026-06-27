@@ -127,7 +127,7 @@ async function seedCuadroBorrador(tenantIdOverride?: string) {
 
   const detalleId = cuadro.detalles[0].id_detalle;
 
-  return { tenantId, proyectoId, userId, presupuestoId, cuadroId: cuadro.id_cuadro, detalleId };
+  return { tenantId, proyectoId, userId, presupuestoId, cuadroId: cuadro.id_cuadro, detalleId, proveedorId: proveedor.id_proveedor };
 }
 
 /**
@@ -210,6 +210,14 @@ async function patch(path: string, token: string, body: object) {
   });
 }
 
+async function put(path: string, token: string, body: object) {
+  return fetch(`${comprasBaseUrl}${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
 async function post(path: string, token: string, body: object) {
   return fetch(`${comprasBaseUrl}${path}`, {
     method: 'POST',
@@ -219,7 +227,7 @@ async function post(path: string, token: string, body: object) {
 }
 
 // ── Test 11.1: Happy path completo ──────────────────────────────────────────
-// BORRADOR → EN_EVALUACION_TECNICA → EVALUADO_TECNICAMENTE → EN_APROBACION_GT → APROBADO_GT → CERRADO
+// BORRADOR → EN_EVALUACION_TECNICA → evaluar(C) → seleccion → firmar(FIRMADO_BLOQUEADO) → EN_APROBACION_GT → APROBADO_GT → CERRADO
 
 async function testHappyPathCompleto() {
   const seeded = await seedCuadroBorrador();
@@ -248,29 +256,49 @@ async function testHappyPathCompleto() {
     assert.equal(b1.data.estado, 'EN_EVALUACION_TECNICA', 'Estado debe ser EN_EVALUACION_TECNICA');
     assert.equal(b1.data.detalles[0].evaluacion_tecnica, 'PENDIENTE', 'Detalle debe tener evaluacion_tecnica=PENDIENTE');
 
-    // Paso 2: Residente registra evaluación técnica → EVALUADO_TECNICAMENTE
+    // Paso 2: Residente registra evaluación técnica ('C' = Cumple)
     const r2 = await patch(
       `/api/v1/compras/comparativas/${seeded.cuadroId}/evaluar`,
       tokenResidente,
-      { evaluaciones: [{ detalle_id: seeded.detalleId, evaluacion_tecnica: 'APROBADO', comentario_tecnico: 'Cumple especificación' }] }
+      { evaluaciones: [{ detalle_id: seeded.detalleId, evaluacion_tecnica: 'C', comentario_tecnico: 'Cumple especificación' }] }
     );
     assert.equal(r2.status, 200, 'evaluar debe retornar 200');
     const b2 = (await r2.json()) as any;
-    assert.equal(b2.data.estado, 'EVALUADO_TECNICAMENTE', 'Estado debe ser EVALUADO_TECNICAMENTE');
-    assert.equal(b2.data.evaluacion_residente_id !== null, true, 'evaluacion_residente_id debe estar seteado');
-    assert.equal(b2.data.detalles[0].evaluacion_tecnica, 'APROBADO', 'Detalle debe tener evaluacion_tecnica=APROBADO');
+    assert.equal(b2.data.detalles[0].evaluacion_tecnica, 'C', 'Detalle debe tener evaluacion_tecnica=C (Cumple)');
 
-    // Paso 3: Residente envía al Gerente Técnico → EN_APROBACION_GT
-    const r3 = await patch(
+    // Paso 3: Residente selecciona primera opción de proveedor
+    const r3 = await put(
+      `/api/v1/compras/comparativas/${seeded.cuadroId}/seleccion`,
+      tokenResidente,
+      { primera_opcion_proveedor_id: seeded.proveedorId }
+    );
+    assert.equal(r3.status, 200, 'seleccion debe retornar 200');
+
+    // Paso 4: Residente firma el cuadro → FIRMADO_BLOQUEADO
+    const r4 = await post(
+      `/api/v1/compras/comparativas/${seeded.cuadroId}/firmar`,
+      tokenResidente,
+      {
+        veredicto_residente: 'Proveedor cumple todas las especificaciones técnicas y presenta mejor precio.',
+        proveedores_sugeridos: [seeded.proveedorId],
+      }
+    );
+    assert.equal(r4.status, 200, 'firmar debe retornar 200');
+    const b4 = (await r4.json()) as any;
+    assert.equal(b4.data.estado, 'FIRMADO_BLOQUEADO', 'Estado debe ser FIRMADO_BLOQUEADO');
+    assert.equal(b4.data.evaluacion_residente_id !== null, true, 'evaluacion_residente_id debe estar seteado');
+
+    // Paso 5: Residente envía al Gerente Técnico → EN_APROBACION_GT
+    const r5 = await patch(
       `/api/v1/compras/comparativas/${seeded.cuadroId}/enviar-gt`,
       tokenResidente, {}
     );
-    assert.equal(r3.status, 200, 'enviar-gt debe retornar 200');
-    const b3 = (await r3.json()) as any;
-    assert.equal(b3.data.estado, 'EN_APROBACION_GT', 'Estado debe ser EN_APROBACION_GT');
+    assert.equal(r5.status, 200, 'enviar-gt debe retornar 200');
+    const b5 = (await r5.json()) as any;
+    assert.equal(b5.data.estado, 'EN_APROBACION_GT', 'Estado debe ser EN_APROBACION_GT');
 
-    // Paso 4: GT aprueba el renglón → APROBADO_GT
-    const r4 = await patch(
+    // Paso 6: GT aprueba el renglón → APROBADO_GT
+    const r6 = await patch(
       `/api/v1/compras/comparativas/${seeded.cuadroId}/revisar-gt`,
       tokenGT,
       {
@@ -278,22 +306,25 @@ async function testHappyPathCompleto() {
         comentario_gt_general: 'Cuadro aprobado. Proceder con OC.',
       }
     );
-    assert.equal(r4.status, 200, 'revisar-gt debe retornar 200');
-    const b4 = (await r4.json()) as any;
-    assert.equal(b4.data.estado, 'APROBADO_GT', 'Estado debe ser APROBADO_GT');
-    assert.equal(b4.data.gerente_tecnico_id !== null, true, 'gerente_tecnico_id debe estar seteado');
-    assert.equal(b4.data.detalles[0].aprobacion_gt, 'APROBADO', 'Detalle debe tener aprobacion_gt=APROBADO');
+    assert.equal(r6.status, 200, 'revisar-gt debe retornar 200');
+    const b6 = (await r6.json()) as any;
+    assert.equal(b6.data.estado, 'APROBADO_GT', 'Estado debe ser APROBADO_GT');
+    assert.equal(b6.data.gerente_tecnico_id !== null, true, 'gerente_tecnico_id debe estar seteado');
+    assert.equal(b6.data.detalles[0].aprobacion_gt, 'APROBADO', 'Detalle debe tener aprobacion_gt=APROBADO');
 
-    // Paso 5: Procurement genera OC → CERRADO (Finanzas acepta)
-    const r5 = await post(
+    // Paso 7: Procurement genera OC → CERRADO (Finanzas acepta)
+    const r7 = await post(
       `/api/v1/compras/comparativas/${seeded.cuadroId}/convertir-oc`,
       tokenProcurement,
       { presupuesto_id: seeded.presupuestoId }
     );
-    assert.equal(r5.status, 201, 'convertir-oc debe retornar 201');
-    const b5 = (await r5.json()) as any;
-    assert.equal(b5.success, true, 'convertir-oc debe tener success=true');
-    assert.ok(b5.data.oc_id || (b5.data && Array.isArray(b5.data)), 'convertir-oc debe retornar OC creada');
+    assert.equal(r7.status, 201, 'convertir-oc debe retornar 201');
+    const b7 = (await r7.json()) as any;
+    assert.equal(b7.success, true, 'convertir-oc debe tener success=true');
+    assert.ok(
+      b7.data.ordenes_compra && Array.isArray(b7.data.ordenes_compra) && b7.data.ordenes_compra.length > 0,
+      'convertir-oc debe retornar array ordenes_compra con al menos 1 OC'
+    );
 
     // Verificar en BD que el cuadro quedó CERRADO
     const cuadroFinal = await prisma.cuadroComparativo.findUnique({
@@ -301,7 +332,7 @@ async function testHappyPathCompleto() {
     });
     assert.equal(cuadroFinal?.estado, 'CERRADO', 'Cuadro debe quedar en estado CERRADO tras OC EMITIDA');
 
-    console.log('ok - 11.1 happy path: BORRADOR → EN_EVALUACION_TECNICA → EVALUADO_TECNICAMENTE → EN_APROBACION_GT → APROBADO_GT → CERRADO');
+    console.log('ok - 11.1 happy path: BORRADOR → EN_EVALUACION_TECNICA → evaluar(C) → firmar(FIRMADO_BLOQUEADO) → EN_APROBACION_GT → APROBADO_GT → CERRADO');
   } finally {
     await cleanupTenant(seeded.tenantId);
   }

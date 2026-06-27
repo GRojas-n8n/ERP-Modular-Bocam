@@ -7980,6 +7980,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | null
     saldo_oc_antes: Decimal | null
     saldo_oc_despues: Decimal | null
+    concepto_id: string | null
+    concepto_clave: string | null
   }
 
   export type DetallePagoOCMaxAggregateOutputType = {
@@ -7992,6 +7994,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | null
     saldo_oc_antes: Decimal | null
     saldo_oc_despues: Decimal | null
+    concepto_id: string | null
+    concepto_clave: string | null
   }
 
   export type DetallePagoOCCountAggregateOutputType = {
@@ -8004,6 +8008,8 @@ export namespace Prisma {
     monto_aplicado: number
     saldo_oc_antes: number
     saldo_oc_despues: number
+    concepto_id: number
+    concepto_clave: number
     _all: number
   }
 
@@ -8030,6 +8036,8 @@ export namespace Prisma {
     monto_aplicado?: true
     saldo_oc_antes?: true
     saldo_oc_despues?: true
+    concepto_id?: true
+    concepto_clave?: true
   }
 
   export type DetallePagoOCMaxAggregateInputType = {
@@ -8042,6 +8050,8 @@ export namespace Prisma {
     monto_aplicado?: true
     saldo_oc_antes?: true
     saldo_oc_despues?: true
+    concepto_id?: true
+    concepto_clave?: true
   }
 
   export type DetallePagoOCCountAggregateInputType = {
@@ -8054,6 +8064,8 @@ export namespace Prisma {
     monto_aplicado?: true
     saldo_oc_antes?: true
     saldo_oc_despues?: true
+    concepto_id?: true
+    concepto_clave?: true
     _all?: true
   }
 
@@ -8153,6 +8165,8 @@ export namespace Prisma {
     monto_aplicado: Decimal
     saldo_oc_antes: Decimal
     saldo_oc_despues: Decimal
+    concepto_id: string | null
+    concepto_clave: string | null
     _count: DetallePagoOCCountAggregateOutputType | null
     _avg: DetallePagoOCAvgAggregateOutputType | null
     _sum: DetallePagoOCSumAggregateOutputType | null
@@ -8184,6 +8198,8 @@ export namespace Prisma {
     monto_aplicado?: boolean
     saldo_oc_antes?: boolean
     saldo_oc_despues?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
     pago?: boolean | PagoOCDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["detallePagoOC"]>
 
@@ -8197,6 +8213,8 @@ export namespace Prisma {
     monto_aplicado?: boolean
     saldo_oc_antes?: boolean
     saldo_oc_despues?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
     pago?: boolean | PagoOCDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["detallePagoOC"]>
 
@@ -8210,6 +8228,8 @@ export namespace Prisma {
     monto_aplicado?: boolean
     saldo_oc_antes?: boolean
     saldo_oc_despues?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
   }
 
   export type DetallePagoOCInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8234,6 +8254,8 @@ export namespace Prisma {
       monto_aplicado: Prisma.Decimal
       saldo_oc_antes: Prisma.Decimal
       saldo_oc_despues: Prisma.Decimal
+      concepto_id: string | null
+      concepto_clave: string | null
     }, ExtArgs["result"]["detallePagoOC"]>
     composites: {}
   }
@@ -8637,6 +8659,8 @@ export namespace Prisma {
     readonly monto_aplicado: FieldRef<"DetallePagoOC", 'Decimal'>
     readonly saldo_oc_antes: FieldRef<"DetallePagoOC", 'Decimal'>
     readonly saldo_oc_despues: FieldRef<"DetallePagoOC", 'Decimal'>
+    readonly concepto_id: FieldRef<"DetallePagoOC", 'String'>
+    readonly concepto_clave: FieldRef<"DetallePagoOC", 'String'>
   }
     
 
@@ -9110,7 +9134,9 @@ export namespace Prisma {
     proveedor_nombre: 'proveedor_nombre',
     monto_aplicado: 'monto_aplicado',
     saldo_oc_antes: 'saldo_oc_antes',
-    saldo_oc_despues: 'saldo_oc_despues'
+    saldo_oc_despues: 'saldo_oc_despues',
+    concepto_id: 'concepto_id',
+    concepto_clave: 'concepto_clave'
   };
 
   export type DetallePagoOCScalarFieldEnum = (typeof DetallePagoOCScalarFieldEnum)[keyof typeof DetallePagoOCScalarFieldEnum]
@@ -9831,6 +9857,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    concepto_id?: UuidNullableFilter<"DetallePagoOC"> | string | null
+    concepto_clave?: StringNullableFilter<"DetallePagoOC"> | string | null
     pago?: XOR<PagoOCRelationFilter, PagoOCWhereInput>
   }
 
@@ -9844,6 +9872,8 @@ export namespace Prisma {
     monto_aplicado?: SortOrder
     saldo_oc_antes?: SortOrder
     saldo_oc_despues?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
+    concepto_clave?: SortOrderInput | SortOrder
     pago?: PagoOCOrderByWithRelationInput
   }
 
@@ -9861,6 +9891,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    concepto_id?: UuidNullableFilter<"DetallePagoOC"> | string | null
+    concepto_clave?: StringNullableFilter<"DetallePagoOC"> | string | null
     pago?: XOR<PagoOCRelationFilter, PagoOCWhereInput>
   }, "id_detalle" | "pago_id_oc_id">
 
@@ -9874,6 +9906,8 @@ export namespace Prisma {
     monto_aplicado?: SortOrder
     saldo_oc_antes?: SortOrder
     saldo_oc_despues?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
+    concepto_clave?: SortOrderInput | SortOrder
     _count?: DetallePagoOCCountOrderByAggregateInput
     _avg?: DetallePagoOCAvgOrderByAggregateInput
     _max?: DetallePagoOCMaxOrderByAggregateInput
@@ -9894,6 +9928,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalWithAggregatesFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalWithAggregatesFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalWithAggregatesFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    concepto_id?: UuidNullableWithAggregatesFilter<"DetallePagoOC"> | string | null
+    concepto_clave?: StringNullableWithAggregatesFilter<"DetallePagoOC"> | string | null
   }
 
   export type PresupuestoAsignadoCreateInput = {
@@ -10618,6 +10654,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | DecimalJsLike | number | string
     saldo_oc_antes: Decimal | DecimalJsLike | number | string
     saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     pago: PagoOCCreateNestedOneWithoutDetallesInput
   }
 
@@ -10631,6 +10669,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | DecimalJsLike | number | string
     saldo_oc_antes: Decimal | DecimalJsLike | number | string
     saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
   }
 
   export type DetallePagoOCUpdateInput = {
@@ -10642,6 +10682,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     pago?: PagoOCUpdateOneRequiredWithoutDetallesNestedInput
   }
 
@@ -10655,6 +10697,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DetallePagoOCCreateManyInput = {
@@ -10667,6 +10711,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | DecimalJsLike | number | string
     saldo_oc_antes: Decimal | DecimalJsLike | number | string
     saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
   }
 
   export type DetallePagoOCUpdateManyMutationInput = {
@@ -10678,6 +10724,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DetallePagoOCUncheckedUpdateManyInput = {
@@ -10690,6 +10738,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -11346,6 +11396,8 @@ export namespace Prisma {
     monto_aplicado?: SortOrder
     saldo_oc_antes?: SortOrder
     saldo_oc_despues?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
   }
 
   export type DetallePagoOCAvgOrderByAggregateInput = {
@@ -11364,6 +11416,8 @@ export namespace Prisma {
     monto_aplicado?: SortOrder
     saldo_oc_antes?: SortOrder
     saldo_oc_despues?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
   }
 
   export type DetallePagoOCMinOrderByAggregateInput = {
@@ -11376,6 +11430,8 @@ export namespace Prisma {
     monto_aplicado?: SortOrder
     saldo_oc_antes?: SortOrder
     saldo_oc_despues?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
   }
 
   export type DetallePagoOCSumOrderByAggregateInput = {
@@ -12339,6 +12395,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | DecimalJsLike | number | string
     saldo_oc_antes: Decimal | DecimalJsLike | number | string
     saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
   }
 
   export type DetallePagoOCUncheckedCreateWithoutPagoInput = {
@@ -12350,6 +12408,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | DecimalJsLike | number | string
     saldo_oc_antes: Decimal | DecimalJsLike | number | string
     saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
   }
 
   export type DetallePagoOCCreateOrConnectWithoutPagoInput = {
@@ -12432,6 +12492,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFilter<"DetallePagoOC"> | Decimal | DecimalJsLike | number | string
+    concepto_id?: UuidNullableFilter<"DetallePagoOC"> | string | null
+    concepto_clave?: StringNullableFilter<"DetallePagoOC"> | string | null
   }
 
   export type PagoOCCreateWithoutDetallesInput = {
@@ -12745,6 +12807,8 @@ export namespace Prisma {
     monto_aplicado: Decimal | DecimalJsLike | number | string
     saldo_oc_antes: Decimal | DecimalJsLike | number | string
     saldo_oc_despues: Decimal | DecimalJsLike | number | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
   }
 
   export type DetallePagoOCUpdateWithoutPagoInput = {
@@ -12756,6 +12820,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DetallePagoOCUncheckedUpdateWithoutPagoInput = {
@@ -12767,6 +12833,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DetallePagoOCUncheckedUpdateManyWithoutPagoInput = {
@@ -12778,6 +12846,8 @@ export namespace Prisma {
     monto_aplicado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_antes?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     saldo_oc_despues?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
 

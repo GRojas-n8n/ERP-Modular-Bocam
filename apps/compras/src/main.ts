@@ -2091,7 +2091,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
 
         if (!comparativa) throw new Error('Cuadro comparativo no encontrado.');
         if (comparativa.estado !== 'APROBADO_GT') {
-          throw new Error(`La OC solo puede generarse de un cuadro aprobado por Gerencia Técnica. Estado actual: ${comparativa.estado}`);
+          throw new Error(`APROBACION_GT_REQUERIDA: La OC solo puede generarse de un cuadro aprobado por Gerencia Técnica. Estado actual: ${comparativa.estado}`);
         }
         if (comparativa.detalles.length === 0) {
           throw new Error('No hay renglones aprobados por Gerencia Técnica con proveedor ganador seleccionado.');
@@ -2266,8 +2266,10 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
     });
   } catch (error: any) {
     logError(req, 'compras', 'compras.orden_compra.emitir.error', 'Error en conversion de comparativa a orden de compra', { error_message: error.message });
-    res.status(error.message.includes('PRESUPUESTO_INSUFICIENTE') ? 422 : 500)
-      .json({ success: false, message: error.message });
+    const status = error.message.includes('PRESUPUESTO_INSUFICIENTE') ? 422
+      : error.message.includes('APROBACION_GT_REQUERIDA') ? 400
+      : 500;
+    res.status(status).json({ success: false, message: error.message });
   }
 });
 
@@ -2654,14 +2656,11 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
-          if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
-            return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.' });
-          }
-          const ESTADOS_ENVIABLES = new Set(['EVALUADO_TECNICAMENTE', 'LOCKED']);
+          const ESTADOS_ENVIABLES = new Set(['EVALUADO_TECNICAMENTE', 'LOCKED', 'FIRMADO_BLOQUEADO']);
           if (!ESTADOS_ENVIABLES.has(cuadro.estado)) {
             return res.status(400).json({
               success: false,
-              message: `El cuadro no está en estado EVALUADO_TECNICAMENTE ni LOCKED. Estado actual: ${cuadro.estado}`,
+              message: `El cuadro debe estar firmado (FIRMADO_BLOQUEADO) antes de enviarse al GT. Estado actual: ${cuadro.estado}`,
             });
           }
 

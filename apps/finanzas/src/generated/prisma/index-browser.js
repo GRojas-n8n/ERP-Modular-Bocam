@@ -231,7 +231,9 @@ exports.Prisma.DetallePagoOCScalarFieldEnum = {
   proveedor_nombre: 'proveedor_nombre',
   monto_aplicado: 'monto_aplicado',
   saldo_oc_antes: 'saldo_oc_antes',
-  saldo_oc_despues: 'saldo_oc_despues'
+  saldo_oc_despues: 'saldo_oc_despues',
+  concepto_id: 'concepto_id',
+  concepto_clave: 'concepto_clave'
 };
 
 exports.Prisma.SortOrder = {
