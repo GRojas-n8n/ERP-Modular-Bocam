@@ -759,6 +759,17 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [cpCategoria, setCpCategoria] = useState('');
   const [cpExporting, setCpExporting] = useState<'PDF' | 'XLSX' | null>(null);
 
+  // ── Estado: Dashboard GT ──────────────────────────────────────────────────
+  interface GtDash {
+    pendientes_revision: number;
+    en_evaluacion_tecnica: number;
+    aprobados_este_mes: number;
+    monto_comprometido: number;
+    alertas: Array<{ comparativa_id: string; folio: string; proyecto: string; dias_en_espera: number; mensaje: string }>;
+    parcial: boolean;
+  }
+  const [gtDash, setGtDash] = useState<GtDash | null>(null);
+
   const loadControlPresupuestal = async () => {
     if (!currentProjectId) return;
     setCpLoading(true);
@@ -1044,6 +1055,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
   useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab]);
   useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab]);
+  useEffect(() => {
+    if (tenant?.id === 'iretum-demo') return;
+    api.get('/api/v1/gerencia-tecnica/dashboard').then(r => setGtDash(r.data?.data ?? null)).catch(() => {});
+  }, [tenant?.id]);
 
   // ── Abrir panel de Take-off para un concepto ──────────────────────────────
   const handleAbrirTakeoff = async (concepto: Concepto) => {
@@ -1488,6 +1503,44 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </div>
         </div>
 
+
+        {/* ── Dashboard GT ─────────────────────────────────────────────────── */}
+        {gtDash && (
+          <div className="space-y-4">
+            {gtDash.parcial && (
+              <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2">
+                <IconAlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Datos parcialmente disponibles — Compras no responde</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                { label: 'Pendientes GT',      value: gtDash.pendientes_revision,    color: gtDash.pendientes_revision > 0 ? 'text-red-600' : 'text-foreground',   bg: gtDash.pendientes_revision > 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-card border-border/30' },
+                { label: 'En evaluación téc.', value: gtDash.en_evaluacion_tecnica,  color: 'text-amber-600', bg: 'bg-amber-500/5 border-amber-500/20' },
+                { label: 'Aprobados este mes', value: gtDash.aprobados_este_mes,     color: 'text-emerald-700', bg: 'bg-emerald-500/5 border-emerald-500/20' },
+                { label: 'Monto comprometido', value: `$${gtDash.monto_comprometido.toLocaleString('es-MX', { maximumFractionDigits: 0 })}`, color: 'text-primary', bg: 'bg-primary/5 border-primary/20' },
+              ].map(k => (
+                <div key={k.label} className={cn('rounded-2xl border p-4', k.bg)}>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{k.label}</p>
+                  <p className={cn('mt-1 text-2xl font-black leading-tight', k.color)}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+            {gtDash.alertas.length > 0 && (
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  {gtDash.alertas.length} cuadro{gtDash.alertas.length !== 1 ? 's' : ''} en espera
+                </p>
+                {gtDash.alertas.map(a => (
+                  <div key={a.comparativa_id} className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2">
+                    <span className="text-xs font-bold text-amber-800">{a.folio} — {a.proyecto}</span>
+                    <span className="shrink-0 text-[10px] font-black text-amber-700">{a.dias_en_espera}d esperando</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Error de parseo ── */}
         {(parseError || parseErrorInsumos) && (
