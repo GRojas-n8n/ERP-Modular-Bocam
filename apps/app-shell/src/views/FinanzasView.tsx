@@ -186,7 +186,7 @@ function exportarPDF(resumen: ResumenFinanciero | null, pagos: PagoProgramado[],
 }
 
 export const FinanzasView: React.FC = () => {
-  const { tenant } = useTenant();
+  const { tenant, currentProjectId } = useTenant();
   const { notify } = useNotification();
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [pagos, setPagos] = useState<PagoProgramado[]>([]);
@@ -298,7 +298,7 @@ export const FinanzasView: React.FC = () => {
     }
   };
 
-  useEffect(() => { void fetchData(); }, []);
+  useEffect(() => { void fetchData(); }, [currentProjectId]);
 
   const handleGuardarPagoOC = async () => {
     if (!pagoForm.referencia || !pagoForm.concepto || !pagoForm.oc_id || !pagoForm.monto_aplicado) {

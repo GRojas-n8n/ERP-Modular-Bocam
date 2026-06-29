@@ -1081,19 +1081,19 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
-  useEffect(() => { void fetchPresupuesto(); }, []);
+  useEffect(() => { void fetchPresupuesto(); }, [currentProjectId]);
   useEffect(() => {
     if (presupuesto?.estado === 'APROBADO' || presupuesto?.estado === 'LIBERADO' || presupuesto?.estado === 'CONGELADO') {
       void fetchSaldoPartidas();
     }
   }, [presupuesto?.id, presupuesto?.estado]);
-  useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
-  useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab]);
-  useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
   useEffect(() => {
     if (tenant?.id === 'iretum-demo') return;
     api.get('/api/v1/gerencia-tecnica/dashboard').then(r => setGtDash(r.data?.data ?? null)).catch(() => {});
-  }, [tenant?.id]);
+  }, [tenant?.id, currentProjectId]);
 
   // ── Abrir panel de Take-off para un concepto ──────────────────────────────
   const handleAbrirTakeoff = async (concepto: Concepto) => {

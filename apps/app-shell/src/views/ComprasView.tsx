@@ -199,7 +199,7 @@ const CLASE_TO_GT_TIPO: Record<string, string> = {
 const UNIDADES = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
 
 export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant, user } = useTenant();
+  const { tenant, user, currentProjectId } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
   const { notify } = useNotification();
 
@@ -262,7 +262,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [cpResumenLoading, setCpResumenLoading] = useState(false);
 
   const loadCpResumen = async () => {
-    const proyectoId = user?.projects?.[0]?.id;
+    const proyectoId = currentProjectId || user?.projects?.[0]?.id;
     if (!proyectoId) return;
     setCpResumenLoading(true);
     try {
@@ -491,8 +491,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
-  useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab]);
+  useEffect(() => { fetchData(); }, [currentProjectId]);
+  useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
 
   // Cerrar dropdown al hacer clic afuera (requisición)
   useEffect(() => {

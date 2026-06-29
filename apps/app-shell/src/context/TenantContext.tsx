@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as Sentry from '@sentry/react';
 import type { TenantConfig, UserContext, AppState, ProjectAccess } from '../types';
-import { getAccessToken, setTokens, clearTokens, loginApi, fetchMe } from '../lib/api';
+import { getAccessToken, setTokens, clearTokens, loginApi, fetchMe, switchProjectApi } from '../lib/api';
 
 /**
  * ---------------------------------------------------------------------------
@@ -18,7 +18,7 @@ interface TenantContextType extends AppState {
   login: (email: string, password: string, tenantId: string) => Promise<void>;
   loginDemo: () => void;
   logout: () => void;
-  setCurrentProjectId: (projectId: string) => void;
+  setCurrentProjectId: (projectId: string) => void | Promise<void>;
   refreshUser: () => Promise<void>;
   loginError: string | null;
 }
@@ -200,8 +200,23 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   // ─── Switch Project ────────────────────────────────────────────────────
-  const setCurrentProjectId = useCallback((projectId: string) => {
+  const setCurrentProjectId = useCallback(async (projectId: string) => {
+    // Actualizar la UI inmediatamente para que el selector muestre el nuevo proyecto
     setState(prev => ({ ...prev, currentProjectId: projectId }));
+    try {
+      // Re-emitir el JWT con el nuevo proyecto_id para que todos los
+      // requests al backend lleven el proyecto correcto en el token
+      const result = await switchProjectApi(projectId);
+      if (result?.data?.access_token) {
+        // Reemplazar solo el access token; el refresh token sigue vigente
+        const refreshToken = localStorage.getItem('iretum_refresh_token') || '';
+        setTokens(result.data.access_token, refreshToken);
+      }
+    } catch {
+      // Si switch-project falla (ej. sin red), la UI ya cambió.
+      // El backend devuelve datos del proyecto anterior hasta el próximo login.
+      // No revertimos el estado para no confundir al usuario.
+    }
   }, []);
 
   // ─── Refresh User (recargar proyectos y datos sin logout) ──────────────

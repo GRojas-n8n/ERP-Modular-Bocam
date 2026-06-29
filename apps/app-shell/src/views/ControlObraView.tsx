@@ -264,7 +264,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentProjectId]);
 
   useEffect(() => {
     if (activeTab === 'configuracion' && canConfig && !isDemo) loadConfiguracion();
