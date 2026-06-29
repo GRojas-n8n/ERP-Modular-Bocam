@@ -20,6 +20,7 @@ import { ResidenciaView } from './views/ResidenciaView';
 import { CalidadView } from './views/CalidadView';
 import { AlmacenView } from './views/AlmacenView';
 import ContabilidadView from './views/ContabilidadView';
+import { ControlProyectosView } from './views/ControlProyectosView';
 
 // ─── View loading fallback ────────────────────────────────────────────────────
 const ViewLoader: React.FC = () => (
@@ -108,6 +109,8 @@ const AuthenticatedApp: React.FC = () => {
         return <AlmacenView activeSubView={currentSubView} />;
       case 'contabilidad':
         return <ContabilidadView />;
+      case 'control-proyectos':
+        return <ControlProyectosView activeSubView={currentSubView} />;
       case 'admin':
         return <AdminView activeSubView={currentSubView} />;
       default:

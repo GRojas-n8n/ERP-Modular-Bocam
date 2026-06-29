@@ -1,0 +1,109 @@
+// Control de Proyectos — EVM, Curva S, Alertas Predictivas
+// Puerto: 3013 | Schema: control_proyectos
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Programación planificada por partida (Gantt simplificado + Curva S)
+model ProgramacionObra {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String   @db.Uuid
+  proyecto_id         String   @db.Uuid
+  concepto_id         String   @db.Uuid
+  concepto_clave      String   @db.VarChar(100)
+  descripcion         String   @db.Text
+
+  fecha_inicio_plan   DateTime @db.Date
+  fecha_fin_plan      DateTime @db.Date
+
+  // JSONB: [{ semana: "2026-W22", pct_acumulado: 15.0 }, ...]
+  curva_programada    Json     @db.JsonB
+
+  // Calculados por subscribers de eventos
+  fecha_inicio_real   DateTime? @db.Date
+  fecha_fin_real      DateTime? @db.Date
+  pct_avance_real     Decimal  @default(0) @db.Decimal(5, 2)
+
+  // EVM por partida
+  cpi                 Decimal? @db.Decimal(6, 4)
+  spi                 Decimal? @db.Decimal(6, 4)
+  eac                 Decimal? @db.Decimal(18, 2)
+  bac                 Decimal  @default(0) @db.Decimal(18, 2)
+
+  // PENDIENTE | EN_CURSO | COMPLETADA | ATRASADA
+  estado              String   @default("PENDIENTE") @db.VarChar(20)
+
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenant_id, proyecto_id, concepto_id])
+  @@index([tenant_id, proyecto_id], name: "idx_prog_proyecto")
+  @@map("programacion_obra")
+}
+
+// Alertas predictivas generadas automáticamente
+model AlertaProyecto {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String    @db.Uuid
+  proyecto_id   String    @db.Uuid
+  concepto_id   String?   @db.Uuid
+
+  // PARTIDA_BLOQUEADA | SOBRE_COSTO_PROYECTADO | RETRASO_CRITICO |
+  // MATERIAL_INMOVILIZADO | BRECHA_FISICO_ECONOMICO | PROVEEDOR_SIN_PAGAR |
+  // NOMINA_SIN_COSTO | IMPREVISTO_EXCESIVO | TRANSFERENCIA_PENDIENTE
+  tipo          String    @db.VarChar(50)
+  severidad     String    @db.VarChar(10)  // INFO | WARN | CRITICA
+  titulo        String    @db.VarChar(200)
+  descripcion   String    @db.Text
+  datos         Json      @db.JsonB
+
+  // ACTIVA | RECONOCIDA | RESUELTA | IGNORADA
+  estado        String    @default("ACTIVA") @db.VarChar(20)
+  nota_cp       String?   @db.Text
+  resuelta_en   DateTime? @db.Timestamptz(6)
+
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([tenant_id, proyecto_id, estado], name: "idx_alerta_proyecto_estado")
+  @@index([tenant_id, proyecto_id, tipo], name: "idx_alerta_proyecto_tipo")
+  @@map("alertas_proyecto")
+}
+
+// Snapshot periódico de EVM global por proyecto
+model ProyeccionCierre {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id             String   @db.Uuid
+  proyecto_id           String   @db.Uuid
+  fecha_calculo         DateTime @db.Date
+
+  // EVM global
+  bac                   Decimal  @db.Decimal(18, 2)
+  pv                    Decimal  @db.Decimal(18, 2)
+  ev                    Decimal  @db.Decimal(18, 2)
+  ac                    Decimal  @db.Decimal(18, 2)
+
+  cpi                   Decimal  @db.Decimal(6, 4)
+  spi                   Decimal  @db.Decimal(6, 4)
+  cv                    Decimal  @db.Decimal(18, 2)
+  sv                    Decimal  @db.Decimal(18, 2)
+
+  eac                   Decimal  @db.Decimal(18, 2)
+  etc                   Decimal  @db.Decimal(18, 2)
+  vac                   Decimal  @db.Decimal(18, 2)
+
+  fecha_fin_plan        DateTime? @db.Date
+  fecha_fin_proyectada  DateTime? @db.Date
+
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenant_id, proyecto_id, fecha_calculo], name: "idx_proyeccion_fecha")
+  @@map("proyecciones_cierre")
+}

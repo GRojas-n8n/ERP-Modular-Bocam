@@ -159,6 +159,17 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'epp',            label: 'EPP',            icon: IconShieldCheck },
     ],
   },
+  {
+    name: 'Control Proyectos', icon: IconActivity, id: 'control-proyectos',
+    roles: ['control_proyectos', 'director'],
+    subItems: [
+      { id: 'dashboard',    label: 'Dashboard EVM',   icon: IconDashboard },
+      { id: 'evm',          label: 'EVM Detalle',      icon: IconTrendingUp },
+      { id: 'curva-s',      label: 'Curva S',          icon: IconActivity },
+      { id: 'alertas',      label: 'Alertas',          icon: IconAlertCircle },
+      { id: 'programacion', label: 'Programación',     icon: IconFileText },
+    ],
+  },
   { name: 'Ventas',       icon: IconShoppingCart, id: 'ventas', roles: ['ventas'] },
   {
     name: 'Calidad', icon: IconShieldCheck, id: 'calidad',

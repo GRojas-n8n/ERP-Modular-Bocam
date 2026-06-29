@@ -526,6 +526,37 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
+  control-proyectos:
+    profiles: ["core", "full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/control-proyectos"
+        APP_PATH: "apps/control-proyectos"
+    container_name: bocam-vps-control-proyectos
+    environment:
+      PORT: 3013
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${CONTROL_PROYECTOS_DATABASE_URL}
+      CONTROL_PROYECTOS_DATABASE_URL: ${CONTROL_PROYECTOS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3013/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
   app-shell:
     profiles: ["core", "full", "staging"]
     build:
@@ -552,6 +583,8 @@ services:
       contabilidad:
         condition: service_healthy
       almacen:
+        condition: service_healthy
+      control-proyectos:
         condition: service_healthy
     networks:
       - bocam-vps-network
