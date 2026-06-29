@@ -244,6 +244,51 @@ enum EstadoPresupuesto {
 }
 
 // ======================================================================
+// TRANSFERENCIAS ENTRE PARTIDAS
+// ======================================================================
+
+/// Solicitud formal de mover presupuesto de una partida a otra.
+/// Requiere aprobación del director antes de ajustar SaldoPartida.
+model TransferenciaPartida {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id String @db.Uuid
+  tipo      String @default("INTERNA") @db.VarChar(20)
+
+  proyecto_origen_id    String  @db.Uuid
+  concepto_origen_id    String? @db.Uuid
+  concepto_origen_clave String  @db.VarChar(100)
+  concepto_origen_desc  String  @db.Text
+
+  proyecto_destino_id    String @db.Uuid
+  concepto_destino_id    String @db.Uuid
+  concepto_destino_clave String @db.VarChar(100)
+  concepto_destino_desc  String @db.Text
+
+  monto  Decimal @db.Decimal(18, 2)
+  moneda String  @default("MXN") @db.VarChar(3)
+
+  justificacion         String @db.Text
+  solicitado_por_id     String @db.Uuid
+  solicitado_por_nombre String @db.VarChar(200)
+
+  aprobado_por_id     String?   @db.Uuid
+  aprobado_por_nombre String?   @db.VarChar(200)
+  fecha_aprobacion    DateTime? @db.Timestamptz(6)
+
+  estado         String  @default("PENDIENTE") @db.VarChar(20)
+  motivo_rechazo String? @db.Text
+  notas_director String? @db.Text
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([tenant_id, proyecto_origen_id], name: "idx_transferencia_origen")
+  @@index([tenant_id, proyecto_destino_id], name: "idx_transferencia_destino")
+  @@index([tenant_id, estado], name: "idx_transferencia_estado")
+  @@map("transferencia_partidas")
+}
+
+// ======================================================================
 // FICHAS TÉCNICAS DE INSUMO
 // Documentos (PDF, Word, imágenes) que los proveedores envían como
 // especificación del material/equipo. Vinculados al insumo del catálogo.

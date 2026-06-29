@@ -1,4 +1,6 @@
-## ADDED Requirements
+# Spec: multi-oc-generacion
+
+## Requirements
 
 ### Requirement: Conversión de cuadro APROBADO_GT en OCs agrupadas por proveedor
 Cuando un cuadro comparativo tiene estado `APROBADO_GT`, el endpoint `POST /comparativas/:id/convertir-oc` SHALL agrupar todos los `ComparativaDetalle` con `es_ganador=true` y `aprobacion_gt=APROBADO` por `proveedor_id`, y crear exactamente una `OrdenCompra` por cada grupo. Cada OC SHALL contener como items todos los renglones ganadores de ese proveedor con cantidades reales y precios unitarios correctos.

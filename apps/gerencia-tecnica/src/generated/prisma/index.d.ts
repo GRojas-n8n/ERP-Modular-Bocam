@@ -64,6 +64,12 @@ export type SaldoPartida = $Result.DefaultSelection<Prisma.$SaldoPartidaPayload>
  */
 export type SaldoMovimiento = $Result.DefaultSelection<Prisma.$SaldoMovimientoPayload>
 /**
+ * Model TransferenciaPartida
+ * Solicitud formal de mover presupuesto de una partida a otra.
+ * Requiere aprobación del director antes de ajustar SaldoPartida.
+ */
+export type TransferenciaPartida = $Result.DefaultSelection<Prisma.$TransferenciaPartidaPayload>
+/**
  * Model FichaTecnicaInsumo
  * 
  */
@@ -306,6 +312,16 @@ export class PrismaClient<
     * ```
     */
   get saldoMovimiento(): Prisma.SaldoMovimientoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.transferenciaPartida`: Exposes CRUD operations for the **TransferenciaPartida** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TransferenciaPartidas
+    * const transferenciaPartidas = await prisma.transferenciaPartida.findMany()
+    * ```
+    */
+  get transferenciaPartida(): Prisma.TransferenciaPartidaDelegate<ExtArgs>;
 
   /**
    * `prisma.fichaTecnicaInsumo`: Exposes CRUD operations for the **FichaTecnicaInsumo** model.
@@ -765,6 +781,7 @@ export namespace Prisma {
     ConceptoInsumo: 'ConceptoInsumo',
     SaldoPartida: 'SaldoPartida',
     SaldoMovimiento: 'SaldoMovimiento',
+    TransferenciaPartida: 'TransferenciaPartida',
     FichaTecnicaInsumo: 'FichaTecnicaInsumo'
   };
 
@@ -781,7 +798,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "fichaTecnicaInsumo"
+      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "transferenciaPartida" | "fichaTecnicaInsumo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1342,6 +1359,76 @@ export namespace Prisma {
           count: {
             args: Prisma.SaldoMovimientoCountArgs<ExtArgs>
             result: $Utils.Optional<SaldoMovimientoCountAggregateOutputType> | number
+          }
+        }
+      }
+      TransferenciaPartida: {
+        payload: Prisma.$TransferenciaPartidaPayload<ExtArgs>
+        fields: Prisma.TransferenciaPartidaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TransferenciaPartidaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TransferenciaPartidaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>
+          }
+          findFirst: {
+            args: Prisma.TransferenciaPartidaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TransferenciaPartidaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>
+          }
+          findMany: {
+            args: Prisma.TransferenciaPartidaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>[]
+          }
+          create: {
+            args: Prisma.TransferenciaPartidaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>
+          }
+          createMany: {
+            args: Prisma.TransferenciaPartidaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TransferenciaPartidaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>[]
+          }
+          delete: {
+            args: Prisma.TransferenciaPartidaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>
+          }
+          update: {
+            args: Prisma.TransferenciaPartidaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>
+          }
+          deleteMany: {
+            args: Prisma.TransferenciaPartidaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TransferenciaPartidaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.TransferenciaPartidaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferenciaPartidaPayload>
+          }
+          aggregate: {
+            args: Prisma.TransferenciaPartidaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTransferenciaPartida>
+          }
+          groupBy: {
+            args: Prisma.TransferenciaPartidaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TransferenciaPartidaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TransferenciaPartidaCountArgs<ExtArgs>
+            result: $Utils.Optional<TransferenciaPartidaCountAggregateOutputType> | number
           }
         }
       }
@@ -10042,6 +10129,1146 @@ export namespace Prisma {
 
 
   /**
+   * Model TransferenciaPartida
+   */
+
+  export type AggregateTransferenciaPartida = {
+    _count: TransferenciaPartidaCountAggregateOutputType | null
+    _avg: TransferenciaPartidaAvgAggregateOutputType | null
+    _sum: TransferenciaPartidaSumAggregateOutputType | null
+    _min: TransferenciaPartidaMinAggregateOutputType | null
+    _max: TransferenciaPartidaMaxAggregateOutputType | null
+  }
+
+  export type TransferenciaPartidaAvgAggregateOutputType = {
+    monto: Decimal | null
+  }
+
+  export type TransferenciaPartidaSumAggregateOutputType = {
+    monto: Decimal | null
+  }
+
+  export type TransferenciaPartidaMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    tipo: string | null
+    proyecto_origen_id: string | null
+    concepto_origen_id: string | null
+    concepto_origen_clave: string | null
+    concepto_origen_desc: string | null
+    proyecto_destino_id: string | null
+    concepto_destino_id: string | null
+    concepto_destino_clave: string | null
+    concepto_destino_desc: string | null
+    monto: Decimal | null
+    moneda: string | null
+    justificacion: string | null
+    solicitado_por_id: string | null
+    solicitado_por_nombre: string | null
+    aprobado_por_id: string | null
+    aprobado_por_nombre: string | null
+    fecha_aprobacion: Date | null
+    estado: string | null
+    motivo_rechazo: string | null
+    notas_director: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type TransferenciaPartidaMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    tipo: string | null
+    proyecto_origen_id: string | null
+    concepto_origen_id: string | null
+    concepto_origen_clave: string | null
+    concepto_origen_desc: string | null
+    proyecto_destino_id: string | null
+    concepto_destino_id: string | null
+    concepto_destino_clave: string | null
+    concepto_destino_desc: string | null
+    monto: Decimal | null
+    moneda: string | null
+    justificacion: string | null
+    solicitado_por_id: string | null
+    solicitado_por_nombre: string | null
+    aprobado_por_id: string | null
+    aprobado_por_nombre: string | null
+    fecha_aprobacion: Date | null
+    estado: string | null
+    motivo_rechazo: string | null
+    notas_director: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type TransferenciaPartidaCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    tipo: number
+    proyecto_origen_id: number
+    concepto_origen_id: number
+    concepto_origen_clave: number
+    concepto_origen_desc: number
+    proyecto_destino_id: number
+    concepto_destino_id: number
+    concepto_destino_clave: number
+    concepto_destino_desc: number
+    monto: number
+    moneda: number
+    justificacion: number
+    solicitado_por_id: number
+    solicitado_por_nombre: number
+    aprobado_por_id: number
+    aprobado_por_nombre: number
+    fecha_aprobacion: number
+    estado: number
+    motivo_rechazo: number
+    notas_director: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type TransferenciaPartidaAvgAggregateInputType = {
+    monto?: true
+  }
+
+  export type TransferenciaPartidaSumAggregateInputType = {
+    monto?: true
+  }
+
+  export type TransferenciaPartidaMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    tipo?: true
+    proyecto_origen_id?: true
+    concepto_origen_id?: true
+    concepto_origen_clave?: true
+    concepto_origen_desc?: true
+    proyecto_destino_id?: true
+    concepto_destino_id?: true
+    concepto_destino_clave?: true
+    concepto_destino_desc?: true
+    monto?: true
+    moneda?: true
+    justificacion?: true
+    solicitado_por_id?: true
+    solicitado_por_nombre?: true
+    aprobado_por_id?: true
+    aprobado_por_nombre?: true
+    fecha_aprobacion?: true
+    estado?: true
+    motivo_rechazo?: true
+    notas_director?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type TransferenciaPartidaMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    tipo?: true
+    proyecto_origen_id?: true
+    concepto_origen_id?: true
+    concepto_origen_clave?: true
+    concepto_origen_desc?: true
+    proyecto_destino_id?: true
+    concepto_destino_id?: true
+    concepto_destino_clave?: true
+    concepto_destino_desc?: true
+    monto?: true
+    moneda?: true
+    justificacion?: true
+    solicitado_por_id?: true
+    solicitado_por_nombre?: true
+    aprobado_por_id?: true
+    aprobado_por_nombre?: true
+    fecha_aprobacion?: true
+    estado?: true
+    motivo_rechazo?: true
+    notas_director?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type TransferenciaPartidaCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    tipo?: true
+    proyecto_origen_id?: true
+    concepto_origen_id?: true
+    concepto_origen_clave?: true
+    concepto_origen_desc?: true
+    proyecto_destino_id?: true
+    concepto_destino_id?: true
+    concepto_destino_clave?: true
+    concepto_destino_desc?: true
+    monto?: true
+    moneda?: true
+    justificacion?: true
+    solicitado_por_id?: true
+    solicitado_por_nombre?: true
+    aprobado_por_id?: true
+    aprobado_por_nombre?: true
+    fecha_aprobacion?: true
+    estado?: true
+    motivo_rechazo?: true
+    notas_director?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type TransferenciaPartidaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TransferenciaPartida to aggregate.
+     */
+    where?: TransferenciaPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransferenciaPartidas to fetch.
+     */
+    orderBy?: TransferenciaPartidaOrderByWithRelationInput | TransferenciaPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TransferenciaPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransferenciaPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransferenciaPartidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TransferenciaPartidas
+    **/
+    _count?: true | TransferenciaPartidaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TransferenciaPartidaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TransferenciaPartidaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TransferenciaPartidaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TransferenciaPartidaMaxAggregateInputType
+  }
+
+  export type GetTransferenciaPartidaAggregateType<T extends TransferenciaPartidaAggregateArgs> = {
+        [P in keyof T & keyof AggregateTransferenciaPartida]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTransferenciaPartida[P]>
+      : GetScalarType<T[P], AggregateTransferenciaPartida[P]>
+  }
+
+
+
+
+  export type TransferenciaPartidaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransferenciaPartidaWhereInput
+    orderBy?: TransferenciaPartidaOrderByWithAggregationInput | TransferenciaPartidaOrderByWithAggregationInput[]
+    by: TransferenciaPartidaScalarFieldEnum[] | TransferenciaPartidaScalarFieldEnum
+    having?: TransferenciaPartidaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TransferenciaPartidaCountAggregateInputType | true
+    _avg?: TransferenciaPartidaAvgAggregateInputType
+    _sum?: TransferenciaPartidaSumAggregateInputType
+    _min?: TransferenciaPartidaMinAggregateInputType
+    _max?: TransferenciaPartidaMaxAggregateInputType
+  }
+
+  export type TransferenciaPartidaGroupByOutputType = {
+    id: string
+    tenant_id: string
+    tipo: string
+    proyecto_origen_id: string
+    concepto_origen_id: string | null
+    concepto_origen_clave: string
+    concepto_origen_desc: string
+    proyecto_destino_id: string
+    concepto_destino_id: string
+    concepto_destino_clave: string
+    concepto_destino_desc: string
+    monto: Decimal
+    moneda: string
+    justificacion: string
+    solicitado_por_id: string
+    solicitado_por_nombre: string
+    aprobado_por_id: string | null
+    aprobado_por_nombre: string | null
+    fecha_aprobacion: Date | null
+    estado: string
+    motivo_rechazo: string | null
+    notas_director: string | null
+    created_at: Date
+    updated_at: Date
+    _count: TransferenciaPartidaCountAggregateOutputType | null
+    _avg: TransferenciaPartidaAvgAggregateOutputType | null
+    _sum: TransferenciaPartidaSumAggregateOutputType | null
+    _min: TransferenciaPartidaMinAggregateOutputType | null
+    _max: TransferenciaPartidaMaxAggregateOutputType | null
+  }
+
+  type GetTransferenciaPartidaGroupByPayload<T extends TransferenciaPartidaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TransferenciaPartidaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TransferenciaPartidaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TransferenciaPartidaGroupByOutputType[P]>
+            : GetScalarType<T[P], TransferenciaPartidaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TransferenciaPartidaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    tipo?: boolean
+    proyecto_origen_id?: boolean
+    concepto_origen_id?: boolean
+    concepto_origen_clave?: boolean
+    concepto_origen_desc?: boolean
+    proyecto_destino_id?: boolean
+    concepto_destino_id?: boolean
+    concepto_destino_clave?: boolean
+    concepto_destino_desc?: boolean
+    monto?: boolean
+    moneda?: boolean
+    justificacion?: boolean
+    solicitado_por_id?: boolean
+    solicitado_por_nombre?: boolean
+    aprobado_por_id?: boolean
+    aprobado_por_nombre?: boolean
+    fecha_aprobacion?: boolean
+    estado?: boolean
+    motivo_rechazo?: boolean
+    notas_director?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["transferenciaPartida"]>
+
+  export type TransferenciaPartidaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    tipo?: boolean
+    proyecto_origen_id?: boolean
+    concepto_origen_id?: boolean
+    concepto_origen_clave?: boolean
+    concepto_origen_desc?: boolean
+    proyecto_destino_id?: boolean
+    concepto_destino_id?: boolean
+    concepto_destino_clave?: boolean
+    concepto_destino_desc?: boolean
+    monto?: boolean
+    moneda?: boolean
+    justificacion?: boolean
+    solicitado_por_id?: boolean
+    solicitado_por_nombre?: boolean
+    aprobado_por_id?: boolean
+    aprobado_por_nombre?: boolean
+    fecha_aprobacion?: boolean
+    estado?: boolean
+    motivo_rechazo?: boolean
+    notas_director?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["transferenciaPartida"]>
+
+  export type TransferenciaPartidaSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    tipo?: boolean
+    proyecto_origen_id?: boolean
+    concepto_origen_id?: boolean
+    concepto_origen_clave?: boolean
+    concepto_origen_desc?: boolean
+    proyecto_destino_id?: boolean
+    concepto_destino_id?: boolean
+    concepto_destino_clave?: boolean
+    concepto_destino_desc?: boolean
+    monto?: boolean
+    moneda?: boolean
+    justificacion?: boolean
+    solicitado_por_id?: boolean
+    solicitado_por_nombre?: boolean
+    aprobado_por_id?: boolean
+    aprobado_por_nombre?: boolean
+    fecha_aprobacion?: boolean
+    estado?: boolean
+    motivo_rechazo?: boolean
+    notas_director?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $TransferenciaPartidaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TransferenciaPartida"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      tipo: string
+      proyecto_origen_id: string
+      concepto_origen_id: string | null
+      concepto_origen_clave: string
+      concepto_origen_desc: string
+      proyecto_destino_id: string
+      concepto_destino_id: string
+      concepto_destino_clave: string
+      concepto_destino_desc: string
+      monto: Prisma.Decimal
+      moneda: string
+      justificacion: string
+      solicitado_por_id: string
+      solicitado_por_nombre: string
+      aprobado_por_id: string | null
+      aprobado_por_nombre: string | null
+      fecha_aprobacion: Date | null
+      estado: string
+      motivo_rechazo: string | null
+      notas_director: string | null
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["transferenciaPartida"]>
+    composites: {}
+  }
+
+  type TransferenciaPartidaGetPayload<S extends boolean | null | undefined | TransferenciaPartidaDefaultArgs> = $Result.GetResult<Prisma.$TransferenciaPartidaPayload, S>
+
+  type TransferenciaPartidaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<TransferenciaPartidaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: TransferenciaPartidaCountAggregateInputType | true
+    }
+
+  export interface TransferenciaPartidaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TransferenciaPartida'], meta: { name: 'TransferenciaPartida' } }
+    /**
+     * Find zero or one TransferenciaPartida that matches the filter.
+     * @param {TransferenciaPartidaFindUniqueArgs} args - Arguments to find a TransferenciaPartida
+     * @example
+     * // Get one TransferenciaPartida
+     * const transferenciaPartida = await prisma.transferenciaPartida.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TransferenciaPartidaFindUniqueArgs>(args: SelectSubset<T, TransferenciaPartidaFindUniqueArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one TransferenciaPartida that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {TransferenciaPartidaFindUniqueOrThrowArgs} args - Arguments to find a TransferenciaPartida
+     * @example
+     * // Get one TransferenciaPartida
+     * const transferenciaPartida = await prisma.transferenciaPartida.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TransferenciaPartidaFindUniqueOrThrowArgs>(args: SelectSubset<T, TransferenciaPartidaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first TransferenciaPartida that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaFindFirstArgs} args - Arguments to find a TransferenciaPartida
+     * @example
+     * // Get one TransferenciaPartida
+     * const transferenciaPartida = await prisma.transferenciaPartida.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TransferenciaPartidaFindFirstArgs>(args?: SelectSubset<T, TransferenciaPartidaFindFirstArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first TransferenciaPartida that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaFindFirstOrThrowArgs} args - Arguments to find a TransferenciaPartida
+     * @example
+     * // Get one TransferenciaPartida
+     * const transferenciaPartida = await prisma.transferenciaPartida.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TransferenciaPartidaFindFirstOrThrowArgs>(args?: SelectSubset<T, TransferenciaPartidaFindFirstOrThrowArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more TransferenciaPartidas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TransferenciaPartidas
+     * const transferenciaPartidas = await prisma.transferenciaPartida.findMany()
+     * 
+     * // Get first 10 TransferenciaPartidas
+     * const transferenciaPartidas = await prisma.transferenciaPartida.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const transferenciaPartidaWithIdOnly = await prisma.transferenciaPartida.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TransferenciaPartidaFindManyArgs>(args?: SelectSubset<T, TransferenciaPartidaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a TransferenciaPartida.
+     * @param {TransferenciaPartidaCreateArgs} args - Arguments to create a TransferenciaPartida.
+     * @example
+     * // Create one TransferenciaPartida
+     * const TransferenciaPartida = await prisma.transferenciaPartida.create({
+     *   data: {
+     *     // ... data to create a TransferenciaPartida
+     *   }
+     * })
+     * 
+     */
+    create<T extends TransferenciaPartidaCreateArgs>(args: SelectSubset<T, TransferenciaPartidaCreateArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many TransferenciaPartidas.
+     * @param {TransferenciaPartidaCreateManyArgs} args - Arguments to create many TransferenciaPartidas.
+     * @example
+     * // Create many TransferenciaPartidas
+     * const transferenciaPartida = await prisma.transferenciaPartida.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TransferenciaPartidaCreateManyArgs>(args?: SelectSubset<T, TransferenciaPartidaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TransferenciaPartidas and returns the data saved in the database.
+     * @param {TransferenciaPartidaCreateManyAndReturnArgs} args - Arguments to create many TransferenciaPartidas.
+     * @example
+     * // Create many TransferenciaPartidas
+     * const transferenciaPartida = await prisma.transferenciaPartida.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TransferenciaPartidas and only return the `id`
+     * const transferenciaPartidaWithIdOnly = await prisma.transferenciaPartida.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TransferenciaPartidaCreateManyAndReturnArgs>(args?: SelectSubset<T, TransferenciaPartidaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a TransferenciaPartida.
+     * @param {TransferenciaPartidaDeleteArgs} args - Arguments to delete one TransferenciaPartida.
+     * @example
+     * // Delete one TransferenciaPartida
+     * const TransferenciaPartida = await prisma.transferenciaPartida.delete({
+     *   where: {
+     *     // ... filter to delete one TransferenciaPartida
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TransferenciaPartidaDeleteArgs>(args: SelectSubset<T, TransferenciaPartidaDeleteArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one TransferenciaPartida.
+     * @param {TransferenciaPartidaUpdateArgs} args - Arguments to update one TransferenciaPartida.
+     * @example
+     * // Update one TransferenciaPartida
+     * const transferenciaPartida = await prisma.transferenciaPartida.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TransferenciaPartidaUpdateArgs>(args: SelectSubset<T, TransferenciaPartidaUpdateArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more TransferenciaPartidas.
+     * @param {TransferenciaPartidaDeleteManyArgs} args - Arguments to filter TransferenciaPartidas to delete.
+     * @example
+     * // Delete a few TransferenciaPartidas
+     * const { count } = await prisma.transferenciaPartida.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TransferenciaPartidaDeleteManyArgs>(args?: SelectSubset<T, TransferenciaPartidaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TransferenciaPartidas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TransferenciaPartidas
+     * const transferenciaPartida = await prisma.transferenciaPartida.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TransferenciaPartidaUpdateManyArgs>(args: SelectSubset<T, TransferenciaPartidaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one TransferenciaPartida.
+     * @param {TransferenciaPartidaUpsertArgs} args - Arguments to update or create a TransferenciaPartida.
+     * @example
+     * // Update or create a TransferenciaPartida
+     * const transferenciaPartida = await prisma.transferenciaPartida.upsert({
+     *   create: {
+     *     // ... data to create a TransferenciaPartida
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TransferenciaPartida we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TransferenciaPartidaUpsertArgs>(args: SelectSubset<T, TransferenciaPartidaUpsertArgs<ExtArgs>>): Prisma__TransferenciaPartidaClient<$Result.GetResult<Prisma.$TransferenciaPartidaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of TransferenciaPartidas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaCountArgs} args - Arguments to filter TransferenciaPartidas to count.
+     * @example
+     * // Count the number of TransferenciaPartidas
+     * const count = await prisma.transferenciaPartida.count({
+     *   where: {
+     *     // ... the filter for the TransferenciaPartidas we want to count
+     *   }
+     * })
+    **/
+    count<T extends TransferenciaPartidaCountArgs>(
+      args?: Subset<T, TransferenciaPartidaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TransferenciaPartidaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TransferenciaPartida.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TransferenciaPartidaAggregateArgs>(args: Subset<T, TransferenciaPartidaAggregateArgs>): Prisma.PrismaPromise<GetTransferenciaPartidaAggregateType<T>>
+
+    /**
+     * Group by TransferenciaPartida.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferenciaPartidaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TransferenciaPartidaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TransferenciaPartidaGroupByArgs['orderBy'] }
+        : { orderBy?: TransferenciaPartidaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TransferenciaPartidaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTransferenciaPartidaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TransferenciaPartida model
+   */
+  readonly fields: TransferenciaPartidaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TransferenciaPartida.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TransferenciaPartidaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TransferenciaPartida model
+   */ 
+  interface TransferenciaPartidaFieldRefs {
+    readonly id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly tenant_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly tipo: FieldRef<"TransferenciaPartida", 'String'>
+    readonly proyecto_origen_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly concepto_origen_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly concepto_origen_clave: FieldRef<"TransferenciaPartida", 'String'>
+    readonly concepto_origen_desc: FieldRef<"TransferenciaPartida", 'String'>
+    readonly proyecto_destino_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly concepto_destino_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly concepto_destino_clave: FieldRef<"TransferenciaPartida", 'String'>
+    readonly concepto_destino_desc: FieldRef<"TransferenciaPartida", 'String'>
+    readonly monto: FieldRef<"TransferenciaPartida", 'Decimal'>
+    readonly moneda: FieldRef<"TransferenciaPartida", 'String'>
+    readonly justificacion: FieldRef<"TransferenciaPartida", 'String'>
+    readonly solicitado_por_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly solicitado_por_nombre: FieldRef<"TransferenciaPartida", 'String'>
+    readonly aprobado_por_id: FieldRef<"TransferenciaPartida", 'String'>
+    readonly aprobado_por_nombre: FieldRef<"TransferenciaPartida", 'String'>
+    readonly fecha_aprobacion: FieldRef<"TransferenciaPartida", 'DateTime'>
+    readonly estado: FieldRef<"TransferenciaPartida", 'String'>
+    readonly motivo_rechazo: FieldRef<"TransferenciaPartida", 'String'>
+    readonly notas_director: FieldRef<"TransferenciaPartida", 'String'>
+    readonly created_at: FieldRef<"TransferenciaPartida", 'DateTime'>
+    readonly updated_at: FieldRef<"TransferenciaPartida", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TransferenciaPartida findUnique
+   */
+  export type TransferenciaPartidaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * Filter, which TransferenciaPartida to fetch.
+     */
+    where: TransferenciaPartidaWhereUniqueInput
+  }
+
+  /**
+   * TransferenciaPartida findUniqueOrThrow
+   */
+  export type TransferenciaPartidaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * Filter, which TransferenciaPartida to fetch.
+     */
+    where: TransferenciaPartidaWhereUniqueInput
+  }
+
+  /**
+   * TransferenciaPartida findFirst
+   */
+  export type TransferenciaPartidaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * Filter, which TransferenciaPartida to fetch.
+     */
+    where?: TransferenciaPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransferenciaPartidas to fetch.
+     */
+    orderBy?: TransferenciaPartidaOrderByWithRelationInput | TransferenciaPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TransferenciaPartidas.
+     */
+    cursor?: TransferenciaPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransferenciaPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransferenciaPartidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TransferenciaPartidas.
+     */
+    distinct?: TransferenciaPartidaScalarFieldEnum | TransferenciaPartidaScalarFieldEnum[]
+  }
+
+  /**
+   * TransferenciaPartida findFirstOrThrow
+   */
+  export type TransferenciaPartidaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * Filter, which TransferenciaPartida to fetch.
+     */
+    where?: TransferenciaPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransferenciaPartidas to fetch.
+     */
+    orderBy?: TransferenciaPartidaOrderByWithRelationInput | TransferenciaPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TransferenciaPartidas.
+     */
+    cursor?: TransferenciaPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransferenciaPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransferenciaPartidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TransferenciaPartidas.
+     */
+    distinct?: TransferenciaPartidaScalarFieldEnum | TransferenciaPartidaScalarFieldEnum[]
+  }
+
+  /**
+   * TransferenciaPartida findMany
+   */
+  export type TransferenciaPartidaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * Filter, which TransferenciaPartidas to fetch.
+     */
+    where?: TransferenciaPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransferenciaPartidas to fetch.
+     */
+    orderBy?: TransferenciaPartidaOrderByWithRelationInput | TransferenciaPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TransferenciaPartidas.
+     */
+    cursor?: TransferenciaPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransferenciaPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransferenciaPartidas.
+     */
+    skip?: number
+    distinct?: TransferenciaPartidaScalarFieldEnum | TransferenciaPartidaScalarFieldEnum[]
+  }
+
+  /**
+   * TransferenciaPartida create
+   */
+  export type TransferenciaPartidaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * The data needed to create a TransferenciaPartida.
+     */
+    data: XOR<TransferenciaPartidaCreateInput, TransferenciaPartidaUncheckedCreateInput>
+  }
+
+  /**
+   * TransferenciaPartida createMany
+   */
+  export type TransferenciaPartidaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TransferenciaPartidas.
+     */
+    data: TransferenciaPartidaCreateManyInput | TransferenciaPartidaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TransferenciaPartida createManyAndReturn
+   */
+  export type TransferenciaPartidaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many TransferenciaPartidas.
+     */
+    data: TransferenciaPartidaCreateManyInput | TransferenciaPartidaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TransferenciaPartida update
+   */
+  export type TransferenciaPartidaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * The data needed to update a TransferenciaPartida.
+     */
+    data: XOR<TransferenciaPartidaUpdateInput, TransferenciaPartidaUncheckedUpdateInput>
+    /**
+     * Choose, which TransferenciaPartida to update.
+     */
+    where: TransferenciaPartidaWhereUniqueInput
+  }
+
+  /**
+   * TransferenciaPartida updateMany
+   */
+  export type TransferenciaPartidaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TransferenciaPartidas.
+     */
+    data: XOR<TransferenciaPartidaUpdateManyMutationInput, TransferenciaPartidaUncheckedUpdateManyInput>
+    /**
+     * Filter which TransferenciaPartidas to update
+     */
+    where?: TransferenciaPartidaWhereInput
+  }
+
+  /**
+   * TransferenciaPartida upsert
+   */
+  export type TransferenciaPartidaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * The filter to search for the TransferenciaPartida to update in case it exists.
+     */
+    where: TransferenciaPartidaWhereUniqueInput
+    /**
+     * In case the TransferenciaPartida found by the `where` argument doesn't exist, create a new TransferenciaPartida with this data.
+     */
+    create: XOR<TransferenciaPartidaCreateInput, TransferenciaPartidaUncheckedCreateInput>
+    /**
+     * In case the TransferenciaPartida was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TransferenciaPartidaUpdateInput, TransferenciaPartidaUncheckedUpdateInput>
+  }
+
+  /**
+   * TransferenciaPartida delete
+   */
+  export type TransferenciaPartidaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+    /**
+     * Filter which TransferenciaPartida to delete.
+     */
+    where: TransferenciaPartidaWhereUniqueInput
+  }
+
+  /**
+   * TransferenciaPartida deleteMany
+   */
+  export type TransferenciaPartidaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TransferenciaPartidas to delete
+     */
+    where?: TransferenciaPartidaWhereInput
+  }
+
+  /**
+   * TransferenciaPartida without action
+   */
+  export type TransferenciaPartidaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferenciaPartida
+     */
+    select?: TransferenciaPartidaSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Model FichaTecnicaInsumo
    */
 
@@ -11159,6 +12386,36 @@ export namespace Prisma {
   export type SaldoMovimientoScalarFieldEnum = (typeof SaldoMovimientoScalarFieldEnum)[keyof typeof SaldoMovimientoScalarFieldEnum]
 
 
+  export const TransferenciaPartidaScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    tipo: 'tipo',
+    proyecto_origen_id: 'proyecto_origen_id',
+    concepto_origen_id: 'concepto_origen_id',
+    concepto_origen_clave: 'concepto_origen_clave',
+    concepto_origen_desc: 'concepto_origen_desc',
+    proyecto_destino_id: 'proyecto_destino_id',
+    concepto_destino_id: 'concepto_destino_id',
+    concepto_destino_clave: 'concepto_destino_clave',
+    concepto_destino_desc: 'concepto_destino_desc',
+    monto: 'monto',
+    moneda: 'moneda',
+    justificacion: 'justificacion',
+    solicitado_por_id: 'solicitado_por_id',
+    solicitado_por_nombre: 'solicitado_por_nombre',
+    aprobado_por_id: 'aprobado_por_id',
+    aprobado_por_nombre: 'aprobado_por_nombre',
+    fecha_aprobacion: 'fecha_aprobacion',
+    estado: 'estado',
+    motivo_rechazo: 'motivo_rechazo',
+    notas_director: 'notas_director',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type TransferenciaPartidaScalarFieldEnum = (typeof TransferenciaPartidaScalarFieldEnum)[keyof typeof TransferenciaPartidaScalarFieldEnum]
+
+
   export const FichaTecnicaInsumoScalarFieldEnum: {
     id_ficha: 'id_ficha',
     tenant_id: 'tenant_id',
@@ -11993,6 +13250,155 @@ export namespace Prisma {
     delta?: DecimalWithAggregatesFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
     saldo_resultante?: DecimalWithAggregatesFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeWithAggregatesFilter<"SaldoMovimiento"> | Date | string
+  }
+
+  export type TransferenciaPartidaWhereInput = {
+    AND?: TransferenciaPartidaWhereInput | TransferenciaPartidaWhereInput[]
+    OR?: TransferenciaPartidaWhereInput[]
+    NOT?: TransferenciaPartidaWhereInput | TransferenciaPartidaWhereInput[]
+    id?: UuidFilter<"TransferenciaPartida"> | string
+    tenant_id?: UuidFilter<"TransferenciaPartida"> | string
+    tipo?: StringFilter<"TransferenciaPartida"> | string
+    proyecto_origen_id?: UuidFilter<"TransferenciaPartida"> | string
+    concepto_origen_id?: UuidNullableFilter<"TransferenciaPartida"> | string | null
+    concepto_origen_clave?: StringFilter<"TransferenciaPartida"> | string
+    concepto_origen_desc?: StringFilter<"TransferenciaPartida"> | string
+    proyecto_destino_id?: UuidFilter<"TransferenciaPartida"> | string
+    concepto_destino_id?: UuidFilter<"TransferenciaPartida"> | string
+    concepto_destino_clave?: StringFilter<"TransferenciaPartida"> | string
+    concepto_destino_desc?: StringFilter<"TransferenciaPartida"> | string
+    monto?: DecimalFilter<"TransferenciaPartida"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"TransferenciaPartida"> | string
+    justificacion?: StringFilter<"TransferenciaPartida"> | string
+    solicitado_por_id?: UuidFilter<"TransferenciaPartida"> | string
+    solicitado_por_nombre?: StringFilter<"TransferenciaPartida"> | string
+    aprobado_por_id?: UuidNullableFilter<"TransferenciaPartida"> | string | null
+    aprobado_por_nombre?: StringNullableFilter<"TransferenciaPartida"> | string | null
+    fecha_aprobacion?: DateTimeNullableFilter<"TransferenciaPartida"> | Date | string | null
+    estado?: StringFilter<"TransferenciaPartida"> | string
+    motivo_rechazo?: StringNullableFilter<"TransferenciaPartida"> | string | null
+    notas_director?: StringNullableFilter<"TransferenciaPartida"> | string | null
+    created_at?: DateTimeFilter<"TransferenciaPartida"> | Date | string
+    updated_at?: DateTimeFilter<"TransferenciaPartida"> | Date | string
+  }
+
+  export type TransferenciaPartidaOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    tipo?: SortOrder
+    proyecto_origen_id?: SortOrder
+    concepto_origen_id?: SortOrderInput | SortOrder
+    concepto_origen_clave?: SortOrder
+    concepto_origen_desc?: SortOrder
+    proyecto_destino_id?: SortOrder
+    concepto_destino_id?: SortOrder
+    concepto_destino_clave?: SortOrder
+    concepto_destino_desc?: SortOrder
+    monto?: SortOrder
+    moneda?: SortOrder
+    justificacion?: SortOrder
+    solicitado_por_id?: SortOrder
+    solicitado_por_nombre?: SortOrder
+    aprobado_por_id?: SortOrderInput | SortOrder
+    aprobado_por_nombre?: SortOrderInput | SortOrder
+    fecha_aprobacion?: SortOrderInput | SortOrder
+    estado?: SortOrder
+    motivo_rechazo?: SortOrderInput | SortOrder
+    notas_director?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type TransferenciaPartidaWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TransferenciaPartidaWhereInput | TransferenciaPartidaWhereInput[]
+    OR?: TransferenciaPartidaWhereInput[]
+    NOT?: TransferenciaPartidaWhereInput | TransferenciaPartidaWhereInput[]
+    tenant_id?: UuidFilter<"TransferenciaPartida"> | string
+    tipo?: StringFilter<"TransferenciaPartida"> | string
+    proyecto_origen_id?: UuidFilter<"TransferenciaPartida"> | string
+    concepto_origen_id?: UuidNullableFilter<"TransferenciaPartida"> | string | null
+    concepto_origen_clave?: StringFilter<"TransferenciaPartida"> | string
+    concepto_origen_desc?: StringFilter<"TransferenciaPartida"> | string
+    proyecto_destino_id?: UuidFilter<"TransferenciaPartida"> | string
+    concepto_destino_id?: UuidFilter<"TransferenciaPartida"> | string
+    concepto_destino_clave?: StringFilter<"TransferenciaPartida"> | string
+    concepto_destino_desc?: StringFilter<"TransferenciaPartida"> | string
+    monto?: DecimalFilter<"TransferenciaPartida"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"TransferenciaPartida"> | string
+    justificacion?: StringFilter<"TransferenciaPartida"> | string
+    solicitado_por_id?: UuidFilter<"TransferenciaPartida"> | string
+    solicitado_por_nombre?: StringFilter<"TransferenciaPartida"> | string
+    aprobado_por_id?: UuidNullableFilter<"TransferenciaPartida"> | string | null
+    aprobado_por_nombre?: StringNullableFilter<"TransferenciaPartida"> | string | null
+    fecha_aprobacion?: DateTimeNullableFilter<"TransferenciaPartida"> | Date | string | null
+    estado?: StringFilter<"TransferenciaPartida"> | string
+    motivo_rechazo?: StringNullableFilter<"TransferenciaPartida"> | string | null
+    notas_director?: StringNullableFilter<"TransferenciaPartida"> | string | null
+    created_at?: DateTimeFilter<"TransferenciaPartida"> | Date | string
+    updated_at?: DateTimeFilter<"TransferenciaPartida"> | Date | string
+  }, "id">
+
+  export type TransferenciaPartidaOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    tipo?: SortOrder
+    proyecto_origen_id?: SortOrder
+    concepto_origen_id?: SortOrderInput | SortOrder
+    concepto_origen_clave?: SortOrder
+    concepto_origen_desc?: SortOrder
+    proyecto_destino_id?: SortOrder
+    concepto_destino_id?: SortOrder
+    concepto_destino_clave?: SortOrder
+    concepto_destino_desc?: SortOrder
+    monto?: SortOrder
+    moneda?: SortOrder
+    justificacion?: SortOrder
+    solicitado_por_id?: SortOrder
+    solicitado_por_nombre?: SortOrder
+    aprobado_por_id?: SortOrderInput | SortOrder
+    aprobado_por_nombre?: SortOrderInput | SortOrder
+    fecha_aprobacion?: SortOrderInput | SortOrder
+    estado?: SortOrder
+    motivo_rechazo?: SortOrderInput | SortOrder
+    notas_director?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: TransferenciaPartidaCountOrderByAggregateInput
+    _avg?: TransferenciaPartidaAvgOrderByAggregateInput
+    _max?: TransferenciaPartidaMaxOrderByAggregateInput
+    _min?: TransferenciaPartidaMinOrderByAggregateInput
+    _sum?: TransferenciaPartidaSumOrderByAggregateInput
+  }
+
+  export type TransferenciaPartidaScalarWhereWithAggregatesInput = {
+    AND?: TransferenciaPartidaScalarWhereWithAggregatesInput | TransferenciaPartidaScalarWhereWithAggregatesInput[]
+    OR?: TransferenciaPartidaScalarWhereWithAggregatesInput[]
+    NOT?: TransferenciaPartidaScalarWhereWithAggregatesInput | TransferenciaPartidaScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"TransferenciaPartida"> | string
+    tenant_id?: UuidWithAggregatesFilter<"TransferenciaPartida"> | string
+    tipo?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    proyecto_origen_id?: UuidWithAggregatesFilter<"TransferenciaPartida"> | string
+    concepto_origen_id?: UuidNullableWithAggregatesFilter<"TransferenciaPartida"> | string | null
+    concepto_origen_clave?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    concepto_origen_desc?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    proyecto_destino_id?: UuidWithAggregatesFilter<"TransferenciaPartida"> | string
+    concepto_destino_id?: UuidWithAggregatesFilter<"TransferenciaPartida"> | string
+    concepto_destino_clave?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    concepto_destino_desc?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    monto?: DecimalWithAggregatesFilter<"TransferenciaPartida"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    justificacion?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    solicitado_por_id?: UuidWithAggregatesFilter<"TransferenciaPartida"> | string
+    solicitado_por_nombre?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    aprobado_por_id?: UuidNullableWithAggregatesFilter<"TransferenciaPartida"> | string | null
+    aprobado_por_nombre?: StringNullableWithAggregatesFilter<"TransferenciaPartida"> | string | null
+    fecha_aprobacion?: DateTimeNullableWithAggregatesFilter<"TransferenciaPartida"> | Date | string | null
+    estado?: StringWithAggregatesFilter<"TransferenciaPartida"> | string
+    motivo_rechazo?: StringNullableWithAggregatesFilter<"TransferenciaPartida"> | string | null
+    notas_director?: StringNullableWithAggregatesFilter<"TransferenciaPartida"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"TransferenciaPartida"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"TransferenciaPartida"> | Date | string
   }
 
   export type FichaTecnicaInsumoWhereInput = {
@@ -12845,6 +14251,195 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TransferenciaPartidaCreateInput = {
+    id?: string
+    tenant_id: string
+    tipo?: string
+    proyecto_origen_id: string
+    concepto_origen_id?: string | null
+    concepto_origen_clave: string
+    concepto_origen_desc: string
+    proyecto_destino_id: string
+    concepto_destino_id: string
+    concepto_destino_clave: string
+    concepto_destino_desc: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    justificacion: string
+    solicitado_por_id: string
+    solicitado_por_nombre: string
+    aprobado_por_id?: string | null
+    aprobado_por_nombre?: string | null
+    fecha_aprobacion?: Date | string | null
+    estado?: string
+    motivo_rechazo?: string | null
+    notas_director?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type TransferenciaPartidaUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    tipo?: string
+    proyecto_origen_id: string
+    concepto_origen_id?: string | null
+    concepto_origen_clave: string
+    concepto_origen_desc: string
+    proyecto_destino_id: string
+    concepto_destino_id: string
+    concepto_destino_clave: string
+    concepto_destino_desc: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    justificacion: string
+    solicitado_por_id: string
+    solicitado_por_nombre: string
+    aprobado_por_id?: string | null
+    aprobado_por_nombre?: string | null
+    fecha_aprobacion?: Date | string | null
+    estado?: string
+    motivo_rechazo?: string | null
+    notas_director?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type TransferenciaPartidaUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_origen_clave?: StringFieldUpdateOperationsInput | string
+    concepto_origen_desc?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_clave?: StringFieldUpdateOperationsInput | string
+    concepto_destino_desc?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+    solicitado_por_id?: StringFieldUpdateOperationsInput | string
+    solicitado_por_nombre?: StringFieldUpdateOperationsInput | string
+    aprobado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    motivo_rechazo?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_director?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferenciaPartidaUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_origen_clave?: StringFieldUpdateOperationsInput | string
+    concepto_origen_desc?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_clave?: StringFieldUpdateOperationsInput | string
+    concepto_destino_desc?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+    solicitado_por_id?: StringFieldUpdateOperationsInput | string
+    solicitado_por_nombre?: StringFieldUpdateOperationsInput | string
+    aprobado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    motivo_rechazo?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_director?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferenciaPartidaCreateManyInput = {
+    id?: string
+    tenant_id: string
+    tipo?: string
+    proyecto_origen_id: string
+    concepto_origen_id?: string | null
+    concepto_origen_clave: string
+    concepto_origen_desc: string
+    proyecto_destino_id: string
+    concepto_destino_id: string
+    concepto_destino_clave: string
+    concepto_destino_desc: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    justificacion: string
+    solicitado_por_id: string
+    solicitado_por_nombre: string
+    aprobado_por_id?: string | null
+    aprobado_por_nombre?: string | null
+    fecha_aprobacion?: Date | string | null
+    estado?: string
+    motivo_rechazo?: string | null
+    notas_director?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type TransferenciaPartidaUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_origen_clave?: StringFieldUpdateOperationsInput | string
+    concepto_origen_desc?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_clave?: StringFieldUpdateOperationsInput | string
+    concepto_destino_desc?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+    solicitado_por_id?: StringFieldUpdateOperationsInput | string
+    solicitado_por_nombre?: StringFieldUpdateOperationsInput | string
+    aprobado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    motivo_rechazo?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_director?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferenciaPartidaUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    concepto_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_origen_clave?: StringFieldUpdateOperationsInput | string
+    concepto_origen_desc?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_id?: StringFieldUpdateOperationsInput | string
+    concepto_destino_clave?: StringFieldUpdateOperationsInput | string
+    concepto_destino_desc?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    justificacion?: StringFieldUpdateOperationsInput | string
+    solicitado_por_id?: StringFieldUpdateOperationsInput | string
+    solicitado_por_nombre?: StringFieldUpdateOperationsInput | string
+    aprobado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    motivo_rechazo?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_director?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type FichaTecnicaInsumoCreateInput = {
     id_ficha?: string
     tenant_id: string
@@ -13694,6 +15289,95 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type TransferenciaPartidaCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    tipo?: SortOrder
+    proyecto_origen_id?: SortOrder
+    concepto_origen_id?: SortOrder
+    concepto_origen_clave?: SortOrder
+    concepto_origen_desc?: SortOrder
+    proyecto_destino_id?: SortOrder
+    concepto_destino_id?: SortOrder
+    concepto_destino_clave?: SortOrder
+    concepto_destino_desc?: SortOrder
+    monto?: SortOrder
+    moneda?: SortOrder
+    justificacion?: SortOrder
+    solicitado_por_id?: SortOrder
+    solicitado_por_nombre?: SortOrder
+    aprobado_por_id?: SortOrder
+    aprobado_por_nombre?: SortOrder
+    fecha_aprobacion?: SortOrder
+    estado?: SortOrder
+    motivo_rechazo?: SortOrder
+    notas_director?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type TransferenciaPartidaAvgOrderByAggregateInput = {
+    monto?: SortOrder
+  }
+
+  export type TransferenciaPartidaMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    tipo?: SortOrder
+    proyecto_origen_id?: SortOrder
+    concepto_origen_id?: SortOrder
+    concepto_origen_clave?: SortOrder
+    concepto_origen_desc?: SortOrder
+    proyecto_destino_id?: SortOrder
+    concepto_destino_id?: SortOrder
+    concepto_destino_clave?: SortOrder
+    concepto_destino_desc?: SortOrder
+    monto?: SortOrder
+    moneda?: SortOrder
+    justificacion?: SortOrder
+    solicitado_por_id?: SortOrder
+    solicitado_por_nombre?: SortOrder
+    aprobado_por_id?: SortOrder
+    aprobado_por_nombre?: SortOrder
+    fecha_aprobacion?: SortOrder
+    estado?: SortOrder
+    motivo_rechazo?: SortOrder
+    notas_director?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type TransferenciaPartidaMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    tipo?: SortOrder
+    proyecto_origen_id?: SortOrder
+    concepto_origen_id?: SortOrder
+    concepto_origen_clave?: SortOrder
+    concepto_origen_desc?: SortOrder
+    proyecto_destino_id?: SortOrder
+    concepto_destino_id?: SortOrder
+    concepto_destino_clave?: SortOrder
+    concepto_destino_desc?: SortOrder
+    monto?: SortOrder
+    moneda?: SortOrder
+    justificacion?: SortOrder
+    solicitado_por_id?: SortOrder
+    solicitado_por_nombre?: SortOrder
+    aprobado_por_id?: SortOrder
+    aprobado_por_nombre?: SortOrder
+    fecha_aprobacion?: SortOrder
+    estado?: SortOrder
+    motivo_rechazo?: SortOrder
+    notas_director?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type TransferenciaPartidaSumOrderByAggregateInput = {
+    monto?: SortOrder
   }
 
   export type FichaTecnicaInsumoCountOrderByAggregateInput = {
@@ -15367,6 +17051,10 @@ export namespace Prisma {
      * @deprecated Use SaldoMovimientoDefaultArgs instead
      */
     export type SaldoMovimientoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SaldoMovimientoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use TransferenciaPartidaDefaultArgs instead
+     */
+    export type TransferenciaPartidaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TransferenciaPartidaDefaultArgs<ExtArgs>
     /**
      * @deprecated Use FichaTecnicaInsumoDefaultArgs instead
      */

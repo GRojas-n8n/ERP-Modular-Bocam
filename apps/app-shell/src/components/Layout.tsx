@@ -24,6 +24,7 @@ import {
   IconQrCode,
   IconUserCheck,
   IconScale,
+  IconArrowRight,
 } from './Icons';
 import { useTenant } from '../context/TenantContext';
 
@@ -91,6 +92,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'insumos',        label: 'Insumos',           icon: IconPackage },
       { id: 'control-costos',       label: 'Control de Costos',    icon: IconTrendingUp },
       { id: 'control-presupuestal', label: 'Control Presupuestal', icon: IconWallet },
+      { id: 'transferencias',       label: 'Transferencias',       icon: IconArrowRight },
     ],
   },
   {

@@ -49,7 +49,7 @@ interface FichaTecnicaInsumo {
   created_at: string;
 }
 
-type ActiveTab = 'catalogo' | 'insumos' | 'control-costos' | 'control-presupuestal';
+type ActiveTab = 'catalogo' | 'insumos' | 'control-costos' | 'control-presupuestal' | 'transferencias';
 
 type TipoInsumo = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
 
@@ -702,6 +702,30 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [saldoMap, setSaldoMap] = useState<Record<string, SaldoResumen>>({});
   const [saldoPanelConcepto, setSaldoPanelConcepto] = useState<SaldoResumen | null>(null);
 
+  // ── Estado Tab: Transferencias ────────────────────────────────────────────
+  interface Transferencia {
+    id: string;
+    tipo: string;
+    concepto_origen_clave: string;
+    concepto_origen_desc: string;
+    concepto_destino_clave: string;
+    concepto_destino_desc: string;
+    monto: number;
+    justificacion: string;
+    estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'REVERTIDA';
+    solicitado_por_nombre: string;
+    aprobado_por_nombre?: string;
+    motivo_rechazo?: string;
+    created_at: string;
+  }
+  const [transferencias, setTransferencias] = useState<Transferencia[]>([]);
+  const [loadingTrans, setLoadingTrans] = useState(false);
+  const [modalRechazo, setModalRechazo] = useState<{ id: string } | null>(null);
+  const [motivoRechazo, setMotivoRechazo] = useState('');
+  const [modalNuevaTrans, setModalNuevaTrans] = useState(false);
+  const [nuevaTrans, setNuevaTrans] = useState({ concepto_origen_id: '', concepto_destino_id: '', monto: '', justificacion: '' });
+  const [enviandoTrans, setEnviandoTrans] = useState(false);
+
   // ── Estado Tab 2: Insumos ─────────────────────────────────────────────────
   const fileInputAPURef       = useRef<HTMLInputElement>(null);
   const fileInputExplosionRef = useRef<HTMLInputElement>(null);
@@ -1020,6 +1044,65 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  const fetchTransferencias = async (estado?: string) => {
+    if (tenant?.id === 'iretum-demo') { setTransferencias([]); return; }
+    setLoadingTrans(true);
+    try {
+      const url = '/api/v1/gerencia-tecnica/transferencias-partida' + (estado ? `?estado=${estado}` : '');
+      const res = await api.get(url);
+      setTransferencias(res.data.data?.transferencias || []);
+    } catch {
+      setTransferencias([]);
+    } finally {
+      setLoadingTrans(false);
+    }
+  };
+
+  const aprobarTransferencia = async (id: string) => {
+    try {
+      await api.patch(`/api/v1/gerencia-tecnica/transferencias-partida/${id}/aprobar`);
+      notify({ type: 'success', title: 'Transferencia aprobada', message: 'Los saldos se ajustaron automáticamente.' });
+      void fetchTransferencias();
+      void fetchSaldoPartidas();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message || 'Error al aprobar transferencia.' });
+    }
+  };
+
+  const rechazarTransferencia = async () => {
+    if (!modalRechazo) return;
+    try {
+      await api.patch(`/api/v1/gerencia-tecnica/transferencias-partida/${modalRechazo.id}/rechazar`, { motivo_rechazo: motivoRechazo });
+      notify({ type: 'success', title: 'Transferencia rechazada' });
+      setModalRechazo(null);
+      setMotivoRechazo('');
+      void fetchTransferencias();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message || 'Error al rechazar transferencia.' });
+    }
+  };
+
+  const solicitarTransferencia = async () => {
+    setEnviandoTrans(true);
+    try {
+      await api.post('/api/v1/gerencia-tecnica/transferencias-partida', {
+        tipo: 'INTERNA',
+        concepto_origen_id:  nuevaTrans.concepto_origen_id || undefined,
+        concepto_destino_id: nuevaTrans.concepto_destino_id,
+        monto:               parseFloat(nuevaTrans.monto),
+        justificacion:       nuevaTrans.justificacion,
+      });
+      notify({ type: 'success', title: 'Transferencia solicitada', message: 'Pendiente de aprobación del director.' });
+      setModalNuevaTrans(false);
+      setNuevaTrans({ concepto_origen_id: '', concepto_destino_id: '', monto: '', justificacion: '' });
+      void fetchTransferencias();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message || 'Error al solicitar transferencia.' });
+    } finally {
+      setEnviandoTrans(false);
+    }
+  };
+
   const handleAprobarPresupuesto = async () => {
     if (!presupuesto) return;
     setAprobando(true);
@@ -1090,6 +1173,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (activeTab === 'transferencias') void fetchTransferencias(); }, [activeTab, currentProjectId]);
   useEffect(() => {
     if (tenant?.id === 'iretum-demo') return;
     api.get('/api/v1/gerencia-tecnica/dashboard').then(r => setGtDash(r.data?.data ?? null)).catch(() => {});
@@ -1464,7 +1548,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
               <div>
                 <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-foreground">
-                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : activeTab === 'control-costos' ? 'Control de Costos' : activeTab === 'control-presupuestal' ? 'Control Presupuestal' : 'Insumos'}
+                  {activeTab === 'catalogo' ? 'Catálogo de Obra' : activeTab === 'control-costos' ? 'Control de Costos' : activeTab === 'control-presupuestal' ? 'Control Presupuestal' : activeTab === 'transferencias' ? 'Transferencias' : 'Insumos'}
                 </h1>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {activeTab === 'catalogo'
@@ -1473,6 +1557,8 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     ? 'Acumulados por partida · Comprometido vs. Presupuesto'
                     : activeTab === 'control-presupuestal'
                     ? 'Presupuestado vs. Comprometido vs. Pagado por partida'
+                    : activeTab === 'transferencias'
+                    ? 'Movimientos de presupuesto entre partidas · Aprobación requerida'
                     : 'Catálogo maestro de insumos · Materiales, M.O., Equipo'}
                 </p>
               </div>
@@ -2308,6 +2394,119 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   </table>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* TAB: Transferencias entre Partidas                                */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'transferencias' && (
+          <div className="space-y-6 px-4 md:px-8 pb-12">
+            {/* Header + acciones */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Transferencias de Partida</h2>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Mueve presupuesto entre partidas cuando una llega a su tope</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => void fetchTransferencias()}
+                  className="p-2 rounded-lg border border-border/60 bg-card hover:bg-muted/60 transition-all"
+                  title="Refrescar"
+                >
+                  <IconRefreshCw className={cn('h-3.5 w-3.5 text-muted-foreground', loadingTrans && 'animate-spin')} />
+                </button>
+                <button
+                  onClick={() => setModalNuevaTrans(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-md shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  + Nueva Transferencia
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de transferencias */}
+            {loadingTrans ? (
+              <div className="flex items-center justify-center py-16 text-muted-foreground text-[10px]">Cargando...</div>
+            ) : transferencias.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-20 text-center">
+                <span className="text-4xl">↔️</span>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sin transferencias</p>
+                <p className="text-[10px] text-muted-foreground/60">Las solicitudes de movimiento de presupuesto aparecerán aquí</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {transferencias.map(t => {
+                  const isPendiente = t.estado === 'PENDIENTE';
+                  const isAdmin = user?.role?.includes('admin') || user?.role?.includes('director');
+                  return (
+                    <div key={t.id} className={cn(
+                      'rounded-2xl border p-4 space-y-3 transition-all',
+                      isPendiente ? 'border-amber-500/30 bg-amber-500/5' :
+                      t.estado === 'APROBADA' ? 'border-emerald-500/20 bg-emerald-500/5' :
+                      'border-red-500/20 bg-red-500/5'
+                    )}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest',
+                              isPendiente ? 'bg-amber-500/20 text-amber-700' :
+                              t.estado === 'APROBADA' ? 'bg-emerald-500/20 text-emerald-700' :
+                              'bg-red-500/20 text-red-700'
+                            )}>
+                              {t.estado}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString('es-MX')}</span>
+                          </div>
+                          <p className="text-[11px] font-bold text-foreground">
+                            {t.concepto_origen_clave !== 'N/A' ? t.concepto_origen_clave : 'Bolsa general'}
+                            {' → '}
+                            {t.concepto_destino_clave}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">{t.concepto_destino_desc}</p>
+                          <p className="text-sm font-black text-foreground font-mono">
+                            {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(t.monto)}
+                          </p>
+                        </div>
+                        {isPendiente && isAdmin && (
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={() => void aprobarTransferencia(t.id)}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all"
+                            >
+                              Aprobar
+                            </button>
+                            <button
+                              onClick={() => { setModalRechazo({ id: t.id }); setMotivoRechazo(''); }}
+                              className="px-3 py-1.5 rounded-lg border border-red-500/40 bg-red-500/10 text-red-700 text-[9px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all"
+                            >
+                              Rechazar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-t border-border/30 pt-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Justificación</p>
+                        <p className="text-[10px] text-foreground/80 line-clamp-2">{t.justificacion}</p>
+                      </div>
+                      {t.solicitado_por_nombre && (
+                        <div className="flex items-center gap-4 text-[9px] text-muted-foreground">
+                          <span>Solicitó: <strong>{t.solicitado_por_nombre}</strong></span>
+                          {t.aprobado_por_nombre && <span>{t.estado === 'APROBADA' ? 'Aprobó' : 'Rechazó'}: <strong>{t.aprobado_por_nombre}</strong></span>}
+                        </div>
+                      )}
+                      {t.motivo_rechazo && (
+                        <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-2">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-red-700 mb-0.5">Motivo de rechazo</p>
+                          <p className="text-[10px] text-red-600/80">{t.motivo_rechazo}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
@@ -3181,6 +3380,130 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* PANEL: Desglose de Saldo por Partida                               */}
       {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* MODAL: Nueva Transferencia                                          */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {modalNuevaTrans && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-card rounded-3xl border border-border/60 shadow-2xl w-full max-w-lg p-6 space-y-5">
+            <div>
+              <h3 className="text-base font-black uppercase tracking-tighter text-foreground">Nueva Transferencia de Partida</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Solicitar mover presupuesto entre partidas · Requiere aprobación del director</p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Partida Origen (concepto_id)</p>
+                <select
+                  value={nuevaTrans.concepto_origen_id}
+                  onChange={e => setNuevaTrans(p => ({ ...p, concepto_origen_id: e.target.value }))}
+                  className="w-full text-xs bg-background border border-border/60 rounded-xl px-3 py-2.5 focus:border-primary outline-none text-foreground"
+                >
+                  <option value="">Bolsa general del proyecto</option>
+                  {Object.values(saldoMap).map(s => (
+                    <option key={s.concepto_id} value={s.concepto_id}>
+                      {s.concepto_clave} — {s.concepto_desc.substring(0, 50)} (disp: {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(s.monto_disponible)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Partida Destino *</p>
+                <select
+                  value={nuevaTrans.concepto_destino_id}
+                  onChange={e => setNuevaTrans(p => ({ ...p, concepto_destino_id: e.target.value }))}
+                  className="w-full text-xs bg-background border border-border/60 rounded-xl px-3 py-2.5 focus:border-primary outline-none text-foreground"
+                >
+                  <option value="">Selecciona partida destino</option>
+                  {Object.values(saldoMap).filter(s => s.concepto_id !== nuevaTrans.concepto_origen_id).map(s => (
+                    <option key={s.concepto_id} value={s.concepto_id}>
+                      {s.concepto_clave} — {s.concepto_desc.substring(0, 50)} ({s.estado_tope})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Monto a transferir (MXN) *</p>
+                <input
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={nuevaTrans.monto}
+                  onChange={e => setNuevaTrans(p => ({ ...p, monto: e.target.value }))}
+                  placeholder="0.00"
+                  className="w-full text-xs bg-background border border-border/60 rounded-xl px-3 py-2.5 focus:border-primary outline-none text-foreground"
+                />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                  Justificación técnica * <span className="text-[9px] text-muted-foreground/60">(mínimo 50 caracteres)</span>
+                </p>
+                <textarea
+                  rows={4}
+                  value={nuevaTrans.justificacion}
+                  onChange={e => setNuevaTrans(p => ({ ...p, justificacion: e.target.value }))}
+                  placeholder="Explica la razón técnica y gerencial de la transferencia..."
+                  className="w-full text-xs bg-background border border-border/60 rounded-xl px-3 py-2.5 focus:border-primary outline-none resize-none text-foreground"
+                />
+                <p className={cn('text-[9px] mt-1', nuevaTrans.justificacion.length >= 50 ? 'text-emerald-600' : 'text-muted-foreground/60')}>
+                  {nuevaTrans.justificacion.length}/50 caracteres mínimos
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => setModalNuevaTrans(false)}
+                className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => void solicitarTransferencia()}
+                disabled={enviandoTrans || !nuevaTrans.concepto_destino_id || !nuevaTrans.monto || nuevaTrans.justificacion.trim().length < 50}
+                className="px-5 py-2.5 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {enviandoTrans ? 'Enviando...' : 'Solicitar Transferencia'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* MODAL: Rechazar Transferencia                                       */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {modalRechazo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-card rounded-3xl border border-border/60 shadow-2xl w-full max-w-md p-6 space-y-5">
+            <h3 className="text-base font-black uppercase tracking-tighter text-foreground">Rechazar Transferencia</h3>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Motivo de rechazo *</p>
+              <textarea
+                rows={4}
+                value={motivoRechazo}
+                onChange={e => setMotivoRechazo(e.target.value)}
+                placeholder="Explica por qué se rechaza la transferencia..."
+                className="w-full text-xs bg-background border border-border/60 rounded-xl px-3 py-2.5 focus:border-red-400 outline-none resize-none text-foreground"
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setModalRechazo(null)}
+                className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => void rechazarTransferencia()}
+                disabled={motivoRechazo.trim().length === 0}
+                className="px-5 py-2.5 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-all disabled:opacity-50"
+              >
+                Confirmar rechazo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SlidePanel
         isOpen={!!saldoPanelConcepto}
         onClose={() => setSaldoPanelConcepto(null)}

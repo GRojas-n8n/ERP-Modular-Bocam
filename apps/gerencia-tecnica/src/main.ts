@@ -2296,6 +2296,303 @@ app.get(
   }
 );
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TRANSFERENCIAS ENTRE PARTIDAS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// POST /api/v1/gerencia-tecnica/transferencias-partida
+app.post(
+  '/api/v1/gerencia-tecnica/transferencias-partida',
+  requireRoles('gerencia_tecnica', 'control_proyectos', 'admin'),
+  async (req: Request, res: Response) => {
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+    try {
+      const { tipo = 'INTERNA', concepto_origen_id, concepto_destino_id, monto, justificacion } = req.body;
+
+      if (!concepto_destino_id || !monto || !justificacion) {
+        return res.status(422).json(createApiError('DATOS_INCOMPLETOS', 'Se requieren concepto_destino_id, monto y justificacion.'));
+      }
+      if (typeof justificacion !== 'string' || justificacion.trim().length < 50) {
+        return res.status(422).json(createApiError('JUSTIFICACION_CORTA', 'La justificación debe tener al menos 50 caracteres.'));
+      }
+      if (Number(monto) <= 0) {
+        return res.status(422).json(createApiError('MONTO_INVALIDO', 'El monto debe ser mayor a cero.'));
+      }
+      if (concepto_origen_id && concepto_origen_id === concepto_destino_id) {
+        return res.status(422).json(createApiError('MISMO_ORIGEN_DESTINO', 'Origen y destino no pueden ser la misma partida.'));
+      }
+
+      const [saldoOrigen, saldoDestino] = await Promise.all([
+        concepto_origen_id
+          ? db.saldoPartida.findUnique({ where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: concepto_origen_id } } })
+          : null,
+        db.saldoPartida.findUnique({ where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: concepto_destino_id } } }),
+      ]);
+
+      if (concepto_origen_id && !saldoOrigen) {
+        return res.status(404).json(createApiError('PARTIDA_ORIGEN_NO_ENCONTRADA', 'La partida origen no tiene saldo inicializado.'));
+      }
+      if (!saldoDestino) {
+        return res.status(404).json(createApiError('PARTIDA_DESTINO_NO_ENCONTRADA', 'La partida destino no tiene saldo inicializado.'));
+      }
+      if (saldoOrigen) {
+        const disponible = Number(saldoOrigen.monto_disponible);
+        if (disponible < Number(monto)) {
+          return res.status(422).json(createApiError(
+            'SALDO_INSUFICIENTE',
+            `La partida origen solo tiene $${disponible.toFixed(2)} disponibles para transferir.`
+          ));
+        }
+      }
+
+      const transferencia = await db.transferenciaPartida.create({
+        data: {
+          tenant_id:              tenantId,
+          tipo,
+          proyecto_origen_id:     proyectoId,
+          concepto_origen_id:     concepto_origen_id || null,
+          concepto_origen_clave:  saldoOrigen?.concepto_clave || 'N/A',
+          concepto_origen_desc:   saldoOrigen?.concepto_desc  || 'N/A',
+          proyecto_destino_id:    proyectoId,
+          concepto_destino_id,
+          concepto_destino_clave: saldoDestino.concepto_clave,
+          concepto_destino_desc:  saldoDestino.concepto_desc,
+          monto:                  Number(monto),
+          justificacion:          justificacion.trim(),
+          solicitado_por_id:      userId,
+          solicitado_por_nombre:  userName || 'Usuario',
+          estado: 'PENDIENTE',
+        },
+      });
+
+      try {
+        await publishEvent({
+          event_type: 'gerencia_tecnica.transferencia_partida_solicitada',
+          timestamp:  new Date().toISOString(),
+          context:    { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+          payload: {
+            transferencia_id:       transferencia.id,
+            tipo,
+            proyecto_id:            proyectoId,
+            concepto_origen_clave:  transferencia.concepto_origen_clave,
+            concepto_destino_clave: transferencia.concepto_destino_clave,
+            monto:                  Number(monto),
+            solicitado_por_nombre:  transferencia.solicitado_por_nombre,
+          },
+        });
+      } catch { /* best-effort */ }
+
+      return res.status(201).json(createApiResponse(transferencia, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error POST /transferencias-partida:', error.message);
+      return res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al crear transferencia.', error.message));
+    }
+  }
+);
+
+// GET /api/v1/gerencia-tecnica/transferencias-partida
+app.get(
+  '/api/v1/gerencia-tecnica/transferencias-partida',
+  async (req: Request, res: Response) => {
+    const { tenantId, proyectoId } = req.securityContext;
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+    try {
+      const { estado } = req.query as { estado?: string };
+      const where: any = { tenant_id: tenantId, proyecto_origen_id: proyectoId };
+      if (estado) where.estado = estado;
+
+      const transferencias = await db.transferenciaPartida.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+      });
+
+      return res.json(createApiResponse({ transferencias, total: transferencias.length }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error GET /transferencias-partida:', error.message);
+      return res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al listar transferencias.', error.message));
+    }
+  }
+);
+
+// GET /api/v1/gerencia-tecnica/partidas/:concepto_id/transferencias
+app.get(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/transferencias',
+  async (req: Request, res: Response) => {
+    const { tenantId, proyectoId } = req.securityContext;
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+    const { concepto_id } = req.params;
+    try {
+      const [enviadas, recibidas] = await Promise.all([
+        db.transferenciaPartida.findMany({
+          where: { tenant_id: tenantId, concepto_origen_id: concepto_id },
+          orderBy: { created_at: 'desc' },
+        }),
+        db.transferenciaPartida.findMany({
+          where: { tenant_id: tenantId, concepto_destino_id: concepto_id },
+          orderBy: { created_at: 'desc' },
+        }),
+      ]);
+
+      const historial = [
+        ...enviadas.map((t: any)  => ({ ...t, direccion: 'ENVIADA',  concepto_contraparte: `${t.concepto_destino_clave} — ${t.concepto_destino_desc}` })),
+        ...recibidas.map((t: any) => ({ ...t, direccion: 'RECIBIDA', concepto_contraparte: `${t.concepto_origen_clave} — ${t.concepto_origen_desc}` })),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      return res.json(createApiResponse(historial, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error GET /partidas/:id/transferencias:', error.message);
+      return res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al obtener historial.', error.message));
+    }
+  }
+);
+
+// PATCH /api/v1/gerencia-tecnica/transferencias-partida/:id/aprobar
+app.patch(
+  '/api/v1/gerencia-tecnica/transferencias-partida/:id/aprobar',
+  requireRoles('admin', 'director'),
+  async (req: Request, res: Response) => {
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+    const { id } = req.params;
+    try {
+      const transferencia = await db.transferenciaPartida.findFirst({
+        where: { id, tenant_id: tenantId },
+      });
+      if (!transferencia) {
+        return res.status(404).json(createApiError('NOT_FOUND', 'Transferencia no encontrada.'));
+      }
+      if (transferencia.estado !== 'PENDIENTE') {
+        return res.status(409).json(createApiError('YA_PROCESADA', 'La transferencia ya fue procesada.'));
+      }
+
+      if (transferencia.concepto_origen_id) {
+        const saldoOrigen = await db.saldoPartida.findUnique({
+          where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: String(transferencia.proyecto_origen_id), concepto_id: String(transferencia.concepto_origen_id) } },
+        });
+        if (!saldoOrigen || Number(saldoOrigen.monto_disponible) < Number(transferencia.monto)) {
+          return res.status(422).json(createApiError('SALDO_INSUFICIENTE', 'La partida origen ya no tiene saldo suficiente para esta transferencia.'));
+        }
+      }
+
+      const monto = Number(transferencia.monto);
+
+      const [transActualizada] = await db.$transaction([
+        db.transferenciaPartida.update({
+          where: { id },
+          data: {
+            estado:              'APROBADA',
+            aprobado_por_id:     userId,
+            aprobado_por_nombre: userName || 'Director',
+            fecha_aprobacion:    new Date(),
+          },
+        }),
+        ...(transferencia.concepto_origen_id ? [
+          db.saldoPartida.updateMany({
+            where: { tenant_id: tenantId, proyecto_id: String(transferencia.proyecto_origen_id), concepto_id: String(transferencia.concepto_origen_id) },
+            data: { monto_aprobado: { decrement: monto }, monto_disponible: { decrement: monto } },
+          }),
+        ] : []),
+        db.saldoPartida.updateMany({
+          where: { tenant_id: tenantId, proyecto_id: String(transferencia.proyecto_destino_id), concepto_id: String(transferencia.concepto_destino_id) },
+          data: { monto_aprobado: { increment: monto }, monto_disponible: { increment: monto } },
+        }),
+      ]);
+
+      // Recalcular estado_tope del destino
+      const saldoDestino = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: String(transferencia.proyecto_destino_id), concepto_id: String(transferencia.concepto_destino_id) } },
+      });
+      if (saldoDestino) {
+        const nuevoEstado = calcularEstadoTope(Number(saldoDestino.monto_aprobado), Number(saldoDestino.monto_disponible));
+        await db.saldoPartida.update({ where: { id: saldoDestino.id }, data: { estado_tope: nuevoEstado } });
+      }
+
+      try {
+        await publishEvent({
+          event_type: 'gerencia_tecnica.transferencia_partida_aprobada',
+          timestamp:  new Date().toISOString(),
+          context:    { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+          payload: {
+            transferencia_id:       id,
+            tipo:                   transferencia.tipo,
+            proyecto_origen_id:     String(transferencia.proyecto_origen_id),
+            concepto_origen_id:     transferencia.concepto_origen_id || null,
+            concepto_origen_clave:  transferencia.concepto_origen_clave,
+            proyecto_destino_id:    String(transferencia.proyecto_destino_id),
+            concepto_destino_id:    String(transferencia.concepto_destino_id),
+            concepto_destino_clave: transferencia.concepto_destino_clave,
+            monto,
+            aprobado_por_nombre:    userName || 'Director',
+            justificacion:          transferencia.justificacion,
+          },
+        });
+      } catch { /* best-effort */ }
+
+      return res.json(createApiResponse(transActualizada, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error PATCH /transferencias-partida/:id/aprobar:', error.message);
+      return res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al aprobar transferencia.', error.message));
+    }
+  }
+);
+
+// PATCH /api/v1/gerencia-tecnica/transferencias-partida/:id/rechazar
+app.patch(
+  '/api/v1/gerencia-tecnica/transferencias-partida/:id/rechazar',
+  requireRoles('admin', 'director'),
+  async (req: Request, res: Response) => {
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+    const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+    const { id } = req.params;
+    try {
+      const { motivo_rechazo } = req.body;
+      if (!motivo_rechazo || String(motivo_rechazo).trim().length === 0) {
+        return res.status(422).json(createApiError('MOTIVO_REQUERIDO', 'El motivo de rechazo es obligatorio.'));
+      }
+
+      const transferencia = await db.transferenciaPartida.findFirst({ where: { id, tenant_id: tenantId } });
+      if (!transferencia) {
+        return res.status(404).json(createApiError('NOT_FOUND', 'Transferencia no encontrada.'));
+      }
+      if (transferencia.estado !== 'PENDIENTE') {
+        return res.status(409).json(createApiError('YA_PROCESADA', 'La transferencia ya fue procesada.'));
+      }
+
+      const transActualizada = await db.transferenciaPartida.update({
+        where: { id },
+        data: {
+          estado:              'RECHAZADA',
+          motivo_rechazo:      String(motivo_rechazo).trim(),
+          aprobado_por_id:     userId,
+          aprobado_por_nombre: userName || 'Director',
+          fecha_aprobacion:    new Date(),
+        },
+      });
+
+      try {
+        await publishEvent({
+          event_type: 'gerencia_tecnica.transferencia_partida_rechazada',
+          timestamp:  new Date().toISOString(),
+          context:    { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+          payload: {
+            transferencia_id:       id,
+            concepto_destino_id:    String(transferencia.concepto_destino_id),
+            concepto_destino_clave: transferencia.concepto_destino_clave,
+            monto:                  Number(transferencia.monto),
+            motivo_rechazo:         String(motivo_rechazo).trim(),
+          },
+        });
+      } catch { /* best-effort */ }
+
+      return res.json(createApiResponse(transActualizada, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error PATCH /transferencias-partida/:id/rechazar:', error.message);
+      return res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al rechazar transferencia.', error.message));
+    }
+  }
+);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'gerencia-tecnica', timestamp: new Date().toISOString() });
 });
