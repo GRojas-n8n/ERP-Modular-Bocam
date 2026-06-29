@@ -33,11 +33,16 @@ export function MetricCard({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden border-border/30 p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:border-border/60',
+        'group relative overflow-hidden border-border/30 p-5 transition-all duration-500 hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl',
         className
       )}
       {...props}
     >
+      {/* Orb ambiental — visible on hover */}
+      <div
+        className="absolute -right-6 -top-6 h-24 w-24 rounded-full blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: 'hsl(var(--primary) / 0.18)' }}
+      />
       <CardContent className="p-0">
         <div className="mb-4 flex items-start justify-between">
           <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl', iconContainerClassName)}>
@@ -101,7 +106,7 @@ export function ProgressRing({
           stroke="currentColor"
           strokeWidth={strokeWidth}
           fill="none"
-          className="text-slate-200"
+          className="text-border"
         />
         <circle
           cx={size / 2}

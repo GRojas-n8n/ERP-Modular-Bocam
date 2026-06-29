@@ -232,7 +232,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
   // ─── Sidebar ─────────────────────────────────────────────────────────────
   const renderSidebarContent = () => (
-    <div className="flex h-full flex-col" style={{ background: 'hsl(var(--card))' }}>
+    <div className="flex h-full flex-col" style={{
+      background: 'linear-gradient(180deg, hsl(var(--card)) 60%, hsl(var(--primary) / 0.04) 100%)',
+    }}>
 
       {/* ── Logo ───────────────────────────────────────────────────────── */}
       <style>{`
@@ -467,13 +469,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
       {/* ── Contenido principal ── */}
       <div className="relative flex flex-1 flex-col overflow-hidden min-w-0">
+        {/* Orbs decorativos — luz ambiental en fondo claro */}
+        <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full blur-3xl" style={{ background: 'hsl(var(--primary) / 0.06)' }} />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 left-1/3 h-72 w-72 rounded-full blur-3xl" style={{ background: 'hsl(var(--primary) / 0.05)' }} />
 
         {/* Header */}
-        <header className="z-10 flex h-14 items-center justify-between border-b glass px-4 md:px-6"
+        <header className="z-10 flex h-14 items-center justify-between border-b glass-elevated px-4 md:px-6"
           style={{
-            background: 'hsl(var(--card) / 0.8)',
             borderColor: 'hsl(var(--border))',
-            backdropFilter: 'blur(16px)',
+            boxShadow: '0 1px 0 hsl(var(--primary) / 0.08), 0 2px 12px hsl(var(--foreground) / 0.04)',
           }}>
 
           {/* Izquierda: hamburger + breadcrumb */}

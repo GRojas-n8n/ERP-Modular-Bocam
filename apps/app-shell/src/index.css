@@ -106,6 +106,13 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  :root:not([data-theme="dark"]) body {
+    background-image:
+      radial-gradient(ellipse 70% 55% at 10% 5%, hsl(var(--primary) / 0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 55% 45% at 90% 95%, hsl(var(--primary) / 0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 30% at 60% 45%, hsl(220 70% 55% / 0.04) 0%, transparent 48%);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     letter-spacing: -0.02em;
@@ -124,9 +131,70 @@
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.5); }
 }
 
+/* ── Keyframes wow ── */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes glow-pulse-primary {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.15), 0 0 40px hsl(var(--primary) / 0.05); }
+  50%       { box-shadow: 0 0 30px hsl(var(--primary) / 0.28), 0 0 60px hsl(var(--primary) / 0.12); }
+}
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
 /* ── Utilidades wow ── */
 @layer utilities {
   .glow-primary    { box-shadow: 0 0 16px hsl(var(--primary) / 0.35), 0 0 32px hsl(var(--primary) / 0.12); }
   .glow-primary-sm { box-shadow: 0 0 8px hsl(var(--primary) / 0.4); }
   .glass           { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+
+  /* Glass elevado — sidebar/header tema claro */
+  .glass-elevated {
+    background: hsl(0 0% 100% / 0.78);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    box-shadow: 0 1px 0 hsl(0 0% 100% / 0.9) inset, 0 4px 24px hsl(var(--foreground) / 0.04);
+  }
+  [data-theme="dark"] .glass-elevated {
+    background: hsl(var(--card) / 0.82);
+    box-shadow: 0 4px 24px hsl(0 0% 0% / 0.3);
+  }
+
+  /* Hover lift + glow primario para tarjetas */
+  .hover-glow {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  }
+  .hover-glow:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.14),
+      0 8px 32px hsl(var(--primary) / 0.12),
+      0 3px 8px hsl(var(--foreground) / 0.05);
+  }
+
+  /* Texto con gradiente animado — extiende el language brand-shimmer */
+  .text-gradient-primary {
+    background: linear-gradient(120deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary) / 0.65) 45%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer-sweep 4s linear infinite;
+  }
+
+  /* Utilidades de animación */
+  .animate-float      { animation: float-y 7s ease-in-out infinite; }
+  .animate-slide-up   { animation: slide-up-fade 0.4s ease both; }
+  .animate-glow-pulse { animation: glow-pulse-primary 3s ease-in-out infinite; }
 }
