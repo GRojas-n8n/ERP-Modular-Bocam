@@ -255,6 +255,25 @@ export enum ContabilidadConsumedEvents {
   FONDOS_COMPROMETIDOS = 'finanzas.fondos_comprometidos',
   FONDOS_LIBERADOS = 'finanzas.fondos_liberados',
   TRANSFERENCIA_PRESUPUESTAL = 'finanzas.transferencia_presupuestal',
+  ESTIMACION_APROBADA = 'control_obra.estimacion_aprobada',
+  AVANCE_FISICO_VALIDADO = 'control_obra.avance_fisico_validado',
+}
+
+export interface EstimacionAprobadaPayload {
+  estimacion_id: string;
+  codigo: string;
+  monto_total: number;
+  moneda?: string;
+  concepto?: string;
+  proyecto_nombre?: string;
+}
+
+export interface AvanceFisicoValidadoPayload {
+  avance_id: string;
+  codigo: string;
+  monto_avaluado: number;
+  moneda?: string;
+  concepto?: string;
 }
 
 export function createApiResponse<T>(data: T, tenantId?: string, proyectoId?: string, correlationId?: string): ApiResponse<T> {

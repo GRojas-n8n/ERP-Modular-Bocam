@@ -186,6 +186,31 @@ exports.Prisma.ConciliacionFiscalScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.CuentaContableScalarFieldEnum = {
+  id_cuenta: 'id_cuenta',
+  clave: 'clave',
+  nombre: 'nombre',
+  tipo: 'tipo',
+  naturaleza: 'naturaleza',
+  padre_id: 'padre_id',
+  nivel: 'nivel',
+  activa: 'activa',
+  created_at: 'created_at'
+};
+
+exports.Prisma.MovimientoPolizaScalarFieldEnum = {
+  id_movimiento: 'id_movimiento',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  asiento_id: 'asiento_id',
+  cuenta_id: 'cuenta_id',
+  descripcion: 'descripcion',
+  cargo: 'cargo',
+  abono: 'abono',
+  orden: 'orden',
+  created_at: 'created_at'
+};
+
 exports.Prisma.ConciliacionBancariaScalarFieldEnum = {
   id_conciliacion_bancaria: 'id_conciliacion_bancaria',
   tenant_id: 'tenant_id',
@@ -227,6 +252,8 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   AsientoContable: 'AsientoContable',
   ConciliacionFiscal: 'ConciliacionFiscal',
+  CuentaContable: 'CuentaContable',
+  MovimientoPoliza: 'MovimientoPoliza',
   ConciliacionBancaria: 'ConciliacionBancaria'
 };
 

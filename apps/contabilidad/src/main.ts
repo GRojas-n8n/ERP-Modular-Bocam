@@ -13,6 +13,7 @@ import {
 } from './idempotency';
 import {
   AsientoContableGeneradoPayload,
+  AvanceFisicoValidadoPayload,
   CfdiSatValidadoPayload,
   CfdiConciliadoPayload,
   ConciliacionBancariaArchivoRequest,
@@ -22,6 +23,7 @@ import {
   ConciliacionBancariaPayload,
   ContabilidadConsumedEvents,
   ContabilidadEvents,
+  EstimacionAprobadaPayload,
   FondosComprometidosPayload,
   FondosLiberadosPayload,
   OrdenCompraCanceladaPayload,
@@ -37,6 +39,7 @@ import {
   createApiError,
   createApiResponse,
 } from './types';
+import { buildMovimientosForPoliza, persistMovimientos, TipoPoliza } from './mapper';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import {
@@ -82,6 +85,33 @@ function buildFunctionalReference(entity: string, entityId: string) {
 
 function appendNote(existing: string | null | undefined, next: string) {
   return existing ? `${existing} ${next}`.trim() : next;
+}
+
+const PARTIDA_DOBLE_CUTOFF = new Date('2026-06-29T00:00:00Z');
+
+async function persistMovimientosIfEligible(
+  asientoId: string,
+  context: { tenant_id: string; proyecto_id: string; user_id: string },
+  tipoPoliza: TipoPoliza,
+  monto: number,
+  descripcion: string,
+  fechaPoliza?: Date | string,
+): Promise<void> {
+  const fecha = fechaPoliza ? new Date(fechaPoliza as string) : new Date();
+  if (fecha < PARTIDA_DOBLE_CUTOFF) return;
+  const defs = buildMovimientosForPoliza(tipoPoliza, monto, descripcion);
+  if (defs.length === 0) return;
+  await createTenantContext(
+    { tenantId: context.tenant_id, proyectoId: context.proyecto_id, userId: context.user_id },
+    async (prisma) => {
+      const ya = await prisma.movimientoPoliza.count({ where: { asiento_id: asientoId } });
+      if (ya > 0) return;
+      await persistMovimientos(prisma, asientoId, defs, {
+        tenant_id: context.tenant_id,
+        proyecto_id: context.proyecto_id,
+      });
+    }
+  );
 }
 
 function logFunctionalReconciliationTerminalState(params: {
@@ -1154,6 +1184,12 @@ export async function handlePagoRegistradoEvent(event: BocamEvent<PagoRegistrado
     idempotentAction: 'contabilidad.event.finanzas.pago_registrado.idempotent',
   });
 
+  if (!result.idempotent) {
+    await persistMovimientosIfEligible(
+      result.asiento.id_asiento, event.context, 'EGRESO',
+      payload.monto_pagado, payload.concepto, payload.fecha_pago_real,
+    );
+  }
   await ensureFiscalReconciliationPlaceholder(
     event,
     result.asiento.id_asiento,
@@ -1188,7 +1224,7 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent<OrdenCompra
     return;
   }
 
-  await persistAsientoFromEvent(event, {
+  const ocCreadaResult = await persistAsientoFromEvent(event, {
     externalEventKey: `${ContabilidadConsumedEvents.ORDEN_COMPRA_CREADA}:${payload.oc_id}`,
     tipoPoliza: 'PASIVO_PROYECTADO',
     folioPoliza: buildFolioByPrefix('POL-PAS', payload.oc_id),
@@ -1206,6 +1242,12 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent<OrdenCompra
     createdAction: 'contabilidad.event.compras.oc_creada.created',
     idempotentAction: 'contabilidad.event.compras.oc_creada.idempotent',
   });
+  if (!ocCreadaResult.idempotent) {
+    await persistMovimientosIfEligible(
+      ocCreadaResult.asiento.id_asiento, event.context, 'PASIVO_PROYECTADO',
+      payload.total, `Pasivo proyectado OC ${payload.codigo}`,
+    );
+  }
 }
 
 export async function handleTransferenciaPresupuestalEvent(event: BocamEvent<TransferenciaPresupuestalPayload>): Promise<void> {
@@ -1231,7 +1273,7 @@ export async function handleTransferenciaPresupuestalEvent(event: BocamEvent<Tra
     return;
   }
 
-  await persistAsientoFromEvent(event, {
+  const trfResult = await persistAsientoFromEvent(event, {
     externalEventKey: `${ContabilidadConsumedEvents.TRANSFERENCIA_PRESUPUESTAL}:${payload.transferencia_id}`,
     tipoPoliza: 'TRANSFERENCIA_INTERNA',
     folioPoliza: buildFolioByPrefix('POL-TRF', payload.transferencia_id),
@@ -1249,6 +1291,12 @@ export async function handleTransferenciaPresupuestalEvent(event: BocamEvent<Tra
     createdAction: 'contabilidad.event.finanzas.transferencia_presupuestal.created',
     idempotentAction: 'contabilidad.event.finanzas.transferencia_presupuestal.idempotent',
   });
+  if (!trfResult.idempotent) {
+    await persistMovimientosIfEligible(
+      trfResult.asiento.id_asiento, event.context, 'TRANSFERENCIA_INTERNA',
+      payload.monto_transferido, payload.concepto,
+    );
+  }
 }
 
 export async function handleOrdenCompraCanceladaEvent(event: BocamEvent<OrdenCompraCanceladaPayload>): Promise<void> {
@@ -1298,7 +1346,7 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent<OrdenCom
     }
   );
 
-  await persistAsientoFromEvent(event, {
+  const ocRevResult = await persistAsientoFromEvent(event, {
     externalEventKey: `${ContabilidadConsumedEvents.ORDEN_COMPRA_CANCELADA}:${payload.oc_id}`,
     tipoPoliza: 'REVERSION_PASIVO_PROYECTADO',
     folioPoliza: buildFolioByPrefix('POL-REV', payload.oc_id),
@@ -1316,6 +1364,12 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent<OrdenCom
     createdAction: 'contabilidad.event.compras.oc_cancelada.created',
     idempotentAction: 'contabilidad.event.compras.oc_cancelada.idempotent',
   });
+  if (!ocRevResult.idempotent) {
+    await persistMovimientosIfEligible(
+      ocRevResult.asiento.id_asiento, event.context, 'REVERSION_PASIVO_PROYECTADO',
+      payload.total, `Reversa OC cancelada ${payload.codigo}`,
+    );
+  }
 }
 
 export async function handleFondosLiberadosEvent(event: BocamEvent<FondosLiberadosPayload>): Promise<void> {
@@ -1411,6 +1465,80 @@ export async function handleFondosComprometidosEvent(event: BocamEvent<FondosCom
   });
 }
 
+export async function handleEstimacionAprobadaEvent(event: BocamEvent<EstimacionAprobadaPayload>): Promise<void> {
+  const payload = event.payload || ({} as EstimacionAprobadaPayload);
+
+  if (!payload.estimacion_id || !payload.codigo || typeof payload.monto_total !== 'number') {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.event.control_obra.estimacion_aprobada.invalid_payload',
+      payload,
+    }));
+    return;
+  }
+
+  const result = await persistAsientoFromEvent(event, {
+    externalEventKey: `${ContabilidadConsumedEvents.ESTIMACION_APROBADA}:${payload.estimacion_id}`,
+    tipoPoliza: 'ESTIMACION',
+    folioPoliza: buildFolioByPrefix('POL-EST', payload.estimacion_id),
+    concepto: payload.concepto || `Estimación aprobada ${payload.codigo}`,
+    montoTotal: payload.monto_total,
+    beneficiario: payload.proyecto_nombre || 'OBRA',
+    referenciaModulo: 'control_obra',
+    referenciaEntidad: 'Estimacion',
+    referenciaId: payload.estimacion_id,
+    estatus: 'REGISTRADO',
+    cfdiStatus: 'NO_APLICA',
+    bancarioStatus: 'NO_APLICA',
+    notas: `Estimación aprobada: ${payload.codigo}.`,
+    createdAction: 'contabilidad.event.control_obra.estimacion_aprobada.created',
+    idempotentAction: 'contabilidad.event.control_obra.estimacion_aprobada.idempotent',
+  });
+
+  if (!result.idempotent) {
+    await persistMovimientosIfEligible(
+      result.asiento.id_asiento, event.context, 'ESTIMACION',
+      payload.monto_total, payload.concepto || `Estimación ${payload.codigo}`,
+    );
+  }
+}
+
+export async function handleAvanceFisicoValidadoEvent(event: BocamEvent<AvanceFisicoValidadoPayload>): Promise<void> {
+  const payload = event.payload || ({} as AvanceFisicoValidadoPayload);
+
+  if (!payload.avance_id || !payload.codigo || typeof payload.monto_avaluado !== 'number') {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.event.control_obra.avance_fisico_validado.invalid_payload',
+      payload,
+    }));
+    return;
+  }
+
+  const result = await persistAsientoFromEvent(event, {
+    externalEventKey: `${ContabilidadConsumedEvents.AVANCE_FISICO_VALIDADO}:${payload.avance_id}`,
+    tipoPoliza: 'AVANCE',
+    folioPoliza: buildFolioByPrefix('POL-AVA', payload.avance_id),
+    concepto: payload.concepto || `Avance físico validado ${payload.codigo}`,
+    montoTotal: payload.monto_avaluado,
+    beneficiario: 'OBRA',
+    referenciaModulo: 'control_obra',
+    referenciaEntidad: 'AvanceFisico',
+    referenciaId: payload.avance_id,
+    estatus: 'REGISTRADO',
+    cfdiStatus: 'NO_APLICA',
+    bancarioStatus: 'NO_APLICA',
+    notas: `Avance físico validado: ${payload.codigo}.`,
+    createdAction: 'contabilidad.event.control_obra.avance_fisico_validado.created',
+    idempotentAction: 'contabilidad.event.control_obra.avance_fisico_validado.idempotent',
+  });
+
+  if (!result.idempotent) {
+    await persistMovimientosIfEligible(
+      result.asiento.id_asiento, event.context, 'AVANCE',
+      payload.monto_avaluado, payload.concepto || `Avance ${payload.codigo}`,
+    );
+  }
+}
+
 export const app = express();
 app.use(express.json());
 app.use(createObservabilityMiddleware('contabilidad'));
@@ -1473,6 +1601,254 @@ app.get(
         reason: error.message,
       });
       res.status(500).json(createApiError('CONT_INTERNAL_ERROR', 'Error al listar asientos contables.', undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+// ── Catálogo de cuentas ────────────────────────────────────────────────────────
+app.get(
+  '/api/v1/contabilidad/cuentas',
+  requireRoles('admin', 'finance', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return await prisma.cuentaContable.findMany({
+          where: { activa: true },
+          orderBy: { clave: 'asc' },
+        });
+      });
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_CUENTAS_ERROR', error.message, undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+// ── Movimientos por asiento ────────────────────────────────────────────────────
+app.get(
+  '/api/v1/contabilidad/asientos/:id/movimientos',
+  requireRoles('admin', 'finance', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const asientoId = req.params.id;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return await prisma.movimientoPoliza.findMany({
+          where: { tenant_id: tenantId, asiento_id: asientoId },
+          include: { cuenta: { select: { clave: true, nombre: true, tipo: true, naturaleza: true } } },
+          orderBy: { orden: 'asc' },
+        });
+      });
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_MOVIMIENTOS_ERROR', error.message, undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+// ── Dashboard contabilidad ─────────────────────────────────────────────────────
+app.get(
+  '/api/v1/contabilidad/dashboard',
+  requireRoles('admin', 'finance', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const ahora = new Date();
+      const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const [total, cerrados, pendCfdi, pendBanco, movsMes] = await Promise.all([
+          prisma.asientoContable.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId } }),
+          prisma.asientoContable.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estatus: 'CERRADO' } }),
+          prisma.conciliacionFiscal.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estatus_fiscal: 'PENDIENTE_CFDI' } }),
+          prisma.conciliacionBancaria.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estatus_bancario: 'PENDIENTE_MOVIMIENTO' } }),
+          prisma.movimientoPoliza.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, created_at: { gte: inicioMes } },
+            select: { cargo: true, abono: true, cuenta: { select: { tipo: true } } },
+          }),
+        ]);
+
+        const totalEgresoMes = movsMes
+          .filter(m => m.cuenta.tipo === 'COSTO' || m.cuenta.tipo === 'GASTO')
+          .reduce((s, m) => s + Number(m.cargo), 0);
+        const totalIngresoMes = movsMes
+          .filter(m => m.cuenta.tipo === 'INGRESO')
+          .reduce((s, m) => s + Number(m.abono), 0);
+
+        const alertas: { tipo: string; mensaje: string }[] = [];
+        if (pendCfdi > 0) alertas.push({ tipo: 'CFDI_PENDIENTE', mensaje: `${pendCfdi} asiento(s) sin CFDI` });
+        if (pendBanco > 0) alertas.push({ tipo: 'BANCO_PENDIENTE', mensaje: `${pendBanco} pago(s) sin conciliar con banco` });
+
+        return { total_asientos: total, cerrados, pendientes_cfdi: pendCfdi, pendientes_banco: pendBanco, total_egreso_mes: totalEgresoMes, total_ingreso_mes: totalIngresoMes, alertas };
+      });
+
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_DASHBOARD_ERROR', error.message, undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+// ── Reportes contables ─────────────────────────────────────────────────────────
+app.get(
+  '/api/v1/contabilidad/reportes/balanza-comprobacion',
+  requireRoles('admin', 'finance'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const desde = req.query.desde ? new Date(req.query.desde as string) : new Date(new Date().getFullYear(), 0, 1);
+      const hasta = req.query.hasta ? new Date(req.query.hasta as string) : new Date();
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const rows = await prisma.$queryRaw<any[]>`
+          SELECT cc.clave, cc.nombre, cc.tipo, cc.naturaleza,
+                 COALESCE(SUM(mp.cargo), 0)::numeric  AS total_cargo,
+                 COALESCE(SUM(mp.abono), 0)::numeric  AS total_abono,
+                 (COALESCE(SUM(mp.cargo), 0) - COALESCE(SUM(mp.abono), 0))::numeric AS saldo
+          FROM cuentas_contables cc
+          LEFT JOIN movimientos_poliza mp
+            ON mp.cuenta_id = cc.id_cuenta
+           AND mp.tenant_id = ${tenantId}::uuid
+           AND mp.proyecto_id = ${proyectoId}::uuid
+           AND mp.created_at BETWEEN ${desde} AND ${hasta}
+          WHERE cc.activa = true
+          GROUP BY cc.id_cuenta, cc.clave, cc.nombre, cc.tipo, cc.naturaleza
+          ORDER BY cc.clave
+        `;
+        const totalCargo = rows.reduce((s, r) => s + Number(r.total_cargo), 0);
+        const totalAbono = rows.reduce((s, r) => s + Number(r.total_abono), 0);
+        return { desde: desde.toISOString(), hasta: hasta.toISOString(), cuentas: rows, total_cargo: totalCargo, total_abono: totalAbono, cuadrado: Math.abs(totalCargo - totalAbono) < 0.01 };
+      });
+
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_BALANZA_ERROR', error.message, undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+app.get(
+  '/api/v1/contabilidad/reportes/estado-resultados',
+  requireRoles('admin', 'finance'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const desde = req.query.desde ? new Date(req.query.desde as string) : new Date(new Date().getFullYear(), 0, 1);
+      const hasta = req.query.hasta ? new Date(req.query.hasta as string) : new Date();
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const rows = await prisma.$queryRaw<any[]>`
+          SELECT cc.clave, cc.nombre, cc.tipo,
+                 COALESCE(SUM(mp.cargo), 0)::numeric  AS total_cargo,
+                 COALESCE(SUM(mp.abono), 0)::numeric  AS total_abono
+          FROM cuentas_contables cc
+          LEFT JOIN movimientos_poliza mp
+            ON mp.cuenta_id = cc.id_cuenta
+           AND mp.tenant_id = ${tenantId}::uuid
+           AND mp.proyecto_id = ${proyectoId}::uuid
+           AND mp.created_at BETWEEN ${desde} AND ${hasta}
+          WHERE cc.activa = true AND cc.tipo IN ('INGRESO', 'COSTO', 'GASTO')
+          GROUP BY cc.id_cuenta, cc.clave, cc.nombre, cc.tipo
+          ORDER BY cc.tipo, cc.clave
+        `;
+        const ingresos = rows.filter(r => r.tipo === 'INGRESO').reduce((s, r) => s + Number(r.total_abono), 0);
+        const costos   = rows.filter(r => r.tipo === 'COSTO').reduce((s, r) => s + Number(r.total_cargo), 0);
+        const gastos   = rows.filter(r => r.tipo === 'GASTO').reduce((s, r) => s + Number(r.total_cargo), 0);
+        return { desde: desde.toISOString(), hasta: hasta.toISOString(), cuentas: rows, ingresos, costos, gastos, utilidad_neta: ingresos - costos - gastos };
+      });
+
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_ESTADO_RESULTADOS_ERROR', error.message, undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+app.get(
+  '/api/v1/contabilidad/reportes/balance-general',
+  requireRoles('admin', 'finance'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const hasta = req.query.fecha ? new Date(req.query.fecha as string) : new Date();
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const rows = await prisma.$queryRaw<any[]>`
+          SELECT cc.clave, cc.nombre, cc.tipo, cc.naturaleza,
+                 COALESCE(SUM(mp.cargo), 0)::numeric  AS total_cargo,
+                 COALESCE(SUM(mp.abono), 0)::numeric  AS total_abono,
+                 CASE cc.naturaleza
+                   WHEN 'DEUDORA'   THEN (COALESCE(SUM(mp.cargo), 0) - COALESCE(SUM(mp.abono), 0))
+                   WHEN 'ACREEDORA' THEN (COALESCE(SUM(mp.abono), 0) - COALESCE(SUM(mp.cargo), 0))
+                   ELSE 0
+                 END::numeric AS saldo_normal
+          FROM cuentas_contables cc
+          LEFT JOIN movimientos_poliza mp
+            ON mp.cuenta_id = cc.id_cuenta
+           AND mp.tenant_id = ${tenantId}::uuid
+           AND mp.proyecto_id = ${proyectoId}::uuid
+           AND mp.created_at <= ${hasta}
+          WHERE cc.activa = true AND cc.tipo IN ('ACTIVO', 'PASIVO', 'CAPITAL')
+          GROUP BY cc.id_cuenta, cc.clave, cc.nombre, cc.tipo, cc.naturaleza
+          ORDER BY cc.tipo, cc.clave
+        `;
+        const activos  = rows.filter(r => r.tipo === 'ACTIVO').reduce((s, r) => s + Number(r.saldo_normal), 0);
+        const pasivos  = rows.filter(r => r.tipo === 'PASIVO').reduce((s, r) => s + Number(r.saldo_normal), 0);
+        const capital  = rows.filter(r => r.tipo === 'CAPITAL').reduce((s, r) => s + Number(r.saldo_normal), 0);
+        return { hasta: hasta.toISOString(), cuentas: rows, activos, pasivos, capital, ecuacion_cuadrada: Math.abs(activos - pasivos - capital) < 0.01 };
+      });
+
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_BALANCE_ERROR', error.message, undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+app.get(
+  '/api/v1/contabilidad/reportes/libro-diario',
+  requireRoles('admin', 'finance'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const correlationId = getCorrelationId(req);
+      const desde = req.query.desde ? new Date(req.query.desde as string) : new Date(new Date().getFullYear(), 0, 1);
+      const hasta = req.query.hasta ? new Date(req.query.hasta as string) : new Date();
+      const page  = Math.max(1, Number(req.query.page || 1));
+      const limit = Math.min(100, Math.max(1, Number(req.query.limit || 50)));
+      const skip  = (page - 1) * limit;
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const [asientos, total] = await Promise.all([
+          prisma.asientoContable.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, fecha_poliza: { gte: desde, lte: hasta } },
+            orderBy: { fecha_poliza: 'asc' },
+            skip,
+            take: limit,
+            include: {
+              movimientos_poliza: {
+                include: { cuenta: { select: { clave: true, nombre: true } } },
+                orderBy: { orden: 'asc' },
+              },
+            },
+          } as any),
+          prisma.asientoContable.count({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId, fecha_poliza: { gte: desde, lte: hasta } },
+          }),
+        ]);
+        return { desde: desde.toISOString(), hasta: hasta.toISOString(), page, limit, total, asientos };
+      });
+
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      res.status(500).json(createApiError('CONT_LIBRO_ERROR', error.message, undefined, getCorrelationId(req)));
     }
   }
 );
@@ -2925,6 +3301,20 @@ async function ensureEventSubscriptions() {
     console.log(`[Contabilidad] EVENTO recibido: finanzas.transferencia_presupuestal`);
     console.log(`Transferencia: ${transferencia_id} | $${Number(monto_transferido).toLocaleString()} | ${codigo_origen} -> ${codigo_destino}`);
     await handleTransferenciaPresupuestalEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.ESTIMACION_APROBADA, async (event: BocamEvent<EstimacionAprobadaPayload>) => {
+    const { estimacion_id, codigo, monto_total } = event.payload as EstimacionAprobadaPayload;
+    console.log(`[Contabilidad] EVENTO recibido: control_obra.estimacion_aprobada`);
+    console.log(`Estimación: ${codigo} (${estimacion_id}) | $${Number(monto_total).toLocaleString()}`);
+    await handleEstimacionAprobadaEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.AVANCE_FISICO_VALIDADO, async (event: BocamEvent<AvanceFisicoValidadoPayload>) => {
+    const { avance_id, codigo, monto_avaluado } = event.payload as AvanceFisicoValidadoPayload;
+    console.log(`[Contabilidad] EVENTO recibido: control_obra.avance_fisico_validado`);
+    console.log(`Avance: ${codigo} (${avance_id}) | $${Number(monto_avaluado).toLocaleString()}`);
+    await handleAvanceFisicoValidadoEvent(event);
   });
 
   subscriptionsRegistered = true;

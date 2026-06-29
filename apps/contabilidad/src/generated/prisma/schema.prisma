@@ -97,6 +97,44 @@ model ConciliacionFiscal {
   @@map("conciliaciones_fiscales")
 }
 
+model CuentaContable {
+  id_cuenta  String   @id @default(uuid()) @db.Uuid
+  clave      String   @db.VarChar(10)
+  nombre     String   @db.VarChar(120)
+  tipo       String   @db.VarChar(20)
+  naturaleza String   @db.VarChar(10)
+  padre_id   String?  @db.Uuid
+  nivel      Int      @default(1)
+  activa     Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  movimientos MovimientoPoliza[]
+
+  @@unique([clave])
+  @@index([tipo, activa])
+  @@map("cuentas_contables")
+}
+
+model MovimientoPoliza {
+  id_movimiento String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  proyecto_id   String   @db.Uuid
+  asiento_id    String   @db.Uuid
+  cuenta_id     String   @db.Uuid
+  descripcion   String   @db.VarChar(500)
+  cargo         Decimal  @default(0) @db.Decimal(18, 2)
+  abono         Decimal  @default(0) @db.Decimal(18, 2)
+  orden         Int      @default(0)
+  created_at    DateTime @default(now())
+
+  cuenta CuentaContable @relation(fields: [cuenta_id], references: [id_cuenta])
+
+  @@index([tenant_id, asiento_id])
+  @@index([tenant_id, proyecto_id])
+  @@index([cuenta_id])
+  @@map("movimientos_poliza")
+}
+
 model ConciliacionBancaria {
   id_conciliacion_bancaria  String    @id @default(uuid()) @db.Uuid
   tenant_id                 String    @db.Uuid

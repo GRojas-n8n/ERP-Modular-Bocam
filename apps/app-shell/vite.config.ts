@@ -44,8 +44,9 @@ export default defineConfig({
       '/api/v1/seguridad': 'http://localhost:3007',
       '/api/v1/calidad':   'http://localhost:3009',
       '/api/v1/reportes':  'http://localhost:3010',
-      '/api/v1/almacen':   'http://localhost:3012',
-      '/api/v1/ventas':    'http://localhost:3012',
+      '/api/v1/almacen':        'http://localhost:3012',
+      '/api/v1/ventas':         'http://localhost:3012',
+      '/api/v1/contabilidad':   'http://localhost:3008',
     }
   },
   preview: {

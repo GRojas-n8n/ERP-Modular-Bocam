@@ -24,6 +24,16 @@ export type AsientoContable = $Result.DefaultSelection<Prisma.$AsientoContablePa
  */
 export type ConciliacionFiscal = $Result.DefaultSelection<Prisma.$ConciliacionFiscalPayload>
 /**
+ * Model CuentaContable
+ * 
+ */
+export type CuentaContable = $Result.DefaultSelection<Prisma.$CuentaContablePayload>
+/**
+ * Model MovimientoPoliza
+ * 
+ */
+export type MovimientoPoliza = $Result.DefaultSelection<Prisma.$MovimientoPolizaPayload>
+/**
  * Model ConciliacionBancaria
  * 
  */
@@ -171,6 +181,26 @@ export class PrismaClient<
     * ```
     */
   get conciliacionFiscal(): Prisma.ConciliacionFiscalDelegate<ExtArgs>;
+
+  /**
+   * `prisma.cuentaContable`: Exposes CRUD operations for the **CuentaContable** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CuentaContables
+    * const cuentaContables = await prisma.cuentaContable.findMany()
+    * ```
+    */
+  get cuentaContable(): Prisma.CuentaContableDelegate<ExtArgs>;
+
+  /**
+   * `prisma.movimientoPoliza`: Exposes CRUD operations for the **MovimientoPoliza** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MovimientoPolizas
+    * const movimientoPolizas = await prisma.movimientoPoliza.findMany()
+    * ```
+    */
+  get movimientoPoliza(): Prisma.MovimientoPolizaDelegate<ExtArgs>;
 
   /**
    * `prisma.conciliacionBancaria`: Exposes CRUD operations for the **ConciliacionBancaria** model.
@@ -624,6 +654,8 @@ export namespace Prisma {
   export const ModelName: {
     AsientoContable: 'AsientoContable',
     ConciliacionFiscal: 'ConciliacionFiscal',
+    CuentaContable: 'CuentaContable',
+    MovimientoPoliza: 'MovimientoPoliza',
     ConciliacionBancaria: 'ConciliacionBancaria'
   };
 
@@ -640,7 +672,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "asientoContable" | "conciliacionFiscal" | "conciliacionBancaria"
+      modelProps: "asientoContable" | "conciliacionFiscal" | "cuentaContable" | "movimientoPoliza" | "conciliacionBancaria"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -781,6 +813,146 @@ export namespace Prisma {
           count: {
             args: Prisma.ConciliacionFiscalCountArgs<ExtArgs>
             result: $Utils.Optional<ConciliacionFiscalCountAggregateOutputType> | number
+          }
+        }
+      }
+      CuentaContable: {
+        payload: Prisma.$CuentaContablePayload<ExtArgs>
+        fields: Prisma.CuentaContableFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CuentaContableFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CuentaContableFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          findFirst: {
+            args: Prisma.CuentaContableFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CuentaContableFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          findMany: {
+            args: Prisma.CuentaContableFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>[]
+          }
+          create: {
+            args: Prisma.CuentaContableCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          createMany: {
+            args: Prisma.CuentaContableCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CuentaContableCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>[]
+          }
+          delete: {
+            args: Prisma.CuentaContableDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          update: {
+            args: Prisma.CuentaContableUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          deleteMany: {
+            args: Prisma.CuentaContableDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CuentaContableUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CuentaContableUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          aggregate: {
+            args: Prisma.CuentaContableAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCuentaContable>
+          }
+          groupBy: {
+            args: Prisma.CuentaContableGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CuentaContableGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CuentaContableCountArgs<ExtArgs>
+            result: $Utils.Optional<CuentaContableCountAggregateOutputType> | number
+          }
+        }
+      }
+      MovimientoPoliza: {
+        payload: Prisma.$MovimientoPolizaPayload<ExtArgs>
+        fields: Prisma.MovimientoPolizaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MovimientoPolizaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MovimientoPolizaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>
+          }
+          findFirst: {
+            args: Prisma.MovimientoPolizaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MovimientoPolizaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>
+          }
+          findMany: {
+            args: Prisma.MovimientoPolizaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>[]
+          }
+          create: {
+            args: Prisma.MovimientoPolizaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>
+          }
+          createMany: {
+            args: Prisma.MovimientoPolizaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MovimientoPolizaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>[]
+          }
+          delete: {
+            args: Prisma.MovimientoPolizaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>
+          }
+          update: {
+            args: Prisma.MovimientoPolizaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>
+          }
+          deleteMany: {
+            args: Prisma.MovimientoPolizaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MovimientoPolizaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.MovimientoPolizaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MovimientoPolizaPayload>
+          }
+          aggregate: {
+            args: Prisma.MovimientoPolizaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMovimientoPoliza>
+          }
+          groupBy: {
+            args: Prisma.MovimientoPolizaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MovimientoPolizaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MovimientoPolizaCountArgs<ExtArgs>
+            result: $Utils.Optional<MovimientoPolizaCountAggregateOutputType> | number
           }
         }
       }
@@ -1009,6 +1181,36 @@ export namespace Prisma {
    * Count Types
    */
 
+
+  /**
+   * Count Type CuentaContableCountOutputType
+   */
+
+  export type CuentaContableCountOutputType = {
+    movimientos: number
+  }
+
+  export type CuentaContableCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    movimientos?: boolean | CuentaContableCountOutputTypeCountMovimientosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CuentaContableCountOutputType without action
+   */
+  export type CuentaContableCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContableCountOutputType
+     */
+    select?: CuentaContableCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CuentaContableCountOutputType without action
+   */
+  export type CuentaContableCountOutputTypeCountMovimientosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MovimientoPolizaWhereInput
+  }
 
 
   /**
@@ -3424,6 +3626,2071 @@ export namespace Prisma {
 
 
   /**
+   * Model CuentaContable
+   */
+
+  export type AggregateCuentaContable = {
+    _count: CuentaContableCountAggregateOutputType | null
+    _avg: CuentaContableAvgAggregateOutputType | null
+    _sum: CuentaContableSumAggregateOutputType | null
+    _min: CuentaContableMinAggregateOutputType | null
+    _max: CuentaContableMaxAggregateOutputType | null
+  }
+
+  export type CuentaContableAvgAggregateOutputType = {
+    nivel: number | null
+  }
+
+  export type CuentaContableSumAggregateOutputType = {
+    nivel: number | null
+  }
+
+  export type CuentaContableMinAggregateOutputType = {
+    id_cuenta: string | null
+    clave: string | null
+    nombre: string | null
+    tipo: string | null
+    naturaleza: string | null
+    padre_id: string | null
+    nivel: number | null
+    activa: boolean | null
+    created_at: Date | null
+  }
+
+  export type CuentaContableMaxAggregateOutputType = {
+    id_cuenta: string | null
+    clave: string | null
+    nombre: string | null
+    tipo: string | null
+    naturaleza: string | null
+    padre_id: string | null
+    nivel: number | null
+    activa: boolean | null
+    created_at: Date | null
+  }
+
+  export type CuentaContableCountAggregateOutputType = {
+    id_cuenta: number
+    clave: number
+    nombre: number
+    tipo: number
+    naturaleza: number
+    padre_id: number
+    nivel: number
+    activa: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type CuentaContableAvgAggregateInputType = {
+    nivel?: true
+  }
+
+  export type CuentaContableSumAggregateInputType = {
+    nivel?: true
+  }
+
+  export type CuentaContableMinAggregateInputType = {
+    id_cuenta?: true
+    clave?: true
+    nombre?: true
+    tipo?: true
+    naturaleza?: true
+    padre_id?: true
+    nivel?: true
+    activa?: true
+    created_at?: true
+  }
+
+  export type CuentaContableMaxAggregateInputType = {
+    id_cuenta?: true
+    clave?: true
+    nombre?: true
+    tipo?: true
+    naturaleza?: true
+    padre_id?: true
+    nivel?: true
+    activa?: true
+    created_at?: true
+  }
+
+  export type CuentaContableCountAggregateInputType = {
+    id_cuenta?: true
+    clave?: true
+    nombre?: true
+    tipo?: true
+    naturaleza?: true
+    padre_id?: true
+    nivel?: true
+    activa?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type CuentaContableAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CuentaContable to aggregate.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CuentaContables
+    **/
+    _count?: true | CuentaContableCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CuentaContableAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CuentaContableSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CuentaContableMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CuentaContableMaxAggregateInputType
+  }
+
+  export type GetCuentaContableAggregateType<T extends CuentaContableAggregateArgs> = {
+        [P in keyof T & keyof AggregateCuentaContable]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCuentaContable[P]>
+      : GetScalarType<T[P], AggregateCuentaContable[P]>
+  }
+
+
+
+
+  export type CuentaContableGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CuentaContableWhereInput
+    orderBy?: CuentaContableOrderByWithAggregationInput | CuentaContableOrderByWithAggregationInput[]
+    by: CuentaContableScalarFieldEnum[] | CuentaContableScalarFieldEnum
+    having?: CuentaContableScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CuentaContableCountAggregateInputType | true
+    _avg?: CuentaContableAvgAggregateInputType
+    _sum?: CuentaContableSumAggregateInputType
+    _min?: CuentaContableMinAggregateInputType
+    _max?: CuentaContableMaxAggregateInputType
+  }
+
+  export type CuentaContableGroupByOutputType = {
+    id_cuenta: string
+    clave: string
+    nombre: string
+    tipo: string
+    naturaleza: string
+    padre_id: string | null
+    nivel: number
+    activa: boolean
+    created_at: Date
+    _count: CuentaContableCountAggregateOutputType | null
+    _avg: CuentaContableAvgAggregateOutputType | null
+    _sum: CuentaContableSumAggregateOutputType | null
+    _min: CuentaContableMinAggregateOutputType | null
+    _max: CuentaContableMaxAggregateOutputType | null
+  }
+
+  type GetCuentaContableGroupByPayload<T extends CuentaContableGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CuentaContableGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CuentaContableGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CuentaContableGroupByOutputType[P]>
+            : GetScalarType<T[P], CuentaContableGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CuentaContableSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_cuenta?: boolean
+    clave?: boolean
+    nombre?: boolean
+    tipo?: boolean
+    naturaleza?: boolean
+    padre_id?: boolean
+    nivel?: boolean
+    activa?: boolean
+    created_at?: boolean
+    movimientos?: boolean | CuentaContable$movimientosArgs<ExtArgs>
+    _count?: boolean | CuentaContableCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cuentaContable"]>
+
+  export type CuentaContableSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_cuenta?: boolean
+    clave?: boolean
+    nombre?: boolean
+    tipo?: boolean
+    naturaleza?: boolean
+    padre_id?: boolean
+    nivel?: boolean
+    activa?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["cuentaContable"]>
+
+  export type CuentaContableSelectScalar = {
+    id_cuenta?: boolean
+    clave?: boolean
+    nombre?: boolean
+    tipo?: boolean
+    naturaleza?: boolean
+    padre_id?: boolean
+    nivel?: boolean
+    activa?: boolean
+    created_at?: boolean
+  }
+
+  export type CuentaContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    movimientos?: boolean | CuentaContable$movimientosArgs<ExtArgs>
+    _count?: boolean | CuentaContableCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CuentaContableIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $CuentaContablePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CuentaContable"
+    objects: {
+      movimientos: Prisma.$MovimientoPolizaPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_cuenta: string
+      clave: string
+      nombre: string
+      tipo: string
+      naturaleza: string
+      padre_id: string | null
+      nivel: number
+      activa: boolean
+      created_at: Date
+    }, ExtArgs["result"]["cuentaContable"]>
+    composites: {}
+  }
+
+  type CuentaContableGetPayload<S extends boolean | null | undefined | CuentaContableDefaultArgs> = $Result.GetResult<Prisma.$CuentaContablePayload, S>
+
+  type CuentaContableCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CuentaContableFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CuentaContableCountAggregateInputType | true
+    }
+
+  export interface CuentaContableDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CuentaContable'], meta: { name: 'CuentaContable' } }
+    /**
+     * Find zero or one CuentaContable that matches the filter.
+     * @param {CuentaContableFindUniqueArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CuentaContableFindUniqueArgs>(args: SelectSubset<T, CuentaContableFindUniqueArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one CuentaContable that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CuentaContableFindUniqueOrThrowArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CuentaContableFindUniqueOrThrowArgs>(args: SelectSubset<T, CuentaContableFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first CuentaContable that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableFindFirstArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CuentaContableFindFirstArgs>(args?: SelectSubset<T, CuentaContableFindFirstArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first CuentaContable that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableFindFirstOrThrowArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CuentaContableFindFirstOrThrowArgs>(args?: SelectSubset<T, CuentaContableFindFirstOrThrowArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more CuentaContables that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CuentaContables
+     * const cuentaContables = await prisma.cuentaContable.findMany()
+     * 
+     * // Get first 10 CuentaContables
+     * const cuentaContables = await prisma.cuentaContable.findMany({ take: 10 })
+     * 
+     * // Only select the `id_cuenta`
+     * const cuentaContableWithId_cuentaOnly = await prisma.cuentaContable.findMany({ select: { id_cuenta: true } })
+     * 
+     */
+    findMany<T extends CuentaContableFindManyArgs>(args?: SelectSubset<T, CuentaContableFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a CuentaContable.
+     * @param {CuentaContableCreateArgs} args - Arguments to create a CuentaContable.
+     * @example
+     * // Create one CuentaContable
+     * const CuentaContable = await prisma.cuentaContable.create({
+     *   data: {
+     *     // ... data to create a CuentaContable
+     *   }
+     * })
+     * 
+     */
+    create<T extends CuentaContableCreateArgs>(args: SelectSubset<T, CuentaContableCreateArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many CuentaContables.
+     * @param {CuentaContableCreateManyArgs} args - Arguments to create many CuentaContables.
+     * @example
+     * // Create many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CuentaContableCreateManyArgs>(args?: SelectSubset<T, CuentaContableCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CuentaContables and returns the data saved in the database.
+     * @param {CuentaContableCreateManyAndReturnArgs} args - Arguments to create many CuentaContables.
+     * @example
+     * // Create many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CuentaContables and only return the `id_cuenta`
+     * const cuentaContableWithId_cuentaOnly = await prisma.cuentaContable.createManyAndReturn({ 
+     *   select: { id_cuenta: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CuentaContableCreateManyAndReturnArgs>(args?: SelectSubset<T, CuentaContableCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a CuentaContable.
+     * @param {CuentaContableDeleteArgs} args - Arguments to delete one CuentaContable.
+     * @example
+     * // Delete one CuentaContable
+     * const CuentaContable = await prisma.cuentaContable.delete({
+     *   where: {
+     *     // ... filter to delete one CuentaContable
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CuentaContableDeleteArgs>(args: SelectSubset<T, CuentaContableDeleteArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one CuentaContable.
+     * @param {CuentaContableUpdateArgs} args - Arguments to update one CuentaContable.
+     * @example
+     * // Update one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CuentaContableUpdateArgs>(args: SelectSubset<T, CuentaContableUpdateArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more CuentaContables.
+     * @param {CuentaContableDeleteManyArgs} args - Arguments to filter CuentaContables to delete.
+     * @example
+     * // Delete a few CuentaContables
+     * const { count } = await prisma.cuentaContable.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CuentaContableDeleteManyArgs>(args?: SelectSubset<T, CuentaContableDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CuentaContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CuentaContableUpdateManyArgs>(args: SelectSubset<T, CuentaContableUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CuentaContable.
+     * @param {CuentaContableUpsertArgs} args - Arguments to update or create a CuentaContable.
+     * @example
+     * // Update or create a CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.upsert({
+     *   create: {
+     *     // ... data to create a CuentaContable
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CuentaContable we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CuentaContableUpsertArgs>(args: SelectSubset<T, CuentaContableUpsertArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of CuentaContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableCountArgs} args - Arguments to filter CuentaContables to count.
+     * @example
+     * // Count the number of CuentaContables
+     * const count = await prisma.cuentaContable.count({
+     *   where: {
+     *     // ... the filter for the CuentaContables we want to count
+     *   }
+     * })
+    **/
+    count<T extends CuentaContableCountArgs>(
+      args?: Subset<T, CuentaContableCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CuentaContableCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CuentaContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CuentaContableAggregateArgs>(args: Subset<T, CuentaContableAggregateArgs>): Prisma.PrismaPromise<GetCuentaContableAggregateType<T>>
+
+    /**
+     * Group by CuentaContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CuentaContableGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CuentaContableGroupByArgs['orderBy'] }
+        : { orderBy?: CuentaContableGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CuentaContableGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCuentaContableGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CuentaContable model
+   */
+  readonly fields: CuentaContableFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CuentaContable.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CuentaContableClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    movimientos<T extends CuentaContable$movimientosArgs<ExtArgs> = {}>(args?: Subset<T, CuentaContable$movimientosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CuentaContable model
+   */ 
+  interface CuentaContableFieldRefs {
+    readonly id_cuenta: FieldRef<"CuentaContable", 'String'>
+    readonly clave: FieldRef<"CuentaContable", 'String'>
+    readonly nombre: FieldRef<"CuentaContable", 'String'>
+    readonly tipo: FieldRef<"CuentaContable", 'String'>
+    readonly naturaleza: FieldRef<"CuentaContable", 'String'>
+    readonly padre_id: FieldRef<"CuentaContable", 'String'>
+    readonly nivel: FieldRef<"CuentaContable", 'Int'>
+    readonly activa: FieldRef<"CuentaContable", 'Boolean'>
+    readonly created_at: FieldRef<"CuentaContable", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CuentaContable findUnique
+   */
+  export type CuentaContableFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable findUniqueOrThrow
+   */
+  export type CuentaContableFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable findFirst
+   */
+  export type CuentaContableFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CuentaContables.
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CuentaContables.
+     */
+    distinct?: CuentaContableScalarFieldEnum | CuentaContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable findFirstOrThrow
+   */
+  export type CuentaContableFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CuentaContables.
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CuentaContables.
+     */
+    distinct?: CuentaContableScalarFieldEnum | CuentaContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable findMany
+   */
+  export type CuentaContableFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContables to fetch.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CuentaContables.
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    distinct?: CuentaContableScalarFieldEnum | CuentaContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable create
+   */
+  export type CuentaContableCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CuentaContable.
+     */
+    data: XOR<CuentaContableCreateInput, CuentaContableUncheckedCreateInput>
+  }
+
+  /**
+   * CuentaContable createMany
+   */
+  export type CuentaContableCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CuentaContables.
+     */
+    data: CuentaContableCreateManyInput | CuentaContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CuentaContable createManyAndReturn
+   */
+  export type CuentaContableCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many CuentaContables.
+     */
+    data: CuentaContableCreateManyInput | CuentaContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CuentaContable update
+   */
+  export type CuentaContableUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CuentaContable.
+     */
+    data: XOR<CuentaContableUpdateInput, CuentaContableUncheckedUpdateInput>
+    /**
+     * Choose, which CuentaContable to update.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable updateMany
+   */
+  export type CuentaContableUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CuentaContables.
+     */
+    data: XOR<CuentaContableUpdateManyMutationInput, CuentaContableUncheckedUpdateManyInput>
+    /**
+     * Filter which CuentaContables to update
+     */
+    where?: CuentaContableWhereInput
+  }
+
+  /**
+   * CuentaContable upsert
+   */
+  export type CuentaContableUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CuentaContable to update in case it exists.
+     */
+    where: CuentaContableWhereUniqueInput
+    /**
+     * In case the CuentaContable found by the `where` argument doesn't exist, create a new CuentaContable with this data.
+     */
+    create: XOR<CuentaContableCreateInput, CuentaContableUncheckedCreateInput>
+    /**
+     * In case the CuentaContable was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CuentaContableUpdateInput, CuentaContableUncheckedUpdateInput>
+  }
+
+  /**
+   * CuentaContable delete
+   */
+  export type CuentaContableDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter which CuentaContable to delete.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable deleteMany
+   */
+  export type CuentaContableDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CuentaContables to delete
+     */
+    where?: CuentaContableWhereInput
+  }
+
+  /**
+   * CuentaContable.movimientos
+   */
+  export type CuentaContable$movimientosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    where?: MovimientoPolizaWhereInput
+    orderBy?: MovimientoPolizaOrderByWithRelationInput | MovimientoPolizaOrderByWithRelationInput[]
+    cursor?: MovimientoPolizaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: MovimientoPolizaScalarFieldEnum | MovimientoPolizaScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable without action
+   */
+  export type CuentaContableDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model MovimientoPoliza
+   */
+
+  export type AggregateMovimientoPoliza = {
+    _count: MovimientoPolizaCountAggregateOutputType | null
+    _avg: MovimientoPolizaAvgAggregateOutputType | null
+    _sum: MovimientoPolizaSumAggregateOutputType | null
+    _min: MovimientoPolizaMinAggregateOutputType | null
+    _max: MovimientoPolizaMaxAggregateOutputType | null
+  }
+
+  export type MovimientoPolizaAvgAggregateOutputType = {
+    cargo: Decimal | null
+    abono: Decimal | null
+    orden: number | null
+  }
+
+  export type MovimientoPolizaSumAggregateOutputType = {
+    cargo: Decimal | null
+    abono: Decimal | null
+    orden: number | null
+  }
+
+  export type MovimientoPolizaMinAggregateOutputType = {
+    id_movimiento: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    asiento_id: string | null
+    cuenta_id: string | null
+    descripcion: string | null
+    cargo: Decimal | null
+    abono: Decimal | null
+    orden: number | null
+    created_at: Date | null
+  }
+
+  export type MovimientoPolizaMaxAggregateOutputType = {
+    id_movimiento: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    asiento_id: string | null
+    cuenta_id: string | null
+    descripcion: string | null
+    cargo: Decimal | null
+    abono: Decimal | null
+    orden: number | null
+    created_at: Date | null
+  }
+
+  export type MovimientoPolizaCountAggregateOutputType = {
+    id_movimiento: number
+    tenant_id: number
+    proyecto_id: number
+    asiento_id: number
+    cuenta_id: number
+    descripcion: number
+    cargo: number
+    abono: number
+    orden: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type MovimientoPolizaAvgAggregateInputType = {
+    cargo?: true
+    abono?: true
+    orden?: true
+  }
+
+  export type MovimientoPolizaSumAggregateInputType = {
+    cargo?: true
+    abono?: true
+    orden?: true
+  }
+
+  export type MovimientoPolizaMinAggregateInputType = {
+    id_movimiento?: true
+    tenant_id?: true
+    proyecto_id?: true
+    asiento_id?: true
+    cuenta_id?: true
+    descripcion?: true
+    cargo?: true
+    abono?: true
+    orden?: true
+    created_at?: true
+  }
+
+  export type MovimientoPolizaMaxAggregateInputType = {
+    id_movimiento?: true
+    tenant_id?: true
+    proyecto_id?: true
+    asiento_id?: true
+    cuenta_id?: true
+    descripcion?: true
+    cargo?: true
+    abono?: true
+    orden?: true
+    created_at?: true
+  }
+
+  export type MovimientoPolizaCountAggregateInputType = {
+    id_movimiento?: true
+    tenant_id?: true
+    proyecto_id?: true
+    asiento_id?: true
+    cuenta_id?: true
+    descripcion?: true
+    cargo?: true
+    abono?: true
+    orden?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type MovimientoPolizaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MovimientoPoliza to aggregate.
+     */
+    where?: MovimientoPolizaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MovimientoPolizas to fetch.
+     */
+    orderBy?: MovimientoPolizaOrderByWithRelationInput | MovimientoPolizaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MovimientoPolizaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MovimientoPolizas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MovimientoPolizas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MovimientoPolizas
+    **/
+    _count?: true | MovimientoPolizaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MovimientoPolizaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MovimientoPolizaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MovimientoPolizaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MovimientoPolizaMaxAggregateInputType
+  }
+
+  export type GetMovimientoPolizaAggregateType<T extends MovimientoPolizaAggregateArgs> = {
+        [P in keyof T & keyof AggregateMovimientoPoliza]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMovimientoPoliza[P]>
+      : GetScalarType<T[P], AggregateMovimientoPoliza[P]>
+  }
+
+
+
+
+  export type MovimientoPolizaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MovimientoPolizaWhereInput
+    orderBy?: MovimientoPolizaOrderByWithAggregationInput | MovimientoPolizaOrderByWithAggregationInput[]
+    by: MovimientoPolizaScalarFieldEnum[] | MovimientoPolizaScalarFieldEnum
+    having?: MovimientoPolizaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MovimientoPolizaCountAggregateInputType | true
+    _avg?: MovimientoPolizaAvgAggregateInputType
+    _sum?: MovimientoPolizaSumAggregateInputType
+    _min?: MovimientoPolizaMinAggregateInputType
+    _max?: MovimientoPolizaMaxAggregateInputType
+  }
+
+  export type MovimientoPolizaGroupByOutputType = {
+    id_movimiento: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    cuenta_id: string
+    descripcion: string
+    cargo: Decimal
+    abono: Decimal
+    orden: number
+    created_at: Date
+    _count: MovimientoPolizaCountAggregateOutputType | null
+    _avg: MovimientoPolizaAvgAggregateOutputType | null
+    _sum: MovimientoPolizaSumAggregateOutputType | null
+    _min: MovimientoPolizaMinAggregateOutputType | null
+    _max: MovimientoPolizaMaxAggregateOutputType | null
+  }
+
+  type GetMovimientoPolizaGroupByPayload<T extends MovimientoPolizaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MovimientoPolizaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MovimientoPolizaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MovimientoPolizaGroupByOutputType[P]>
+            : GetScalarType<T[P], MovimientoPolizaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MovimientoPolizaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_movimiento?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    asiento_id?: boolean
+    cuenta_id?: boolean
+    descripcion?: boolean
+    cargo?: boolean
+    abono?: boolean
+    orden?: boolean
+    created_at?: boolean
+    cuenta?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["movimientoPoliza"]>
+
+  export type MovimientoPolizaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_movimiento?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    asiento_id?: boolean
+    cuenta_id?: boolean
+    descripcion?: boolean
+    cargo?: boolean
+    abono?: boolean
+    orden?: boolean
+    created_at?: boolean
+    cuenta?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["movimientoPoliza"]>
+
+  export type MovimientoPolizaSelectScalar = {
+    id_movimiento?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    asiento_id?: boolean
+    cuenta_id?: boolean
+    descripcion?: boolean
+    cargo?: boolean
+    abono?: boolean
+    orden?: boolean
+    created_at?: boolean
+  }
+
+  export type MovimientoPolizaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuenta?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }
+  export type MovimientoPolizaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuenta?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }
+
+  export type $MovimientoPolizaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MovimientoPoliza"
+    objects: {
+      cuenta: Prisma.$CuentaContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_movimiento: string
+      tenant_id: string
+      proyecto_id: string
+      asiento_id: string
+      cuenta_id: string
+      descripcion: string
+      cargo: Prisma.Decimal
+      abono: Prisma.Decimal
+      orden: number
+      created_at: Date
+    }, ExtArgs["result"]["movimientoPoliza"]>
+    composites: {}
+  }
+
+  type MovimientoPolizaGetPayload<S extends boolean | null | undefined | MovimientoPolizaDefaultArgs> = $Result.GetResult<Prisma.$MovimientoPolizaPayload, S>
+
+  type MovimientoPolizaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<MovimientoPolizaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: MovimientoPolizaCountAggregateInputType | true
+    }
+
+  export interface MovimientoPolizaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MovimientoPoliza'], meta: { name: 'MovimientoPoliza' } }
+    /**
+     * Find zero or one MovimientoPoliza that matches the filter.
+     * @param {MovimientoPolizaFindUniqueArgs} args - Arguments to find a MovimientoPoliza
+     * @example
+     * // Get one MovimientoPoliza
+     * const movimientoPoliza = await prisma.movimientoPoliza.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MovimientoPolizaFindUniqueArgs>(args: SelectSubset<T, MovimientoPolizaFindUniqueArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one MovimientoPoliza that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {MovimientoPolizaFindUniqueOrThrowArgs} args - Arguments to find a MovimientoPoliza
+     * @example
+     * // Get one MovimientoPoliza
+     * const movimientoPoliza = await prisma.movimientoPoliza.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MovimientoPolizaFindUniqueOrThrowArgs>(args: SelectSubset<T, MovimientoPolizaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first MovimientoPoliza that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaFindFirstArgs} args - Arguments to find a MovimientoPoliza
+     * @example
+     * // Get one MovimientoPoliza
+     * const movimientoPoliza = await prisma.movimientoPoliza.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MovimientoPolizaFindFirstArgs>(args?: SelectSubset<T, MovimientoPolizaFindFirstArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first MovimientoPoliza that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaFindFirstOrThrowArgs} args - Arguments to find a MovimientoPoliza
+     * @example
+     * // Get one MovimientoPoliza
+     * const movimientoPoliza = await prisma.movimientoPoliza.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MovimientoPolizaFindFirstOrThrowArgs>(args?: SelectSubset<T, MovimientoPolizaFindFirstOrThrowArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more MovimientoPolizas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MovimientoPolizas
+     * const movimientoPolizas = await prisma.movimientoPoliza.findMany()
+     * 
+     * // Get first 10 MovimientoPolizas
+     * const movimientoPolizas = await prisma.movimientoPoliza.findMany({ take: 10 })
+     * 
+     * // Only select the `id_movimiento`
+     * const movimientoPolizaWithId_movimientoOnly = await prisma.movimientoPoliza.findMany({ select: { id_movimiento: true } })
+     * 
+     */
+    findMany<T extends MovimientoPolizaFindManyArgs>(args?: SelectSubset<T, MovimientoPolizaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a MovimientoPoliza.
+     * @param {MovimientoPolizaCreateArgs} args - Arguments to create a MovimientoPoliza.
+     * @example
+     * // Create one MovimientoPoliza
+     * const MovimientoPoliza = await prisma.movimientoPoliza.create({
+     *   data: {
+     *     // ... data to create a MovimientoPoliza
+     *   }
+     * })
+     * 
+     */
+    create<T extends MovimientoPolizaCreateArgs>(args: SelectSubset<T, MovimientoPolizaCreateArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many MovimientoPolizas.
+     * @param {MovimientoPolizaCreateManyArgs} args - Arguments to create many MovimientoPolizas.
+     * @example
+     * // Create many MovimientoPolizas
+     * const movimientoPoliza = await prisma.movimientoPoliza.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MovimientoPolizaCreateManyArgs>(args?: SelectSubset<T, MovimientoPolizaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MovimientoPolizas and returns the data saved in the database.
+     * @param {MovimientoPolizaCreateManyAndReturnArgs} args - Arguments to create many MovimientoPolizas.
+     * @example
+     * // Create many MovimientoPolizas
+     * const movimientoPoliza = await prisma.movimientoPoliza.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MovimientoPolizas and only return the `id_movimiento`
+     * const movimientoPolizaWithId_movimientoOnly = await prisma.movimientoPoliza.createManyAndReturn({ 
+     *   select: { id_movimiento: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MovimientoPolizaCreateManyAndReturnArgs>(args?: SelectSubset<T, MovimientoPolizaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a MovimientoPoliza.
+     * @param {MovimientoPolizaDeleteArgs} args - Arguments to delete one MovimientoPoliza.
+     * @example
+     * // Delete one MovimientoPoliza
+     * const MovimientoPoliza = await prisma.movimientoPoliza.delete({
+     *   where: {
+     *     // ... filter to delete one MovimientoPoliza
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MovimientoPolizaDeleteArgs>(args: SelectSubset<T, MovimientoPolizaDeleteArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one MovimientoPoliza.
+     * @param {MovimientoPolizaUpdateArgs} args - Arguments to update one MovimientoPoliza.
+     * @example
+     * // Update one MovimientoPoliza
+     * const movimientoPoliza = await prisma.movimientoPoliza.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MovimientoPolizaUpdateArgs>(args: SelectSubset<T, MovimientoPolizaUpdateArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more MovimientoPolizas.
+     * @param {MovimientoPolizaDeleteManyArgs} args - Arguments to filter MovimientoPolizas to delete.
+     * @example
+     * // Delete a few MovimientoPolizas
+     * const { count } = await prisma.movimientoPoliza.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MovimientoPolizaDeleteManyArgs>(args?: SelectSubset<T, MovimientoPolizaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MovimientoPolizas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MovimientoPolizas
+     * const movimientoPoliza = await prisma.movimientoPoliza.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MovimientoPolizaUpdateManyArgs>(args: SelectSubset<T, MovimientoPolizaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one MovimientoPoliza.
+     * @param {MovimientoPolizaUpsertArgs} args - Arguments to update or create a MovimientoPoliza.
+     * @example
+     * // Update or create a MovimientoPoliza
+     * const movimientoPoliza = await prisma.movimientoPoliza.upsert({
+     *   create: {
+     *     // ... data to create a MovimientoPoliza
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MovimientoPoliza we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MovimientoPolizaUpsertArgs>(args: SelectSubset<T, MovimientoPolizaUpsertArgs<ExtArgs>>): Prisma__MovimientoPolizaClient<$Result.GetResult<Prisma.$MovimientoPolizaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of MovimientoPolizas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaCountArgs} args - Arguments to filter MovimientoPolizas to count.
+     * @example
+     * // Count the number of MovimientoPolizas
+     * const count = await prisma.movimientoPoliza.count({
+     *   where: {
+     *     // ... the filter for the MovimientoPolizas we want to count
+     *   }
+     * })
+    **/
+    count<T extends MovimientoPolizaCountArgs>(
+      args?: Subset<T, MovimientoPolizaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MovimientoPolizaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MovimientoPoliza.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MovimientoPolizaAggregateArgs>(args: Subset<T, MovimientoPolizaAggregateArgs>): Prisma.PrismaPromise<GetMovimientoPolizaAggregateType<T>>
+
+    /**
+     * Group by MovimientoPoliza.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MovimientoPolizaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MovimientoPolizaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MovimientoPolizaGroupByArgs['orderBy'] }
+        : { orderBy?: MovimientoPolizaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MovimientoPolizaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMovimientoPolizaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MovimientoPoliza model
+   */
+  readonly fields: MovimientoPolizaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MovimientoPoliza.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MovimientoPolizaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuenta<T extends CuentaContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaContableDefaultArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MovimientoPoliza model
+   */ 
+  interface MovimientoPolizaFieldRefs {
+    readonly id_movimiento: FieldRef<"MovimientoPoliza", 'String'>
+    readonly tenant_id: FieldRef<"MovimientoPoliza", 'String'>
+    readonly proyecto_id: FieldRef<"MovimientoPoliza", 'String'>
+    readonly asiento_id: FieldRef<"MovimientoPoliza", 'String'>
+    readonly cuenta_id: FieldRef<"MovimientoPoliza", 'String'>
+    readonly descripcion: FieldRef<"MovimientoPoliza", 'String'>
+    readonly cargo: FieldRef<"MovimientoPoliza", 'Decimal'>
+    readonly abono: FieldRef<"MovimientoPoliza", 'Decimal'>
+    readonly orden: FieldRef<"MovimientoPoliza", 'Int'>
+    readonly created_at: FieldRef<"MovimientoPoliza", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MovimientoPoliza findUnique
+   */
+  export type MovimientoPolizaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * Filter, which MovimientoPoliza to fetch.
+     */
+    where: MovimientoPolizaWhereUniqueInput
+  }
+
+  /**
+   * MovimientoPoliza findUniqueOrThrow
+   */
+  export type MovimientoPolizaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * Filter, which MovimientoPoliza to fetch.
+     */
+    where: MovimientoPolizaWhereUniqueInput
+  }
+
+  /**
+   * MovimientoPoliza findFirst
+   */
+  export type MovimientoPolizaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * Filter, which MovimientoPoliza to fetch.
+     */
+    where?: MovimientoPolizaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MovimientoPolizas to fetch.
+     */
+    orderBy?: MovimientoPolizaOrderByWithRelationInput | MovimientoPolizaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MovimientoPolizas.
+     */
+    cursor?: MovimientoPolizaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MovimientoPolizas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MovimientoPolizas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MovimientoPolizas.
+     */
+    distinct?: MovimientoPolizaScalarFieldEnum | MovimientoPolizaScalarFieldEnum[]
+  }
+
+  /**
+   * MovimientoPoliza findFirstOrThrow
+   */
+  export type MovimientoPolizaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * Filter, which MovimientoPoliza to fetch.
+     */
+    where?: MovimientoPolizaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MovimientoPolizas to fetch.
+     */
+    orderBy?: MovimientoPolizaOrderByWithRelationInput | MovimientoPolizaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MovimientoPolizas.
+     */
+    cursor?: MovimientoPolizaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MovimientoPolizas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MovimientoPolizas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MovimientoPolizas.
+     */
+    distinct?: MovimientoPolizaScalarFieldEnum | MovimientoPolizaScalarFieldEnum[]
+  }
+
+  /**
+   * MovimientoPoliza findMany
+   */
+  export type MovimientoPolizaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * Filter, which MovimientoPolizas to fetch.
+     */
+    where?: MovimientoPolizaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MovimientoPolizas to fetch.
+     */
+    orderBy?: MovimientoPolizaOrderByWithRelationInput | MovimientoPolizaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MovimientoPolizas.
+     */
+    cursor?: MovimientoPolizaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MovimientoPolizas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MovimientoPolizas.
+     */
+    skip?: number
+    distinct?: MovimientoPolizaScalarFieldEnum | MovimientoPolizaScalarFieldEnum[]
+  }
+
+  /**
+   * MovimientoPoliza create
+   */
+  export type MovimientoPolizaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a MovimientoPoliza.
+     */
+    data: XOR<MovimientoPolizaCreateInput, MovimientoPolizaUncheckedCreateInput>
+  }
+
+  /**
+   * MovimientoPoliza createMany
+   */
+  export type MovimientoPolizaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MovimientoPolizas.
+     */
+    data: MovimientoPolizaCreateManyInput | MovimientoPolizaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MovimientoPoliza createManyAndReturn
+   */
+  export type MovimientoPolizaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many MovimientoPolizas.
+     */
+    data: MovimientoPolizaCreateManyInput | MovimientoPolizaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * MovimientoPoliza update
+   */
+  export type MovimientoPolizaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a MovimientoPoliza.
+     */
+    data: XOR<MovimientoPolizaUpdateInput, MovimientoPolizaUncheckedUpdateInput>
+    /**
+     * Choose, which MovimientoPoliza to update.
+     */
+    where: MovimientoPolizaWhereUniqueInput
+  }
+
+  /**
+   * MovimientoPoliza updateMany
+   */
+  export type MovimientoPolizaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MovimientoPolizas.
+     */
+    data: XOR<MovimientoPolizaUpdateManyMutationInput, MovimientoPolizaUncheckedUpdateManyInput>
+    /**
+     * Filter which MovimientoPolizas to update
+     */
+    where?: MovimientoPolizaWhereInput
+  }
+
+  /**
+   * MovimientoPoliza upsert
+   */
+  export type MovimientoPolizaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the MovimientoPoliza to update in case it exists.
+     */
+    where: MovimientoPolizaWhereUniqueInput
+    /**
+     * In case the MovimientoPoliza found by the `where` argument doesn't exist, create a new MovimientoPoliza with this data.
+     */
+    create: XOR<MovimientoPolizaCreateInput, MovimientoPolizaUncheckedCreateInput>
+    /**
+     * In case the MovimientoPoliza was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MovimientoPolizaUpdateInput, MovimientoPolizaUncheckedUpdateInput>
+  }
+
+  /**
+   * MovimientoPoliza delete
+   */
+  export type MovimientoPolizaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+    /**
+     * Filter which MovimientoPoliza to delete.
+     */
+    where: MovimientoPolizaWhereUniqueInput
+  }
+
+  /**
+   * MovimientoPoliza deleteMany
+   */
+  export type MovimientoPolizaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MovimientoPolizas to delete
+     */
+    where?: MovimientoPolizaWhereInput
+  }
+
+  /**
+   * MovimientoPoliza without action
+   */
+  export type MovimientoPolizaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MovimientoPoliza
+     */
+    select?: MovimientoPolizaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MovimientoPolizaInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model ConciliacionBancaria
    */
 
@@ -4591,6 +6858,37 @@ export namespace Prisma {
   export type ConciliacionFiscalScalarFieldEnum = (typeof ConciliacionFiscalScalarFieldEnum)[keyof typeof ConciliacionFiscalScalarFieldEnum]
 
 
+  export const CuentaContableScalarFieldEnum: {
+    id_cuenta: 'id_cuenta',
+    clave: 'clave',
+    nombre: 'nombre',
+    tipo: 'tipo',
+    naturaleza: 'naturaleza',
+    padre_id: 'padre_id',
+    nivel: 'nivel',
+    activa: 'activa',
+    created_at: 'created_at'
+  };
+
+  export type CuentaContableScalarFieldEnum = (typeof CuentaContableScalarFieldEnum)[keyof typeof CuentaContableScalarFieldEnum]
+
+
+  export const MovimientoPolizaScalarFieldEnum: {
+    id_movimiento: 'id_movimiento',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    asiento_id: 'asiento_id',
+    cuenta_id: 'cuenta_id',
+    descripcion: 'descripcion',
+    cargo: 'cargo',
+    abono: 'abono',
+    orden: 'orden',
+    created_at: 'created_at'
+  };
+
+  export type MovimientoPolizaScalarFieldEnum = (typeof MovimientoPolizaScalarFieldEnum)[keyof typeof MovimientoPolizaScalarFieldEnum]
+
+
   export const ConciliacionBancariaScalarFieldEnum: {
     id_conciliacion_bancaria: 'id_conciliacion_bancaria',
     tenant_id: 'tenant_id',
@@ -4698,6 +6996,13 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -5069,6 +7374,165 @@ export namespace Prisma {
     notas?: StringNullableWithAggregatesFilter<"ConciliacionFiscal"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"ConciliacionFiscal"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"ConciliacionFiscal"> | Date | string
+  }
+
+  export type CuentaContableWhereInput = {
+    AND?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    OR?: CuentaContableWhereInput[]
+    NOT?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    id_cuenta?: UuidFilter<"CuentaContable"> | string
+    clave?: StringFilter<"CuentaContable"> | string
+    nombre?: StringFilter<"CuentaContable"> | string
+    tipo?: StringFilter<"CuentaContable"> | string
+    naturaleza?: StringFilter<"CuentaContable"> | string
+    padre_id?: UuidNullableFilter<"CuentaContable"> | string | null
+    nivel?: IntFilter<"CuentaContable"> | number
+    activa?: BoolFilter<"CuentaContable"> | boolean
+    created_at?: DateTimeFilter<"CuentaContable"> | Date | string
+    movimientos?: MovimientoPolizaListRelationFilter
+  }
+
+  export type CuentaContableOrderByWithRelationInput = {
+    id_cuenta?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    tipo?: SortOrder
+    naturaleza?: SortOrder
+    padre_id?: SortOrderInput | SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    movimientos?: MovimientoPolizaOrderByRelationAggregateInput
+  }
+
+  export type CuentaContableWhereUniqueInput = Prisma.AtLeast<{
+    id_cuenta?: string
+    clave?: string
+    AND?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    OR?: CuentaContableWhereInput[]
+    NOT?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    nombre?: StringFilter<"CuentaContable"> | string
+    tipo?: StringFilter<"CuentaContable"> | string
+    naturaleza?: StringFilter<"CuentaContable"> | string
+    padre_id?: UuidNullableFilter<"CuentaContable"> | string | null
+    nivel?: IntFilter<"CuentaContable"> | number
+    activa?: BoolFilter<"CuentaContable"> | boolean
+    created_at?: DateTimeFilter<"CuentaContable"> | Date | string
+    movimientos?: MovimientoPolizaListRelationFilter
+  }, "id_cuenta" | "clave">
+
+  export type CuentaContableOrderByWithAggregationInput = {
+    id_cuenta?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    tipo?: SortOrder
+    naturaleza?: SortOrder
+    padre_id?: SortOrderInput | SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+    _count?: CuentaContableCountOrderByAggregateInput
+    _avg?: CuentaContableAvgOrderByAggregateInput
+    _max?: CuentaContableMaxOrderByAggregateInput
+    _min?: CuentaContableMinOrderByAggregateInput
+    _sum?: CuentaContableSumOrderByAggregateInput
+  }
+
+  export type CuentaContableScalarWhereWithAggregatesInput = {
+    AND?: CuentaContableScalarWhereWithAggregatesInput | CuentaContableScalarWhereWithAggregatesInput[]
+    OR?: CuentaContableScalarWhereWithAggregatesInput[]
+    NOT?: CuentaContableScalarWhereWithAggregatesInput | CuentaContableScalarWhereWithAggregatesInput[]
+    id_cuenta?: UuidWithAggregatesFilter<"CuentaContable"> | string
+    clave?: StringWithAggregatesFilter<"CuentaContable"> | string
+    nombre?: StringWithAggregatesFilter<"CuentaContable"> | string
+    tipo?: StringWithAggregatesFilter<"CuentaContable"> | string
+    naturaleza?: StringWithAggregatesFilter<"CuentaContable"> | string
+    padre_id?: UuidNullableWithAggregatesFilter<"CuentaContable"> | string | null
+    nivel?: IntWithAggregatesFilter<"CuentaContable"> | number
+    activa?: BoolWithAggregatesFilter<"CuentaContable"> | boolean
+    created_at?: DateTimeWithAggregatesFilter<"CuentaContable"> | Date | string
+  }
+
+  export type MovimientoPolizaWhereInput = {
+    AND?: MovimientoPolizaWhereInput | MovimientoPolizaWhereInput[]
+    OR?: MovimientoPolizaWhereInput[]
+    NOT?: MovimientoPolizaWhereInput | MovimientoPolizaWhereInput[]
+    id_movimiento?: UuidFilter<"MovimientoPoliza"> | string
+    tenant_id?: UuidFilter<"MovimientoPoliza"> | string
+    proyecto_id?: UuidFilter<"MovimientoPoliza"> | string
+    asiento_id?: UuidFilter<"MovimientoPoliza"> | string
+    cuenta_id?: UuidFilter<"MovimientoPoliza"> | string
+    descripcion?: StringFilter<"MovimientoPoliza"> | string
+    cargo?: DecimalFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    orden?: IntFilter<"MovimientoPoliza"> | number
+    created_at?: DateTimeFilter<"MovimientoPoliza"> | Date | string
+    cuenta?: XOR<CuentaContableRelationFilter, CuentaContableWhereInput>
+  }
+
+  export type MovimientoPolizaOrderByWithRelationInput = {
+    id_movimiento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    asiento_id?: SortOrder
+    cuenta_id?: SortOrder
+    descripcion?: SortOrder
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    cuenta?: CuentaContableOrderByWithRelationInput
+  }
+
+  export type MovimientoPolizaWhereUniqueInput = Prisma.AtLeast<{
+    id_movimiento?: string
+    AND?: MovimientoPolizaWhereInput | MovimientoPolizaWhereInput[]
+    OR?: MovimientoPolizaWhereInput[]
+    NOT?: MovimientoPolizaWhereInput | MovimientoPolizaWhereInput[]
+    tenant_id?: UuidFilter<"MovimientoPoliza"> | string
+    proyecto_id?: UuidFilter<"MovimientoPoliza"> | string
+    asiento_id?: UuidFilter<"MovimientoPoliza"> | string
+    cuenta_id?: UuidFilter<"MovimientoPoliza"> | string
+    descripcion?: StringFilter<"MovimientoPoliza"> | string
+    cargo?: DecimalFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    orden?: IntFilter<"MovimientoPoliza"> | number
+    created_at?: DateTimeFilter<"MovimientoPoliza"> | Date | string
+    cuenta?: XOR<CuentaContableRelationFilter, CuentaContableWhereInput>
+  }, "id_movimiento">
+
+  export type MovimientoPolizaOrderByWithAggregationInput = {
+    id_movimiento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    asiento_id?: SortOrder
+    cuenta_id?: SortOrder
+    descripcion?: SortOrder
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    _count?: MovimientoPolizaCountOrderByAggregateInput
+    _avg?: MovimientoPolizaAvgOrderByAggregateInput
+    _max?: MovimientoPolizaMaxOrderByAggregateInput
+    _min?: MovimientoPolizaMinOrderByAggregateInput
+    _sum?: MovimientoPolizaSumOrderByAggregateInput
+  }
+
+  export type MovimientoPolizaScalarWhereWithAggregatesInput = {
+    AND?: MovimientoPolizaScalarWhereWithAggregatesInput | MovimientoPolizaScalarWhereWithAggregatesInput[]
+    OR?: MovimientoPolizaScalarWhereWithAggregatesInput[]
+    NOT?: MovimientoPolizaScalarWhereWithAggregatesInput | MovimientoPolizaScalarWhereWithAggregatesInput[]
+    id_movimiento?: UuidWithAggregatesFilter<"MovimientoPoliza"> | string
+    tenant_id?: UuidWithAggregatesFilter<"MovimientoPoliza"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"MovimientoPoliza"> | string
+    asiento_id?: UuidWithAggregatesFilter<"MovimientoPoliza"> | string
+    cuenta_id?: UuidWithAggregatesFilter<"MovimientoPoliza"> | string
+    descripcion?: StringWithAggregatesFilter<"MovimientoPoliza"> | string
+    cargo?: DecimalWithAggregatesFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    abono?: DecimalWithAggregatesFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    orden?: IntWithAggregatesFilter<"MovimientoPoliza"> | number
+    created_at?: DateTimeWithAggregatesFilter<"MovimientoPoliza"> | Date | string
   }
 
   export type ConciliacionBancariaWhereInput = {
@@ -5642,6 +8106,184 @@ export namespace Prisma {
     notas?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaContableCreateInput = {
+    id_cuenta?: string
+    clave: string
+    nombre: string
+    tipo: string
+    naturaleza: string
+    padre_id?: string | null
+    nivel?: number
+    activa?: boolean
+    created_at?: Date | string
+    movimientos?: MovimientoPolizaCreateNestedManyWithoutCuentaInput
+  }
+
+  export type CuentaContableUncheckedCreateInput = {
+    id_cuenta?: string
+    clave: string
+    nombre: string
+    tipo: string
+    naturaleza: string
+    padre_id?: string | null
+    nivel?: number
+    activa?: boolean
+    created_at?: Date | string
+    movimientos?: MovimientoPolizaUncheckedCreateNestedManyWithoutCuentaInput
+  }
+
+  export type CuentaContableUpdateInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    naturaleza?: StringFieldUpdateOperationsInput | string
+    padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    nivel?: IntFieldUpdateOperationsInput | number
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    movimientos?: MovimientoPolizaUpdateManyWithoutCuentaNestedInput
+  }
+
+  export type CuentaContableUncheckedUpdateInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    naturaleza?: StringFieldUpdateOperationsInput | string
+    padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    nivel?: IntFieldUpdateOperationsInput | number
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    movimientos?: MovimientoPolizaUncheckedUpdateManyWithoutCuentaNestedInput
+  }
+
+  export type CuentaContableCreateManyInput = {
+    id_cuenta?: string
+    clave: string
+    nombre: string
+    tipo: string
+    naturaleza: string
+    padre_id?: string | null
+    nivel?: number
+    activa?: boolean
+    created_at?: Date | string
+  }
+
+  export type CuentaContableUpdateManyMutationInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    naturaleza?: StringFieldUpdateOperationsInput | string
+    padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    nivel?: IntFieldUpdateOperationsInput | number
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaContableUncheckedUpdateManyInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    naturaleza?: StringFieldUpdateOperationsInput | string
+    padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    nivel?: IntFieldUpdateOperationsInput | number
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MovimientoPolizaCreateInput = {
+    id_movimiento?: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    descripcion: string
+    cargo?: Decimal | DecimalJsLike | number | string
+    abono?: Decimal | DecimalJsLike | number | string
+    orden?: number
+    created_at?: Date | string
+    cuenta: CuentaContableCreateNestedOneWithoutMovimientosInput
+  }
+
+  export type MovimientoPolizaUncheckedCreateInput = {
+    id_movimiento?: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    cuenta_id: string
+    descripcion: string
+    cargo?: Decimal | DecimalJsLike | number | string
+    abono?: Decimal | DecimalJsLike | number | string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type MovimientoPolizaUpdateInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuenta?: CuentaContableUpdateOneRequiredWithoutMovimientosNestedInput
+  }
+
+  export type MovimientoPolizaUncheckedUpdateInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    cuenta_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MovimientoPolizaCreateManyInput = {
+    id_movimiento?: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    cuenta_id: string
+    descripcion: string
+    cargo?: Decimal | DecimalJsLike | number | string
+    abono?: Decimal | DecimalJsLike | number | string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type MovimientoPolizaUpdateManyMutationInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MovimientoPolizaUncheckedUpdateManyInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    cuenta_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ConciliacionBancariaCreateInput = {
@@ -6292,6 +8934,129 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type MovimientoPolizaListRelationFilter = {
+    every?: MovimientoPolizaWhereInput
+    some?: MovimientoPolizaWhereInput
+    none?: MovimientoPolizaWhereInput
+  }
+
+  export type MovimientoPolizaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CuentaContableCountOrderByAggregateInput = {
+    id_cuenta?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    tipo?: SortOrder
+    naturaleza?: SortOrder
+    padre_id?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type CuentaContableAvgOrderByAggregateInput = {
+    nivel?: SortOrder
+  }
+
+  export type CuentaContableMaxOrderByAggregateInput = {
+    id_cuenta?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    tipo?: SortOrder
+    naturaleza?: SortOrder
+    padre_id?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type CuentaContableMinOrderByAggregateInput = {
+    id_cuenta?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    tipo?: SortOrder
+    naturaleza?: SortOrder
+    padre_id?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type CuentaContableSumOrderByAggregateInput = {
+    nivel?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type CuentaContableRelationFilter = {
+    is?: CuentaContableWhereInput
+    isNot?: CuentaContableWhereInput
+  }
+
+  export type MovimientoPolizaCountOrderByAggregateInput = {
+    id_movimiento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    asiento_id?: SortOrder
+    cuenta_id?: SortOrder
+    descripcion?: SortOrder
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MovimientoPolizaAvgOrderByAggregateInput = {
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+  }
+
+  export type MovimientoPolizaMaxOrderByAggregateInput = {
+    id_movimiento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    asiento_id?: SortOrder
+    cuenta_id?: SortOrder
+    descripcion?: SortOrder
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MovimientoPolizaMinOrderByAggregateInput = {
+    id_movimiento?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    asiento_id?: SortOrder
+    cuenta_id?: SortOrder
+    descripcion?: SortOrder
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MovimientoPolizaSumOrderByAggregateInput = {
+    cargo?: SortOrder
+    abono?: SortOrder
+    orden?: SortOrder
+  }
+
   export type ConciliacionBancariaTenant_idAsiento_idCompoundUniqueInput = {
     tenant_id: string
     asiento_id: string
@@ -6411,6 +9176,66 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type MovimientoPolizaCreateNestedManyWithoutCuentaInput = {
+    create?: XOR<MovimientoPolizaCreateWithoutCuentaInput, MovimientoPolizaUncheckedCreateWithoutCuentaInput> | MovimientoPolizaCreateWithoutCuentaInput[] | MovimientoPolizaUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: MovimientoPolizaCreateOrConnectWithoutCuentaInput | MovimientoPolizaCreateOrConnectWithoutCuentaInput[]
+    createMany?: MovimientoPolizaCreateManyCuentaInputEnvelope
+    connect?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+  }
+
+  export type MovimientoPolizaUncheckedCreateNestedManyWithoutCuentaInput = {
+    create?: XOR<MovimientoPolizaCreateWithoutCuentaInput, MovimientoPolizaUncheckedCreateWithoutCuentaInput> | MovimientoPolizaCreateWithoutCuentaInput[] | MovimientoPolizaUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: MovimientoPolizaCreateOrConnectWithoutCuentaInput | MovimientoPolizaCreateOrConnectWithoutCuentaInput[]
+    createMany?: MovimientoPolizaCreateManyCuentaInputEnvelope
+    connect?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type MovimientoPolizaUpdateManyWithoutCuentaNestedInput = {
+    create?: XOR<MovimientoPolizaCreateWithoutCuentaInput, MovimientoPolizaUncheckedCreateWithoutCuentaInput> | MovimientoPolizaCreateWithoutCuentaInput[] | MovimientoPolizaUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: MovimientoPolizaCreateOrConnectWithoutCuentaInput | MovimientoPolizaCreateOrConnectWithoutCuentaInput[]
+    upsert?: MovimientoPolizaUpsertWithWhereUniqueWithoutCuentaInput | MovimientoPolizaUpsertWithWhereUniqueWithoutCuentaInput[]
+    createMany?: MovimientoPolizaCreateManyCuentaInputEnvelope
+    set?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    disconnect?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    delete?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    connect?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    update?: MovimientoPolizaUpdateWithWhereUniqueWithoutCuentaInput | MovimientoPolizaUpdateWithWhereUniqueWithoutCuentaInput[]
+    updateMany?: MovimientoPolizaUpdateManyWithWhereWithoutCuentaInput | MovimientoPolizaUpdateManyWithWhereWithoutCuentaInput[]
+    deleteMany?: MovimientoPolizaScalarWhereInput | MovimientoPolizaScalarWhereInput[]
+  }
+
+  export type MovimientoPolizaUncheckedUpdateManyWithoutCuentaNestedInput = {
+    create?: XOR<MovimientoPolizaCreateWithoutCuentaInput, MovimientoPolizaUncheckedCreateWithoutCuentaInput> | MovimientoPolizaCreateWithoutCuentaInput[] | MovimientoPolizaUncheckedCreateWithoutCuentaInput[]
+    connectOrCreate?: MovimientoPolizaCreateOrConnectWithoutCuentaInput | MovimientoPolizaCreateOrConnectWithoutCuentaInput[]
+    upsert?: MovimientoPolizaUpsertWithWhereUniqueWithoutCuentaInput | MovimientoPolizaUpsertWithWhereUniqueWithoutCuentaInput[]
+    createMany?: MovimientoPolizaCreateManyCuentaInputEnvelope
+    set?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    disconnect?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    delete?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    connect?: MovimientoPolizaWhereUniqueInput | MovimientoPolizaWhereUniqueInput[]
+    update?: MovimientoPolizaUpdateWithWhereUniqueWithoutCuentaInput | MovimientoPolizaUpdateWithWhereUniqueWithoutCuentaInput[]
+    updateMany?: MovimientoPolizaUpdateManyWithWhereWithoutCuentaInput | MovimientoPolizaUpdateManyWithWhereWithoutCuentaInput[]
+    deleteMany?: MovimientoPolizaScalarWhereInput | MovimientoPolizaScalarWhereInput[]
+  }
+
+  export type CuentaContableCreateNestedOneWithoutMovimientosInput = {
+    create?: XOR<CuentaContableCreateWithoutMovimientosInput, CuentaContableUncheckedCreateWithoutMovimientosInput>
+    connectOrCreate?: CuentaContableCreateOrConnectWithoutMovimientosInput
+    connect?: CuentaContableWhereUniqueInput
+  }
+
+  export type CuentaContableUpdateOneRequiredWithoutMovimientosNestedInput = {
+    create?: XOR<CuentaContableCreateWithoutMovimientosInput, CuentaContableUncheckedCreateWithoutMovimientosInput>
+    connectOrCreate?: CuentaContableCreateOrConnectWithoutMovimientosInput
+    upsert?: CuentaContableUpsertWithoutMovimientosInput
+    connect?: CuentaContableWhereUniqueInput
+    update?: XOR<XOR<CuentaContableUpdateToOneWithWhereWithoutMovimientosInput, CuentaContableUpdateWithoutMovimientosInput>, CuentaContableUncheckedUpdateWithoutMovimientosInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -6678,11 +9503,206 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type MovimientoPolizaCreateWithoutCuentaInput = {
+    id_movimiento?: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    descripcion: string
+    cargo?: Decimal | DecimalJsLike | number | string
+    abono?: Decimal | DecimalJsLike | number | string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type MovimientoPolizaUncheckedCreateWithoutCuentaInput = {
+    id_movimiento?: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    descripcion: string
+    cargo?: Decimal | DecimalJsLike | number | string
+    abono?: Decimal | DecimalJsLike | number | string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type MovimientoPolizaCreateOrConnectWithoutCuentaInput = {
+    where: MovimientoPolizaWhereUniqueInput
+    create: XOR<MovimientoPolizaCreateWithoutCuentaInput, MovimientoPolizaUncheckedCreateWithoutCuentaInput>
+  }
+
+  export type MovimientoPolizaCreateManyCuentaInputEnvelope = {
+    data: MovimientoPolizaCreateManyCuentaInput | MovimientoPolizaCreateManyCuentaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MovimientoPolizaUpsertWithWhereUniqueWithoutCuentaInput = {
+    where: MovimientoPolizaWhereUniqueInput
+    update: XOR<MovimientoPolizaUpdateWithoutCuentaInput, MovimientoPolizaUncheckedUpdateWithoutCuentaInput>
+    create: XOR<MovimientoPolizaCreateWithoutCuentaInput, MovimientoPolizaUncheckedCreateWithoutCuentaInput>
+  }
+
+  export type MovimientoPolizaUpdateWithWhereUniqueWithoutCuentaInput = {
+    where: MovimientoPolizaWhereUniqueInput
+    data: XOR<MovimientoPolizaUpdateWithoutCuentaInput, MovimientoPolizaUncheckedUpdateWithoutCuentaInput>
+  }
+
+  export type MovimientoPolizaUpdateManyWithWhereWithoutCuentaInput = {
+    where: MovimientoPolizaScalarWhereInput
+    data: XOR<MovimientoPolizaUpdateManyMutationInput, MovimientoPolizaUncheckedUpdateManyWithoutCuentaInput>
+  }
+
+  export type MovimientoPolizaScalarWhereInput = {
+    AND?: MovimientoPolizaScalarWhereInput | MovimientoPolizaScalarWhereInput[]
+    OR?: MovimientoPolizaScalarWhereInput[]
+    NOT?: MovimientoPolizaScalarWhereInput | MovimientoPolizaScalarWhereInput[]
+    id_movimiento?: UuidFilter<"MovimientoPoliza"> | string
+    tenant_id?: UuidFilter<"MovimientoPoliza"> | string
+    proyecto_id?: UuidFilter<"MovimientoPoliza"> | string
+    asiento_id?: UuidFilter<"MovimientoPoliza"> | string
+    cuenta_id?: UuidFilter<"MovimientoPoliza"> | string
+    descripcion?: StringFilter<"MovimientoPoliza"> | string
+    cargo?: DecimalFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFilter<"MovimientoPoliza"> | Decimal | DecimalJsLike | number | string
+    orden?: IntFilter<"MovimientoPoliza"> | number
+    created_at?: DateTimeFilter<"MovimientoPoliza"> | Date | string
+  }
+
+  export type CuentaContableCreateWithoutMovimientosInput = {
+    id_cuenta?: string
+    clave: string
+    nombre: string
+    tipo: string
+    naturaleza: string
+    padre_id?: string | null
+    nivel?: number
+    activa?: boolean
+    created_at?: Date | string
+  }
+
+  export type CuentaContableUncheckedCreateWithoutMovimientosInput = {
+    id_cuenta?: string
+    clave: string
+    nombre: string
+    tipo: string
+    naturaleza: string
+    padre_id?: string | null
+    nivel?: number
+    activa?: boolean
+    created_at?: Date | string
+  }
+
+  export type CuentaContableCreateOrConnectWithoutMovimientosInput = {
+    where: CuentaContableWhereUniqueInput
+    create: XOR<CuentaContableCreateWithoutMovimientosInput, CuentaContableUncheckedCreateWithoutMovimientosInput>
+  }
+
+  export type CuentaContableUpsertWithoutMovimientosInput = {
+    update: XOR<CuentaContableUpdateWithoutMovimientosInput, CuentaContableUncheckedUpdateWithoutMovimientosInput>
+    create: XOR<CuentaContableCreateWithoutMovimientosInput, CuentaContableUncheckedCreateWithoutMovimientosInput>
+    where?: CuentaContableWhereInput
+  }
+
+  export type CuentaContableUpdateToOneWithWhereWithoutMovimientosInput = {
+    where?: CuentaContableWhereInput
+    data: XOR<CuentaContableUpdateWithoutMovimientosInput, CuentaContableUncheckedUpdateWithoutMovimientosInput>
+  }
+
+  export type CuentaContableUpdateWithoutMovimientosInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    naturaleza?: StringFieldUpdateOperationsInput | string
+    padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    nivel?: IntFieldUpdateOperationsInput | number
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaContableUncheckedUpdateWithoutMovimientosInput = {
+    id_cuenta?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    naturaleza?: StringFieldUpdateOperationsInput | string
+    padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    nivel?: IntFieldUpdateOperationsInput | number
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MovimientoPolizaCreateManyCuentaInput = {
+    id_movimiento?: string
+    tenant_id: string
+    proyecto_id: string
+    asiento_id: string
+    descripcion: string
+    cargo?: Decimal | DecimalJsLike | number | string
+    abono?: Decimal | DecimalJsLike | number | string
+    orden?: number
+    created_at?: Date | string
+  }
+
+  export type MovimientoPolizaUpdateWithoutCuentaInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MovimientoPolizaUncheckedUpdateWithoutCuentaInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MovimientoPolizaUncheckedUpdateManyWithoutCuentaInput = {
+    id_movimiento?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    asiento_id?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    cargo?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    abono?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
 
 
   /**
    * Aliases for legacy arg types
    */
+    /**
+     * @deprecated Use CuentaContableCountOutputTypeDefaultArgs instead
+     */
+    export type CuentaContableCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuentaContableCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use AsientoContableDefaultArgs instead
      */
@@ -6691,6 +9711,14 @@ export namespace Prisma {
      * @deprecated Use ConciliacionFiscalDefaultArgs instead
      */
     export type ConciliacionFiscalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConciliacionFiscalDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CuentaContableDefaultArgs instead
+     */
+    export type CuentaContableArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuentaContableDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use MovimientoPolizaDefaultArgs instead
+     */
+    export type MovimientoPolizaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MovimientoPolizaDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ConciliacionBancariaDefaultArgs instead
      */
