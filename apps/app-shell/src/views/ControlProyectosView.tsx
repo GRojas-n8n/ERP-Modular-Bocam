@@ -130,7 +130,8 @@ interface ControlProyectosViewProps {
 }
 
 export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ activeSubView }) => {
-  const { currentProjectId, isDemo } = useTenant();
+  const { currentProjectId, tenant } = useTenant();
+  const isDemo = tenant?.id === 'iretum-demo';
   const [activeTab, setActiveTab] = useState<ActiveTab>((activeSubView as ActiveTab) || 'dashboard');
 
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
