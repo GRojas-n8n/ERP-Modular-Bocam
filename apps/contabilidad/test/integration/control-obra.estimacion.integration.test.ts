@@ -45,7 +45,7 @@ async function api(method: string, path: string, token: string, body?: unknown) 
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  return { status: res.status, body: await res.json().catch(() => null) };
+  return { status: res.status, body: (await res.json().catch(() => null)) as any };
 }
 
 async function testEstimacionCreaAsientoYMovimientos() {

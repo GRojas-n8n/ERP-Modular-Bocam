@@ -44,7 +44,7 @@ async function api(method: string, path: string, token: string) {
     method,
     headers: { 'Authorization': `Bearer ${token}` },
   });
-  return { status: res.status, body: await res.json().catch(() => null) };
+  return { status: res.status, body: (await res.json().catch(() => null)) as any };
 }
 
 async function testBalanzaComprobacion() {
