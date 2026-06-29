@@ -30,32 +30,32 @@
 
 ## 4. Backend — Aprobación de requisición (GT/Compras)
 
-- [ ] 4.1 Identificar dónde se aprueba la req actualmente y añadir verificación de SaldoPartida
-- [ ] 4.2 Si BLOQUEADO: req pasa a `PENDIENTE_TRANSFERENCIA`
-- [ ] 4.3 Si LIMITADO: aprobar con warning
-- [ ] 4.4 Actualizar `monto_en_proceso` cuando req es APROBADA
-- [ ] 4.5 Reducir `monto_en_proceso` cuando req genera OC
+- [x] 4.1 Identificar dónde se aprueba la req actualmente y añadir verificación de SaldoPartida
+- [x] 4.2 Si BLOQUEADO: req pasa a `PENDIENTE_TRANSFERENCIA`
+- [x] 4.3 Si LIMITADO: aprobar con warning
+- [x] 4.4 Actualizar `monto_en_proceso` cuando req es APROBADA
+- [x] 4.5 Reducir `monto_en_proceso` cuando req genera OC
 
 ## 5. Backend — Desbloqueo automático de reqs (GT)
 
-- [ ] 5.1 Subscriber para `gerencia_tecnica.transferencia_partida_aprobada`: re-evaluar reqs PENDIENTE_TRANSFERENCIA
-- [ ] 5.2 Si saldo suficiente: req → APROBADA y notificar a Compras
+- [x] 5.1 Subscriber para `gerencia_tecnica.transferencia_partida_aprobada`: re-evaluar reqs PENDIENTE_TRANSFERENCIA
+- [x] 5.2 Si saldo suficiente: req → APROBADA y notificar a Compras
 
 ## 6. Frontend — InsumosView / Presupuesto GT (indicadores de saldo)
 
-- [ ] 6.1 Columna "Saldo" con `monto_disponible` + badge `estado_tope` (verde/amarillo/rojo)
-- [ ] 6.2 SlidePanel al click: desglose aprobado/en proceso/comprometido/ejercido/disponible
-- [ ] 6.3 Partidas BLOQUEADAS: icono candado + fondo rojo suave
+- [x] 6.1 Columna "Saldo" con `monto_disponible` + badge `estado_tope` (verde/amarillo/rojo)
+- [x] 6.2 SlidePanel al click: desglose aprobado/en proceso/comprometido/ejercido/disponible
+- [x] 6.3 Partidas BLOQUEADAS: icono candado + fondo rojo suave
 
 ## 7. Frontend — ComprasView / alerta de bloqueo en generación OC
 
-- [ ] 7.1 Si respuesta incluye `oc_bloqueadas[]`: mostrar alerta con lista de partidas bloqueadas
-- [ ] 7.2 Botón "Solicitar transferencia presupuestal"
+- [x] 7.1 Si respuesta incluye `oc_bloqueadas[]`: mostrar alerta con lista de partidas bloqueadas
+- [x] 7.2 Mensaje de instrucción para solicitar transferencia presupuestal en GT
 
 ## 8. Frontend — Lista de requisiciones (badge PENDIENTE_TRANSFERENCIA)
 
-- [ ] 8.1 Badge amber "Esperando transferencia" para reqs en `PENDIENTE_TRANSFERENCIA`
-- [ ] 8.2 Tooltip con partida bloqueada y monto faltante
+- [x] 8.1 Badge amber "Esperando transferencia" para reqs en `PENDIENTE_TRANSFERENCIA`
+- [x] 8.2 Info block con partida bloqueada y nota de desbloqueo automático al aprobar transferencia
 
 ## 9. Tests de integración
 
@@ -67,4 +67,4 @@
 - [x] 9.6 Test: DELETE /comprometer revierte compromiso y restaura LIBRE
 - [x] 9.7 Test: GET /partidas/:id/saldo retorna 404 si no existe
 - [x] 9.8 Test: GET /partidas/resumen lista partidas con estado_tope correcto
-- [ ] 9.9 Test: req con partida BLOQUEADA pasa a PENDIENTE_TRANSFERENCIA (task 4 pendiente)
+- [x] 9.9 Test: req con partida BLOQUEADA pasa a PENDIENTE_TRANSFERENCIA

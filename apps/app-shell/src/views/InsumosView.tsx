@@ -88,6 +88,19 @@ interface ConceptoPreview {
   _error?: string;
 }
 
+interface SaldoResumen {
+  concepto_id: string;
+  concepto_clave: string;
+  concepto_desc: string;
+  monto_aprobado: number;
+  monto_comprometido: number;
+  monto_ejercido: number;
+  monto_en_proceso: number;
+  monto_disponible: number;
+  estado_tope: 'LIBRE' | 'LIMITADO' | 'BLOQUEADO' | 'SUSPENDIDO';
+  pct_ejecutado: number;
+}
+
 interface InsumoData {
   id: string;
   clave: string;
@@ -685,6 +698,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [preview, setPreview]         = useState<ConceptoPreview[]>([]);
   const [parseError, setParseError]   = useState<string | null>(null);
 
+  // ── Estado: Saldo por partida ─────────────────────────────────────────────
+  const [saldoMap, setSaldoMap] = useState<Record<string, SaldoResumen>>({});
+  const [saldoPanelConcepto, setSaldoPanelConcepto] = useState<SaldoResumen | null>(null);
+
   // ── Estado Tab 2: Insumos ─────────────────────────────────────────────────
   const fileInputAPURef       = useRef<HTMLInputElement>(null);
   const fileInputExplosionRef = useRef<HTMLInputElement>(null);
@@ -990,6 +1007,19 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  const fetchSaldoPartidas = async () => {
+    try {
+      if (tenant?.id === 'iretum-demo') return;
+      const res = await api.get('/api/v1/gerencia-tecnica/partidas/resumen');
+      const lista: SaldoResumen[] = res.data.data || [];
+      const map: Record<string, SaldoResumen> = {};
+      for (const s of lista) map[s.concepto_id] = s;
+      setSaldoMap(map);
+    } catch {
+      // saldo no crítico — tabla sigue funcionando sin él
+    }
+  };
+
   const handleAprobarPresupuesto = async () => {
     if (!presupuesto) return;
     setAprobando(true);
@@ -1052,6 +1082,11 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   useEffect(() => { void fetchPresupuesto(); }, []);
+  useEffect(() => {
+    if (presupuesto?.estado === 'APROBADO' || presupuesto?.estado === 'LIBERADO' || presupuesto?.estado === 'CONGELADO') {
+      void fetchSaldoPartidas();
+    }
+  }, [presupuesto?.id, presupuesto?.estado]);
   useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab]);
   useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab]);
   useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab]);
@@ -1686,12 +1721,16 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">P. Actual</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Δ%</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Importe</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Saldo</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">APU</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/20">
-                      {conceptosFiltrados.map((c) => (
-                        <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors group">
+                      {conceptosFiltrados.map((c) => {
+                        const saldo = saldoMap[c.id];
+                        const esBloqueado = saldo?.estado_tope === 'BLOQUEADO';
+                        return (
+                        <tr key={c.id} className={cn('hover:bg-primary/[0.02] transition-colors group', esBloqueado && 'bg-red-500/[0.04] hover:bg-red-500/[0.07]')}>
                           <td className="px-6 py-4 font-black text-primary tracking-tighter text-sm whitespace-nowrap">{c.clave}</td>
                           <td className="px-6 py-4 max-w-sm">
                             <span className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{c.descripcion}</span>
@@ -1725,6 +1764,31 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                           <td className="px-6 py-4 text-right">
                             <span className="font-mono font-black text-sm text-primary">{formatMXN(Number(c.importe))}</span>
                           </td>
+                          <td className="px-6 py-4 text-right">
+                            {saldo ? (
+                              <button
+                                onClick={() => setSaldoPanelConcepto(saldo)}
+                                className="group/saldo inline-flex flex-col items-end gap-0.5"
+                                title="Ver desglose de saldo"
+                              >
+                                <span className={cn(
+                                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border',
+                                  saldo.estado_tope === 'LIBRE'     && 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+                                  saldo.estado_tope === 'LIMITADO'  && 'bg-amber-500/10  text-amber-700  border-amber-500/20',
+                                  saldo.estado_tope === 'BLOQUEADO' && 'bg-red-500/10    text-red-700    border-red-500/20',
+                                  saldo.estado_tope === 'SUSPENDIDO'&& 'bg-muted/40      text-muted-foreground border-border/40',
+                                )}>
+                                  {esBloqueado && <span>🔒</span>}
+                                  {saldo.estado_tope}
+                                </span>
+                                <span className="font-mono text-xs font-bold text-foreground group-hover/saldo:underline">
+                                  {formatMXN(Number(saldo.monto_disponible))}
+                                </span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/30">—</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-center">
                             <button
                               onClick={() => handleAbrirTakeoff(c)}
@@ -1736,11 +1800,12 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             </button>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-border/60 bg-muted/20">
-                        <td colSpan={8} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                        <td colSpan={9} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
                           Total {search ? `(filtrado)` : `(${conceptosFiltrados.length} conceptos)`}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -3111,6 +3176,94 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             </div>
           )}
         </div>
+      </SlidePanel>
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* PANEL: Desglose de Saldo por Partida                               */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <SlidePanel
+        isOpen={!!saldoPanelConcepto}
+        onClose={() => setSaldoPanelConcepto(null)}
+        title={`Saldo · ${saldoPanelConcepto?.concepto_clave ?? ''}`}
+        subtitle={saldoPanelConcepto?.concepto_desc ?? 'Desglose de partida'}
+        accentColor={
+          saldoPanelConcepto?.estado_tope === 'BLOQUEADO' ? 'red' :
+          saldoPanelConcepto?.estado_tope === 'LIMITADO'  ? 'amber' : 'emerald'
+        }
+        maxWidthClassName="max-w-lg"
+      >
+        {saldoPanelConcepto && (() => {
+          const s = saldoPanelConcepto;
+          const aprobado    = Number(s.monto_aprobado);
+          const comprometido = Number(s.monto_comprometido);
+          const ejercido    = Number(s.monto_ejercido);
+          const enProceso   = Number(s.monto_en_proceso);
+          const disponible  = Number(s.monto_disponible);
+          const pctDisp = aprobado > 0 ? Math.max(0, Math.round((disponible / aprobado) * 100)) : 0;
+          const badgeClass =
+            s.estado_tope === 'BLOQUEADO' ? 'bg-red-500/10 text-red-700 border-red-500/20' :
+            s.estado_tope === 'LIMITADO'  ? 'bg-amber-500/10 text-amber-700 border-amber-500/20' :
+            'bg-emerald-500/10 text-emerald-700 border-emerald-500/20';
+          const barColor =
+            s.estado_tope === 'BLOQUEADO' ? 'bg-red-500' :
+            s.estado_tope === 'LIMITADO'  ? 'bg-amber-500' : 'bg-emerald-500';
+
+          return (
+            <div className="space-y-5 pb-8">
+              {/* Estado badge */}
+              <div className="flex items-center justify-between">
+                <span className={cn('inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border', badgeClass)}>
+                  {s.estado_tope === 'BLOQUEADO' && '🔒 '}
+                  {s.estado_tope}
+                </span>
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                  {pctDisp}% disponible
+                </span>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="h-3 rounded-full bg-muted/40 overflow-hidden">
+                <div className={cn('h-full rounded-full transition-all', barColor)} style={{ width: `${pctDisp}%` }} />
+              </div>
+
+              {/* Desglose */}
+              <div className="divide-y divide-border/30 rounded-2xl border border-border/40 overflow-hidden">
+                {[
+                  { label: 'Presupuesto aprobado', value: aprobado,     color: 'text-foreground',       bold: true },
+                  { label: 'Ejercido (pagado)',     value: ejercido,    color: 'text-violet-700',       bold: false },
+                  { label: 'Comprometido (OCs)',    value: comprometido, color: 'text-blue-700',        bold: false },
+                  { label: 'En proceso (Reqs)',     value: enProceso,   color: 'text-amber-700',        bold: false },
+                  { label: 'Disponible',            value: disponible,  color: s.estado_tope === 'BLOQUEADO' ? 'text-red-700' : s.estado_tope === 'LIMITADO' ? 'text-amber-700' : 'text-emerald-700', bold: true },
+                ].map(row => (
+                  <div key={row.label} className="flex items-center justify-between px-5 py-3 bg-card hover:bg-muted/20">
+                    <span className="text-[11px] text-muted-foreground">{row.label}</span>
+                    <span className={cn('font-mono text-sm', row.color, row.bold && 'font-black')}>{formatMXN(row.value)}</span>
+                  </div>
+                ))}
+              </div>
+
+              {s.estado_tope === 'BLOQUEADO' && (
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-700 mb-1">Partida bloqueada</p>
+                  <p className="text-xs text-red-600/80">
+                    Esta partida ha agotado su presupuesto. Para generar nuevas órdenes de compra es necesario
+                    solicitar una transferencia presupuestal.
+                  </p>
+                </div>
+              )}
+
+              {s.estado_tope === 'LIMITADO' && (
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-1">Presupuesto limitado</p>
+                  <p className="text-xs text-amber-600/80">
+                    Quedan menos del 20% de los recursos disponibles en esta partida. Las órdenes de compra
+                    se generarán con advertencia.
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </SlidePanel>
     </>
   );

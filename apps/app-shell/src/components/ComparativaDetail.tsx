@@ -351,6 +351,10 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [selectedPresupuestoId, setSelectedPresupuestoId] = useState('');
   const [showPresupuestoModal, setShowPresupuestoModal] = useState(false);
 
+  // Partidas bloqueadas al generar OC
+  type OcBloqueada = { concepto_id: string; concepto_clave: string; concepto_desc: string; monto_requerido: number };
+  const [ocBloqueadas, setOcBloqueadas] = useState<OcBloqueada[]>([]);
+
   // Fetch OC data (with acumulados) when the detail opens — the list endpoint omits this
   useEffect(() => {
     if (isDemo || ocFetchedRef.current) return;
@@ -1111,13 +1115,18 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const ejecutarConvertirOc = async (presupuestoId: string) => {
     setAutorizando(true);
+    setOcBloqueadas([]);
     try {
       await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, { presupuesto_id: presupuestoId });
       const freshResp = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
       const freshData = freshResp.data.data ?? {};
       onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: freshData.ordenes_compra ?? [] });
     } catch (err: any) {
-      notify({ type: 'error', title: 'Error al generar OC', message: err.response?.data?.message ?? err.message });
+      if (err.response?.status === 422 && Array.isArray(err.response?.data?.oc_bloqueadas)) {
+        setOcBloqueadas(err.response.data.oc_bloqueadas);
+      } else {
+        notify({ type: 'error', title: 'Error al generar OC', message: err.response?.data?.message ?? err.message });
+      }
     } finally {
       setAutorizando(false);
       setShowPresupuestoModal(false);
@@ -2532,6 +2541,44 @@ export const ComparativaDetail: React.FC<Props> = ({
               >
                 {autorizando ? 'Generando OC...' : 'Confirmar y generar OC'}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Partidas bloqueadas — sin presupuesto suficiente ──────────── */}
+      {ocBloqueadas.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-card shadow-2xl overflow-hidden">
+            <div className="bg-red-700 px-6 py-4">
+              <h2 className="text-sm font-black uppercase tracking-tight text-white">🔒 Partidas Bloqueadas</h2>
+              <p className="text-[10px] text-red-200/80 mt-0.5">
+                Las siguientes partidas no tienen presupuesto disponible. No se generaron órdenes de compra.
+              </p>
+            </div>
+            <div className="px-6 py-5 space-y-3 max-h-72 overflow-y-auto">
+              {ocBloqueadas.map(b => (
+                <div key={b.concepto_id} className="rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+                  <p className="text-xs font-black text-red-700">{b.concepto_clave}</p>
+                  <p className="text-[11px] text-foreground mt-0.5 line-clamp-2">{b.concepto_desc}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Monto requerido: <span className="font-black text-red-700">
+                      {Number(b.monto_requerido).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                    </span>
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border/40 px-6 py-4 flex justify-between items-center gap-3">
+              <span className="text-[10px] text-muted-foreground">
+                Solicita una transferencia presupuestal en el módulo de Gerencia Técnica.
+              </span>
+              <button
+                onClick={() => setOcBloqueadas([])}
+                className="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-500 transition-colors"
+              >
+                Entendido
+              </button>
             </div>
           </div>
         </div>

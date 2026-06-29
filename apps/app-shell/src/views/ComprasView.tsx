@@ -1031,6 +1031,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   ];
 
   const getIdCiclo = (req: Requisicion, comp?: ComparativaLocal): string => {
+    if (req.estado === 'PENDIENTE_TRANSFERENCIA') return 'pendiente-aprobacion';
     if (['PENDIENTE', 'BORRADOR'].includes(req.estado)) return 'pendiente-aprobacion';
     if (req.estado === 'APROBADA') {
       if (!comp) return 'lista-cotizar';
@@ -1046,6 +1047,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   const getReqCycleStep = (req: Requisicion, comp?: ComparativaLocal) => {
+    if (req.estado === 'PENDIENTE_TRANSFERENCIA')
+      return { label: '🔒 Esperando transferencia', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/20' };
     if (['PENDIENTE', 'BORRADOR'].includes(req.estado))
       return { label: '🟡 Pendiente de aprobación', cls: 'bg-amber-500/10 text-amber-700 border-amber-500/20' };
     if (req.estado === 'APROBADA') {
@@ -1427,6 +1430,29 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             <IconCheckCircle2 className="h-3.5 w-3.5" />
                             {aprobando === req.id ? 'Aprobando…' : 'Aprobar Requisición'}
                           </Button>
+                        )}
+                        {/* Aviso de partida bloqueada — PENDIENTE_TRANSFERENCIA */}
+                        {req.estado === 'PENDIENTE_TRANSFERENCIA' && (
+                          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px]">🔒</span>
+                              <span className="text-[9px] font-black uppercase tracking-widest text-amber-700">
+                                Esperando transferencia presupuestal
+                              </span>
+                            </div>
+                            {req.concepto_clave && (
+                              <p className="text-[10px] text-amber-700/80">
+                                Partida <span className="font-black">{req.concepto_clave}</span> sin saldo disponible.
+                                Esta requisición se aprobará automáticamente cuando se apruebe la transferencia.
+                              </p>
+                            )}
+                            {!req.concepto_clave && (
+                              <p className="text-[10px] text-amber-700/80">
+                                La partida asociada no tiene saldo disponible.
+                                Esta requisición se aprobará automáticamente cuando se apruebe la transferencia.
+                              </p>
+                            )}
+                          </div>
                         )}
                         {/* Sección Solicitud + Comparativa para APROBADAS */}
                         {req.estado === 'APROBADA' && (() => {

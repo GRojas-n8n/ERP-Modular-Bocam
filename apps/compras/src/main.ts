@@ -233,20 +233,12 @@ app.patch(
           const req_obj = await prisma.requisicion.findUnique({
             where: { id_requisicion: id },
           });
-          if (!req_obj) {
-            return null;
-          }
-          if (req_obj.estado === 'APROBADA') {
-            return req_obj; // idempotente: ya estaba aprobada
-          }
-          if (!['PENDIENTE', 'BORRADOR'].includes(req_obj.estado)) {
+          if (!req_obj) return null;
+          if (req_obj.estado === 'APROBADA') return req_obj; // idempotente
+          if (!['PENDIENTE', 'BORRADOR', 'PENDIENTE_TRANSFERENCIA'].includes(req_obj.estado)) {
             throw new Error(`La requisición está en estado ${req_obj.estado} y no puede aprobarse.`);
           }
-          return prisma.requisicion.update({
-            where: { id_requisicion: id },
-            data: { estado: 'APROBADA' },
-            include: { items: true },
-          });
+          return req_obj;
         }
       );
 
@@ -254,7 +246,89 @@ app.patch(
         return res.status(404).json({ success: false, message: 'Requisición no encontrada.' });
       }
 
-      logInfo(req, 'compras', 'compras.requisicion_aprobada', `Requisición ${(data as any).codigo} aprobada por ${userId}`);
+      const reqObj = data as any;
+
+      // Gate: verificar SaldoPartida si la req tiene concepto_id asignado
+      let warningPartida: string | null = null;
+      if (reqObj.concepto_id) {
+        try {
+          const saldoResp = await axios.get(`${GT_URL}/partidas/${reqObj.concepto_id}/saldo`, {
+            headers: { Authorization: req.headers.authorization || '', 'x-tenant-id': tenantId, 'x-proyecto-id': proyectoId },
+            timeout: 2000,
+          });
+          const saldo = saldoResp.data?.data;
+
+          if (saldo?.estado_tope === 'BLOQUEADO' && saldo?.bloqueo_automatico !== false) {
+            // Partida agotada → req va a PENDIENTE_TRANSFERENCIA
+            const blocked = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+              prisma.requisicion.update({
+                where: { id_requisicion: id },
+                data: { estado: 'PENDIENTE_TRANSFERENCIA' },
+                include: { items: true },
+              })
+            );
+
+            try {
+              await eventBus.publish({
+                event_type: 'gerencia_tecnica.partida_bloqueada',
+                timestamp:  new Date().toISOString(),
+                context:    buildEventContext(req),
+                payload: {
+                  concepto_id:     reqObj.concepto_id,
+                  concepto_clave:  saldo.concepto_clave || '',
+                  monto_aprobado:  saldo.monto_aprobado,
+                  monto_disponible: saldo.monto_disponible,
+                  trigger:         'REQUISICION',
+                  referencia_id:   id,
+                  referencia_codigo: reqObj.codigo,
+                },
+              });
+            } catch (_) { /* best-effort */ }
+
+            logInfo(req, 'compras', 'compras.requisicion_bloqueada_partida', `Req ${reqObj.codigo} en PENDIENTE_TRANSFERENCIA — partida ${reqObj.concepto_id} BLOQUEADA`, { concepto_id: reqObj.concepto_id });
+
+            return res.status(422).json({
+              success: false,
+              error: 'PARTIDA_BLOQUEADA',
+              message: `La partida presupuestal ha alcanzado su tope. La requisición ${reqObj.codigo} queda en espera de transferencia presupuestal.`,
+              data: { ...blocked, estado: 'PENDIENTE_TRANSFERENCIA' },
+            });
+          }
+
+          if (saldo?.estado_tope === 'LIMITADO') {
+            warningPartida = `Partida al límite: disponible $${Number(saldo.monto_disponible).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+          }
+
+          // Actualizar monto_en_proceso en GT (fire-and-forget)
+          if (reqObj.concepto_id) {
+            const montoReq = reqObj.items?.reduce((acc: number, item: any) => acc + (Number(item.cantidad) * (item.precio_unitario ? Number(item.precio_unitario) : 0)), 0) ?? 0;
+            if (montoReq > 0) {
+              axios.post(`${GT_URL}/partidas/${reqObj.concepto_id}/comprometer`, {
+                monto:            montoReq,
+                referencia_id:    id,
+                referencia_codigo: reqObj.codigo,
+                tipo:             'REQ_APROBADA',
+              }, { headers: { Authorization: req.headers.authorization || '', 'x-tenant-id': tenantId, 'x-proyecto-id': proyectoId }, timeout: 3000 })
+                .catch((e: any) => console.warn('[Compras] No se actualizó monto_en_proceso en GT:', e.message));
+            }
+          }
+        } catch (gtErr: any) {
+          if (gtErr.code !== 'ECONNABORTED' && !gtErr.message?.includes('timeout')) {
+            console.warn('[Compras] GT no disponible para verificar partida — aprobando en modo degradado:', gtErr.message);
+          }
+        }
+      }
+
+      const approved = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => prisma.requisicion.update({
+          where: { id_requisicion: id },
+          data: { estado: 'APROBADA' },
+          include: { items: true },
+        })
+      );
+
+      logInfo(req, 'compras', 'compras.requisicion_aprobada', `Requisición ${reqObj.codigo} aprobada por ${userId}`);
 
       try {
         await eventBus.publish({
@@ -263,15 +337,15 @@ app.patch(
           context:     buildEventContext(req),
           payload: {
             requisicion_id: id,
-            codigo:         (data as any).codigo,
-            tipo:           (data as any).tipo,
-            prioridad:      (data as any).prioridad,
+            codigo:         reqObj.codigo,
+            tipo:           reqObj.tipo,
+            prioridad:      reqObj.prioridad,
             aprobado_por:   userId,
           },
         });
       } catch (_) { /* EventBus offline — degradación elegante */ }
 
-      res.json({ success: true, data });
+      res.json({ success: true, data: approved, ...(warningPartida ? { warning: warningPartida } : {}) });
     } catch (error: any) {
       logError(req, 'compras', 'compras.requisicion_aprobar_error', 'Error al aprobar requisición', { error_message: error.message });
       res.status(400).json({ success: false, message: error.message });
@@ -3933,6 +4007,69 @@ export async function handleOcPagadaParcialEvent(event: BocamEvent): Promise<voi
   }
 }
 
+// ─── Handler: gerencia_tecnica.transferencia_partida_aprobada ────────────────
+// Re-evalúa las reqs en PENDIENTE_TRANSFERENCIA cuando se aprueba una transferencia
+// que restaura saldo en la partida destino.
+export async function handleTransferenciaPartidaAprobadaEvent(event: BocamEvent): Promise<void> {
+  const payload = event.payload as {
+    concepto_destino_id?: string;
+    concepto_destino_clave?: string;
+    monto?: number;
+  };
+  const { concepto_destino_id } = payload;
+  if (!concepto_destino_id) return;
+
+  const ctx = { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id };
+
+  try {
+    // Verificar saldo actual en GT
+    let montoDisponible = 0;
+    try {
+      const saldoResp = await axios.get(`${GT_URL}/partidas/${concepto_destino_id}/saldo`, {
+        headers: { 'x-tenant-id': ctx.tenantId, 'x-proyecto-id': ctx.proyectoId },
+        timeout: 3000,
+      });
+      montoDisponible = saldoResp.data?.data?.monto_disponible ?? 0;
+    } catch (_) {
+      console.warn('[Compras] GT timeout al verificar saldo tras transferencia');
+      return;
+    }
+
+    if (montoDisponible <= 0) return;
+
+    // Buscar reqs bloqueadas para esta partida
+    const reqsBloqueadas = await createTenantContext(ctx, async (prisma) =>
+      prisma.requisicion.findMany({
+        where: { tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, concepto_id: concepto_destino_id, estado: 'PENDIENTE_TRANSFERENCIA' },
+        include: { items: true },
+        orderBy: { fecha_solicitud: 'asc' },
+      })
+    );
+
+    if (reqsBloqueadas.length === 0) return;
+
+    let saldoRestante = montoDisponible;
+    for (const reqBloq of reqsBloqueadas as any[]) {
+      const montoReq = reqBloq.items?.reduce((acc: number, item: any) => acc + (Number(item.cantidad) * (item.precio_unitario ? Number(item.precio_unitario) : 0)), 0) ?? 0;
+
+      if (montoReq <= saldoRestante || montoReq === 0) {
+        await createTenantContext(ctx, async (prisma) =>
+          prisma.requisicion.update({ where: { id_requisicion: reqBloq.id_requisicion }, data: { estado: 'APROBADA' } })
+        );
+        saldoRestante -= montoReq;
+        console.log(JSON.stringify({
+          action: 'compras.event.transferencia_partida.req_desbloqueada',
+          req_id: reqBloq.id_requisicion,
+          codigo: reqBloq.codigo,
+          concepto_destino_id,
+        }));
+      }
+    }
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'compras.event.transferencia_partida.error', concepto_destino_id, error: err.message }));
+  }
+}
+
 setupSentryExpressHandler(app);
 
 export async function startServer() {
@@ -3948,7 +4085,8 @@ export async function startServer() {
   await eventBus.subscribe('finanzas.presupuesto_insuficiente', handlePresupuestoInsuficienteEvent);
   await eventBus.subscribe('finanzas.oc_pagada_total', handleOcPagadaTotalEvent);
   await eventBus.subscribe('finanzas.oc_pagada_parcial', handleOcPagadaParcialEvent);
-  console.log('[Compras] Eventos: finanzas.fondos_comprometidos, finanzas.fondos_liberados, finanzas.presupuesto_insuficiente, finanzas.oc_pagada_total, finanzas.oc_pagada_parcial');
+  await eventBus.subscribe('gerencia_tecnica.transferencia_partida_aprobada', handleTransferenciaPartidaAprobadaEvent);
+  console.log('[Compras] Eventos: finanzas.fondos_*, finanzas.oc_pagada_*, gerencia_tecnica.transferencia_partida_aprobada');
   });
 }
 

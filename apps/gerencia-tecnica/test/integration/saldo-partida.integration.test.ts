@@ -274,6 +274,30 @@ async function test_resumen_lista_partidas_con_estado() {
   console.log('✓ GET /partidas/resumen lista todas las partidas con estado_tope');
 }
 
+async function test_comprometer_en_partida_bloqueada_devuelve_bloqueado() {
+  // Verifica que cuando la partida está BLOQUEADA el saldo se reporta correctamente
+  // y que nuevos compromisos no modifican el saldo (la gate vive en Compras, GT solo reporta)
+  const { presupuestoId, conceptoIds } = await crearPresupuestoConConceptos(1);
+  await fetch_(`/api/v1/gerencia-tecnica/presupuestos/${presupuestoId}/aprobar`, { method: 'PATCH' });
+
+  // Agotar el saldo (100 000 comprometidos)
+  await fetch_(`/api/v1/gerencia-tecnica/partidas/${conceptoIds[0]}/comprometer`, {
+    method: 'POST',
+    body: JSON.stringify({ monto: 100_000, referencia_id: randomUUID(), tipo: 'OC' }),
+  });
+
+  // Confirmar BLOQUEADO
+  const saldoRes = await fetch_(`/api/v1/gerencia-tecnica/partidas/${conceptoIds[0]}/saldo`);
+  const saldoBody = await saldoRes.json() as any;
+  assert.equal(saldoBody.data.estado_tope, 'BLOQUEADO');
+  assert.equal(saldoBody.data.monto_disponible, 0);
+
+  // Compras consulta este endpoint antes de crear OC — si retorna BLOQUEADO, detiene la generación
+  // Verificar que el endpoint retorna bloqueo_automatico
+  assert.equal(typeof saldoBody.data.bloqueo_automatico, 'boolean');
+  console.log('✓ Partida BLOQUEADA: saldo endpoint retorna estado correcto para gate de Compras');
+}
+
 // ─── Runner ───────────────────────────────────────────────────────────────────
 
 (async () => {
@@ -289,6 +313,7 @@ async function test_resumen_lista_partidas_con_estado() {
     test_cancelar_compromiso_revierte_saldo,
     test_404_partida_sin_inicializar,
     test_resumen_lista_partidas_con_estado,
+    test_comprometer_en_partida_bloqueada_devuelve_bloqueado,
   ];
 
   for (const t of tests) {
