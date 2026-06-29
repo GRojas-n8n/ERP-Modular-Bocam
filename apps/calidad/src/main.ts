@@ -41,6 +41,39 @@ const upload = multer({
   },
 });
 
+// ── Workflow NC ──────────────────────────────────────────────────────────────
+function validarTransicionNC(
+  estadoActual: string,
+  estadoNuevo: string,
+  acciones: { estado: string }[],
+  rol: string,
+): { ok: true } | { ok: false; codigo: string } {
+  const transiciones: Record<string, string[]> = {
+    ABIERTA:           ['EN_ANALISIS'],
+    EN_ANALISIS:       ['ACCION_CORRECTIVA', 'CERRADA'],
+    ACCION_CORRECTIVA: ['EN_VERIFICACION'],
+    EN_VERIFICACION:   ['CERRADA', 'ACCION_CORRECTIVA'],
+    CERRADA:           [],
+  };
+
+  const permitidos = transiciones[estadoActual] ?? [];
+  if (!permitidos.includes(estadoNuevo)) {
+    return { ok: false, codigo: 'TRANSICION_NO_PERMITIDA' };
+  }
+
+  if (estadoNuevo === 'EN_VERIFICACION') {
+    const hayCompletada = acciones.some(a => a.estado === 'COMPLETADA' || a.estado === 'VERIFICADA');
+    if (!hayCompletada) return { ok: false, codigo: 'NC_SIN_ACCIONES_COMPLETADAS' };
+  }
+
+  if (estadoNuevo === 'CERRADA' && estadoActual === 'EN_VERIFICACION') {
+    const todasVerificadas = acciones.filter(a => a.estado !== 'CANCELADA').every(a => a.estado === 'VERIFICADA');
+    if (!todasVerificadas) return { ok: false, codigo: 'NC_ACCIONES_PENDIENTES_VERIFICACION' };
+  }
+
+  return { ok: true };
+}
+
 // ── App ──────────────────────────────────────────────────────────────────────
 export const app = express();
 app.use(express.json());
@@ -138,21 +171,50 @@ app.patch('/api/v1/calidad/no-conformidades/:id',
   async (req: Request, res: Response) => {
     try {
       const { tenantId, userId } = req.securityContext;
-      const { estado, causa_raiz, responsable_id, fecha_limite } = req.body;
-      const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
-        prisma.noConformidad.update({
+      const { rol } = req.securityContext as any;
+      const { estado, causa_raiz, responsable_id, fecha_limite, reabrir } = req.body;
+
+      const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const nc = await prisma.noConformidad.findUnique({
+          where: { id_nc: req.params.id },
+          include: { acciones: true },
+        });
+        if (!nc) return { notFound: true };
+
+        // Reapertura administrativa
+        if (reabrir === true) {
+          if (rol !== 'admin') return { forbidden: true, codigo: 'REABRIR_SOLO_ADMIN' };
+          const updated = await prisma.noConformidad.update({
+            where: { id_nc: req.params.id },
+            data: { estado: 'ABIERTA', fecha_cierre: null },
+            include: { acciones: true },
+          });
+          return { data: updated };
+        }
+
+        if (estado) {
+          const validacion = validarTransicionNC(nc.estado, estado, nc.acciones, rol);
+          if (!validacion.ok) return { transicionInvalida: true, codigo: validacion.codigo };
+        }
+
+        const updated = await prisma.noConformidad.update({
           where: { id_nc: req.params.id },
           data: {
-            ...(estado          && { estado }),
-            ...(causa_raiz      !== undefined && { causa_raiz }),
-            ...(responsable_id  && { responsable_id }),
-            ...(fecha_limite    !== undefined && { fecha_limite: fecha_limite ? new Date(fecha_limite) : null }),
+            ...(estado         && { estado }),
+            ...(causa_raiz     !== undefined && { causa_raiz }),
+            ...(responsable_id && { responsable_id }),
+            ...(fecha_limite   !== undefined && { fecha_limite: fecha_limite ? new Date(fecha_limite) : null }),
             ...(estado === 'CERRADA' && { fecha_cierre: new Date() }),
           },
           include: { acciones: true },
-        })
-      );
-      res.json({ success: true, data });
+        });
+        return { data: updated };
+      });
+
+      if ((result as any).notFound)          return res.status(404).json({ success: false, message: 'NC no encontrada.' });
+      if ((result as any).forbidden)         return res.status(403).json({ success: false, message: 'Solo admin puede reabrir una NC.', codigo: (result as any).codigo });
+      if ((result as any).transicionInvalida) return res.status(422).json({ success: false, message: 'Transición no permitida.', codigo: (result as any).codigo });
+      res.json({ success: true, data: (result as any).data });
     } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
   }
 );
@@ -190,6 +252,10 @@ app.patch('/api/v1/calidad/no-conformidades/:id/acciones/:aid',
           data: {
             ...(estado    && { estado }),
             ...(evidencia !== undefined && { evidencia }),
+            ...(estado === 'VERIFICADA' && {
+              verificado_por:     userId,
+              fecha_verificacion: new Date(),
+            }),
           },
         })
       );
@@ -283,6 +349,138 @@ app.post('/api/v1/calidad/auditorias/:id/hallazgos',
   }
 );
 
+// ── PATCH /auditorias/:id — workflow de estado ───────────────────────────────
+app.patch('/api/v1/calidad/auditorias/:id',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { rol } = req.securityContext as any;
+      const { estado, observaciones } = req.body;
+
+      const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const aud = await prisma.auditoriaInterna.findFirst({
+          where: { id_auditoria: req.params.id, tenant_id: tenantId },
+        });
+        if (!aud) return { notFound: true };
+
+        if (estado) {
+          const TRANSICIONES_AUD: Record<string, string[]> = {
+            PROGRAMADA:  ['EN_CURSO', 'CANCELADA'],
+            EN_CURSO:    ['COMPLETADA', 'CANCELADA'],
+            COMPLETADA:  [],
+            CANCELADA:   [],
+          };
+          const permitidos = TRANSICIONES_AUD[aud.estado] ?? [];
+          if (!permitidos.includes(estado)) {
+            return { transicionInvalida: true, estadoActual: aud.estado, permitidos };
+          }
+          if (estado === 'CANCELADA' && rol !== 'admin') {
+            return { forbidden: true };
+          }
+        }
+
+        const updated = await prisma.auditoriaInterna.update({
+          where: { id_auditoria: req.params.id },
+          data: {
+            ...(estado       && { estado }),
+            ...(observaciones !== undefined && { observaciones }),
+          },
+          include: { hallazgos: { orderBy: { created_at: 'asc' } } },
+        });
+        return { data: updated };
+      });
+
+      if ((result as any).notFound)          return res.status(404).json({ success: false, message: 'Auditoría no encontrada.' });
+      if ((result as any).forbidden)         return res.status(403).json({ success: false, message: 'Solo admin puede cancelar una auditoría.' });
+      if ((result as any).transicionInvalida) return res.status(422).json({
+        success: false,
+        message: `Transición inválida desde ${(result as any).estadoActual}. Permitidos: ${((result as any).permitidos as string[]).join(', ') || 'ninguno'}.`,
+      });
+      res.json({ success: true, data: (result as any).data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+// ── PATCH /auditorias/:id/hallazgos/:hid ────────────────────────────────────
+app.patch('/api/v1/calidad/auditorias/:id/hallazgos/:hid',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { estado, evidencia } = req.body;
+
+      const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const hallazgo = await prisma.hallazgoAuditoria.findFirst({
+          where: { id_hallazgo: req.params.hid, auditoria_id: req.params.id, tenant_id: tenantId },
+        });
+        if (!hallazgo) return { notFound: true };
+
+        const updated = await prisma.hallazgoAuditoria.update({
+          where: { id_hallazgo: req.params.hid },
+          data: {
+            ...(estado    && { estado }),
+            ...(evidencia !== undefined && { evidencia }),
+          },
+        });
+        return { data: updated };
+      });
+
+      if ((result as any).notFound) return res.status(404).json({ success: false, message: 'Hallazgo no encontrado o no pertenece a esta auditoría.' });
+      res.json({ success: true, data: (result as any).data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
+// ── POST /auditorias/:id/hallazgos/:hid/crear-nc ─────────────────────────────
+app.post('/api/v1/calidad/auditorias/:id/hallazgos/:hid/crear-nc',
+  requireRoles('calidad', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, userId } = req.securityContext;
+      const { responsable_id, fecha_limite } = req.body;
+
+      const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
+        const hallazgo = await prisma.hallazgoAuditoria.findFirst({
+          where: { id_hallazgo: req.params.hid, auditoria_id: req.params.id, tenant_id: tenantId },
+        });
+        if (!hallazgo) return { notFound: true };
+        if (hallazgo.nc_id) return { yaExiste: true, nc_id: hallazgo.nc_id };
+
+        const count = await prisma.noConformidad.count({ where: { tenant_id: tenantId } });
+        const year  = new Date().getFullYear();
+        const codigo = `NC-${year}-${String(count + 1).padStart(3, '0')}`;
+
+        const nc = await prisma.noConformidad.create({
+          data: {
+            tenant_id:     tenantId,
+            codigo,
+            titulo:        hallazgo.descripcion.slice(0, 255),
+            descripcion:   [hallazgo.descripcion, hallazgo.proceso_afectado].filter(Boolean).join('\nProceso afectado: '),
+            fuente:        'AUDITORIA',
+            estado:        'ABIERTA',
+            detectado_por: userId,
+            responsable_id: responsable_id || userId,
+            fecha_limite:  fecha_limite ? new Date(fecha_limite) : null,
+          },
+          include: { acciones: true },
+        });
+
+        const hallazgoActualizado = await prisma.hallazgoAuditoria.update({
+          where: { id_hallazgo: req.params.hid },
+          data:  { nc_id: nc.id_nc },
+        });
+
+        return { data: { nc, hallazgo: hallazgoActualizado } };
+      });
+
+      if ((result as any).notFound)  return res.status(404).json({ success: false, message: 'Hallazgo no encontrado.', codigo: 'HALLAZGO_NOT_FOUND' });
+      if ((result as any).yaExiste)  return res.status(409).json({ success: false, message: 'El hallazgo ya tiene una NC asociada.', codigo: 'HALLAZGO_YA_TIENE_NC', nc_id: (result as any).nc_id });
+      res.status(201).json({ success: true, data: (result as any).data });
+    } catch (error: any) { res.status(500).json({ success: false, message: error.message }); }
+  }
+);
+
 // ── Health ───────────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'calidad', version: '1.0.0', timestamp: new Date().toISOString() });
@@ -315,7 +513,7 @@ app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superinte
         docsPorEstado, docsPorTipo, versionesPendientes, versionesSinArchivo,
         ncsAbiertas, ncsVencidas, auditoriasProgramadas,
         ncsTotal, ncsCerradasEnPlazo,
-        ncsVencidasDetalle,
+        accionesVencidas, hallazgosMayorSinNC, auditoriasEnCurso,
       ] = await Promise.all([
         prisma.documento.groupBy({ by: ['estado_actual'], where: { tenant_id: tenantId }, _count: { _all: true } }),
         prisma.documento.groupBy({ by: ['tipo'],          where: { tenant_id: tenantId }, _count: { _all: true } }),
@@ -326,11 +524,9 @@ app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superinte
         prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, estado: 'PROGRAMADA', fecha_inicio: { gte: now, lte: en30Dias } } }),
         prisma.noConformidad.count({ where: { tenant_id: tenantId, created_at: { gte: primerDiaMes } } }),
         prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: 'CERRADA', fecha_cierre: { gte: primerDiaMes }, fecha_limite: { not: null } } }),
-        prisma.noConformidad.findMany({
-          where: { tenant_id: tenantId, estado: { not: 'CERRADA' }, fecha_limite: { lt: now } },
-          select: { id_nc: true, codigo: true, fecha_limite: true },
-          take: 5,
-        }),
+        prisma.accionCorrectiva.count({ where: { tenant_id: tenantId, estado: { notIn: ['COMPLETADA', 'VERIFICADA', 'CANCELADA'] }, fecha_compromiso: { lt: now } } }),
+        prisma.hallazgoAuditoria.count({ where: { tenant_id: tenantId, tipo: 'MAYOR', nc_id: null, estado: { not: 'CERRADO' } } }),
+        prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, estado: 'EN_CURSO' } }),
       ]);
 
       const porEstado: Record<string, number> = { BORRADOR: 0, EN_REVISION: 0, VIGENTE: 0, OBSOLETO: 0 };
@@ -341,19 +537,19 @@ app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superinte
 
       const indiceCalidad = ncsTotal > 0 ? Math.round((ncsCerradasEnPlazo / ncsTotal) * 100) : 100;
 
-      const alertas = ncsVencidasDetalle.map((nc: any) => ({
-        nc_id:        nc.id_nc,
-        folio:        nc.codigo,
-        descripcion:  `No conformidad vencida desde ${new Date(nc.fecha_limite).toLocaleDateString('es-MX')}`,
-        severidad:    'critica',
-      }));
+      const alertas: { tipo: string; count: number; mensaje: string }[] = [];
+      if (ncsVencidas > 0)          alertas.push({ tipo: 'NC_VENCIDA',             count: ncsVencidas,          mensaje: `${ncsVencidas} no conformidades vencidas sin cerrar` });
+      if (hallazgosMayorSinNC > 0)  alertas.push({ tipo: 'HALLAZGO_MAYOR_SIN_NC',  count: hallazgosMayorSinNC,  mensaje: `${hallazgosMayorSinNC} hallazgos MAYOR sin NC asociada` });
 
       return {
         // KPIs de NCs e ISO 9001
-        ncs_abiertas:            ncsAbiertas,
-        ncs_vencidas:            ncsVencidas,
-        auditorias_programadas:  auditoriasProgramadas,
-        indice_calidad:          indiceCalidad,
+        ncs_abiertas:             ncsAbiertas,
+        ncs_vencidas:             ncsVencidas,
+        acciones_vencidas:        accionesVencidas,
+        hallazgos_mayor_sin_nc:   hallazgosMayorSinNC,
+        auditorias_en_curso:      auditoriasEnCurso,
+        auditorias_programadas:   auditoriasProgramadas,
+        indice_calidad:           indiceCalidad,
         alertas,
         // Documentos (datos legacy — no eliminados para no romper)
         documentos_por_estado: porEstado,

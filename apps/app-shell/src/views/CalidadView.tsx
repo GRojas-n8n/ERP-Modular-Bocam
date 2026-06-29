@@ -64,12 +64,14 @@ interface DashboardData {
   documentos_por_tipo: Record<TipoDoc, number>;
   versiones_pendientes_revision: number;
   versiones_en_borrador_sin_archivo: number;
-  // NCs e ISO 9001
   ncs_abiertas?: number;
   ncs_vencidas?: number;
+  acciones_vencidas?: number;
+  hallazgos_mayor_sin_nc?: number;
+  auditorias_en_curso?: number;
   auditorias_programadas?: number;
   indice_calidad?: number;
-  alertas?: Array<{ nc_id: string; folio: string; descripcion: string; severidad: string }>;
+  alertas?: Array<{ tipo: string; count: number; mensaje: string }>;
 }
 
 // ── Estilos por estado/tipo ───────────────────────────────────────────────────
@@ -343,13 +345,13 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         </div>
       )}
 
-      {/* Alertas NCs vencidas */}
+      {/* Alertas ISO 9001 */}
       {dashboard?.alertas && dashboard.alertas.length > 0 && (
         <div className="space-y-2">
           {dashboard.alertas.map((a) => (
-            <div key={a.nc_id} className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-red-700">
+            <div key={a.tipo} className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-red-700">
               <IconAlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs font-bold">[{a.folio}] {a.descripcion}</span>
+              <span className="text-xs font-bold">{a.mensaje}</span>
             </div>
           ))}
         </div>
@@ -746,13 +748,14 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
 interface NC {
   id_nc: string; codigo: string; titulo: string; descripcion?: string | null; fuente: string;
-  estado: string; fecha_deteccion: string; fecha_limite?: string | null;
+  estado: string; fecha_deteccion: string; fecha_limite?: string | null; fecha_cierre?: string | null;
   responsable_id: string; causa_raiz?: string | null;
   acciones: AC[];
 }
 interface AC {
   id_accion: string; descripcion: string; estado: string;
   responsable_id: string; fecha_compromiso?: string | null; evidencia?: string | null;
+  verificado_por?: string | null; fecha_verificacion?: string | null;
 }
 
 const NC_ESTADO_COLOR: Record<string, string> = {
@@ -762,18 +765,46 @@ const NC_ESTADO_COLOR: Record<string, string> = {
   EN_VERIFICACION:   'bg-violet-500/10 text-violet-600 border-violet-500/20',
   CERRADA:           'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
 };
-const NC_ESTADOS_FLUJO = ['ABIERTA', 'EN_ANALISIS', 'ACCION_CORRECTIVA', 'EN_VERIFICACION', 'CERRADA'];
+const AC_ESTADO_COLOR: Record<string, string> = {
+  PENDIENTE:    'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  EN_PROCESO:   'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  COMPLETADA:   'bg-teal-500/10 text-teal-600 border-teal-500/20',
+  VERIFICADA:   'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  CANCELADA:    'bg-muted/50 text-muted-foreground border-border/30',
+};
+const NC_TRANSICIONES: Record<string, string[]> = {
+  ABIERTA:           ['EN_ANALISIS'],
+  EN_ANALISIS:       ['ACCION_CORRECTIVA', 'CERRADA'],
+  ACCION_CORRECTIVA: ['EN_VERIFICACION'],
+  EN_VERIFICACION:   ['CERRADA', 'ACCION_CORRECTIVA'],
+  CERRADA:           [],
+};
+
+function ncTransicionTooltip(nc: NC, estadoDestino: string): string | undefined {
+  if (estadoDestino === 'EN_VERIFICACION') {
+    const hayCompletada = nc.acciones.some(a => a.estado === 'COMPLETADA' || a.estado === 'VERIFICADA');
+    if (!hayCompletada) return 'Requiere al menos 1 acción COMPLETADA';
+  }
+  if (estadoDestino === 'CERRADA' && nc.estado === 'EN_VERIFICACION') {
+    const todasVerificadas = nc.acciones.filter(a => a.estado !== 'CANCELADA').every(a => a.estado === 'VERIFICADA');
+    if (!todasVerificadas) return 'Requiere todas las acciones VERIFICADAS';
+  }
+  return undefined;
+}
 
 const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDemo, canEdit }) => {
   const { notify } = useNotification();
-  const [ncs, setNcs]             = useState<NC[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [selected, setSelected]   = useState<NC | null>(null);
+  const [ncs, setNcs]               = useState<NC[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [selected, setSelected]     = useState<NC | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [form, setForm]           = useState({ titulo: '', descripcion: '', fuente: 'INTERNA', fecha_limite: '' });
-  const [acForm, setAcForm]       = useState({ descripcion: '', fecha_compromiso: '' });
+  const [saving, setSaving]         = useState(false);
+  const [form, setForm]             = useState({ titulo: '', descripcion: '', fuente: 'INTERNA', fecha_limite: '' });
+  const [acForm, setAcForm]         = useState({ descripcion: '', fecha_compromiso: '' });
   const [showAcForm, setShowAcForm] = useState(false);
+  const [causaEdit, setCausaEdit]   = useState(false);
+  const [causaText, setCausaText]   = useState('');
+  const [acEstadoLoading, setAcEstadoLoading] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (isDemo) { setNcs([]); setLoading(false); return; }
@@ -785,6 +816,15 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ 
   }, [isDemo]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const reloadSelected = async (ncId: string) => {
+    try {
+      const r = await api.get(`/api/v1/calidad/no-conformidades/${ncId}`);
+      const nc = r.data.data as NC;
+      setSelected(nc);
+      setNcs(prev => prev.map(x => x.id_nc === nc.id_nc ? nc : x));
+    } catch { /* silencioso */ }
+  };
 
   const handleCreate = async () => {
     if (!form.titulo) return;
@@ -800,11 +840,23 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ 
   };
 
   const handleEstado = async (nc: NC, estado: string) => {
+    const tooltip = ncTransicionTooltip(nc, estado);
+    if (tooltip) { notify({ title: tooltip, type: 'error' }); return; }
     try {
       await api.patch(`/api/v1/calidad/no-conformidades/${nc.id_nc}`, { estado });
       notify({ title: `NC ${nc.codigo} → ${estado}`, type: 'success' });
+      await reloadSelected(nc.id_nc);
       void load();
-      setSelected(prev => prev ? { ...prev, estado } : null);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+  };
+
+  const handleCausaRaiz = async () => {
+    if (!selected) return;
+    try {
+      await api.patch(`/api/v1/calidad/no-conformidades/${selected.id_nc}`, { causa_raiz: causaText });
+      notify({ title: 'Causa raíz guardada.', type: 'success' });
+      setCausaEdit(false);
+      await reloadSelected(selected.id_nc);
     } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
   };
 
@@ -816,10 +868,30 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ 
       notify({ title: 'Acción correctiva agregada.', type: 'success' });
       setAcForm({ descripcion: '', fecha_compromiso: '' });
       setShowAcForm(false);
+      await reloadSelected(selected.id_nc);
       void load();
     } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
     finally { setSaving(false); }
   };
+
+  const handleAcEstado = async (nc: NC, acId: string, estado: string) => {
+    setAcEstadoLoading(acId);
+    try {
+      await api.patch(`/api/v1/calidad/no-conformidades/${nc.id_nc}/acciones/${acId}`, { estado });
+      notify({ title: `Acción → ${estado}`, type: 'success' });
+      await reloadSelected(nc.id_nc);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setAcEstadoLoading(null); }
+  };
+
+  const openDetalle = (nc: NC) => {
+    setSelected(nc);
+    setCausaEdit(false);
+    setCausaText(nc.causa_raiz ?? '');
+    setShowAcForm(false);
+  };
+
+  const hoy = new Date();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -853,22 +925,30 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20">
-                  {ncs.map(nc => (
-                    <tr key={nc.id_nc} onClick={() => setSelected(nc)}
-                      className="cursor-pointer hover:bg-primary/[0.02] transition-colors">
-                      <td className="px-4 py-3 font-black text-primary text-sm">{nc.codigo}</td>
-                      <td className="px-4 py-3 text-sm text-foreground max-w-xs truncate">{nc.titulo}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{nc.fuente}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', NC_ESTADO_COLOR[nc.estado] || 'bg-muted text-muted-foreground')}>{nc.estado.replace('_', ' ')}</span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {nc.fecha_limite ? new Date(nc.fecha_limite).toLocaleDateString('es-MX') : '—'}
-                      </td>
-                    </tr>
-                  ))}
+                  {ncs.map(nc => {
+                    const vencida = nc.fecha_limite && nc.estado !== 'CERRADA' && new Date(nc.fecha_limite) < hoy;
+                    return (
+                      <tr key={nc.id_nc} onClick={() => openDetalle(nc)}
+                        className="cursor-pointer hover:bg-primary/[0.02] transition-colors">
+                        <td className="px-4 py-3 font-black text-primary text-sm">{nc.codigo}</td>
+                        <td className="px-4 py-3 text-sm text-foreground max-w-xs truncate">{nc.titulo}</td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{nc.fuente}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', NC_ESTADO_COLOR[nc.estado] || 'bg-muted text-muted-foreground')}>{nc.estado.replace('_', ' ')}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {nc.fecha_limite ? (
+                            <span className={cn(vencida ? 'font-black text-red-600' : 'text-muted-foreground')}>
+                              {new Date(nc.fecha_limite).toLocaleDateString('es-MX')}
+                              {vencida && ' ⚠'}
+                            </span>
+                          ) : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -879,38 +959,128 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ 
       {/* Detalle NC */}
       {selected && (
         <SlidePanel isOpen title={`${selected.codigo} — ${selected.titulo}`} onClose={() => setSelected(null)} accentColor="indigo">
-          <div className="space-y-4">
-            <div className="flex gap-2 flex-wrap">
-              {NC_ESTADOS_FLUJO.map(e => (
-                <button key={e} disabled={selected.estado === e || !canEdit}
-                  onClick={() => void handleEstado(selected, e)}
-                  className={cn('rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-widest transition-all',
-                    selected.estado === e ? NC_ESTADO_COLOR[e] : 'border-border/40 text-muted-foreground hover:border-primary/40 disabled:opacity-40')}>
-                  {e.replace('_', ' ')}
-                </button>
-              ))}
+          <div className="space-y-5">
+            {/* Header: estado + badge VENCIDA */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={cn('rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-widest', NC_ESTADO_COLOR[selected.estado] || 'bg-muted text-muted-foreground')}>
+                {selected.estado.replace('_', ' ')}
+              </span>
+              {selected.fecha_limite && selected.estado !== 'CERRADA' && new Date(selected.fecha_limite) < hoy && (
+                <span className="rounded-full border border-red-600 bg-red-600/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-red-700">
+                  VENCIDA
+                </span>
+              )}
+              {selected.fecha_limite && (
+                <span className="text-[10px] text-muted-foreground">
+                  Límite: {new Date(selected.fecha_limite).toLocaleDateString('es-MX')}
+                </span>
+              )}
             </div>
+
+            {/* Botones de transición con tooltip de precondición */}
+            {canEdit && selected.estado !== 'CERRADA' && (
+              <div className="flex gap-2 flex-wrap">
+                {(NC_TRANSICIONES[selected.estado] ?? []).map(destino => {
+                  const tooltip = ncTransicionTooltip(selected, destino);
+                  return (
+                    <button
+                      key={destino}
+                      disabled={!!tooltip}
+                      title={tooltip}
+                      onClick={() => void handleEstado(selected, destino)}
+                      className={cn(
+                        'rounded-xl border px-3 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all',
+                        tooltip ? 'cursor-not-allowed border-border/30 opacity-40' : 'border-primary/40 text-primary hover:bg-primary/10 active:scale-95',
+                      )}
+                    >
+                      → {destino.replace(/_/g, ' ')}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Descripción */}
             {selected.descripcion && <p className="text-sm text-muted-foreground">{selected.descripcion}</p>}
+
+            {/* Causa Raíz */}
+            <div className="rounded-xl border border-border/30 bg-muted/20 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Causa Raíz</p>
+                {canEdit && !causaEdit && (
+                  <button onClick={() => { setCausaEdit(true); setCausaText(selected.causa_raiz ?? ''); }}
+                    className="text-[10px] font-black text-primary hover:opacity-80">Editar</button>
+                )}
+              </div>
+              {causaEdit ? (
+                <div className="space-y-2">
+                  <textarea value={causaText} onChange={e => setCausaText(e.target.value)} rows={3}
+                    placeholder="Describe la causa raíz de esta no conformidad..."
+                    className="w-full rounded-lg border border-border/40 bg-background p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <div className="flex gap-2">
+                    <button onClick={() => void handleCausaRaiz()}
+                      className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-black uppercase text-primary-foreground hover:opacity-90">
+                      Guardar
+                    </button>
+                    <button onClick={() => setCausaEdit(false)} className="text-[10px] text-muted-foreground hover:text-foreground">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-foreground">
+                  {selected.causa_raiz || <span className="italic text-muted-foreground">Sin causa raíz documentada.</span>}
+                </p>
+              )}
+            </div>
+
+            {/* Acciones Correctivas */}
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Acciones Correctivas ({selected.acciones.length})</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3">
+                Acciones Correctivas ({selected.acciones.length})
+              </p>
               {selected.acciones.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">Sin acciones correctivas aún.</p>
               ) : (
                 <div className="space-y-2">
                   {selected.acciones.map(ac => (
-                    <div key={ac.id_accion} className="rounded-lg border border-border/30 bg-muted/20 p-3">
+                    <div key={ac.id_accion} className="rounded-lg border border-border/30 bg-muted/20 p-3 space-y-2">
                       <p className="text-sm text-foreground">{ac.descripcion}</p>
-                      <span className={cn('mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest',
-                        ac.estado === 'COMPLETADA' || ac.estado === 'VERIFICADA' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600')}>
-                        {ac.estado}
-                      </span>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        {/* Badge estado clicable */}
+                        {canEdit ? (
+                          <select
+                            value={ac.estado}
+                            disabled={acEstadoLoading === ac.id_accion}
+                            onChange={e => void handleAcEstado(selected, ac.id_accion, e.target.value)}
+                            className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest cursor-pointer bg-background disabled:opacity-50',
+                              AC_ESTADO_COLOR[ac.estado] || 'bg-muted text-muted-foreground')}
+                          >
+                            {['PENDIENTE', 'EN_PROCESO', 'COMPLETADA', 'VERIFICADA', 'CANCELADA'].map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', AC_ESTADO_COLOR[ac.estado] || 'bg-muted text-muted-foreground')}>
+                            {ac.estado}
+                          </span>
+                        )}
+                        {ac.fecha_compromiso && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Compromiso: {new Date(ac.fecha_compromiso).toLocaleDateString('es-MX')}
+                          </span>
+                        )}
+                      </div>
+                      {ac.verificado_por && (
+                        <p className="text-[10px] text-emerald-600">
+                          ✓ Verificado {ac.fecha_verificacion ? `el ${new Date(ac.fecha_verificacion).toLocaleDateString('es-MX')}` : ''}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
               {canEdit && !showAcForm && (
                 <button onClick={() => setShowAcForm(true)}
-                  className="mt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80">
+                  className="mt-3 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80">
                   <IconPlus className="h-3 w-3" /> Agregar acción
                 </button>
               )}
@@ -978,7 +1148,7 @@ interface Auditoria {
 }
 interface Hallazgo {
   id_hallazgo: string; descripcion: string; tipo: string;
-  proceso_afectado?: string | null; estado: string;
+  proceso_afectado?: string | null; estado: string; nc_id?: string | null;
 }
 
 const AUD_ESTADO_COLOR: Record<string, string> = {
@@ -995,14 +1165,17 @@ const HALLAZGO_COLOR: Record<string, string> = {
 
 const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDemo, canEdit }) => {
   const { notify } = useNotification();
-  const [auditorias, setAuditorias] = useState<Auditoria[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [selected, setSelected]     = useState<Auditoria | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [saving, setSaving]         = useState(false);
-  const [form, setForm]             = useState({ titulo: '', alcance: '', criterios: '', fecha_inicio: '', fecha_fin: '' });
-  const [hForm, setHForm]           = useState({ descripcion: '', tipo: 'MENOR', proceso_afectado: '' });
-  const [showHForm, setShowHForm]   = useState(false);
+  const [auditorias, setAuditorias]     = useState<Auditoria[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [selected, setSelected]         = useState<Auditoria | null>(null);
+  const [showCreate, setShowCreate]     = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [audWfLoading, setAudWfLoading] = useState(false);
+  const [hEstadoLoading, setHEstadoLoading] = useState<string | null>(null);
+  const [crearNcLoading, setCrearNcLoading] = useState<string | null>(null);
+  const [form, setForm]                 = useState({ titulo: '', alcance: '', criterios: '', fecha_inicio: '', fecha_fin: '' });
+  const [hForm, setHForm]               = useState({ descripcion: '', tipo: 'MENOR', proceso_afectado: '' });
+  const [showHForm, setShowHForm]       = useState(false);
 
   const load = useCallback(async () => {
     if (isDemo) { setAuditorias([]); setLoading(false); return; }
@@ -1016,7 +1189,9 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDem
   const loadDetail = useCallback(async (id: string) => {
     try {
       const r = await api.get(`/api/v1/calidad/auditorias/${id}`);
-      setSelected(r.data.data);
+      const aud = r.data.data as Auditoria;
+      setSelected(aud);
+      setAuditorias(prev => prev.map(a => a.id_auditoria === aud.id_auditoria ? { ...a, estado: aud.estado } : a));
     } catch { /* silencioso */ }
   }, []);
 
@@ -1033,6 +1208,39 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDem
       void load();
     } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
     finally { setSaving(false); }
+  };
+
+  const handleAudEstado = async (estado: string) => {
+    if (!selected) return;
+    setAudWfLoading(true);
+    try {
+      await api.patch(`/api/v1/calidad/auditorias/${selected.id_auditoria}`, { estado });
+      notify({ title: `Auditoría → ${estado.replace('_', ' ')}`, type: 'success' });
+      await loadDetail(selected.id_auditoria);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setAudWfLoading(false); }
+  };
+
+  const handleHallazgoEstado = async (hid: string, estado: string) => {
+    if (!selected) return;
+    setHEstadoLoading(hid);
+    try {
+      await api.patch(`/api/v1/calidad/auditorias/${selected.id_auditoria}/hallazgos/${hid}`, { estado });
+      notify({ title: `Hallazgo → ${estado}`, type: 'success' });
+      await loadDetail(selected.id_auditoria);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setHEstadoLoading(null); }
+  };
+
+  const handleCrearNC = async (hid: string) => {
+    if (!selected) return;
+    setCrearNcLoading(hid);
+    try {
+      await api.post(`/api/v1/calidad/auditorias/${selected.id_auditoria}/hallazgos/${hid}/crear-nc`, {});
+      notify({ title: 'NC creada desde hallazgo.', type: 'success' });
+      await loadDetail(selected.id_auditoria);
+    } catch (e: any) { notify({ title: e.response?.data?.message || 'Error.', type: 'error' }); }
+    finally { setCrearNcLoading(null); }
   };
 
   const handleAddHallazgo = async () => {
@@ -1104,13 +1312,46 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDem
       {/* Detalle Auditoría */}
       {selected && (
         <SlidePanel isOpen title={`${selected.codigo} — ${selected.titulo}`} onClose={() => setSelected(null)} accentColor="emerald">
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Estado actual */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={cn('rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-widest', AUD_ESTADO_COLOR[selected.estado] || 'bg-muted text-muted-foreground')}>
+                {selected.estado.replace('_', ' ')}
+              </span>
+            </div>
+
+            {/* Botones de workflow */}
+            {canEdit && (
+              <div className="flex gap-2 flex-wrap">
+                {selected.estado === 'PROGRAMADA' && (
+                  <button onClick={() => void handleAudEstado('EN_CURSO')} disabled={audWfLoading}
+                    className="rounded-xl bg-amber-500 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-amber-400 disabled:opacity-50">
+                    Iniciar auditoría
+                  </button>
+                )}
+                {selected.estado === 'EN_CURSO' && (
+                  <button onClick={() => void handleAudEstado('COMPLETADA')} disabled={audWfLoading}
+                    className="rounded-xl bg-emerald-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-emerald-500 disabled:opacity-50">
+                    Completar auditoría
+                  </button>
+                )}
+                {(selected.estado === 'PROGRAMADA' || selected.estado === 'EN_CURSO') && (
+                  <button onClick={() => void handleAudEstado('CANCELADA')} disabled={audWfLoading}
+                    className="rounded-xl border border-border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted disabled:opacity-50">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            )}
+
             {selected.alcance && (
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Alcance</p>
                 <p className="text-sm text-foreground">{selected.alcance}</p>
               </div>
             )}
+
+            {/* Hallazgos */}
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
                 Hallazgos ({selected.hallazgos?.length ?? 0})
@@ -1120,12 +1361,43 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDem
               ) : (
                 <div className="space-y-2">
                   {selected.hallazgos!.map(h => (
-                    <div key={h.id_hallazgo} className="rounded-lg border border-border/30 bg-muted/20 p-3">
+                    <div key={h.id_hallazgo} className="rounded-lg border border-border/30 bg-muted/20 p-3 space-y-2">
                       <div className="flex items-start gap-2">
                         <span className={cn('mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', HALLAZGO_COLOR[h.tipo] || 'bg-muted text-muted-foreground')}>{h.tipo}</span>
-                        <p className="text-sm text-foreground">{h.descripcion}</p>
+                        <p className="text-sm text-foreground flex-1">{h.descripcion}</p>
                       </div>
-                      {h.proceso_afectado && <p className="mt-1 text-[10px] text-muted-foreground">Proceso: {h.proceso_afectado}</p>}
+                      {h.proceso_afectado && <p className="text-[10px] text-muted-foreground">Proceso: {h.proceso_afectado}</p>}
+
+                      {/* Estado clicable + botón Crear NC */}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        {canEdit ? (
+                          <select
+                            value={h.estado}
+                            disabled={hEstadoLoading === h.id_hallazgo}
+                            onChange={e => void handleHallazgoEstado(h.id_hallazgo, e.target.value)}
+                            className="rounded-full border border-border/40 bg-background px-2 py-0.5 text-[9px] font-black uppercase tracking-widest cursor-pointer disabled:opacity-50"
+                          >
+                            {['ABIERTO', 'EN_SEGUIMIENTO', 'CERRADO'].map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <span className="rounded-full border border-border/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{h.estado}</span>
+                        )}
+
+                        {/* Crear NC o badge NC existente */}
+                        {h.nc_id ? (
+                          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black text-emerald-700">
+                            NC vinculada
+                          </span>
+                        ) : canEdit ? (
+                          <button
+                            onClick={() => void handleCrearNC(h.id_hallazgo)}
+                            disabled={crearNcLoading === h.id_hallazgo}
+                            className="rounded-full border border-primary/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 disabled:opacity-50"
+                          >
+                            {crearNcLoading === h.id_hallazgo ? '...' : '→ Crear NC'}
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>

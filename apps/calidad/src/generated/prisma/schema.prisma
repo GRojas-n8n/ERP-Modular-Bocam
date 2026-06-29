@@ -94,17 +94,19 @@ model NoConformidad {
 
 // --- Acciones Correctivas ---
 model AccionCorrectiva {
-  id_accion        String        @id @default(uuid()) @db.Uuid
-  tenant_id        String        @db.Uuid
-  nc_id            String        @db.Uuid
-  nc               NoConformidad @relation(fields: [nc_id], references: [id_nc], onDelete: Cascade)
-  descripcion      String        @db.Text
-  responsable_id   String        @db.Uuid
-  fecha_compromiso DateTime?
-  estado           String        @default("PENDIENTE") // PENDIENTE|EN_PROCESO|COMPLETADA|VERIFICADA|CANCELADA
-  evidencia        String?       @db.Text
-  created_at       DateTime      @default(now())
-  updated_at       DateTime      @updatedAt
+  id_accion          String        @id @default(uuid()) @db.Uuid
+  tenant_id          String        @db.Uuid
+  nc_id              String        @db.Uuid
+  nc                 NoConformidad @relation(fields: [nc_id], references: [id_nc], onDelete: Cascade)
+  descripcion        String        @db.Text
+  responsable_id     String        @db.Uuid
+  fecha_compromiso   DateTime?
+  estado             String        @default("PENDIENTE") // PENDIENTE|EN_PROCESO|COMPLETADA|VERIFICADA|CANCELADA
+  evidencia          String?       @db.Text
+  verificado_por     String?       @db.Uuid
+  fecha_verificacion DateTime?
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
 
   @@index([nc_id])
   @@index([tenant_id])
@@ -148,6 +150,7 @@ model HallazgoAuditoria {
   evidencia        String?          @db.Text
   accion_requerida String?          @db.Text
   estado           String           @default("ABIERTO") // ABIERTO|EN_SEGUIMIENTO|CERRADO
+  nc_id            String?          @db.Uuid
   created_at       DateTime         @default(now())
 
   @@index([auditoria_id])

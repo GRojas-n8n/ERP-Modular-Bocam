@@ -184,6 +184,8 @@ exports.Prisma.AccionCorrectivaScalarFieldEnum = {
   fecha_compromiso: 'fecha_compromiso',
   estado: 'estado',
   evidencia: 'evidencia',
+  verificado_por: 'verificado_por',
+  fecha_verificacion: 'fecha_verificacion',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };
@@ -215,6 +217,7 @@ exports.Prisma.HallazgoAuditoriaScalarFieldEnum = {
   evidencia: 'evidencia',
   accion_requerida: 'accion_requerida',
   estado: 'estado',
+  nc_id: 'nc_id',
   created_at: 'created_at'
 };
 

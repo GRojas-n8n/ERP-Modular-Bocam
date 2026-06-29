@@ -103,6 +103,8 @@ model AccionCorrectiva {
   fecha_compromiso  DateTime?
   estado            String         @default("PENDIENTE")  // PENDIENTE|EN_PROCESO|COMPLETADA|VERIFICADA|CANCELADA
   evidencia         String?        @db.Text
+  verificado_por    String?        @db.Uuid
+  fecha_verificacion DateTime?
   created_at        DateTime       @default(now())
   updated_at        DateTime       @updatedAt
 
@@ -148,6 +150,7 @@ model HallazgoAuditoria {
   evidencia         String?          @db.Text
   accion_requerida  String?          @db.Text
   estado            String           @default("ABIERTO")  // ABIERTO|EN_SEGUIMIENTO|CERRADO
+  nc_id             String?          @db.Uuid
   created_at        DateTime         @default(now())
 
   @@index([auditoria_id])

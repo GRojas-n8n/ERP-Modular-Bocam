@@ -4595,6 +4595,8 @@ export namespace Prisma {
     fecha_compromiso: Date | null
     estado: string | null
     evidencia: string | null
+    verificado_por: string | null
+    fecha_verificacion: Date | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -4608,6 +4610,8 @@ export namespace Prisma {
     fecha_compromiso: Date | null
     estado: string | null
     evidencia: string | null
+    verificado_por: string | null
+    fecha_verificacion: Date | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -4621,6 +4625,8 @@ export namespace Prisma {
     fecha_compromiso: number
     estado: number
     evidencia: number
+    verificado_por: number
+    fecha_verificacion: number
     created_at: number
     updated_at: number
     _all: number
@@ -4636,6 +4642,8 @@ export namespace Prisma {
     fecha_compromiso?: true
     estado?: true
     evidencia?: true
+    verificado_por?: true
+    fecha_verificacion?: true
     created_at?: true
     updated_at?: true
   }
@@ -4649,6 +4657,8 @@ export namespace Prisma {
     fecha_compromiso?: true
     estado?: true
     evidencia?: true
+    verificado_por?: true
+    fecha_verificacion?: true
     created_at?: true
     updated_at?: true
   }
@@ -4662,6 +4672,8 @@ export namespace Prisma {
     fecha_compromiso?: true
     estado?: true
     evidencia?: true
+    verificado_por?: true
+    fecha_verificacion?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -4748,6 +4760,8 @@ export namespace Prisma {
     fecha_compromiso: Date | null
     estado: string
     evidencia: string | null
+    verificado_por: string | null
+    fecha_verificacion: Date | null
     created_at: Date
     updated_at: Date
     _count: AccionCorrectivaCountAggregateOutputType | null
@@ -4778,6 +4792,8 @@ export namespace Prisma {
     fecha_compromiso?: boolean
     estado?: boolean
     evidencia?: boolean
+    verificado_por?: boolean
+    fecha_verificacion?: boolean
     created_at?: boolean
     updated_at?: boolean
     nc?: boolean | NoConformidadDefaultArgs<ExtArgs>
@@ -4792,6 +4808,8 @@ export namespace Prisma {
     fecha_compromiso?: boolean
     estado?: boolean
     evidencia?: boolean
+    verificado_por?: boolean
+    fecha_verificacion?: boolean
     created_at?: boolean
     updated_at?: boolean
     nc?: boolean | NoConformidadDefaultArgs<ExtArgs>
@@ -4806,6 +4824,8 @@ export namespace Prisma {
     fecha_compromiso?: boolean
     estado?: boolean
     evidencia?: boolean
+    verificado_por?: boolean
+    fecha_verificacion?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
@@ -4831,6 +4851,8 @@ export namespace Prisma {
       fecha_compromiso: Date | null
       estado: string
       evidencia: string | null
+      verificado_por: string | null
+      fecha_verificacion: Date | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["accionCorrectiva"]>
@@ -5235,6 +5257,8 @@ export namespace Prisma {
     readonly fecha_compromiso: FieldRef<"AccionCorrectiva", 'DateTime'>
     readonly estado: FieldRef<"AccionCorrectiva", 'String'>
     readonly evidencia: FieldRef<"AccionCorrectiva", 'String'>
+    readonly verificado_por: FieldRef<"AccionCorrectiva", 'String'>
+    readonly fecha_verificacion: FieldRef<"AccionCorrectiva", 'DateTime'>
     readonly created_at: FieldRef<"AccionCorrectiva", 'DateTime'>
     readonly updated_at: FieldRef<"AccionCorrectiva", 'DateTime'>
   }
@@ -6645,6 +6669,7 @@ export namespace Prisma {
     evidencia: string | null
     accion_requerida: string | null
     estado: string | null
+    nc_id: string | null
     created_at: Date | null
   }
 
@@ -6658,6 +6683,7 @@ export namespace Prisma {
     evidencia: string | null
     accion_requerida: string | null
     estado: string | null
+    nc_id: string | null
     created_at: Date | null
   }
 
@@ -6671,6 +6697,7 @@ export namespace Prisma {
     evidencia: number
     accion_requerida: number
     estado: number
+    nc_id: number
     created_at: number
     _all: number
   }
@@ -6686,6 +6713,7 @@ export namespace Prisma {
     evidencia?: true
     accion_requerida?: true
     estado?: true
+    nc_id?: true
     created_at?: true
   }
 
@@ -6699,6 +6727,7 @@ export namespace Prisma {
     evidencia?: true
     accion_requerida?: true
     estado?: true
+    nc_id?: true
     created_at?: true
   }
 
@@ -6712,6 +6741,7 @@ export namespace Prisma {
     evidencia?: true
     accion_requerida?: true
     estado?: true
+    nc_id?: true
     created_at?: true
     _all?: true
   }
@@ -6798,6 +6828,7 @@ export namespace Prisma {
     evidencia: string | null
     accion_requerida: string | null
     estado: string
+    nc_id: string | null
     created_at: Date
     _count: HallazgoAuditoriaCountAggregateOutputType | null
     _min: HallazgoAuditoriaMinAggregateOutputType | null
@@ -6828,6 +6859,7 @@ export namespace Prisma {
     evidencia?: boolean
     accion_requerida?: boolean
     estado?: boolean
+    nc_id?: boolean
     created_at?: boolean
     auditoria?: boolean | AuditoriaInternaDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["hallazgoAuditoria"]>
@@ -6842,6 +6874,7 @@ export namespace Prisma {
     evidencia?: boolean
     accion_requerida?: boolean
     estado?: boolean
+    nc_id?: boolean
     created_at?: boolean
     auditoria?: boolean | AuditoriaInternaDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["hallazgoAuditoria"]>
@@ -6856,6 +6889,7 @@ export namespace Prisma {
     evidencia?: boolean
     accion_requerida?: boolean
     estado?: boolean
+    nc_id?: boolean
     created_at?: boolean
   }
 
@@ -6881,6 +6915,7 @@ export namespace Prisma {
       evidencia: string | null
       accion_requerida: string | null
       estado: string
+      nc_id: string | null
       created_at: Date
     }, ExtArgs["result"]["hallazgoAuditoria"]>
     composites: {}
@@ -7285,6 +7320,7 @@ export namespace Prisma {
     readonly evidencia: FieldRef<"HallazgoAuditoria", 'String'>
     readonly accion_requerida: FieldRef<"HallazgoAuditoria", 'String'>
     readonly estado: FieldRef<"HallazgoAuditoria", 'String'>
+    readonly nc_id: FieldRef<"HallazgoAuditoria", 'String'>
     readonly created_at: FieldRef<"HallazgoAuditoria", 'DateTime'>
   }
     
@@ -7703,6 +7739,8 @@ export namespace Prisma {
     fecha_compromiso: 'fecha_compromiso',
     estado: 'estado',
     evidencia: 'evidencia',
+    verificado_por: 'verificado_por',
+    fecha_verificacion: 'fecha_verificacion',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -7740,6 +7778,7 @@ export namespace Prisma {
     evidencia: 'evidencia',
     accion_requerida: 'accion_requerida',
     estado: 'estado',
+    nc_id: 'nc_id',
     created_at: 'created_at'
   };
 
@@ -8161,6 +8200,8 @@ export namespace Prisma {
     fecha_compromiso?: DateTimeNullableFilter<"AccionCorrectiva"> | Date | string | null
     estado?: StringFilter<"AccionCorrectiva"> | string
     evidencia?: StringNullableFilter<"AccionCorrectiva"> | string | null
+    verificado_por?: UuidNullableFilter<"AccionCorrectiva"> | string | null
+    fecha_verificacion?: DateTimeNullableFilter<"AccionCorrectiva"> | Date | string | null
     created_at?: DateTimeFilter<"AccionCorrectiva"> | Date | string
     updated_at?: DateTimeFilter<"AccionCorrectiva"> | Date | string
     nc?: XOR<NoConformidadRelationFilter, NoConformidadWhereInput>
@@ -8175,6 +8216,8 @@ export namespace Prisma {
     fecha_compromiso?: SortOrderInput | SortOrder
     estado?: SortOrder
     evidencia?: SortOrderInput | SortOrder
+    verificado_por?: SortOrderInput | SortOrder
+    fecha_verificacion?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     nc?: NoConformidadOrderByWithRelationInput
@@ -8192,6 +8235,8 @@ export namespace Prisma {
     fecha_compromiso?: DateTimeNullableFilter<"AccionCorrectiva"> | Date | string | null
     estado?: StringFilter<"AccionCorrectiva"> | string
     evidencia?: StringNullableFilter<"AccionCorrectiva"> | string | null
+    verificado_por?: UuidNullableFilter<"AccionCorrectiva"> | string | null
+    fecha_verificacion?: DateTimeNullableFilter<"AccionCorrectiva"> | Date | string | null
     created_at?: DateTimeFilter<"AccionCorrectiva"> | Date | string
     updated_at?: DateTimeFilter<"AccionCorrectiva"> | Date | string
     nc?: XOR<NoConformidadRelationFilter, NoConformidadWhereInput>
@@ -8206,6 +8251,8 @@ export namespace Prisma {
     fecha_compromiso?: SortOrderInput | SortOrder
     estado?: SortOrder
     evidencia?: SortOrderInput | SortOrder
+    verificado_por?: SortOrderInput | SortOrder
+    fecha_verificacion?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: AccionCorrectivaCountOrderByAggregateInput
@@ -8225,6 +8272,8 @@ export namespace Prisma {
     fecha_compromiso?: DateTimeNullableWithAggregatesFilter<"AccionCorrectiva"> | Date | string | null
     estado?: StringWithAggregatesFilter<"AccionCorrectiva"> | string
     evidencia?: StringNullableWithAggregatesFilter<"AccionCorrectiva"> | string | null
+    verificado_por?: UuidNullableWithAggregatesFilter<"AccionCorrectiva"> | string | null
+    fecha_verificacion?: DateTimeNullableWithAggregatesFilter<"AccionCorrectiva"> | Date | string | null
     created_at?: DateTimeWithAggregatesFilter<"AccionCorrectiva"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"AccionCorrectiva"> | Date | string
   }
@@ -8343,6 +8392,7 @@ export namespace Prisma {
     evidencia?: StringNullableFilter<"HallazgoAuditoria"> | string | null
     accion_requerida?: StringNullableFilter<"HallazgoAuditoria"> | string | null
     estado?: StringFilter<"HallazgoAuditoria"> | string
+    nc_id?: UuidNullableFilter<"HallazgoAuditoria"> | string | null
     created_at?: DateTimeFilter<"HallazgoAuditoria"> | Date | string
     auditoria?: XOR<AuditoriaInternaRelationFilter, AuditoriaInternaWhereInput>
   }
@@ -8357,6 +8407,7 @@ export namespace Prisma {
     evidencia?: SortOrderInput | SortOrder
     accion_requerida?: SortOrderInput | SortOrder
     estado?: SortOrder
+    nc_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     auditoria?: AuditoriaInternaOrderByWithRelationInput
   }
@@ -8374,6 +8425,7 @@ export namespace Prisma {
     evidencia?: StringNullableFilter<"HallazgoAuditoria"> | string | null
     accion_requerida?: StringNullableFilter<"HallazgoAuditoria"> | string | null
     estado?: StringFilter<"HallazgoAuditoria"> | string
+    nc_id?: UuidNullableFilter<"HallazgoAuditoria"> | string | null
     created_at?: DateTimeFilter<"HallazgoAuditoria"> | Date | string
     auditoria?: XOR<AuditoriaInternaRelationFilter, AuditoriaInternaWhereInput>
   }, "id_hallazgo">
@@ -8388,6 +8440,7 @@ export namespace Prisma {
     evidencia?: SortOrderInput | SortOrder
     accion_requerida?: SortOrderInput | SortOrder
     estado?: SortOrder
+    nc_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     _count?: HallazgoAuditoriaCountOrderByAggregateInput
     _max?: HallazgoAuditoriaMaxOrderByAggregateInput
@@ -8407,6 +8460,7 @@ export namespace Prisma {
     evidencia?: StringNullableWithAggregatesFilter<"HallazgoAuditoria"> | string | null
     accion_requerida?: StringNullableWithAggregatesFilter<"HallazgoAuditoria"> | string | null
     estado?: StringWithAggregatesFilter<"HallazgoAuditoria"> | string
+    nc_id?: UuidNullableWithAggregatesFilter<"HallazgoAuditoria"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"HallazgoAuditoria"> | Date | string
   }
 
@@ -8796,6 +8850,8 @@ export namespace Prisma {
     fecha_compromiso?: Date | string | null
     estado?: string
     evidencia?: string | null
+    verificado_por?: string | null
+    fecha_verificacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
     nc: NoConformidadCreateNestedOneWithoutAccionesInput
@@ -8810,6 +8866,8 @@ export namespace Prisma {
     fecha_compromiso?: Date | string | null
     estado?: string
     evidencia?: string | null
+    verificado_por?: string | null
+    fecha_verificacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -8822,6 +8880,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     nc?: NoConformidadUpdateOneRequiredWithoutAccionesNestedInput
@@ -8836,6 +8896,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8849,6 +8911,8 @@ export namespace Prisma {
     fecha_compromiso?: Date | string | null
     estado?: string
     evidencia?: string | null
+    verificado_por?: string | null
+    fecha_verificacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -8861,6 +8925,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -8874,6 +8940,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9010,6 +9078,7 @@ export namespace Prisma {
     evidencia?: string | null
     accion_requerida?: string | null
     estado?: string
+    nc_id?: string | null
     created_at?: Date | string
     auditoria: AuditoriaInternaCreateNestedOneWithoutHallazgosInput
   }
@@ -9024,6 +9093,7 @@ export namespace Prisma {
     evidencia?: string | null
     accion_requerida?: string | null
     estado?: string
+    nc_id?: string | null
     created_at?: Date | string
   }
 
@@ -9036,6 +9106,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     auditoria?: AuditoriaInternaUpdateOneRequiredWithoutHallazgosNestedInput
   }
@@ -9050,6 +9121,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9063,6 +9135,7 @@ export namespace Prisma {
     evidencia?: string | null
     accion_requerida?: string | null
     estado?: string
+    nc_id?: string | null
     created_at?: Date | string
   }
 
@@ -9075,6 +9148,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9088,6 +9162,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9514,6 +9589,8 @@ export namespace Prisma {
     fecha_compromiso?: SortOrder
     estado?: SortOrder
     evidencia?: SortOrder
+    verificado_por?: SortOrder
+    fecha_verificacion?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -9527,6 +9604,8 @@ export namespace Prisma {
     fecha_compromiso?: SortOrder
     estado?: SortOrder
     evidencia?: SortOrder
+    verificado_por?: SortOrder
+    fecha_verificacion?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -9540,6 +9619,8 @@ export namespace Prisma {
     fecha_compromiso?: SortOrder
     estado?: SortOrder
     evidencia?: SortOrder
+    verificado_por?: SortOrder
+    fecha_verificacion?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -9625,6 +9706,7 @@ export namespace Prisma {
     evidencia?: SortOrder
     accion_requerida?: SortOrder
     estado?: SortOrder
+    nc_id?: SortOrder
     created_at?: SortOrder
   }
 
@@ -9638,6 +9720,7 @@ export namespace Prisma {
     evidencia?: SortOrder
     accion_requerida?: SortOrder
     estado?: SortOrder
+    nc_id?: SortOrder
     created_at?: SortOrder
   }
 
@@ -9651,6 +9734,7 @@ export namespace Prisma {
     evidencia?: SortOrder
     accion_requerida?: SortOrder
     estado?: SortOrder
+    nc_id?: SortOrder
     created_at?: SortOrder
   }
 
@@ -10225,6 +10309,8 @@ export namespace Prisma {
     fecha_compromiso?: Date | string | null
     estado?: string
     evidencia?: string | null
+    verificado_por?: string | null
+    fecha_verificacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -10237,6 +10323,8 @@ export namespace Prisma {
     fecha_compromiso?: Date | string | null
     estado?: string
     evidencia?: string | null
+    verificado_por?: string | null
+    fecha_verificacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -10279,6 +10367,8 @@ export namespace Prisma {
     fecha_compromiso?: DateTimeNullableFilter<"AccionCorrectiva"> | Date | string | null
     estado?: StringFilter<"AccionCorrectiva"> | string
     evidencia?: StringNullableFilter<"AccionCorrectiva"> | string | null
+    verificado_por?: UuidNullableFilter<"AccionCorrectiva"> | string | null
+    fecha_verificacion?: DateTimeNullableFilter<"AccionCorrectiva"> | Date | string | null
     created_at?: DateTimeFilter<"AccionCorrectiva"> | Date | string
     updated_at?: DateTimeFilter<"AccionCorrectiva"> | Date | string
   }
@@ -10384,6 +10474,7 @@ export namespace Prisma {
     evidencia?: string | null
     accion_requerida?: string | null
     estado?: string
+    nc_id?: string | null
     created_at?: Date | string
   }
 
@@ -10396,6 +10487,7 @@ export namespace Prisma {
     evidencia?: string | null
     accion_requerida?: string | null
     estado?: string
+    nc_id?: string | null
     created_at?: Date | string
   }
 
@@ -10438,6 +10530,7 @@ export namespace Prisma {
     evidencia?: StringNullableFilter<"HallazgoAuditoria"> | string | null
     accion_requerida?: StringNullableFilter<"HallazgoAuditoria"> | string | null
     estado?: StringFilter<"HallazgoAuditoria"> | string
+    nc_id?: UuidNullableFilter<"HallazgoAuditoria"> | string | null
     created_at?: DateTimeFilter<"HallazgoAuditoria"> | Date | string
   }
 
@@ -10605,6 +10698,8 @@ export namespace Prisma {
     fecha_compromiso?: Date | string | null
     estado?: string
     evidencia?: string | null
+    verificado_por?: string | null
+    fecha_verificacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -10617,6 +10712,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10629,6 +10726,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10641,6 +10740,8 @@ export namespace Prisma {
     fecha_compromiso?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: StringFieldUpdateOperationsInput | string
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_verificacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10654,6 +10755,7 @@ export namespace Prisma {
     evidencia?: string | null
     accion_requerida?: string | null
     estado?: string
+    nc_id?: string | null
     created_at?: Date | string
   }
 
@@ -10666,6 +10768,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10678,6 +10781,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10690,6 +10794,7 @@ export namespace Prisma {
     evidencia?: NullableStringFieldUpdateOperationsInput | string | null
     accion_requerida?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    nc_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
