@@ -20,7 +20,7 @@ import fs from 'fs';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { createTenantContext, disconnectDb } from './db';
-import { initEventBus, closeEventBus } from './event-bus';
+import { initEventBus, closeEventBus, publishEvent } from './event-bus';
 import {
   createApiResponse,
   createApiError,
@@ -50,7 +50,7 @@ const fichasUpload = multer({
   },
 });
 
-const app = express();
+export const app = express();
 app.use(express.json());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -820,7 +820,10 @@ app.patch(
 
       const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
-      const presupuesto = await db.presupuestoBase.findUnique({ where: { id } });
+      const presupuesto = await db.presupuestoBase.findUnique({
+        where: { id },
+        include: { conceptos: true },
+      });
       if (!presupuesto) {
         return res.status(404).json(createApiError('NOT_FOUND', 'Presupuesto no encontrado.'));
       }
@@ -836,6 +839,37 @@ app.patch(
           fecha_aprobacion: new Date(),
         },
       });
+
+      // Crear SaldoPartida por cada concepto (idempotente via upsert)
+      const conceptos = (presupuesto as any).conceptos ?? [];
+      if (conceptos.length > 0) {
+        await Promise.all(
+          conceptos.map((c: any) => {
+            const monto = Number(c.precio_unitario) * Number(c.cantidad);
+            return db.saldoPartida.upsert({
+              where: {
+                uq_saldo_partida: {
+                  tenant_id: tenantId,
+                  proyecto_id: proyectoId,
+                  concepto_id: c.id,
+                },
+              },
+              update: { monto_aprobado: monto, monto_disponible: monto },
+              create: {
+                tenant_id:       tenantId,
+                proyecto_id:     proyectoId,
+                concepto_id:     c.id,
+                concepto_clave:  c.clave,
+                concepto_desc:   c.descripcion,
+                monto_aprobado:  monto,
+                monto_disponible: monto,
+                estado_tope:     'LIBRE',
+              },
+            });
+          })
+        );
+        console.log(`[GT] SaldoPartida: ${conceptos.length} partidas inicializadas para presupuesto ${id}`);
+      }
 
       res.json(createApiResponse(actualizado, tenantId, proyectoId));
     } catch (error: any) {
@@ -1847,6 +1881,421 @@ app.post('/api/v1/gerencia-tecnica/reportes/control-presupuestal/export', async 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONTROL PRESUPUESTAL POR PARTIDA (SaldoPartida)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function calcularEstadoTope(monto_aprobado: number, monto_disponible: number): string {
+  if (monto_disponible <= 0) return 'BLOQUEADO';
+  const pct = monto_aprobado > 0 ? monto_disponible / monto_aprobado : 1;
+  if (pct < 0.20) return 'LIMITADO';
+  return 'LIBRE';
+}
+
+async function actualizarSaldoYEmitir(
+  db: any,
+  saldo: any,
+  nuevoDisponible: number,
+  tenantId: string,
+  proyectoId: string,
+  contextoEvento: any
+): Promise<void> {
+  const estadoAnterior = saldo.estado_tope;
+  const nuevoEstado = calcularEstadoTope(Number(saldo.monto_aprobado), nuevoDisponible);
+
+  await db.saldoPartida.update({
+    where: { id: saldo.id },
+    data: {
+      monto_comprometido: saldo.monto_comprometido,
+      monto_ejercido:     saldo.monto_ejercido,
+      monto_en_proceso:   saldo.monto_en_proceso,
+      monto_disponible:   nuevoDisponible,
+      estado_tope:        nuevoEstado,
+    },
+  });
+
+  if (nuevoEstado === 'BLOQUEADO' && estadoAnterior !== 'BLOQUEADO') {
+    await publishEvent({
+      event_type: 'gerencia_tecnica.partida_bloqueada',
+      timestamp:  new Date().toISOString(),
+      context:    { tenant_id: tenantId, proyecto_id: proyectoId, user_id: contextoEvento.user_id || '' },
+      payload: {
+        concepto_id:      saldo.concepto_id,
+        concepto_clave:   saldo.concepto_clave,
+        monto_aprobado:   Number(saldo.monto_aprobado),
+        monto_disponible: nuevoDisponible,
+        trigger:          contextoEvento.trigger,
+        referencia_id:    contextoEvento.referencia_id,
+        referencia_codigo: contextoEvento.referencia_codigo || '',
+      },
+    });
+  }
+}
+
+// GET /api/v1/gerencia-tecnica/partidas/resumen
+app.get(
+  '/api/v1/gerencia-tecnica/partidas/resumen',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica', 'control_proyectos', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const saldos = await db.saldoPartida.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId },
+        orderBy: { concepto_clave: 'asc' },
+      });
+
+      const data = saldos.map((s: any) => ({
+        concepto_id:    s.concepto_id,
+        concepto_clave: s.concepto_clave,
+        concepto_desc:  s.concepto_desc,
+        monto_aprobado:  Number(s.monto_aprobado),
+        monto_disponible: Number(s.monto_disponible),
+        monto_comprometido: Number(s.monto_comprometido),
+        monto_ejercido:  Number(s.monto_ejercido),
+        pct_ejecutado: Number(s.monto_aprobado) > 0
+          ? Math.round(((Number(s.monto_ejercido) + Number(s.monto_comprometido)) / Number(s.monto_aprobado)) * 1000) / 10
+          : 0,
+        estado_tope:    s.estado_tope,
+        bloqueo_automatico: s.bloqueo_automatico,
+      }));
+
+      res.json(createApiResponse(data, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error GET /partidas/resumen:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al obtener resumen de partidas.', error.message));
+    }
+  }
+);
+
+// GET /api/v1/gerencia-tecnica/partidas/:concepto_id/saldo
+app.get(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/saldo',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica', 'control_proyectos', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { concepto_id } = req.params;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const saldo = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id } },
+      });
+
+      if (!saldo) {
+        return res.status(404).json(createApiError('SALDO_NO_INICIALIZADO', 'No existe SaldoPartida para este concepto. Aprueba el presupuesto primero.'));
+      }
+
+      const aprobado    = Number(saldo.monto_aprobado);
+      const disponible  = Number(saldo.monto_disponible);
+      const comprometido = Number(saldo.monto_comprometido);
+      const ejercido    = Number(saldo.monto_ejercido);
+      const en_proceso  = Number(saldo.monto_en_proceso);
+
+      res.json(createApiResponse({
+        concepto_id:         saldo.concepto_id,
+        concepto_clave:      saldo.concepto_clave,
+        concepto_desc:       saldo.concepto_desc,
+        monto_aprobado:      aprobado,
+        monto_en_proceso:    en_proceso,
+        monto_comprometido:  comprometido,
+        monto_ejercido:      ejercido,
+        monto_disponible:    disponible,
+        pct_comprometido:    aprobado > 0 ? Math.round((comprometido / aprobado) * 1000) / 10 : 0,
+        pct_ejercido:        aprobado > 0 ? Math.round((ejercido / aprobado) * 1000) / 10 : 0,
+        pct_disponible:      aprobado > 0 ? Math.round((disponible / aprobado) * 1000) / 10 : 0,
+        estado_tope:         saldo.estado_tope,
+        bloqueo_automatico:  saldo.bloqueo_automatico,
+      }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error GET /partidas/:id/saldo:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al obtener saldo de partida.', error.message));
+    }
+  }
+);
+
+// POST /api/v1/gerencia-tecnica/partidas/:concepto_id/comprometer
+// Llamado por Compras o Personal para registrar un compromiso.
+app.post(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/comprometer',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica', 'procurement', 'control_proyectos'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { concepto_id } = req.params;
+      const { monto, referencia_id, tipo, referencia_codigo } = req.body;
+
+      if (!monto || !referencia_id || !tipo) {
+        return res.status(400).json(createApiError('MISSING_FIELDS', 'monto, referencia_id y tipo son obligatorios.'));
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const saldo = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id } },
+      });
+      if (!saldo) {
+        return res.status(404).json(createApiError('SALDO_NO_INICIALIZADO', 'No existe SaldoPartida para este concepto.'));
+      }
+
+      // Idempotencia: verificar si ya existe este movimiento
+      const existing = await db.saldoMovimiento.findUnique({
+        where: { uq_saldo_movimiento_idem: { saldo_partida_id: saldo.id, referencia_id, tipo } },
+      });
+      if (existing) {
+        return res.json(createApiResponse({ idempotente: true, saldo_partida_id: saldo.id }, tenantId, proyectoId));
+      }
+
+      const nuevoComprometido = Number(saldo.monto_comprometido) + Number(monto);
+      const nuevoDisponible   = Number(saldo.monto_aprobado) - nuevoComprometido - Number(saldo.monto_ejercido) - Number(saldo.monto_en_proceso);
+
+      // Registrar movimiento para audit trail
+      await db.saldoMovimiento.create({
+        data: {
+          tenant_id:        tenantId,
+          saldo_partida_id: saldo.id,
+          referencia_id,
+          referencia_codigo: referencia_codigo || null,
+          tipo,
+          campo:            'monto_comprometido',
+          delta:            Number(monto),
+          saldo_resultante: nuevoDisponible,
+        },
+      });
+
+      const saldoActualizado = { ...saldo, monto_comprometido: nuevoComprometido, monto_disponible: nuevoDisponible };
+      await actualizarSaldoYEmitir(db, saldoActualizado, nuevoDisponible, tenantId, proyectoId, {
+        user_id: userId, trigger: tipo, referencia_id, referencia_codigo,
+      });
+
+      res.json(createApiResponse({ concepto_id, monto_disponible: nuevoDisponible, estado_tope: calcularEstadoTope(Number(saldo.monto_aprobado), nuevoDisponible) }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error POST /partidas/:id/comprometer:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al comprometer saldo.', error.message));
+    }
+  }
+);
+
+// POST /api/v1/gerencia-tecnica/partidas/:concepto_id/ejercer
+// Llamado por Finanzas cuando se registra un pago (mueve comprometido → ejercido).
+app.post(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/ejercer',
+  requireRoles('admin', 'finanzas', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { concepto_id } = req.params;
+      const { monto, referencia_id, tipo } = req.body;
+
+      if (!monto || !referencia_id || !tipo) {
+        return res.status(400).json(createApiError('MISSING_FIELDS', 'monto, referencia_id y tipo son obligatorios.'));
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const saldo = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id } },
+      });
+      if (!saldo) return res.status(404).json(createApiError('SALDO_NO_INICIALIZADO', 'No existe SaldoPartida.'));
+
+      const existing = await db.saldoMovimiento.findUnique({
+        where: { uq_saldo_movimiento_idem: { saldo_partida_id: saldo.id, referencia_id, tipo: `EJERCER_${tipo}` } },
+      });
+      if (existing) return res.json(createApiResponse({ idempotente: true }, tenantId, proyectoId));
+
+      const delta = Number(monto);
+      const nuevoComprometido = Math.max(0, Number(saldo.monto_comprometido) - delta);
+      const nuevoEjercido     = Number(saldo.monto_ejercido) + delta;
+      const nuevoDisponible   = Number(saldo.monto_aprobado) - nuevoComprometido - nuevoEjercido - Number(saldo.monto_en_proceso);
+
+      await db.saldoMovimiento.create({
+        data: { tenant_id: tenantId, saldo_partida_id: saldo.id, referencia_id, tipo: `EJERCER_${tipo}`, campo: 'monto_ejercido', delta, saldo_resultante: nuevoDisponible },
+      });
+
+      const saldoActualizado = { ...saldo, monto_comprometido: nuevoComprometido, monto_ejercido: nuevoEjercido, monto_disponible: nuevoDisponible };
+      await actualizarSaldoYEmitir(db, saldoActualizado, nuevoDisponible, tenantId, proyectoId, {
+        user_id: userId, trigger: tipo, referencia_id,
+      });
+
+      res.json(createApiResponse({ concepto_id, monto_disponible: nuevoDisponible }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error POST /partidas/:id/ejercer:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al ejercer saldo.', error.message));
+    }
+  }
+);
+
+// DELETE /api/v1/gerencia-tecnica/partidas/:concepto_id/comprometer/:referencia_id
+// Reversa de un compromiso (OC cancelada).
+app.delete(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/comprometer/:referencia_id',
+  requireRoles('admin', 'procurement', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { concepto_id, referencia_id } = req.params;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const saldo = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id } },
+      });
+      if (!saldo) return res.status(404).json(createApiError('SALDO_NO_INICIALIZADO', 'No existe SaldoPartida.'));
+
+      // Buscar el movimiento original para saber el delta
+      const movimientos = await db.saldoMovimiento.findMany({
+        where: { saldo_partida_id: saldo.id, referencia_id },
+      });
+      if (movimientos.length === 0) {
+        return res.status(404).json(createApiError('MOVIMIENTO_NOT_FOUND', 'No existe compromiso para esta referencia.'));
+      }
+
+      const deltaTotal = movimientos.reduce((acc: number, m: any) => acc + Number(m.delta), 0);
+      const nuevoComprometido = Math.max(0, Number(saldo.monto_comprometido) - deltaTotal);
+      const nuevoDisponible   = Number(saldo.monto_aprobado) - nuevoComprometido - Number(saldo.monto_ejercido) - Number(saldo.monto_en_proceso);
+
+      const estadoNuevo = calcularEstadoTope(Number(saldo.monto_aprobado), nuevoDisponible);
+      await db.saldoPartida.update({
+        where: { id: saldo.id },
+        data: { monto_comprometido: nuevoComprometido, monto_disponible: nuevoDisponible, estado_tope: estadoNuevo },
+      });
+
+      res.json(createApiResponse({ concepto_id, monto_disponible: nuevoDisponible, delta_revertido: deltaTotal }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error DELETE /partidas/:id/comprometer/:ref:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al revertir compromiso.', error.message));
+    }
+  }
+);
+
+// PATCH /api/v1/gerencia-tecnica/partidas/:concepto_id/anular-bloqueo
+app.patch(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/anular-bloqueo',
+  requireRoles('admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { concepto_id } = req.params;
+      const { justificacion } = req.body;
+
+      if (!justificacion || justificacion.trim().length < 10) {
+        return res.status(400).json(createApiError('JUSTIFICACION_REQUERIDA', 'Se requiere justificación mínima de 10 caracteres.'));
+      }
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const saldo = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id } },
+      });
+      if (!saldo) return res.status(404).json(createApiError('SALDO_NO_INICIALIZADO', 'No existe SaldoPartida.'));
+
+      await db.saldoPartida.update({
+        where: { id: saldo.id },
+        data: { bloqueo_automatico: false },
+      });
+
+      // Audit log via movimiento tipo ANULACION_BLOQUEO
+      await db.saldoMovimiento.create({
+        data: {
+          tenant_id:        tenantId,
+          saldo_partida_id: saldo.id,
+          referencia_id:    userId,
+          referencia_codigo: justificacion.substring(0, 100),
+          tipo:             'ANULACION_BLOQUEO',
+          campo:            'bloqueo_automatico',
+          delta:            0,
+          saldo_resultante: Number(saldo.monto_disponible),
+        },
+      });
+
+      console.log(`[GT] ANULACION_BLOQUEO en partida ${saldo.concepto_clave} por user ${userId}: "${justificacion}"`);
+      res.json(createApiResponse({ concepto_id, bloqueo_automatico: false, estado_tope: saldo.estado_tope }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error PATCH /partidas/:id/anular-bloqueo:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al anular bloqueo.', error.message));
+    }
+  }
+);
+
+// POST /api/v1/gerencia-tecnica/saldo-partida/inicializar-proyecto (migración)
+app.post(
+  '/api/v1/gerencia-tecnica/saldo-partida/inicializar-proyecto',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const presupuesto = await db.presupuestoBase.findFirst({
+        where: { proyecto_id: proyectoId, estado: 'APROBADO' },
+        orderBy: { created_at: 'desc' },
+        include: { conceptos: true },
+      });
+
+      if (!presupuesto) {
+        return res.status(404).json(createApiError('NOT_FOUND', 'No hay presupuesto APROBADO para este proyecto.'));
+      }
+
+      const conceptos = (presupuesto as any).conceptos ?? [];
+      let creados = 0;
+      let existentes = 0;
+
+      await Promise.all(
+        conceptos.map(async (c: any) => {
+          const monto = Number(c.precio_unitario) * Number(c.cantidad);
+          const existe = await db.saldoPartida.findUnique({
+            where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: c.id } },
+          });
+          if (existe) { existentes++; return; }
+
+          await db.saldoPartida.create({
+            data: {
+              tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: c.id,
+              concepto_clave: c.clave, concepto_desc: c.descripcion,
+              monto_aprobado: monto, monto_disponible: monto, estado_tope: 'LIBRE',
+            },
+          });
+          creados++;
+        })
+      );
+
+      res.json(createApiResponse({ creados, existentes, total_conceptos: conceptos.length }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error POST /saldo-partida/inicializar-proyecto:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error en inicialización.', error.message));
+    }
+  }
+);
+
+// GET /api/v1/gerencia-tecnica/requisiciones-bloqueadas
+app.get(
+  '/api/v1/gerencia-tecnica/requisiciones-bloqueadas',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica', 'control_proyectos'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const saldos = await db.saldoPartida.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, estado_tope: 'BLOQUEADO', bloqueo_automatico: true },
+        select: { concepto_id: true, concepto_clave: true, concepto_desc: true, monto_disponible: true, monto_aprobado: true },
+      });
+
+      res.json(createApiResponse({
+        partidas_bloqueadas: saldos.map((s: any) => ({
+          concepto_id:    s.concepto_id,
+          concepto_clave: s.concepto_clave,
+          concepto_desc:  s.concepto_desc,
+          monto_disponible: Number(s.monto_disponible),
+          monto_aprobado:   Number(s.monto_aprobado),
+        })),
+        total: saldos.length,
+      }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error GET /requisiciones-bloqueadas:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error.', error.message));
+    }
+  }
+);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'gerencia-tecnica', timestamp: new Date().toISOString() });
 });

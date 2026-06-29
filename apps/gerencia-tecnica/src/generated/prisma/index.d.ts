@@ -52,6 +52,18 @@ export type Concepto = $Result.DefaultSelection<Prisma.$ConceptoPayload>
  */
 export type ConceptoInsumo = $Result.DefaultSelection<Prisma.$ConceptoInsumoPayload>
 /**
+ * Model SaldoPartida
+ * Saldo presupuestal por concepto/partida del catálogo APU.
+ * Se crea automáticamente al aprobar un presupuesto (uno por concepto).
+ * Es el gate de control antes de generar OC o aprobar requisiciones.
+ */
+export type SaldoPartida = $Result.DefaultSelection<Prisma.$SaldoPartidaPayload>
+/**
+ * Model SaldoMovimiento
+ * Audit trail de cada cambio en SaldoPartida (compromisos, pagos, reversas).
+ */
+export type SaldoMovimiento = $Result.DefaultSelection<Prisma.$SaldoMovimientoPayload>
+/**
  * Model FichaTecnicaInsumo
  * 
  */
@@ -274,6 +286,26 @@ export class PrismaClient<
     * ```
     */
   get conceptoInsumo(): Prisma.ConceptoInsumoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.saldoPartida`: Exposes CRUD operations for the **SaldoPartida** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SaldoPartidas
+    * const saldoPartidas = await prisma.saldoPartida.findMany()
+    * ```
+    */
+  get saldoPartida(): Prisma.SaldoPartidaDelegate<ExtArgs>;
+
+  /**
+   * `prisma.saldoMovimiento`: Exposes CRUD operations for the **SaldoMovimiento** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SaldoMovimientos
+    * const saldoMovimientos = await prisma.saldoMovimiento.findMany()
+    * ```
+    */
+  get saldoMovimiento(): Prisma.SaldoMovimientoDelegate<ExtArgs>;
 
   /**
    * `prisma.fichaTecnicaInsumo`: Exposes CRUD operations for the **FichaTecnicaInsumo** model.
@@ -731,6 +763,8 @@ export namespace Prisma {
     PresupuestoBase: 'PresupuestoBase',
     Concepto: 'Concepto',
     ConceptoInsumo: 'ConceptoInsumo',
+    SaldoPartida: 'SaldoPartida',
+    SaldoMovimiento: 'SaldoMovimiento',
     FichaTecnicaInsumo: 'FichaTecnicaInsumo'
   };
 
@@ -747,7 +781,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "fichaTecnicaInsumo"
+      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "fichaTecnicaInsumo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1171,6 +1205,146 @@ export namespace Prisma {
           }
         }
       }
+      SaldoPartida: {
+        payload: Prisma.$SaldoPartidaPayload<ExtArgs>
+        fields: Prisma.SaldoPartidaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SaldoPartidaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SaldoPartidaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>
+          }
+          findFirst: {
+            args: Prisma.SaldoPartidaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SaldoPartidaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>
+          }
+          findMany: {
+            args: Prisma.SaldoPartidaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>[]
+          }
+          create: {
+            args: Prisma.SaldoPartidaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>
+          }
+          createMany: {
+            args: Prisma.SaldoPartidaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SaldoPartidaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>[]
+          }
+          delete: {
+            args: Prisma.SaldoPartidaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>
+          }
+          update: {
+            args: Prisma.SaldoPartidaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>
+          }
+          deleteMany: {
+            args: Prisma.SaldoPartidaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SaldoPartidaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SaldoPartidaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoPartidaPayload>
+          }
+          aggregate: {
+            args: Prisma.SaldoPartidaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSaldoPartida>
+          }
+          groupBy: {
+            args: Prisma.SaldoPartidaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SaldoPartidaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SaldoPartidaCountArgs<ExtArgs>
+            result: $Utils.Optional<SaldoPartidaCountAggregateOutputType> | number
+          }
+        }
+      }
+      SaldoMovimiento: {
+        payload: Prisma.$SaldoMovimientoPayload<ExtArgs>
+        fields: Prisma.SaldoMovimientoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SaldoMovimientoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SaldoMovimientoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>
+          }
+          findFirst: {
+            args: Prisma.SaldoMovimientoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SaldoMovimientoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>
+          }
+          findMany: {
+            args: Prisma.SaldoMovimientoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>[]
+          }
+          create: {
+            args: Prisma.SaldoMovimientoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>
+          }
+          createMany: {
+            args: Prisma.SaldoMovimientoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SaldoMovimientoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>[]
+          }
+          delete: {
+            args: Prisma.SaldoMovimientoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>
+          }
+          update: {
+            args: Prisma.SaldoMovimientoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>
+          }
+          deleteMany: {
+            args: Prisma.SaldoMovimientoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SaldoMovimientoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SaldoMovimientoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SaldoMovimientoPayload>
+          }
+          aggregate: {
+            args: Prisma.SaldoMovimientoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSaldoMovimiento>
+          }
+          groupBy: {
+            args: Prisma.SaldoMovimientoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SaldoMovimientoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SaldoMovimientoCountArgs<ExtArgs>
+            result: $Utils.Optional<SaldoMovimientoCountAggregateOutputType> | number
+          }
+        }
+      }
       FichaTecnicaInsumo: {
         payload: Prisma.$FichaTecnicaInsumoPayload<ExtArgs>
         fields: Prisma.FichaTecnicaInsumoFieldRefs
@@ -1518,6 +1692,37 @@ export namespace Prisma {
    */
   export type ConceptoCountOutputTypeCountInsumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ConceptoInsumoWhereInput
+  }
+
+
+  /**
+   * Count Type SaldoPartidaCountOutputType
+   */
+
+  export type SaldoPartidaCountOutputType = {
+    movimientos: number
+  }
+
+  export type SaldoPartidaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    movimientos?: boolean | SaldoPartidaCountOutputTypeCountMovimientosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SaldoPartidaCountOutputType without action
+   */
+  export type SaldoPartidaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartidaCountOutputType
+     */
+    select?: SaldoPartidaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SaldoPartidaCountOutputType without action
+   */
+  export type SaldoPartidaCountOutputTypeCountMovimientosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SaldoMovimientoWhereInput
   }
 
 
@@ -7688,6 +7893,2155 @@ export namespace Prisma {
 
 
   /**
+   * Model SaldoPartida
+   */
+
+  export type AggregateSaldoPartida = {
+    _count: SaldoPartidaCountAggregateOutputType | null
+    _avg: SaldoPartidaAvgAggregateOutputType | null
+    _sum: SaldoPartidaSumAggregateOutputType | null
+    _min: SaldoPartidaMinAggregateOutputType | null
+    _max: SaldoPartidaMaxAggregateOutputType | null
+  }
+
+  export type SaldoPartidaAvgAggregateOutputType = {
+    monto_aprobado: Decimal | null
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+    monto_en_proceso: Decimal | null
+    monto_disponible: Decimal | null
+  }
+
+  export type SaldoPartidaSumAggregateOutputType = {
+    monto_aprobado: Decimal | null
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+    monto_en_proceso: Decimal | null
+    monto_disponible: Decimal | null
+  }
+
+  export type SaldoPartidaMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    concepto_desc: string | null
+    monto_aprobado: Decimal | null
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+    monto_en_proceso: Decimal | null
+    monto_disponible: Decimal | null
+    estado_tope: string | null
+    bloqueo_automatico: boolean | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type SaldoPartidaMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    concepto_desc: string | null
+    monto_aprobado: Decimal | null
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+    monto_en_proceso: Decimal | null
+    monto_disponible: Decimal | null
+    estado_tope: string | null
+    bloqueo_automatico: boolean | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type SaldoPartidaCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    concepto_id: number
+    concepto_clave: number
+    concepto_desc: number
+    monto_aprobado: number
+    monto_comprometido: number
+    monto_ejercido: number
+    monto_en_proceso: number
+    monto_disponible: number
+    estado_tope: number
+    bloqueo_automatico: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type SaldoPartidaAvgAggregateInputType = {
+    monto_aprobado?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    monto_en_proceso?: true
+    monto_disponible?: true
+  }
+
+  export type SaldoPartidaSumAggregateInputType = {
+    monto_aprobado?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    monto_en_proceso?: true
+    monto_disponible?: true
+  }
+
+  export type SaldoPartidaMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    concepto_desc?: true
+    monto_aprobado?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    monto_en_proceso?: true
+    monto_disponible?: true
+    estado_tope?: true
+    bloqueo_automatico?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type SaldoPartidaMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    concepto_desc?: true
+    monto_aprobado?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    monto_en_proceso?: true
+    monto_disponible?: true
+    estado_tope?: true
+    bloqueo_automatico?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type SaldoPartidaCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    concepto_desc?: true
+    monto_aprobado?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    monto_en_proceso?: true
+    monto_disponible?: true
+    estado_tope?: true
+    bloqueo_automatico?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type SaldoPartidaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SaldoPartida to aggregate.
+     */
+    where?: SaldoPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoPartidas to fetch.
+     */
+    orderBy?: SaldoPartidaOrderByWithRelationInput | SaldoPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SaldoPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoPartidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SaldoPartidas
+    **/
+    _count?: true | SaldoPartidaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SaldoPartidaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SaldoPartidaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SaldoPartidaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SaldoPartidaMaxAggregateInputType
+  }
+
+  export type GetSaldoPartidaAggregateType<T extends SaldoPartidaAggregateArgs> = {
+        [P in keyof T & keyof AggregateSaldoPartida]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSaldoPartida[P]>
+      : GetScalarType<T[P], AggregateSaldoPartida[P]>
+  }
+
+
+
+
+  export type SaldoPartidaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SaldoPartidaWhereInput
+    orderBy?: SaldoPartidaOrderByWithAggregationInput | SaldoPartidaOrderByWithAggregationInput[]
+    by: SaldoPartidaScalarFieldEnum[] | SaldoPartidaScalarFieldEnum
+    having?: SaldoPartidaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SaldoPartidaCountAggregateInputType | true
+    _avg?: SaldoPartidaAvgAggregateInputType
+    _sum?: SaldoPartidaSumAggregateInputType
+    _min?: SaldoPartidaMinAggregateInputType
+    _max?: SaldoPartidaMaxAggregateInputType
+  }
+
+  export type SaldoPartidaGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_desc: string
+    monto_aprobado: Decimal
+    monto_comprometido: Decimal
+    monto_ejercido: Decimal
+    monto_en_proceso: Decimal
+    monto_disponible: Decimal
+    estado_tope: string
+    bloqueo_automatico: boolean
+    created_at: Date
+    updated_at: Date
+    _count: SaldoPartidaCountAggregateOutputType | null
+    _avg: SaldoPartidaAvgAggregateOutputType | null
+    _sum: SaldoPartidaSumAggregateOutputType | null
+    _min: SaldoPartidaMinAggregateOutputType | null
+    _max: SaldoPartidaMaxAggregateOutputType | null
+  }
+
+  type GetSaldoPartidaGroupByPayload<T extends SaldoPartidaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SaldoPartidaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SaldoPartidaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SaldoPartidaGroupByOutputType[P]>
+            : GetScalarType<T[P], SaldoPartidaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SaldoPartidaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    concepto_desc?: boolean
+    monto_aprobado?: boolean
+    monto_comprometido?: boolean
+    monto_ejercido?: boolean
+    monto_en_proceso?: boolean
+    monto_disponible?: boolean
+    estado_tope?: boolean
+    bloqueo_automatico?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    movimientos?: boolean | SaldoPartida$movimientosArgs<ExtArgs>
+    _count?: boolean | SaldoPartidaCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["saldoPartida"]>
+
+  export type SaldoPartidaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    concepto_desc?: boolean
+    monto_aprobado?: boolean
+    monto_comprometido?: boolean
+    monto_ejercido?: boolean
+    monto_en_proceso?: boolean
+    monto_disponible?: boolean
+    estado_tope?: boolean
+    bloqueo_automatico?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["saldoPartida"]>
+
+  export type SaldoPartidaSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    concepto_desc?: boolean
+    monto_aprobado?: boolean
+    monto_comprometido?: boolean
+    monto_ejercido?: boolean
+    monto_en_proceso?: boolean
+    monto_disponible?: boolean
+    estado_tope?: boolean
+    bloqueo_automatico?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type SaldoPartidaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    movimientos?: boolean | SaldoPartida$movimientosArgs<ExtArgs>
+    _count?: boolean | SaldoPartidaCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SaldoPartidaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SaldoPartidaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SaldoPartida"
+    objects: {
+      movimientos: Prisma.$SaldoMovimientoPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      concepto_id: string
+      concepto_clave: string
+      concepto_desc: string
+      monto_aprobado: Prisma.Decimal
+      monto_comprometido: Prisma.Decimal
+      monto_ejercido: Prisma.Decimal
+      monto_en_proceso: Prisma.Decimal
+      monto_disponible: Prisma.Decimal
+      estado_tope: string
+      bloqueo_automatico: boolean
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["saldoPartida"]>
+    composites: {}
+  }
+
+  type SaldoPartidaGetPayload<S extends boolean | null | undefined | SaldoPartidaDefaultArgs> = $Result.GetResult<Prisma.$SaldoPartidaPayload, S>
+
+  type SaldoPartidaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SaldoPartidaFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SaldoPartidaCountAggregateInputType | true
+    }
+
+  export interface SaldoPartidaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SaldoPartida'], meta: { name: 'SaldoPartida' } }
+    /**
+     * Find zero or one SaldoPartida that matches the filter.
+     * @param {SaldoPartidaFindUniqueArgs} args - Arguments to find a SaldoPartida
+     * @example
+     * // Get one SaldoPartida
+     * const saldoPartida = await prisma.saldoPartida.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SaldoPartidaFindUniqueArgs>(args: SelectSubset<T, SaldoPartidaFindUniqueArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SaldoPartida that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SaldoPartidaFindUniqueOrThrowArgs} args - Arguments to find a SaldoPartida
+     * @example
+     * // Get one SaldoPartida
+     * const saldoPartida = await prisma.saldoPartida.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SaldoPartidaFindUniqueOrThrowArgs>(args: SelectSubset<T, SaldoPartidaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SaldoPartida that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaFindFirstArgs} args - Arguments to find a SaldoPartida
+     * @example
+     * // Get one SaldoPartida
+     * const saldoPartida = await prisma.saldoPartida.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SaldoPartidaFindFirstArgs>(args?: SelectSubset<T, SaldoPartidaFindFirstArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SaldoPartida that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaFindFirstOrThrowArgs} args - Arguments to find a SaldoPartida
+     * @example
+     * // Get one SaldoPartida
+     * const saldoPartida = await prisma.saldoPartida.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SaldoPartidaFindFirstOrThrowArgs>(args?: SelectSubset<T, SaldoPartidaFindFirstOrThrowArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SaldoPartidas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SaldoPartidas
+     * const saldoPartidas = await prisma.saldoPartida.findMany()
+     * 
+     * // Get first 10 SaldoPartidas
+     * const saldoPartidas = await prisma.saldoPartida.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const saldoPartidaWithIdOnly = await prisma.saldoPartida.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SaldoPartidaFindManyArgs>(args?: SelectSubset<T, SaldoPartidaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SaldoPartida.
+     * @param {SaldoPartidaCreateArgs} args - Arguments to create a SaldoPartida.
+     * @example
+     * // Create one SaldoPartida
+     * const SaldoPartida = await prisma.saldoPartida.create({
+     *   data: {
+     *     // ... data to create a SaldoPartida
+     *   }
+     * })
+     * 
+     */
+    create<T extends SaldoPartidaCreateArgs>(args: SelectSubset<T, SaldoPartidaCreateArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SaldoPartidas.
+     * @param {SaldoPartidaCreateManyArgs} args - Arguments to create many SaldoPartidas.
+     * @example
+     * // Create many SaldoPartidas
+     * const saldoPartida = await prisma.saldoPartida.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SaldoPartidaCreateManyArgs>(args?: SelectSubset<T, SaldoPartidaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SaldoPartidas and returns the data saved in the database.
+     * @param {SaldoPartidaCreateManyAndReturnArgs} args - Arguments to create many SaldoPartidas.
+     * @example
+     * // Create many SaldoPartidas
+     * const saldoPartida = await prisma.saldoPartida.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SaldoPartidas and only return the `id`
+     * const saldoPartidaWithIdOnly = await prisma.saldoPartida.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SaldoPartidaCreateManyAndReturnArgs>(args?: SelectSubset<T, SaldoPartidaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SaldoPartida.
+     * @param {SaldoPartidaDeleteArgs} args - Arguments to delete one SaldoPartida.
+     * @example
+     * // Delete one SaldoPartida
+     * const SaldoPartida = await prisma.saldoPartida.delete({
+     *   where: {
+     *     // ... filter to delete one SaldoPartida
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SaldoPartidaDeleteArgs>(args: SelectSubset<T, SaldoPartidaDeleteArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SaldoPartida.
+     * @param {SaldoPartidaUpdateArgs} args - Arguments to update one SaldoPartida.
+     * @example
+     * // Update one SaldoPartida
+     * const saldoPartida = await prisma.saldoPartida.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SaldoPartidaUpdateArgs>(args: SelectSubset<T, SaldoPartidaUpdateArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SaldoPartidas.
+     * @param {SaldoPartidaDeleteManyArgs} args - Arguments to filter SaldoPartidas to delete.
+     * @example
+     * // Delete a few SaldoPartidas
+     * const { count } = await prisma.saldoPartida.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SaldoPartidaDeleteManyArgs>(args?: SelectSubset<T, SaldoPartidaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SaldoPartidas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SaldoPartidas
+     * const saldoPartida = await prisma.saldoPartida.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SaldoPartidaUpdateManyArgs>(args: SelectSubset<T, SaldoPartidaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SaldoPartida.
+     * @param {SaldoPartidaUpsertArgs} args - Arguments to update or create a SaldoPartida.
+     * @example
+     * // Update or create a SaldoPartida
+     * const saldoPartida = await prisma.saldoPartida.upsert({
+     *   create: {
+     *     // ... data to create a SaldoPartida
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SaldoPartida we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SaldoPartidaUpsertArgs>(args: SelectSubset<T, SaldoPartidaUpsertArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SaldoPartidas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaCountArgs} args - Arguments to filter SaldoPartidas to count.
+     * @example
+     * // Count the number of SaldoPartidas
+     * const count = await prisma.saldoPartida.count({
+     *   where: {
+     *     // ... the filter for the SaldoPartidas we want to count
+     *   }
+     * })
+    **/
+    count<T extends SaldoPartidaCountArgs>(
+      args?: Subset<T, SaldoPartidaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SaldoPartidaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SaldoPartida.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SaldoPartidaAggregateArgs>(args: Subset<T, SaldoPartidaAggregateArgs>): Prisma.PrismaPromise<GetSaldoPartidaAggregateType<T>>
+
+    /**
+     * Group by SaldoPartida.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoPartidaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SaldoPartidaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SaldoPartidaGroupByArgs['orderBy'] }
+        : { orderBy?: SaldoPartidaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SaldoPartidaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSaldoPartidaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SaldoPartida model
+   */
+  readonly fields: SaldoPartidaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SaldoPartida.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SaldoPartidaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    movimientos<T extends SaldoPartida$movimientosArgs<ExtArgs> = {}>(args?: Subset<T, SaldoPartida$movimientosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SaldoPartida model
+   */ 
+  interface SaldoPartidaFieldRefs {
+    readonly id: FieldRef<"SaldoPartida", 'String'>
+    readonly tenant_id: FieldRef<"SaldoPartida", 'String'>
+    readonly proyecto_id: FieldRef<"SaldoPartida", 'String'>
+    readonly concepto_id: FieldRef<"SaldoPartida", 'String'>
+    readonly concepto_clave: FieldRef<"SaldoPartida", 'String'>
+    readonly concepto_desc: FieldRef<"SaldoPartida", 'String'>
+    readonly monto_aprobado: FieldRef<"SaldoPartida", 'Decimal'>
+    readonly monto_comprometido: FieldRef<"SaldoPartida", 'Decimal'>
+    readonly monto_ejercido: FieldRef<"SaldoPartida", 'Decimal'>
+    readonly monto_en_proceso: FieldRef<"SaldoPartida", 'Decimal'>
+    readonly monto_disponible: FieldRef<"SaldoPartida", 'Decimal'>
+    readonly estado_tope: FieldRef<"SaldoPartida", 'String'>
+    readonly bloqueo_automatico: FieldRef<"SaldoPartida", 'Boolean'>
+    readonly created_at: FieldRef<"SaldoPartida", 'DateTime'>
+    readonly updated_at: FieldRef<"SaldoPartida", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SaldoPartida findUnique
+   */
+  export type SaldoPartidaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoPartida to fetch.
+     */
+    where: SaldoPartidaWhereUniqueInput
+  }
+
+  /**
+   * SaldoPartida findUniqueOrThrow
+   */
+  export type SaldoPartidaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoPartida to fetch.
+     */
+    where: SaldoPartidaWhereUniqueInput
+  }
+
+  /**
+   * SaldoPartida findFirst
+   */
+  export type SaldoPartidaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoPartida to fetch.
+     */
+    where?: SaldoPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoPartidas to fetch.
+     */
+    orderBy?: SaldoPartidaOrderByWithRelationInput | SaldoPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SaldoPartidas.
+     */
+    cursor?: SaldoPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoPartidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SaldoPartidas.
+     */
+    distinct?: SaldoPartidaScalarFieldEnum | SaldoPartidaScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoPartida findFirstOrThrow
+   */
+  export type SaldoPartidaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoPartida to fetch.
+     */
+    where?: SaldoPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoPartidas to fetch.
+     */
+    orderBy?: SaldoPartidaOrderByWithRelationInput | SaldoPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SaldoPartidas.
+     */
+    cursor?: SaldoPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoPartidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SaldoPartidas.
+     */
+    distinct?: SaldoPartidaScalarFieldEnum | SaldoPartidaScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoPartida findMany
+   */
+  export type SaldoPartidaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoPartidas to fetch.
+     */
+    where?: SaldoPartidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoPartidas to fetch.
+     */
+    orderBy?: SaldoPartidaOrderByWithRelationInput | SaldoPartidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SaldoPartidas.
+     */
+    cursor?: SaldoPartidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoPartidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoPartidas.
+     */
+    skip?: number
+    distinct?: SaldoPartidaScalarFieldEnum | SaldoPartidaScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoPartida create
+   */
+  export type SaldoPartidaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SaldoPartida.
+     */
+    data: XOR<SaldoPartidaCreateInput, SaldoPartidaUncheckedCreateInput>
+  }
+
+  /**
+   * SaldoPartida createMany
+   */
+  export type SaldoPartidaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SaldoPartidas.
+     */
+    data: SaldoPartidaCreateManyInput | SaldoPartidaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SaldoPartida createManyAndReturn
+   */
+  export type SaldoPartidaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SaldoPartidas.
+     */
+    data: SaldoPartidaCreateManyInput | SaldoPartidaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SaldoPartida update
+   */
+  export type SaldoPartidaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SaldoPartida.
+     */
+    data: XOR<SaldoPartidaUpdateInput, SaldoPartidaUncheckedUpdateInput>
+    /**
+     * Choose, which SaldoPartida to update.
+     */
+    where: SaldoPartidaWhereUniqueInput
+  }
+
+  /**
+   * SaldoPartida updateMany
+   */
+  export type SaldoPartidaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SaldoPartidas.
+     */
+    data: XOR<SaldoPartidaUpdateManyMutationInput, SaldoPartidaUncheckedUpdateManyInput>
+    /**
+     * Filter which SaldoPartidas to update
+     */
+    where?: SaldoPartidaWhereInput
+  }
+
+  /**
+   * SaldoPartida upsert
+   */
+  export type SaldoPartidaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SaldoPartida to update in case it exists.
+     */
+    where: SaldoPartidaWhereUniqueInput
+    /**
+     * In case the SaldoPartida found by the `where` argument doesn't exist, create a new SaldoPartida with this data.
+     */
+    create: XOR<SaldoPartidaCreateInput, SaldoPartidaUncheckedCreateInput>
+    /**
+     * In case the SaldoPartida was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SaldoPartidaUpdateInput, SaldoPartidaUncheckedUpdateInput>
+  }
+
+  /**
+   * SaldoPartida delete
+   */
+  export type SaldoPartidaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+    /**
+     * Filter which SaldoPartida to delete.
+     */
+    where: SaldoPartidaWhereUniqueInput
+  }
+
+  /**
+   * SaldoPartida deleteMany
+   */
+  export type SaldoPartidaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SaldoPartidas to delete
+     */
+    where?: SaldoPartidaWhereInput
+  }
+
+  /**
+   * SaldoPartida.movimientos
+   */
+  export type SaldoPartida$movimientosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    where?: SaldoMovimientoWhereInput
+    orderBy?: SaldoMovimientoOrderByWithRelationInput | SaldoMovimientoOrderByWithRelationInput[]
+    cursor?: SaldoMovimientoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SaldoMovimientoScalarFieldEnum | SaldoMovimientoScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoPartida without action
+   */
+  export type SaldoPartidaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoPartida
+     */
+    select?: SaldoPartidaSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoPartidaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SaldoMovimiento
+   */
+
+  export type AggregateSaldoMovimiento = {
+    _count: SaldoMovimientoCountAggregateOutputType | null
+    _avg: SaldoMovimientoAvgAggregateOutputType | null
+    _sum: SaldoMovimientoSumAggregateOutputType | null
+    _min: SaldoMovimientoMinAggregateOutputType | null
+    _max: SaldoMovimientoMaxAggregateOutputType | null
+  }
+
+  export type SaldoMovimientoAvgAggregateOutputType = {
+    delta: Decimal | null
+    saldo_resultante: Decimal | null
+  }
+
+  export type SaldoMovimientoSumAggregateOutputType = {
+    delta: Decimal | null
+    saldo_resultante: Decimal | null
+  }
+
+  export type SaldoMovimientoMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    saldo_partida_id: string | null
+    referencia_id: string | null
+    referencia_codigo: string | null
+    tipo: string | null
+    campo: string | null
+    delta: Decimal | null
+    saldo_resultante: Decimal | null
+    created_at: Date | null
+  }
+
+  export type SaldoMovimientoMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    saldo_partida_id: string | null
+    referencia_id: string | null
+    referencia_codigo: string | null
+    tipo: string | null
+    campo: string | null
+    delta: Decimal | null
+    saldo_resultante: Decimal | null
+    created_at: Date | null
+  }
+
+  export type SaldoMovimientoCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    saldo_partida_id: number
+    referencia_id: number
+    referencia_codigo: number
+    tipo: number
+    campo: number
+    delta: number
+    saldo_resultante: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type SaldoMovimientoAvgAggregateInputType = {
+    delta?: true
+    saldo_resultante?: true
+  }
+
+  export type SaldoMovimientoSumAggregateInputType = {
+    delta?: true
+    saldo_resultante?: true
+  }
+
+  export type SaldoMovimientoMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    saldo_partida_id?: true
+    referencia_id?: true
+    referencia_codigo?: true
+    tipo?: true
+    campo?: true
+    delta?: true
+    saldo_resultante?: true
+    created_at?: true
+  }
+
+  export type SaldoMovimientoMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    saldo_partida_id?: true
+    referencia_id?: true
+    referencia_codigo?: true
+    tipo?: true
+    campo?: true
+    delta?: true
+    saldo_resultante?: true
+    created_at?: true
+  }
+
+  export type SaldoMovimientoCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    saldo_partida_id?: true
+    referencia_id?: true
+    referencia_codigo?: true
+    tipo?: true
+    campo?: true
+    delta?: true
+    saldo_resultante?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type SaldoMovimientoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SaldoMovimiento to aggregate.
+     */
+    where?: SaldoMovimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoMovimientos to fetch.
+     */
+    orderBy?: SaldoMovimientoOrderByWithRelationInput | SaldoMovimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SaldoMovimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoMovimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoMovimientos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SaldoMovimientos
+    **/
+    _count?: true | SaldoMovimientoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SaldoMovimientoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SaldoMovimientoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SaldoMovimientoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SaldoMovimientoMaxAggregateInputType
+  }
+
+  export type GetSaldoMovimientoAggregateType<T extends SaldoMovimientoAggregateArgs> = {
+        [P in keyof T & keyof AggregateSaldoMovimiento]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSaldoMovimiento[P]>
+      : GetScalarType<T[P], AggregateSaldoMovimiento[P]>
+  }
+
+
+
+
+  export type SaldoMovimientoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SaldoMovimientoWhereInput
+    orderBy?: SaldoMovimientoOrderByWithAggregationInput | SaldoMovimientoOrderByWithAggregationInput[]
+    by: SaldoMovimientoScalarFieldEnum[] | SaldoMovimientoScalarFieldEnum
+    having?: SaldoMovimientoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SaldoMovimientoCountAggregateInputType | true
+    _avg?: SaldoMovimientoAvgAggregateInputType
+    _sum?: SaldoMovimientoSumAggregateInputType
+    _min?: SaldoMovimientoMinAggregateInputType
+    _max?: SaldoMovimientoMaxAggregateInputType
+  }
+
+  export type SaldoMovimientoGroupByOutputType = {
+    id: string
+    tenant_id: string
+    saldo_partida_id: string
+    referencia_id: string
+    referencia_codigo: string | null
+    tipo: string
+    campo: string
+    delta: Decimal
+    saldo_resultante: Decimal
+    created_at: Date
+    _count: SaldoMovimientoCountAggregateOutputType | null
+    _avg: SaldoMovimientoAvgAggregateOutputType | null
+    _sum: SaldoMovimientoSumAggregateOutputType | null
+    _min: SaldoMovimientoMinAggregateOutputType | null
+    _max: SaldoMovimientoMaxAggregateOutputType | null
+  }
+
+  type GetSaldoMovimientoGroupByPayload<T extends SaldoMovimientoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SaldoMovimientoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SaldoMovimientoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SaldoMovimientoGroupByOutputType[P]>
+            : GetScalarType<T[P], SaldoMovimientoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SaldoMovimientoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    saldo_partida_id?: boolean
+    referencia_id?: boolean
+    referencia_codigo?: boolean
+    tipo?: boolean
+    campo?: boolean
+    delta?: boolean
+    saldo_resultante?: boolean
+    created_at?: boolean
+    saldo_partida?: boolean | SaldoPartidaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["saldoMovimiento"]>
+
+  export type SaldoMovimientoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    saldo_partida_id?: boolean
+    referencia_id?: boolean
+    referencia_codigo?: boolean
+    tipo?: boolean
+    campo?: boolean
+    delta?: boolean
+    saldo_resultante?: boolean
+    created_at?: boolean
+    saldo_partida?: boolean | SaldoPartidaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["saldoMovimiento"]>
+
+  export type SaldoMovimientoSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    saldo_partida_id?: boolean
+    referencia_id?: boolean
+    referencia_codigo?: boolean
+    tipo?: boolean
+    campo?: boolean
+    delta?: boolean
+    saldo_resultante?: boolean
+    created_at?: boolean
+  }
+
+  export type SaldoMovimientoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    saldo_partida?: boolean | SaldoPartidaDefaultArgs<ExtArgs>
+  }
+  export type SaldoMovimientoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    saldo_partida?: boolean | SaldoPartidaDefaultArgs<ExtArgs>
+  }
+
+  export type $SaldoMovimientoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SaldoMovimiento"
+    objects: {
+      saldo_partida: Prisma.$SaldoPartidaPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      saldo_partida_id: string
+      referencia_id: string
+      referencia_codigo: string | null
+      tipo: string
+      campo: string
+      delta: Prisma.Decimal
+      saldo_resultante: Prisma.Decimal
+      created_at: Date
+    }, ExtArgs["result"]["saldoMovimiento"]>
+    composites: {}
+  }
+
+  type SaldoMovimientoGetPayload<S extends boolean | null | undefined | SaldoMovimientoDefaultArgs> = $Result.GetResult<Prisma.$SaldoMovimientoPayload, S>
+
+  type SaldoMovimientoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SaldoMovimientoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SaldoMovimientoCountAggregateInputType | true
+    }
+
+  export interface SaldoMovimientoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SaldoMovimiento'], meta: { name: 'SaldoMovimiento' } }
+    /**
+     * Find zero or one SaldoMovimiento that matches the filter.
+     * @param {SaldoMovimientoFindUniqueArgs} args - Arguments to find a SaldoMovimiento
+     * @example
+     * // Get one SaldoMovimiento
+     * const saldoMovimiento = await prisma.saldoMovimiento.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SaldoMovimientoFindUniqueArgs>(args: SelectSubset<T, SaldoMovimientoFindUniqueArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SaldoMovimiento that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SaldoMovimientoFindUniqueOrThrowArgs} args - Arguments to find a SaldoMovimiento
+     * @example
+     * // Get one SaldoMovimiento
+     * const saldoMovimiento = await prisma.saldoMovimiento.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SaldoMovimientoFindUniqueOrThrowArgs>(args: SelectSubset<T, SaldoMovimientoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SaldoMovimiento that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoFindFirstArgs} args - Arguments to find a SaldoMovimiento
+     * @example
+     * // Get one SaldoMovimiento
+     * const saldoMovimiento = await prisma.saldoMovimiento.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SaldoMovimientoFindFirstArgs>(args?: SelectSubset<T, SaldoMovimientoFindFirstArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SaldoMovimiento that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoFindFirstOrThrowArgs} args - Arguments to find a SaldoMovimiento
+     * @example
+     * // Get one SaldoMovimiento
+     * const saldoMovimiento = await prisma.saldoMovimiento.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SaldoMovimientoFindFirstOrThrowArgs>(args?: SelectSubset<T, SaldoMovimientoFindFirstOrThrowArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SaldoMovimientos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SaldoMovimientos
+     * const saldoMovimientos = await prisma.saldoMovimiento.findMany()
+     * 
+     * // Get first 10 SaldoMovimientos
+     * const saldoMovimientos = await prisma.saldoMovimiento.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const saldoMovimientoWithIdOnly = await prisma.saldoMovimiento.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SaldoMovimientoFindManyArgs>(args?: SelectSubset<T, SaldoMovimientoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SaldoMovimiento.
+     * @param {SaldoMovimientoCreateArgs} args - Arguments to create a SaldoMovimiento.
+     * @example
+     * // Create one SaldoMovimiento
+     * const SaldoMovimiento = await prisma.saldoMovimiento.create({
+     *   data: {
+     *     // ... data to create a SaldoMovimiento
+     *   }
+     * })
+     * 
+     */
+    create<T extends SaldoMovimientoCreateArgs>(args: SelectSubset<T, SaldoMovimientoCreateArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SaldoMovimientos.
+     * @param {SaldoMovimientoCreateManyArgs} args - Arguments to create many SaldoMovimientos.
+     * @example
+     * // Create many SaldoMovimientos
+     * const saldoMovimiento = await prisma.saldoMovimiento.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SaldoMovimientoCreateManyArgs>(args?: SelectSubset<T, SaldoMovimientoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SaldoMovimientos and returns the data saved in the database.
+     * @param {SaldoMovimientoCreateManyAndReturnArgs} args - Arguments to create many SaldoMovimientos.
+     * @example
+     * // Create many SaldoMovimientos
+     * const saldoMovimiento = await prisma.saldoMovimiento.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SaldoMovimientos and only return the `id`
+     * const saldoMovimientoWithIdOnly = await prisma.saldoMovimiento.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SaldoMovimientoCreateManyAndReturnArgs>(args?: SelectSubset<T, SaldoMovimientoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SaldoMovimiento.
+     * @param {SaldoMovimientoDeleteArgs} args - Arguments to delete one SaldoMovimiento.
+     * @example
+     * // Delete one SaldoMovimiento
+     * const SaldoMovimiento = await prisma.saldoMovimiento.delete({
+     *   where: {
+     *     // ... filter to delete one SaldoMovimiento
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SaldoMovimientoDeleteArgs>(args: SelectSubset<T, SaldoMovimientoDeleteArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SaldoMovimiento.
+     * @param {SaldoMovimientoUpdateArgs} args - Arguments to update one SaldoMovimiento.
+     * @example
+     * // Update one SaldoMovimiento
+     * const saldoMovimiento = await prisma.saldoMovimiento.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SaldoMovimientoUpdateArgs>(args: SelectSubset<T, SaldoMovimientoUpdateArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SaldoMovimientos.
+     * @param {SaldoMovimientoDeleteManyArgs} args - Arguments to filter SaldoMovimientos to delete.
+     * @example
+     * // Delete a few SaldoMovimientos
+     * const { count } = await prisma.saldoMovimiento.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SaldoMovimientoDeleteManyArgs>(args?: SelectSubset<T, SaldoMovimientoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SaldoMovimientos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SaldoMovimientos
+     * const saldoMovimiento = await prisma.saldoMovimiento.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SaldoMovimientoUpdateManyArgs>(args: SelectSubset<T, SaldoMovimientoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SaldoMovimiento.
+     * @param {SaldoMovimientoUpsertArgs} args - Arguments to update or create a SaldoMovimiento.
+     * @example
+     * // Update or create a SaldoMovimiento
+     * const saldoMovimiento = await prisma.saldoMovimiento.upsert({
+     *   create: {
+     *     // ... data to create a SaldoMovimiento
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SaldoMovimiento we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SaldoMovimientoUpsertArgs>(args: SelectSubset<T, SaldoMovimientoUpsertArgs<ExtArgs>>): Prisma__SaldoMovimientoClient<$Result.GetResult<Prisma.$SaldoMovimientoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SaldoMovimientos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoCountArgs} args - Arguments to filter SaldoMovimientos to count.
+     * @example
+     * // Count the number of SaldoMovimientos
+     * const count = await prisma.saldoMovimiento.count({
+     *   where: {
+     *     // ... the filter for the SaldoMovimientos we want to count
+     *   }
+     * })
+    **/
+    count<T extends SaldoMovimientoCountArgs>(
+      args?: Subset<T, SaldoMovimientoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SaldoMovimientoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SaldoMovimiento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SaldoMovimientoAggregateArgs>(args: Subset<T, SaldoMovimientoAggregateArgs>): Prisma.PrismaPromise<GetSaldoMovimientoAggregateType<T>>
+
+    /**
+     * Group by SaldoMovimiento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SaldoMovimientoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SaldoMovimientoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SaldoMovimientoGroupByArgs['orderBy'] }
+        : { orderBy?: SaldoMovimientoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SaldoMovimientoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSaldoMovimientoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SaldoMovimiento model
+   */
+  readonly fields: SaldoMovimientoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SaldoMovimiento.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SaldoMovimientoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    saldo_partida<T extends SaldoPartidaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SaldoPartidaDefaultArgs<ExtArgs>>): Prisma__SaldoPartidaClient<$Result.GetResult<Prisma.$SaldoPartidaPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SaldoMovimiento model
+   */ 
+  interface SaldoMovimientoFieldRefs {
+    readonly id: FieldRef<"SaldoMovimiento", 'String'>
+    readonly tenant_id: FieldRef<"SaldoMovimiento", 'String'>
+    readonly saldo_partida_id: FieldRef<"SaldoMovimiento", 'String'>
+    readonly referencia_id: FieldRef<"SaldoMovimiento", 'String'>
+    readonly referencia_codigo: FieldRef<"SaldoMovimiento", 'String'>
+    readonly tipo: FieldRef<"SaldoMovimiento", 'String'>
+    readonly campo: FieldRef<"SaldoMovimiento", 'String'>
+    readonly delta: FieldRef<"SaldoMovimiento", 'Decimal'>
+    readonly saldo_resultante: FieldRef<"SaldoMovimiento", 'Decimal'>
+    readonly created_at: FieldRef<"SaldoMovimiento", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SaldoMovimiento findUnique
+   */
+  export type SaldoMovimientoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoMovimiento to fetch.
+     */
+    where: SaldoMovimientoWhereUniqueInput
+  }
+
+  /**
+   * SaldoMovimiento findUniqueOrThrow
+   */
+  export type SaldoMovimientoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoMovimiento to fetch.
+     */
+    where: SaldoMovimientoWhereUniqueInput
+  }
+
+  /**
+   * SaldoMovimiento findFirst
+   */
+  export type SaldoMovimientoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoMovimiento to fetch.
+     */
+    where?: SaldoMovimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoMovimientos to fetch.
+     */
+    orderBy?: SaldoMovimientoOrderByWithRelationInput | SaldoMovimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SaldoMovimientos.
+     */
+    cursor?: SaldoMovimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoMovimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoMovimientos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SaldoMovimientos.
+     */
+    distinct?: SaldoMovimientoScalarFieldEnum | SaldoMovimientoScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoMovimiento findFirstOrThrow
+   */
+  export type SaldoMovimientoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoMovimiento to fetch.
+     */
+    where?: SaldoMovimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoMovimientos to fetch.
+     */
+    orderBy?: SaldoMovimientoOrderByWithRelationInput | SaldoMovimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SaldoMovimientos.
+     */
+    cursor?: SaldoMovimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoMovimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoMovimientos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SaldoMovimientos.
+     */
+    distinct?: SaldoMovimientoScalarFieldEnum | SaldoMovimientoScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoMovimiento findMany
+   */
+  export type SaldoMovimientoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * Filter, which SaldoMovimientos to fetch.
+     */
+    where?: SaldoMovimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SaldoMovimientos to fetch.
+     */
+    orderBy?: SaldoMovimientoOrderByWithRelationInput | SaldoMovimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SaldoMovimientos.
+     */
+    cursor?: SaldoMovimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SaldoMovimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SaldoMovimientos.
+     */
+    skip?: number
+    distinct?: SaldoMovimientoScalarFieldEnum | SaldoMovimientoScalarFieldEnum[]
+  }
+
+  /**
+   * SaldoMovimiento create
+   */
+  export type SaldoMovimientoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SaldoMovimiento.
+     */
+    data: XOR<SaldoMovimientoCreateInput, SaldoMovimientoUncheckedCreateInput>
+  }
+
+  /**
+   * SaldoMovimiento createMany
+   */
+  export type SaldoMovimientoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SaldoMovimientos.
+     */
+    data: SaldoMovimientoCreateManyInput | SaldoMovimientoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SaldoMovimiento createManyAndReturn
+   */
+  export type SaldoMovimientoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SaldoMovimientos.
+     */
+    data: SaldoMovimientoCreateManyInput | SaldoMovimientoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SaldoMovimiento update
+   */
+  export type SaldoMovimientoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SaldoMovimiento.
+     */
+    data: XOR<SaldoMovimientoUpdateInput, SaldoMovimientoUncheckedUpdateInput>
+    /**
+     * Choose, which SaldoMovimiento to update.
+     */
+    where: SaldoMovimientoWhereUniqueInput
+  }
+
+  /**
+   * SaldoMovimiento updateMany
+   */
+  export type SaldoMovimientoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SaldoMovimientos.
+     */
+    data: XOR<SaldoMovimientoUpdateManyMutationInput, SaldoMovimientoUncheckedUpdateManyInput>
+    /**
+     * Filter which SaldoMovimientos to update
+     */
+    where?: SaldoMovimientoWhereInput
+  }
+
+  /**
+   * SaldoMovimiento upsert
+   */
+  export type SaldoMovimientoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SaldoMovimiento to update in case it exists.
+     */
+    where: SaldoMovimientoWhereUniqueInput
+    /**
+     * In case the SaldoMovimiento found by the `where` argument doesn't exist, create a new SaldoMovimiento with this data.
+     */
+    create: XOR<SaldoMovimientoCreateInput, SaldoMovimientoUncheckedCreateInput>
+    /**
+     * In case the SaldoMovimiento was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SaldoMovimientoUpdateInput, SaldoMovimientoUncheckedUpdateInput>
+  }
+
+  /**
+   * SaldoMovimiento delete
+   */
+  export type SaldoMovimientoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+    /**
+     * Filter which SaldoMovimiento to delete.
+     */
+    where: SaldoMovimientoWhereUniqueInput
+  }
+
+  /**
+   * SaldoMovimiento deleteMany
+   */
+  export type SaldoMovimientoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SaldoMovimientos to delete
+     */
+    where?: SaldoMovimientoWhereInput
+  }
+
+  /**
+   * SaldoMovimiento without action
+   */
+  export type SaldoMovimientoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SaldoMovimiento
+     */
+    select?: SaldoMovimientoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SaldoMovimientoInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model FichaTecnicaInsumo
    */
 
@@ -8768,6 +11122,43 @@ export namespace Prisma {
   export type ConceptoInsumoScalarFieldEnum = (typeof ConceptoInsumoScalarFieldEnum)[keyof typeof ConceptoInsumoScalarFieldEnum]
 
 
+  export const SaldoPartidaScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    concepto_id: 'concepto_id',
+    concepto_clave: 'concepto_clave',
+    concepto_desc: 'concepto_desc',
+    monto_aprobado: 'monto_aprobado',
+    monto_comprometido: 'monto_comprometido',
+    monto_ejercido: 'monto_ejercido',
+    monto_en_proceso: 'monto_en_proceso',
+    monto_disponible: 'monto_disponible',
+    estado_tope: 'estado_tope',
+    bloqueo_automatico: 'bloqueo_automatico',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type SaldoPartidaScalarFieldEnum = (typeof SaldoPartidaScalarFieldEnum)[keyof typeof SaldoPartidaScalarFieldEnum]
+
+
+  export const SaldoMovimientoScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    saldo_partida_id: 'saldo_partida_id',
+    referencia_id: 'referencia_id',
+    referencia_codigo: 'referencia_codigo',
+    tipo: 'tipo',
+    campo: 'campo',
+    delta: 'delta',
+    saldo_resultante: 'saldo_resultante',
+    created_at: 'created_at'
+  };
+
+  export type SaldoMovimientoScalarFieldEnum = (typeof SaldoMovimientoScalarFieldEnum)[keyof typeof SaldoMovimientoScalarFieldEnum]
+
+
   export const FichaTecnicaInsumoScalarFieldEnum: {
     id_ficha: 'id_ficha',
     tenant_id: 'tenant_id',
@@ -9413,6 +11804,197 @@ export namespace Prisma {
     updated_at?: DateTimeWithAggregatesFilter<"ConceptoInsumo"> | Date | string
   }
 
+  export type SaldoPartidaWhereInput = {
+    AND?: SaldoPartidaWhereInput | SaldoPartidaWhereInput[]
+    OR?: SaldoPartidaWhereInput[]
+    NOT?: SaldoPartidaWhereInput | SaldoPartidaWhereInput[]
+    id?: UuidFilter<"SaldoPartida"> | string
+    tenant_id?: UuidFilter<"SaldoPartida"> | string
+    proyecto_id?: UuidFilter<"SaldoPartida"> | string
+    concepto_id?: UuidFilter<"SaldoPartida"> | string
+    concepto_clave?: StringFilter<"SaldoPartida"> | string
+    concepto_desc?: StringFilter<"SaldoPartida"> | string
+    monto_aprobado?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFilter<"SaldoPartida"> | string
+    bloqueo_automatico?: BoolFilter<"SaldoPartida"> | boolean
+    created_at?: DateTimeFilter<"SaldoPartida"> | Date | string
+    updated_at?: DateTimeFilter<"SaldoPartida"> | Date | string
+    movimientos?: SaldoMovimientoListRelationFilter
+  }
+
+  export type SaldoPartidaOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_desc?: SortOrder
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+    estado_tope?: SortOrder
+    bloqueo_automatico?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    movimientos?: SaldoMovimientoOrderByRelationAggregateInput
+  }
+
+  export type SaldoPartidaWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_saldo_partida?: SaldoPartidaUq_saldo_partidaCompoundUniqueInput
+    AND?: SaldoPartidaWhereInput | SaldoPartidaWhereInput[]
+    OR?: SaldoPartidaWhereInput[]
+    NOT?: SaldoPartidaWhereInput | SaldoPartidaWhereInput[]
+    tenant_id?: UuidFilter<"SaldoPartida"> | string
+    proyecto_id?: UuidFilter<"SaldoPartida"> | string
+    concepto_id?: UuidFilter<"SaldoPartida"> | string
+    concepto_clave?: StringFilter<"SaldoPartida"> | string
+    concepto_desc?: StringFilter<"SaldoPartida"> | string
+    monto_aprobado?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFilter<"SaldoPartida"> | string
+    bloqueo_automatico?: BoolFilter<"SaldoPartida"> | boolean
+    created_at?: DateTimeFilter<"SaldoPartida"> | Date | string
+    updated_at?: DateTimeFilter<"SaldoPartida"> | Date | string
+    movimientos?: SaldoMovimientoListRelationFilter
+  }, "id" | "uq_saldo_partida">
+
+  export type SaldoPartidaOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_desc?: SortOrder
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+    estado_tope?: SortOrder
+    bloqueo_automatico?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: SaldoPartidaCountOrderByAggregateInput
+    _avg?: SaldoPartidaAvgOrderByAggregateInput
+    _max?: SaldoPartidaMaxOrderByAggregateInput
+    _min?: SaldoPartidaMinOrderByAggregateInput
+    _sum?: SaldoPartidaSumOrderByAggregateInput
+  }
+
+  export type SaldoPartidaScalarWhereWithAggregatesInput = {
+    AND?: SaldoPartidaScalarWhereWithAggregatesInput | SaldoPartidaScalarWhereWithAggregatesInput[]
+    OR?: SaldoPartidaScalarWhereWithAggregatesInput[]
+    NOT?: SaldoPartidaScalarWhereWithAggregatesInput | SaldoPartidaScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SaldoPartida"> | string
+    tenant_id?: UuidWithAggregatesFilter<"SaldoPartida"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"SaldoPartida"> | string
+    concepto_id?: UuidWithAggregatesFilter<"SaldoPartida"> | string
+    concepto_clave?: StringWithAggregatesFilter<"SaldoPartida"> | string
+    concepto_desc?: StringWithAggregatesFilter<"SaldoPartida"> | string
+    monto_aprobado?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringWithAggregatesFilter<"SaldoPartida"> | string
+    bloqueo_automatico?: BoolWithAggregatesFilter<"SaldoPartida"> | boolean
+    created_at?: DateTimeWithAggregatesFilter<"SaldoPartida"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"SaldoPartida"> | Date | string
+  }
+
+  export type SaldoMovimientoWhereInput = {
+    AND?: SaldoMovimientoWhereInput | SaldoMovimientoWhereInput[]
+    OR?: SaldoMovimientoWhereInput[]
+    NOT?: SaldoMovimientoWhereInput | SaldoMovimientoWhereInput[]
+    id?: UuidFilter<"SaldoMovimiento"> | string
+    tenant_id?: UuidFilter<"SaldoMovimiento"> | string
+    saldo_partida_id?: UuidFilter<"SaldoMovimiento"> | string
+    referencia_id?: UuidFilter<"SaldoMovimiento"> | string
+    referencia_codigo?: StringNullableFilter<"SaldoMovimiento"> | string | null
+    tipo?: StringFilter<"SaldoMovimiento"> | string
+    campo?: StringFilter<"SaldoMovimiento"> | string
+    delta?: DecimalFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"SaldoMovimiento"> | Date | string
+    saldo_partida?: XOR<SaldoPartidaRelationFilter, SaldoPartidaWhereInput>
+  }
+
+  export type SaldoMovimientoOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    saldo_partida_id?: SortOrder
+    referencia_id?: SortOrder
+    referencia_codigo?: SortOrderInput | SortOrder
+    tipo?: SortOrder
+    campo?: SortOrder
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+    created_at?: SortOrder
+    saldo_partida?: SaldoPartidaOrderByWithRelationInput
+  }
+
+  export type SaldoMovimientoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_saldo_movimiento_idem?: SaldoMovimientoUq_saldo_movimiento_idemCompoundUniqueInput
+    AND?: SaldoMovimientoWhereInput | SaldoMovimientoWhereInput[]
+    OR?: SaldoMovimientoWhereInput[]
+    NOT?: SaldoMovimientoWhereInput | SaldoMovimientoWhereInput[]
+    tenant_id?: UuidFilter<"SaldoMovimiento"> | string
+    saldo_partida_id?: UuidFilter<"SaldoMovimiento"> | string
+    referencia_id?: UuidFilter<"SaldoMovimiento"> | string
+    referencia_codigo?: StringNullableFilter<"SaldoMovimiento"> | string | null
+    tipo?: StringFilter<"SaldoMovimiento"> | string
+    campo?: StringFilter<"SaldoMovimiento"> | string
+    delta?: DecimalFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"SaldoMovimiento"> | Date | string
+    saldo_partida?: XOR<SaldoPartidaRelationFilter, SaldoPartidaWhereInput>
+  }, "id" | "uq_saldo_movimiento_idem">
+
+  export type SaldoMovimientoOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    saldo_partida_id?: SortOrder
+    referencia_id?: SortOrder
+    referencia_codigo?: SortOrderInput | SortOrder
+    tipo?: SortOrder
+    campo?: SortOrder
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+    created_at?: SortOrder
+    _count?: SaldoMovimientoCountOrderByAggregateInput
+    _avg?: SaldoMovimientoAvgOrderByAggregateInput
+    _max?: SaldoMovimientoMaxOrderByAggregateInput
+    _min?: SaldoMovimientoMinOrderByAggregateInput
+    _sum?: SaldoMovimientoSumOrderByAggregateInput
+  }
+
+  export type SaldoMovimientoScalarWhereWithAggregatesInput = {
+    AND?: SaldoMovimientoScalarWhereWithAggregatesInput | SaldoMovimientoScalarWhereWithAggregatesInput[]
+    OR?: SaldoMovimientoScalarWhereWithAggregatesInput[]
+    NOT?: SaldoMovimientoScalarWhereWithAggregatesInput | SaldoMovimientoScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SaldoMovimiento"> | string
+    tenant_id?: UuidWithAggregatesFilter<"SaldoMovimiento"> | string
+    saldo_partida_id?: UuidWithAggregatesFilter<"SaldoMovimiento"> | string
+    referencia_id?: UuidWithAggregatesFilter<"SaldoMovimiento"> | string
+    referencia_codigo?: StringNullableWithAggregatesFilter<"SaldoMovimiento"> | string | null
+    tipo?: StringWithAggregatesFilter<"SaldoMovimiento"> | string
+    campo?: StringWithAggregatesFilter<"SaldoMovimiento"> | string
+    delta?: DecimalWithAggregatesFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalWithAggregatesFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeWithAggregatesFilter<"SaldoMovimiento"> | Date | string
+  }
+
   export type FichaTecnicaInsumoWhereInput = {
     AND?: FichaTecnicaInsumoWhereInput | FichaTecnicaInsumoWhereInput[]
     OR?: FichaTecnicaInsumoWhereInput[]
@@ -10041,6 +12623,226 @@ export namespace Prisma {
     costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoPartidaCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_desc: string
+    monto_aprobado?: Decimal | DecimalJsLike | number | string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: Decimal | DecimalJsLike | number | string
+    monto_disponible?: Decimal | DecimalJsLike | number | string
+    estado_tope?: string
+    bloqueo_automatico?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    movimientos?: SaldoMovimientoCreateNestedManyWithoutSaldo_partidaInput
+  }
+
+  export type SaldoPartidaUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_desc: string
+    monto_aprobado?: Decimal | DecimalJsLike | number | string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: Decimal | DecimalJsLike | number | string
+    monto_disponible?: Decimal | DecimalJsLike | number | string
+    estado_tope?: string
+    bloqueo_automatico?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    movimientos?: SaldoMovimientoUncheckedCreateNestedManyWithoutSaldo_partidaInput
+  }
+
+  export type SaldoPartidaUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_desc?: StringFieldUpdateOperationsInput | string
+    monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFieldUpdateOperationsInput | string
+    bloqueo_automatico?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    movimientos?: SaldoMovimientoUpdateManyWithoutSaldo_partidaNestedInput
+  }
+
+  export type SaldoPartidaUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_desc?: StringFieldUpdateOperationsInput | string
+    monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFieldUpdateOperationsInput | string
+    bloqueo_automatico?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    movimientos?: SaldoMovimientoUncheckedUpdateManyWithoutSaldo_partidaNestedInput
+  }
+
+  export type SaldoPartidaCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_desc: string
+    monto_aprobado?: Decimal | DecimalJsLike | number | string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: Decimal | DecimalJsLike | number | string
+    monto_disponible?: Decimal | DecimalJsLike | number | string
+    estado_tope?: string
+    bloqueo_automatico?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type SaldoPartidaUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_desc?: StringFieldUpdateOperationsInput | string
+    monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFieldUpdateOperationsInput | string
+    bloqueo_automatico?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoPartidaUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_desc?: StringFieldUpdateOperationsInput | string
+    monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFieldUpdateOperationsInput | string
+    bloqueo_automatico?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoMovimientoCreateInput = {
+    id?: string
+    tenant_id: string
+    referencia_id: string
+    referencia_codigo?: string | null
+    tipo: string
+    campo: string
+    delta: Decimal | DecimalJsLike | number | string
+    saldo_resultante: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    saldo_partida: SaldoPartidaCreateNestedOneWithoutMovimientosInput
+  }
+
+  export type SaldoMovimientoUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    saldo_partida_id: string
+    referencia_id: string
+    referencia_codigo?: string | null
+    tipo: string
+    campo: string
+    delta: Decimal | DecimalJsLike | number | string
+    saldo_resultante: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type SaldoMovimientoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    saldo_partida?: SaldoPartidaUpdateOneRequiredWithoutMovimientosNestedInput
+  }
+
+  export type SaldoMovimientoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    saldo_partida_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoMovimientoCreateManyInput = {
+    id?: string
+    tenant_id: string
+    saldo_partida_id: string
+    referencia_id: string
+    referencia_codigo?: string | null
+    tipo: string
+    campo: string
+    delta: Decimal | DecimalJsLike | number | string
+    saldo_resultante: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type SaldoMovimientoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoMovimientoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    saldo_partida_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type FichaTecnicaInsumoCreateInput = {
@@ -10715,6 +13517,92 @@ export namespace Prisma {
     costo_unitario?: SortOrder
   }
 
+  export type SaldoMovimientoListRelationFilter = {
+    every?: SaldoMovimientoWhereInput
+    some?: SaldoMovimientoWhereInput
+    none?: SaldoMovimientoWhereInput
+  }
+
+  export type SaldoMovimientoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SaldoPartidaUq_saldo_partidaCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+  }
+
+  export type SaldoPartidaCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_desc?: SortOrder
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+    estado_tope?: SortOrder
+    bloqueo_automatico?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type SaldoPartidaAvgOrderByAggregateInput = {
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+  }
+
+  export type SaldoPartidaMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_desc?: SortOrder
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+    estado_tope?: SortOrder
+    bloqueo_automatico?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type SaldoPartidaMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    concepto_desc?: SortOrder
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+    estado_tope?: SortOrder
+    bloqueo_automatico?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type SaldoPartidaSumOrderByAggregateInput = {
+    monto_aprobado?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    monto_en_proceso?: SortOrder
+    monto_disponible?: SortOrder
+  }
+
   export type StringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -10728,6 +13616,84 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type SaldoPartidaRelationFilter = {
+    is?: SaldoPartidaWhereInput
+    isNot?: SaldoPartidaWhereInput
+  }
+
+  export type SaldoMovimientoUq_saldo_movimiento_idemCompoundUniqueInput = {
+    saldo_partida_id: string
+    referencia_id: string
+    tipo: string
+  }
+
+  export type SaldoMovimientoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    saldo_partida_id?: SortOrder
+    referencia_id?: SortOrder
+    referencia_codigo?: SortOrder
+    tipo?: SortOrder
+    campo?: SortOrder
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type SaldoMovimientoAvgOrderByAggregateInput = {
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+  }
+
+  export type SaldoMovimientoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    saldo_partida_id?: SortOrder
+    referencia_id?: SortOrder
+    referencia_codigo?: SortOrder
+    tipo?: SortOrder
+    campo?: SortOrder
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type SaldoMovimientoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    saldo_partida_id?: SortOrder
+    referencia_id?: SortOrder
+    referencia_codigo?: SortOrder
+    tipo?: SortOrder
+    campo?: SortOrder
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type SaldoMovimientoSumOrderByAggregateInput = {
+    delta?: SortOrder
+    saldo_resultante?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type FichaTecnicaInsumoCountOrderByAggregateInput = {
@@ -10775,24 +13741,6 @@ export namespace Prisma {
 
   export type FichaTecnicaInsumoSumOrderByAggregateInput = {
     tamano_bytes?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type InsumoCreateNestedManyWithoutCategoria_gastoInput = {
@@ -11063,6 +14011,62 @@ export namespace Prisma {
     upsert?: InsumoUpsertWithoutConcepto_insumosInput
     connect?: InsumoWhereUniqueInput
     update?: XOR<XOR<InsumoUpdateToOneWithWhereWithoutConcepto_insumosInput, InsumoUpdateWithoutConcepto_insumosInput>, InsumoUncheckedUpdateWithoutConcepto_insumosInput>
+  }
+
+  export type SaldoMovimientoCreateNestedManyWithoutSaldo_partidaInput = {
+    create?: XOR<SaldoMovimientoCreateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput> | SaldoMovimientoCreateWithoutSaldo_partidaInput[] | SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput[]
+    connectOrCreate?: SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput | SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput[]
+    createMany?: SaldoMovimientoCreateManySaldo_partidaInputEnvelope
+    connect?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+  }
+
+  export type SaldoMovimientoUncheckedCreateNestedManyWithoutSaldo_partidaInput = {
+    create?: XOR<SaldoMovimientoCreateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput> | SaldoMovimientoCreateWithoutSaldo_partidaInput[] | SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput[]
+    connectOrCreate?: SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput | SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput[]
+    createMany?: SaldoMovimientoCreateManySaldo_partidaInputEnvelope
+    connect?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+  }
+
+  export type SaldoMovimientoUpdateManyWithoutSaldo_partidaNestedInput = {
+    create?: XOR<SaldoMovimientoCreateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput> | SaldoMovimientoCreateWithoutSaldo_partidaInput[] | SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput[]
+    connectOrCreate?: SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput | SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput[]
+    upsert?: SaldoMovimientoUpsertWithWhereUniqueWithoutSaldo_partidaInput | SaldoMovimientoUpsertWithWhereUniqueWithoutSaldo_partidaInput[]
+    createMany?: SaldoMovimientoCreateManySaldo_partidaInputEnvelope
+    set?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    disconnect?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    delete?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    connect?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    update?: SaldoMovimientoUpdateWithWhereUniqueWithoutSaldo_partidaInput | SaldoMovimientoUpdateWithWhereUniqueWithoutSaldo_partidaInput[]
+    updateMany?: SaldoMovimientoUpdateManyWithWhereWithoutSaldo_partidaInput | SaldoMovimientoUpdateManyWithWhereWithoutSaldo_partidaInput[]
+    deleteMany?: SaldoMovimientoScalarWhereInput | SaldoMovimientoScalarWhereInput[]
+  }
+
+  export type SaldoMovimientoUncheckedUpdateManyWithoutSaldo_partidaNestedInput = {
+    create?: XOR<SaldoMovimientoCreateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput> | SaldoMovimientoCreateWithoutSaldo_partidaInput[] | SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput[]
+    connectOrCreate?: SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput | SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput[]
+    upsert?: SaldoMovimientoUpsertWithWhereUniqueWithoutSaldo_partidaInput | SaldoMovimientoUpsertWithWhereUniqueWithoutSaldo_partidaInput[]
+    createMany?: SaldoMovimientoCreateManySaldo_partidaInputEnvelope
+    set?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    disconnect?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    delete?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    connect?: SaldoMovimientoWhereUniqueInput | SaldoMovimientoWhereUniqueInput[]
+    update?: SaldoMovimientoUpdateWithWhereUniqueWithoutSaldo_partidaInput | SaldoMovimientoUpdateWithWhereUniqueWithoutSaldo_partidaInput[]
+    updateMany?: SaldoMovimientoUpdateManyWithWhereWithoutSaldo_partidaInput | SaldoMovimientoUpdateManyWithWhereWithoutSaldo_partidaInput[]
+    deleteMany?: SaldoMovimientoScalarWhereInput | SaldoMovimientoScalarWhereInput[]
+  }
+
+  export type SaldoPartidaCreateNestedOneWithoutMovimientosInput = {
+    create?: XOR<SaldoPartidaCreateWithoutMovimientosInput, SaldoPartidaUncheckedCreateWithoutMovimientosInput>
+    connectOrCreate?: SaldoPartidaCreateOrConnectWithoutMovimientosInput
+    connect?: SaldoPartidaWhereUniqueInput
+  }
+
+  export type SaldoPartidaUpdateOneRequiredWithoutMovimientosNestedInput = {
+    create?: XOR<SaldoPartidaCreateWithoutMovimientosInput, SaldoPartidaUncheckedCreateWithoutMovimientosInput>
+    connectOrCreate?: SaldoPartidaCreateOrConnectWithoutMovimientosInput
+    upsert?: SaldoPartidaUpsertWithoutMovimientosInput
+    connect?: SaldoPartidaWhereUniqueInput
+    update?: XOR<XOR<SaldoPartidaUpdateToOneWithWhereWithoutMovimientosInput, SaldoPartidaUpdateWithoutMovimientosInput>, SaldoPartidaUncheckedUpdateWithoutMovimientosInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -11888,6 +14892,160 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type SaldoMovimientoCreateWithoutSaldo_partidaInput = {
+    id?: string
+    tenant_id: string
+    referencia_id: string
+    referencia_codigo?: string | null
+    tipo: string
+    campo: string
+    delta: Decimal | DecimalJsLike | number | string
+    saldo_resultante: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput = {
+    id?: string
+    tenant_id: string
+    referencia_id: string
+    referencia_codigo?: string | null
+    tipo: string
+    campo: string
+    delta: Decimal | DecimalJsLike | number | string
+    saldo_resultante: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type SaldoMovimientoCreateOrConnectWithoutSaldo_partidaInput = {
+    where: SaldoMovimientoWhereUniqueInput
+    create: XOR<SaldoMovimientoCreateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput>
+  }
+
+  export type SaldoMovimientoCreateManySaldo_partidaInputEnvelope = {
+    data: SaldoMovimientoCreateManySaldo_partidaInput | SaldoMovimientoCreateManySaldo_partidaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SaldoMovimientoUpsertWithWhereUniqueWithoutSaldo_partidaInput = {
+    where: SaldoMovimientoWhereUniqueInput
+    update: XOR<SaldoMovimientoUpdateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedUpdateWithoutSaldo_partidaInput>
+    create: XOR<SaldoMovimientoCreateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedCreateWithoutSaldo_partidaInput>
+  }
+
+  export type SaldoMovimientoUpdateWithWhereUniqueWithoutSaldo_partidaInput = {
+    where: SaldoMovimientoWhereUniqueInput
+    data: XOR<SaldoMovimientoUpdateWithoutSaldo_partidaInput, SaldoMovimientoUncheckedUpdateWithoutSaldo_partidaInput>
+  }
+
+  export type SaldoMovimientoUpdateManyWithWhereWithoutSaldo_partidaInput = {
+    where: SaldoMovimientoScalarWhereInput
+    data: XOR<SaldoMovimientoUpdateManyMutationInput, SaldoMovimientoUncheckedUpdateManyWithoutSaldo_partidaInput>
+  }
+
+  export type SaldoMovimientoScalarWhereInput = {
+    AND?: SaldoMovimientoScalarWhereInput | SaldoMovimientoScalarWhereInput[]
+    OR?: SaldoMovimientoScalarWhereInput[]
+    NOT?: SaldoMovimientoScalarWhereInput | SaldoMovimientoScalarWhereInput[]
+    id?: UuidFilter<"SaldoMovimiento"> | string
+    tenant_id?: UuidFilter<"SaldoMovimiento"> | string
+    saldo_partida_id?: UuidFilter<"SaldoMovimiento"> | string
+    referencia_id?: UuidFilter<"SaldoMovimiento"> | string
+    referencia_codigo?: StringNullableFilter<"SaldoMovimiento"> | string | null
+    tipo?: StringFilter<"SaldoMovimiento"> | string
+    campo?: StringFilter<"SaldoMovimiento"> | string
+    delta?: DecimalFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFilter<"SaldoMovimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"SaldoMovimiento"> | Date | string
+  }
+
+  export type SaldoPartidaCreateWithoutMovimientosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_desc: string
+    monto_aprobado?: Decimal | DecimalJsLike | number | string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: Decimal | DecimalJsLike | number | string
+    monto_disponible?: Decimal | DecimalJsLike | number | string
+    estado_tope?: string
+    bloqueo_automatico?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type SaldoPartidaUncheckedCreateWithoutMovimientosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    concepto_desc: string
+    monto_aprobado?: Decimal | DecimalJsLike | number | string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: Decimal | DecimalJsLike | number | string
+    monto_disponible?: Decimal | DecimalJsLike | number | string
+    estado_tope?: string
+    bloqueo_automatico?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type SaldoPartidaCreateOrConnectWithoutMovimientosInput = {
+    where: SaldoPartidaWhereUniqueInput
+    create: XOR<SaldoPartidaCreateWithoutMovimientosInput, SaldoPartidaUncheckedCreateWithoutMovimientosInput>
+  }
+
+  export type SaldoPartidaUpsertWithoutMovimientosInput = {
+    update: XOR<SaldoPartidaUpdateWithoutMovimientosInput, SaldoPartidaUncheckedUpdateWithoutMovimientosInput>
+    create: XOR<SaldoPartidaCreateWithoutMovimientosInput, SaldoPartidaUncheckedCreateWithoutMovimientosInput>
+    where?: SaldoPartidaWhereInput
+  }
+
+  export type SaldoPartidaUpdateToOneWithWhereWithoutMovimientosInput = {
+    where?: SaldoPartidaWhereInput
+    data: XOR<SaldoPartidaUpdateWithoutMovimientosInput, SaldoPartidaUncheckedUpdateWithoutMovimientosInput>
+  }
+
+  export type SaldoPartidaUpdateWithoutMovimientosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_desc?: StringFieldUpdateOperationsInput | string
+    monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFieldUpdateOperationsInput | string
+    bloqueo_automatico?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoPartidaUncheckedUpdateWithoutMovimientosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    concepto_desc?: StringFieldUpdateOperationsInput | string
+    monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_en_proceso?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_disponible?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    estado_tope?: StringFieldUpdateOperationsInput | string
+    bloqueo_automatico?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type InsumoCreateManyCategoria_gastoInput = {
     id?: string
     tenant_id: string
@@ -12104,6 +15262,54 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type SaldoMovimientoCreateManySaldo_partidaInput = {
+    id?: string
+    tenant_id: string
+    referencia_id: string
+    referencia_codigo?: string | null
+    tipo: string
+    campo: string
+    delta: Decimal | DecimalJsLike | number | string
+    saldo_resultante: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type SaldoMovimientoUpdateWithoutSaldo_partidaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoMovimientoUncheckedUpdateWithoutSaldo_partidaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SaldoMovimientoUncheckedUpdateManyWithoutSaldo_partidaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    referencia_id?: StringFieldUpdateOperationsInput | string
+    referencia_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    campo?: StringFieldUpdateOperationsInput | string
+    delta?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldo_resultante?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
 
 
   /**
@@ -12125,6 +15331,10 @@ export namespace Prisma {
      * @deprecated Use ConceptoCountOutputTypeDefaultArgs instead
      */
     export type ConceptoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SaldoPartidaCountOutputTypeDefaultArgs instead
+     */
+    export type SaldoPartidaCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SaldoPartidaCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use CategoriaGastoDefaultArgs instead
      */
@@ -12149,6 +15359,14 @@ export namespace Prisma {
      * @deprecated Use ConceptoInsumoDefaultArgs instead
      */
     export type ConceptoInsumoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoInsumoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SaldoPartidaDefaultArgs instead
+     */
+    export type SaldoPartidaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SaldoPartidaDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SaldoMovimientoDefaultArgs instead
+     */
+    export type SaldoMovimientoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SaldoMovimientoDefaultArgs<ExtArgs>
     /**
      * @deprecated Use FichaTecnicaInsumoDefaultArgs instead
      */

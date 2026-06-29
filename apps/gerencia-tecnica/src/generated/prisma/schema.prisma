@@ -169,6 +169,61 @@ model ConceptoInsumo {
 }
 
 // ======================================================================
+// CONTROL PRESUPUESTAL POR PARTIDA
+// ======================================================================
+
+/// Saldo presupuestal por concepto/partida del catálogo APU.
+/// Se crea automáticamente al aprobar un presupuesto (uno por concepto).
+/// Es el gate de control antes de generar OC o aprobar requisiciones.
+model SaldoPartida {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String @db.Uuid
+  proyecto_id    String @db.Uuid
+  concepto_id    String @db.Uuid
+  concepto_clave String @db.VarChar(50)
+  concepto_desc  String @db.Text
+
+  monto_aprobado     Decimal @default(0) @db.Decimal(18, 2)
+  monto_comprometido Decimal @default(0) @db.Decimal(18, 2)
+  monto_ejercido     Decimal @default(0) @db.Decimal(18, 2)
+  monto_en_proceso   Decimal @default(0) @db.Decimal(18, 2)
+  monto_disponible   Decimal @default(0) @db.Decimal(18, 2)
+
+  estado_tope        String  @default("LIBRE") @db.VarChar(20)
+  bloqueo_automatico Boolean @default(true)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  movimientos SaldoMovimiento[]
+
+  @@unique([tenant_id, proyecto_id, concepto_id], name: "uq_saldo_partida")
+  @@index([tenant_id, proyecto_id], name: "idx_saldo_partida_proyecto")
+  @@map("saldo_partidas")
+}
+
+/// Audit trail de cada cambio en SaldoPartida (compromisos, pagos, reversas).
+model SaldoMovimiento {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id        String       @db.Uuid
+  saldo_partida_id String       @db.Uuid
+  saldo_partida    SaldoPartida @relation(fields: [saldo_partida_id], references: [id], onDelete: Cascade)
+
+  referencia_id     String  @db.Uuid
+  referencia_codigo String? @db.VarChar(100)
+  tipo              String  @db.VarChar(30)
+  campo             String  @db.VarChar(30)
+  delta             Decimal @db.Decimal(18, 2)
+  saldo_resultante  Decimal @db.Decimal(18, 2)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([saldo_partida_id, referencia_id, tipo], name: "uq_saldo_movimiento_idem")
+  @@index([tenant_id, saldo_partida_id], name: "idx_saldo_mov_partida")
+  @@map("saldo_movimientos")
+}
+
+// ======================================================================
 // ENUMERACIONES
 // ======================================================================
 

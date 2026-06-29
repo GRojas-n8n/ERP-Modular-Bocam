@@ -28,6 +28,7 @@ app.use(createObservabilityMiddleware('compras'));
 const PORT = process.env.PORT || 3002;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
+const GT_URL = process.env.GT_URL || 'http://localhost:3001/api/v1/gerencia-tecnica';
 const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
 const DOCS_PROVEEDORES_UPLOAD_DIR = process.env.DOCS_PROVEEDORES_UPLOAD_DIR || '/tmp/docs-proveedores';
 const DOCS_PROVEEDORES_MAX_SIZE_MB = parseInt(process.env.DOCS_PROVEEDORES_MAX_SIZE_MB ?? '10', 10);
@@ -2118,14 +2119,25 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           grupo.subtotal += d.precio_ofertado.toNumber() * cantidad;
         }
 
-        // 1.4: Total agregado (con IVA) para verificación de suficiencia única
+            // 1.4: Total agregado (con IVA) para verificación de suficiencia única
         let totalAgregadoSinIva = 0;
         for (const g of grupos.values()) totalAgregadoSinIva += g.subtotal;
         const totalAgregado = totalAgregadoSinIva * (1 + IVA_RATE);
 
+        // Obtener concepto_id de la req para el gate de partida
+        let conceptoId: string | null = null;
+        if (comparativa.requisicion_id) {
+          const req = await prisma.requisicion.findUnique({
+            where: { id_requisicion: comparativa.requisicion_id },
+            select: { concepto_id: true },
+          });
+          conceptoId = req?.concepto_id ?? null;
+        }
+
         return {
           comparativaId: comparativa.id_cuadro,
           requisicionId: comparativa.requisicion_id,
+          conceptoId,
           grupos,
           lineaMap,
           cantidadMap,
@@ -2148,11 +2160,44 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       throw new Error(`Error de validación financiera: ${errMsg}`);
     }
 
+    // Gate: verificar SaldoPartida en GT antes de crear OCs (fail-open en timeout)
+    const oc_bloqueadas: any[] = [];
+    let saldoPartidaGT: { monto_disponible: number; estado_tope: string; bloqueo_automatico: boolean } | null = null;
+    if (loteData.conceptoId) {
+      try {
+        const saldoResp = await axios.get(`${GT_URL}/partidas/${loteData.conceptoId}/saldo`, {
+          headers: buildForwardHeaders(req, { Authorization: token || '' }),
+          timeout: 2000,
+        });
+        saldoPartidaGT = saldoResp.data?.data ?? null;
+      } catch (_) {
+        console.warn('[Compras] GT timeout/error en verificación de SaldoPartida — modo degradado (fail-open)');
+      }
+
+      if (saldoPartidaGT?.estado_tope === 'BLOQUEADO' && saldoPartidaGT?.bloqueo_automatico !== false) {
+        oc_bloqueadas.push({
+          concepto_id:    loteData.conceptoId,
+          monto_disponible: saldoPartidaGT.monto_disponible,
+          motivo: 'PARTIDA_BLOQUEADA',
+        });
+        return res.status(422).json({
+          success: false,
+          error: 'PARTIDA_BLOQUEADA',
+          message: 'La partida presupuestal ha alcanzado su tope. Solicita una transferencia presupuestal para continuar.',
+          oc_bloqueadas,
+        });
+      }
+    }
+
     // 1.5–1.8: Crear una OC por proveedor con todos sus renglones
     const timestamp = Date.now();
     const ordenesCreadas: any[] = [];
     const advertencias: string[] = [];
     let idx = 0;
+
+    if (saldoPartidaGT?.estado_tope === 'LIMITADO') {
+      advertencias.push(`Partida al límite — disponible: $${saldoPartidaGT.monto_disponible.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`);
+    }
 
     for (const [proveedorId, grupo] of loteData.grupos) {
       idx++;
@@ -2227,7 +2272,21 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada', 'Alerta de OC en ERROR_FINANZAS persistida en BD', { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id });
       }
 
-      // 1.7: Publicar evento compras.oc_creada por cada OC emitida (best-effort)
+      // 1.7: Comprometer saldo en GT para el concepto/partida (fire-and-forget)
+      if (ocEmitida && loteData.conceptoId) {
+        try {
+          await axios.post(`${GT_URL}/partidas/${loteData.conceptoId}/comprometer`, {
+            monto:            oc.total.toNumber(),
+            referencia_id:    oc.id_orden,
+            referencia_codigo: oc.codigo,
+            tipo:             'OC',
+          }, { headers: buildForwardHeaders(req, { Authorization: token || '' }), timeout: 3000 });
+        } catch (gtErr: any) {
+          console.error(`[Compras] Falla al comprometer saldo GT para OC ${oc.id_orden}:`, gtErr.message);
+        }
+      }
+
+      // 1.8: Publicar evento compras.oc_creada por cada OC emitida (best-effort)
       if (ocEmitida) {
         try {
           await eventBus.publish({
@@ -3159,6 +3218,23 @@ app.post('/api/v1/compras/ordenes-compra/:id/cancelar', requireRoles('admin', 's
         return cancelada;
       }
     );
+
+    // Revertir compromiso en GT (fire-and-forget) para liberar saldo de la partida
+    if (result.requisicion_id) {
+      try {
+        const reqData = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+          prisma.requisicion.findUnique({ where: { id_requisicion: result.requisicion_id! }, select: { concepto_id: true } })
+        );
+        if (reqData?.concepto_id) {
+          await axios.delete(`${GT_URL}/partidas/${reqData.concepto_id}/comprometer/${result.id_orden}`, {
+            headers: buildForwardHeaders(req, { Authorization: token || '' }),
+            timeout: 3000,
+          });
+        }
+      } catch (gtErr: any) {
+        console.warn(`[Compras] No se pudo revertir compromiso GT para OC ${result.id_orden}:`, gtErr.message);
+      }
+    }
 
     logInfo(req, 'compras', 'compras.orden_compra.cancelada', 'Orden de compra cancelada y conciliada con Finanzas', {
       oc_id: result.id_orden,

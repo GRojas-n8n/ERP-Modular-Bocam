@@ -199,6 +199,37 @@ exports.Prisma.ConceptoInsumoScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.SaldoPartidaScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
+  concepto_clave: 'concepto_clave',
+  concepto_desc: 'concepto_desc',
+  monto_aprobado: 'monto_aprobado',
+  monto_comprometido: 'monto_comprometido',
+  monto_ejercido: 'monto_ejercido',
+  monto_en_proceso: 'monto_en_proceso',
+  monto_disponible: 'monto_disponible',
+  estado_tope: 'estado_tope',
+  bloqueo_automatico: 'bloqueo_automatico',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.SaldoMovimientoScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  saldo_partida_id: 'saldo_partida_id',
+  referencia_id: 'referencia_id',
+  referencia_codigo: 'referencia_codigo',
+  tipo: 'tipo',
+  campo: 'campo',
+  delta: 'delta',
+  saldo_resultante: 'saldo_resultante',
+  created_at: 'created_at'
+};
+
 exports.Prisma.FichaTecnicaInsumoScalarFieldEnum = {
   id_ficha: 'id_ficha',
   tenant_id: 'tenant_id',
@@ -249,6 +280,8 @@ exports.Prisma.ModelName = {
   PresupuestoBase: 'PresupuestoBase',
   Concepto: 'Concepto',
   ConceptoInsumo: 'ConceptoInsumo',
+  SaldoPartida: 'SaldoPartida',
+  SaldoMovimiento: 'SaldoMovimiento',
   FichaTecnicaInsumo: 'FichaTecnicaInsumo'
 };
 
