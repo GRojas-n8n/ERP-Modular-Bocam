@@ -150,7 +150,11 @@ exports.Prisma.MovimientoAlmacenScalarFieldEnum = {
   destino: 'destino',
   responsable: 'responsable',
   referencia: 'referencia',
-  fecha: 'fecha'
+  fecha: 'fecha',
+  concepto_id: 'concepto_id',
+  concepto_clave: 'concepto_clave',
+  frente_trabajo: 'frente_trabajo',
+  oc_item_id: 'oc_item_id'
 };
 
 exports.Prisma.SortOrder = {

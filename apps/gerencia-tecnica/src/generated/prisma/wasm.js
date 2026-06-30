@@ -257,6 +257,20 @@ exports.Prisma.TransferenciaPartidaScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.CompraProyectadaScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
+  insumo_id: 'insumo_id',
+  oc_id: 'oc_id',
+  oc_codigo: 'oc_codigo',
+  cantidad: 'cantidad',
+  monto: 'monto',
+  estado: 'estado',
+  created_at: 'created_at'
+};
+
 exports.Prisma.FichaTecnicaInsumoScalarFieldEnum = {
   id_ficha: 'id_ficha',
   tenant_id: 'tenant_id',
@@ -310,6 +324,7 @@ exports.Prisma.ModelName = {
   SaldoPartida: 'SaldoPartida',
   SaldoMovimiento: 'SaldoMovimiento',
   TransferenciaPartida: 'TransferenciaPartida',
+  CompraProyectada: 'CompraProyectada',
   FichaTecnicaInsumo: 'FichaTecnicaInsumo'
 };
 

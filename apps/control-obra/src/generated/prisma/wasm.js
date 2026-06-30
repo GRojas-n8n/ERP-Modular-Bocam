@@ -172,6 +172,26 @@ exports.Prisma.AvanceFisicoScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.MaterialConsumidoObraScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
+  concepto_clave: 'concepto_clave',
+  insumo_id: 'insumo_id',
+  clave_insumo: 'clave_insumo',
+  descripcion: 'descripcion',
+  unidad: 'unidad',
+  cantidad: 'cantidad',
+  costo_unitario: 'costo_unitario',
+  costo_total: 'costo_total',
+  costo_pendiente: 'costo_pendiente',
+  frente_trabajo: 'frente_trabajo',
+  movimiento_id: 'movimiento_id',
+  fecha: 'fecha',
+  created_at: 'created_at'
+};
+
 exports.Prisma.EstimacionScalarFieldEnum = {
   id_estimacion: 'id_estimacion',
   tenant_id: 'tenant_id',
@@ -217,6 +237,7 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   BitacoraObra: 'BitacoraObra',
   AvanceFisico: 'AvanceFisico',
+  MaterialConsumidoObra: 'MaterialConsumidoObra',
   Estimacion: 'Estimacion'
 };
 

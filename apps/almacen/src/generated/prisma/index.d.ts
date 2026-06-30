@@ -2074,6 +2074,10 @@ export namespace Prisma {
     responsable: string | null
     referencia: string | null
     fecha: Date | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    frente_trabajo: string | null
+    oc_item_id: string | null
   }
 
   export type MovimientoAlmacenMaxAggregateOutputType = {
@@ -2089,6 +2093,10 @@ export namespace Prisma {
     responsable: string | null
     referencia: string | null
     fecha: Date | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    frente_trabajo: string | null
+    oc_item_id: string | null
   }
 
   export type MovimientoAlmacenCountAggregateOutputType = {
@@ -2104,6 +2112,10 @@ export namespace Prisma {
     responsable: number
     referencia: number
     fecha: number
+    concepto_id: number
+    concepto_clave: number
+    frente_trabajo: number
+    oc_item_id: number
     _all: number
   }
 
@@ -2129,6 +2141,10 @@ export namespace Prisma {
     responsable?: true
     referencia?: true
     fecha?: true
+    concepto_id?: true
+    concepto_clave?: true
+    frente_trabajo?: true
+    oc_item_id?: true
   }
 
   export type MovimientoAlmacenMaxAggregateInputType = {
@@ -2144,6 +2160,10 @@ export namespace Prisma {
     responsable?: true
     referencia?: true
     fecha?: true
+    concepto_id?: true
+    concepto_clave?: true
+    frente_trabajo?: true
+    oc_item_id?: true
   }
 
   export type MovimientoAlmacenCountAggregateInputType = {
@@ -2159,6 +2179,10 @@ export namespace Prisma {
     responsable?: true
     referencia?: true
     fecha?: true
+    concepto_id?: true
+    concepto_clave?: true
+    frente_trabajo?: true
+    oc_item_id?: true
     _all?: true
   }
 
@@ -2261,6 +2285,10 @@ export namespace Prisma {
     responsable: string | null
     referencia: string | null
     fecha: Date
+    concepto_id: string | null
+    concepto_clave: string | null
+    frente_trabajo: string | null
+    oc_item_id: string | null
     _count: MovimientoAlmacenCountAggregateOutputType | null
     _avg: MovimientoAlmacenAvgAggregateOutputType | null
     _sum: MovimientoAlmacenSumAggregateOutputType | null
@@ -2295,6 +2323,10 @@ export namespace Prisma {
     responsable?: boolean
     referencia?: boolean
     fecha?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    frente_trabajo?: boolean
+    oc_item_id?: boolean
     item?: boolean | ItemInventarioDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["movimientoAlmacen"]>
 
@@ -2311,6 +2343,10 @@ export namespace Prisma {
     responsable?: boolean
     referencia?: boolean
     fecha?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    frente_trabajo?: boolean
+    oc_item_id?: boolean
     item?: boolean | ItemInventarioDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["movimientoAlmacen"]>
 
@@ -2327,6 +2363,10 @@ export namespace Prisma {
     responsable?: boolean
     referencia?: boolean
     fecha?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    frente_trabajo?: boolean
+    oc_item_id?: boolean
   }
 
   export type MovimientoAlmacenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2354,6 +2394,10 @@ export namespace Prisma {
       responsable: string | null
       referencia: string | null
       fecha: Date
+      concepto_id: string | null
+      concepto_clave: string | null
+      frente_trabajo: string | null
+      oc_item_id: string | null
     }, ExtArgs["result"]["movimientoAlmacen"]>
     composites: {}
   }
@@ -2760,6 +2804,10 @@ export namespace Prisma {
     readonly responsable: FieldRef<"MovimientoAlmacen", 'String'>
     readonly referencia: FieldRef<"MovimientoAlmacen", 'String'>
     readonly fecha: FieldRef<"MovimientoAlmacen", 'DateTime'>
+    readonly concepto_id: FieldRef<"MovimientoAlmacen", 'String'>
+    readonly concepto_clave: FieldRef<"MovimientoAlmacen", 'String'>
+    readonly frente_trabajo: FieldRef<"MovimientoAlmacen", 'String'>
+    readonly oc_item_id: FieldRef<"MovimientoAlmacen", 'String'>
   }
     
 
@@ -3137,7 +3185,11 @@ export namespace Prisma {
     destino: 'destino',
     responsable: 'responsable',
     referencia: 'referencia',
-    fecha: 'fecha'
+    fecha: 'fecha',
+    concepto_id: 'concepto_id',
+    concepto_clave: 'concepto_clave',
+    frente_trabajo: 'frente_trabajo',
+    oc_item_id: 'oc_item_id'
   };
 
   export type MovimientoAlmacenScalarFieldEnum = (typeof MovimientoAlmacenScalarFieldEnum)[keyof typeof MovimientoAlmacenScalarFieldEnum]
@@ -3344,6 +3396,10 @@ export namespace Prisma {
     responsable?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     referencia?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     fecha?: DateTimeFilter<"MovimientoAlmacen"> | Date | string
+    concepto_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    concepto_clave?: StringNullableFilter<"MovimientoAlmacen"> | string | null
+    frente_trabajo?: StringNullableFilter<"MovimientoAlmacen"> | string | null
+    oc_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
     item?: XOR<ItemInventarioRelationFilter, ItemInventarioWhereInput>
   }
 
@@ -3360,6 +3416,10 @@ export namespace Prisma {
     responsable?: SortOrderInput | SortOrder
     referencia?: SortOrderInput | SortOrder
     fecha?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
+    concepto_clave?: SortOrderInput | SortOrder
+    frente_trabajo?: SortOrderInput | SortOrder
+    oc_item_id?: SortOrderInput | SortOrder
     item?: ItemInventarioOrderByWithRelationInput
   }
 
@@ -3379,6 +3439,10 @@ export namespace Prisma {
     responsable?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     referencia?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     fecha?: DateTimeFilter<"MovimientoAlmacen"> | Date | string
+    concepto_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    concepto_clave?: StringNullableFilter<"MovimientoAlmacen"> | string | null
+    frente_trabajo?: StringNullableFilter<"MovimientoAlmacen"> | string | null
+    oc_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
     item?: XOR<ItemInventarioRelationFilter, ItemInventarioWhereInput>
   }, "id">
 
@@ -3395,6 +3459,10 @@ export namespace Prisma {
     responsable?: SortOrderInput | SortOrder
     referencia?: SortOrderInput | SortOrder
     fecha?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
+    concepto_clave?: SortOrderInput | SortOrder
+    frente_trabajo?: SortOrderInput | SortOrder
+    oc_item_id?: SortOrderInput | SortOrder
     _count?: MovimientoAlmacenCountOrderByAggregateInput
     _avg?: MovimientoAlmacenAvgOrderByAggregateInput
     _max?: MovimientoAlmacenMaxOrderByAggregateInput
@@ -3418,6 +3486,10 @@ export namespace Prisma {
     responsable?: StringNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
     referencia?: StringNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
     fecha?: DateTimeWithAggregatesFilter<"MovimientoAlmacen"> | Date | string
+    concepto_id?: UuidNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
+    concepto_clave?: StringNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
+    frente_trabajo?: StringNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
+    oc_item_id?: UuidNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
   }
 
   export type ItemInventarioCreateInput = {
@@ -3548,6 +3620,10 @@ export namespace Prisma {
     responsable?: string | null
     referencia?: string | null
     fecha?: Date | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
+    frente_trabajo?: string | null
+    oc_item_id?: string | null
     item: ItemInventarioCreateNestedOneWithoutMovimientosInput
   }
 
@@ -3564,6 +3640,10 @@ export namespace Prisma {
     responsable?: string | null
     referencia?: string | null
     fecha?: Date | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
+    frente_trabajo?: string | null
+    oc_item_id?: string | null
   }
 
   export type MovimientoAlmacenUpdateInput = {
@@ -3578,6 +3658,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
     item?: ItemInventarioUpdateOneRequiredWithoutMovimientosNestedInput
   }
 
@@ -3594,6 +3678,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenCreateManyInput = {
@@ -3609,6 +3697,10 @@ export namespace Prisma {
     responsable?: string | null
     referencia?: string | null
     fecha?: Date | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
+    frente_trabajo?: string | null
+    oc_item_id?: string | null
   }
 
   export type MovimientoAlmacenUpdateManyMutationInput = {
@@ -3623,6 +3715,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenUncheckedUpdateManyInput = {
@@ -3638,6 +3734,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -3903,6 +4003,10 @@ export namespace Prisma {
     responsable?: SortOrder
     referencia?: SortOrder
     fecha?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    frente_trabajo?: SortOrder
+    oc_item_id?: SortOrder
   }
 
   export type MovimientoAlmacenAvgOrderByAggregateInput = {
@@ -3922,6 +4026,10 @@ export namespace Prisma {
     responsable?: SortOrder
     referencia?: SortOrder
     fecha?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    frente_trabajo?: SortOrder
+    oc_item_id?: SortOrder
   }
 
   export type MovimientoAlmacenMinOrderByAggregateInput = {
@@ -3937,6 +4045,10 @@ export namespace Prisma {
     responsable?: SortOrder
     referencia?: SortOrder
     fecha?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    frente_trabajo?: SortOrder
+    oc_item_id?: SortOrder
   }
 
   export type MovimientoAlmacenSumOrderByAggregateInput = {
@@ -4217,6 +4329,10 @@ export namespace Prisma {
     responsable?: string | null
     referencia?: string | null
     fecha?: Date | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
+    frente_trabajo?: string | null
+    oc_item_id?: string | null
   }
 
   export type MovimientoAlmacenUncheckedCreateWithoutItemInput = {
@@ -4231,6 +4347,10 @@ export namespace Prisma {
     responsable?: string | null
     referencia?: string | null
     fecha?: Date | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
+    frente_trabajo?: string | null
+    oc_item_id?: string | null
   }
 
   export type MovimientoAlmacenCreateOrConnectWithoutItemInput = {
@@ -4275,6 +4395,10 @@ export namespace Prisma {
     responsable?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     referencia?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     fecha?: DateTimeFilter<"MovimientoAlmacen"> | Date | string
+    concepto_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    concepto_clave?: StringNullableFilter<"MovimientoAlmacen"> | string | null
+    frente_trabajo?: StringNullableFilter<"MovimientoAlmacen"> | string | null
+    oc_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
   }
 
   export type ItemInventarioCreateWithoutMovimientosInput = {
@@ -4369,6 +4493,10 @@ export namespace Prisma {
     responsable?: string | null
     referencia?: string | null
     fecha?: Date | string
+    concepto_id?: string | null
+    concepto_clave?: string | null
+    frente_trabajo?: string | null
+    oc_item_id?: string | null
   }
 
   export type MovimientoAlmacenUpdateWithoutItemInput = {
@@ -4383,6 +4511,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenUncheckedUpdateWithoutItemInput = {
@@ -4397,6 +4529,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenUncheckedUpdateManyWithoutItemInput = {
@@ -4411,6 +4547,10 @@ export namespace Prisma {
     responsable?: NullableStringFieldUpdateOperationsInput | string | null
     referencia?: NullableStringFieldUpdateOperationsInput | string | null
     fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
 

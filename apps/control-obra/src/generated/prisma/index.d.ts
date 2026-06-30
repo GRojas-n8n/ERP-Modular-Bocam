@@ -24,6 +24,11 @@ export type BitacoraObra = $Result.DefaultSelection<Prisma.$BitacoraObraPayload>
  */
 export type AvanceFisico = $Result.DefaultSelection<Prisma.$AvanceFisicoPayload>
 /**
+ * Model MaterialConsumidoObra
+ * 
+ */
+export type MaterialConsumidoObra = $Result.DefaultSelection<Prisma.$MaterialConsumidoObraPayload>
+/**
  * Model Estimacion
  * 
  */
@@ -171,6 +176,16 @@ export class PrismaClient<
     * ```
     */
   get avanceFisico(): Prisma.AvanceFisicoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.materialConsumidoObra`: Exposes CRUD operations for the **MaterialConsumidoObra** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MaterialConsumidoObras
+    * const materialConsumidoObras = await prisma.materialConsumidoObra.findMany()
+    * ```
+    */
+  get materialConsumidoObra(): Prisma.MaterialConsumidoObraDelegate<ExtArgs>;
 
   /**
    * `prisma.estimacion`: Exposes CRUD operations for the **Estimacion** model.
@@ -624,6 +639,7 @@ export namespace Prisma {
   export const ModelName: {
     BitacoraObra: 'BitacoraObra',
     AvanceFisico: 'AvanceFisico',
+    MaterialConsumidoObra: 'MaterialConsumidoObra',
     Estimacion: 'Estimacion'
   };
 
@@ -640,7 +656,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "bitacoraObra" | "avanceFisico" | "estimacion"
+      modelProps: "bitacoraObra" | "avanceFisico" | "materialConsumidoObra" | "estimacion"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -781,6 +797,76 @@ export namespace Prisma {
           count: {
             args: Prisma.AvanceFisicoCountArgs<ExtArgs>
             result: $Utils.Optional<AvanceFisicoCountAggregateOutputType> | number
+          }
+        }
+      }
+      MaterialConsumidoObra: {
+        payload: Prisma.$MaterialConsumidoObraPayload<ExtArgs>
+        fields: Prisma.MaterialConsumidoObraFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MaterialConsumidoObraFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MaterialConsumidoObraFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>
+          }
+          findFirst: {
+            args: Prisma.MaterialConsumidoObraFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MaterialConsumidoObraFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>
+          }
+          findMany: {
+            args: Prisma.MaterialConsumidoObraFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>[]
+          }
+          create: {
+            args: Prisma.MaterialConsumidoObraCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>
+          }
+          createMany: {
+            args: Prisma.MaterialConsumidoObraCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MaterialConsumidoObraCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>[]
+          }
+          delete: {
+            args: Prisma.MaterialConsumidoObraDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>
+          }
+          update: {
+            args: Prisma.MaterialConsumidoObraUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>
+          }
+          deleteMany: {
+            args: Prisma.MaterialConsumidoObraDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MaterialConsumidoObraUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.MaterialConsumidoObraUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MaterialConsumidoObraPayload>
+          }
+          aggregate: {
+            args: Prisma.MaterialConsumidoObraAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMaterialConsumidoObra>
+          }
+          groupBy: {
+            args: Prisma.MaterialConsumidoObraGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MaterialConsumidoObraGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MaterialConsumidoObraCountArgs<ExtArgs>
+            result: $Utils.Optional<MaterialConsumidoObraCountAggregateOutputType> | number
           }
         }
       }
@@ -3384,6 +3470,1070 @@ export namespace Prisma {
 
 
   /**
+   * Model MaterialConsumidoObra
+   */
+
+  export type AggregateMaterialConsumidoObra = {
+    _count: MaterialConsumidoObraCountAggregateOutputType | null
+    _avg: MaterialConsumidoObraAvgAggregateOutputType | null
+    _sum: MaterialConsumidoObraSumAggregateOutputType | null
+    _min: MaterialConsumidoObraMinAggregateOutputType | null
+    _max: MaterialConsumidoObraMaxAggregateOutputType | null
+  }
+
+  export type MaterialConsumidoObraAvgAggregateOutputType = {
+    cantidad: Decimal | null
+    costo_unitario: Decimal | null
+    costo_total: Decimal | null
+  }
+
+  export type MaterialConsumidoObraSumAggregateOutputType = {
+    cantidad: Decimal | null
+    costo_unitario: Decimal | null
+    costo_total: Decimal | null
+  }
+
+  export type MaterialConsumidoObraMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    insumo_id: string | null
+    clave_insumo: string | null
+    descripcion: string | null
+    unidad: string | null
+    cantidad: Decimal | null
+    costo_unitario: Decimal | null
+    costo_total: Decimal | null
+    costo_pendiente: boolean | null
+    frente_trabajo: string | null
+    movimiento_id: string | null
+    fecha: Date | null
+    created_at: Date | null
+  }
+
+  export type MaterialConsumidoObraMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
+    insumo_id: string | null
+    clave_insumo: string | null
+    descripcion: string | null
+    unidad: string | null
+    cantidad: Decimal | null
+    costo_unitario: Decimal | null
+    costo_total: Decimal | null
+    costo_pendiente: boolean | null
+    frente_trabajo: string | null
+    movimiento_id: string | null
+    fecha: Date | null
+    created_at: Date | null
+  }
+
+  export type MaterialConsumidoObraCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    concepto_id: number
+    concepto_clave: number
+    insumo_id: number
+    clave_insumo: number
+    descripcion: number
+    unidad: number
+    cantidad: number
+    costo_unitario: number
+    costo_total: number
+    costo_pendiente: number
+    frente_trabajo: number
+    movimiento_id: number
+    fecha: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type MaterialConsumidoObraAvgAggregateInputType = {
+    cantidad?: true
+    costo_unitario?: true
+    costo_total?: true
+  }
+
+  export type MaterialConsumidoObraSumAggregateInputType = {
+    cantidad?: true
+    costo_unitario?: true
+    costo_total?: true
+  }
+
+  export type MaterialConsumidoObraMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    insumo_id?: true
+    clave_insumo?: true
+    descripcion?: true
+    unidad?: true
+    cantidad?: true
+    costo_unitario?: true
+    costo_total?: true
+    costo_pendiente?: true
+    frente_trabajo?: true
+    movimiento_id?: true
+    fecha?: true
+    created_at?: true
+  }
+
+  export type MaterialConsumidoObraMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    insumo_id?: true
+    clave_insumo?: true
+    descripcion?: true
+    unidad?: true
+    cantidad?: true
+    costo_unitario?: true
+    costo_total?: true
+    costo_pendiente?: true
+    frente_trabajo?: true
+    movimiento_id?: true
+    fecha?: true
+    created_at?: true
+  }
+
+  export type MaterialConsumidoObraCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    concepto_clave?: true
+    insumo_id?: true
+    clave_insumo?: true
+    descripcion?: true
+    unidad?: true
+    cantidad?: true
+    costo_unitario?: true
+    costo_total?: true
+    costo_pendiente?: true
+    frente_trabajo?: true
+    movimiento_id?: true
+    fecha?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type MaterialConsumidoObraAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MaterialConsumidoObra to aggregate.
+     */
+    where?: MaterialConsumidoObraWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MaterialConsumidoObras to fetch.
+     */
+    orderBy?: MaterialConsumidoObraOrderByWithRelationInput | MaterialConsumidoObraOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MaterialConsumidoObraWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MaterialConsumidoObras from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MaterialConsumidoObras.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MaterialConsumidoObras
+    **/
+    _count?: true | MaterialConsumidoObraCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MaterialConsumidoObraAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MaterialConsumidoObraSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MaterialConsumidoObraMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MaterialConsumidoObraMaxAggregateInputType
+  }
+
+  export type GetMaterialConsumidoObraAggregateType<T extends MaterialConsumidoObraAggregateArgs> = {
+        [P in keyof T & keyof AggregateMaterialConsumidoObra]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMaterialConsumidoObra[P]>
+      : GetScalarType<T[P], AggregateMaterialConsumidoObra[P]>
+  }
+
+
+
+
+  export type MaterialConsumidoObraGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MaterialConsumidoObraWhereInput
+    orderBy?: MaterialConsumidoObraOrderByWithAggregationInput | MaterialConsumidoObraOrderByWithAggregationInput[]
+    by: MaterialConsumidoObraScalarFieldEnum[] | MaterialConsumidoObraScalarFieldEnum
+    having?: MaterialConsumidoObraScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MaterialConsumidoObraCountAggregateInputType | true
+    _avg?: MaterialConsumidoObraAvgAggregateInputType
+    _sum?: MaterialConsumidoObraSumAggregateInputType
+    _min?: MaterialConsumidoObraMinAggregateInputType
+    _max?: MaterialConsumidoObraMaxAggregateInputType
+  }
+
+  export type MaterialConsumidoObraGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    insumo_id: string | null
+    clave_insumo: string
+    descripcion: string
+    unidad: string
+    cantidad: Decimal
+    costo_unitario: Decimal
+    costo_total: Decimal
+    costo_pendiente: boolean
+    frente_trabajo: string | null
+    movimiento_id: string
+    fecha: Date
+    created_at: Date
+    _count: MaterialConsumidoObraCountAggregateOutputType | null
+    _avg: MaterialConsumidoObraAvgAggregateOutputType | null
+    _sum: MaterialConsumidoObraSumAggregateOutputType | null
+    _min: MaterialConsumidoObraMinAggregateOutputType | null
+    _max: MaterialConsumidoObraMaxAggregateOutputType | null
+  }
+
+  type GetMaterialConsumidoObraGroupByPayload<T extends MaterialConsumidoObraGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MaterialConsumidoObraGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MaterialConsumidoObraGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MaterialConsumidoObraGroupByOutputType[P]>
+            : GetScalarType<T[P], MaterialConsumidoObraGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MaterialConsumidoObraSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    insumo_id?: boolean
+    clave_insumo?: boolean
+    descripcion?: boolean
+    unidad?: boolean
+    cantidad?: boolean
+    costo_unitario?: boolean
+    costo_total?: boolean
+    costo_pendiente?: boolean
+    frente_trabajo?: boolean
+    movimiento_id?: boolean
+    fecha?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["materialConsumidoObra"]>
+
+  export type MaterialConsumidoObraSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    insumo_id?: boolean
+    clave_insumo?: boolean
+    descripcion?: boolean
+    unidad?: boolean
+    cantidad?: boolean
+    costo_unitario?: boolean
+    costo_total?: boolean
+    costo_pendiente?: boolean
+    frente_trabajo?: boolean
+    movimiento_id?: boolean
+    fecha?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["materialConsumidoObra"]>
+
+  export type MaterialConsumidoObraSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
+    insumo_id?: boolean
+    clave_insumo?: boolean
+    descripcion?: boolean
+    unidad?: boolean
+    cantidad?: boolean
+    costo_unitario?: boolean
+    costo_total?: boolean
+    costo_pendiente?: boolean
+    frente_trabajo?: boolean
+    movimiento_id?: boolean
+    fecha?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $MaterialConsumidoObraPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MaterialConsumidoObra"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      concepto_id: string
+      concepto_clave: string
+      insumo_id: string | null
+      clave_insumo: string
+      descripcion: string
+      unidad: string
+      cantidad: Prisma.Decimal
+      costo_unitario: Prisma.Decimal
+      costo_total: Prisma.Decimal
+      costo_pendiente: boolean
+      frente_trabajo: string | null
+      movimiento_id: string
+      fecha: Date
+      created_at: Date
+    }, ExtArgs["result"]["materialConsumidoObra"]>
+    composites: {}
+  }
+
+  type MaterialConsumidoObraGetPayload<S extends boolean | null | undefined | MaterialConsumidoObraDefaultArgs> = $Result.GetResult<Prisma.$MaterialConsumidoObraPayload, S>
+
+  type MaterialConsumidoObraCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<MaterialConsumidoObraFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: MaterialConsumidoObraCountAggregateInputType | true
+    }
+
+  export interface MaterialConsumidoObraDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MaterialConsumidoObra'], meta: { name: 'MaterialConsumidoObra' } }
+    /**
+     * Find zero or one MaterialConsumidoObra that matches the filter.
+     * @param {MaterialConsumidoObraFindUniqueArgs} args - Arguments to find a MaterialConsumidoObra
+     * @example
+     * // Get one MaterialConsumidoObra
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MaterialConsumidoObraFindUniqueArgs>(args: SelectSubset<T, MaterialConsumidoObraFindUniqueArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one MaterialConsumidoObra that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {MaterialConsumidoObraFindUniqueOrThrowArgs} args - Arguments to find a MaterialConsumidoObra
+     * @example
+     * // Get one MaterialConsumidoObra
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MaterialConsumidoObraFindUniqueOrThrowArgs>(args: SelectSubset<T, MaterialConsumidoObraFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first MaterialConsumidoObra that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraFindFirstArgs} args - Arguments to find a MaterialConsumidoObra
+     * @example
+     * // Get one MaterialConsumidoObra
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MaterialConsumidoObraFindFirstArgs>(args?: SelectSubset<T, MaterialConsumidoObraFindFirstArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first MaterialConsumidoObra that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraFindFirstOrThrowArgs} args - Arguments to find a MaterialConsumidoObra
+     * @example
+     * // Get one MaterialConsumidoObra
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MaterialConsumidoObraFindFirstOrThrowArgs>(args?: SelectSubset<T, MaterialConsumidoObraFindFirstOrThrowArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more MaterialConsumidoObras that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MaterialConsumidoObras
+     * const materialConsumidoObras = await prisma.materialConsumidoObra.findMany()
+     * 
+     * // Get first 10 MaterialConsumidoObras
+     * const materialConsumidoObras = await prisma.materialConsumidoObra.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const materialConsumidoObraWithIdOnly = await prisma.materialConsumidoObra.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MaterialConsumidoObraFindManyArgs>(args?: SelectSubset<T, MaterialConsumidoObraFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a MaterialConsumidoObra.
+     * @param {MaterialConsumidoObraCreateArgs} args - Arguments to create a MaterialConsumidoObra.
+     * @example
+     * // Create one MaterialConsumidoObra
+     * const MaterialConsumidoObra = await prisma.materialConsumidoObra.create({
+     *   data: {
+     *     // ... data to create a MaterialConsumidoObra
+     *   }
+     * })
+     * 
+     */
+    create<T extends MaterialConsumidoObraCreateArgs>(args: SelectSubset<T, MaterialConsumidoObraCreateArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many MaterialConsumidoObras.
+     * @param {MaterialConsumidoObraCreateManyArgs} args - Arguments to create many MaterialConsumidoObras.
+     * @example
+     * // Create many MaterialConsumidoObras
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MaterialConsumidoObraCreateManyArgs>(args?: SelectSubset<T, MaterialConsumidoObraCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MaterialConsumidoObras and returns the data saved in the database.
+     * @param {MaterialConsumidoObraCreateManyAndReturnArgs} args - Arguments to create many MaterialConsumidoObras.
+     * @example
+     * // Create many MaterialConsumidoObras
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MaterialConsumidoObras and only return the `id`
+     * const materialConsumidoObraWithIdOnly = await prisma.materialConsumidoObra.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MaterialConsumidoObraCreateManyAndReturnArgs>(args?: SelectSubset<T, MaterialConsumidoObraCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a MaterialConsumidoObra.
+     * @param {MaterialConsumidoObraDeleteArgs} args - Arguments to delete one MaterialConsumidoObra.
+     * @example
+     * // Delete one MaterialConsumidoObra
+     * const MaterialConsumidoObra = await prisma.materialConsumidoObra.delete({
+     *   where: {
+     *     // ... filter to delete one MaterialConsumidoObra
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MaterialConsumidoObraDeleteArgs>(args: SelectSubset<T, MaterialConsumidoObraDeleteArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one MaterialConsumidoObra.
+     * @param {MaterialConsumidoObraUpdateArgs} args - Arguments to update one MaterialConsumidoObra.
+     * @example
+     * // Update one MaterialConsumidoObra
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MaterialConsumidoObraUpdateArgs>(args: SelectSubset<T, MaterialConsumidoObraUpdateArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more MaterialConsumidoObras.
+     * @param {MaterialConsumidoObraDeleteManyArgs} args - Arguments to filter MaterialConsumidoObras to delete.
+     * @example
+     * // Delete a few MaterialConsumidoObras
+     * const { count } = await prisma.materialConsumidoObra.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MaterialConsumidoObraDeleteManyArgs>(args?: SelectSubset<T, MaterialConsumidoObraDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MaterialConsumidoObras.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MaterialConsumidoObras
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MaterialConsumidoObraUpdateManyArgs>(args: SelectSubset<T, MaterialConsumidoObraUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one MaterialConsumidoObra.
+     * @param {MaterialConsumidoObraUpsertArgs} args - Arguments to update or create a MaterialConsumidoObra.
+     * @example
+     * // Update or create a MaterialConsumidoObra
+     * const materialConsumidoObra = await prisma.materialConsumidoObra.upsert({
+     *   create: {
+     *     // ... data to create a MaterialConsumidoObra
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MaterialConsumidoObra we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MaterialConsumidoObraUpsertArgs>(args: SelectSubset<T, MaterialConsumidoObraUpsertArgs<ExtArgs>>): Prisma__MaterialConsumidoObraClient<$Result.GetResult<Prisma.$MaterialConsumidoObraPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of MaterialConsumidoObras.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraCountArgs} args - Arguments to filter MaterialConsumidoObras to count.
+     * @example
+     * // Count the number of MaterialConsumidoObras
+     * const count = await prisma.materialConsumidoObra.count({
+     *   where: {
+     *     // ... the filter for the MaterialConsumidoObras we want to count
+     *   }
+     * })
+    **/
+    count<T extends MaterialConsumidoObraCountArgs>(
+      args?: Subset<T, MaterialConsumidoObraCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MaterialConsumidoObraCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MaterialConsumidoObra.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MaterialConsumidoObraAggregateArgs>(args: Subset<T, MaterialConsumidoObraAggregateArgs>): Prisma.PrismaPromise<GetMaterialConsumidoObraAggregateType<T>>
+
+    /**
+     * Group by MaterialConsumidoObra.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MaterialConsumidoObraGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MaterialConsumidoObraGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MaterialConsumidoObraGroupByArgs['orderBy'] }
+        : { orderBy?: MaterialConsumidoObraGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MaterialConsumidoObraGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMaterialConsumidoObraGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MaterialConsumidoObra model
+   */
+  readonly fields: MaterialConsumidoObraFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MaterialConsumidoObra.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MaterialConsumidoObraClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MaterialConsumidoObra model
+   */ 
+  interface MaterialConsumidoObraFieldRefs {
+    readonly id: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly tenant_id: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly proyecto_id: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly concepto_id: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly concepto_clave: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly insumo_id: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly clave_insumo: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly descripcion: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly unidad: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly cantidad: FieldRef<"MaterialConsumidoObra", 'Decimal'>
+    readonly costo_unitario: FieldRef<"MaterialConsumidoObra", 'Decimal'>
+    readonly costo_total: FieldRef<"MaterialConsumidoObra", 'Decimal'>
+    readonly costo_pendiente: FieldRef<"MaterialConsumidoObra", 'Boolean'>
+    readonly frente_trabajo: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly movimiento_id: FieldRef<"MaterialConsumidoObra", 'String'>
+    readonly fecha: FieldRef<"MaterialConsumidoObra", 'DateTime'>
+    readonly created_at: FieldRef<"MaterialConsumidoObra", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MaterialConsumidoObra findUnique
+   */
+  export type MaterialConsumidoObraFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * Filter, which MaterialConsumidoObra to fetch.
+     */
+    where: MaterialConsumidoObraWhereUniqueInput
+  }
+
+  /**
+   * MaterialConsumidoObra findUniqueOrThrow
+   */
+  export type MaterialConsumidoObraFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * Filter, which MaterialConsumidoObra to fetch.
+     */
+    where: MaterialConsumidoObraWhereUniqueInput
+  }
+
+  /**
+   * MaterialConsumidoObra findFirst
+   */
+  export type MaterialConsumidoObraFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * Filter, which MaterialConsumidoObra to fetch.
+     */
+    where?: MaterialConsumidoObraWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MaterialConsumidoObras to fetch.
+     */
+    orderBy?: MaterialConsumidoObraOrderByWithRelationInput | MaterialConsumidoObraOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MaterialConsumidoObras.
+     */
+    cursor?: MaterialConsumidoObraWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MaterialConsumidoObras from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MaterialConsumidoObras.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MaterialConsumidoObras.
+     */
+    distinct?: MaterialConsumidoObraScalarFieldEnum | MaterialConsumidoObraScalarFieldEnum[]
+  }
+
+  /**
+   * MaterialConsumidoObra findFirstOrThrow
+   */
+  export type MaterialConsumidoObraFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * Filter, which MaterialConsumidoObra to fetch.
+     */
+    where?: MaterialConsumidoObraWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MaterialConsumidoObras to fetch.
+     */
+    orderBy?: MaterialConsumidoObraOrderByWithRelationInput | MaterialConsumidoObraOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MaterialConsumidoObras.
+     */
+    cursor?: MaterialConsumidoObraWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MaterialConsumidoObras from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MaterialConsumidoObras.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MaterialConsumidoObras.
+     */
+    distinct?: MaterialConsumidoObraScalarFieldEnum | MaterialConsumidoObraScalarFieldEnum[]
+  }
+
+  /**
+   * MaterialConsumidoObra findMany
+   */
+  export type MaterialConsumidoObraFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * Filter, which MaterialConsumidoObras to fetch.
+     */
+    where?: MaterialConsumidoObraWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MaterialConsumidoObras to fetch.
+     */
+    orderBy?: MaterialConsumidoObraOrderByWithRelationInput | MaterialConsumidoObraOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MaterialConsumidoObras.
+     */
+    cursor?: MaterialConsumidoObraWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MaterialConsumidoObras from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MaterialConsumidoObras.
+     */
+    skip?: number
+    distinct?: MaterialConsumidoObraScalarFieldEnum | MaterialConsumidoObraScalarFieldEnum[]
+  }
+
+  /**
+   * MaterialConsumidoObra create
+   */
+  export type MaterialConsumidoObraCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * The data needed to create a MaterialConsumidoObra.
+     */
+    data: XOR<MaterialConsumidoObraCreateInput, MaterialConsumidoObraUncheckedCreateInput>
+  }
+
+  /**
+   * MaterialConsumidoObra createMany
+   */
+  export type MaterialConsumidoObraCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MaterialConsumidoObras.
+     */
+    data: MaterialConsumidoObraCreateManyInput | MaterialConsumidoObraCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MaterialConsumidoObra createManyAndReturn
+   */
+  export type MaterialConsumidoObraCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many MaterialConsumidoObras.
+     */
+    data: MaterialConsumidoObraCreateManyInput | MaterialConsumidoObraCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MaterialConsumidoObra update
+   */
+  export type MaterialConsumidoObraUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * The data needed to update a MaterialConsumidoObra.
+     */
+    data: XOR<MaterialConsumidoObraUpdateInput, MaterialConsumidoObraUncheckedUpdateInput>
+    /**
+     * Choose, which MaterialConsumidoObra to update.
+     */
+    where: MaterialConsumidoObraWhereUniqueInput
+  }
+
+  /**
+   * MaterialConsumidoObra updateMany
+   */
+  export type MaterialConsumidoObraUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MaterialConsumidoObras.
+     */
+    data: XOR<MaterialConsumidoObraUpdateManyMutationInput, MaterialConsumidoObraUncheckedUpdateManyInput>
+    /**
+     * Filter which MaterialConsumidoObras to update
+     */
+    where?: MaterialConsumidoObraWhereInput
+  }
+
+  /**
+   * MaterialConsumidoObra upsert
+   */
+  export type MaterialConsumidoObraUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * The filter to search for the MaterialConsumidoObra to update in case it exists.
+     */
+    where: MaterialConsumidoObraWhereUniqueInput
+    /**
+     * In case the MaterialConsumidoObra found by the `where` argument doesn't exist, create a new MaterialConsumidoObra with this data.
+     */
+    create: XOR<MaterialConsumidoObraCreateInput, MaterialConsumidoObraUncheckedCreateInput>
+    /**
+     * In case the MaterialConsumidoObra was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MaterialConsumidoObraUpdateInput, MaterialConsumidoObraUncheckedUpdateInput>
+  }
+
+  /**
+   * MaterialConsumidoObra delete
+   */
+  export type MaterialConsumidoObraDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+    /**
+     * Filter which MaterialConsumidoObra to delete.
+     */
+    where: MaterialConsumidoObraWhereUniqueInput
+  }
+
+  /**
+   * MaterialConsumidoObra deleteMany
+   */
+  export type MaterialConsumidoObraDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MaterialConsumidoObras to delete
+     */
+    where?: MaterialConsumidoObraWhereInput
+  }
+
+  /**
+   * MaterialConsumidoObra without action
+   */
+  export type MaterialConsumidoObraDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MaterialConsumidoObra
+     */
+    select?: MaterialConsumidoObraSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Model Estimacion
    */
 
@@ -4671,6 +5821,29 @@ export namespace Prisma {
   export type AvanceFisicoScalarFieldEnum = (typeof AvanceFisicoScalarFieldEnum)[keyof typeof AvanceFisicoScalarFieldEnum]
 
 
+  export const MaterialConsumidoObraScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    concepto_id: 'concepto_id',
+    concepto_clave: 'concepto_clave',
+    insumo_id: 'insumo_id',
+    clave_insumo: 'clave_insumo',
+    descripcion: 'descripcion',
+    unidad: 'unidad',
+    cantidad: 'cantidad',
+    costo_unitario: 'costo_unitario',
+    costo_total: 'costo_total',
+    costo_pendiente: 'costo_pendiente',
+    frente_trabajo: 'frente_trabajo',
+    movimiento_id: 'movimiento_id',
+    fecha: 'fecha',
+    created_at: 'created_at'
+  };
+
+  export type MaterialConsumidoObraScalarFieldEnum = (typeof MaterialConsumidoObraScalarFieldEnum)[keyof typeof MaterialConsumidoObraScalarFieldEnum]
+
+
   export const EstimacionScalarFieldEnum: {
     id_estimacion: 'id_estimacion',
     tenant_id: 'tenant_id',
@@ -4782,6 +5955,13 @@ export namespace Prisma {
    * Reference to a field of type 'Decimal[]'
    */
   export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -5082,6 +6262,120 @@ export namespace Prisma {
     estimacion_id?: UuidNullableWithAggregatesFilter<"AvanceFisico"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"AvanceFisico"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"AvanceFisico"> | Date | string
+  }
+
+  export type MaterialConsumidoObraWhereInput = {
+    AND?: MaterialConsumidoObraWhereInput | MaterialConsumidoObraWhereInput[]
+    OR?: MaterialConsumidoObraWhereInput[]
+    NOT?: MaterialConsumidoObraWhereInput | MaterialConsumidoObraWhereInput[]
+    id?: UuidFilter<"MaterialConsumidoObra"> | string
+    tenant_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    proyecto_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    concepto_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    concepto_clave?: StringFilter<"MaterialConsumidoObra"> | string
+    insumo_id?: UuidNullableFilter<"MaterialConsumidoObra"> | string | null
+    clave_insumo?: StringFilter<"MaterialConsumidoObra"> | string
+    descripcion?: StringFilter<"MaterialConsumidoObra"> | string
+    unidad?: StringFilter<"MaterialConsumidoObra"> | string
+    cantidad?: DecimalFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolFilter<"MaterialConsumidoObra"> | boolean
+    frente_trabajo?: StringNullableFilter<"MaterialConsumidoObra"> | string | null
+    movimiento_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    fecha?: DateTimeFilter<"MaterialConsumidoObra"> | Date | string
+    created_at?: DateTimeFilter<"MaterialConsumidoObra"> | Date | string
+  }
+
+  export type MaterialConsumidoObraOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
+    clave_insumo?: SortOrder
+    descripcion?: SortOrder
+    unidad?: SortOrder
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+    costo_pendiente?: SortOrder
+    frente_trabajo?: SortOrderInput | SortOrder
+    movimiento_id?: SortOrder
+    fecha?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MaterialConsumidoObraWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    movimiento_id?: string
+    AND?: MaterialConsumidoObraWhereInput | MaterialConsumidoObraWhereInput[]
+    OR?: MaterialConsumidoObraWhereInput[]
+    NOT?: MaterialConsumidoObraWhereInput | MaterialConsumidoObraWhereInput[]
+    tenant_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    proyecto_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    concepto_id?: UuidFilter<"MaterialConsumidoObra"> | string
+    concepto_clave?: StringFilter<"MaterialConsumidoObra"> | string
+    insumo_id?: UuidNullableFilter<"MaterialConsumidoObra"> | string | null
+    clave_insumo?: StringFilter<"MaterialConsumidoObra"> | string
+    descripcion?: StringFilter<"MaterialConsumidoObra"> | string
+    unidad?: StringFilter<"MaterialConsumidoObra"> | string
+    cantidad?: DecimalFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolFilter<"MaterialConsumidoObra"> | boolean
+    frente_trabajo?: StringNullableFilter<"MaterialConsumidoObra"> | string | null
+    fecha?: DateTimeFilter<"MaterialConsumidoObra"> | Date | string
+    created_at?: DateTimeFilter<"MaterialConsumidoObra"> | Date | string
+  }, "id" | "movimiento_id">
+
+  export type MaterialConsumidoObraOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
+    clave_insumo?: SortOrder
+    descripcion?: SortOrder
+    unidad?: SortOrder
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+    costo_pendiente?: SortOrder
+    frente_trabajo?: SortOrderInput | SortOrder
+    movimiento_id?: SortOrder
+    fecha?: SortOrder
+    created_at?: SortOrder
+    _count?: MaterialConsumidoObraCountOrderByAggregateInput
+    _avg?: MaterialConsumidoObraAvgOrderByAggregateInput
+    _max?: MaterialConsumidoObraMaxOrderByAggregateInput
+    _min?: MaterialConsumidoObraMinOrderByAggregateInput
+    _sum?: MaterialConsumidoObraSumOrderByAggregateInput
+  }
+
+  export type MaterialConsumidoObraScalarWhereWithAggregatesInput = {
+    AND?: MaterialConsumidoObraScalarWhereWithAggregatesInput | MaterialConsumidoObraScalarWhereWithAggregatesInput[]
+    OR?: MaterialConsumidoObraScalarWhereWithAggregatesInput[]
+    NOT?: MaterialConsumidoObraScalarWhereWithAggregatesInput | MaterialConsumidoObraScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    tenant_id?: UuidWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    concepto_id?: UuidWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    concepto_clave?: StringWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    insumo_id?: UuidNullableWithAggregatesFilter<"MaterialConsumidoObra"> | string | null
+    clave_insumo?: StringWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    descripcion?: StringWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    unidad?: StringWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    cantidad?: DecimalWithAggregatesFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalWithAggregatesFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalWithAggregatesFilter<"MaterialConsumidoObra"> | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolWithAggregatesFilter<"MaterialConsumidoObra"> | boolean
+    frente_trabajo?: StringNullableWithAggregatesFilter<"MaterialConsumidoObra"> | string | null
+    movimiento_id?: UuidWithAggregatesFilter<"MaterialConsumidoObra"> | string
+    fecha?: DateTimeWithAggregatesFilter<"MaterialConsumidoObra"> | Date | string
+    created_at?: DateTimeWithAggregatesFilter<"MaterialConsumidoObra"> | Date | string
   }
 
   export type EstimacionWhereInput = {
@@ -5580,6 +6874,146 @@ export namespace Prisma {
     estimacion_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MaterialConsumidoObraCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    insumo_id?: string | null
+    clave_insumo: string
+    descripcion: string
+    unidad: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    costo_unitario: Decimal | DecimalJsLike | number | string
+    costo_total: Decimal | DecimalJsLike | number | string
+    costo_pendiente?: boolean
+    frente_trabajo?: string | null
+    movimiento_id: string
+    fecha: Date | string
+    created_at?: Date | string
+  }
+
+  export type MaterialConsumidoObraUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    insumo_id?: string | null
+    clave_insumo: string
+    descripcion: string
+    unidad: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    costo_unitario: Decimal | DecimalJsLike | number | string
+    costo_total: Decimal | DecimalJsLike | number | string
+    costo_pendiente?: boolean
+    frente_trabajo?: string | null
+    movimiento_id: string
+    fecha: Date | string
+    created_at?: Date | string
+  }
+
+  export type MaterialConsumidoObraUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave_insumo?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolFieldUpdateOperationsInput | boolean
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    movimiento_id?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MaterialConsumidoObraUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave_insumo?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolFieldUpdateOperationsInput | boolean
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    movimiento_id?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MaterialConsumidoObraCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    concepto_clave: string
+    insumo_id?: string | null
+    clave_insumo: string
+    descripcion: string
+    unidad: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    costo_unitario: Decimal | DecimalJsLike | number | string
+    costo_total: Decimal | DecimalJsLike | number | string
+    costo_pendiente?: boolean
+    frente_trabajo?: string | null
+    movimiento_id: string
+    fecha: Date | string
+    created_at?: Date | string
+  }
+
+  export type MaterialConsumidoObraUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave_insumo?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolFieldUpdateOperationsInput | boolean
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    movimiento_id?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MaterialConsumidoObraUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    concepto_clave?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave_insumo?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    costo_pendiente?: BoolFieldUpdateOperationsInput | boolean
+    frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
+    movimiento_id?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type EstimacionCreateInput = {
@@ -6194,6 +7628,91 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type MaterialConsumidoObraCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    insumo_id?: SortOrder
+    clave_insumo?: SortOrder
+    descripcion?: SortOrder
+    unidad?: SortOrder
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+    costo_pendiente?: SortOrder
+    frente_trabajo?: SortOrder
+    movimiento_id?: SortOrder
+    fecha?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MaterialConsumidoObraAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+  }
+
+  export type MaterialConsumidoObraMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    insumo_id?: SortOrder
+    clave_insumo?: SortOrder
+    descripcion?: SortOrder
+    unidad?: SortOrder
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+    costo_pendiente?: SortOrder
+    frente_trabajo?: SortOrder
+    movimiento_id?: SortOrder
+    fecha?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MaterialConsumidoObraMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
+    insumo_id?: SortOrder
+    clave_insumo?: SortOrder
+    descripcion?: SortOrder
+    unidad?: SortOrder
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+    costo_pendiente?: SortOrder
+    frente_trabajo?: SortOrder
+    movimiento_id?: SortOrder
+    fecha?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type MaterialConsumidoObraSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    costo_unitario?: SortOrder
+    costo_total?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -6386,6 +7905,10 @@ export namespace Prisma {
     delete?: EstimacionWhereInput | boolean
     connect?: EstimacionWhereUniqueInput
     update?: XOR<XOR<EstimacionUpdateToOneWithWhereWithoutAvancesInput, EstimacionUpdateWithoutAvancesInput>, EstimacionUncheckedUpdateWithoutAvancesInput>
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type AvanceFisicoCreateNestedManyWithoutEstimacionInput = {
@@ -6672,6 +8195,19 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
@@ -7048,6 +8584,10 @@ export namespace Prisma {
      * @deprecated Use AvanceFisicoDefaultArgs instead
      */
     export type AvanceFisicoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = AvanceFisicoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use MaterialConsumidoObraDefaultArgs instead
+     */
+    export type MaterialConsumidoObraArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MaterialConsumidoObraDefaultArgs<ExtArgs>
     /**
      * @deprecated Use EstimacionDefaultArgs instead
      */
