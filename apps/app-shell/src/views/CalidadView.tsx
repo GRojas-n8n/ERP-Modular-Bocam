@@ -108,7 +108,7 @@ const CALIDAD_URL = '/api/v1/calidad';
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant, user } = useTenant();
+  const { tenant, user, currentProjectId } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
   const roles: string[] = user?.role ?? [];
@@ -153,7 +153,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       const r = await api.get(`${CALIDAD_URL}/dashboard`);
       setDashboard((r.data as { data: DashboardData }).data);
     } catch (_) { /* silencioso */ }
-  }, [isDemo]);
+  }, [isDemo, currentProjectId]);
 
   const fetchDocumentos = useCallback(async () => {
     if (isDemo) { setLoading(false); return; }
@@ -168,7 +168,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     } catch (e: any) {
       setError(e.response?.data?.message ?? 'Error al cargar documentos');
     } finally { setLoading(false); }
-  }, [isDemo, filtroTipo, filtroEstado, busqueda]);
+  }, [isDemo, filtroTipo, filtroEstado, busqueda, currentProjectId]);
 
   useEffect(() => { void fetchDashboard(); }, [fetchDashboard]);
   useEffect(() => { void fetchDocumentos(); }, [fetchDocumentos]);
@@ -737,8 +737,8 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   );
 
   // ── Routing por sub-vista ────────────────────────────────────────────────
-  if (activeSubView === 'no-conformidades') return <NoConformidadesView isDemo={isDemo} canEdit={canEdit} />;
-  if (activeSubView === 'auditorias')       return <AuditoriasView       isDemo={isDemo} canEdit={canEdit} />;
+  if (activeSubView === 'no-conformidades') return <NoConformidadesView isDemo={isDemo} canEdit={canEdit} currentProjectId={currentProjectId} />;
+  if (activeSubView === 'auditorias')       return <AuditoriasView       isDemo={isDemo} canEdit={canEdit} currentProjectId={currentProjectId} />;
   return documentosView;
 };
 
@@ -792,7 +792,7 @@ function ncTransicionTooltip(nc: NC, estadoDestino: string): string | undefined 
   return undefined;
 }
 
-const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDemo, canEdit }) => {
+const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProjectId: string | null }> = ({ isDemo, canEdit, currentProjectId }) => {
   const { notify } = useNotification();
   const [ncs, setNcs]               = useState<NC[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -813,7 +813,7 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ 
       setNcs(r.data.data || []);
     } catch { /* silencioso */ }
     finally { setLoading(false); }
-  }, [isDemo]);
+  }, [isDemo, currentProjectId]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -1163,7 +1163,7 @@ const HALLAZGO_COLOR: Record<string, string> = {
   OBSERVACION:'bg-blue-500/10 text-blue-600 border-blue-500/20',
 };
 
-const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDemo, canEdit }) => {
+const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProjectId: string | null }> = ({ isDemo, canEdit, currentProjectId }) => {
   const { notify } = useNotification();
   const [auditorias, setAuditorias]     = useState<Auditoria[]>([]);
   const [loading, setLoading]           = useState(true);
@@ -1184,7 +1184,7 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean }> = ({ isDem
       setAuditorias(r.data.data || []);
     } catch { /* silencioso */ }
     finally { setLoading(false); }
-  }, [isDemo]);
+  }, [isDemo, currentProjectId]);
 
   const loadDetail = useCallback(async (id: string) => {
     try {

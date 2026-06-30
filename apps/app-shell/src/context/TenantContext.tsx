@@ -201,22 +201,20 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // ─── Switch Project ────────────────────────────────────────────────────
   const setCurrentProjectId = useCallback(async (projectId: string) => {
-    // Actualizar la UI inmediatamente para que el selector muestre el nuevo proyecto
-    setState(prev => ({ ...prev, currentProjectId: projectId }));
     try {
-      // Re-emitir el JWT con el nuevo proyecto_id para que todos los
-      // requests al backend lleven el proyecto correcto en el token
+      // Obtener el nuevo JWT ANTES de actualizar el estado para evitar que los
+      // useEffect de las vistas re-fetchen con el token viejo (race condition).
       const result = await switchProjectApi(projectId);
       if (result?.data?.access_token) {
-        // Reemplazar solo el access token; el refresh token sigue vigente
         const refreshToken = localStorage.getItem('iretum_refresh_token') || '';
         setTokens(result.data.access_token, refreshToken);
       }
     } catch {
-      // Si switch-project falla (ej. sin red), la UI ya cambió.
-      // El backend devuelve datos del proyecto anterior hasta el próximo login.
-      // No revertimos el estado para no confundir al usuario.
+      // Si el switch falla no cambiamos de proyecto — evita mostrar datos del
+      // proyecto incorrecto en la UI.
+      return;
     }
+    setState(prev => ({ ...prev, currentProjectId: projectId }));
   }, []);
 
   // ─── Refresh User (recargar proyectos y datos sin logout) ──────────────

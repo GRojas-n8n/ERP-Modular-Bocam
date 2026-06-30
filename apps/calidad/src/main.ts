@@ -110,9 +110,10 @@ app.get('/api/v1/calidad/no-conformidades',
   requireRoles('calidad', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
+      const { tenantId, userId, proyectoId } = req.securityContext;
       const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
         prisma.noConformidad.findMany({
+          where: { proyecto_id: proyectoId },
           include: { acciones: { orderBy: { created_at: 'asc' } } },
           orderBy: { created_at: 'desc' },
         })
@@ -126,8 +127,8 @@ app.post('/api/v1/calidad/no-conformidades',
   requireRoles('calidad', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
-      const { titulo, descripcion, fuente, responsable_id, fecha_limite, proyecto_id } = req.body;
+      const { tenantId, userId, proyectoId } = req.securityContext;
+      const { titulo, descripcion, fuente, responsable_id, fecha_limite } = req.body;
       if (!titulo || !fuente) return res.status(400).json({ success: false, message: 'titulo y fuente son requeridos.' });
       const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
         const count = await prisma.noConformidad.count({ where: { tenant_id: tenantId } });
@@ -135,7 +136,7 @@ app.post('/api/v1/calidad/no-conformidades',
         const codigo = `NC-${year}-${String(count + 1).padStart(3, '0')}`;
         return prisma.noConformidad.create({
           data: {
-            tenant_id: tenantId, proyecto_id: proyecto_id || null,
+            tenant_id: tenantId, proyecto_id: proyectoId,
             codigo, titulo, descripcion: descripcion || null,
             fuente, detectado_por: userId,
             responsable_id: responsable_id || userId,
@@ -270,9 +271,10 @@ app.get('/api/v1/calidad/auditorias',
   requireRoles('calidad', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
+      const { tenantId, userId, proyectoId } = req.securityContext;
       const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
         prisma.auditoriaInterna.findMany({
+          where: { proyecto_id: proyectoId },
           include: { _count: { select: { hallazgos: true } } },
           orderBy: { created_at: 'desc' },
         })
@@ -286,8 +288,8 @@ app.post('/api/v1/calidad/auditorias',
   requireRoles('calidad', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
-      const { titulo, alcance, criterios, auditor_lider_id, fecha_inicio, fecha_fin, proyecto_id } = req.body;
+      const { tenantId, userId, proyectoId } = req.securityContext;
+      const { titulo, alcance, criterios, auditor_lider_id, fecha_inicio, fecha_fin } = req.body;
       if (!titulo) return res.status(400).json({ success: false, message: 'titulo es requerido.' });
       const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
         const count  = await prisma.auditoriaInterna.count({ where: { tenant_id: tenantId } });
@@ -295,7 +297,7 @@ app.post('/api/v1/calidad/auditorias',
         const codigo = `AUD-${year}-${String(count + 1).padStart(2, '0')}`;
         return prisma.auditoriaInterna.create({
           data: {
-            tenant_id: tenantId, proyecto_id: proyecto_id || null,
+            tenant_id: tenantId, proyecto_id: proyectoId,
             codigo, titulo,
             alcance: alcance || null, criterios: criterios || null,
             auditor_lider_id: auditor_lider_id || userId,
@@ -437,7 +439,7 @@ app.post('/api/v1/calidad/auditorias/:id/hallazgos/:hid/crear-nc',
   requireRoles('calidad', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
+      const { tenantId, userId, proyectoId } = req.securityContext;
       const { responsable_id, fecha_limite } = req.body;
 
       const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
@@ -454,6 +456,7 @@ app.post('/api/v1/calidad/auditorias/:id/hallazgos/:hid/crear-nc',
         const nc = await prisma.noConformidad.create({
           data: {
             tenant_id:     tenantId,
+            proyecto_id:   proyectoId,
             codigo,
             titulo:        hallazgo.descripcion.slice(0, 255),
             descripcion:   [hallazgo.descripcion, hallazgo.proceso_afectado].filter(Boolean).join('\nProceso afectado: '),
@@ -502,7 +505,7 @@ function ensureDir(dir: string): void {
 // ── Dashboard ────────────────────────────────────────────────────────────────
 app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superintendent'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, userId } = req.securityContext;
+    const { tenantId, userId, proyectoId } = req.securityContext;
 
     const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
       const now = new Date();
@@ -515,18 +518,18 @@ app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superinte
         ncsTotal, ncsCerradasEnPlazo,
         accionesVencidas, hallazgosMayorSinNC, auditoriasEnCurso,
       ] = await Promise.all([
-        prisma.documento.groupBy({ by: ['estado_actual'], where: { tenant_id: tenantId }, _count: { _all: true } }),
-        prisma.documento.groupBy({ by: ['tipo'],          where: { tenant_id: tenantId }, _count: { _all: true } }),
+        prisma.documento.groupBy({ by: ['estado_actual'], where: { tenant_id: tenantId, proyecto_id: proyectoId }, _count: { _all: true } }),
+        prisma.documento.groupBy({ by: ['tipo'],          where: { tenant_id: tenantId, proyecto_id: proyectoId }, _count: { _all: true } }),
         prisma.versionDocumento.count({ where: { tenant_id: tenantId, estado: 'EN_REVISION' } }),
         prisma.versionDocumento.count({ where: { tenant_id: tenantId, estado: 'BORRADOR', archivo_ruta: null } }),
-        prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: { not: 'CERRADA' } } }),
-        prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: { not: 'CERRADA' }, fecha_limite: { lt: now } } }),
-        prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, estado: 'PROGRAMADA', fecha_inicio: { gte: now, lte: en30Dias } } }),
-        prisma.noConformidad.count({ where: { tenant_id: tenantId, created_at: { gte: primerDiaMes } } }),
-        prisma.noConformidad.count({ where: { tenant_id: tenantId, estado: 'CERRADA', fecha_cierre: { gte: primerDiaMes }, fecha_limite: { not: null } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: { not: 'CERRADA' } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: { not: 'CERRADA' }, fecha_limite: { lt: now } } }),
+        prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'PROGRAMADA', fecha_inicio: { gte: now, lte: en30Dias } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, created_at: { gte: primerDiaMes } } }),
+        prisma.noConformidad.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'CERRADA', fecha_cierre: { gte: primerDiaMes }, fecha_limite: { not: null } } }),
         prisma.accionCorrectiva.count({ where: { tenant_id: tenantId, estado: { notIn: ['COMPLETADA', 'VERIFICADA', 'CANCELADA'] }, fecha_compromiso: { lt: now } } }),
         prisma.hallazgoAuditoria.count({ where: { tenant_id: tenantId, tipo: 'MAYOR', nc_id: null, estado: { not: 'CERRADO' } } }),
-        prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, estado: 'EN_CURSO' } }),
+        prisma.auditoriaInterna.count({ where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'EN_CURSO' } }),
       ]);
 
       const porEstado: Record<string, number> = { BORRADOR: 0, EN_REVISION: 0, VIGENTE: 0, OBSOLETO: 0 };
@@ -570,13 +573,14 @@ app.get('/api/v1/calidad/dashboard', requireRoles('calidad', 'admin', 'superinte
 // ── GET /documentos ───────────────────────────────────────────────────────────
 app.get('/api/v1/calidad/documentos', requireRoles('calidad', 'admin', 'superintendent'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, userId } = req.securityContext;
+    const { tenantId, userId, proyectoId } = req.securityContext;
     const { tipo, estado, q } = req.query as Record<string, string | undefined>;
 
     const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
       return prisma.documento.findMany({
         where: {
           tenant_id: tenantId,
+          proyecto_id: proyectoId,
           ...(tipo   ? { tipo }                                          : {}),
           ...(estado ? { estado_actual: estado }                         : {}),
           ...(q      ? { OR: [{ codigo: { contains: q, mode: 'insensitive' } }, { titulo: { contains: q, mode: 'insensitive' } }] } : {}),
@@ -596,8 +600,8 @@ app.get('/api/v1/calidad/documentos', requireRoles('calidad', 'admin', 'superint
 // ── POST /documentos ──────────────────────────────────────────────────────────
 app.post('/api/v1/calidad/documentos', requireRoles('calidad', 'admin'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, userId } = req.securityContext;
-    const { codigo, titulo, tipo, descripcion, responsable_id, proyecto_id } = req.body;
+    const { tenantId, userId, proyectoId } = req.securityContext;
+    const { codigo, titulo, tipo, descripcion, responsable_id } = req.body;
 
     if (!codigo || !titulo || !tipo || !responsable_id) {
       return res.status(400).json({ success: false, message: 'Campos requeridos: codigo, titulo, tipo, responsable_id' });
@@ -615,7 +619,7 @@ app.post('/api/v1/calidad/documentos', requireRoles('calidad', 'admin'), async (
           tipo,
           descripcion:    descripcion || null,
           responsable_id,
-          proyecto_id:    proyecto_id || null,
+          proyecto_id:    proyectoId,
         },
       });
     });
@@ -634,12 +638,12 @@ app.post('/api/v1/calidad/documentos', requireRoles('calidad', 'admin'), async (
 // ── GET /documentos/:id ───────────────────────────────────────────────────────
 app.get('/api/v1/calidad/documentos/:id', requireRoles('calidad', 'admin', 'superintendent'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, userId } = req.securityContext;
+    const { tenantId, userId, proyectoId } = req.securityContext;
     const { id } = req.params;
 
     const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
       return prisma.documento.findFirst({
-        where: { id_documento: id, tenant_id: tenantId },
+        where: { id_documento: id, tenant_id: tenantId, proyecto_id: proyectoId },
         include: {
           versiones: { orderBy: { created_at: 'desc' } },
         },
@@ -657,12 +661,12 @@ app.get('/api/v1/calidad/documentos/:id', requireRoles('calidad', 'admin', 'supe
 // ── PATCH /documentos/:id ─────────────────────────────────────────────────────
 app.patch('/api/v1/calidad/documentos/:id', requireRoles('calidad', 'admin'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, userId } = req.securityContext;
+    const { tenantId, userId, proyectoId } = req.securityContext;
     const { id } = req.params;
-    const { titulo, descripcion, responsable_id, proyecto_id } = req.body;
+    const { titulo, descripcion, responsable_id } = req.body;
 
     const data = await createCalidadContext({ tenantId, userId }, async (prisma) => {
-      const doc = await prisma.documento.findFirst({ where: { id_documento: id, tenant_id: tenantId } });
+      const doc = await prisma.documento.findFirst({ where: { id_documento: id, tenant_id: tenantId, proyecto_id: proyectoId } });
       if (!doc) return null;
       return prisma.documento.update({
         where: { id_documento: id },
@@ -670,7 +674,6 @@ app.patch('/api/v1/calidad/documentos/:id', requireRoles('calidad', 'admin'), as
           ...(titulo         !== undefined ? { titulo }         : {}),
           ...(descripcion    !== undefined ? { descripcion }    : {}),
           ...(responsable_id !== undefined ? { responsable_id } : {}),
-          ...(proyecto_id    !== undefined ? { proyecto_id }    : {}),
         },
       });
     });
@@ -686,12 +689,12 @@ app.patch('/api/v1/calidad/documentos/:id', requireRoles('calidad', 'admin'), as
 // ── DELETE /documentos/:id ────────────────────────────────────────────────────
 app.delete('/api/v1/calidad/documentos/:id', requireRoles('calidad', 'admin'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, userId } = req.securityContext;
+    const { tenantId, userId, proyectoId } = req.securityContext;
     const { id } = req.params;
 
     const resultado = await createCalidadContext({ tenantId, userId }, async (prisma) => {
       const doc = await prisma.documento.findFirst({
-        where: { id_documento: id, tenant_id: tenantId },
+        where: { id_documento: id, tenant_id: tenantId, proyecto_id: proyectoId },
         include: { versiones: true },
       });
       if (!doc) return { notFound: true };
