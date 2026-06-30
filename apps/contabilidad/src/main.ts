@@ -26,6 +26,8 @@ import {
   EstimacionAprobadaPayload,
   FondosComprometidosPayload,
   FondosLiberadosPayload,
+  NominaAutorizadaPayload,
+  NominaPagadaPayload,
   OrdenCompraCanceladaPayload,
   OrdenCompraCreadaPayload,
   PagoRegistradoPayload,
@@ -1535,6 +1537,78 @@ export async function handleAvanceFisicoValidadoEvent(event: BocamEvent<AvanceFi
     await persistMovimientosIfEligible(
       result.asiento.id_asiento, event.context, 'AVANCE',
       payload.monto_avaluado, payload.concepto || `Avance ${payload.codigo}`,
+    );
+  }
+}
+
+export async function handleNominaAutorizadaEvent(event: BocamEvent<NominaAutorizadaPayload>): Promise<void> {
+  const payload = event.payload || ({} as NominaAutorizadaPayload);
+  if (!payload.prenomina_id || typeof payload.total_neto !== 'number') {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.event.personal.nomina_autorizada.invalid_payload',
+      payload,
+    }));
+    return;
+  }
+  const concepto = `Nómina ${payload.codigo} — ${payload.total_empleados} empleados · ${payload.periodo_inicio} a ${payload.periodo_fin}`;
+  const result = await persistAsientoFromEvent(event, {
+    externalEventKey: `${ContabilidadConsumedEvents.NOMINA_AUTORIZADA}:${payload.prenomina_id}`,
+    tipoPoliza: 'MANO_OBRA',
+    folioPoliza: `POL-NOM-${payload.prenomina_id.slice(0, 8)}`,
+    concepto,
+    montoTotal: payload.total_neto,
+    fechaPoliza: payload.periodo_fin,
+    beneficiario: `Nómina ${payload.periodo_tipo}`,
+    referenciaModulo: 'personal',
+    referenciaEntidad: 'prenomina',
+    referenciaId: payload.prenomina_id,
+    estatus: 'REGISTRADO',
+    cfdiStatus: 'NO_APLICA',
+    bancarioStatus: 'NO_APLICA',
+    notas: `Asiento generado desde ${ContabilidadConsumedEvents.NOMINA_AUTORIZADA}.`,
+    createdAction: 'contabilidad.event.personal.nomina_autorizada.created',
+    idempotentAction: 'contabilidad.event.personal.nomina_autorizada.idempotent',
+  });
+  if (!result.idempotent) {
+    await persistMovimientosIfEligible(
+      result.asiento.id_asiento, event.context, 'MANO_OBRA',
+      payload.total_neto, concepto,
+    );
+  }
+}
+
+export async function handleNominaPagadaEvent(event: BocamEvent<NominaPagadaPayload>): Promise<void> {
+  const payload = event.payload || ({} as NominaPagadaPayload);
+  if (!payload.prenomina_id || typeof payload.total_neto !== 'number') {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.event.personal.nomina_pagada.invalid_payload',
+      payload,
+    }));
+    return;
+  }
+  const concepto = `Pago nómina ${payload.codigo} — ${payload.periodo_inicio} a ${payload.periodo_fin}`;
+  const result = await persistAsientoFromEvent(event, {
+    externalEventKey: `${ContabilidadConsumedEvents.NOMINA_PAGADA}:${payload.prenomina_id}`,
+    tipoPoliza: 'PAGO_NOMINA',
+    folioPoliza: `POL-PAG-NOM-${payload.prenomina_id.slice(0, 8)}`,
+    concepto,
+    montoTotal: payload.total_neto,
+    fechaPoliza: payload.periodo_fin,
+    beneficiario: `Nómina ${payload.periodo_tipo}`,
+    referenciaModulo: 'personal',
+    referenciaEntidad: 'prenomina',
+    referenciaId: payload.prenomina_id,
+    estatus: 'REGISTRADO',
+    cfdiStatus: 'NO_APLICA',
+    bancarioStatus: 'NO_APLICA',
+    notas: `Asiento generado desde ${ContabilidadConsumedEvents.NOMINA_PAGADA}.`,
+    createdAction: 'contabilidad.event.personal.nomina_pagada.created',
+    idempotentAction: 'contabilidad.event.personal.nomina_pagada.idempotent',
+  });
+  if (!result.idempotent) {
+    await persistMovimientosIfEligible(
+      result.asiento.id_asiento, event.context, 'PAGO_NOMINA',
+      payload.total_neto, concepto,
     );
   }
 }
@@ -3315,6 +3389,20 @@ async function ensureEventSubscriptions() {
     console.log(`[Contabilidad] EVENTO recibido: control_obra.avance_fisico_validado`);
     console.log(`Avance: ${codigo} (${avance_id}) | $${Number(monto_avaluado).toLocaleString()}`);
     await handleAvanceFisicoValidadoEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.NOMINA_AUTORIZADA, async (event: BocamEvent<NominaAutorizadaPayload>) => {
+    const { prenomina_id, codigo, total_neto } = event.payload as NominaAutorizadaPayload;
+    console.log(`[Contabilidad] EVENTO recibido: personal.nomina_autorizada`);
+    console.log(`Nómina: ${codigo} (${prenomina_id}) | $${Number(total_neto).toLocaleString()}`);
+    await handleNominaAutorizadaEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.NOMINA_PAGADA, async (event: BocamEvent<NominaPagadaPayload>) => {
+    const { prenomina_id, codigo, total_neto } = event.payload as NominaPagadaPayload;
+    console.log(`[Contabilidad] EVENTO recibido: personal.nomina_pagada`);
+    console.log(`Nómina pagada: ${codigo} (${prenomina_id}) | $${Number(total_neto).toLocaleString()}`);
+    await handleNominaPagadaEvent(event);
   });
 
   subscriptionsRegistered = true;

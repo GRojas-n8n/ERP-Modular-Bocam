@@ -6,7 +6,9 @@ export type TipoPoliza =
   | 'REVERSION_PASIVO_PROYECTADO'
   | 'TRANSFERENCIA_INTERNA'
   | 'ESTIMACION'
-  | 'AVANCE';
+  | 'AVANCE'
+  | 'MANO_OBRA'
+  | 'PAGO_NOMINA';
 
 interface MovimientoDef {
   clave_cargo: string;
@@ -33,6 +35,10 @@ export function buildMovimientosForPoliza(
       return [{ clave_cargo: '1200', clave_abono: '4100', monto, descripcion }];
     case 'AVANCE':
       return [{ clave_cargo: '5100', clave_abono: '2100', monto, descripcion }];
+    case 'MANO_OBRA':
+      return [{ clave_cargo: '5100', clave_abono: '2200', monto, descripcion }];
+    case 'PAGO_NOMINA':
+      return [{ clave_cargo: '2200', clave_abono: '1100', monto, descripcion }];
     default:
       return [];
   }

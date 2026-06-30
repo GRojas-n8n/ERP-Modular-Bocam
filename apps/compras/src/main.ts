@@ -3136,7 +3136,22 @@ app.get('/api/v1/compras/dashboard',
         };
       });
 
-      res.json({ success: true, data });
+      // B2B: GT dashboard KPIs para mostrar en ComprasView (fail-soft → parcial)
+      let gtDashboard: any = null;
+      try {
+        const { default: axios } = await import('axios');
+        const gtResp = await axios.get(`${GT_URL}/dashboard`, {
+          headers: {
+            authorization: req.headers.authorization,
+            'x-tenant-id':   req.headers['x-tenant-id'],
+            'x-proyecto-id': req.headers['x-proyecto-id'],
+          },
+          timeout: 3000,
+        });
+        gtDashboard = gtResp.data?.data ?? null;
+      } catch { /* GT no disponible — parcial */ }
+
+      res.json({ success: true, data: { ...data, gt_dashboard: gtDashboard } });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
     }
@@ -3198,6 +3213,81 @@ app.get('/api/v1/compras/reportes/ocs-por-concepto',
       res.json({ success: true, data });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PROXIES B2B HACIA GERENCIA TÉCNICA (solo backend-to-backend — frontend
+// no llama a GT directamente, cumple regla-no-cross-service-frontend)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/compras/catalog/insumos',
+  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { default: axios } = await import('axios');
+      const token = req.headers.authorization;
+      const resp = await axios.get(`${GT_URL}/insumos`, {
+        headers: { authorization: token, 'x-tenant-id': req.headers['x-tenant-id'], 'x-proyecto-id': req.headers['x-proyecto-id'] },
+        timeout: 5000,
+      });
+      res.json(resp.data);
+    } catch (error: any) {
+      res.status(502).json({ success: false, message: 'GT insumos temporalmente no disponible.', parcial: true });
+    }
+  }
+);
+
+app.post('/api/v1/compras/catalog/insumos',
+  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { default: axios } = await import('axios');
+      const token = req.headers.authorization;
+      const resp = await axios.post(`${GT_URL}/insumos`, req.body, {
+        headers: { authorization: token, 'x-tenant-id': req.headers['x-tenant-id'], 'x-proyecto-id': req.headers['x-proyecto-id'], 'content-type': 'application/json' },
+        timeout: 5000,
+      });
+      res.status(resp.status).json(resp.data);
+    } catch (error: any) {
+      const status = error.response?.status ?? 502;
+      res.status(status).json(error.response?.data ?? { success: false, message: 'Error creando insumo en GT.' });
+    }
+  }
+);
+
+app.get('/api/v1/compras/presupuesto-activo',
+  requireRoles('procurement', 'admin', 'superintendent', 'resident', 'residencia', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { default: axios } = await import('axios');
+      const token = req.headers.authorization;
+      const resp = await axios.get(`${GT_URL}/presupuesto/activo`, {
+        headers: { authorization: token, 'x-tenant-id': req.headers['x-tenant-id'], 'x-proyecto-id': req.headers['x-proyecto-id'] },
+        timeout: 5000,
+      });
+      res.json(resp.data);
+    } catch (error: any) {
+      res.status(502).json({ success: false, data: null, parcial: true });
+    }
+  }
+);
+
+app.get('/api/v1/compras/reportes/control-presupuestal',
+  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica'),
+  async (req: Request, res: Response) => {
+    try {
+      const { default: axios } = await import('axios');
+      const token = req.headers.authorization;
+      const resp = await axios.get(`${GT_URL}/reportes/control-presupuestal`, {
+        params: req.query,
+        headers: { authorization: token, 'x-tenant-id': req.headers['x-tenant-id'], 'x-proyecto-id': req.headers['x-proyecto-id'] },
+        timeout: 8000,
+      });
+      res.json(resp.data);
+    } catch (error: any) {
+      res.status(502).json({ success: false, data: null, parcial: true });
     }
   }
 );

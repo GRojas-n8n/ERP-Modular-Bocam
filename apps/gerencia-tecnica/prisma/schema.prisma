@@ -334,3 +334,22 @@ model FichaTecnicaInsumo {
   @@map("fichas_tecnicas_insumo")
 }
 
+model ProyectoObraVinculado {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  proyecto_id    String   @db.Uuid
+  cotizacion_id  String   @db.Uuid
+  monto_contrato Decimal  @db.Decimal(18, 2)
+  moneda         String   @default("MXN") @db.VarChar(3)
+  cliente_nombre String   @db.VarChar(255)
+  fecha_contrato DateTime @db.Date
+  estado         String   @default("SIN_PRESUPUESTO") @db.VarChar(30)
+  notas          String?  @db.VarChar(500)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenant_id, cotizacion_id])
+  @@index([tenant_id, proyecto_id])
+  @@map("proyectos_obra_vinculados")
+}
+

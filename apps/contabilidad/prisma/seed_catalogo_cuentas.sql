@@ -9,6 +9,7 @@ VALUES
   (gen_random_uuid(), '1300', 'Inventarios',               'ACTIVO',   'DEUDORA',   1, true, NOW()),
   (gen_random_uuid(), '1400', 'Anticipos a Proveedores',   'ACTIVO',   'DEUDORA',   1, true, NOW()),
   (gen_random_uuid(), '2100', 'Cuentas por Pagar',         'PASIVO',   'ACREEDORA', 1, true, NOW()),
+  (gen_random_uuid(), '2200', 'Nómina por Pagar',          'PASIVO',   'ACREEDORA', 1, true, NOW()),
   (gen_random_uuid(), '2300', 'IVA Trasladado por Pagar',  'PASIVO',   'ACREEDORA', 1, true, NOW()),
   (gen_random_uuid(), '3100', 'Capital Social',            'CAPITAL',  'ACREEDORA', 1, true, NOW()),
   (gen_random_uuid(), '3200', 'Utilidades Retenidas',      'CAPITAL',  'ACREEDORA', 1, true, NOW()),

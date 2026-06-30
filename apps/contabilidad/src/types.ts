@@ -257,7 +257,25 @@ export enum ContabilidadConsumedEvents {
   TRANSFERENCIA_PRESUPUESTAL = 'finanzas.transferencia_presupuestal',
   ESTIMACION_APROBADA = 'control_obra.estimacion_aprobada',
   AVANCE_FISICO_VALIDADO = 'control_obra.avance_fisico_validado',
+  NOMINA_AUTORIZADA = 'personal.nomina_autorizada',
+  NOMINA_PAGADA = 'personal.nomina_pagada',
 }
+
+export interface NominaAutorizadaPayload {
+  prenomina_id:          string;
+  codigo:                string;
+  periodo_tipo:          string;
+  periodo_inicio:        string;
+  periodo_fin:           string;
+  total_percepciones:    number;
+  total_deducciones:     number;
+  total_neto:            number;
+  total_empleados:       number;
+  autorizado_por_id:     string;
+  autorizado_por_nombre: string;
+}
+
+export type NominaPagadaPayload = NominaAutorizadaPayload;
 
 export interface EstimacionAprobadaPayload {
   estimacion_id: string;

@@ -871,6 +871,14 @@ app.patch(
         console.log(`[GT] SaldoPartida: ${conceptos.length} partidas inicializadas para presupuesto ${id}`);
       }
 
+      // Si el proyecto nació de Ventas, avanzar el vínculo a CON_PRESUPUESTO
+      try {
+        await (db as any).proyectoObraVinculado.updateMany({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'SIN_PRESUPUESTO' },
+          data:  { estado: 'CON_PRESUPUESTO', updated_at: new Date() },
+        });
+      } catch { /* proyecto manual sin vínculo — ignorar */ }
+
       res.json(createApiResponse(actualizado, tenantId, proyectoId));
     } catch (error: any) {
       console.error('[Gerencia Técnica] Error en PATCH /presupuestos/:id/aprobar:', error.message);
@@ -1607,13 +1615,27 @@ app.get(
         parcial = true;
       }
 
+      // KPIs de proyectos vinculados a Ventas (local, no B2B)
+      const dbLocal = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+      const [sinPresupuesto, enEjecucion, montoActivoAgg] = await Promise.all([
+        (dbLocal as any).proyectoObraVinculado.count({ where: { tenant_id: tenantId, estado: 'SIN_PRESUPUESTO' } }),
+        (dbLocal as any).proyectoObraVinculado.count({ where: { tenant_id: tenantId, estado: 'EN_EJECUCION' } }),
+        (dbLocal as any).proyectoObraVinculado.aggregate({
+          where: { tenant_id: tenantId, estado: 'EN_EJECUCION' },
+          _sum:  { monto_contrato: true },
+        }),
+      ]).catch(() => [0, 0, null]);
+
       res.json({
         success: true,
         data: {
-          pendientes_revision:    pendientesRevision,
-          en_evaluacion_tecnica:  enEvaluacionTecnica,
-          aprobados_este_mes:     aprobadosEsteMes,
-          monto_comprometido:     montoComprometido,
+          pendientes_revision:        pendientesRevision,
+          en_evaluacion_tecnica:      enEvaluacionTecnica,
+          aprobados_este_mes:         aprobadosEsteMes,
+          monto_comprometido:         montoComprometido,
+          proyectos_sin_presupuesto:  Number(sinPresupuesto ?? 0),
+          proyectos_en_ejecucion:     Number(enEjecucion ?? 0),
+          monto_contratado_activo:    Number((montoActivoAgg as any)?._sum?.monto_contrato ?? 0),
           alertas,
           reciente,
           parcial,
@@ -2667,6 +2689,42 @@ export async function handleOcCanceladaParaProyeccion(event: any): Promise<void>
   }
 }
 
+export async function handleCotizacionAceptadaEvent(event: any): Promise<void> {
+  const { cotizacion_id, proyecto_id, cliente_nombre, monto_contrato, moneda, fecha_aceptacion } = event.payload ?? {};
+  const tenantId = event.context?.tenant_id;
+
+  if (!cotizacion_id || !tenantId) {
+    console.warn(JSON.stringify({ action: 'gt.vinculo.cotizacion_aceptada.invalid_payload', payload: event.payload }));
+    return;
+  }
+
+  const prisma = createTenantContext({
+    tenant_id:   tenantId,
+    proyecto_id: proyecto_id ?? event.context?.proyecto_id,
+    user_id:     event.context?.user_id,
+  });
+
+  try {
+    await (prisma as any).proyectoObraVinculado.upsert({
+      where:  { tenant_id_cotizacion_id: { tenant_id: tenantId, cotizacion_id } },
+      create: {
+        tenant_id:      tenantId,
+        proyecto_id:    proyecto_id ?? event.context?.proyecto_id,
+        cotizacion_id,
+        monto_contrato: monto_contrato ?? 0,
+        moneda:         moneda ?? 'MXN',
+        cliente_nombre: cliente_nombre ?? '',
+        fecha_contrato: fecha_aceptacion ? new Date(fecha_aceptacion) : new Date(),
+        estado:         'SIN_PRESUPUESTO',
+      },
+      update: {},
+    });
+    console.log(`[GT] Proyecto ${proyecto_id} vinculado a cotización ${cotizacion_id} — ${cliente_nombre} — $${monto_contrato}`);
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'gt.vinculo.cotizacion_aceptada.error', cotizacion_id, error: err.message }));
+  }
+}
+
 // GET /trazabilidad/resumen — datos ligeros por concepto (sin B2B)
 app.get('/api/v1/gerencia-tecnica/trazabilidad/resumen',
   requireRoles('gerencia_tecnica', 'director', 'admin', 'superintendent'),
@@ -2857,6 +2915,41 @@ app.get('/api/v1/gerencia-tecnica/trazabilidad/triangulo',
   }
 );
 
+// GET /proyectos-vinculados — proyectos que nacieron de cotizaciones de Ventas
+app.get('/api/v1/gerencia-tecnica/proyectos-vinculados',
+  requireRoles('gerencia_tecnica', 'director', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { estado } = req.query;
+      const prisma = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId });
+
+      const where: any = { tenant_id: tenantId };
+      if (estado) where.estado = estado as string;
+
+      const vinculados = await (prisma as any).proyectoObraVinculado.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+      });
+
+      const data = vinculados.map((v: any) => ({
+        proyecto_id:      v.proyecto_id,
+        cotizacion_id:    v.cotizacion_id,
+        cliente_nombre:   v.cliente_nombre,
+        monto_contrato:   Number(v.monto_contrato),
+        moneda:           v.moneda,
+        estado:           v.estado,
+        tiene_presupuesto: v.estado !== 'SIN_PRESUPUESTO',
+        fecha_contrato:   v.fecha_contrato,
+      }));
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json(createApiError('INTERNAL_ERROR', error.message));
+    }
+  }
+);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'gerencia-tecnica', timestamp: new Date().toISOString() });
 });
@@ -2877,8 +2970,9 @@ async function bootstrap(): Promise<void> {
 
   // 1. Inicializar EventBus (RabbitMQ) — no bloquea si falla
   await initEventBus();
-  await subscribeToEvent('compras.oc_creada',   handleOcCreadaParaProyeccion);
-  await subscribeToEvent('compras.oc_cancelada', handleOcCanceladaParaProyeccion);
+  await subscribeToEvent('compras.oc_creada',          handleOcCreadaParaProyeccion);
+  await subscribeToEvent('compras.oc_cancelada',        handleOcCanceladaParaProyeccion);
+  await subscribeToEvent('ventas.cotizacion_aceptada',  handleCotizacionAceptadaEvent);
 
   // 2. Levantar servidor HTTP
   const server = app.listen(PORT, () => {

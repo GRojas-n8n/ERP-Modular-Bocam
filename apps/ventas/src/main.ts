@@ -88,7 +88,7 @@ app.post('/api/v1/ventas/cotizaciones/:id/aceptar', async (req: Request, res: Re
     const { tenantId, proyectoId, userId } = req.securityContext;
 
     const updated = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      const row = await prisma.cotizacion.findUnique({ where: { id_cotizacion: id } });
+      const row = await prisma.cotizacion.findUnique({ where: { id_cotizacion: id }, include: { cliente: true } });
       if (!row) {
         return { kind: 'missing' as const };
       }
@@ -99,7 +99,7 @@ app.post('/api/v1/ventas/cotizaciones/:id/aceptar', async (req: Request, res: Re
         where: { id_cotizacion: id },
         data: { estado: 'ACEPTADA' },
       });
-      return { kind: 'applied' as const, row: next };
+      return { kind: 'applied' as const, row: next, clienteNombre: row.cliente?.razon_social ?? '', moneda: row.moneda };
     });
 
     if (updated.kind === 'missing') {
@@ -127,9 +127,14 @@ app.post('/api/v1/ventas/cotizaciones/:id/aceptar', async (req: Request, res: Re
       timestamp: new Date().toISOString(),
       context: buildEventContext(req),
       payload: {
-        cotizacion_id: updated.row.id_cotizacion,
-        codigo: updated.row.codigo,
-        total: updated.row.total.toNumber(),
+        cotizacion_id:    updated.row.id_cotizacion,
+        codigo:           updated.row.codigo,
+        total:            updated.row.total.toNumber(),
+        proyecto_id:      proyectoId,
+        cliente_nombre:   updated.clienteNombre ?? '',
+        monto_contrato:   updated.row.total.toNumber(),
+        moneda:           updated.moneda ?? 'MXN',
+        fecha_aceptacion: new Date().toISOString(),
       },
     });
 

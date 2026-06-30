@@ -3,6 +3,7 @@ import { createTenantContext } from './db';
 import { createApiResponse, createApiError, EstadoPreNomina } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
+import { createEventBus } from '../../../packages/event-bus/src';
 import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcularHorasTrabajadas, calcularHorasDesglose, calcularMontoHEPorSemana } from './tablas-fiscales';
 
 /**
@@ -26,6 +27,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3006;
 const JWT_SECRET = requireEnv('JWT_SECRET');
+const eventBus = createEventBus(process.env.PERSONAL_EVENT_BUS_NAME || 'personal');
 initSentry(process.env.SENTRY_DSN || '', 'personal');
 
 app.use(createAuthMiddleware({
@@ -559,7 +561,68 @@ app.patch('/api/v1/personal/prenominas/:id/autorizar', async (req: Request, res:
       });
     });
 
+    void eventBus.publish({
+      event_type: 'personal.nomina_autorizada',
+      timestamp: new Date().toISOString(),
+      context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+      payload: {
+        prenomina_id:          data.id_prenomina,
+        codigo:                data.codigo,
+        periodo_tipo:          data.periodo_tipo,
+        periodo_inicio:        data.periodo_inicio.toISOString(),
+        periodo_fin:           data.periodo_fin.toISOString(),
+        total_percepciones:    Number(data.total_percepciones),
+        total_deducciones:     Number(data.total_deducciones),
+        total_neto:            Number(data.total_neto),
+        total_empleados:       Number(data.total_empleados),
+        autorizado_por_id:     userId,
+        autorizado_por_nombre: userId,
+      },
+    }).catch((err: any) => console.error('[Personal] eventBus.publish error (nomina_autorizada):', err.message));
     console.log(`[Personal] ✅ Pre-nómina ${data.codigo} AUTORIZADA`);
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Marcar pre-nómina como PAGADA (RBAC: admin | rh_manager)
+app.patch('/api/v1/personal/prenominas/:id/pagar', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId, roles } = req.securityContext;
+    if (!roles.includes('admin') && !roles.includes('rh_manager')) {
+      res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o rh_manager pueden marcar una nómina como pagada.'));
+      return;
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const pn = await prisma.preNomina.findUnique({ where: { id_prenomina: id } });
+      if (!pn) throw new Error('Pre-nómina no encontrada.');
+      if (pn.estado !== EstadoPreNomina.AUTORIZADA) throw new Error(`Solo se puede marcar como PAGADA una pre-nómina AUTORIZADA. Estado actual: ${pn.estado}`);
+      return await prisma.preNomina.update({
+        where: { id_prenomina: id },
+        data: { estado: EstadoPreNomina.PAGADA },
+      });
+    });
+    void eventBus.publish({
+      event_type: 'personal.nomina_pagada',
+      timestamp: new Date().toISOString(),
+      context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+      payload: {
+        prenomina_id:          data.id_prenomina,
+        codigo:                data.codigo,
+        periodo_tipo:          data.periodo_tipo,
+        periodo_inicio:        data.periodo_inicio.toISOString(),
+        periodo_fin:           data.periodo_fin.toISOString(),
+        total_percepciones:    Number(data.total_percepciones),
+        total_deducciones:     Number(data.total_deducciones),
+        total_neto:            Number(data.total_neto),
+        total_empleados:       Number(data.total_empleados),
+        autorizado_por_id:     data.autorizado_por ?? userId,
+        autorizado_por_nombre: data.autorizado_por ?? userId,
+      },
+    }).catch((err: any) => console.error('[Personal] eventBus.publish error (nomina_pagada):', err.message));
+    console.log(`[Personal] ✅ Pre-nómina ${data.codigo} PAGADA`);
     res.json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
@@ -1192,26 +1255,30 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 setupSentryExpressHandler(app);
 
-app.listen(PORT, () => {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('  👷  Módulo: PERSONAL / RRHH');
-  console.log('  🏢  Propiedad: Constructora Bocam, S. A. de C.V.');
-  console.log('  🔐  Autenticación: JWT REAL (Bearer Token)');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`[Personal] ✅ Servidor en puerto ${PORT}`);
-  console.log(`[Personal] 📡 Rutas disponibles:`);
-  console.log(`   GET   /api/v1/personal/empleados`);
-  console.log(`   POST  /api/v1/personal/empleados`);
-  console.log(`   PATCH /api/v1/personal/empleados/:id/baja`);
-  console.log(`   GET   /api/v1/personal/cuadrillas`);
-  console.log(`   POST  /api/v1/personal/cuadrillas`);
-  console.log(`   POST  /api/v1/personal/cuadrillas/:id/asignar`);
-  console.log(`   GET   /api/v1/personal/asignaciones`);
-  console.log(`   POST  /api/v1/personal/asignaciones`);
-  console.log(`   GET   /api/v1/personal/prenominas`);
-  console.log(`   GET   /api/v1/personal/prenominas/:id`);
-  console.log(`   POST  /api/v1/personal/prenominas/calcular`);
-  console.log(`   PATCH /api/v1/personal/prenominas/:id/autorizar`);
-  console.log(`   GET   /api/v1/personal/dashboard`);
-  console.log(`   GET   /health`);
-});
+void (async () => {
+  await eventBus.connect();
+  app.listen(PORT, () => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  👷  Módulo: PERSONAL / RRHH');
+    console.log('  🏢  Propiedad: Constructora Bocam, S. A. de C.V.');
+    console.log('  🔐  Autenticación: JWT REAL (Bearer Token)');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`[Personal] ✅ Servidor en puerto ${PORT}`);
+    console.log(`[Personal] 📡 Rutas disponibles:`);
+    console.log(`   GET   /api/v1/personal/empleados`);
+    console.log(`   POST  /api/v1/personal/empleados`);
+    console.log(`   PATCH /api/v1/personal/empleados/:id/baja`);
+    console.log(`   GET   /api/v1/personal/cuadrillas`);
+    console.log(`   POST  /api/v1/personal/cuadrillas`);
+    console.log(`   POST  /api/v1/personal/cuadrillas/:id/asignar`);
+    console.log(`   GET   /api/v1/personal/asignaciones`);
+    console.log(`   POST  /api/v1/personal/asignaciones`);
+    console.log(`   GET   /api/v1/personal/prenominas`);
+    console.log(`   GET   /api/v1/personal/prenominas/:id`);
+    console.log(`   POST  /api/v1/personal/prenominas/calcular`);
+    console.log(`   PATCH /api/v1/personal/prenominas/:id/autorizar`);
+    console.log(`   PATCH /api/v1/personal/prenominas/:id/pagar`);
+    console.log(`   GET   /api/v1/personal/dashboard`);
+    console.log(`   GET   /health`);
+  });
+})();

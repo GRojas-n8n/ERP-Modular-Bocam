@@ -266,7 +266,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     if (!proyectoId) return;
     setCpResumenLoading(true);
     try {
-      const res = await api.get(`/api/v1/gerencia-tecnica/reportes/control-presupuestal?proyectoId=${proyectoId}`);
+      const res = await api.get(`/api/v1/compras/reportes/control-presupuestal?proyectoId=${proyectoId}`);
       const d = res.data.data ?? res.data;
       setCpResumen({
         total_presupuestado: d.total_presupuestado,
@@ -351,18 +351,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         setPendientesGT(demoComps.filter(c => c.estado === 'EN_APROBACION_GT'));
         return;
       }
-      const [reqRes, insRes, compRes, evalRes, gtRes, provRes, alertasRes, presRes, dashRes, gtDashRes] = await Promise.allSettled([
+      const [reqRes, insRes, compRes, evalRes, gtRes, provRes, alertasRes, presRes, dashRes] = await Promise.allSettled([
         api.get('/api/v1/compras/requisiciones'),
-        api.get('/api/v1/gerencia-tecnica/insumos'),
+        api.get('/api/v1/compras/catalog/insumos'),
         api.get('/api/v1/compras/comparativas'),
         // Bandejas de aprobación (pueden fallar por rol — ignorar 403)
         api.get('/api/v1/compras/comparativas/pendientes-evaluacion').catch(() => null),
         api.get('/api/v1/compras/comparativas/pendientes-gt').catch(() => null),
         api.get('/api/v1/compras/proveedores').catch(() => null),
         api.get('/api/v1/compras/alertas/cotizacion-pendiente').catch(() => null),
-        api.get('/api/v1/gerencia-tecnica/presupuesto/activo').catch(() => null),
+        api.get('/api/v1/compras/presupuesto-activo').catch(() => null),
         api.get('/api/v1/compras/dashboard').catch(() => null),
-        api.get('/api/v1/gerencia-tecnica/dashboard').catch(() => null),
       ]);
       // Colectar datos normalizados para las dependencias entre entidades
       let insumosNormalizados: Insumo[] = [];
@@ -479,10 +478,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         })));
       }
       if (dashRes.status === 'fulfilled' && dashRes.value?.data?.data) {
-        setDashboardData(dashRes.value.data.data);
-      }
-      if (gtDashRes.status === 'fulfilled' && gtDashRes.value?.data?.data) {
-        setGtDashboardData(gtDashRes.value.data.data);
+        const dashData = dashRes.value.data.data;
+        setDashboardData(dashData);
+        if (dashData.gt_dashboard) {
+          setGtDashboardData(dashData.gt_dashboard);
+        }
       }
     } catch {
       setError('Error al conectar con el modulo de Compras.');
@@ -638,7 +638,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     if (isDemo) { setShowInsumoForm(false); resetInsumoForm(); return; }
     try {
       setFormLoading(true);
-      await api.post('/api/v1/gerencia-tecnica/insumos', {
+      await api.post('/api/v1/compras/catalog/insumos', {
         clave:         insumoForm.clave,
         descripcion:   insumoForm.descripcion,
         unidad_medida: insumoForm.unidad,
