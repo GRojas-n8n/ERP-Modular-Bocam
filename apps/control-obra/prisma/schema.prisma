@@ -107,6 +107,35 @@ model AvanceFisico {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD: Material Consumido en Obra
+// Creado por suscriptor almacen.salida_obra. Registra el costo real de
+// materiales por partida (concepto) del presupuesto base.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model MaterialConsumidoObra {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  concepto_id     String   @db.Uuid
+  concepto_clave  String   @db.VarChar(100)
+  insumo_id       String?  @db.Uuid
+  clave_insumo    String   @db.VarChar(50)
+  descripcion     String   @db.VarChar(255)
+  unidad          String   @db.VarChar(20)
+  cantidad        Decimal  @db.Decimal(18, 4)
+  costo_unitario  Decimal  @db.Decimal(18, 4)
+  costo_total     Decimal  @db.Decimal(18, 2)
+  costo_pendiente Boolean  @default(false)
+  frente_trabajo  String?  @db.VarChar(100)
+  movimiento_id   String   @unique @db.Uuid
+  fecha           DateTime @db.Date
+  created_at      DateTime @default(now())
+
+  @@index([tenant_id, proyecto_id, concepto_id])
+  @@map("materiales_consumidos_obra")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ENTIDAD 3: Estimación de Facturación
 // Agrupa avances físicos validados en un documento oficial de cobro.
 // Al ser aprobada, emite el evento EstimacionAprobada → Finanzas programa pago.

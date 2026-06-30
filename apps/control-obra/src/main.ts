@@ -51,6 +51,7 @@ const PORT = process.env.PORT || 3005;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
 const COMPRAS_URL  = process.env.COMPRAS_URL  || 'http://localhost:3002/api/v1/compras';
+const GT_URL       = process.env.GT_URL       || 'http://localhost:3001/api/v1/gerencia-tecnica';
 initSentry(process.env.SENTRY_DSN || '', 'control-obra');
 const ESTIMACION_STATUS = {
   PENDIENTE_FINANZAS: EstadoEstimacion.PENDIENTE_CONFIRMACION_FINANZAS,
@@ -1083,6 +1084,123 @@ app.get('/api/v1/control-obra/dashboard/residente',
   }
 );
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// COSTO REAL DE MATERIALES POR CONCEPTO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get('/api/v1/control-obra/conceptos/:concepto_id/costo-real', async (req: Request, res: Response) => {
+  try {
+    const { concepto_id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma: PrismaClient) => {
+      const materiales = await (prisma as any).materialConsumidoObra.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id },
+        orderBy: { fecha: 'desc' as const },
+      });
+
+      const total_consumido_qty   = materiales.reduce((s: number, m: any) => s + Number(m.cantidad), 0);
+      const total_consumido_monto = materiales.reduce((s: number, m: any) => s + Number(m.costo_total), 0);
+      const concepto_clave        = materiales[0]?.concepto_clave ?? '';
+
+      return {
+        concepto_id,
+        concepto_clave,
+        total_consumido_qty,
+        total_consumido_monto,
+        materiales: materiales.map((m: any) => ({
+          id:             m.id,
+          fecha:          m.fecha,
+          insumo_id:      m.insumo_id,
+          clave_insumo:   m.clave_insumo,
+          descripcion:    m.descripcion,
+          unidad:         m.unidad,
+          cantidad:       Number(m.cantidad),
+          costo_unitario: Number(m.costo_unitario),
+          costo_total:    Number(m.costo_total),
+          costo_pendiente: m.costo_pendiente,
+          frente_trabajo: m.frente_trabajo,
+        })),
+      };
+    });
+
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUBSCRIBER: almacen.salida_obra → MaterialConsumidoObra
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function handleSalidaObraEvent(event: any): Promise<void> {
+  const {
+    movimiento_id, item_id, insumo_id, clave, descripcion, unidad,
+    cantidad, concepto_id, concepto_clave, frente_trabajo, responsable, fecha,
+  } = event.payload as {
+    movimiento_id: string; item_id: string; insumo_id: string | null;
+    clave: string; descripcion: string; unidad: string; cantidad: number;
+    concepto_id: string; concepto_clave: string; frente_trabajo: string | null;
+    responsable: string | null; fecha: string;
+  };
+
+  const ctx = {
+    tenantId:   event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
+    userId:     event.context.user_id,
+  };
+
+  try {
+    await createTenantContext(ctx, async (prisma: PrismaClient) => {
+      // Idempotencia por movimiento_id
+      const existing = await (prisma as any).materialConsumidoObra.findUnique({
+        where: { movimiento_id },
+      });
+      if (existing) {
+        console.log(JSON.stringify({ action: 'control_obra.salida_obra.idempotent', movimiento_id }));
+        return;
+      }
+
+      // Obtener costo_base desde GT (fail-soft)
+      let costo_unitario = 0;
+      let costo_pendiente = false;
+      if (insumo_id) {
+        try {
+          const resp = await axios.get(`${GT_URL}/insumos/${insumo_id}`, { timeout: 3000 });
+          costo_unitario = Number(resp.data?.data?.costo_base ?? 0);
+        } catch {
+          costo_pendiente = true;
+        }
+      }
+
+      const costo_total = cantidad * costo_unitario;
+
+      await (prisma as any).materialConsumidoObra.create({
+        data: {
+          tenant_id:      ctx.tenantId,
+          proyecto_id:    ctx.proyectoId,
+          concepto_id,
+          concepto_clave: concepto_clave ?? '',
+          insumo_id:      insumo_id ?? null,
+          clave_insumo:   clave,
+          descripcion,
+          unidad,
+          cantidad,
+          costo_unitario,
+          costo_total,
+          costo_pendiente,
+          frente_trabajo: frente_trabajo ?? null,
+          movimiento_id,
+          fecha:          new Date(fecha),
+        },
+      });
+
+      console.log(JSON.stringify({ action: 'control_obra.salida_obra.applied', movimiento_id, concepto_id, costo_total }));
+    });
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'control_obra.salida_obra.error', movimiento_id, error: err.message }));
+  }
+}
+
 // HEALTH CHECK
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {
@@ -1106,7 +1224,8 @@ export async function startServer() {
   // Inicializar EventBus
   await eventBus.connect();
   await eventBus.subscribe('finanzas.pago_registrado', handlePagoRegistradoEvent);
-  console.log(`[Control Obra] 📡 Eventos: avance_registrado, avance_validado, estimacion_aprobada`);
+  await eventBus.subscribe('almacen.salida_obra',      handleSalidaObraEvent);
+  console.log(`[Control Obra] 📡 Eventos: avance_registrado, avance_validado, estimacion_aprobada, salida_obra`);
 });
 }
 

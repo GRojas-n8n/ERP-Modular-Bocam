@@ -173,13 +173,16 @@ app.post('/api/v1/almacen/movimientos',
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const { insumo_id, clave, descripcion, unidad, categoria, tipo, cantidad, origen, destino, responsable, referencia } = req.body;
+      const { insumo_id, clave, descripcion, unidad, categoria, tipo, cantidad, origen, destino, responsable, referencia, concepto_id, concepto_clave, frente_trabajo, oc_item_id } = req.body;
 
       if (!insumo_id || !tipo || !cantidad) {
         return res.status(400).json({ success: false, message: 'insumo_id, tipo y cantidad son obligatorios.' });
       }
-      if (!['INGRESO', 'EGRESO', 'TRASPASO'].includes(tipo)) {
-        return res.status(400).json({ success: false, message: 'tipo debe ser INGRESO, EGRESO o TRASPASO.' });
+      if (!['INGRESO', 'EGRESO', 'TRASPASO', 'EGRESO_OBRA'].includes(tipo)) {
+        return res.status(400).json({ success: false, message: 'tipo debe ser INGRESO, EGRESO, TRASPASO o EGRESO_OBRA.' });
+      }
+      if (tipo === 'EGRESO_OBRA' && !req.body.concepto_id) {
+        return res.status(422).json({ success: false, message: 'concepto_id es obligatorio para EGRESO_OBRA.' });
       }
 
       const result = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
@@ -202,21 +205,61 @@ app.post('/api/v1/almacen/movimientos',
           ? Number(item.stock_actual) + qty
           : Number(item.stock_actual) - qty;
 
-        if ((tipo === 'EGRESO' || tipo === 'TRASPASO') && stockNuevo < 0) {
-          const err = new Error(`Stock insuficiente. Actual: ${Number(item.stock_actual)} — Solicitado: ${qty}`) as any;
+        if ((tipo === 'EGRESO' || tipo === 'TRASPASO' || tipo === 'EGRESO_OBRA') && stockNuevo < 0) {
+          const err = new Error(`Stock insuficiente. Disponible: ${Number(item.stock_actual)} — Solicitado: ${qty}`) as any;
           err.status = 422;
           throw err;
         }
 
         await prisma.itemInventario.update({ where: { id: item.id }, data: { stock_actual: stockNuevo } });
         const mov = await prisma.movimientoAlmacen.create({
-          data: { tenant_id: tenantId, proyecto_id: proyectoId, item_id: item.id, tipo, cantidad: qty, unidad: item.unidad, origen: origen ?? null, destino: destino ?? null, responsable: responsable ?? null, referencia: referencia ?? null },
+          data: {
+            tenant_id: tenantId,
+            proyecto_id: proyectoId,
+            item_id: item.id,
+            tipo,
+            cantidad: qty,
+            unidad: item.unidad,
+            origen: origen ?? null,
+            destino: destino ?? null,
+            responsable: responsable ?? null,
+            referencia: referencia ?? null,
+            concepto_id: concepto_id ?? null,
+            concepto_clave: concepto_clave ?? null,
+            frente_trabajo: frente_trabajo ?? null,
+            oc_item_id: oc_item_id ?? null,
+          },
         });
 
         return { mov, item: { ...item, stock_actual: stockNuevo } };
       });
 
-      // Publicar alertas best-effort
+      // Publicar evento EGRESO_OBRA best-effort
+      if (tipo === 'EGRESO_OBRA') {
+        await eventBus.publish({
+          event_type: 'almacen.salida_obra',
+          timestamp: new Date().toISOString(),
+          context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+          payload: {
+            movimiento_id:  result.mov.id,
+            item_id:        result.item.id,
+            insumo_id:      result.item.insumo_id ?? null,
+            clave:          result.item.clave,
+            descripcion:    result.item.descripcion,
+            unidad:         result.item.unidad,
+            cantidad:       Number(result.mov.cantidad),
+            concepto_id:    concepto_id,
+            concepto_clave: concepto_clave ?? '',
+            frente_trabajo: frente_trabajo ?? null,
+            responsable:    responsable ?? null,
+            fecha:          new Date().toISOString(),
+          },
+        }).catch((err: any) => {
+          logError(req, 'almacen', 'almacen.salida_obra.event_error', 'No se pudo publicar almacen.salida_obra', { error_message: err.message });
+        });
+      }
+
+      // Publicar alertas stock best-effort
       const stockActual = Number(result.item.stock_actual);
       const stockMin    = Number(result.item.stock_minimo);
       if (tipo !== 'INGRESO') {
@@ -233,6 +276,50 @@ app.post('/api/v1/almacen/movimientos',
     }
   }
 );
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SALIDAS DE OBRA (EGRESO_OBRA)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/almacen/salidas-obra', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { concepto_id, frente_trabajo } = req.query as Record<string, string | undefined>;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.movimientoAlmacen.findMany({
+        where: {
+          tenant_id:   tenantId,
+          proyecto_id: proyectoId,
+          tipo:        'EGRESO_OBRA',
+          ...(concepto_id    ? { concepto_id }    : {}),
+          ...(frente_trabajo ? { frente_trabajo } : {}),
+        },
+        include: { item: { select: { clave: true, descripcion: true, unidad: true, insumo_id: true } } },
+        orderBy: { fecha: 'desc' },
+        take: 500,
+      });
+    });
+
+    const serialized = data.map(mov => ({
+      id:             mov.id,
+      fecha:          mov.fecha,
+      cantidad:       Number(mov.cantidad),
+      unidad:         mov.unidad,
+      concepto_id:    mov.concepto_id,
+      concepto_clave: mov.concepto_clave,
+      frente_trabajo: mov.frente_trabajo,
+      responsable:    mov.responsable,
+      clave:          mov.item?.clave       ?? '',
+      descripcion:    mov.item?.descripcion ?? '',
+      insumo_id:      mov.item?.insumo_id   ?? null,
+    }));
+
+    res.json({ success: true, data: serialized });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // DASHBOARD

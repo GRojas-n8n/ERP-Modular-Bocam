@@ -40,21 +40,27 @@ model ItemInventario {
 }
 
 model MovimientoAlmacen {
-  id            String   @id @default(uuid()) @db.Uuid
-  tenant_id     String   @db.Uuid
-  proyecto_id   String   @db.Uuid
-  item_id       String   @db.Uuid
-  tipo          String   @db.VarChar(20)  // INGRESO | EGRESO | TRASPASO
-  cantidad      Decimal  @db.Decimal(18, 4)
-  unidad        String   @db.VarChar(20)
-  origen        String?  @db.VarChar(100)
-  destino       String?  @db.VarChar(100)
-  responsable   String?  @db.VarChar(100)
-  referencia    String?  @db.VarChar(50)
-  fecha         DateTime @default(now())
+  id              String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  item_id         String   @db.Uuid
+  tipo            String   @db.VarChar(20)  // INGRESO | EGRESO | TRASPASO | EGRESO_OBRA
+  cantidad        Decimal  @db.Decimal(18, 4)
+  unidad          String   @db.VarChar(20)
+  origen          String?  @db.VarChar(100)
+  destino         String?  @db.VarChar(100)
+  responsable     String?  @db.VarChar(100)
+  referencia      String?  @db.VarChar(50)
+  fecha           DateTime @default(now())
+  // Campos para EGRESO_OBRA (obligatorios cuando tipo=EGRESO_OBRA)
+  concepto_id     String?  @db.Uuid
+  concepto_clave  String?  @db.VarChar(100)
+  frente_trabajo  String?  @db.VarChar(100)
+  oc_item_id      String?  @db.Uuid
 
-  item          ItemInventario @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  item            ItemInventario @relation(fields: [item_id], references: [id], onDelete: Cascade)
 
   @@index([tenant_id, proyecto_id, fecha])
+  @@index([tenant_id, proyecto_id, concepto_id])
   @@map("movimientos_almacen")
 }
