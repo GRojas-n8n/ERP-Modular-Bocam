@@ -532,8 +532,6 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────────
-  const totalAlertas = dashCP ? dashCP.alertas_activas.criticas + dashCP.alertas_activas.warnings : alertas.filter(a => a.estado === 'ACTIVA').length;
-
   const insumosPorTipo = useMemo(() => {
     const map: Record<string, InsumoClasif[]> = {};
     const q = clasifSearch.toLowerCase();
