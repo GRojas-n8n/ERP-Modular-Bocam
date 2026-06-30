@@ -93,6 +93,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'control-costos',       label: 'Control de Costos',    icon: IconTrendingUp },
       { id: 'control-presupuestal', label: 'Control Presupuestal', icon: IconWallet },
       { id: 'transferencias',       label: 'Transferencias',       icon: IconArrowRight },
+      { id: 'trazabilidad',         label: 'Trazabilidad',         icon: IconActivity },
     ],
   },
   {

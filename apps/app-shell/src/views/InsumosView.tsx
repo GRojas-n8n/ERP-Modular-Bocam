@@ -49,7 +49,7 @@ interface FichaTecnicaInsumo {
   created_at: string;
 }
 
-type ActiveTab = 'catalogo' | 'insumos' | 'control-costos' | 'control-presupuestal' | 'transferencias';
+type ActiveTab = 'catalogo' | 'insumos' | 'control-costos' | 'control-presupuestal' | 'transferencias' | 'trazabilidad';
 
 type TipoInsumo = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
 
@@ -726,6 +726,17 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [nuevaTrans, setNuevaTrans] = useState({ concepto_origen_id: '', concepto_destino_id: '', monto: '', justificacion: '' });
   const [enviandoTrans, setEnviandoTrans] = useState(false);
 
+  // ── Estado Tab: Trazabilidad ──────────────────────────────────────────────
+  interface TrazabilidadConcepto {
+    concepto_id: string; clave: string; descripcion: string;
+    monto_presupuestado: number; monto_comprado: number; monto_consumido: number;
+    semaforo: string; pct_comprado: number; pct_consumido: number;
+  }
+  const [trazabilidad, setTrazabilidad] = useState<TrazabilidadConcepto[]>([]);
+  const [loadingTraz, setLoadingTraz]   = useState(false);
+  const [trazParcial, setTrazParcial]   = useState(false);
+  const [trazExpanded, setTrazExpanded] = useState<Set<string>>(new Set());
+
   // ── Estado Tab 2: Insumos ─────────────────────────────────────────────────
   const fileInputAPURef       = useRef<HTMLInputElement>(null);
   const fileInputExplosionRef = useRef<HTMLInputElement>(null);
@@ -1174,6 +1185,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'transferencias') void fetchTransferencias(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (activeTab === 'trazabilidad') void fetchTrazabilidad(); }, [activeTab, currentProjectId]);
   useEffect(() => {
     if (tenant?.id === 'iretum-demo') return;
     api.get('/api/v1/gerencia-tecnica/dashboard').then(r => setGtDash(r.data?.data ?? null)).catch(() => {});
@@ -1290,6 +1302,21 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       });
     } finally {
       setEnviandoPreReq(false);
+    }
+  };
+
+  // ── Fetch Trazabilidad ────────────────────────────────────────────────────
+  const fetchTrazabilidad = async () => {
+    if (!currentProjectId) return;
+    setLoadingTraz(true);
+    try {
+      const r = await api.get('/api/v1/gerencia-tecnica/trazabilidad/resumen');
+      setTrazabilidad(r.data?.data ?? []);
+      setTrazParcial(r.data?.parcial ?? false);
+    } catch {
+      setTrazabilidad([]);
+    } finally {
+      setLoadingTraz(false);
     }
   };
 
@@ -2506,6 +2533,90 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Tab: Trazabilidad ──────────────────────────────────────────── */}
+        {activeTab === 'trazabilidad' && (
+          <div className="space-y-6 px-4 md:px-8 pb-12">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Trazabilidad — Presupuestado · Comprado · Consumido</h2>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Triángulo de trazabilidad por partida del presupuesto base</p>
+              </div>
+              <button
+                onClick={() => void fetchTrazabilidad()}
+                className="p-2 rounded-lg border border-border/60 bg-card hover:bg-muted/60 transition-all"
+                title="Refrescar"
+              >
+                <IconRefreshCw className={cn('h-3.5 w-3.5 text-muted-foreground', loadingTraz && 'animate-spin')} />
+              </button>
+            </div>
+
+            {trazParcial && (
+              <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 flex gap-2 items-center">
+                <IconAlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                <p className="text-[10px] text-amber-700 font-semibold">Datos incompletos — algún servicio no respondió. Refrescar para reintentar.</p>
+              </div>
+            )}
+
+            {loadingTraz ? (
+              <div className="flex items-center justify-center py-16 text-muted-foreground text-[10px]">Cargando trazabilidad...</div>
+            ) : trazabilidad.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-20 text-center">
+                <IconActivity className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Sin datos de presupuesto</p>
+                <p className="text-[10px] text-muted-foreground max-w-xs">Carga el catálogo de obra y aprueba un presupuesto para ver la trazabilidad.</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border/40 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-muted/50 border-b border-border/40">
+                    <tr>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground w-8"></th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Clave / Descripción</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">Presupuestado</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">Comprado</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">Consumido</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trazabilidad.map(c => {
+                      const expanded = trazExpanded.has(c.concepto_id);
+                      const semaforoColor = c.semaforo === 'VERDE' ? 'bg-emerald-500' : c.semaforo === 'AMARILLO' ? 'bg-amber-400' : c.semaforo === 'ROJO' ? 'bg-red-500' : 'bg-muted-foreground/30';
+                      return (
+                        <tr
+                          key={c.concepto_id}
+                          onClick={() => setTrazExpanded(prev => { const n = new Set(prev); expanded ? n.delete(c.concepto_id) : n.add(c.concepto_id); return n; })}
+                          className="border-b border-border/30 hover:bg-muted/30 cursor-pointer transition-colors"
+                        >
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {expanded ? '▾' : '▸'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="font-black text-primary text-[10px]">{c.clave}</span>
+                            <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{c.descripcion}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-[10px] text-foreground">{formatMXN(c.monto_presupuestado)}</td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="font-mono text-[10px] text-foreground">{formatMXN(c.monto_comprado)}</span>
+                            {c.pct_comprado > 0 && <span className="ml-1 text-[9px] text-muted-foreground">({c.pct_comprado}%)</span>}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="font-mono text-[10px] text-foreground">{formatMXN(c.monto_consumido)}</span>
+                            {c.pct_consumido > 0 && <span className="ml-1 text-[9px] text-muted-foreground">({c.pct_consumido}%)</span>}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={cn('inline-block h-2.5 w-2.5 rounded-full', semaforoColor)} title={c.semaforo} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

@@ -2367,7 +2367,20 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
             event_type: 'compras.oc_creada',
             timestamp: new Date().toISOString(),
             context: buildEventContext(req),
-            payload: { oc_id: oc.id_orden, codigo: oc.codigo, total: oc.total.toNumber(), proveedor_id: oc.proveedor_id, proyecto_id: proyectoId },
+            payload: {
+              oc_id:          oc.id_orden,
+              codigo:         oc.codigo,
+              total:          oc.total.toNumber(),
+              proveedor_id:   oc.proveedor_id,
+              proyecto_id:    proyectoId,
+              requisicion_id: loteData.requisicionId || null,
+              concepto_id:    loteData.conceptoId   || null,
+              items:          grupo.detalles.map((d: any) => {
+                const reqLineId = loteData.lineaMap.get(d.insumo_id) ?? null;
+                const cantidad  = reqLineId ? (loteData.cantidadMap.get(reqLineId) ?? 1) : 1;
+                return { insumo_id: d.insumo_id, cantidad, precio_unitario: d.precio_ofertado.toNumber() };
+              }),
+            },
           });
         } catch (_) { /* best-effort */ }
       }
@@ -3282,10 +3295,11 @@ app.post('/api/v1/compras/ordenes-compra/:id/cancelar', requireRoles('admin', 's
           timestamp: new Date().toISOString(),
           context: buildEventContext(req),
           payload: {
-            oc_id: cancelada.id_orden,
-            codigo: cancelada.codigo,
-            total: cancelada.total.toNumber(),
+            oc_id:          cancelada.id_orden,
+            codigo:         cancelada.codigo,
+            total:          cancelada.total.toNumber(),
             presupuesto_id: cancelada.presupuesto_id,
+            requisicion_id: cancelada.requisicion_id,
           },
         });
 
@@ -3442,10 +3456,11 @@ app.post('/api/v1/compras/ordenes-compra/:id/reconciliar-finanzas', requireRoles
         timestamp: new Date().toISOString(),
         context: buildEventContext(req),
         payload: {
-          oc_id: updated.id_orden,
-          codigo: updated.codigo,
-          total: updated.total.toNumber(),
+          oc_id:          updated.id_orden,
+          codigo:         updated.codigo,
+          total:          updated.total.toNumber(),
           presupuesto_id: updated.presupuesto_id,
+          requisicion_id: updated.requisicion_id,
         },
       });
 

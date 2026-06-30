@@ -127,6 +127,34 @@ export async function publishEvent<T>(event: BocamEvent<T>): Promise<boolean> {
 }
 
 /**
+ * Suscribe a un evento del bus. Crea cola exclusiva auto-delete por binding.
+ */
+export async function subscribeToEvent(eventType: string, handler: (event: BocamEvent) => Promise<void>): Promise<void> {
+  if (!channel) {
+    console.warn(`[EventBus] Canal no disponible — no se pudo suscribir a ${eventType}`);
+    return;
+  }
+  try {
+    const queue = await channel.assertQueue('', { exclusive: true, autoDelete: true });
+    await channel.bindQueue(queue.queue, EXCHANGE_NAME, eventType);
+    await channel.consume(queue.queue, async (msg: any) => {
+      if (!msg) return;
+      try {
+        const event = JSON.parse(msg.content.toString()) as BocamEvent;
+        await handler(event);
+        channel.ack(msg);
+      } catch (err: any) {
+        console.error(`[EventBus] Error procesando evento ${eventType}:`, err.message);
+        channel.nack(msg, false, false);
+      }
+    });
+    console.log(`[EventBus] 📥 Suscrito a: ${eventType}`);
+  } catch (err: any) {
+    console.error(`[EventBus] Error al suscribir a ${eventType}:`, err.message);
+  }
+}
+
+/**
  * Cierra la conexión con RabbitMQ limpiamente.
  * Se debe llamar al apagar el módulo (graceful shutdown).
  */

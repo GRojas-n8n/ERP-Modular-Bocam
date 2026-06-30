@@ -20,7 +20,7 @@ import fs from 'fs';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { createTenantContext, disconnectDb } from './db';
-import { initEventBus, closeEventBus, publishEvent } from './event-bus';
+import { initEventBus, closeEventBus, publishEvent, subscribeToEvent } from './event-bus';
 import {
   createApiResponse,
   createApiError,
@@ -2593,6 +2593,270 @@ app.patch(
   }
 );
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TRAZABILIDAD TRIÁNGULO — Presupuestado ↔ Comprado ↔ Consumido
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const CO_URL = (process.env.CONTROL_OBRA_URL || 'http://localhost:3005/api/v1/control-obra').replace(/\/$/, '');
+
+function semaforoPorDesviacion(presupuestado: number, comprado: number, consumido: number): string {
+  if (comprado === 0) return 'GRIS';
+  if (consumido > comprado) return 'ROJO';
+  const ratio = presupuestado > 0 ? comprado / presupuestado : 0;
+  if (ratio >= 0.95 && ratio <= 1.05) return 'VERDE';
+  if (ratio >= 0.80 && ratio <= 1.20) return 'AMARILLO';
+  return 'ROJO';
+}
+
+// Handlers de eventos de Compras → CompraProyectada
+export async function handleOcCreadaParaProyeccion(event: any): Promise<void> {
+  const { oc_id, codigo, concepto_id, items } = event.payload as {
+    oc_id: string; codigo: string; concepto_id?: string | null;
+    items?: Array<{ insumo_id: string; cantidad: number; precio_unitario: number }>;
+  };
+
+  if (!concepto_id || !Array.isArray(items) || items.length === 0) return;
+
+  const prisma = createTenantContext({
+    tenant_id:   event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    user_id:     event.context.user_id,
+  });
+
+  try {
+    for (const item of items) {
+      const monto = item.cantidad * item.precio_unitario;
+      await (prisma as any).compraProyectada.upsert({
+        where: { uq_compra_proyectada_oc_insumo: { oc_id, insumo_id: item.insumo_id } },
+        update: { cantidad: item.cantidad, monto, estado: 'VIGENTE' },
+        create: {
+          tenant_id:   event.context.tenant_id,
+          proyecto_id: event.context.proyecto_id,
+          concepto_id,
+          insumo_id:   item.insumo_id,
+          oc_id,
+          oc_codigo:   codigo,
+          cantidad:    item.cantidad,
+          monto,
+        },
+      });
+    }
+    console.log(JSON.stringify({ action: 'gt.compra_proyectada.applied', oc_id, concepto_id, items: items.length }));
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'gt.compra_proyectada.error', oc_id, error: err.message }));
+  }
+}
+
+export async function handleOcCanceladaParaProyeccion(event: any): Promise<void> {
+  const { oc_id } = event.payload as { oc_id: string };
+
+  const prisma = createTenantContext({
+    tenant_id:   event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    user_id:     event.context.user_id,
+  });
+
+  try {
+    await (prisma as any).compraProyectada.updateMany({
+      where: { oc_id },
+      data:  { estado: 'CANCELADA' },
+    });
+    console.log(JSON.stringify({ action: 'gt.compra_proyectada.cancelada', oc_id }));
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'gt.compra_proyectada.cancelada.error', oc_id, error: err.message }));
+  }
+}
+
+// GET /trazabilidad/resumen — datos ligeros por concepto (sin B2B)
+app.get('/api/v1/gerencia-tecnica/trazabilidad/resumen',
+  requireRoles('gerencia_tecnica', 'director', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const prisma = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId });
+
+      const presupuesto = await prisma.presupuestoBase.findFirst({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId },
+        orderBy: { created_at: 'desc' },
+        include: { conceptos: { select: { id: true, clave: true, descripcion: true, importe: true } } },
+      });
+
+      let data: any[] = [];
+      if (presupuesto) {
+        const compradas = await (prisma as any).compraProyectada.findMany({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'VIGENTE' },
+        });
+
+        const comprasPorConcepto = new Map<string, number>();
+        for (const c of compradas) {
+          comprasPorConcepto.set(c.concepto_id, (comprasPorConcepto.get(c.concepto_id) ?? 0) + Number(c.monto));
+        }
+
+        data = presupuesto.conceptos.map((concepto: any) => {
+          const monto_presupuestado = Number(concepto.importe);
+          const monto_comprado      = comprasPorConcepto.get(concepto.id) ?? 0;
+          const semaforo            = semaforoPorDesviacion(monto_presupuestado, monto_comprado, 0);
+          const pct_comprado        = monto_presupuestado > 0 ? Math.round((monto_comprado / monto_presupuestado) * 1000) / 10 : 0;
+          return {
+            concepto_id: concepto.id, clave: concepto.clave, descripcion: concepto.descripcion,
+            monto_presupuestado, monto_comprado, monto_consumido: 0, semaforo, pct_comprado, pct_consumido: 0,
+          };
+        });
+      }
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json(createApiError('INTERNAL_ERROR', error.message));
+    }
+  }
+);
+
+// GET /trazabilidad/triangulo — detalle completo por insumo con B2B a control-obra
+app.get('/api/v1/gerencia-tecnica/trazabilidad/triangulo',
+  requireRoles('gerencia_tecnica', 'director', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { concepto_id: filtroConceptoId } = req.query as Record<string, string | undefined>;
+      const authHeader = req.headers.authorization ?? '';
+
+      const { default: axios } = await import('axios');
+      let parcial = false;
+
+      const prismaT = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId });
+
+      const presupuesto = await prismaT.presupuestoBase.findFirst({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId },
+        orderBy: { created_at: 'desc' },
+        include: {
+          conceptos: {
+            where: filtroConceptoId ? { id: filtroConceptoId } : {},
+            include: { insumos: { include: { insumo: { select: { id: true, clave: true, descripcion: true, unidad_medida: true, tipo_insumo: true } } } } },
+          },
+        },
+      });
+
+      const cpRows = await (prismaT as any).compraProyectada.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'VIGENTE' },
+      });
+
+      const comprasPorConcepto = new Map<string, Map<string, { cantidad: number; monto: number; ocs: string[] }>>();
+      for (const row of cpRows) {
+        if (!comprasPorConcepto.has(row.concepto_id)) comprasPorConcepto.set(row.concepto_id, new Map());
+        const byInsumo = comprasPorConcepto.get(row.concepto_id)!;
+        const prev = byInsumo.get(row.insumo_id) ?? { cantidad: 0, monto: 0, ocs: [] };
+        byInsumo.set(row.insumo_id, {
+          cantidad: prev.cantidad + Number(row.cantidad),
+          monto:    prev.monto    + Number(row.monto),
+          ocs:      [...prev.ocs, row.oc_codigo],
+        });
+      }
+
+      if (!presupuesto) {
+        return res.json({ success: true, data: { proyecto_id: proyectoId, parcial: false, conceptos: [], resumen: { total_presupuestado: 0, total_comprado: 0, total_consumido: 0, desviacion_compra_pct: 0, conceptos_en_alerta: 0 } } });
+      }
+
+      let totalPresupuestado = 0;
+      let totalComprado = 0;
+      let totalConsumido = 0;
+      let conceptosEnAlerta = 0;
+
+      const conceptos = await Promise.all(presupuesto.conceptos.map(async concepto => {
+        const monto_presupuestado = Number(concepto.importe);
+        totalPresupuestado += monto_presupuestado;
+
+        // Obtener consumido de control-obra (B2B fail-soft)
+        let consumidoPorInsumo = new Map<string, { cantidad: number; monto: number }>();
+        try {
+          const coResp = await axios.get(`${CO_URL}/conceptos/${concepto.id}/costo-real`, {
+            headers: { authorization: authHeader },
+            timeout: 2500,
+          });
+          const materiales: any[] = coResp.data?.data?.materiales ?? [];
+          for (const m of materiales) {
+            consumidoPorInsumo.set(m.insumo_id, {
+              cantidad: Number(m.cantidad),
+              monto:    Number(m.costo_total),
+            });
+          }
+        } catch {
+          parcial = true;
+        }
+
+        const compradoByConcepto = comprasPorConcepto.get(concepto.id) ?? new Map();
+        let conceptoComprado = 0;
+        let conceptoConsumido = 0;
+        let tieneAlerta = false;
+
+        const insumos = concepto.insumos.map(ci => {
+          const presupuestadoInsumo = {
+            cantidad: Number(ci.cantidad) * Number(concepto.importe) / (Number(concepto.precio_unitario) || 1),
+            monto:    Number(ci.costo_unitario) * Number(ci.cantidad) * Number(concepto.cantidad || 1),
+            fuente:   'APU',
+          };
+          const cp = compradoByConcepto.get(ci.insumo_id) ?? { cantidad: 0, monto: 0, ocs: [] };
+          const consumido = consumidoPorInsumo.get(ci.insumo_id) ?? { cantidad: 0, monto: 0 };
+
+          conceptoComprado  += cp.monto;
+          conceptoConsumido += consumido.monto;
+
+          const sem = semaforoPorDesviacion(presupuestadoInsumo.monto, cp.monto, consumido.monto);
+          if (sem === 'ROJO' || sem === 'AMARILLO') tieneAlerta = true;
+
+          return {
+            insumo_id:   ci.insumo.id,
+            clave:       ci.insumo.clave,
+            descripcion: ci.insumo.descripcion,
+            unidad:      ci.insumo.unidad_medida,
+            tipo_insumo: ci.insumo.tipo_insumo,
+            presupuestado: presupuestadoInsumo,
+            comprado: { cantidad: cp.cantidad, monto: cp.monto, ocs: cp.ocs, parcial: false },
+            consumido: { cantidad: consumido.cantidad, monto: consumido.monto, parcial },
+            semaforo: sem,
+            desviacion_compra_pct:   presupuestadoInsumo.monto > 0 ? Math.round(((cp.monto / presupuestadoInsumo.monto) - 1) * 1000) / 10 : 0,
+            desviacion_consumo_pct:  presupuestadoInsumo.monto > 0 ? Math.round(((consumido.monto / presupuestadoInsumo.monto) - 1) * 1000) / 10 : 0,
+          };
+        });
+
+        totalComprado  += conceptoComprado;
+        totalConsumido += conceptoConsumido;
+        if (tieneAlerta) conceptosEnAlerta++;
+
+        return {
+          concepto_id:              concepto.id,
+          clave:                    concepto.clave,
+          descripcion:              concepto.descripcion,
+          unidad:                   concepto.unidad_medida,
+          cantidad_presupuestada:   Number(concepto.cantidad),
+          monto_presupuestado,
+          insumos:                  insumos.sort((a, b) => (a.semaforo === 'ROJO' ? -1 : b.semaforo === 'ROJO' ? 1 : 0)),
+        };
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          proyecto_id:    proyectoId,
+          presupuesto_id: presupuesto.id,
+          generado_en:    new Date().toISOString(),
+          parcial,
+          conceptos,
+          resumen: {
+            total_presupuestado:   totalPresupuestado,
+            total_comprado:        totalComprado,
+            total_consumido:       totalConsumido,
+            desviacion_compra_pct: totalPresupuestado > 0 ? Math.round(((totalComprado / totalPresupuestado) - 1) * 1000) / 10 : 0,
+            conceptos_en_alerta:   conceptosEnAlerta,
+          },
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json(createApiError('INTERNAL_ERROR', error.message));
+    }
+  }
+);
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'gerencia-tecnica', timestamp: new Date().toISOString() });
 });
@@ -2613,6 +2877,8 @@ async function bootstrap(): Promise<void> {
 
   // 1. Inicializar EventBus (RabbitMQ) — no bloquea si falla
   await initEventBus();
+  await subscribeToEvent('compras.oc_creada',   handleOcCreadaParaProyeccion);
+  await subscribeToEvent('compras.oc_cancelada', handleOcCanceladaParaProyeccion);
 
   // 2. Levantar servidor HTTP
   const server = app.listen(PORT, () => {

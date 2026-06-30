@@ -289,6 +289,30 @@ model TransferenciaPartida {
 }
 
 // ======================================================================
+// PROYECCIÓN DE COMPRAS (desde eventos Compras → GT para trazabilidad)
+// ======================================================================
+
+/// Espejo de OC creadas/canceladas proyectado en GT via eventos.
+/// Permite calcular "comprado" por concepto sin llamar a Compras en tiempo real.
+model CompraProyectada {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  proyecto_id String   @db.Uuid
+  concepto_id String   @db.Uuid
+  insumo_id   String   @db.Uuid
+  oc_id       String   @db.Uuid
+  oc_codigo   String   @db.VarChar(50)
+  cantidad    Decimal  @db.Decimal(18, 4)
+  monto       Decimal  @db.Decimal(18, 2)
+  estado      String   @default("VIGENTE") @db.VarChar(20)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([oc_id, insumo_id], name: "uq_compra_proyectada_oc_insumo")
+  @@index([tenant_id, proyecto_id, concepto_id], name: "idx_compra_proyectada_concepto")
+  @@map("compras_proyectadas")
+}
+
+// ======================================================================
 // FICHAS TÉCNICAS DE INSUMO
 // Documentos (PDF, Word, imágenes) que los proveedores envían como
 // especificación del material/equipo. Vinculados al insumo del catálogo.
