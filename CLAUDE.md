@@ -59,7 +59,6 @@ Cada módulo tiene su propio dashboard. Reglas:
 1. **No cross-service en frontend.** Una vista (`*View.tsx`) solo llama a `/api/v1/{su-propio-servicio}/*`. Los datos cruzados se proyectan en el backend vía RabbitMQ.
 2. **Endpoint estándar:** cada microservicio expone `GET /api/v1/{servicio}/dashboard` que retorna `{ kpis, alertas, actividad_reciente }` para el módulo.
 3. **Backend-to-backend permitido** para datos que no pueden proyectarse (ej. GT consulta Compras para obtener cuadros; devuelve `parcial: true` si el otro servicio falla).
-4. **Deuda técnica conocida:** `ComprasView.tsx` llama a `/api/v1/gerencia-tecnica/insumos` y `/api/v1/gerencia-tecnica/presupuesto/activo` — violación del patrón. Se corregirá en el change `dashboard-compras` moviendo esos datos al endpoint `/api/v1/compras/dashboard` o proyectándolos vía evento.
 
 ### Stack prohibido (en iRetum)
 - NO usar SQLite — iRetum es PostgreSQL puro

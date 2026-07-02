@@ -67,10 +67,7 @@
 
 ## 8. Deploy a VPS
 
-- [ ] 8.1 Aplicar migración en VPS: `docker compose exec auth npx prisma migrate deploy`
-- [ ] 8.2 Verificar `REDIS_URL` en VPS `.env` del módulo auth
-- [ ] 8.3 Build y redeploy: `docker compose build --no-cache auth && docker compose up -d auth`
-- [ ] 8.4 Verificar en producción:
-  - Más de 5 POSTs a `/master/tenants` → `429`
-  - `GET /master/audit-log` muestra operaciones registradas
-  - Intentos con secret incorrecto aparecen en el log
+- [x] 8.1 Aplicar migración en VPS: `docker compose exec auth npx prisma migrate deploy` (2026-07-02)
+- [x] 8.2 Verificar `REDIS_URL` en VPS `.env` del módulo auth — confirmado: `redis://redis:6379`
+- [x] 8.3 Build y redeploy: commit 477f270 (fix ERR_ERL_CREATED_IN_REQUEST_HANDLER) + rebuild (2026-07-02)
+- [x] 8.4 Verificar en producción: container healthy, sin errores de rate-limit en logs

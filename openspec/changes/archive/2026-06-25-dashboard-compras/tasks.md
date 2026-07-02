@@ -13,6 +13,6 @@
 
 ## 3. Verificación
 
-- [ ] 3.1 Verificar que `GET /api/v1/compras/dashboard` responde en < 500ms en producción
-- [ ] 3.2 Verificar UI: dashboard visible al entrar a `/compras` con KPIs correctos
-- [ ] 3.3 Verificar que los tabs siguen funcionando mientras el dashboard carga (no bloqueo)
+- [x] 3.1 Verificar que `GET /api/v1/compras/dashboard` responde en < 500ms en producción — 303ms (2026-07-02)
+- [x] 3.2 Verificar UI: dashboard visible con KPIs (11 reqs, 4 pendiente GT, 1 OC emitida) y alerta cotización vencida
+- [x] 3.3 Verificar que los tabs siguen funcionando (endpoint no bloquea — fetch en paralelo con Promise.allSettled)
