@@ -154,10 +154,10 @@ app.get('/api/v1/calidad/no-conformidades/:id',
   requireRoles('calidad', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
+      const { tenantId, userId, proyectoId } = req.securityContext;
       const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
-        prisma.noConformidad.findUnique({
-          where: { id_nc: req.params.id },
+        prisma.noConformidad.findFirst({
+          where: { id_nc: req.params.id, tenant_id: tenantId, proyecto_id: proyectoId },
           include: { acciones: { orderBy: { created_at: 'asc' } } },
         })
       );
@@ -171,13 +171,13 @@ app.patch('/api/v1/calidad/no-conformidades/:id',
   requireRoles('calidad', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
+      const { tenantId, userId, proyectoId } = req.securityContext;
       const { rol } = req.securityContext as any;
       const { estado, causa_raiz, responsable_id, fecha_limite, reabrir } = req.body;
 
       const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
-        const nc = await prisma.noConformidad.findUnique({
-          where: { id_nc: req.params.id },
+        const nc = await prisma.noConformidad.findFirst({
+          where: { id_nc: req.params.id, tenant_id: tenantId, proyecto_id: proyectoId },
           include: { acciones: true },
         });
         if (!nc) return { notFound: true };
@@ -315,10 +315,10 @@ app.get('/api/v1/calidad/auditorias/:id',
   requireRoles('calidad', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
+      const { tenantId, userId, proyectoId } = req.securityContext;
       const data = await createCalidadContext({ tenantId, userId }, async (prisma) =>
-        prisma.auditoriaInterna.findUnique({
-          where: { id_auditoria: req.params.id },
+        prisma.auditoriaInterna.findFirst({
+          where: { id_auditoria: req.params.id, tenant_id: tenantId, proyecto_id: proyectoId },
           include: { hallazgos: { orderBy: { created_at: 'asc' } } },
         })
       );

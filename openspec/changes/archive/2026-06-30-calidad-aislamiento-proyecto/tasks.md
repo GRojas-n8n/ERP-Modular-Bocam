@@ -17,6 +17,9 @@
 - [x] 2.9 `GET /documentos/:id`: agregar `proyecto_id: proyectoId` al findFirst (bloqueo acceso cruzado)
 - [x] 2.10 `PATCH /documentos/:id`: agregar `proyecto_id: proyectoId` al findFirst de verificación
 - [x] 2.11 `DELETE /documentos/:id`: agregar `proyecto_id: proyectoId` al findFirst de verificación
+- [x] 2.12 `GET /no-conformidades/:id`: cambiar `findUnique` → `findFirst` con `tenant_id + proyecto_id` (bug detectado por tests retroactivos — 2026-07-02)
+- [x] 2.13 `PATCH /no-conformidades/:id`: cambiar `findUnique` → `findFirst` con `tenant_id + proyecto_id` (mismo bug)
+- [x] 2.14 `GET /auditorias/:id`: cambiar `findUnique` → `findFirst` con `tenant_id + proyecto_id` (mismo bug)
 
 ## 3. Frontend — re-fetch al cambiar Centro de Costos
 
@@ -29,10 +32,10 @@
 
 ## 4. Tests retroactivos
 
-- [ ] 4.1 `apps/calidad/test/integration/aislamiento-proyecto.integration.test.ts` — test: crear NC en proyecto A, verificar que GET /no-conformidades con token de proyecto B NO la devuelve
-- [ ] 4.2 Test: crear Auditoría en proyecto A, verificar que GET /auditorias con token B NO la devuelve
-- [ ] 4.3 Test: GET /documentos/:id con token de proyecto incorrecto devuelve 404
-- [ ] 4.4 Test: POST /no-conformidades ignora `proyecto_id` del body y usa el del JWT
+- [x] 4.1 `apps/calidad/test/integration/aislamiento-proyecto.integration.test.ts` — test: crear NC en proyecto A, verificar que GET /no-conformidades con token de proyecto B NO la devuelve (también detectó bug 2.12)
+- [x] 4.2 Test: crear Auditoría en proyecto A, verificar que GET /auditorias con token B NO la devuelve
+- [x] 4.3 Test: GET /documentos/:id con token de proyecto incorrecto devuelve 404
+- [x] 4.4 Test: POST /no-conformidades ignora `proyecto_id` del body y usa el del JWT
 
 ## 5. Commit y cierre
 
@@ -43,5 +46,5 @@
 
 ## Estado
 
-**Código:** ✅ Completado (commit 745f561, 2026-06-30)
-**Tests retroactivos (tasks 4.x):** ⏳ Pendiente
+**Código:** ✅ Completado (commit 745f561 + bug-fix 2026-07-02: GET/PATCH /nc/:id + GET /auditorias/:id)
+**Tests retroactivos (tasks 4.x):** ✅ 4/4 passing (2026-07-02)

@@ -19,8 +19,8 @@
 
 ## 4. Tests retroactivos
 
-- [ ] 4.1 `apps/app-shell/src/context/__tests__/TenantContext.race.test.ts` — test que simula switch-project fallido: verificar que `currentProjectId` NO cambia si `switchProjectApi` lanza
-- [ ] 4.2 `apps/app-shell/src/context/__tests__/TenantContext.race.test.ts` — test que simula switch-project exitoso: verificar que el JWT se actualiza ANTES de que `currentProjectId` cambie
+- [x] 4.1 `apps/app-shell/test/unit/setCurrentProjectId.logic.test.ts` — test: switch fallido → currentProjectId NO cambia (no setState, no setTokens)
+- [x] 4.2 `apps/app-shell/test/unit/setCurrentProjectId.logic.test.ts` — test: JWT actualizado ANTES que currentProjectId (orden: setTokens → setState); + test switch sin access_token → estado actualiza, setTokens no se llama
 
 ## 5. Commit y cierre
 
@@ -32,4 +32,4 @@
 
 **Código:** ✅ Completado (commit 745f561, 2026-06-30)
 **Datos VPS:** ✅ Completado (2026-07-01, 8 registros insertados)
-**Tests retroactivos (tasks 4.x):** ⏳ Pendiente
+**Tests retroactivos (tasks 4.x):** ✅ 3/3 passing (2026-07-02)
