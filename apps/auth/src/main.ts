@@ -62,18 +62,13 @@ const rateLimitHandler = (_req: Request, res: Response) =>
 
 const RL_WINDOW = 15 * 60 * 1000;
 
-// Cada llamada crea su propio closure con su propio store — evita ERR_ERL_STORE_REUSE.
-// El store se instancia en la primera request, cuando Redis ya está conectado (o no).
+// sendCommand es un closure que resuelve en request-time, cuando Redis ya está conectado
+// (startServer() hace redisClient.connect() antes de app.listen()). El rateLimit() se
+// crea en tiempo de módulo para cumplir con ERR_ERL_CREATED_IN_REQUEST_HANDLER de v7.5+.
 function makeLimiter(max: number): express.RequestHandler {
-  let limiter: express.RequestHandler | null = null;
-  return (req, res, next) => {
-    if (!limiter) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const store = redisClient?.isReady ? new RedisStore({ sendCommand: (...args: string[]) => redisClient!.sendCommand(args) }) as any : undefined;
-      limiter = rateLimit({ windowMs: RL_WINDOW, max, standardHeaders: true, legacyHeaders: false, store, handler: rateLimitHandler });
-    }
-    limiter(req, res, next);
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const store = redisClient ? new RedisStore({ sendCommand: (...args: string[]) => redisClient!.sendCommand(args) }) as any : undefined;
+  return rateLimit({ windowMs: RL_WINDOW, max, standardHeaders: true, legacyHeaders: false, store, handler: rateLimitHandler });
 }
 
 const masterWriteLimiter  = makeLimiter(5);
