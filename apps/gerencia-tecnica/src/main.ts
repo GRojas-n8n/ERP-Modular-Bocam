@@ -3004,7 +3004,9 @@ async function bootstrap(): Promise<void> {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-bootstrap().catch((err) => {
-  console.error('[Gerencia Técnica] ❌ Error fatal al iniciar:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  bootstrap().catch((err) => {
+    console.error('[Gerencia Técnica] ❌ Error fatal al iniciar:', err);
+    process.exit(1);
+  });
+}

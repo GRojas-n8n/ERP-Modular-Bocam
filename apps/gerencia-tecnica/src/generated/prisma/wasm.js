@@ -284,6 +284,21 @@ exports.Prisma.FichaTecnicaInsumoScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.ProyectoObraVinculadoScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  cotizacion_id: 'cotizacion_id',
+  monto_contrato: 'monto_contrato',
+  moneda: 'moneda',
+  cliente_nombre: 'cliente_nombre',
+  fecha_contrato: 'fecha_contrato',
+  estado: 'estado',
+  notas: 'notas',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -325,7 +340,8 @@ exports.Prisma.ModelName = {
   SaldoMovimiento: 'SaldoMovimiento',
   TransferenciaPartida: 'TransferenciaPartida',
   CompraProyectada: 'CompraProyectada',
-  FichaTecnicaInsumo: 'FichaTecnicaInsumo'
+  FichaTecnicaInsumo: 'FichaTecnicaInsumo',
+  ProyectoObraVinculado: 'ProyectoObraVinculado'
 };
 
 /**

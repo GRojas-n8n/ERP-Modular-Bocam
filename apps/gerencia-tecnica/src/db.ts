@@ -34,6 +34,7 @@ export interface TenantContext {
 // ─── Instancia Base (Singleton) ─────────────────────────────────────────────
 // Reutiliza el pool de conexiones de Prisma. No debe exponerse fuera de este módulo.
 const basePrisma = new PrismaClient({
+  datasources: { db: { url: process.env.GERENCIA_TECNICA_DATABASE_URL || process.env.DATABASE_URL } },
   log: process.env.NODE_ENV === 'development'
     ? ['query', 'warn', 'error']
     : ['error'],
