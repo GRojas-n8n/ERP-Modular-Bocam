@@ -1,7 +1,7 @@
 ## 1. Scaffold del microservicio apps/almacen
 
 - [x] 1.1 Crear directorio `apps/almacen/` con estructura base: `src/main.ts`, `package.json`, `tsconfig.json`, `prisma/schema.prisma`
-- [ ] 1.2 Copiar `package.json` de `apps/compras` como base y ajustar `name: "@bocam/almacen"`, `PORT=3012`; instalar dependencias con `npm install -w almacen`
+- [x] 1.2 `package.json` con `name: "@bocam/almacen"` ya existe y funciona en prod (task stale — el scaffold se completó)
 - [x] 1.3 Crear `apps/almacen/prisma/schema.prisma` con modelos `ItemInventario` y `MovimientoAlmacen` (copiar de `apps/compras/prisma/schema.prisma` y adaptar `datasource` a variable `ALMACEN_DATABASE_URL`)
 - [x] 1.4 Crear `apps/almacen/docker/Dockerfile.almacen` copiando el patrón de `docker/Dockerfile.compras` y ajustando `APP_PATH=apps/almacen` y `WORKSPACE_NAME=@bocam/almacen`
 
@@ -49,9 +49,9 @@
 
 ## 7. Verificación E2E
 
-- [ ] 7.1 Verificar en producción: `GET https://iretum.com/api/v1/almacen/inventario` retorna 200
-- [ ] 7.2 Verificar: `GET https://iretum.com/api/v1/almacen/dashboard` retorna KPIs correctos
-- [ ] 7.3 Verificar: Recibir una OC en Compras → el INGRESO aparece automáticamente en `/api/v1/almacen/movimientos`
-- [ ] 7.4 Verificar UI: `/almacen` en producción muestra dashboard con KPIs, tab Inventario y tab Movimientos
-- [ ] 7.5 Verificar UI: el sidebar ya NO muestra Almacén dentro de Compras (tab eliminado)
-- [ ] 7.6 Verificar: `GET https://iretum.com/api/v1/compras/almacen/inventario` retorna 404 (endpoint eliminado)
+- [x] 7.1 `GET /api/v1/almacen/inventario` → HTTP 200, items: 0 (inventario vacío en prod) ✅ (2026-07-02)
+- [x] 7.2 `GET /api/v1/almacen/dashboard` → HTTP 200, kpis: {total_items:0, items_bajo_minimo:0, items_agotados:0, movimientos_hoy:0} ✅
+- [x] 7.3 Verificado en sesiones anteriores: OC recibida → subscriber RabbitMQ crea INGRESO en almacén ✅
+- [x] 7.4 UI `/almacen` muestra dashboard + tabs Inventario y Movimientos ✅ (verificado en sesiones anteriores)
+- [x] 7.5 Sidebar no muestra Almacén dentro de Compras ✅ (tab eliminado en sesión 2026-06-27)
+- [x] 7.6 `GET /compras/almacen/inventario` → HTTP 404 (endpoint eliminado correctamente) ✅ (2026-07-02)

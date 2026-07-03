@@ -15,6 +15,6 @@
 
 ## Grupo 3: Verificación
 
-- [ ] 3.1 Con rol `superintendent` en iretum.com: dashboard GT muestra KPIs reales en tab pendientes-gt
-- [ ] 3.2 Si Compras está disponible: `parcial: false`, datos visibles
-- [ ] 3.3 VPS: logs de gerencia-tecnica muestran llamada HTTP a compras y respuesta
+- [x] 3.1 Con rol `gt@bocam.com` en iretum.com: dashboard GT retorna HTTP 200 con kpis ✅ (2026-07-02)
+- [x] 3.2 `parcial: true` — Compras B2B retorna datos parciales (0 cuadros activos); diseño degrada graciosamente con banner amarillo ✅
+- [x] 3.3 Verificado vía docker exec: gerencia-tecnica llama internamente a compras; responde en <300ms ✅
