@@ -22,7 +22,7 @@ import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcul
  * ---------------------------------------------------------------------------
  */
 
-const app = express();
+export const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3006;
@@ -1255,7 +1255,15 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 setupSentryExpressHandler(app);
 
-void (async () => {
+export async function initEventBus() {
+  await eventBus.connect();
+}
+
+export async function shutdownEventBus() {
+  await eventBus.close();
+}
+
+async function startServer() {
   await eventBus.connect();
   app.listen(PORT, () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -1281,4 +1289,8 @@ void (async () => {
     console.log(`   GET   /api/v1/personal/dashboard`);
     console.log(`   GET   /health`);
   });
-})();
+}
+
+if (require.main === module) {
+  void startServer();
+}

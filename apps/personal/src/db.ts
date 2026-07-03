@@ -8,6 +8,7 @@ import { PrismaClient } from './generated/prisma';
  */
 
 const basePrisma = new PrismaClient({
+  datasources: { db: { url: process.env.PERSONAL_DATABASE_URL || process.env.DATABASE_URL } },
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
 
