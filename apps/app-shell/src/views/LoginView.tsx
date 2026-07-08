@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useTenant } from '../context/TenantContext';
 
 const DEFAULT_TENANT_ID = (import.meta.env.VITE_DEFAULT_TENANT_ID || '8e07a7ac-8157-4e5d-8499-e985a9fcdbfc').trim();
@@ -44,6 +44,7 @@ export const LoginView: React.FC = () => {
   const { login, loginDemo, loginError } = useTenant();
   const [email, setEmail]           = useState('');
   const [password, setPassword]     = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -204,6 +205,16 @@ export const LoginView: React.FC = () => {
           color:rgba(255,255,255,.26); pointer-events:none; transition:color .2s;
         }
         .lr-input-wrap:focus-within .lr-icon { color:rgba(0,209,255,.70); }
+        .lr-input-pw { padding-right:42px; }
+        .lr-icon-toggle {
+          position:absolute; right:10px; top:50%; transform:translateY(-50%);
+          display:flex; align-items:center; justify-content:center;
+          width:28px; height:28px; padding:0; border:none; background:transparent;
+          color:rgba(255,255,255,.30); cursor:pointer; border-radius:8px;
+          transition:color .2s, background .2s;
+        }
+        .lr-icon-toggle:hover { color:rgba(0,209,255,.75); background:rgba(0,209,255,.08); }
+        .lr-icon-toggle:focus-visible { outline:2px solid rgba(0,209,255,.50); outline-offset:1px; }
         .lr-label {
           display:block; font-size:10px; font-weight:600;
           letter-spacing:.12em; text-transform:uppercase;
@@ -439,9 +450,18 @@ export const LoginView: React.FC = () => {
                   <label className="lr-label">Contraseña</label>
                   <div className="lr-input-wrap">
                     <IconLock className="lr-icon" />
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                    <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••" required
-                      id="login-password-input" autoComplete="current-password" className="lr-input" />
+                      id="login-password-input" autoComplete="current-password" className="lr-input lr-input-pw" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="lr-icon-toggle"
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff style={{ width:16, height:16 }} /> : <Eye style={{ width:16, height:16 }} />}
+                    </button>
                   </div>
                 </div>
                 <button type="submit" disabled={isSubmitting} id="login-submit-btn" className="lr-btn" style={{ marginTop:4 }}>
