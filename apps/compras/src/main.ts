@@ -767,7 +767,7 @@ app.get(
         async (prisma) => {
           const sol = await prisma.solicitudCotizacion.findUnique({
             where: { tenant_id_requisicion_id: { tenant_id: tenantId, requisicion_id: reqId } },
-            include: { proveedores: true },
+            include: { proveedores: { include: { proveedor: true } } },
           });
           if (!sol) return null;
 
@@ -775,7 +775,12 @@ app.get(
             ...sol,
             dias_habiles_restantes: calcDiasHabilesRestantes(sol.fecha_limite),
             alerta_plazo: sol.fecha_limite < new Date() && sol.proveedores.some(p => p.estado === 'PENDIENTE'),
-            proveedores: sol.proveedores.map(p => ({ ...p, pdf_ruta: undefined })),
+            proveedores: sol.proveedores.map(p => ({
+              ...p,
+              pdf_ruta: undefined,
+              proveedor_nombre: p.proveedor?.razon_social ?? '—',
+              proveedor_ciudad: p.proveedor?.ciudad ?? null,
+            })),
           };
         }
       );

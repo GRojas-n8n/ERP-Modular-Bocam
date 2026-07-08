@@ -2481,6 +2481,7 @@ export namespace Prisma {
     comparativas: number
     documentos: number
     calificaciones: number
+    solicitudes_cotizacion: number
   }
 
   export type ProveedorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2488,6 +2489,7 @@ export namespace Prisma {
     comparativas?: boolean | ProveedorCountOutputTypeCountComparativasArgs
     documentos?: boolean | ProveedorCountOutputTypeCountDocumentosArgs
     calificaciones?: boolean | ProveedorCountOutputTypeCountCalificacionesArgs
+    solicitudes_cotizacion?: boolean | ProveedorCountOutputTypeCountSolicitudes_cotizacionArgs
   }
 
   // Custom InputTypes
@@ -2527,6 +2529,13 @@ export namespace Prisma {
    */
   export type ProveedorCountOutputTypeCountCalificacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CalificacionProveedorWhereInput
+  }
+
+  /**
+   * ProveedorCountOutputType without action
+   */
+  export type ProveedorCountOutputTypeCountSolicitudes_cotizacionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SolicitudCotizacionProveedorWhereInput
   }
 
 
@@ -3003,6 +3012,7 @@ export namespace Prisma {
     comparativas?: boolean | Proveedor$comparativasArgs<ExtArgs>
     documentos?: boolean | Proveedor$documentosArgs<ExtArgs>
     calificaciones?: boolean | Proveedor$calificacionesArgs<ExtArgs>
+    solicitudes_cotizacion?: boolean | Proveedor$solicitudes_cotizacionArgs<ExtArgs>
     _count?: boolean | ProveedorCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["proveedor"]>
 
@@ -3045,6 +3055,7 @@ export namespace Prisma {
     comparativas?: boolean | Proveedor$comparativasArgs<ExtArgs>
     documentos?: boolean | Proveedor$documentosArgs<ExtArgs>
     calificaciones?: boolean | Proveedor$calificacionesArgs<ExtArgs>
+    solicitudes_cotizacion?: boolean | Proveedor$solicitudes_cotizacionArgs<ExtArgs>
     _count?: boolean | ProveedorCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -3056,6 +3067,7 @@ export namespace Prisma {
       comparativas: Prisma.$ComparativaDetallePayload<ExtArgs>[]
       documentos: Prisma.$DocumentoProveedorPayload<ExtArgs>[]
       calificaciones: Prisma.$CalificacionProveedorPayload<ExtArgs>[]
+      solicitudes_cotizacion: Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_proveedor: string
@@ -3440,6 +3452,7 @@ export namespace Prisma {
     comparativas<T extends Proveedor$comparativasArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$comparativasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaDetallePayload<ExtArgs>, T, "findMany"> | Null>
     documentos<T extends Proveedor$documentosArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$documentosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentoProveedorPayload<ExtArgs>, T, "findMany"> | Null>
     calificaciones<T extends Proveedor$calificacionesArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$calificacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CalificacionProveedorPayload<ExtArgs>, T, "findMany"> | Null>
+    solicitudes_cotizacion<T extends Proveedor$solicitudes_cotizacionArgs<ExtArgs> = {}>(args?: Subset<T, Proveedor$solicitudes_cotizacionArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SolicitudCotizacionProveedorPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3874,6 +3887,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: CalificacionProveedorScalarFieldEnum | CalificacionProveedorScalarFieldEnum[]
+  }
+
+  /**
+   * Proveedor.solicitudes_cotizacion
+   */
+  export type Proveedor$solicitudes_cotizacionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SolicitudCotizacionProveedor
+     */
+    select?: SolicitudCotizacionProveedorSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SolicitudCotizacionProveedorInclude<ExtArgs> | null
+    where?: SolicitudCotizacionProveedorWhereInput
+    orderBy?: SolicitudCotizacionProveedorOrderByWithRelationInput | SolicitudCotizacionProveedorOrderByWithRelationInput[]
+    cursor?: SolicitudCotizacionProveedorWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SolicitudCotizacionProveedorScalarFieldEnum | SolicitudCotizacionProveedorScalarFieldEnum[]
   }
 
   /**
@@ -20721,6 +20754,7 @@ export namespace Prisma {
     fecha_respuesta?: boolean
     updated_at?: boolean
     solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["solicitudCotizacionProveedor"]>
 
   export type SolicitudCotizacionProveedorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -20736,6 +20770,7 @@ export namespace Prisma {
     fecha_respuesta?: boolean
     updated_at?: boolean
     solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["solicitudCotizacionProveedor"]>
 
   export type SolicitudCotizacionProveedorSelectScalar = {
@@ -20754,15 +20789,18 @@ export namespace Prisma {
 
   export type SolicitudCotizacionProveedorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }
   export type SolicitudCotizacionProveedorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     solicitud?: boolean | SolicitudCotizacionDefaultArgs<ExtArgs>
+    proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }
 
   export type $SolicitudCotizacionProveedorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "SolicitudCotizacionProveedor"
     objects: {
       solicitud: Prisma.$SolicitudCotizacionPayload<ExtArgs>
+      proveedor: Prisma.$ProveedorPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id_scp: string
@@ -21141,6 +21179,7 @@ export namespace Prisma {
   export interface Prisma__SolicitudCotizacionProveedorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     solicitud<T extends SolicitudCotizacionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SolicitudCotizacionDefaultArgs<ExtArgs>>): Prisma__SolicitudCotizacionClient<$Result.GetResult<Prisma.$SolicitudCotizacionPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    proveedor<T extends ProveedorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProveedorDefaultArgs<ExtArgs>>): Prisma__ProveedorClient<$Result.GetResult<Prisma.$ProveedorPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -23864,6 +23903,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleListRelationFilter
     documentos?: DocumentoProveedorListRelationFilter
     calificaciones?: CalificacionProveedorListRelationFilter
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorListRelationFilter
   }
 
   export type ProveedorOrderByWithRelationInput = {
@@ -23885,6 +23925,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleOrderByRelationAggregateInput
     documentos?: DocumentoProveedorOrderByRelationAggregateInput
     calificaciones?: CalificacionProveedorOrderByRelationAggregateInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorOrderByRelationAggregateInput
   }
 
   export type ProveedorWhereUniqueInput = Prisma.AtLeast<{
@@ -23910,6 +23951,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleListRelationFilter
     documentos?: DocumentoProveedorListRelationFilter
     calificaciones?: CalificacionProveedorListRelationFilter
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorListRelationFilter
   }, "id_proveedor" | "tenant_id_rfc_tax_id">
 
   export type ProveedorOrderByWithAggregationInput = {
@@ -25382,6 +25424,7 @@ export namespace Prisma {
     fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
     updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
     solicitud?: XOR<SolicitudCotizacionRelationFilter, SolicitudCotizacionWhereInput>
+    proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
   }
 
   export type SolicitudCotizacionProveedorOrderByWithRelationInput = {
@@ -25397,6 +25440,7 @@ export namespace Prisma {
     fecha_respuesta?: SortOrderInput | SortOrder
     updated_at?: SortOrder
     solicitud?: SolicitudCotizacionOrderByWithRelationInput
+    proveedor?: ProveedorOrderByWithRelationInput
   }
 
   export type SolicitudCotizacionProveedorWhereUniqueInput = Prisma.AtLeast<{
@@ -25416,6 +25460,7 @@ export namespace Prisma {
     fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
     updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
     solicitud?: XOR<SolicitudCotizacionRelationFilter, SolicitudCotizacionWhereInput>
+    proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
   }, "id_scp" | "solicitud_id_proveedor_id">
 
   export type SolicitudCotizacionProveedorOrderByWithAggregationInput = {
@@ -25621,6 +25666,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateInput = {
@@ -25642,6 +25688,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUpdateInput = {
@@ -25663,6 +25710,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateInput = {
@@ -25684,6 +25732,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorCreateManyInput = {
@@ -27346,7 +27395,6 @@ export namespace Prisma {
   export type SolicitudCotizacionProveedorCreateInput = {
     id_scp?: string
     tenant_id: string
-    proveedor_id: string
     estado?: string
     pdf_nombre?: string | null
     pdf_ruta?: string | null
@@ -27355,6 +27403,7 @@ export namespace Prisma {
     fecha_respuesta?: Date | string | null
     updated_at?: Date | string
     solicitud: SolicitudCotizacionCreateNestedOneWithoutProveedoresInput
+    proveedor: ProveedorCreateNestedOneWithoutSolicitudes_cotizacionInput
   }
 
   export type SolicitudCotizacionProveedorUncheckedCreateInput = {
@@ -27374,7 +27423,6 @@ export namespace Prisma {
   export type SolicitudCotizacionProveedorUpdateInput = {
     id_scp?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
-    proveedor_id?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27383,6 +27431,7 @@ export namespace Prisma {
     fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     solicitud?: SolicitudCotizacionUpdateOneRequiredWithoutProveedoresNestedInput
+    proveedor?: ProveedorUpdateOneRequiredWithoutSolicitudes_cotizacionNestedInput
   }
 
   export type SolicitudCotizacionProveedorUncheckedUpdateInput = {
@@ -27416,7 +27465,6 @@ export namespace Prisma {
   export type SolicitudCotizacionProveedorUpdateManyMutationInput = {
     id_scp?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
-    proveedor_id?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27697,6 +27745,12 @@ export namespace Prisma {
     none?: CalificacionProveedorWhereInput
   }
 
+  export type SolicitudCotizacionProveedorListRelationFilter = {
+    every?: SolicitudCotizacionProveedorWhereInput
+    some?: SolicitudCotizacionProveedorWhereInput
+    none?: SolicitudCotizacionProveedorWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -27715,6 +27769,10 @@ export namespace Prisma {
   }
 
   export type CalificacionProveedorOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SolicitudCotizacionProveedorOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -28839,16 +28897,6 @@ export namespace Prisma {
     orden?: SortOrder
   }
 
-  export type SolicitudCotizacionProveedorListRelationFilter = {
-    every?: SolicitudCotizacionProveedorWhereInput
-    some?: SolicitudCotizacionProveedorWhereInput
-    none?: SolicitudCotizacionProveedorWhereInput
-  }
-
-  export type SolicitudCotizacionProveedorOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
   export type SolicitudCotizacionTenant_idRequisicion_idCompoundUniqueInput = {
     tenant_id: string
     requisicion_id: string
@@ -29061,6 +29109,13 @@ export namespace Prisma {
     connect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
   }
 
+  export type SolicitudCotizacionProveedorCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput> | SolicitudCotizacionProveedorCreateWithoutProveedorInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput | SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManyProveedorInputEnvelope
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+  }
+
   export type OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput = {
     create?: XOR<OrdenCompraCreateWithoutProveedorInput, OrdenCompraUncheckedCreateWithoutProveedorInput> | OrdenCompraCreateWithoutProveedorInput[] | OrdenCompraUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutProveedorInput | OrdenCompraCreateOrConnectWithoutProveedorInput[]
@@ -29087,6 +29142,13 @@ export namespace Prisma {
     connectOrCreate?: CalificacionProveedorCreateOrConnectWithoutProveedorInput | CalificacionProveedorCreateOrConnectWithoutProveedorInput[]
     createMany?: CalificacionProveedorCreateManyProveedorInputEnvelope
     connect?: CalificacionProveedorWhereUniqueInput | CalificacionProveedorWhereUniqueInput[]
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput> | SolicitudCotizacionProveedorCreateWithoutProveedorInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput | SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManyProveedorInputEnvelope
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -29165,6 +29227,20 @@ export namespace Prisma {
     deleteMany?: CalificacionProveedorScalarWhereInput | CalificacionProveedorScalarWhereInput[]
   }
 
+  export type SolicitudCotizacionProveedorUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput> | SolicitudCotizacionProveedorCreateWithoutProveedorInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput | SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput[]
+    upsert?: SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutProveedorInput | SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManyProveedorInputEnvelope
+    set?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    disconnect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    delete?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    update?: SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutProveedorInput | SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: SolicitudCotizacionProveedorUpdateManyWithWhereWithoutProveedorInput | SolicitudCotizacionProveedorUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+  }
+
   export type OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput = {
     create?: XOR<OrdenCompraCreateWithoutProveedorInput, OrdenCompraUncheckedCreateWithoutProveedorInput> | OrdenCompraCreateWithoutProveedorInput[] | OrdenCompraUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: OrdenCompraCreateOrConnectWithoutProveedorInput | OrdenCompraCreateOrConnectWithoutProveedorInput[]
@@ -29219,6 +29295,20 @@ export namespace Prisma {
     update?: CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput | CalificacionProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
     updateMany?: CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput | CalificacionProveedorUpdateManyWithWhereWithoutProveedorInput[]
     deleteMany?: CalificacionProveedorScalarWhereInput | CalificacionProveedorScalarWhereInput[]
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<SolicitudCotizacionProveedorCreateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput> | SolicitudCotizacionProveedorCreateWithoutProveedorInput[] | SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput | SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput[]
+    upsert?: SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutProveedorInput | SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: SolicitudCotizacionProveedorCreateManyProveedorInputEnvelope
+    set?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    disconnect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    delete?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    connect?: SolicitudCotizacionProveedorWhereUniqueInput | SolicitudCotizacionProveedorWhereUniqueInput[]
+    update?: SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutProveedorInput | SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: SolicitudCotizacionProveedorUpdateManyWithWhereWithoutProveedorInput | SolicitudCotizacionProveedorUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
   }
 
   export type ProveedorCreateNestedOneWithoutCalificacionesInput = {
@@ -29797,12 +29887,26 @@ export namespace Prisma {
     connect?: SolicitudCotizacionWhereUniqueInput
   }
 
+  export type ProveedorCreateNestedOneWithoutSolicitudes_cotizacionInput = {
+    create?: XOR<ProveedorCreateWithoutSolicitudes_cotizacionInput, ProveedorUncheckedCreateWithoutSolicitudes_cotizacionInput>
+    connectOrCreate?: ProveedorCreateOrConnectWithoutSolicitudes_cotizacionInput
+    connect?: ProveedorWhereUniqueInput
+  }
+
   export type SolicitudCotizacionUpdateOneRequiredWithoutProveedoresNestedInput = {
     create?: XOR<SolicitudCotizacionCreateWithoutProveedoresInput, SolicitudCotizacionUncheckedCreateWithoutProveedoresInput>
     connectOrCreate?: SolicitudCotizacionCreateOrConnectWithoutProveedoresInput
     upsert?: SolicitudCotizacionUpsertWithoutProveedoresInput
     connect?: SolicitudCotizacionWhereUniqueInput
     update?: XOR<XOR<SolicitudCotizacionUpdateToOneWithWhereWithoutProveedoresInput, SolicitudCotizacionUpdateWithoutProveedoresInput>, SolicitudCotizacionUncheckedUpdateWithoutProveedoresInput>
+  }
+
+  export type ProveedorUpdateOneRequiredWithoutSolicitudes_cotizacionNestedInput = {
+    create?: XOR<ProveedorCreateWithoutSolicitudes_cotizacionInput, ProveedorUncheckedCreateWithoutSolicitudes_cotizacionInput>
+    connectOrCreate?: ProveedorCreateOrConnectWithoutSolicitudes_cotizacionInput
+    upsert?: ProveedorUpsertWithoutSolicitudes_cotizacionInput
+    connect?: ProveedorWhereUniqueInput
+    update?: XOR<XOR<ProveedorUpdateToOneWithWhereWithoutSolicitudes_cotizacionInput, ProveedorUpdateWithoutSolicitudes_cotizacionInput>, ProveedorUncheckedUpdateWithoutSolicitudes_cotizacionInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -30247,6 +30351,42 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SolicitudCotizacionProveedorCreateWithoutProveedorInput = {
+    id_scp?: string
+    tenant_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+    solicitud: SolicitudCotizacionCreateNestedOneWithoutProveedoresInput
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput = {
+    id_scp?: string
+    tenant_id: string
+    solicitud_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorCreateOrConnectWithoutProveedorInput = {
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    create: XOR<SolicitudCotizacionProveedorCreateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type SolicitudCotizacionProveedorCreateManyProveedorInputEnvelope = {
+    data: SolicitudCotizacionProveedorCreateManyProveedorInput | SolicitudCotizacionProveedorCreateManyProveedorInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrdenCompraUpsertWithWhereUniqueWithoutProveedorInput = {
     where: OrdenCompraWhereUniqueInput
     update: XOR<OrdenCompraUpdateWithoutProveedorInput, OrdenCompraUncheckedUpdateWithoutProveedorInput>
@@ -30387,6 +30527,39 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"CalificacionProveedor"> | Date | string
   }
 
+  export type SolicitudCotizacionProveedorUpsertWithWhereUniqueWithoutProveedorInput = {
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    update: XOR<SolicitudCotizacionProveedorUpdateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedUpdateWithoutProveedorInput>
+    create: XOR<SolicitudCotizacionProveedorCreateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type SolicitudCotizacionProveedorUpdateWithWhereUniqueWithoutProveedorInput = {
+    where: SolicitudCotizacionProveedorWhereUniqueInput
+    data: XOR<SolicitudCotizacionProveedorUpdateWithoutProveedorInput, SolicitudCotizacionProveedorUncheckedUpdateWithoutProveedorInput>
+  }
+
+  export type SolicitudCotizacionProveedorUpdateManyWithWhereWithoutProveedorInput = {
+    where: SolicitudCotizacionProveedorScalarWhereInput
+    data: XOR<SolicitudCotizacionProveedorUpdateManyMutationInput, SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorInput>
+  }
+
+  export type SolicitudCotizacionProveedorScalarWhereInput = {
+    AND?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+    OR?: SolicitudCotizacionProveedorScalarWhereInput[]
+    NOT?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
+    id_scp?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    tenant_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    solicitud_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    proveedor_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
+    estado?: StringFilter<"SolicitudCotizacionProveedor"> | string
+    pdf_nombre?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_ruta?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    pdf_mime?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    notas_proveedor?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
+    fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
+    updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
+  }
+
   export type ProveedorCreateWithoutCalificacionesInput = {
     id_proveedor?: string
     tenant_id: string
@@ -30405,6 +30578,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutCalificacionesInput = {
@@ -30425,6 +30599,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutCalificacionesInput = {
@@ -30461,6 +30636,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutCalificacionesInput = {
@@ -30481,6 +30657,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorCreateWithoutDocumentosInput = {
@@ -30501,6 +30678,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutDocumentosInput = {
@@ -30521,6 +30699,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutDocumentosInput = {
@@ -30557,6 +30736,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutDocumentosInput = {
@@ -30577,6 +30757,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type RequisicionItemCreateWithoutRequisicionInput = {
@@ -30762,6 +30943,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutOrdenesInput = {
@@ -30782,6 +30964,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutOrdenesInput = {
@@ -30880,6 +31063,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutOrdenesInput = {
@@ -30900,6 +31084,7 @@ export namespace Prisma {
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type OrdenCompraItemUpsertWithWhereUniqueWithoutOrdenInput = {
@@ -31836,6 +32021,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorUncheckedCreateWithoutComparativasInput = {
@@ -31856,6 +32042,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
     documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
     calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type ProveedorCreateOrConnectWithoutComparativasInput = {
@@ -31957,6 +32144,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProveedorUncheckedUpdateWithoutComparativasInput = {
@@ -31977,6 +32165,7 @@ export namespace Prisma {
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
     documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
     calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    solicitudes_cotizacion?: SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type CuadroComparativoCreateWithoutAclaracionesInput = {
@@ -32106,7 +32295,6 @@ export namespace Prisma {
   export type SolicitudCotizacionProveedorCreateWithoutSolicitudInput = {
     id_scp?: string
     tenant_id: string
-    proveedor_id: string
     estado?: string
     pdf_nombre?: string | null
     pdf_ruta?: string | null
@@ -32114,6 +32302,7 @@ export namespace Prisma {
     notas_proveedor?: string | null
     fecha_respuesta?: Date | string | null
     updated_at?: Date | string
+    proveedor: ProveedorCreateNestedOneWithoutSolicitudes_cotizacionInput
   }
 
   export type SolicitudCotizacionProveedorUncheckedCreateWithoutSolicitudInput = {
@@ -32155,23 +32344,6 @@ export namespace Prisma {
     data: XOR<SolicitudCotizacionProveedorUpdateManyMutationInput, SolicitudCotizacionProveedorUncheckedUpdateManyWithoutSolicitudInput>
   }
 
-  export type SolicitudCotizacionProveedorScalarWhereInput = {
-    AND?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
-    OR?: SolicitudCotizacionProveedorScalarWhereInput[]
-    NOT?: SolicitudCotizacionProveedorScalarWhereInput | SolicitudCotizacionProveedorScalarWhereInput[]
-    id_scp?: UuidFilter<"SolicitudCotizacionProveedor"> | string
-    tenant_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
-    solicitud_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
-    proveedor_id?: UuidFilter<"SolicitudCotizacionProveedor"> | string
-    estado?: StringFilter<"SolicitudCotizacionProveedor"> | string
-    pdf_nombre?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
-    pdf_ruta?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
-    pdf_mime?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
-    notas_proveedor?: StringNullableFilter<"SolicitudCotizacionProveedor"> | string | null
-    fecha_respuesta?: DateTimeNullableFilter<"SolicitudCotizacionProveedor"> | Date | string | null
-    updated_at?: DateTimeFilter<"SolicitudCotizacionProveedor"> | Date | string
-  }
-
   export type SolicitudCotizacionCreateWithoutProveedoresInput = {
     id_solicitud?: string
     tenant_id: string
@@ -32201,6 +32373,53 @@ export namespace Prisma {
   export type SolicitudCotizacionCreateOrConnectWithoutProveedoresInput = {
     where: SolicitudCotizacionWhereUniqueInput
     create: XOR<SolicitudCotizacionCreateWithoutProveedoresInput, SolicitudCotizacionUncheckedCreateWithoutProveedoresInput>
+  }
+
+  export type ProveedorCreateWithoutSolicitudes_cotizacionInput = {
+    id_proveedor?: string
+    tenant_id: string
+    rfc_tax_id: string
+    razon_social: string
+    email_contacto?: string | null
+    telefono?: string | null
+    estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
+    comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorCreateNestedManyWithoutProveedorInput
+  }
+
+  export type ProveedorUncheckedCreateWithoutSolicitudes_cotizacionInput = {
+    id_proveedor?: string
+    tenant_id: string
+    rfc_tax_id: string
+    razon_social: string
+    email_contacto?: string | null
+    telefono?: string | null
+    estatus?: string
+    ciudad?: string | null
+    tipo_ubicacion?: string
+    entrega_en_sitio?: boolean
+    estatus_credito?: string
+    limite_credito?: Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: string
+    calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
+    comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
+    documentos?: DocumentoProveedorUncheckedCreateNestedManyWithoutProveedorInput
+    calificaciones?: CalificacionProveedorUncheckedCreateNestedManyWithoutProveedorInput
+  }
+
+  export type ProveedorCreateOrConnectWithoutSolicitudes_cotizacionInput = {
+    where: ProveedorWhereUniqueInput
+    create: XOR<ProveedorCreateWithoutSolicitudes_cotizacionInput, ProveedorUncheckedCreateWithoutSolicitudes_cotizacionInput>
   }
 
   export type SolicitudCotizacionUpsertWithoutProveedoresInput = {
@@ -32238,6 +32457,59 @@ export namespace Prisma {
     creado_por?: StringFieldUpdateOperationsInput | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProveedorUpsertWithoutSolicitudes_cotizacionInput = {
+    update: XOR<ProveedorUpdateWithoutSolicitudes_cotizacionInput, ProveedorUncheckedUpdateWithoutSolicitudes_cotizacionInput>
+    create: XOR<ProveedorCreateWithoutSolicitudes_cotizacionInput, ProveedorUncheckedCreateWithoutSolicitudes_cotizacionInput>
+    where?: ProveedorWhereInput
+  }
+
+  export type ProveedorUpdateToOneWithWhereWithoutSolicitudes_cotizacionInput = {
+    where?: ProveedorWhereInput
+    data: XOR<ProveedorUpdateWithoutSolicitudes_cotizacionInput, ProveedorUncheckedUpdateWithoutSolicitudes_cotizacionInput>
+  }
+
+  export type ProveedorUpdateWithoutSolicitudes_cotizacionInput = {
+    id_proveedor?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    rfc_tax_id?: StringFieldUpdateOperationsInput | string
+    razon_social?: StringFieldUpdateOperationsInput | string
+    email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
+    comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUpdateManyWithoutProveedorNestedInput
+  }
+
+  export type ProveedorUncheckedUpdateWithoutSolicitudes_cotizacionInput = {
+    id_proveedor?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    rfc_tax_id?: StringFieldUpdateOperationsInput | string
+    razon_social?: StringFieldUpdateOperationsInput | string
+    email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    estatus?: StringFieldUpdateOperationsInput | string
+    ciudad?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo_ubicacion?: StringFieldUpdateOperationsInput | string
+    entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
+    estatus_credito?: StringFieldUpdateOperationsInput | string
+    limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tipo_proveedor?: StringFieldUpdateOperationsInput | string
+    calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
+    comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
+    documentos?: DocumentoProveedorUncheckedUpdateManyWithoutProveedorNestedInput
+    calificaciones?: CalificacionProveedorUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type OrdenCompraCreateManyProveedorInput = {
@@ -32297,6 +32569,19 @@ export namespace Prisma {
     calificado_por: string
     calificado_por_nombre: string
     created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type SolicitudCotizacionProveedorCreateManyProveedorInput = {
+    id_scp?: string
+    tenant_id: string
+    solicitud_id: string
+    estado?: string
+    pdf_nombre?: string | null
+    pdf_ruta?: string | null
+    pdf_mime?: string | null
+    notas_proveedor?: string | null
+    fecha_respuesta?: Date | string | null
     updated_at?: Date | string
   }
 
@@ -32481,6 +32766,45 @@ export namespace Prisma {
     calificado_por?: StringFieldUpdateOperationsInput | string
     calificado_por_nombre?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUpdateWithoutProveedorInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    solicitud?: SolicitudCotizacionUpdateOneRequiredWithoutProveedoresNestedInput
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateWithoutProveedorInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    solicitud_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SolicitudCotizacionProveedorUncheckedUpdateManyWithoutProveedorInput = {
+    id_scp?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    solicitud_id?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
+    pdf_mime?: NullableStringFieldUpdateOperationsInput | string | null
+    notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -32886,7 +33210,6 @@ export namespace Prisma {
   export type SolicitudCotizacionProveedorUpdateWithoutSolicitudInput = {
     id_scp?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
-    proveedor_id?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     pdf_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     pdf_ruta?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32894,6 +33217,7 @@ export namespace Prisma {
     notas_proveedor?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_respuesta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedor?: ProveedorUpdateOneRequiredWithoutSolicitudes_cotizacionNestedInput
   }
 
   export type SolicitudCotizacionProveedorUncheckedUpdateWithoutSolicitudInput = {

@@ -37,10 +37,11 @@ model Proveedor {
   tipo_proveedor         String   @default("NACIONAL") @db.VarChar(20) // NACIONAL | EXTRANJERO
   calificacion_desempeno Decimal? @db.Decimal(3, 2) // 0.00–5.00
 
-  ordenes        OrdenCompra[]
-  comparativas   ComparativaDetalle[]
-  documentos     DocumentoProveedor[]
-  calificaciones CalificacionProveedor[]
+  ordenes                OrdenCompra[]
+  comparativas           ComparativaDetalle[]
+  documentos             DocumentoProveedor[]
+  calificaciones         CalificacionProveedor[]
+  solicitudes_cotizacion SolicitudCotizacionProveedor[]
 
   @@unique([tenant_id, rfc_tax_id])
   @@map("proveedores")
@@ -451,6 +452,7 @@ model SolicitudCotizacionProveedor {
   updated_at      DateTime  @updatedAt
 
   solicitud SolicitudCotizacion @relation(fields: [solicitud_id], references: [id_solicitud], onDelete: Cascade)
+  proveedor Proveedor           @relation(fields: [proveedor_id], references: [id_proveedor])
 
   @@unique([solicitud_id, proveedor_id])
   @@index([tenant_id, solicitud_id])
