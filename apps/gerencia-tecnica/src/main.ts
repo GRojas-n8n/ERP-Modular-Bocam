@@ -262,7 +262,7 @@ app.get('/api/v1/gerencia-tecnica/presupuesto/activo', async (req: Request, res:
  * POST /api/v1/gerencia-tecnica/insumos
  * Crea un nuevo insumo en el catálogo SSOT del tenant.
  */
-app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
+app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { clave, descripcion, unidad_medida, costo_base, tipo_insumo } = req.body;
@@ -428,7 +428,7 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
  * PATCH /api/v1/gerencia-tecnica/insumos/:id
  * Actualiza un insumo existente (precio, descripción, unidad).
  */
-app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
+app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { id } = req.params;
@@ -498,7 +498,7 @@ app.delete('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin'), async 
  * POST /api/v1/gerencia-tecnica/presupuestos
  * Crea un nuevo presupuesto base para un proyecto.
  */
-app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'technical'), async (req: Request, res: Response) => {
+app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { proyecto_id, version, conceptos } = req.body;
