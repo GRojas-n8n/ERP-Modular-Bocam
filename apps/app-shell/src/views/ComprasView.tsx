@@ -75,6 +75,7 @@ interface Requisicion {
   concepto_id?: string | null;
   concepto_clave?: string | null;
   concepto_descripcion?: string | null;
+  observaciones?: string | null;
 }
 
 interface ConceptoSimpleC {
@@ -395,6 +396,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           concepto_id:           r.concepto_id ?? null,
           concepto_clave:        r.concepto_clave ?? null,
           concepto_descripcion:  r.concepto_descripcion ?? null,
+          observaciones:         r.observaciones ?? null,
           items:       (r.items || []).map((it: any) => ({
             id:               it.id_item ?? it.id,
             insumo_id:        it.insumo_id,
@@ -820,7 +822,9 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       if (loaded) {
         setSolicitudForm({ dias_habiles: loaded.dias_habiles, notas: loaded.notas ?? '', provsSeleccionados: loaded.proveedores.map(p => p.proveedor_id) });
       } else {
-        setSolicitudForm({ dias_habiles: 3, notas: '', provsSeleccionados: [] });
+        // Sin solicitud previa — precargar las "Notas Adicionales" con las observaciones
+        // que el Residente capturó al crear la requisición (editable por Compras).
+        setSolicitudForm({ dias_habiles: 3, notas: req.observaciones ?? '', provsSeleccionados: [] });
       }
     } else if (existing) {
       setSolicitudForm({ dias_habiles: existing.dias_habiles, notas: existing.notas ?? '', provsSeleccionados: existing.proveedores.map(p => p.proveedor_id) });
@@ -2356,6 +2360,15 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             accentColor="sky"
           >
             <div className="space-y-5 p-1">
+              {/* ── Consideraciones generales del Residente (observaciones de la requisición) ── */}
+              {req?.observaciones && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                    ⚠ Consideraciones del Residente
+                  </p>
+                  <p className="text-[10px] whitespace-pre-line text-foreground/90">{req.observaciones}</p>
+                </div>
+              )}
               {/* ── Partidas de la requisición (solo lectura) ── */}
               {(req?.items ?? []).length > 0 && (
                 <div className="space-y-1.5">
