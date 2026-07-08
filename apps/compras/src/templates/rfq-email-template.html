@@ -1,0 +1,222 @@
+<!--
+  Plantilla de correo — Solicitud de Cotización (RFQ)
+  iretum.com | Constructora Bocam
+  Tema oscuro industrial. Tablas + estilos inline para Outlook/Gmail/Apple Mail.
+  Variables: sintaxis {{VARIABLE}} — reemplazar antes de enviar.
+  {{Tabla_Partidas_HTML}} debe reemplazarse por las filas <tr> ya construidas
+  (una por partida), siguiendo el mismo formato de celdas que el <thead>.
+-->
+<!doctype html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>Solicitud de Cotización {{Folio_Requisicion}}</title>
+<!--[if mso]>
+<noscript>
+<xml>
+<o:OfficeDocumentSettings>
+<o:PixelsPerInch>96</o:PixelsPerInch>
+</o:OfficeDocumentSettings>
+</xml>
+</noscript>
+<![endif]-->
+<style>
+  body, table, td { font-family: Arial, Helvetica, sans-serif; }
+  body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+  table { border-collapse:collapse; }
+  img { border:0; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+  a { color:#6366F1; text-decoration:none; }
+
+  @media screen and (max-width: 600px) {
+    .rfq-wrapper { width:100% !important; }
+    .rfq-container { width:100% !important; border-radius:0 !important; }
+    .rfq-px { padding-left:20px !important; padding-right:20px !important; }
+    .rfq-logo-col { display:block !important; width:100% !important; text-align:left !important; padding-bottom:14px !important; }
+    .rfq-logo-col.rfq-logo-right { text-align:left !important; padding-bottom:0 !important; }
+    .rfq-stack-table th, .rfq-stack-table td { font-size:12px !important; padding:8px 6px !important; }
+    .rfq-hide-mobile { display:none !important; }
+  }
+</style>
+</head>
+<body style="margin:0; padding:0; background-color:#0F172A;">
+  <!-- Preheader (oculto, mejora el texto de previsualizacion en la bandeja) -->
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">
+    Solicitud de cotización {{Folio_Requisicion}} — {{Proyecto}} · Responder antes del {{Fecha_Limite}}
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0F172A;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <table role="presentation" class="rfq-wrapper" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px;">
+
+          <!-- ══════════════ HEADER — doble logotipo ══════════════ -->
+          <tr>
+            <td class="rfq-container rfq-px" style="background-color:#1E293B; border-radius:12px 12px 0 0; padding:24px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="rfq-logo-col" align="left" style="width:50%; vertical-align:middle;">
+                    <img src="logo_iretum.png" alt="iretum" height="32" style="height:32px; display:block;" />
+                  </td>
+                  <td class="rfq-logo-col rfq-logo-right" align="right" style="width:50%; vertical-align:middle;">
+                    <img src="logo_bocam.png" alt="Constructora Bocam" height="32" style="height:32px; display:block; margin-left:auto;" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Linea de acento -->
+          <tr>
+            <td style="background-color:#1E293B; padding:0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="height:2px; line-height:2px; font-size:2px; background-color:#6366F1;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ══════════════ CONTENEDOR PRINCIPAL ══════════════ -->
+          <tr>
+            <td class="rfq-container rfq-px" style="background-color:#1E293B; padding:32px; border-radius:0 0 12px 12px; box-shadow:0 8px 24px rgba(0,0,0,0.35);">
+
+              <!-- Eyebrow + titulo -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-bottom:4px;">
+                    <span style="font-size:11px; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:#6366F1;">Solicitud de Cotización</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom:18px;">
+                    <span style="font-size:22px; font-weight:700; color:#FFFFFF;">Folio {{Folio_Requisicion}}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Saludo -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-bottom:20px; font-size:14px; line-height:22px; color:#FFFFFF;">
+                    Estimado(a) <strong>{{Nombre_Proveedor}}</strong>,
+                    <br /><br />
+                    <span style="color:#9CA3AF;">
+                      Constructora Bocam solicita su cotización para el proyecto <strong style="color:#FFFFFF;">{{Proyecto}}</strong>.
+                      Le pedimos revisar cuidadosamente las partidas y especificaciones técnicas detalladas a continuación.
+                    </span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Callout: formato PDF obligatorio -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="border:1px solid #6366F1; border-radius:10px; padding:16px 18px; background-color:rgba(99,102,241,0.08);">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="28" valign="top" style="padding-right:10px;">
+                          <span style="font-size:16px;">📄</span>
+                        </td>
+                        <td style="font-size:13px; line-height:20px; color:#FFFFFF;">
+                          Su propuesta debe enviarse obligatoriamente en <strong style="color:#6366F1;">formato PDF</strong>,
+                          considerando estrictamente las especificaciones técnicas adjuntas para cada partida. No se aceptarán
+                          cotizaciones en formatos distintos ni que omitan las especificaciones solicitadas.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Tabla de partidas -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="padding-bottom:10px;">
+                    <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9CA3AF;">Partidas a cotizar</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <table role="presentation" class="rfq-stack-table" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #334155; border-radius:8px; overflow:hidden;">
+                      <thead>
+                        <tr>
+                          <th align="left"   style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#9CA3AF; background-color:#111827; padding:10px 12px; border-bottom:1px solid #334155;">Partida</th>
+                          <th align="left"   style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#9CA3AF; background-color:#111827; padding:10px 12px; border-bottom:1px solid #334155;">Descripción / Especificación Técnica</th>
+                          <th align="right"  style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#9CA3AF; background-color:#111827; padding:10px 12px; border-bottom:1px solid #334155; white-space:nowrap;">Cantidad</th>
+                          <th align="left"   style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#9CA3AF; background-color:#111827; padding:10px 12px; border-bottom:1px solid #334155;">Unidad</th>
+                          <th align="left"   style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#9CA3AF; background-color:#111827; padding:10px 12px; border-bottom:1px solid #334155;">Marca / Modelo de Referencia</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {{Tabla_Partidas_HTML}}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Condiciones: plazo / entrega / pago -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px; border-top:1px solid #334155;">
+                <tr><td style="height:20px; line-height:20px; font-size:0;">&nbsp;</td></tr>
+              </table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                <tr>
+                  <td width="50%" valign="top" style="padding-right:10px; padding-bottom:16px;">
+                    <span style="display:block; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9CA3AF; padding-bottom:4px;">Fecha límite de respuesta</span>
+                    <span style="font-size:14px; font-weight:700; color:#FFFFFF;">{{Fecha_Limite}} — {{Hora_Limite}} h</span>
+                  </td>
+                  <td width="50%" valign="top" style="padding-left:10px; padding-bottom:16px; border-left:1px solid #334155;">
+                    <span style="display:block; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9CA3AF; padding-bottom:4px;">Condiciones de pago</span>
+                    <span style="font-size:14px; font-weight:700; color:#FFFFFF;">{{Condiciones_Pago}}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding-top:4px;">
+                    <span style="display:block; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9CA3AF; padding-bottom:4px;">Dirección de entrega</span>
+                    <span style="font-size:14px; color:#FFFFFF;">{{Direccion_Entrega}}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Despedida -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-top:8px; font-size:13px; line-height:20px; color:#9CA3AF;">
+                    Quedamos atentos a su propuesta. Cualquier duda, favor de responder directamente a este correo.
+                    <br /><br />
+                    Atentamente,<br />
+                    <strong style="color:#FFFFFF;">{{Nombre_Comprador}}</strong><br />
+                    Departamento de Compras — Constructora Bocam
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- ══════════════ FOOTER ══════════════ -->
+          <tr>
+            <td align="center" style="padding:24px 32px 8px;">
+              <span style="font-size:11px; line-height:18px; color:#6B7280;">
+                Este correo fue generado automáticamente por el ERP Industrial <a href="https://iretum.com" style="color:#6B7280; text-decoration:underline;">iretum.com</a>.
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 32px 32px;">
+              <span style="font-size:11px; color:#6B7280;">
+                <a href="{{Url_Soporte}}" style="color:#6B7280; text-decoration:underline;">Soporte</a>
+                &nbsp;·&nbsp;
+                <a href="{{Url_Privacidad}}" style="color:#6B7280; text-decoration:underline;">Aviso de privacidad</a>
+              </span>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
