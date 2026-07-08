@@ -140,7 +140,7 @@ app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => 
 
 app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {
-    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { tenantId, proyectoId, userId, name: solicitanteNombre } = req.securityContext;
     const { codigo, items, observaciones, prioridad, tipo, concepto_id } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -177,6 +177,7 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
           proyecto_id:   proyectoId,
           codigo:        codigo || `REQ-${Date.now()}`,
           solicitante_id: userId,
+          solicitante_nombre: solicitanteNombre || null,
           prioridad:     prioridad || 'NORMAL',
           estado:        'PENDIENTE',
           tipo:          tipoReq,

@@ -92,6 +92,8 @@ model Requisicion {
   codigo         String   @db.VarChar(50) // Ej. REQ-2026-001
   fecha_solicitud DateTime @default(now())
   solicitante_id String   @db.Uuid // Referencia a Usuario_Identidad
+  /// Nombre del solicitante al momento de crear la req (snapshot del JWT) — evita JOIN cruzado con Auth
+  solicitante_nombre String? @db.VarChar(200)
   prioridad      String   @default("NORMAL") // BAJA, NORMAL, URGENTE
   estado         String   @default("PENDIENTE") // PENDIENTE, APROBADA, RECHAZADA, COMPRADA
   /// Tipo de requisición: NORMAL (con catálogo) | IMPREVISTO (texto libre, sin insumo_id)

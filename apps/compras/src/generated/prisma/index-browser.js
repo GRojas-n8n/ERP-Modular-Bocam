@@ -173,6 +173,7 @@ exports.Prisma.RequisicionScalarFieldEnum = {
   codigo: 'codigo',
   fecha_solicitud: 'fecha_solicitud',
   solicitante_id: 'solicitante_id',
+  solicitante_nombre: 'solicitante_nombre',
   prioridad: 'prioridad',
   estado: 'estado',
   tipo: 'tipo',
@@ -401,37 +402,6 @@ exports.Prisma.AlertaOcErrorScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
-exports.Prisma.ItemInventarioScalarFieldEnum = {
-  id: 'id',
-  tenant_id: 'tenant_id',
-  proyecto_id: 'proyecto_id',
-  insumo_id: 'insumo_id',
-  clave: 'clave',
-  descripcion: 'descripcion',
-  unidad: 'unidad',
-  categoria: 'categoria',
-  stock_actual: 'stock_actual',
-  stock_minimo: 'stock_minimo',
-  ubicacion: 'ubicacion',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-};
-
-exports.Prisma.MovimientoAlmacenScalarFieldEnum = {
-  id: 'id',
-  tenant_id: 'tenant_id',
-  proyecto_id: 'proyecto_id',
-  item_id: 'item_id',
-  tipo: 'tipo',
-  cantidad: 'cantidad',
-  unidad: 'unidad',
-  origen: 'origen',
-  destino: 'destino',
-  responsable: 'responsable',
-  referencia: 'referencia',
-  fecha: 'fecha'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -468,9 +438,7 @@ exports.Prisma.ModelName = {
   SolicitudCotizacion: 'SolicitudCotizacion',
   SolicitudCotizacionProveedor: 'SolicitudCotizacionProveedor',
   AnotacionEspecificacion: 'AnotacionEspecificacion',
-  AlertaOcError: 'AlertaOcError',
-  ItemInventario: 'ItemInventario',
-  MovimientoAlmacen: 'MovimientoAlmacen'
+  AlertaOcError: 'AlertaOcError'
 };
 
 /**

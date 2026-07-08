@@ -211,6 +211,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const activeTab: TabId = (activeSubView as TabId) || 'requisiciones';
   const [requisiciones, setRequisiciones] = useState<Requisicion[]>([]);
   const [insumos, setInsumos] = useState<Insumo[]>([]);
+  const [expandedReqIds, setExpandedReqIds] = useState<Set<string>>(new Set());
   const [comparativas, setComparativas] = useState<ComparativaLocal[]>([]);
   const [pendientesEval, setPendientesEval] = useState<ComparativaLocal[]>([]);
   const [pendientesGT, setPendientesGT] = useState<ComparativaLocal[]>([]);
@@ -387,7 +388,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           id:          r.id_requisicion ?? r.id,
           folio:       r.codigo ?? r.folio,
           fecha:       r.fecha_solicitud ?? r.fecha,
-          solicitante: r.solicitante_id ?? r.solicitante ?? '—',
+          solicitante: r.solicitante_nombre ?? r.solicitante_id ?? r.solicitante ?? '—',
           prioridad:   r.prioridad ?? 'NORMAL',
           estado:      r.estado,
           tipo:        r.tipo,
@@ -530,6 +531,19 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     () => new Set(alertasCotizacion.map(a => a.requisicion_id)),
     [alertasCotizacion]
   );
+
+  const insumoById = useMemo(
+    () => new Map(insumos.map(i => [i.id, i])),
+    [insumos]
+  );
+
+  const toggleReqExpanded = (reqId: string) => {
+    setExpandedReqIds(prev => {
+      const next = new Set(prev);
+      if (next.has(reqId)) next.delete(reqId); else next.add(reqId);
+      return next;
+    });
+  };
 
   const reqPendientes = requisiciones.filter(r => r.estado === 'PENDIENTE').length;
 
@@ -1419,6 +1433,44 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                           <p className="text-[10px] font-mono text-emerald-700 truncate">
                             [{req.concepto_clave}] {req.concepto_descripcion}
                           </p>
+                        )}
+                        {/* Detalle de items — para revisar qué se pide antes de aprobar */}
+                        {!!req.items?.length && (
+                          <div className="rounded-xl border border-border/40 bg-muted/20">
+                            <button
+                              type="button"
+                              onClick={() => toggleReqExpanded(req.id)}
+                              className="flex w-full items-center justify-between px-3 py-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                            >
+                              <span>Ver {req.items.length} ítem{req.items.length === 1 ? '' : 's'}</span>
+                              <span>{expandedReqIds.has(req.id) ? '▲' : '▼'}</span>
+                            </button>
+                            {expandedReqIds.has(req.id) && (
+                              <div className="space-y-2 border-t border-border/40 px-3 py-2.5">
+                                {req.items.map(item => {
+                                  const insumo = item.insumo_id ? insumoById.get(item.insumo_id) : undefined;
+                                  const nombre = item.es_imprevisto
+                                    ? (item.descripcion_libre || 'Descripción libre no capturada')
+                                    : (insumo ? `[${insumo.clave}] ${insumo.descripcion}` : (item.insumo_id ? 'Insumo no encontrado en catálogo' : '—'));
+                                  const unidad = item.es_imprevisto ? item.unidad_libre : insumo?.unidad;
+                                  return (
+                                    <div key={item.id} className="text-[10px] leading-snug">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <span className="font-semibold text-foreground">{nombre}</span>
+                                        <span className="shrink-0 font-mono text-muted-foreground">{item.cantidad} {unidad || ''}</span>
+                                      </div>
+                                      {(item.especificacion_marca_modelo || item.especificacion_detalle) && (
+                                        <p className="text-muted-foreground">
+                                          {[item.especificacion_marca_modelo, item.especificacion_detalle].filter(Boolean).join(' — ')}
+                                        </p>
+                                      )}
+                                      {item.notas && <p className="italic text-muted-foreground">{item.notas}</p>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         )}
                         {/* Botón "Aprobar" para Procurement en requisiciones PENDIENTE/BORRADOR */}
                         {isProcurement && ['PENDIENTE', 'BORRADOR'].includes(req.estado) && (
