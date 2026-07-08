@@ -91,7 +91,8 @@ function calcDiasHabilesRestantes(fechaLimite: Date): number {
  */
 async function enviarCorreosSolicitudCotizacion(opts: {
   reqId: string; tenantId: string; proyectoId: string; proveedoresIds: string[];
-  diasHabiles: number; notas: string | null; fechaLimite: Date;
+  diasHabiles: number; notas: string | null; fechaSolicitud: Date; fechaLimite: Date;
+  compradorNombre: string; compradorEmail: string;
   authHeader?: string; tenantHeader?: string; proyectoHeader?: string;
 }): Promise<{ enviados: number; fallidos: Array<{ proveedor: string; error: string }>; sin_correo: string[] }> {
   const fallidos: Array<{ proveedor: string; error: string }> = [];
@@ -138,14 +139,25 @@ async function enviarCorreosSolicitudCotizacion(opts: {
         sinCorreo.push(prov.razon_social);
         continue;
       }
-      const result = await enviarSolicitudCotizacionEmail(prov.email_contacto, prov.razon_social, {
-        folio: reqData.codigo,
-        prioridad: reqData.prioridad,
-        diasHabiles: opts.diasHabiles,
-        fechaLimite: opts.fechaLimite,
-        notasProveedor: opts.notas ?? reqData.observaciones ?? null,
-        items,
-      });
+      const result = await enviarSolicitudCotizacionEmail(
+        {
+          razon_social: prov.razon_social,
+          rfc_tax_id: prov.rfc_tax_id,
+          email_contacto: prov.email_contacto,
+          telefono: prov.telefono,
+          ciudad: prov.ciudad,
+        },
+        {
+          folio: reqData.codigo,
+          prioridad: reqData.prioridad,
+          diasHabiles: opts.diasHabiles,
+          fechaSolicitud: opts.fechaSolicitud,
+          fechaLimite: opts.fechaLimite,
+          notasProveedor: opts.notas ?? reqData.observaciones ?? null,
+          items,
+          comprador: { nombre: opts.compradorNombre, email: opts.compradorEmail },
+        }
+      );
       if (result.enviado) enviados++;
       else fallidos.push({ proveedor: prov.razon_social, error: result.error || 'Error desconocido.' });
     }
@@ -608,7 +620,7 @@ app.post(
   requireRoles('procurement', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { tenantId, proyectoId, userId, name: compradorNombre, email: compradorEmail } = req.securityContext;
       const { reqId } = req.params;
       const { proveedores_ids, dias_habiles, notas } = req.body as {
         proveedores_ids: string[];
@@ -694,7 +706,10 @@ app.post(
       const emailResult = await enviarCorreosSolicitudCotizacion({
         reqId, tenantId, proyectoId, proveedoresIds: proveedores_ids,
         diasHabiles: Number(dias_habiles), notas: notas ?? null,
+        fechaSolicitud: (data as any).fecha_solicitud,
         fechaLimite: (data as any).fecha_limite,
+        compradorNombre: compradorNombre || 'Compras Bocam',
+        compradorEmail: compradorEmail || '',
         authHeader: req.headers.authorization,
         tenantHeader: req.headers['x-tenant-id'] as string | undefined,
         proyectoHeader: req.headers['x-proyecto-id'] as string | undefined,
