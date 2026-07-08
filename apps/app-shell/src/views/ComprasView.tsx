@@ -844,13 +844,25 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
     try {
       setSolicitudSubmitting(true);
-      await api.post(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion`, {
+      const res = await api.post(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion`, {
         dias_habiles: solicitudForm.dias_habiles,
         notas:        solicitudForm.notas || undefined,
         proveedores_ids: solicitudForm.provsSeleccionados,
       });
       await loadSolicitud(reqId);
+      const emails = res.data?.emails as { enviados: number; fallidos: Array<{ proveedor: string; error: string }>; sin_correo: string[] } | undefined;
       notify({ type: 'success', title: 'Solicitud de cotización enviada', message: `${solicitudForm.provsSeleccionados.length} proveedor(es) · plazo ${solicitudForm.dias_habiles} días hábiles` });
+      if (emails) {
+        if (emails.enviados > 0) {
+          notify({ type: 'success', title: 'Correos enviados', message: `${emails.enviados} proveedor(es) notificado(s) por correo.`, duration: 6000 });
+        }
+        if (emails.sin_correo.length > 0) {
+          notify({ type: 'warning', title: 'Sin correo registrado', message: `${emails.sin_correo.join(', ')} — no tiene(n) email_contacto en su ficha.`, duration: 8000 });
+        }
+        if (emails.fallidos.length > 0) {
+          notify({ type: 'error', title: 'Error al enviar correo', message: emails.fallidos.map(f => `${f.proveedor}: ${f.error}`).join(' · '), duration: 8000 });
+        }
+      }
     } catch (err: any) {
       notify({ type: 'error', title: 'Error al enviar solicitud', message: err.response?.data?.message || err.message });
     } finally {

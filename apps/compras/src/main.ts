@@ -18,6 +18,7 @@ import {
   setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
+import { enviarSolicitudCotizacionEmail } from './mailer';
 
 const eventBus = createEventBus('compras');
 
@@ -80,6 +81,79 @@ function calcDiasHabilesRestantes(fechaLimite: Date): number {
     if (day !== 0 && day !== 6) count++;
   }
   return count;
+}
+
+/**
+ * Envía la solicitud de cotización por correo a cada proveedor seleccionado
+ * que tenga email_contacto registrado. Best-effort: nunca lanza — si SMTP o
+ * el catálogo de GT fallan, retorna el detalle para que el frontend lo muestre,
+ * pero no revierte la solicitud ya creada en BD.
+ */
+async function enviarCorreosSolicitudCotizacion(opts: {
+  reqId: string; tenantId: string; proyectoId: string; proveedoresIds: string[];
+  diasHabiles: number; notas: string | null; fechaLimite: Date;
+  authHeader?: string; tenantHeader?: string; proyectoHeader?: string;
+}): Promise<{ enviados: number; fallidos: Array<{ proveedor: string; error: string }>; sin_correo: string[] }> {
+  const fallidos: Array<{ proveedor: string; error: string }> = [];
+  const sinCorreo: string[] = [];
+  let enviados = 0;
+
+  try {
+    const [reqData, proveedoresData, insumosCatalogo] = await Promise.all([
+      createTenantContext({ tenantId: opts.tenantId, proyectoId: opts.proyectoId, userId: '' }, async (prisma) =>
+        prisma.requisicion.findUnique({
+          where: { id_requisicion: opts.reqId },
+          include: { items: true },
+        })
+      ),
+      createTenantContext({ tenantId: opts.tenantId, proyectoId: opts.proyectoId, userId: '' }, async (prisma) =>
+        prisma.proveedor.findMany({ where: { id_proveedor: { in: opts.proveedoresIds } } })
+      ),
+      axios.get(`${GT_URL}/insumos`, {
+        headers: { authorization: opts.authHeader, 'x-tenant-id': opts.tenantHeader, 'x-proyecto-id': opts.proyectoHeader },
+        timeout: 5000,
+      }).then(r => (r.data?.data ?? []) as any[]).catch(() => [] as any[]),
+    ]);
+
+    if (!reqData) {
+      return { enviados: 0, fallidos: [{ proveedor: '—', error: 'Requisición no encontrada al enviar correos.' }], sin_correo: [] };
+    }
+
+    const insumoById = new Map(insumosCatalogo.map(i => [i.id, i]));
+    const items = reqData.items.map((it: any) => {
+      const insumo = it.insumo_id ? insumoById.get(it.insumo_id) : undefined;
+      return {
+        descripcion: it.es_imprevisto
+          ? (it.descripcion_libre || 'Descripción libre no capturada')
+          : (insumo ? `[${insumo.clave}] ${insumo.descripcion}` : (it.insumo_id ? 'Insumo no encontrado en catálogo' : '—')),
+        cantidad: Number(it.cantidad),
+        unidad: it.es_imprevisto ? (it.unidad_libre || '') : (insumo?.unidad_medida || ''),
+        marca_modelo: it.especificacion_marca_modelo,
+        especificacion_detalle: it.especificacion_detalle,
+      };
+    });
+
+    for (const prov of proveedoresData) {
+      if (!prov.email_contacto) {
+        sinCorreo.push(prov.razon_social);
+        continue;
+      }
+      const result = await enviarSolicitudCotizacionEmail(prov.email_contacto, prov.razon_social, {
+        folio: reqData.codigo,
+        prioridad: reqData.prioridad,
+        diasHabiles: opts.diasHabiles,
+        fechaLimite: opts.fechaLimite,
+        notasProveedor: opts.notas ?? reqData.observaciones ?? null,
+        items,
+      });
+      if (result.enviado) enviados++;
+      else fallidos.push({ proveedor: prov.razon_social, error: result.error || 'Error desconocido.' });
+    }
+  } catch (err: any) {
+    fallidos.push({ proveedor: '—', error: `Error preparando correos: ${err.message}` });
+  }
+
+  return { enviados, fallidos, sin_correo: sinCorreo };
 }
 
 const OC_STATUS = {
@@ -615,7 +689,18 @@ app.post(
       logInfo(req, 'compras', 'compras.solicitud_cotizacion.creada', 'Solicitud de cotización registrada', {
         req_id: reqId, proveedores: proveedores_ids.length, dias_habiles,
       });
-      res.status(201).json({ success: true, data });
+
+      // ── Envío de correos a proveedores (best-effort, no bloquea la respuesta) ──
+      const emailResult = await enviarCorreosSolicitudCotizacion({
+        reqId, tenantId, proyectoId, proveedoresIds: proveedores_ids,
+        diasHabiles: Number(dias_habiles), notas: notas ?? null,
+        fechaLimite: (data as any).fecha_limite,
+        authHeader: req.headers.authorization,
+        tenantHeader: req.headers['x-tenant-id'] as string | undefined,
+        proyectoHeader: req.headers['x-proyecto-id'] as string | undefined,
+      });
+
+      res.status(201).json({ success: true, data, emails: emailResult });
     } catch (error: any) {
       logError(req, 'compras', 'compras.solicitud_cotizacion.crear.error', 'Error al crear solicitud de cotización', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });

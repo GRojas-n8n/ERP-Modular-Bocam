@@ -214,6 +214,11 @@ services:
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
       GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
       COTIZACIONES_UPLOAD_DIR: /data/compras/cotizaciones
       SENTRY_DSN: ${SENTRY_DSN:-}
