@@ -287,6 +287,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [solicitudesMap, setSolicitudesMap] = useState<Record<string, SolicitudCotizacion>>({});
   const [alertasCotizacion, setAlertasCotizacion] = useState<AlertaCotizacion[]>([]);
   const [solicitudPanelReqId, setSolicitudPanelReqId] = useState<string | null>(null);
+  const [editandoProveedores, setEditandoProveedores] = useState(false);
   const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[]; tema: 'claro' | 'oscuro' }>({ dias_habiles: 3, notas: '', provsSeleccionados: [], tema: 'claro' });
   const [solicitudSubmitting, setSolicitudSubmitting] = useState(false);
   const [scpUploadTarget, setScpUploadTarget] = useState<{ reqId: string; scpId: string } | null>(null);
@@ -831,6 +832,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     } else if (existing) {
       setSolicitudForm({ dias_habiles: existing.dias_habiles, notas: existing.notas ?? '', provsSeleccionados: existing.proveedores.map(p => p.proveedor_id), tema: 'claro' });
     }
+    setEditandoProveedores(false);
     setSolicitudPanelReqId(req.id);
   };
 
@@ -853,8 +855,9 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         proyecto_nombre: proyectoNombre,
       });
       await loadSolicitud(reqId);
+      setEditandoProveedores(false);
       const emails = res.data?.emails as { enviados: number; fallidos: Array<{ proveedor: string; error: string }>; sin_correo: string[] } | undefined;
-      notify({ type: 'success', title: 'Solicitud de cotización enviada', message: `${solicitudForm.provsSeleccionados.length} proveedor(es) · plazo ${solicitudForm.dias_habiles} días hábiles` });
+      notify({ type: 'success', title: 'Solicitud de cotización actualizada', message: `${solicitudForm.provsSeleccionados.length} proveedor(es) · plazo ${solicitudForm.dias_habiles} días hábiles` });
       if (emails) {
         if (emails.enviados > 0) {
           notify({ type: 'success', title: 'Correos enviados', message: `${emails.enviados} proveedor(es) notificado(s) por correo.`, duration: 6000 });
@@ -2431,7 +2434,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </div>
               )}
               {/* ── Si ya existe solicitud, mostrar estado de proveedores ── */}
-              {solic ? (
+              {solic && !editandoProveedores ? (
                 <div className="space-y-3">
                   {/* Resumen de plazo */}
                   <div className={cn(
@@ -2519,16 +2522,32 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     ))}
                   </div>
 
-                  {/* Botón agregar más proveedores */}
+                  {/* Botón para seleccionar otros/más proveedores */}
                   {isProcurement && (
-                    <p className="text-[10px] text-muted-foreground text-center">
-                      Para agregar más proveedores, crea una nueva solicitud (sobrescribe la actual).
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setEditandoProveedores(true)}
+                      className="w-full rounded-xl border border-sky-500/40 bg-sky-500/5 py-2.5 text-[10px] font-black uppercase tracking-widest text-sky-700 hover:bg-sky-500/10"
+                    >
+                      ✎ Seleccionar otros proveedores
+                    </button>
                   )}
                 </div>
               ) : (
-                /* ── Formulario para crear solicitud ── */
+                /* ── Formulario para crear/editar la solicitud ── */
                 <div className="space-y-4">
+                  {solic && editandoProveedores && (
+                    <div className="flex items-center justify-between rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-2">
+                      <p className="text-[10px] text-sky-700">Editando proveedores de la solicitud existente.</p>
+                      <button
+                        type="button"
+                        onClick={() => setEditandoProveedores(false)}
+                        className="text-[10px] font-black uppercase text-muted-foreground hover:text-foreground"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
                   {/* Selector de proveedores */}
                   <div>
                     <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -2539,10 +2558,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <p className="p-4 text-xs text-muted-foreground text-center">Sin proveedores activos en el catálogo.</p>
                       ) : provsFiltrados.map(prov => {
                         const sel = solicitudForm.provsSeleccionados.includes(prov.id_proveedor);
+                        const yaRespondio = solic?.proveedores.some(p => p.proveedor_id === prov.id_proveedor && p.estado === 'RESPONDIO');
                         return (
                           <button
                             key={prov.id_proveedor}
                             type="button"
+                            disabled={yaRespondio}
                             onClick={() => setSolicitudForm(f => ({
                               ...f,
                               provsSeleccionados: sel
@@ -2551,6 +2572,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             }))}
                             className={cn(
                               'flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors',
+                              yaRespondio ? 'cursor-not-allowed opacity-60' : '',
                               sel ? 'bg-sky-500/10' : 'hover:bg-muted/50'
                             )}
                           >
@@ -2561,6 +2583,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                               <p className="text-xs font-semibold truncate">{prov.razon_social}</p>
                               {prov.ciudad && <p className="text-[10px] text-muted-foreground">{prov.ciudad}</p>}
                             </div>
+                            {yaRespondio && (
+                              <span className="shrink-0 rounded-full bg-green-500/10 px-2 py-0.5 text-[9px] font-black text-green-700">
+                                Respondió 🔒
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -2625,10 +2652,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </div>
               )}
 
-              {/* Botón enviar (solo si es nuevo) */}
-              {!solic && isProcurement && (
+              {/* Botón enviar — al crear la primera solicitud, o al editar proveedores de una existente */}
+              {(!solic || editandoProveedores) && isProcurement && (
                 <SubmitButton
-                  label={solicitudSubmitting ? 'Enviando…' : `Enviar Solicitud · ${solicitudForm.provsSeleccionados.length} prov.`}
+                  label={
+                    solicitudSubmitting ? 'Enviando…'
+                    : solic ? `Actualizar Solicitud · ${solicitudForm.provsSeleccionados.length} prov.`
+                    : `Enviar Solicitud · ${solicitudForm.provsSeleccionados.length} prov.`
+                  }
                   loading={solicitudSubmitting}
                   color="sky"
                   onClick={() => handleSubmitSolicitud(solicitudPanelReqId)}

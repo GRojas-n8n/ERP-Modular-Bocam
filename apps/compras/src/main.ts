@@ -656,28 +656,46 @@ app.post(
           const fechaSolicitud = new Date();
           const fechaLimite = addDiasHabiles(fechaSolicitud, Number(dias_habiles));
 
-          // upsert: si ya existe una solicitud, la reemplaza (resetea proveedores)
+          // upsert: si ya existe una solicitud, se ACTUALIZA sin perder el progreso de
+          // los proveedores que se conservan (respuestas/PDFs ya subidos). Solo se
+          // agregan los proveedores nuevos y se quitan los que ya no están seleccionados.
           const existing = await prisma.solicitudCotizacion.findUnique({
             where: { tenant_id_requisicion_id: { tenant_id: tenantId, requisicion_id: reqId } },
+            include: { proveedores: true },
           });
 
           if (existing) {
-            await prisma.solicitudCotizacionProveedor.deleteMany({ where: { solicitud_id: existing.id_solicitud } });
+            const idsActuales = new Set(existing.proveedores.map(p => p.proveedor_id));
+            const idsNuevos = new Set(proveedores_ids as string[]);
+            const aQuitar = existing.proveedores.filter(p => !idsNuevos.has(p.proveedor_id));
+            const aAgregar = (proveedores_ids as string[]).filter(pid => !idsActuales.has(pid));
+
+            if (aQuitar.length > 0) {
+              await prisma.solicitudCotizacionProveedor.deleteMany({
+                where: { id_scp: { in: aQuitar.map(p => p.id_scp) } },
+              });
+            }
+
             const updated = await prisma.solicitudCotizacion.update({
               where: { id_solicitud: existing.id_solicitud },
               data: { dias_habiles: Number(dias_habiles), fecha_solicitud: fechaSolicitud, fecha_limite: fechaLimite, notas: notas ?? null },
             });
-            await prisma.solicitudCotizacionProveedor.createMany({
-              data: proveedores_ids.map(pid => ({
-                tenant_id: tenantId,
-                solicitud_id: updated.id_solicitud,
-                proveedor_id: pid,
-              })),
-            });
-            return prisma.solicitudCotizacion.findUnique({
+
+            if (aAgregar.length > 0) {
+              await prisma.solicitudCotizacionProveedor.createMany({
+                data: aAgregar.map(pid => ({
+                  tenant_id: tenantId,
+                  solicitud_id: updated.id_solicitud,
+                  proveedor_id: pid,
+                })),
+              });
+            }
+
+            const full = await prisma.solicitudCotizacion.findUnique({
               where: { id_solicitud: updated.id_solicitud },
               include: { proveedores: true },
             });
+            return { ...full, proveedoresNuevos: aAgregar };
           }
 
           const sol = await prisma.solicitudCotizacion.create({
@@ -699,7 +717,7 @@ app.post(
             },
             include: { proveedores: true },
           });
-          return sol;
+          return { ...sol, proveedoresNuevos: proveedores_ids as string[] };
         }
       );
 
@@ -709,9 +727,13 @@ app.post(
         req_id: reqId, proveedores: proveedores_ids.length, dias_habiles,
       });
 
-      // ── Envío de correos a proveedores (best-effort, no bloquea la respuesta) ──
-      const emailResult = await enviarCorreosSolicitudCotizacion({
-        reqId, tenantId, proyectoId, proveedoresIds: proveedores_ids,
+      // ── Envío de correos — solo a proveedores nuevos en esta edición, para no
+      // reenviar el correo a quienes ya fueron invitados en un envío anterior ──
+      const proveedoresAEmailear: string[] = (data as any).proveedoresNuevos ?? proveedores_ids;
+      const emailResult = proveedoresAEmailear.length === 0
+        ? { enviados: 0, fallidos: [], sin_correo: [] }
+        : await enviarCorreosSolicitudCotizacion({
+        reqId, tenantId, proyectoId, proveedoresIds: proveedoresAEmailear,
         diasHabiles: Number(dias_habiles), notas: notas ?? null,
         fechaSolicitud: (data as any).fecha_solicitud,
         fechaLimite: (data as any).fecha_limite,
