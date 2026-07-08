@@ -178,6 +178,7 @@ exports.Prisma.RequisicionScalarFieldEnum = {
   estado: 'estado',
   tipo: 'tipo',
   observaciones: 'observaciones',
+  observaciones_internas: 'observaciones_internas',
   concepto_id: 'concepto_id'
 };
 

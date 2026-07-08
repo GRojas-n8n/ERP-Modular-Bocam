@@ -76,6 +76,7 @@ interface Requisicion {
   concepto_clave?: string | null;
   concepto_descripcion?: string | null;
   observaciones?: string | null;
+  observaciones_internas?: string | null;
 }
 
 interface ConceptoSimpleC {
@@ -397,6 +398,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           concepto_clave:        r.concepto_clave ?? null,
           concepto_descripcion:  r.concepto_descripcion ?? null,
           observaciones:         r.observaciones ?? null,
+          observaciones_internas: r.observaciones_internas ?? null,
           items:       (r.items || []).map((it: any) => ({
             id:               it.id_item ?? it.id,
             insumo_id:        it.insumo_id,
@@ -1438,6 +1440,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             [{req.concepto_clave}] {req.concepto_descripcion}
                           </p>
                         )}
+                        {req.observaciones_internas && (
+                          <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-2.5 py-1.5">
+                            <p className="text-[8px] font-black uppercase tracking-widest text-red-700">🔒 Nota interna</p>
+                            <p className="text-[9px] whitespace-pre-line text-foreground/90 line-clamp-3">{req.observaciones_internas}</p>
+                          </div>
+                        )}
                         {/* Detalle de items — para revisar qué se pide antes de aprobar */}
                         {!!req.items?.length && (
                           <div className="rounded-xl border border-border/40 bg-muted/20">
@@ -2360,11 +2368,20 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             accentColor="sky"
           >
             <div className="space-y-5 p-1">
+              {/* ── Notas internas del Residente para Compras — NUNCA se envían a proveedores ── */}
+              {req?.observaciones_internas && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2.5 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-700">
+                    🔒 Notas internas (solo Compras — no se envían a proveedores)
+                  </p>
+                  <p className="text-[10px] whitespace-pre-line text-foreground/90">{req.observaciones_internas}</p>
+                </div>
+              )}
               {/* ── Consideraciones generales del Residente (observaciones de la requisición) ── */}
               {req?.observaciones && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-                    ⚠ Consideraciones del Residente
+                    ⚠ Consideraciones del Residente (para proveedores)
                   </p>
                   <p className="text-[10px] whitespace-pre-line text-foreground/90">{req.observaciones}</p>
                 </div>

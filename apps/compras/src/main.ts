@@ -141,7 +141,7 @@ app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => 
 app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId, name: solicitanteNombre } = req.securityContext;
-    const { codigo, items, observaciones, prioridad, tipo, concepto_id } = req.body;
+    const { codigo, items, observaciones, observaciones_internas, prioridad, tipo, concepto_id } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la requisición.' });
@@ -182,6 +182,7 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
           estado:        'PENDIENTE',
           tipo:          tipoReq,
           observaciones,
+          observaciones_internas: observaciones_internas || null,
           concepto_id:   concepto_id || null,
           items: {
             create: items.map((item: any) => ({

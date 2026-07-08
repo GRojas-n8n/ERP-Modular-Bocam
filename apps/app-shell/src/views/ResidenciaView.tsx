@@ -345,6 +345,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [reqTipo, setReqTipo] = useState<'INSUMO' | 'APU' | 'IMPREVISTO'>('INSUMO');
   const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
   const [reqNotas, setReqNotas] = useState('');
+  const [reqNotasInternas, setReqNotasInternas] = useState('');
   const [generandoReq, setGenerandoReq] = useState(false);
   // Partida del catálogo — obligatoria para INSUMO e IMPREVISTO
   const [reqConceptoId, setReqConceptoId] = useState<string | null>(null);
@@ -640,6 +641,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     setReqTipo('INSUMO');
     setReqPrioridad('MEDIA');
     setReqNotas('');
+    setReqNotasInternas('');
     setReqConceptoId(null);
     setReqConceptoSearch2('');
     setConceptoSearch('');
@@ -697,6 +699,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           concepto_id: reqConceptoId,
           prioridad: reqPrioridad,
           observaciones: observacionesFinal,
+          observaciones_internas: reqNotasInternas || undefined,
           items: insumosSeleccionados.map(i => {
             const excede = i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada;
             return {
@@ -772,7 +775,8 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           tipo: 'NORMAL',
           concepto_id: conceptoSeleccionado.id,
           prioridad: reqPrioridad,
-          observaciones: `Take-off APU · ${conceptoSeleccionado.clave} · ${conceptoSeleccionado.descripcion} · ${qty} ${conceptoSeleccionado.unidad_medida}`,
+          observaciones: `Take-off APU · ${conceptoSeleccionado.clave} · ${conceptoSeleccionado.descripcion} · ${qty} ${conceptoSeleccionado.unidad_medida}${reqNotas ? ' · ' + reqNotas : ''}`,
+          observaciones_internas: reqNotasInternas || undefined,
           items: materiales.map(m => ({
             insumo_id:              m.insumo_id,
             clave:                  m.clave,
@@ -827,6 +831,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           concepto_id: reqConceptoId,
           prioridad: reqPrioridad,
           observaciones: reqNotas || undefined,
+          observaciones_internas: reqNotasInternas || undefined,
           items: validos.map(i => ({
             descripcion_libre:           i.descripcion_libre,
             unidad_libre:                i.unidad_libre || 'PZA',
@@ -2300,12 +2305,28 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             <div />
           </div>
 
-          <FormField label={reqTipo === 'IMPREVISTO' ? 'Justificación' : 'Notas adicionales'}>
+          <FormField label={reqTipo === 'IMPREVISTO' ? 'Justificación' : 'Notas para Proveedores'}>
             <Textarea className="min-h-[70px]"
-              placeholder={reqTipo === 'IMPREVISTO' ? 'Motivo del imprevisto...' : 'Observaciones...'}
+              placeholder={reqTipo === 'IMPREVISTO' ? 'Motivo del imprevisto...' : 'Instrucciones, certificaciones, consideraciones para el proveedor...'}
               value={reqNotas}
               onChange={e => setReqNotas(e.target.value)}
             />
+            {reqTipo !== 'IMPREVISTO' && (
+              <p className="mt-1 text-[9px] text-muted-foreground">
+                Se verán en la Solicitud de Cotización y pueden llegar a los proveedores.
+              </p>
+            )}
+          </FormField>
+
+          <FormField label="Notas internas para Compras">
+            <Textarea className="min-h-[70px]"
+              placeholder="Solo lo ve Compras — no se envía a proveedores..."
+              value={reqNotasInternas}
+              onChange={e => setReqNotasInternas(e.target.value)}
+            />
+            <p className="mt-1 text-[9px] text-muted-foreground">
+              🔒 Confidencial — nunca se comparte con proveedores.
+            </p>
           </FormField>
 
           <div className="border-t border-border/40 pt-4">

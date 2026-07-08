@@ -86,19 +86,22 @@ model DocumentoProveedor {
 
 // --- Transaccional: Requisiciones ---
 model Requisicion {
-  id_requisicion     String   @id @default(uuid()) @db.Uuid
-  tenant_id          String   @db.Uuid
-  proyecto_id        String   @db.Uuid // Centro de Costos
-  codigo             String   @db.VarChar(50) // Ej. REQ-2026-001
-  fecha_solicitud    DateTime @default(now())
-  solicitante_id     String   @db.Uuid // Referencia a Usuario_Identidad
+  id_requisicion         String   @id @default(uuid()) @db.Uuid
+  tenant_id              String   @db.Uuid
+  proyecto_id            String   @db.Uuid // Centro de Costos
+  codigo                 String   @db.VarChar(50) // Ej. REQ-2026-001
+  fecha_solicitud        DateTime @default(now())
+  solicitante_id         String   @db.Uuid // Referencia a Usuario_Identidad
   /// Nombre del solicitante al momento de crear la req (snapshot del JWT) — evita JOIN cruzado con Auth
-  solicitante_nombre String?  @db.VarChar(200)
-  prioridad          String   @default("NORMAL") // BAJA, NORMAL, URGENTE
-  estado             String   @default("PENDIENTE") // PENDIENTE, APROBADA, RECHAZADA, COMPRADA
+  solicitante_nombre     String?  @db.VarChar(200)
+  prioridad              String   @default("NORMAL") // BAJA, NORMAL, URGENTE
+  estado                 String   @default("PENDIENTE") // PENDIENTE, APROBADA, RECHAZADA, COMPRADA
   /// Tipo de requisición: NORMAL (con catálogo) | IMPREVISTO (texto libre, sin insumo_id)
-  tipo               String   @default("NORMAL") @db.VarChar(20)
-  observaciones      String?  @db.Text
+  tipo                   String   @default("NORMAL") @db.VarChar(20)
+  /// Notas destinadas a los proveedores — se muestran/precargan en la Solicitud de Cotización
+  observaciones          String?  @db.Text
+  /// Notas internas del Residente para Compras — NUNCA se envían a proveedores
+  observaciones_internas String?  @db.Text
 
   /// Partida del catálogo de conceptos a la que pertenece esta requisición (obligatorio en nuevas reqs)
   concepto_id String? @db.Uuid
