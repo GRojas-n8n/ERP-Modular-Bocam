@@ -337,6 +337,37 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
+  ventas:
+    profiles: ["full", "staging"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/ventas"
+        APP_PATH: "apps/ventas"
+    container_name: bocam-vps-ventas
+    environment:
+      PORT: 3012
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${VENTAS_DATABASE_URL}
+      VENTAS_DATABASE_URL: ${VENTAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - bocam-vps-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3012/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
   contabilidad:
     profiles: ["core", "full", "staging"]
     build:
