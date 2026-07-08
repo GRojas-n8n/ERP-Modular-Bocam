@@ -51,7 +51,7 @@ const fichasUpload = multer({
 });
 
 export const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MIDDLEWARE JWT: Verificación real con firma criptográfica
