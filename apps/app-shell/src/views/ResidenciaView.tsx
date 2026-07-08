@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
@@ -58,6 +58,18 @@ type TabId = 'estimaciones' | 'nomina' | 'asistencia' | 'requisiciones';
 
 // ── Tipos Requisiciones del Residente ─────────────────────────────────────────
 
+interface ReqResidenteItem {
+  id: string;
+  insumo_id: string | null;
+  cantidad: number;
+  notas: string | null;
+  descripcion_libre: string | null;
+  unidad_libre: string | null;
+  es_imprevisto: boolean;
+  especificacion_marca_modelo?: string | null;
+  especificacion_detalle?: string | null;
+}
+
 interface ReqResidente {
   id: string;
   folio: string;
@@ -69,6 +81,7 @@ interface ReqResidente {
   concepto_id?: string | null;
   concepto_clave?: string | null;
   concepto_descripcion?: string | null;
+  items?: ReqResidenteItem[];
 }
 
 interface ConceptoSimple {
@@ -327,6 +340,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
 
   // ─ Requisiciones del Residente ─────────────────────────────────────────────
   const [reqsResidente, setReqsResidente] = useState<ReqResidente[]>([]);
+  const [expandedReqIds, setExpandedReqIds] = useState<Set<string>>(new Set());
   const [showReqPanel, setShowReqPanel] = useState(false);
   const [reqTipo, setReqTipo] = useState<'INSUMO' | 'APU' | 'IMPREVISTO'>('INSUMO');
   const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
@@ -368,6 +382,17 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   // IDs de insumos del APU de la partida seleccionada — null = sin filtro (IMPREVISTO o sin partida)
   const [insumosDePartidaIds,  setInsumosDePartidaIds]  = useState<Set<string> | null>(null);
   const [loadingInsumosPartida,setLoadingInsumosPartida]= useState(false);
+  const insumoByIdResidente = useMemo(
+    () => new Map(insumosAll.map(i => [i.insumo_id, i])),
+    [insumosAll]
+  );
+  const toggleReqExpandedResidente = (reqId: string) => {
+    setExpandedReqIds(prev => {
+      const next = new Set(prev);
+      if (next.has(reqId)) next.delete(reqId); else next.add(reqId);
+      return next;
+    });
+  };
 
   // ── Carga inicial ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -438,6 +463,17 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             concepto_id:  r.concepto_id ?? null,
             concepto_clave: r.concepto_clave ?? null,
             concepto_descripcion: r.concepto_descripcion ?? null,
+            items: Array.isArray(r.items) ? r.items.map((it: any) => ({
+              id: it.id_item ?? it.id,
+              insumo_id: it.insumo_id ?? null,
+              cantidad: Number(it.cantidad ?? 0),
+              notas: it.notas ?? null,
+              descripcion_libre: it.descripcion_libre ?? null,
+              unidad_libre: it.unidad_libre ?? null,
+              es_imprevisto: Boolean(it.es_imprevisto),
+              especificacion_marca_modelo: it.especificacion_marca_modelo ?? null,
+              especificacion_detalle: it.especificacion_detalle ?? null,
+            })) : [],
           })));
         }
         if (presRes.status === 'fulfilled') {
@@ -1576,6 +1612,43 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                       )}
                       {req.observaciones && (
                         <p className="text-[11px] text-muted-foreground line-clamp-2">{req.observaciones}</p>
+                      )}
+                      {!!req.items?.length && (
+                        <div className="rounded-xl border border-border/40 bg-muted/20">
+                          <button
+                            type="button"
+                            onClick={() => toggleReqExpandedResidente(req.id)}
+                            className="flex w-full items-center justify-between px-3 py-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                          >
+                            <span>Ver {req.items.length} ítem{req.items.length === 1 ? '' : 's'}</span>
+                            <span>{expandedReqIds.has(req.id) ? '▲' : '▼'}</span>
+                          </button>
+                          {expandedReqIds.has(req.id) && (
+                            <div className="space-y-2 border-t border-border/40 px-3 py-2.5">
+                              {req.items.map(item => {
+                                const insumo = item.insumo_id ? insumoByIdResidente.get(item.insumo_id) : undefined;
+                                const nombre = item.es_imprevisto
+                                  ? (item.descripcion_libre || 'Descripción libre no capturada')
+                                  : (insumo ? `[${insumo.clave}] ${insumo.descripcion}` : (item.insumo_id ? 'Insumo no encontrado en catálogo' : '—'));
+                                const unidad = item.es_imprevisto ? item.unidad_libre : insumo?.unidad_medida;
+                                return (
+                                  <div key={item.id} className="text-[10px] leading-snug">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <span className="font-semibold text-foreground">{nombre}</span>
+                                      <span className="shrink-0 font-mono text-muted-foreground">{item.cantidad} {unidad || ''}</span>
+                                    </div>
+                                    {(item.especificacion_marca_modelo || item.especificacion_detalle) && (
+                                      <p className="text-muted-foreground">
+                                        {[item.especificacion_marca_modelo, item.especificacion_detalle].filter(Boolean).join(' — ')}
+                                      </p>
+                                    )}
+                                    {item.notas && <p className="italic text-muted-foreground">{item.notas}</p>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       )}
                       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                         <span>Prioridad: <strong>{req.prioridad}</strong></span>
