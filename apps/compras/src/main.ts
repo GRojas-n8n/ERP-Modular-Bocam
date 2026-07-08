@@ -92,7 +92,7 @@ function calcDiasHabilesRestantes(fechaLimite: Date): number {
 async function enviarCorreosSolicitudCotizacion(opts: {
   reqId: string; tenantId: string; proyectoId: string; proveedoresIds: string[];
   diasHabiles: number; notas: string | null; fechaSolicitud: Date; fechaLimite: Date;
-  compradorNombre: string; compradorEmail: string;
+  compradorNombre: string; compradorEmail: string; tema: 'claro' | 'oscuro'; proyectoNombre?: string;
   authHeader?: string; tenantHeader?: string; proyectoHeader?: string;
 }): Promise<{ enviados: number; fallidos: Array<{ proveedor: string; error: string }>; sin_correo: string[] }> {
   const fallidos: Array<{ proveedor: string; error: string }> = [];
@@ -121,9 +121,10 @@ async function enviarCorreosSolicitudCotizacion(opts: {
     }
 
     const insumoById = new Map(insumosCatalogo.map(i => [i.id, i]));
-    const items = reqData.items.map((it: any) => {
+    const items = reqData.items.map((it: any, idx: number) => {
       const insumo = it.insumo_id ? insumoById.get(it.insumo_id) : undefined;
       return {
+        partida: String(idx + 1),
         descripcion: it.es_imprevisto
           ? (it.descripcion_libre || 'Descripción libre no capturada')
           : (insumo ? `[${insumo.clave}] ${insumo.descripcion}` : (it.insumo_id ? 'Insumo no encontrado en catálogo' : '—')),
@@ -149,14 +150,17 @@ async function enviarCorreosSolicitudCotizacion(opts: {
         },
         {
           folio: reqData.codigo,
+          proyectoNombre: opts.proyectoNombre || opts.proyectoId.substring(0, 8).toUpperCase(),
           prioridad: reqData.prioridad,
           diasHabiles: opts.diasHabiles,
           fechaSolicitud: opts.fechaSolicitud,
           fechaLimite: opts.fechaLimite,
           notasProveedor: opts.notas ?? reqData.observaciones ?? null,
+          direccionEntrega: reqData.direccion_entrega ?? null,
           items,
           comprador: { nombre: opts.compradorNombre, email: opts.compradorEmail },
-        }
+        },
+        opts.tema
       );
       if (result.enviado) enviados++;
       else fallidos.push({ proveedor: prov.razon_social, error: result.error || 'Error desconocido.' });
@@ -227,7 +231,7 @@ app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => 
 app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId, name: solicitanteNombre } = req.securityContext;
-    const { codigo, items, observaciones, observaciones_internas, prioridad, tipo, concepto_id } = req.body;
+    const { codigo, items, observaciones, observaciones_internas, direccion_entrega, prioridad, tipo, concepto_id } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la requisición.' });
@@ -269,6 +273,7 @@ app.post('/api/v1/compras/requisiciones', async (req: Request, res: Response) =>
           tipo:          tipoReq,
           observaciones,
           observaciones_internas: observaciones_internas || null,
+          direccion_entrega: direccion_entrega || null,
           concepto_id:   concepto_id || null,
           items: {
             create: items.map((item: any) => ({
@@ -622,10 +627,12 @@ app.post(
     try {
       const { tenantId, proyectoId, userId, name: compradorNombre, email: compradorEmail } = req.securityContext;
       const { reqId } = req.params;
-      const { proveedores_ids, dias_habiles, notas } = req.body as {
+      const { proveedores_ids, dias_habiles, notas, tema, proyecto_nombre } = req.body as {
         proveedores_ids: string[];
         dias_habiles: 3 | 5;
         notas?: string;
+        tema?: 'claro' | 'oscuro';
+        proyecto_nombre?: string;
       };
 
       if (!Array.isArray(proveedores_ids) || proveedores_ids.length === 0) {
@@ -710,6 +717,8 @@ app.post(
         fechaLimite: (data as any).fecha_limite,
         compradorNombre: compradorNombre || 'Compras Bocam',
         compradorEmail: compradorEmail || '',
+        tema: tema === 'oscuro' ? 'oscuro' : 'claro',
+        proyectoNombre: proyecto_nombre,
         authHeader: req.headers.authorization,
         tenantHeader: req.headers['x-tenant-id'] as string | undefined,
         proyectoHeader: req.headers['x-proyecto-id'] as string | undefined,

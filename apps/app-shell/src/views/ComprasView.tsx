@@ -287,7 +287,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [solicitudesMap, setSolicitudesMap] = useState<Record<string, SolicitudCotizacion>>({});
   const [alertasCotizacion, setAlertasCotizacion] = useState<AlertaCotizacion[]>([]);
   const [solicitudPanelReqId, setSolicitudPanelReqId] = useState<string | null>(null);
-  const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[] }>({ dias_habiles: 3, notas: '', provsSeleccionados: [] });
+  const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[]; tema: 'claro' | 'oscuro' }>({ dias_habiles: 3, notas: '', provsSeleccionados: [], tema: 'claro' });
   const [solicitudSubmitting, setSolicitudSubmitting] = useState(false);
   const [scpUploadTarget, setScpUploadTarget] = useState<{ reqId: string; scpId: string } | null>(null);
   const scpFileRef = useRef<HTMLInputElement>(null);
@@ -822,14 +822,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     if (!existing && !isDemo) {
       const loaded = await loadSolicitud(req.id);
       if (loaded) {
-        setSolicitudForm({ dias_habiles: loaded.dias_habiles, notas: loaded.notas ?? '', provsSeleccionados: loaded.proveedores.map(p => p.proveedor_id) });
+        setSolicitudForm({ dias_habiles: loaded.dias_habiles, notas: loaded.notas ?? '', provsSeleccionados: loaded.proveedores.map(p => p.proveedor_id), tema: 'claro' });
       } else {
         // Sin solicitud previa — precargar las "Notas Adicionales" con las observaciones
         // que el Residente capturó al crear la requisición (editable por Compras).
-        setSolicitudForm({ dias_habiles: 3, notas: req.observaciones ?? '', provsSeleccionados: [] });
+        setSolicitudForm({ dias_habiles: 3, notas: req.observaciones ?? '', provsSeleccionados: [], tema: 'claro' });
       }
     } else if (existing) {
-      setSolicitudForm({ dias_habiles: existing.dias_habiles, notas: existing.notas ?? '', provsSeleccionados: existing.proveedores.map(p => p.proveedor_id) });
+      setSolicitudForm({ dias_habiles: existing.dias_habiles, notas: existing.notas ?? '', provsSeleccionados: existing.proveedores.map(p => p.proveedor_id), tema: 'claro' });
     }
     setSolicitudPanelReqId(req.id);
   };
@@ -844,10 +844,13 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
     try {
       setSolicitudSubmitting(true);
+      const proyectoNombre = user?.projects?.find(p => p.id === currentProjectId)?.name;
       const res = await api.post(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion`, {
         dias_habiles: solicitudForm.dias_habiles,
         notas:        solicitudForm.notas || undefined,
         proveedores_ids: solicitudForm.provsSeleccionados,
+        tema: solicitudForm.tema,
+        proyecto_nombre: proyectoNombre,
       });
       await loadSolicitud(reqId);
       const emails = res.data?.emails as { enviados: number; fallidos: Array<{ proveedor: string; error: string }>; sin_correo: string[] } | undefined;
@@ -2581,6 +2584,28 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                           )}
                         >
                           {d} días hábiles
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tema del correo */}
+                  <div>
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tema del correo</p>
+                    <div className="flex gap-2">
+                      {([['claro', 'Claro'], ['oscuro', 'Oscuro']] as const).map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setSolicitudForm(f => ({ ...f, tema: value }))}
+                          className={cn(
+                            'flex-1 rounded-xl border py-2 text-xs font-black transition-all',
+                            solicitudForm.tema === value
+                              ? 'border-sky-500 bg-sky-500/10 text-sky-700'
+                              : 'border-border/40 text-muted-foreground hover:border-sky-500/40'
+                          )}
+                        >
+                          {label}
                         </button>
                       ))}
                     </div>

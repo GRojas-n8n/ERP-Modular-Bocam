@@ -5979,6 +5979,7 @@ export namespace Prisma {
     estado: string | null
     tipo: string | null
     observaciones: string | null
+    direccion_entrega: string | null
     observaciones_internas: string | null
     concepto_id: string | null
   }
@@ -5995,6 +5996,7 @@ export namespace Prisma {
     estado: string | null
     tipo: string | null
     observaciones: string | null
+    direccion_entrega: string | null
     observaciones_internas: string | null
     concepto_id: string | null
   }
@@ -6011,6 +6013,7 @@ export namespace Prisma {
     estado: number
     tipo: number
     observaciones: number
+    direccion_entrega: number
     observaciones_internas: number
     concepto_id: number
     _all: number
@@ -6029,6 +6032,7 @@ export namespace Prisma {
     estado?: true
     tipo?: true
     observaciones?: true
+    direccion_entrega?: true
     observaciones_internas?: true
     concepto_id?: true
   }
@@ -6045,6 +6049,7 @@ export namespace Prisma {
     estado?: true
     tipo?: true
     observaciones?: true
+    direccion_entrega?: true
     observaciones_internas?: true
     concepto_id?: true
   }
@@ -6061,6 +6066,7 @@ export namespace Prisma {
     estado?: true
     tipo?: true
     observaciones?: true
+    direccion_entrega?: true
     observaciones_internas?: true
     concepto_id?: true
     _all?: true
@@ -6150,6 +6156,7 @@ export namespace Prisma {
     estado: string
     tipo: string
     observaciones: string | null
+    direccion_entrega: string | null
     observaciones_internas: string | null
     concepto_id: string | null
     _count: RequisicionCountAggregateOutputType | null
@@ -6183,6 +6190,7 @@ export namespace Prisma {
     estado?: boolean
     tipo?: boolean
     observaciones?: boolean
+    direccion_entrega?: boolean
     observaciones_internas?: boolean
     concepto_id?: boolean
     items?: boolean | Requisicion$itemsArgs<ExtArgs>
@@ -6201,6 +6209,7 @@ export namespace Prisma {
     estado?: boolean
     tipo?: boolean
     observaciones?: boolean
+    direccion_entrega?: boolean
     observaciones_internas?: boolean
     concepto_id?: boolean
   }, ExtArgs["result"]["requisicion"]>
@@ -6217,6 +6226,7 @@ export namespace Prisma {
     estado?: boolean
     tipo?: boolean
     observaciones?: boolean
+    direccion_entrega?: boolean
     observaciones_internas?: boolean
     concepto_id?: boolean
   }
@@ -6253,6 +6263,10 @@ export namespace Prisma {
        * Notas destinadas a los proveedores — se muestran/precargan en la Solicitud de Cotización
        */
       observaciones: string | null
+      /**
+       * Dirección donde debe entregarse el material — capturada por el Residente, se muestra en el correo de RFQ
+       */
+      direccion_entrega: string | null
       /**
        * Notas internas del Residente para Compras — NUNCA se envían a proveedores
        */
@@ -6666,6 +6680,7 @@ export namespace Prisma {
     readonly estado: FieldRef<"Requisicion", 'String'>
     readonly tipo: FieldRef<"Requisicion", 'String'>
     readonly observaciones: FieldRef<"Requisicion", 'String'>
+    readonly direccion_entrega: FieldRef<"Requisicion", 'String'>
     readonly observaciones_internas: FieldRef<"Requisicion", 'String'>
     readonly concepto_id: FieldRef<"Requisicion", 'String'>
   }
@@ -23441,6 +23456,7 @@ export namespace Prisma {
     estado: 'estado',
     tipo: 'tipo',
     observaciones: 'observaciones',
+    direccion_entrega: 'direccion_entrega',
     observaciones_internas: 'observaciones_internas',
     concepto_id: 'concepto_id'
   };
@@ -24123,6 +24139,7 @@ export namespace Prisma {
     estado?: StringFilter<"Requisicion"> | string
     tipo?: StringFilter<"Requisicion"> | string
     observaciones?: StringNullableFilter<"Requisicion"> | string | null
+    direccion_entrega?: StringNullableFilter<"Requisicion"> | string | null
     observaciones_internas?: StringNullableFilter<"Requisicion"> | string | null
     concepto_id?: UuidNullableFilter<"Requisicion"> | string | null
     items?: RequisicionItemListRelationFilter
@@ -24140,6 +24157,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrderInput | SortOrder
+    direccion_entrega?: SortOrderInput | SortOrder
     observaciones_internas?: SortOrderInput | SortOrder
     concepto_id?: SortOrderInput | SortOrder
     items?: RequisicionItemOrderByRelationAggregateInput
@@ -24161,6 +24179,7 @@ export namespace Prisma {
     estado?: StringFilter<"Requisicion"> | string
     tipo?: StringFilter<"Requisicion"> | string
     observaciones?: StringNullableFilter<"Requisicion"> | string | null
+    direccion_entrega?: StringNullableFilter<"Requisicion"> | string | null
     observaciones_internas?: StringNullableFilter<"Requisicion"> | string | null
     concepto_id?: UuidNullableFilter<"Requisicion"> | string | null
     items?: RequisicionItemListRelationFilter
@@ -24178,6 +24197,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrderInput | SortOrder
+    direccion_entrega?: SortOrderInput | SortOrder
     observaciones_internas?: SortOrderInput | SortOrder
     concepto_id?: SortOrderInput | SortOrder
     _count?: RequisicionCountOrderByAggregateInput
@@ -24200,6 +24220,7 @@ export namespace Prisma {
     estado?: StringWithAggregatesFilter<"Requisicion"> | string
     tipo?: StringWithAggregatesFilter<"Requisicion"> | string
     observaciones?: StringNullableWithAggregatesFilter<"Requisicion"> | string | null
+    direccion_entrega?: StringNullableWithAggregatesFilter<"Requisicion"> | string | null
     observaciones_internas?: StringNullableWithAggregatesFilter<"Requisicion"> | string | null
     concepto_id?: UuidNullableWithAggregatesFilter<"Requisicion"> | string | null
   }
@@ -25915,6 +25936,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    direccion_entrega?: string | null
     observaciones_internas?: string | null
     concepto_id?: string | null
     items?: RequisicionItemCreateNestedManyWithoutRequisicionInput
@@ -25932,6 +25954,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    direccion_entrega?: string | null
     observaciones_internas?: string | null
     concepto_id?: string | null
     items?: RequisicionItemUncheckedCreateNestedManyWithoutRequisicionInput
@@ -25949,6 +25972,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones_internas?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: RequisicionItemUpdateManyWithoutRequisicionNestedInput
@@ -25966,6 +25990,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones_internas?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     items?: RequisicionItemUncheckedUpdateManyWithoutRequisicionNestedInput
@@ -25983,6 +26008,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    direccion_entrega?: string | null
     observaciones_internas?: string | null
     concepto_id?: string | null
   }
@@ -25999,6 +26025,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones_internas?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -26015,6 +26042,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones_internas?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -28057,6 +28085,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrder
+    direccion_entrega?: SortOrder
     observaciones_internas?: SortOrder
     concepto_id?: SortOrder
   }
@@ -28073,6 +28102,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrder
+    direccion_entrega?: SortOrder
     observaciones_internas?: SortOrder
     concepto_id?: SortOrder
   }
@@ -28089,6 +28119,7 @@ export namespace Prisma {
     estado?: SortOrder
     tipo?: SortOrder
     observaciones?: SortOrder
+    direccion_entrega?: SortOrder
     observaciones_internas?: SortOrder
     concepto_id?: SortOrder
   }
@@ -30641,6 +30672,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    direccion_entrega?: string | null
     observaciones_internas?: string | null
     concepto_id?: string | null
   }
@@ -30657,6 +30689,7 @@ export namespace Prisma {
     estado?: string
     tipo?: string
     observaciones?: string | null
+    direccion_entrega?: string | null
     observaciones_internas?: string | null
     concepto_id?: string | null
   }
@@ -30689,6 +30722,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones_internas?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -30705,6 +30739,7 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion_entrega?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones_internas?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
   }

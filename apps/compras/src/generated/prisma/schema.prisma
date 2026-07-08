@@ -100,6 +100,8 @@ model Requisicion {
   tipo                   String   @default("NORMAL") @db.VarChar(20)
   /// Notas destinadas a los proveedores — se muestran/precargan en la Solicitud de Cotización
   observaciones          String?  @db.Text
+  /// Dirección donde debe entregarse el material — capturada por el Residente, se muestra en el correo de RFQ
+  direccion_entrega      String?  @db.VarChar(300)
   /// Notas internas del Residente para Compras — NUNCA se envían a proveedores
   observaciones_internas String?  @db.Text
 

@@ -346,6 +346,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
   const [reqNotas, setReqNotas] = useState('');
   const [reqNotasInternas, setReqNotasInternas] = useState('');
+  const [reqDireccionEntrega, setReqDireccionEntrega] = useState('');
   const [generandoReq, setGenerandoReq] = useState(false);
   // Partida del catálogo — obligatoria para INSUMO e IMPREVISTO
   const [reqConceptoId, setReqConceptoId] = useState<string | null>(null);
@@ -642,6 +643,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     setReqPrioridad('MEDIA');
     setReqNotas('');
     setReqNotasInternas('');
+    setReqDireccionEntrega('');
     setReqConceptoId(null);
     setReqConceptoSearch2('');
     setConceptoSearch('');
@@ -700,6 +702,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           prioridad: reqPrioridad,
           observaciones: observacionesFinal,
           observaciones_internas: reqNotasInternas || undefined,
+          direccion_entrega: reqDireccionEntrega || undefined,
           items: insumosSeleccionados.map(i => {
             const excede = i.cantidad_presupuestada != null && i.cantidad > i.cantidad_presupuestada;
             return {
@@ -777,6 +780,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           prioridad: reqPrioridad,
           observaciones: `Take-off APU · ${conceptoSeleccionado.clave} · ${conceptoSeleccionado.descripcion} · ${qty} ${conceptoSeleccionado.unidad_medida}${reqNotas ? ' · ' + reqNotas : ''}`,
           observaciones_internas: reqNotasInternas || undefined,
+          direccion_entrega: reqDireccionEntrega || undefined,
           items: materiales.map(m => ({
             insumo_id:              m.insumo_id,
             clave:                  m.clave,
@@ -832,6 +836,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           prioridad: reqPrioridad,
           observaciones: reqNotas || undefined,
           observaciones_internas: reqNotasInternas || undefined,
+          direccion_entrega: reqDireccionEntrega || undefined,
           items: validos.map(i => ({
             descripcion_libre:           i.descripcion_libre,
             unidad_libre:                i.unidad_libre || 'PZA',
@@ -2326,6 +2331,17 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             />
             <p className="mt-1 text-[9px] text-muted-foreground">
               🔒 Confidencial — nunca se comparte con proveedores.
+            </p>
+          </FormField>
+
+          <FormField label="Dirección de entrega">
+            <Input
+              value={reqDireccionEntrega}
+              onChange={e => setReqDireccionEntrega(e.target.value)}
+              placeholder="Ej. Almacén de obra — Av. Industria 245, Parque Industrial..."
+            />
+            <p className="mt-1 text-[9px] text-muted-foreground">
+              Se incluye en el correo de Solicitud de Cotización que Compras envía a los proveedores.
             </p>
           </FormField>
 
