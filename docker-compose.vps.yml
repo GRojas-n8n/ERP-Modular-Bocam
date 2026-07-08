@@ -213,6 +213,7 @@ services:
       COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+      GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
       DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
       COTIZACIONES_UPLOAD_DIR: /data/compras/cotizaciones
       SENTRY_DSN: ${SENTRY_DSN:-}
@@ -225,6 +226,8 @@ services:
       rabbitmq:
         condition: service_healthy
       finanzas:
+        condition: service_healthy
+      gerencia-tecnica:
         condition: service_healthy
     networks:
       - bocam-vps-network
