@@ -1,3 +1,5 @@
+import type Anthropic from '@anthropic-ai/sdk';
+
 export interface RenglonCotizacion {
   descripcion: string;
   unidad: string;
@@ -29,3 +31,5 @@ export interface AlertasPredictivas {
   alertas: AlertaPredictiva[];
   proyecto_saludable: boolean;
 }
+
+export type MensajeConversacion = Anthropic.MessageParam;
