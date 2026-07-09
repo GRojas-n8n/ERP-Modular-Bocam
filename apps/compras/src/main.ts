@@ -793,10 +793,13 @@ app.get(
   }
 );
 
+// El PDF de cotización ya NO se sube desde este endpoint — se sube y persiste
+// exclusivamente desde el cuadro comparativo (ver PUT .../comparativas/:compId/proveedores/:provId/cotizacion-pdf).
+// pdf_nombre/pdf_ruta/pdf_mime de SolicitudCotizacionProveedor quedan como registro
+// histórico de solo lectura para respuestas anteriores a este cambio.
 app.put(
   '/api/v1/compras/requisiciones/:reqId/solicitud-cotizacion/proveedores/:scpId',
   requireRoles('procurement', 'admin'),
-  cotizacionesMulter.single('archivo'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -805,7 +808,6 @@ app.put(
 
       const estadosValidos = ['RESPONDIO', 'DECLINO', 'PENDIENTE'];
       if (!estadosValidos.includes(estado)) {
-        if (req.file?.path) try { fs.unlinkSync(req.file.path); } catch (_) {}
         return res.status(400).json({ success: false, message: `estado inválido. Valores: ${estadosValidos.join(', ')}` });
       }
 
@@ -820,29 +822,11 @@ app.put(
             return { notFound: true };
           }
 
-          let pdfNombre: string | null = scp.pdf_nombre;
-          let pdfRuta: string | null = scp.pdf_ruta;
-          let pdfMime: string | null = scp.pdf_mime;
-
-          if (req.file) {
-            const ext = path.extname(req.file.originalname).toLowerCase();
-            const rutaFinal = path.join(COTIZACIONES_UPLOAD_DIR, tenantId, scp.solicitud_id, `${scpId}${ext}`);
-            fs.mkdirSync(path.dirname(rutaFinal), { recursive: true });
-            if (pdfRuta && fs.existsSync(pdfRuta)) try { fs.unlinkSync(pdfRuta); } catch (_) {}
-            fs.renameSync(req.file.path, rutaFinal);
-            pdfNombre = req.file.originalname;
-            pdfRuta = rutaFinal;
-            pdfMime = req.file.mimetype;
-          }
-
           return prisma.solicitudCotizacionProveedor.update({
             where: { id_scp: scpId },
             data: {
               estado,
               notas_proveedor: notas_proveedor ?? null,
-              pdf_nombre: pdfNombre,
-              pdf_ruta: pdfRuta,
-              pdf_mime: pdfMime,
               fecha_respuesta: ['RESPONDIO', 'DECLINO'].includes(estado) ? new Date() : null,
             },
           });
@@ -854,7 +838,6 @@ app.put(
       const result = data as any;
       res.json({ success: true, data: { ...result, pdf_ruta: undefined } });
     } catch (error: any) {
-      if (req.file?.path) try { fs.unlinkSync(req.file.path); } catch (_) {}
       logError(req, 'compras', 'compras.solicitud_cotizacion.proveedor.error', 'Error al actualizar respuesta de proveedor', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
@@ -2092,7 +2075,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        const [cuadro, lineas, aclaraciones, anotacionesSpec] = await Promise.all([
+        const [cuadro, lineas, aclaraciones, anotacionesSpec, archivosProveedor] = await Promise.all([
           prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
             include: { detalles: { include: { proveedor: true } } },
@@ -2107,6 +2090,10 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           prisma.anotacionEspecificacion.findMany({
             where: { cuadro_id: id, tenant_id: tenantId },
             orderBy: { created_at: 'asc' },
+          }),
+          prisma.comparativaProveedorArchivo.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
+            select: { proveedor_id: true, pdf_nombre: true, pdf_mime: true, updated_at: true },
           }),
         ]);
         if (!cuadro) return null;
@@ -2212,6 +2199,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           detalles: detallesConCount,
           lineas_detalle: lineasDetalle,
           anotaciones_spec: anotacionesSpec,
+          archivos_proveedor: archivosProveedor,
           ordenes_compra,
         };
       },
@@ -2643,6 +2631,79 @@ app.post('/api/v1/compras/comparativas',
       res.status(201).json({ success: true, data });
     } catch (error: any) {
       logError(req, 'compras', 'compras.comparativa.crear.error', 'Error al crear cuadro comparativo', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// PUT /comparativas/:compId/proveedores/:provId/cotizacion-pdf — guarda el PDF de cotización
+// aplicado a un proveedor dentro del cuadro. Tabla independiente de ComparativaDetalle:
+// PUT .../cotizaciones hace deleteMany+recreate de ComparativaDetalle en cada guardado de
+// precios, y perdería el archivo si viviera ahí.
+app.put('/api/v1/compras/comparativas/:compId/proveedores/:provId/cotizacion-pdf',
+  requireRoles('procurement', 'admin'),
+  cotizacionesMulter.single('archivo'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { compId, provId } = req.params;
+
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'Se requiere un archivo.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findFirst({
+            where: { id_cuadro: compId, tenant_id: tenantId },
+          });
+          if (!cuadro) return { notFound: true };
+
+          const existente = await prisma.comparativaProveedorArchivo.findUnique({
+            where: { cuadro_id_proveedor_id: { cuadro_id: compId, proveedor_id: provId } },
+          });
+
+          const ext = path.extname(req.file!.originalname).toLowerCase();
+          const rutaFinal = path.join(COTIZACIONES_UPLOAD_DIR, tenantId, compId, `${provId}${ext}`);
+          fs.mkdirSync(path.dirname(rutaFinal), { recursive: true });
+          if (existente?.pdf_ruta && fs.existsSync(existente.pdf_ruta)) {
+            try { fs.unlinkSync(existente.pdf_ruta); } catch (_) {}
+          }
+          fs.renameSync(req.file!.path, rutaFinal);
+
+          const archivo = await prisma.comparativaProveedorArchivo.upsert({
+            where: { cuadro_id_proveedor_id: { cuadro_id: compId, proveedor_id: provId } },
+            create: {
+              tenant_id:   tenantId,
+              proyecto_id: proyectoId,
+              cuadro_id:   compId,
+              proveedor_id: provId,
+              pdf_nombre:  req.file!.originalname,
+              pdf_ruta:    rutaFinal,
+              pdf_mime:    req.file!.mimetype,
+            },
+            update: {
+              pdf_nombre: req.file!.originalname,
+              pdf_ruta:   rutaFinal,
+              pdf_mime:   req.file!.mimetype,
+            },
+          });
+
+          return { archivo };
+        }
+      );
+
+      if ((data as any).notFound) {
+        if (req.file?.path && fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch (_) {}
+        return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+      }
+
+      logInfo(req, 'compras', 'compras.comparativa.pdf.guardado', `PDF de cotización guardado para proveedor ${provId} en cuadro ${compId}`, {});
+      res.json({ success: true, data: { ...(data as any).archivo, pdf_ruta: undefined } });
+    } catch (error: any) {
+      if (req.file?.path && fs.existsSync(req.file.path)) try { fs.unlinkSync(req.file.path); } catch (_) {}
+      logError(req, 'compras', 'compras.comparativa.pdf.error', 'Error al guardar PDF de cotización del comparativo', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }

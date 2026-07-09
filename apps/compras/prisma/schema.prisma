@@ -298,10 +298,34 @@ model CuadroComparativo {
   lineas              ComparativaLinea[]
   aclaraciones        AclaracionComparativa[]
   auditoria_desbloqueos AuditoriaDesbloqueoComparativa[]
+  archivos_proveedor   ComparativaProveedorArchivo[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
   @@map("cuadros_comparativos")
+}
+
+// ── PDF de cotización aplicado por proveedor dentro de un cuadro comparativo ────
+// Tabla independiente de ComparativaDetalle a propósito: ComparativaDetalle se borra y
+// recrea por completo en cada guardado de precios (PUT .../cotizaciones), y perdería el
+// archivo si viviera ahí. Una fila por (cuadro, proveedor) — el PDF aplica a toda la
+// cotización de ese proveedor, no a un insumo en particular.
+model ComparativaProveedorArchivo {
+  id_archivo   String   @id @default(uuid()) @db.Uuid
+  tenant_id    String   @db.Uuid
+  proyecto_id  String   @db.Uuid
+  cuadro_id    String   @db.Uuid
+  proveedor_id String   @db.Uuid
+  pdf_nombre   String   @db.VarChar(255)
+  pdf_ruta     String   @db.Text
+  pdf_mime     String   @db.VarChar(100)
+  updated_at   DateTime @updatedAt
+
+  cuadro CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
+
+  @@unique([cuadro_id, proveedor_id])
+  @@index([tenant_id, cuadro_id])
+  @@map("comparativas_proveedores_archivos")
 }
 
 // ── Auditoría de desbloqueos de cuadros firmados ─────────────────────────────
