@@ -20,6 +20,7 @@ import { createTenantContext, disconnectDb, runAsSystem } from './db';
 import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
+import { resolveAutoAssignedUserIds } from './project-access-policy';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -840,19 +841,17 @@ app.post('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHand
         },
       });
 
-      // 2. Auto-asignar todos los usuarios admin/superintendent del tenant
+      // 2. Auto-asignar los usuarios con rol elegible (ver project-access-policy.ts)
       //    para que el proyecto aparezca de inmediato en su selector de proyectos
-      const admins = await prisma.user.findMany({
-        where: { tenant_id: tenantId, activo: true },
-        select: { id_usuario: true, rol_global: true },
+      const candidatos = await prisma.user.findMany({
+        where: { tenant_id: tenantId },
+        select: { id_usuario: true, rol_global: true, activo: true },
       });
-      const adminIds = admins
-        .filter(u => (u.rol_global as string[]).some(r => ['admin', 'superintendent'].includes(r)))
-        .map(u => u.id_usuario);
+      const autoAssignIds = resolveAutoAssignedUserIds(candidatos);
 
-      if (adminIds.length > 0) {
+      if (autoAssignIds.length > 0) {
         await prisma.userProjectAccess.createMany({
-          data: adminIds.map(uid => ({ user_id: uid, proyecto_id: nuevo.id_proyecto })),
+          data: autoAssignIds.map(uid => ({ user_id: uid, proyecto_id: nuevo.id_proyecto })),
           skipDuplicates: true,
         });
       }
