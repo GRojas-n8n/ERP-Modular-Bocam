@@ -189,6 +189,13 @@ export const comprasApi = {
   getComparativas:     ()         => api.get('/api/v1/compras/comparativas'),
   getComparativa:      (id: string) => api.get(`/api/v1/compras/comparativas/${id}`),
   convertirAOC:        (id: string, data: unknown) => api.post(`/api/v1/compras/comparativas/${id}/convertir-oc`, data),
+  subirCotizacionPdf:  (compId: string, provId: string, file: File) => {
+    const form = new FormData();
+    form.append('archivo', file);
+    return api.put(`/api/v1/compras/comparativas/${compId}/proveedores/${provId}/cotizacion-pdf`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   cancelarOC:          (id: string, data: unknown) => api.post(`/api/v1/compras/ordenes-compra/${id}/cancelar`, data),
 };
 

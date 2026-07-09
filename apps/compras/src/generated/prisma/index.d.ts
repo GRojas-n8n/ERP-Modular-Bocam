@@ -69,6 +69,11 @@ export type RecepcionOCItem = $Result.DefaultSelection<Prisma.$RecepcionOCItemPa
  */
 export type CuadroComparativo = $Result.DefaultSelection<Prisma.$CuadroComparativoPayload>
 /**
+ * Model ComparativaProveedorArchivo
+ * 
+ */
+export type ComparativaProveedorArchivo = $Result.DefaultSelection<Prisma.$ComparativaProveedorArchivoPayload>
+/**
  * Model AuditoriaDesbloqueoComparativa
  * 
  */
@@ -346,6 +351,16 @@ export class PrismaClient<
     * ```
     */
   get cuadroComparativo(): Prisma.CuadroComparativoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.comparativaProveedorArchivo`: Exposes CRUD operations for the **ComparativaProveedorArchivo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ComparativaProveedorArchivos
+    * const comparativaProveedorArchivos = await prisma.comparativaProveedorArchivo.findMany()
+    * ```
+    */
+  get comparativaProveedorArchivo(): Prisma.ComparativaProveedorArchivoDelegate<ExtArgs>;
 
   /**
    * `prisma.auditoriaDesbloqueoComparativa`: Exposes CRUD operations for the **AuditoriaDesbloqueoComparativa** model.
@@ -888,6 +903,7 @@ export namespace Prisma {
     RecepcionOC: 'RecepcionOC',
     RecepcionOCItem: 'RecepcionOCItem',
     CuadroComparativo: 'CuadroComparativo',
+    ComparativaProveedorArchivo: 'ComparativaProveedorArchivo',
     AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
     ComparativaLinea: 'ComparativaLinea',
     ComparativaDetalle: 'ComparativaDetalle',
@@ -912,7 +928,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "recepcionOC" | "recepcionOCItem" | "cuadroComparativo" | "auditoriaDesbloqueoComparativa" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError"
+      modelProps: "proveedor" | "calificacionProveedor" | "documentoProveedor" | "requisicion" | "requisicionItem" | "asignacionExtraConcepto" | "ordenCompra" | "ordenCompraItem" | "recepcionOC" | "recepcionOCItem" | "cuadroComparativo" | "comparativaProveedorArchivo" | "auditoriaDesbloqueoComparativa" | "comparativaLinea" | "comparativaDetalle" | "aclaracionComparativa" | "especificacionDetalleReq" | "solicitudCotizacion" | "solicitudCotizacionProveedor" | "anotacionEspecificacion" | "alertaOcError"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1683,6 +1699,76 @@ export namespace Prisma {
           count: {
             args: Prisma.CuadroComparativoCountArgs<ExtArgs>
             result: $Utils.Optional<CuadroComparativoCountAggregateOutputType> | number
+          }
+        }
+      }
+      ComparativaProveedorArchivo: {
+        payload: Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>
+        fields: Prisma.ComparativaProveedorArchivoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ComparativaProveedorArchivoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ComparativaProveedorArchivoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>
+          }
+          findFirst: {
+            args: Prisma.ComparativaProveedorArchivoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ComparativaProveedorArchivoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>
+          }
+          findMany: {
+            args: Prisma.ComparativaProveedorArchivoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>[]
+          }
+          create: {
+            args: Prisma.ComparativaProveedorArchivoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>
+          }
+          createMany: {
+            args: Prisma.ComparativaProveedorArchivoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ComparativaProveedorArchivoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>[]
+          }
+          delete: {
+            args: Prisma.ComparativaProveedorArchivoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>
+          }
+          update: {
+            args: Prisma.ComparativaProveedorArchivoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>
+          }
+          deleteMany: {
+            args: Prisma.ComparativaProveedorArchivoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ComparativaProveedorArchivoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ComparativaProveedorArchivoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComparativaProveedorArchivoPayload>
+          }
+          aggregate: {
+            args: Prisma.ComparativaProveedorArchivoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateComparativaProveedorArchivo>
+          }
+          groupBy: {
+            args: Prisma.ComparativaProveedorArchivoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ComparativaProveedorArchivoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ComparativaProveedorArchivoCountArgs<ExtArgs>
+            result: $Utils.Optional<ComparativaProveedorArchivoCountAggregateOutputType> | number
           }
         }
       }
@@ -2650,6 +2736,7 @@ export namespace Prisma {
     lineas: number
     aclaraciones: number
     auditoria_desbloqueos: number
+    archivos_proveedor: number
   }
 
   export type CuadroComparativoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2657,6 +2744,7 @@ export namespace Prisma {
     lineas?: boolean | CuadroComparativoCountOutputTypeCountLineasArgs
     aclaraciones?: boolean | CuadroComparativoCountOutputTypeCountAclaracionesArgs
     auditoria_desbloqueos?: boolean | CuadroComparativoCountOutputTypeCountAuditoria_desbloqueosArgs
+    archivos_proveedor?: boolean | CuadroComparativoCountOutputTypeCountArchivos_proveedorArgs
   }
 
   // Custom InputTypes
@@ -2696,6 +2784,13 @@ export namespace Prisma {
    */
   export type CuadroComparativoCountOutputTypeCountAuditoria_desbloqueosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AuditoriaDesbloqueoComparativaWhereInput
+  }
+
+  /**
+   * CuadroComparativoCountOutputType without action
+   */
+  export type CuadroComparativoCountOutputTypeCountArchivos_proveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ComparativaProveedorArchivoWhereInput
   }
 
 
@@ -13599,6 +13694,7 @@ export namespace Prisma {
     lineas?: boolean | CuadroComparativo$lineasArgs<ExtArgs>
     aclaraciones?: boolean | CuadroComparativo$aclaracionesArgs<ExtArgs>
     auditoria_desbloqueos?: boolean | CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs>
+    archivos_proveedor?: boolean | CuadroComparativo$archivos_proveedorArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cuadroComparativo"]>
 
@@ -13655,6 +13751,7 @@ export namespace Prisma {
     lineas?: boolean | CuadroComparativo$lineasArgs<ExtArgs>
     aclaraciones?: boolean | CuadroComparativo$aclaracionesArgs<ExtArgs>
     auditoria_desbloqueos?: boolean | CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs>
+    archivos_proveedor?: boolean | CuadroComparativo$archivos_proveedorArgs<ExtArgs>
     _count?: boolean | CuadroComparativoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CuadroComparativoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -13666,6 +13763,7 @@ export namespace Prisma {
       lineas: Prisma.$ComparativaLineaPayload<ExtArgs>[]
       aclaraciones: Prisma.$AclaracionComparativaPayload<ExtArgs>[]
       auditoria_desbloqueos: Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>[]
+      archivos_proveedor: Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id_cuadro: string
@@ -14063,6 +14161,7 @@ export namespace Prisma {
     lineas<T extends CuadroComparativo$lineasArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$lineasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaLineaPayload<ExtArgs>, T, "findMany"> | Null>
     aclaraciones<T extends CuadroComparativo$aclaracionesArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$aclaracionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AclaracionComparativaPayload<ExtArgs>, T, "findMany"> | Null>
     auditoria_desbloqueos<T extends CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$auditoria_desbloqueosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaDesbloqueoComparativaPayload<ExtArgs>, T, "findMany"> | Null>
+    archivos_proveedor<T extends CuadroComparativo$archivos_proveedorArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativo$archivos_proveedorArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14507,6 +14606,26 @@ export namespace Prisma {
   }
 
   /**
+   * CuadroComparativo.archivos_proveedor
+   */
+  export type CuadroComparativo$archivos_proveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    where?: ComparativaProveedorArchivoWhereInput
+    orderBy?: ComparativaProveedorArchivoOrderByWithRelationInput | ComparativaProveedorArchivoOrderByWithRelationInput[]
+    cursor?: ComparativaProveedorArchivoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ComparativaProveedorArchivoScalarFieldEnum | ComparativaProveedorArchivoScalarFieldEnum[]
+  }
+
+  /**
    * CuadroComparativo without action
    */
   export type CuadroComparativoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14518,6 +14637,987 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CuadroComparativoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ComparativaProveedorArchivo
+   */
+
+  export type AggregateComparativaProveedorArchivo = {
+    _count: ComparativaProveedorArchivoCountAggregateOutputType | null
+    _min: ComparativaProveedorArchivoMinAggregateOutputType | null
+    _max: ComparativaProveedorArchivoMaxAggregateOutputType | null
+  }
+
+  export type ComparativaProveedorArchivoMinAggregateOutputType = {
+    id_archivo: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    cuadro_id: string | null
+    proveedor_id: string | null
+    pdf_nombre: string | null
+    pdf_ruta: string | null
+    pdf_mime: string | null
+    updated_at: Date | null
+  }
+
+  export type ComparativaProveedorArchivoMaxAggregateOutputType = {
+    id_archivo: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    cuadro_id: string | null
+    proveedor_id: string | null
+    pdf_nombre: string | null
+    pdf_ruta: string | null
+    pdf_mime: string | null
+    updated_at: Date | null
+  }
+
+  export type ComparativaProveedorArchivoCountAggregateOutputType = {
+    id_archivo: number
+    tenant_id: number
+    proyecto_id: number
+    cuadro_id: number
+    proveedor_id: number
+    pdf_nombre: number
+    pdf_ruta: number
+    pdf_mime: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ComparativaProveedorArchivoMinAggregateInputType = {
+    id_archivo?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    proveedor_id?: true
+    pdf_nombre?: true
+    pdf_ruta?: true
+    pdf_mime?: true
+    updated_at?: true
+  }
+
+  export type ComparativaProveedorArchivoMaxAggregateInputType = {
+    id_archivo?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    proveedor_id?: true
+    pdf_nombre?: true
+    pdf_ruta?: true
+    pdf_mime?: true
+    updated_at?: true
+  }
+
+  export type ComparativaProveedorArchivoCountAggregateInputType = {
+    id_archivo?: true
+    tenant_id?: true
+    proyecto_id?: true
+    cuadro_id?: true
+    proveedor_id?: true
+    pdf_nombre?: true
+    pdf_ruta?: true
+    pdf_mime?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ComparativaProveedorArchivoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ComparativaProveedorArchivo to aggregate.
+     */
+    where?: ComparativaProveedorArchivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaProveedorArchivos to fetch.
+     */
+    orderBy?: ComparativaProveedorArchivoOrderByWithRelationInput | ComparativaProveedorArchivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ComparativaProveedorArchivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaProveedorArchivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaProveedorArchivos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ComparativaProveedorArchivos
+    **/
+    _count?: true | ComparativaProveedorArchivoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ComparativaProveedorArchivoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ComparativaProveedorArchivoMaxAggregateInputType
+  }
+
+  export type GetComparativaProveedorArchivoAggregateType<T extends ComparativaProveedorArchivoAggregateArgs> = {
+        [P in keyof T & keyof AggregateComparativaProveedorArchivo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateComparativaProveedorArchivo[P]>
+      : GetScalarType<T[P], AggregateComparativaProveedorArchivo[P]>
+  }
+
+
+
+
+  export type ComparativaProveedorArchivoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ComparativaProveedorArchivoWhereInput
+    orderBy?: ComparativaProveedorArchivoOrderByWithAggregationInput | ComparativaProveedorArchivoOrderByWithAggregationInput[]
+    by: ComparativaProveedorArchivoScalarFieldEnum[] | ComparativaProveedorArchivoScalarFieldEnum
+    having?: ComparativaProveedorArchivoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ComparativaProveedorArchivoCountAggregateInputType | true
+    _min?: ComparativaProveedorArchivoMinAggregateInputType
+    _max?: ComparativaProveedorArchivoMaxAggregateInputType
+  }
+
+  export type ComparativaProveedorArchivoGroupByOutputType = {
+    id_archivo: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at: Date
+    _count: ComparativaProveedorArchivoCountAggregateOutputType | null
+    _min: ComparativaProveedorArchivoMinAggregateOutputType | null
+    _max: ComparativaProveedorArchivoMaxAggregateOutputType | null
+  }
+
+  type GetComparativaProveedorArchivoGroupByPayload<T extends ComparativaProveedorArchivoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ComparativaProveedorArchivoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ComparativaProveedorArchivoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ComparativaProveedorArchivoGroupByOutputType[P]>
+            : GetScalarType<T[P], ComparativaProveedorArchivoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ComparativaProveedorArchivoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_archivo?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    proveedor_id?: boolean
+    pdf_nombre?: boolean
+    pdf_ruta?: boolean
+    pdf_mime?: boolean
+    updated_at?: boolean
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["comparativaProveedorArchivo"]>
+
+  export type ComparativaProveedorArchivoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_archivo?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    proveedor_id?: boolean
+    pdf_nombre?: boolean
+    pdf_ruta?: boolean
+    pdf_mime?: boolean
+    updated_at?: boolean
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["comparativaProveedorArchivo"]>
+
+  export type ComparativaProveedorArchivoSelectScalar = {
+    id_archivo?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    cuadro_id?: boolean
+    proveedor_id?: boolean
+    pdf_nombre?: boolean
+    pdf_ruta?: boolean
+    pdf_mime?: boolean
+    updated_at?: boolean
+  }
+
+  export type ComparativaProveedorArchivoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }
+  export type ComparativaProveedorArchivoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
+  }
+
+  export type $ComparativaProveedorArchivoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ComparativaProveedorArchivo"
+    objects: {
+      cuadro: Prisma.$CuadroComparativoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_archivo: string
+      tenant_id: string
+      proyecto_id: string
+      cuadro_id: string
+      proveedor_id: string
+      pdf_nombre: string
+      pdf_ruta: string
+      pdf_mime: string
+      updated_at: Date
+    }, ExtArgs["result"]["comparativaProveedorArchivo"]>
+    composites: {}
+  }
+
+  type ComparativaProveedorArchivoGetPayload<S extends boolean | null | undefined | ComparativaProveedorArchivoDefaultArgs> = $Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload, S>
+
+  type ComparativaProveedorArchivoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ComparativaProveedorArchivoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ComparativaProveedorArchivoCountAggregateInputType | true
+    }
+
+  export interface ComparativaProveedorArchivoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ComparativaProveedorArchivo'], meta: { name: 'ComparativaProveedorArchivo' } }
+    /**
+     * Find zero or one ComparativaProveedorArchivo that matches the filter.
+     * @param {ComparativaProveedorArchivoFindUniqueArgs} args - Arguments to find a ComparativaProveedorArchivo
+     * @example
+     * // Get one ComparativaProveedorArchivo
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ComparativaProveedorArchivoFindUniqueArgs>(args: SelectSubset<T, ComparativaProveedorArchivoFindUniqueArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ComparativaProveedorArchivo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ComparativaProveedorArchivoFindUniqueOrThrowArgs} args - Arguments to find a ComparativaProveedorArchivo
+     * @example
+     * // Get one ComparativaProveedorArchivo
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ComparativaProveedorArchivoFindUniqueOrThrowArgs>(args: SelectSubset<T, ComparativaProveedorArchivoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ComparativaProveedorArchivo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoFindFirstArgs} args - Arguments to find a ComparativaProveedorArchivo
+     * @example
+     * // Get one ComparativaProveedorArchivo
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ComparativaProveedorArchivoFindFirstArgs>(args?: SelectSubset<T, ComparativaProveedorArchivoFindFirstArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ComparativaProveedorArchivo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoFindFirstOrThrowArgs} args - Arguments to find a ComparativaProveedorArchivo
+     * @example
+     * // Get one ComparativaProveedorArchivo
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ComparativaProveedorArchivoFindFirstOrThrowArgs>(args?: SelectSubset<T, ComparativaProveedorArchivoFindFirstOrThrowArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ComparativaProveedorArchivos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ComparativaProveedorArchivos
+     * const comparativaProveedorArchivos = await prisma.comparativaProveedorArchivo.findMany()
+     * 
+     * // Get first 10 ComparativaProveedorArchivos
+     * const comparativaProveedorArchivos = await prisma.comparativaProveedorArchivo.findMany({ take: 10 })
+     * 
+     * // Only select the `id_archivo`
+     * const comparativaProveedorArchivoWithId_archivoOnly = await prisma.comparativaProveedorArchivo.findMany({ select: { id_archivo: true } })
+     * 
+     */
+    findMany<T extends ComparativaProveedorArchivoFindManyArgs>(args?: SelectSubset<T, ComparativaProveedorArchivoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ComparativaProveedorArchivo.
+     * @param {ComparativaProveedorArchivoCreateArgs} args - Arguments to create a ComparativaProveedorArchivo.
+     * @example
+     * // Create one ComparativaProveedorArchivo
+     * const ComparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.create({
+     *   data: {
+     *     // ... data to create a ComparativaProveedorArchivo
+     *   }
+     * })
+     * 
+     */
+    create<T extends ComparativaProveedorArchivoCreateArgs>(args: SelectSubset<T, ComparativaProveedorArchivoCreateArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ComparativaProveedorArchivos.
+     * @param {ComparativaProveedorArchivoCreateManyArgs} args - Arguments to create many ComparativaProveedorArchivos.
+     * @example
+     * // Create many ComparativaProveedorArchivos
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ComparativaProveedorArchivoCreateManyArgs>(args?: SelectSubset<T, ComparativaProveedorArchivoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ComparativaProveedorArchivos and returns the data saved in the database.
+     * @param {ComparativaProveedorArchivoCreateManyAndReturnArgs} args - Arguments to create many ComparativaProveedorArchivos.
+     * @example
+     * // Create many ComparativaProveedorArchivos
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ComparativaProveedorArchivos and only return the `id_archivo`
+     * const comparativaProveedorArchivoWithId_archivoOnly = await prisma.comparativaProveedorArchivo.createManyAndReturn({ 
+     *   select: { id_archivo: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ComparativaProveedorArchivoCreateManyAndReturnArgs>(args?: SelectSubset<T, ComparativaProveedorArchivoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ComparativaProveedorArchivo.
+     * @param {ComparativaProveedorArchivoDeleteArgs} args - Arguments to delete one ComparativaProveedorArchivo.
+     * @example
+     * // Delete one ComparativaProveedorArchivo
+     * const ComparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.delete({
+     *   where: {
+     *     // ... filter to delete one ComparativaProveedorArchivo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ComparativaProveedorArchivoDeleteArgs>(args: SelectSubset<T, ComparativaProveedorArchivoDeleteArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ComparativaProveedorArchivo.
+     * @param {ComparativaProveedorArchivoUpdateArgs} args - Arguments to update one ComparativaProveedorArchivo.
+     * @example
+     * // Update one ComparativaProveedorArchivo
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ComparativaProveedorArchivoUpdateArgs>(args: SelectSubset<T, ComparativaProveedorArchivoUpdateArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ComparativaProveedorArchivos.
+     * @param {ComparativaProveedorArchivoDeleteManyArgs} args - Arguments to filter ComparativaProveedorArchivos to delete.
+     * @example
+     * // Delete a few ComparativaProveedorArchivos
+     * const { count } = await prisma.comparativaProveedorArchivo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ComparativaProveedorArchivoDeleteManyArgs>(args?: SelectSubset<T, ComparativaProveedorArchivoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ComparativaProveedorArchivos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ComparativaProveedorArchivos
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ComparativaProveedorArchivoUpdateManyArgs>(args: SelectSubset<T, ComparativaProveedorArchivoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ComparativaProveedorArchivo.
+     * @param {ComparativaProveedorArchivoUpsertArgs} args - Arguments to update or create a ComparativaProveedorArchivo.
+     * @example
+     * // Update or create a ComparativaProveedorArchivo
+     * const comparativaProveedorArchivo = await prisma.comparativaProveedorArchivo.upsert({
+     *   create: {
+     *     // ... data to create a ComparativaProveedorArchivo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ComparativaProveedorArchivo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ComparativaProveedorArchivoUpsertArgs>(args: SelectSubset<T, ComparativaProveedorArchivoUpsertArgs<ExtArgs>>): Prisma__ComparativaProveedorArchivoClient<$Result.GetResult<Prisma.$ComparativaProveedorArchivoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ComparativaProveedorArchivos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoCountArgs} args - Arguments to filter ComparativaProveedorArchivos to count.
+     * @example
+     * // Count the number of ComparativaProveedorArchivos
+     * const count = await prisma.comparativaProveedorArchivo.count({
+     *   where: {
+     *     // ... the filter for the ComparativaProveedorArchivos we want to count
+     *   }
+     * })
+    **/
+    count<T extends ComparativaProveedorArchivoCountArgs>(
+      args?: Subset<T, ComparativaProveedorArchivoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ComparativaProveedorArchivoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ComparativaProveedorArchivo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ComparativaProveedorArchivoAggregateArgs>(args: Subset<T, ComparativaProveedorArchivoAggregateArgs>): Prisma.PrismaPromise<GetComparativaProveedorArchivoAggregateType<T>>
+
+    /**
+     * Group by ComparativaProveedorArchivo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComparativaProveedorArchivoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ComparativaProveedorArchivoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ComparativaProveedorArchivoGroupByArgs['orderBy'] }
+        : { orderBy?: ComparativaProveedorArchivoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ComparativaProveedorArchivoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetComparativaProveedorArchivoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ComparativaProveedorArchivo model
+   */
+  readonly fields: ComparativaProveedorArchivoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ComparativaProveedorArchivo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ComparativaProveedorArchivoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuadro<T extends CuadroComparativoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuadroComparativoDefaultArgs<ExtArgs>>): Prisma__CuadroComparativoClient<$Result.GetResult<Prisma.$CuadroComparativoPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ComparativaProveedorArchivo model
+   */ 
+  interface ComparativaProveedorArchivoFieldRefs {
+    readonly id_archivo: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly tenant_id: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly proyecto_id: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly cuadro_id: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly proveedor_id: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly pdf_nombre: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly pdf_ruta: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly pdf_mime: FieldRef<"ComparativaProveedorArchivo", 'String'>
+    readonly updated_at: FieldRef<"ComparativaProveedorArchivo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ComparativaProveedorArchivo findUnique
+   */
+  export type ComparativaProveedorArchivoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaProveedorArchivo to fetch.
+     */
+    where: ComparativaProveedorArchivoWhereUniqueInput
+  }
+
+  /**
+   * ComparativaProveedorArchivo findUniqueOrThrow
+   */
+  export type ComparativaProveedorArchivoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaProveedorArchivo to fetch.
+     */
+    where: ComparativaProveedorArchivoWhereUniqueInput
+  }
+
+  /**
+   * ComparativaProveedorArchivo findFirst
+   */
+  export type ComparativaProveedorArchivoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaProveedorArchivo to fetch.
+     */
+    where?: ComparativaProveedorArchivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaProveedorArchivos to fetch.
+     */
+    orderBy?: ComparativaProveedorArchivoOrderByWithRelationInput | ComparativaProveedorArchivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ComparativaProveedorArchivos.
+     */
+    cursor?: ComparativaProveedorArchivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaProveedorArchivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaProveedorArchivos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComparativaProveedorArchivos.
+     */
+    distinct?: ComparativaProveedorArchivoScalarFieldEnum | ComparativaProveedorArchivoScalarFieldEnum[]
+  }
+
+  /**
+   * ComparativaProveedorArchivo findFirstOrThrow
+   */
+  export type ComparativaProveedorArchivoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaProveedorArchivo to fetch.
+     */
+    where?: ComparativaProveedorArchivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaProveedorArchivos to fetch.
+     */
+    orderBy?: ComparativaProveedorArchivoOrderByWithRelationInput | ComparativaProveedorArchivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ComparativaProveedorArchivos.
+     */
+    cursor?: ComparativaProveedorArchivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaProveedorArchivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaProveedorArchivos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComparativaProveedorArchivos.
+     */
+    distinct?: ComparativaProveedorArchivoScalarFieldEnum | ComparativaProveedorArchivoScalarFieldEnum[]
+  }
+
+  /**
+   * ComparativaProveedorArchivo findMany
+   */
+  export type ComparativaProveedorArchivoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * Filter, which ComparativaProveedorArchivos to fetch.
+     */
+    where?: ComparativaProveedorArchivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComparativaProveedorArchivos to fetch.
+     */
+    orderBy?: ComparativaProveedorArchivoOrderByWithRelationInput | ComparativaProveedorArchivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ComparativaProveedorArchivos.
+     */
+    cursor?: ComparativaProveedorArchivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComparativaProveedorArchivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComparativaProveedorArchivos.
+     */
+    skip?: number
+    distinct?: ComparativaProveedorArchivoScalarFieldEnum | ComparativaProveedorArchivoScalarFieldEnum[]
+  }
+
+  /**
+   * ComparativaProveedorArchivo create
+   */
+  export type ComparativaProveedorArchivoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ComparativaProveedorArchivo.
+     */
+    data: XOR<ComparativaProveedorArchivoCreateInput, ComparativaProveedorArchivoUncheckedCreateInput>
+  }
+
+  /**
+   * ComparativaProveedorArchivo createMany
+   */
+  export type ComparativaProveedorArchivoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ComparativaProveedorArchivos.
+     */
+    data: ComparativaProveedorArchivoCreateManyInput | ComparativaProveedorArchivoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ComparativaProveedorArchivo createManyAndReturn
+   */
+  export type ComparativaProveedorArchivoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ComparativaProveedorArchivos.
+     */
+    data: ComparativaProveedorArchivoCreateManyInput | ComparativaProveedorArchivoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ComparativaProveedorArchivo update
+   */
+  export type ComparativaProveedorArchivoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ComparativaProveedorArchivo.
+     */
+    data: XOR<ComparativaProveedorArchivoUpdateInput, ComparativaProveedorArchivoUncheckedUpdateInput>
+    /**
+     * Choose, which ComparativaProveedorArchivo to update.
+     */
+    where: ComparativaProveedorArchivoWhereUniqueInput
+  }
+
+  /**
+   * ComparativaProveedorArchivo updateMany
+   */
+  export type ComparativaProveedorArchivoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ComparativaProveedorArchivos.
+     */
+    data: XOR<ComparativaProveedorArchivoUpdateManyMutationInput, ComparativaProveedorArchivoUncheckedUpdateManyInput>
+    /**
+     * Filter which ComparativaProveedorArchivos to update
+     */
+    where?: ComparativaProveedorArchivoWhereInput
+  }
+
+  /**
+   * ComparativaProveedorArchivo upsert
+   */
+  export type ComparativaProveedorArchivoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ComparativaProveedorArchivo to update in case it exists.
+     */
+    where: ComparativaProveedorArchivoWhereUniqueInput
+    /**
+     * In case the ComparativaProveedorArchivo found by the `where` argument doesn't exist, create a new ComparativaProveedorArchivo with this data.
+     */
+    create: XOR<ComparativaProveedorArchivoCreateInput, ComparativaProveedorArchivoUncheckedCreateInput>
+    /**
+     * In case the ComparativaProveedorArchivo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ComparativaProveedorArchivoUpdateInput, ComparativaProveedorArchivoUncheckedUpdateInput>
+  }
+
+  /**
+   * ComparativaProveedorArchivo delete
+   */
+  export type ComparativaProveedorArchivoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
+    /**
+     * Filter which ComparativaProveedorArchivo to delete.
+     */
+    where: ComparativaProveedorArchivoWhereUniqueInput
+  }
+
+  /**
+   * ComparativaProveedorArchivo deleteMany
+   */
+  export type ComparativaProveedorArchivoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ComparativaProveedorArchivos to delete
+     */
+    where?: ComparativaProveedorArchivoWhereInput
+  }
+
+  /**
+   * ComparativaProveedorArchivo without action
+   */
+  export type ComparativaProveedorArchivoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComparativaProveedorArchivo
+     */
+    select?: ComparativaProveedorArchivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ComparativaProveedorArchivoInclude<ExtArgs> | null
   }
 
 
@@ -23629,6 +24729,21 @@ export namespace Prisma {
   export type CuadroComparativoScalarFieldEnum = (typeof CuadroComparativoScalarFieldEnum)[keyof typeof CuadroComparativoScalarFieldEnum]
 
 
+  export const ComparativaProveedorArchivoScalarFieldEnum: {
+    id_archivo: 'id_archivo',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    cuadro_id: 'cuadro_id',
+    proveedor_id: 'proveedor_id',
+    pdf_nombre: 'pdf_nombre',
+    pdf_ruta: 'pdf_ruta',
+    pdf_mime: 'pdf_mime',
+    updated_at: 'updated_at'
+  };
+
+  export type ComparativaProveedorArchivoScalarFieldEnum = (typeof ComparativaProveedorArchivoScalarFieldEnum)[keyof typeof ComparativaProveedorArchivoScalarFieldEnum]
+
+
   export const AuditoriaDesbloqueoComparativaScalarFieldEnum: {
     id_auditoria: 'id_auditoria',
     tenant_id: 'tenant_id',
@@ -24809,6 +25924,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaListRelationFilter
     aclaraciones?: AclaracionComparativaListRelationFilter
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaListRelationFilter
+    archivos_proveedor?: ComparativaProveedorArchivoListRelationFilter
   }
 
   export type CuadroComparativoOrderByWithRelationInput = {
@@ -24837,6 +25953,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaOrderByRelationAggregateInput
     aclaraciones?: AclaracionComparativaOrderByRelationAggregateInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaOrderByRelationAggregateInput
+    archivos_proveedor?: ComparativaProveedorArchivoOrderByRelationAggregateInput
   }
 
   export type CuadroComparativoWhereUniqueInput = Prisma.AtLeast<{
@@ -24869,6 +25986,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaListRelationFilter
     aclaraciones?: AclaracionComparativaListRelationFilter
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaListRelationFilter
+    archivos_proveedor?: ComparativaProveedorArchivoListRelationFilter
   }, "id_cuadro" | "tenant_id_codigo">
 
   export type CuadroComparativoOrderByWithAggregationInput = {
@@ -24923,6 +26041,82 @@ export namespace Prisma {
     gerente_tecnico_id?: UuidNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
     fecha_aprobacion_gt?: DateTimeNullableWithAggregatesFilter<"CuadroComparativo"> | Date | string | null
     comentario_gt_general?: StringNullableWithAggregatesFilter<"CuadroComparativo"> | string | null
+  }
+
+  export type ComparativaProveedorArchivoWhereInput = {
+    AND?: ComparativaProveedorArchivoWhereInput | ComparativaProveedorArchivoWhereInput[]
+    OR?: ComparativaProveedorArchivoWhereInput[]
+    NOT?: ComparativaProveedorArchivoWhereInput | ComparativaProveedorArchivoWhereInput[]
+    id_archivo?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    tenant_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    proyecto_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    cuadro_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    proveedor_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    pdf_nombre?: StringFilter<"ComparativaProveedorArchivo"> | string
+    pdf_ruta?: StringFilter<"ComparativaProveedorArchivo"> | string
+    pdf_mime?: StringFilter<"ComparativaProveedorArchivo"> | string
+    updated_at?: DateTimeFilter<"ComparativaProveedorArchivo"> | Date | string
+    cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
+  }
+
+  export type ComparativaProveedorArchivoOrderByWithRelationInput = {
+    id_archivo?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    proveedor_id?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    updated_at?: SortOrder
+    cuadro?: CuadroComparativoOrderByWithRelationInput
+  }
+
+  export type ComparativaProveedorArchivoWhereUniqueInput = Prisma.AtLeast<{
+    id_archivo?: string
+    cuadro_id_proveedor_id?: ComparativaProveedorArchivoCuadro_idProveedor_idCompoundUniqueInput
+    AND?: ComparativaProveedorArchivoWhereInput | ComparativaProveedorArchivoWhereInput[]
+    OR?: ComparativaProveedorArchivoWhereInput[]
+    NOT?: ComparativaProveedorArchivoWhereInput | ComparativaProveedorArchivoWhereInput[]
+    tenant_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    proyecto_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    cuadro_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    proveedor_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    pdf_nombre?: StringFilter<"ComparativaProveedorArchivo"> | string
+    pdf_ruta?: StringFilter<"ComparativaProveedorArchivo"> | string
+    pdf_mime?: StringFilter<"ComparativaProveedorArchivo"> | string
+    updated_at?: DateTimeFilter<"ComparativaProveedorArchivo"> | Date | string
+    cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
+  }, "id_archivo" | "cuadro_id_proveedor_id">
+
+  export type ComparativaProveedorArchivoOrderByWithAggregationInput = {
+    id_archivo?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    proveedor_id?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    updated_at?: SortOrder
+    _count?: ComparativaProveedorArchivoCountOrderByAggregateInput
+    _max?: ComparativaProveedorArchivoMaxOrderByAggregateInput
+    _min?: ComparativaProveedorArchivoMinOrderByAggregateInput
+  }
+
+  export type ComparativaProveedorArchivoScalarWhereWithAggregatesInput = {
+    AND?: ComparativaProveedorArchivoScalarWhereWithAggregatesInput | ComparativaProveedorArchivoScalarWhereWithAggregatesInput[]
+    OR?: ComparativaProveedorArchivoScalarWhereWithAggregatesInput[]
+    NOT?: ComparativaProveedorArchivoScalarWhereWithAggregatesInput | ComparativaProveedorArchivoScalarWhereWithAggregatesInput[]
+    id_archivo?: UuidWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    cuadro_id?: UuidWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    proveedor_id?: UuidWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    pdf_nombre?: StringWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    pdf_ruta?: StringWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    pdf_mime?: StringWithAggregatesFilter<"ComparativaProveedorArchivo"> | string
+    updated_at?: DateTimeWithAggregatesFilter<"ComparativaProveedorArchivo"> | Date | string
   }
 
   export type AuditoriaDesbloqueoComparativaWhereInput = {
@@ -26696,6 +27890,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateInput = {
@@ -26724,6 +27919,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUpdateInput = {
@@ -26752,6 +27948,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateInput = {
@@ -26780,6 +27977,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoCreateManyInput = {
@@ -26852,6 +28050,89 @@ export namespace Prisma {
     gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ComparativaProveedorArchivoCreateInput = {
+    id_archivo?: string
+    tenant_id: string
+    proyecto_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at?: Date | string
+    cuadro: CuadroComparativoCreateNestedOneWithoutArchivos_proveedorInput
+  }
+
+  export type ComparativaProveedorArchivoUncheckedCreateInput = {
+    id_archivo?: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at?: Date | string
+  }
+
+  export type ComparativaProveedorArchivoUpdateInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuadro?: CuadroComparativoUpdateOneRequiredWithoutArchivos_proveedorNestedInput
+  }
+
+  export type ComparativaProveedorArchivoUncheckedUpdateInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComparativaProveedorArchivoCreateManyInput = {
+    id_archivo?: string
+    tenant_id: string
+    proyecto_id: string
+    cuadro_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at?: Date | string
+  }
+
+  export type ComparativaProveedorArchivoUpdateManyMutationInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComparativaProveedorArchivoUncheckedUpdateManyInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    cuadro_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AuditoriaDesbloqueoComparativaCreateInput = {
@@ -28576,6 +29857,12 @@ export namespace Prisma {
     none?: AuditoriaDesbloqueoComparativaWhereInput
   }
 
+  export type ComparativaProveedorArchivoListRelationFilter = {
+    every?: ComparativaProveedorArchivoWhereInput
+    some?: ComparativaProveedorArchivoWhereInput
+    none?: ComparativaProveedorArchivoWhereInput
+  }
+
   export type ComparativaLineaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -28585,6 +29872,10 @@ export namespace Prisma {
   }
 
   export type AuditoriaDesbloqueoComparativaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ComparativaProveedorArchivoOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -28682,6 +29973,47 @@ export namespace Prisma {
   export type CuadroComparativoRelationFilter = {
     is?: CuadroComparativoWhereInput
     isNot?: CuadroComparativoWhereInput
+  }
+
+  export type ComparativaProveedorArchivoCuadro_idProveedor_idCompoundUniqueInput = {
+    cuadro_id: string
+    proveedor_id: string
+  }
+
+  export type ComparativaProveedorArchivoCountOrderByAggregateInput = {
+    id_archivo?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    proveedor_id?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ComparativaProveedorArchivoMaxOrderByAggregateInput = {
+    id_archivo?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    proveedor_id?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ComparativaProveedorArchivoMinOrderByAggregateInput = {
+    id_archivo?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    cuadro_id?: SortOrder
+    proveedor_id?: SortOrder
+    pdf_nombre?: SortOrder
+    pdf_ruta?: SortOrder
+    pdf_mime?: SortOrder
+    updated_at?: SortOrder
   }
 
   export type AuditoriaDesbloqueoComparativaCountOrderByAggregateInput = {
@@ -29625,6 +30957,13 @@ export namespace Prisma {
     connect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
   }
 
+  export type ComparativaProveedorArchivoCreateNestedManyWithoutCuadroInput = {
+    create?: XOR<ComparativaProveedorArchivoCreateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput> | ComparativaProveedorArchivoCreateWithoutCuadroInput[] | ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput | ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput[]
+    createMany?: ComparativaProveedorArchivoCreateManyCuadroInputEnvelope
+    connect?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+  }
+
   export type ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
@@ -29651,6 +30990,13 @@ export namespace Prisma {
     connectOrCreate?: AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput | AuditoriaDesbloqueoComparativaCreateOrConnectWithoutCuadroInput[]
     createMany?: AuditoriaDesbloqueoComparativaCreateManyCuadroInputEnvelope
     connect?: AuditoriaDesbloqueoComparativaWhereUniqueInput | AuditoriaDesbloqueoComparativaWhereUniqueInput[]
+  }
+
+  export type ComparativaProveedorArchivoUncheckedCreateNestedManyWithoutCuadroInput = {
+    create?: XOR<ComparativaProveedorArchivoCreateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput> | ComparativaProveedorArchivoCreateWithoutCuadroInput[] | ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput | ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput[]
+    createMany?: ComparativaProveedorArchivoCreateManyCuadroInputEnvelope
+    connect?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -29713,6 +31059,20 @@ export namespace Prisma {
     deleteMany?: AuditoriaDesbloqueoComparativaScalarWhereInput | AuditoriaDesbloqueoComparativaScalarWhereInput[]
   }
 
+  export type ComparativaProveedorArchivoUpdateManyWithoutCuadroNestedInput = {
+    create?: XOR<ComparativaProveedorArchivoCreateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput> | ComparativaProveedorArchivoCreateWithoutCuadroInput[] | ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput | ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput[]
+    upsert?: ComparativaProveedorArchivoUpsertWithWhereUniqueWithoutCuadroInput | ComparativaProveedorArchivoUpsertWithWhereUniqueWithoutCuadroInput[]
+    createMany?: ComparativaProveedorArchivoCreateManyCuadroInputEnvelope
+    set?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    disconnect?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    delete?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    connect?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    update?: ComparativaProveedorArchivoUpdateWithWhereUniqueWithoutCuadroInput | ComparativaProveedorArchivoUpdateWithWhereUniqueWithoutCuadroInput[]
+    updateMany?: ComparativaProveedorArchivoUpdateManyWithWhereWithoutCuadroInput | ComparativaProveedorArchivoUpdateManyWithWhereWithoutCuadroInput[]
+    deleteMany?: ComparativaProveedorArchivoScalarWhereInput | ComparativaProveedorArchivoScalarWhereInput[]
+  }
+
   export type ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput = {
     create?: XOR<ComparativaDetalleCreateWithoutCuadroInput, ComparativaDetalleUncheckedCreateWithoutCuadroInput> | ComparativaDetalleCreateWithoutCuadroInput[] | ComparativaDetalleUncheckedCreateWithoutCuadroInput[]
     connectOrCreate?: ComparativaDetalleCreateOrConnectWithoutCuadroInput | ComparativaDetalleCreateOrConnectWithoutCuadroInput[]
@@ -29767,6 +31127,34 @@ export namespace Prisma {
     update?: AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpdateWithWhereUniqueWithoutCuadroInput[]
     updateMany?: AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput | AuditoriaDesbloqueoComparativaUpdateManyWithWhereWithoutCuadroInput[]
     deleteMany?: AuditoriaDesbloqueoComparativaScalarWhereInput | AuditoriaDesbloqueoComparativaScalarWhereInput[]
+  }
+
+  export type ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroNestedInput = {
+    create?: XOR<ComparativaProveedorArchivoCreateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput> | ComparativaProveedorArchivoCreateWithoutCuadroInput[] | ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput[]
+    connectOrCreate?: ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput | ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput[]
+    upsert?: ComparativaProveedorArchivoUpsertWithWhereUniqueWithoutCuadroInput | ComparativaProveedorArchivoUpsertWithWhereUniqueWithoutCuadroInput[]
+    createMany?: ComparativaProveedorArchivoCreateManyCuadroInputEnvelope
+    set?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    disconnect?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    delete?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    connect?: ComparativaProveedorArchivoWhereUniqueInput | ComparativaProveedorArchivoWhereUniqueInput[]
+    update?: ComparativaProveedorArchivoUpdateWithWhereUniqueWithoutCuadroInput | ComparativaProveedorArchivoUpdateWithWhereUniqueWithoutCuadroInput[]
+    updateMany?: ComparativaProveedorArchivoUpdateManyWithWhereWithoutCuadroInput | ComparativaProveedorArchivoUpdateManyWithWhereWithoutCuadroInput[]
+    deleteMany?: ComparativaProveedorArchivoScalarWhereInput | ComparativaProveedorArchivoScalarWhereInput[]
+  }
+
+  export type CuadroComparativoCreateNestedOneWithoutArchivos_proveedorInput = {
+    create?: XOR<CuadroComparativoCreateWithoutArchivos_proveedorInput, CuadroComparativoUncheckedCreateWithoutArchivos_proveedorInput>
+    connectOrCreate?: CuadroComparativoCreateOrConnectWithoutArchivos_proveedorInput
+    connect?: CuadroComparativoWhereUniqueInput
+  }
+
+  export type CuadroComparativoUpdateOneRequiredWithoutArchivos_proveedorNestedInput = {
+    create?: XOR<CuadroComparativoCreateWithoutArchivos_proveedorInput, CuadroComparativoUncheckedCreateWithoutArchivos_proveedorInput>
+    connectOrCreate?: CuadroComparativoCreateOrConnectWithoutArchivos_proveedorInput
+    upsert?: CuadroComparativoUpsertWithoutArchivos_proveedorInput
+    connect?: CuadroComparativoWhereUniqueInput
+    update?: XOR<XOR<CuadroComparativoUpdateToOneWithWhereWithoutArchivos_proveedorInput, CuadroComparativoUpdateWithoutArchivos_proveedorInput>, CuadroComparativoUncheckedUpdateWithoutArchivos_proveedorInput>
   }
 
   export type CuadroComparativoCreateNestedOneWithoutAuditoria_desbloqueosInput = {
@@ -31588,6 +32976,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ComparativaProveedorArchivoCreateWithoutCuadroInput = {
+    id_archivo?: string
+    tenant_id: string
+    proyecto_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at?: Date | string
+  }
+
+  export type ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput = {
+    id_archivo?: string
+    tenant_id: string
+    proyecto_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at?: Date | string
+  }
+
+  export type ComparativaProveedorArchivoCreateOrConnectWithoutCuadroInput = {
+    where: ComparativaProveedorArchivoWhereUniqueInput
+    create: XOR<ComparativaProveedorArchivoCreateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput>
+  }
+
+  export type ComparativaProveedorArchivoCreateManyCuadroInputEnvelope = {
+    data: ComparativaProveedorArchivoCreateManyCuadroInput | ComparativaProveedorArchivoCreateManyCuadroInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ComparativaDetalleUpsertWithWhereUniqueWithoutCuadroInput = {
     where: ComparativaDetalleWhereUniqueInput
     update: XOR<ComparativaDetalleUpdateWithoutCuadroInput, ComparativaDetalleUncheckedUpdateWithoutCuadroInput>
@@ -31696,6 +33116,165 @@ export namespace Prisma {
     justificacion?: StringFilter<"AuditoriaDesbloqueoComparativa"> | string
   }
 
+  export type ComparativaProveedorArchivoUpsertWithWhereUniqueWithoutCuadroInput = {
+    where: ComparativaProveedorArchivoWhereUniqueInput
+    update: XOR<ComparativaProveedorArchivoUpdateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedUpdateWithoutCuadroInput>
+    create: XOR<ComparativaProveedorArchivoCreateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedCreateWithoutCuadroInput>
+  }
+
+  export type ComparativaProveedorArchivoUpdateWithWhereUniqueWithoutCuadroInput = {
+    where: ComparativaProveedorArchivoWhereUniqueInput
+    data: XOR<ComparativaProveedorArchivoUpdateWithoutCuadroInput, ComparativaProveedorArchivoUncheckedUpdateWithoutCuadroInput>
+  }
+
+  export type ComparativaProveedorArchivoUpdateManyWithWhereWithoutCuadroInput = {
+    where: ComparativaProveedorArchivoScalarWhereInput
+    data: XOR<ComparativaProveedorArchivoUpdateManyMutationInput, ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroInput>
+  }
+
+  export type ComparativaProveedorArchivoScalarWhereInput = {
+    AND?: ComparativaProveedorArchivoScalarWhereInput | ComparativaProveedorArchivoScalarWhereInput[]
+    OR?: ComparativaProveedorArchivoScalarWhereInput[]
+    NOT?: ComparativaProveedorArchivoScalarWhereInput | ComparativaProveedorArchivoScalarWhereInput[]
+    id_archivo?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    tenant_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    proyecto_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    cuadro_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    proveedor_id?: UuidFilter<"ComparativaProveedorArchivo"> | string
+    pdf_nombre?: StringFilter<"ComparativaProveedorArchivo"> | string
+    pdf_ruta?: StringFilter<"ComparativaProveedorArchivo"> | string
+    pdf_mime?: StringFilter<"ComparativaProveedorArchivo"> | string
+    updated_at?: DateTimeFilter<"ComparativaProveedorArchivo"> | Date | string
+  }
+
+  export type CuadroComparativoCreateWithoutArchivos_proveedorInput = {
+    id_cuadro?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    codigo: string
+    fecha_creacion?: Date | string
+    estado?: string
+    notas?: string | null
+    revision?: string
+    revision_padre_id?: string | null
+    firmado_por?: string | null
+    fecha_firma?: Date | string | null
+    primera_opcion_proveedor_id?: string | null
+    segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
+    detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
+    lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
+    aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
+  }
+
+  export type CuadroComparativoUncheckedCreateWithoutArchivos_proveedorInput = {
+    id_cuadro?: string
+    tenant_id: string
+    proyecto_id: string
+    requisicion_id: string
+    codigo: string
+    fecha_creacion?: Date | string
+    estado?: string
+    notas?: string | null
+    revision?: string
+    revision_padre_id?: string | null
+    firmado_por?: string | null
+    fecha_firma?: Date | string | null
+    primera_opcion_proveedor_id?: string | null
+    segunda_opcion_proveedor_id?: string | null
+    veredicto_residente?: string | null
+    proveedores_sugeridos?: string | null
+    evaluacion_residente_id?: string | null
+    fecha_evaluacion_tecnica?: Date | string | null
+    gerente_tecnico_id?: string | null
+    fecha_aprobacion_gt?: Date | string | null
+    comentario_gt_general?: string | null
+    detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
+    lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
+    aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
+  }
+
+  export type CuadroComparativoCreateOrConnectWithoutArchivos_proveedorInput = {
+    where: CuadroComparativoWhereUniqueInput
+    create: XOR<CuadroComparativoCreateWithoutArchivos_proveedorInput, CuadroComparativoUncheckedCreateWithoutArchivos_proveedorInput>
+  }
+
+  export type CuadroComparativoUpsertWithoutArchivos_proveedorInput = {
+    update: XOR<CuadroComparativoUpdateWithoutArchivos_proveedorInput, CuadroComparativoUncheckedUpdateWithoutArchivos_proveedorInput>
+    create: XOR<CuadroComparativoCreateWithoutArchivos_proveedorInput, CuadroComparativoUncheckedCreateWithoutArchivos_proveedorInput>
+    where?: CuadroComparativoWhereInput
+  }
+
+  export type CuadroComparativoUpdateToOneWithWhereWithoutArchivos_proveedorInput = {
+    where?: CuadroComparativoWhereInput
+    data: XOR<CuadroComparativoUpdateWithoutArchivos_proveedorInput, CuadroComparativoUncheckedUpdateWithoutArchivos_proveedorInput>
+  }
+
+  export type CuadroComparativoUpdateWithoutArchivos_proveedorInput = {
+    id_cuadro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revision?: StringFieldUpdateOperationsInput | string
+    revision_padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    firmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
+    lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
+    aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
+  }
+
+  export type CuadroComparativoUncheckedUpdateWithoutArchivos_proveedorInput = {
+    id_cuadro?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    requisicion_id?: StringFieldUpdateOperationsInput | string
+    codigo?: StringFieldUpdateOperationsInput | string
+    fecha_creacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: StringFieldUpdateOperationsInput | string
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revision?: StringFieldUpdateOperationsInput | string
+    revision_padre_id?: NullableStringFieldUpdateOperationsInput | string | null
+    firmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_firma?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    primera_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    segunda_opcion_proveedor_id?: NullableStringFieldUpdateOperationsInput | string | null
+    veredicto_residente?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedores_sugeridos?: NullableStringFieldUpdateOperationsInput | string | null
+    evaluacion_residente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_evaluacion_tecnica?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gerente_tecnico_id?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion_gt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comentario_gt_general?: NullableStringFieldUpdateOperationsInput | string | null
+    detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
+    lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
+    aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+  }
+
   export type CuadroComparativoCreateWithoutAuditoria_desbloqueosInput = {
     id_cuadro?: string
     tenant_id: string
@@ -31721,6 +33300,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutAuditoria_desbloqueosInput = {
@@ -31748,6 +33328,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutAuditoria_desbloqueosInput = {
@@ -31791,6 +33372,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutAuditoria_desbloqueosInput = {
@@ -31818,6 +33400,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoCreateWithoutLineasInput = {
@@ -31845,6 +33428,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutLineasInput = {
@@ -31872,6 +33456,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutLineasInput = {
@@ -31915,6 +33500,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutLineasInput = {
@@ -31942,6 +33528,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoCreateWithoutDetallesInput = {
@@ -31969,6 +33556,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutDetallesInput = {
@@ -31996,6 +33584,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
     aclaraciones?: AclaracionComparativaUncheckedCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutDetallesInput = {
@@ -32086,6 +33675,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutDetallesInput = {
@@ -32113,6 +33703,7 @@ export namespace Prisma {
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
     aclaraciones?: AclaracionComparativaUncheckedUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type ProveedorUpsertWithoutComparativasInput = {
@@ -32193,6 +33784,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoUncheckedCreateWithoutAclaracionesInput = {
@@ -32220,6 +33812,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedCreateNestedManyWithoutCuadroInput
     lineas?: ComparativaLineaUncheckedCreateNestedManyWithoutCuadroInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedCreateNestedManyWithoutCuadroInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedCreateNestedManyWithoutCuadroInput
   }
 
   export type CuadroComparativoCreateOrConnectWithoutAclaracionesInput = {
@@ -32263,6 +33856,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUpdateManyWithoutCuadroNestedInput
   }
 
   export type CuadroComparativoUncheckedUpdateWithoutAclaracionesInput = {
@@ -32290,6 +33884,7 @@ export namespace Prisma {
     detalles?: ComparativaDetalleUncheckedUpdateManyWithoutCuadroNestedInput
     lineas?: ComparativaLineaUncheckedUpdateManyWithoutCuadroNestedInput
     auditoria_desbloqueos?: AuditoriaDesbloqueoComparativaUncheckedUpdateManyWithoutCuadroNestedInput
+    archivos_proveedor?: ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroNestedInput
   }
 
   export type SolicitudCotizacionProveedorCreateWithoutSolicitudInput = {
@@ -33044,6 +34639,17 @@ export namespace Prisma {
     justificacion: string
   }
 
+  export type ComparativaProveedorArchivoCreateManyCuadroInput = {
+    id_archivo?: string
+    tenant_id: string
+    proyecto_id: string
+    proveedor_id: string
+    pdf_nombre: string
+    pdf_ruta: string
+    pdf_mime: string
+    updated_at?: Date | string
+  }
+
   export type ComparativaDetalleUpdateWithoutCuadroInput = {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
@@ -33194,6 +34800,39 @@ export namespace Prisma {
     justificacion?: StringFieldUpdateOperationsInput | string
   }
 
+  export type ComparativaProveedorArchivoUpdateWithoutCuadroInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComparativaProveedorArchivoUncheckedUpdateWithoutCuadroInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComparativaProveedorArchivoUncheckedUpdateManyWithoutCuadroInput = {
+    id_archivo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    proveedor_id?: StringFieldUpdateOperationsInput | string
+    pdf_nombre?: StringFieldUpdateOperationsInput | string
+    pdf_ruta?: StringFieldUpdateOperationsInput | string
+    pdf_mime?: StringFieldUpdateOperationsInput | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type SolicitudCotizacionProveedorCreateManySolicitudInput = {
     id_scp?: string
     tenant_id: string
@@ -33319,6 +34958,10 @@ export namespace Prisma {
      * @deprecated Use CuadroComparativoDefaultArgs instead
      */
     export type CuadroComparativoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CuadroComparativoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ComparativaProveedorArchivoDefaultArgs instead
+     */
+    export type ComparativaProveedorArchivoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ComparativaProveedorArchivoDefaultArgs<ExtArgs>
     /**
      * @deprecated Use AuditoriaDesbloqueoComparativaDefaultArgs instead
      */

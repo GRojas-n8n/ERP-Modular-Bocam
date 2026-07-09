@@ -5,6 +5,7 @@ import { useNotification } from '../context/NotificationContext';
 import { DEMO_INSUMOS, DEMO_REQUISICIONES, DEMO_COMPARATIVAS } from '../lib/demoData';
 import { ComparativaDetail } from '../components/ComparativaDetail';
 import type { ComparativaLocal } from '../components/ComparativaDetail';
+import { seedProveedoresDesdeSolicitud } from '../lib/comparativa-proveedores';
 import {
   Button,
   Card,
@@ -38,7 +39,6 @@ import {
   IconSearch,
   IconSend,
   IconShoppingCart,
-  IconUpload,
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
@@ -291,8 +291,6 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [editandoProveedores, setEditandoProveedores] = useState(false);
   const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[]; tema: 'claro' | 'oscuro' }>({ dias_habiles: 3, notas: '', provsSeleccionados: [], tema: 'claro' });
   const [solicitudSubmitting, setSolicitudSubmitting] = useState(false);
-  const [scpUploadTarget, setScpUploadTarget] = useState<{ reqId: string; scpId: string } | null>(null);
-  const scpFileRef = useRef<HTMLInputElement>(null);
 
   // Panels
   const [showReqForm, setShowReqForm] = useState(false);
@@ -738,12 +736,24 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         } catch { /* si falla, usar ID local */ }
       }
 
+      // Pre-poblar proveedores desde la Solicitud de Cotización ya enviada (si existe),
+      // para que Compras no tenga que volver a capturarlos manualmente.
+      let proveedoresIniciales: ComparativaLocal['proveedores'] = [];
+      if (!isDemo) {
+        const solicitud = solicitudesMap[req.id] ?? (await loadSolicitud(req.id));
+        if (solicitud) {
+          proveedoresIniciales = seedProveedoresDesdeSolicitud(
+            solicitud.proveedores.map(p => ({ proveedor_id: p.proveedor_id, proveedor_nombre: p.proveedor_nombre }))
+          );
+        }
+      }
+
       const lineasFromReq = buildLineasFromReq(req);
       const newComp: ComparativaLocal = {
         id: backendId,
         requisicion_id: req.id,
         estado: 'BORRADOR',
-        proveedores: [],
+        proveedores: proveedoresIniciales,
         lineas: lineasFromReq,
         ordenes_compra: [],
       };
@@ -877,18 +887,13 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
-  const handleUploadScpPdf = async (file: File, reqId: string, scpId: string) => {
-    const fd = new FormData();
-    fd.append('archivo', file);
-    fd.append('estado', 'RESPONDIO');
+  const handleMarcarRespondio = async (reqId: string, scpId: string) => {
     try {
-      await api.put(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion/proveedores/${scpId}`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await api.put(`/api/v1/compras/requisiciones/${reqId}/solicitud-cotizacion/proveedores/${scpId}`, { estado: 'RESPONDIO' });
       await loadSolicitud(reqId);
-      notify({ type: 'success', title: 'Cotización recibida', message: file.name });
+      notify({ type: 'success', title: 'Proveedor marcado como Respondió' });
     } catch (err: any) {
-      notify({ type: 'error', title: 'Error al subir PDF', message: err.response?.data?.message || err.message });
+      notify({ type: 'error', title: 'Error', message: err.response?.data?.message || err.message });
     }
   };
 
@@ -2496,10 +2501,10 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                           <div className="flex gap-2 mt-2">
                             <button
                               type="button"
-                              onClick={() => { setScpUploadTarget({ reqId: solicitudPanelReqId, scpId: scp.id_scp }); scpFileRef.current?.click(); }}
-                              className="flex items-center gap-1 rounded-lg bg-sky-500/10 px-3 py-1.5 text-[10px] font-black text-sky-700 hover:bg-sky-500/20"
+                              onClick={() => handleMarcarRespondio(solicitudPanelReqId, scp.id_scp)}
+                              className="flex items-center gap-1 rounded-lg bg-green-500/10 px-3 py-1.5 text-[10px] font-black text-green-700 hover:bg-green-500/20"
                             >
-                              <IconUpload className="h-3 w-3" /> Subir PDF
+                              <IconCheckCircle2 className="h-3 w-3" /> Respondió
                             </button>
                             <button
                               type="button"
@@ -2510,14 +2515,10 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             </button>
                           </div>
                         )}
-                        {scp.estado === 'RESPONDIO' && isProcurement && (
-                          <button
-                            type="button"
-                            onClick={() => { setScpUploadTarget({ reqId: solicitudPanelReqId, scpId: scp.id_scp }); scpFileRef.current?.click(); }}
-                            className="flex items-center gap-1 mt-2 rounded-lg bg-sky-500/10 px-3 py-1.5 text-[10px] font-black text-sky-700 hover:bg-sky-500/20"
-                          >
-                            <IconUpload className="h-3 w-3" /> Re-subir PDF
-                          </button>
+                        {scp.estado === 'RESPONDIO' && (
+                          <p className="mt-2 text-[10px] text-muted-foreground">
+                            El PDF de cotización se sube desde el cuadro comparativo.
+                          </p>
                         )}
                       </div>
                     ))}
@@ -2670,22 +2671,6 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </SlidePanel>
         );
       })()}
-
-      {/* Input oculto para subir PDF de cotización */}
-      <input
-        ref={scpFileRef}
-        type="file"
-        accept=".pdf,application/pdf"
-        className="hidden"
-        onChange={async e => {
-          const file = e.target.files?.[0];
-          if (file && scpUploadTarget) {
-            await handleUploadScpPdf(file, scpUploadTarget.reqId, scpUploadTarget.scpId);
-          }
-          e.target.value = '';
-          setScpUploadTarget(null);
-        }}
-      />
 
       {/* ── SLIDE PANEL: Nueva Requisición ──────────────────────────────────── */}
       <SlidePanel

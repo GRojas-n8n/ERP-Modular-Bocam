@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import api, { asistenteApi } from '../lib/api';
+import api, { asistenteApi, comprasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import {
@@ -18,6 +18,7 @@ import {
   IconArrowLeft,
   IconCheckCircle2,
   IconDownload,
+  IconFileText,
   IconPackage,
   IconPlus,
   IconScale,
@@ -366,6 +367,10 @@ export const ComparativaDetail: React.FC<Props> = ({
         if (resp.data?.data?.ordenes_compra) {
           onUpdate({ ...compRef.current, ordenes_compra: resp.data.data.ordenes_compra });
         }
+        const archivos = resp.data?.data?.archivos_proveedor as { proveedor_id: string; pdf_nombre: string; updated_at: string }[] | undefined;
+        if (archivos) {
+          setArchivosProveedor(Object.fromEntries(archivos.map(a => [a.proveedor_id, { pdf_nombre: a.pdf_nombre, updated_at: a.updated_at }])));
+        }
       })
       .catch(() => {});
   }, []);
@@ -434,6 +439,9 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [renglonesPdf, setRenglonesPdf] = useState<RenglonEditable[]>([]);
   const [showPdfReview, setShowPdfReview] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [aplicandoCotizacion, setAplicandoCotizacion] = useState(false);
+  const [archivosProveedor, setArchivosProveedor] = useState<Record<string, { pdf_nombre: string; updated_at: string }>>({});
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const addLineaRef = useRef<HTMLDivElement>(null);
@@ -709,6 +717,7 @@ export const ComparativaDetail: React.FC<Props> = ({
     e.target.value = '';
 
     const prov = comp.proveedores.find(p => p.id === pdfProveedorId);
+    setPdfFile(file);
     setUploadingPdf(true);
     try {
       const resp = await asistenteApi.leerCotizacionPDF(prov?.nombre ?? '', file);
@@ -722,18 +731,27 @@ export const ComparativaDetail: React.FC<Props> = ({
       setRenglonesPdf(renglones);
       setShowPdfReview(true);
     } catch (err: unknown) {
-      const msg = (err as { response?: { status?: number } })?.response?.status === 413
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const msg = status === 413
         ? 'El PDF supera el límite de 10 MB.'
-        : (err as { response?: { status?: number } })?.response?.status === 503
-          ? 'El servicio de IA no está disponible. Intenta más tarde.'
-          : 'No se pudo procesar el PDF.';
-      notify({ type: 'error', title: 'Error al leer PDF', message: msg });
+        : status === 503
+          ? 'El servicio de IA no está disponible. Captura los precios manualmente y el PDF se guardará igual como respaldo.'
+          : 'No se pudo leer el PDF automáticamente. Captura los precios manualmente y el PDF se guardará igual como respaldo.';
+      notify({ type: status === 413 ? 'error' : 'warning', title: status === 413 ? 'Error al leer PDF' : 'Extracción no disponible', message: msg });
+      // El servicio de IA no respondió, pero el PDF sigue siendo válido como respaldo:
+      // se abre el panel de revisión vacío para captura manual, sin bloquear el flujo.
+      if (status !== 413) {
+        setRenglonesPdf([]);
+        setShowPdfReview(true);
+      } else {
+        setPdfFile(null);
+      }
     } finally {
       setUploadingPdf(false);
     }
   };
 
-  const handleAplicarCotizacion = () => {
+  const handleAplicarCotizacion = async () => {
     if (!pdfProveedorId) return;
     const lineasActualizadas = comp.lineas.map((linea) => {
       const match = renglonesPdf.find(
@@ -746,7 +764,26 @@ export const ComparativaDetail: React.FC<Props> = ({
       return { ...linea, precios: { ...linea.precios, [pdfProveedorId]: String(precio) } };
     });
     onUpdate({ ...comp, lineas: lineasActualizadas });
+
+    // Persistir el PDF original como respaldo — solo ahora que Compras confirmó
+    // aplicar la cotización, no en el momento de la extracción.
+    if (pdfFile && !isDemo) {
+      setAplicandoCotizacion(true);
+      try {
+        const resp = await comprasApi.subirCotizacionPdf(comp.id, pdfProveedorId, pdfFile);
+        const archivo = resp.data?.data as { pdf_nombre: string; updated_at: string } | undefined;
+        if (archivo) {
+          setArchivosProveedor(prev => ({ ...prev, [pdfProveedorId]: { pdf_nombre: archivo.pdf_nombre, updated_at: archivo.updated_at } }));
+        }
+      } catch {
+        notify({ type: 'warning', title: 'Precios aplicados', message: 'Los precios se aplicaron, pero no se pudo guardar el PDF como respaldo.' });
+      } finally {
+        setAplicandoCotizacion(false);
+      }
+    }
+
     setShowPdfReview(false);
+    setPdfFile(null);
     notify({ type: 'success', title: 'Cotización aplicada', message: 'Precios del PDF aplicados al cuadro.' });
   };
 
@@ -1545,11 +1582,19 @@ export const ComparativaDetail: React.FC<Props> = ({
                   <div key={prov.id} className={cn('flex items-center gap-2 rounded-xl border px-3 py-2', c.chip)}>
                     <span className="text-[11px] font-black">{String.fromCharCode(65 + i)}</span>
                     <span className="text-xs font-semibold">{prov.nombre}</span>
+                    {archivosProveedor[prov.id] && (
+                      <span
+                        title={`Cotización en respaldo: ${archivosProveedor[prov.id].pdf_nombre}`}
+                        className="flex items-center gap-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-600"
+                      >
+                        <IconFileText className="h-3 w-3" />
+                      </span>
+                    )}
                     {!locked && !isDemo && (
                       <button
                         onClick={() => handleSubirCotizacionClick(prov.id)}
                         disabled={uploadingPdf}
-                        title="Subir cotización PDF"
+                        title={archivosProveedor[prov.id] ? 'Re-subir cotización PDF' : 'Subir cotización PDF'}
                         className="ml-1 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
                       >
                         {uploadingPdf && pdfProveedorId === prov.id ? (
@@ -2712,14 +2757,15 @@ export const ComparativaDetail: React.FC<Props> = ({
             </table>
           </TableScrollShadow>
           <div className="flex justify-end gap-3 pt-2">
-            <Button onClick={() => setShowPdfReview(false)} variant="outline" className="rounded-xl text-xs">
+            <Button onClick={() => { setShowPdfReview(false); setPdfFile(null); }} variant="outline" className="rounded-xl text-xs" disabled={aplicandoCotizacion}>
               Cancelar
             </Button>
             <Button
               onClick={handleAplicarCotizacion}
-              className="rounded-xl bg-emerald-600 px-5 text-xs font-black text-white hover:bg-emerald-500"
+              disabled={aplicandoCotizacion}
+              className="rounded-xl bg-emerald-600 px-5 text-xs font-black text-white hover:bg-emerald-500 disabled:opacity-60"
             >
-              Aplicar al cuadro
+              {aplicandoCotizacion ? 'Guardando...' : 'Aplicar al cuadro'}
             </Button>
           </div>
         </div>

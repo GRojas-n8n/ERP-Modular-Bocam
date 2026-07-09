@@ -288,6 +288,18 @@ exports.Prisma.CuadroComparativoScalarFieldEnum = {
   comentario_gt_general: 'comentario_gt_general'
 };
 
+exports.Prisma.ComparativaProveedorArchivoScalarFieldEnum = {
+  id_archivo: 'id_archivo',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  cuadro_id: 'cuadro_id',
+  proveedor_id: 'proveedor_id',
+  pdf_nombre: 'pdf_nombre',
+  pdf_ruta: 'pdf_ruta',
+  pdf_mime: 'pdf_mime',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.AuditoriaDesbloqueoComparativaScalarFieldEnum = {
   id_auditoria: 'id_auditoria',
   tenant_id: 'tenant_id',
@@ -432,6 +444,7 @@ exports.Prisma.ModelName = {
   RecepcionOC: 'RecepcionOC',
   RecepcionOCItem: 'RecepcionOCItem',
   CuadroComparativo: 'CuadroComparativo',
+  ComparativaProveedorArchivo: 'ComparativaProveedorArchivo',
   AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
   ComparativaLinea: 'ComparativaLinea',
   ComparativaDetalle: 'ComparativaDetalle',
