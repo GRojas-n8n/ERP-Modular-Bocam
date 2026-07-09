@@ -19,6 +19,7 @@ import {
 } from '../../../packages/observability/src';
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
 import { enviarSolicitudCotizacionEmail } from './mailer';
+import { resolveProyectoIdParaSolicitud } from './solicitud-cotizacion-policy';
 
 const eventBus = createEventBus('compras');
 
@@ -647,11 +648,17 @@ app.post(
         async (prisma) => {
           const req_obj = await prisma.requisicion.findUnique({
             where: { id_requisicion: reqId },
-            select: { id_requisicion: true, tenant_id: true },
+            select: { id_requisicion: true, tenant_id: true, proyecto_id: true },
           });
           if (!req_obj || req_obj.tenant_id !== tenantId) {
             return { notFound: true };
           }
+
+          // El proyecto de la solicitud SIEMPRE viene de la requisición de
+          // origen — nunca del proyecto activo de la sesión del usuario
+          // (roles tenant-level pueden tener seleccionado otro proyecto, o
+          // ninguno). Ver openspec/changes/fix-proyecto-id-solicitud-cotizacion.
+          const proyectoIdSolicitud = resolveProyectoIdParaSolicitud(req_obj, tenantId);
 
           const fechaSolicitud = new Date();
           const fechaLimite = addDiasHabiles(fechaSolicitud, Number(dias_habiles));
@@ -701,7 +708,7 @@ app.post(
           const sol = await prisma.solicitudCotizacion.create({
             data: {
               tenant_id: tenantId,
-              proyecto_id: proyectoId,
+              proyecto_id: proyectoIdSolicitud,
               requisicion_id: reqId,
               dias_habiles: Number(dias_habiles),
               fecha_solicitud: fechaSolicitud,
@@ -733,7 +740,7 @@ app.post(
       const emailResult = proveedoresAEmailear.length === 0
         ? { enviados: 0, fallidos: [], sin_correo: [] }
         : await enviarCorreosSolicitudCotizacion({
-        reqId, tenantId, proyectoId, proveedoresIds: proveedoresAEmailear,
+        reqId, tenantId, proyectoId: (data as any).proyecto_id, proveedoresIds: proveedoresAEmailear,
         diasHabiles: Number(dias_habiles), notas: notas ?? null,
         fechaSolicitud: (data as any).fecha_solicitud,
         fechaLimite: (data as any).fecha_limite,
@@ -748,6 +755,9 @@ app.post(
 
       res.status(201).json({ success: true, data, emails: emailResult });
     } catch (error: any) {
+      if (error.message === 'REQUISICION_PROYECTO_INVALIDO') {
+        return res.status(400).json({ success: false, message: 'El proyecto de la requisición no es válido.' });
+      }
       logError(req, 'compras', 'compras.solicitud_cotizacion.crear.error', 'Error al crear solicitud de cotización', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
