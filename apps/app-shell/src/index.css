@@ -123,12 +123,16 @@
   }
 }
 
-/* ── Scrollbar sutil ── */
+/* ── Scrollbar ── */
 @layer base {
-  ::-webkit-scrollbar       { width: 5px; height: 5px; }
+  ::-webkit-scrollbar       { width: 7px; height: 7px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.5); }
+  /* Contraste elevado a propósito: con hsl(var(--border)) el thumb era casi
+     invisible sobre fondos similares, y era la única señal de que una tabla
+     tenía scroll horizontal disponible (ver TableScrollShadow para la señal
+     visual adicional en los bordes). */
+  ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.5); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.7); }
 }
 
 /* ── Keyframes wow ── */

@@ -1,5 +1,4 @@
 import { fileURLToPath, URL } from 'node:url'
-import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -10,20 +9,18 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      // CRÍTICO: Fuerza que react y react/jsx-runtime SIEMPRE se resuelvan
-      // desde app-shell/node_modules (React 19), sin importar desde qué
-      // directorio se importan. Sin esto, packages/ui-core/src/*.tsx sube
-      // por el árbol hasta el node_modules raíz del monorepo que tiene
-      // React 18.3.1 → elementos con $$typeof react.element (símbolo viejo)
-      // → React 19 reconciler los rechaza con error #525.
-      'react': path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime'),
-      'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime'),
       // Aliases de módulos locales
       '@bocam/ui-core': fileURLToPath(new URL('../../packages/ui-core/src/index.tsx', import.meta.url)),
       '@bocam/ui-core/dashboard': fileURLToPath(new URL('../../packages/ui-core/src/dashboard/index.tsx', import.meta.url)),
     },
+    // React y react-dom están unificados a una sola versión en todo el
+    // monorepo vía "overrides" en el package.json raíz — dedupe es una
+    // defensa adicional por si un futuro `npm install` reintroduce una
+    // copia duplicada (el bug original #525 documentado en el historial
+    // de este archivo: dos copias de React con distinto $$typeof de
+    // elemento hacían que el reconciler de React 19 rechazara elementos
+    // creados por la copia vieja).
+    dedupe: ['react', 'react-dom'],
   },
   define: {
     // Compatibilidad con librerías CJS que referencian process.env en producción.
@@ -52,5 +49,5 @@ export default defineConfig({
   },
   preview: {
     port: 3000,
-  }
+  },
 })

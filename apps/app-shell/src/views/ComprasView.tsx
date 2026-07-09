@@ -42,6 +42,7 @@ import {
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 
 /**
  * ---------------------------------------------------------------------------
@@ -1756,7 +1757,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   {isProcurement && <p className="mt-1 text-xs text-muted-foreground/70">Crea el primero con el botón "Nuevo Proveedor"</p>}
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-2xl border border-border/50">
+                <TableScrollShadow className="rounded-2xl border border-border/50">
                   <table className="w-full text-sm">
                     <thead className="border-b border-border/50 bg-muted/30">
                       <tr>
@@ -1862,7 +1863,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollShadow>
               )}
             </div>
           )}

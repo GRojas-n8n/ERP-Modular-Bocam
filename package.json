@@ -37,5 +37,9 @@
   "devDependencies": {
     "@allpepper/memory-bank-mcp": "^0.2.2",
     "prisma": "^5.22.0"
+  },
+  "overrides": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   }
 }

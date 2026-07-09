@@ -8,6 +8,7 @@ import {
   IconSearch,
 } from '../components/Icons';
 import { cn } from '../lib/utils';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 
 // ─── Icono local para ventas ──────────────────────────────────────────────────
 const IconShoppingBag: React.FC<{ className?: string }> = ({ className }) => (
@@ -250,7 +251,7 @@ export const VentasView: React.FC = () => {
                   <p className="font-black text-[10px] uppercase tracking-[0.3em] opacity-30">Sin clientes registrados</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <TableScrollShadow>
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border/40">
@@ -277,7 +278,7 @@ export const VentasView: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollShadow>
               )
             )}
 
@@ -289,7 +290,7 @@ export const VentasView: React.FC = () => {
                   <p className="font-black text-[10px] uppercase tracking-[0.3em] opacity-30">Sin cotizaciones registradas</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <TableScrollShadow>
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border/40">
@@ -318,7 +319,7 @@ export const VentasView: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollShadow>
               )
             )}
 
@@ -330,7 +331,7 @@ export const VentasView: React.FC = () => {
                   <p className="font-black text-[10px] uppercase tracking-[0.3em] opacity-30">Sin facturas registradas</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <TableScrollShadow>
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border/40">
@@ -361,7 +362,7 @@ export const VentasView: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollShadow>
               )
             )}
           </>

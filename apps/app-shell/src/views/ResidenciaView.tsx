@@ -41,6 +41,7 @@ import {
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 
 /**
  * ---------------------------------------------------------------------------
@@ -1485,7 +1486,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
               <div><p className="text-muted-foreground">Total Bruto</p><p className="font-semibold">{fmt$(nominaDetalle.total_bruto)}</p></div>
               <div><p className="text-muted-foreground">Deducciones</p><p className="font-semibold text-red-500">-{fmt$(nominaDetalle.total_deducciones)}</p></div>
             </div>
-            <div className="rounded-xl border border-border overflow-hidden">
+            <TableScrollShadow className="rounded-xl border border-border">
               <table className="w-full text-xs">
                 <thead className="bg-muted/40">
                   <tr>
@@ -1509,7 +1510,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                   </tr>
                 </tbody>
               </table>
-            </div>
+            </TableScrollShadow>
             {(nominaDetalle.estado === 'PENDIENTE' || nominaDetalle.estado === 'EN_PROCESO') && (
               <Button
                 className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"

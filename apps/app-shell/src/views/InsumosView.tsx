@@ -21,6 +21,7 @@ import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 import {
   IconBriefcase,
   IconSearch,
@@ -1822,7 +1823,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <TableScrollShadow>
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-border/40 bg-muted/30">
@@ -1927,7 +1928,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       </tr>
                     </tfoot>
                   </table>
-                </div>
+                </TableScrollShadow>
               )}
             </div>
           </>
@@ -2041,7 +2042,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <TableScrollShadow>
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-border/40 bg-muted/30">
@@ -2097,7 +2098,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       </tr>
                     </tfoot>
                   </table>
-                </div>
+                </TableScrollShadow>
               )}
             </div>
           </>
@@ -2170,7 +2171,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </div>
 
                 {/* Tabla WBS */}
-                <div className="overflow-hidden rounded-2xl border border-border/30 bg-card shadow-sm">
+                <TableScrollShadow className="rounded-2xl border border-border/30 bg-card shadow-sm">
                   <table className="w-full min-w-[900px] text-xs">
                     <thead className="border-b border-border/30 bg-muted/20">
                       <tr>
@@ -2273,7 +2274,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       )}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollShadow>
               </>
             )}
           </div>
@@ -2367,7 +2368,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </div>
 
                 {/* Tabla de partidas (6.2 + 6.4) */}
-                <div className="overflow-x-auto rounded-2xl border border-border/30">
+                <TableScrollShadow className="rounded-2xl border border-border/30">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-border/30 bg-muted/30">
@@ -2419,7 +2420,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       )}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollShadow>
               </>
             )}
           </div>
@@ -2571,7 +2572,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 <p className="text-[10px] text-muted-foreground max-w-xs">Carga el catálogo de obra y aprueba un presupuesto para ver la trazabilidad.</p>
               </div>
             ) : (
-              <div className="rounded-2xl border border-border/40 overflow-hidden">
+              <TableScrollShadow className="rounded-2xl border border-border/40">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-muted/50 border-b border-border/40">
                     <tr>
@@ -2617,7 +2618,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     })}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             )}
           </div>
         )}
@@ -2664,7 +2665,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           )}
 
           <div className="rounded-2xl border border-border/40 overflow-hidden">
-            <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            <TableScrollShadow className="max-h-[480px] overflow-y-auto">
               <table className="w-full text-left text-xs">
                 <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
                   <tr className="border-b border-border/40">
@@ -2704,7 +2705,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollShadow>
           </div>
         </div>
 
@@ -2851,7 +2852,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
             {/* Tabla de vista previa */}
             <div className="rounded-2xl border border-border/40 overflow-hidden">
-              <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+              <TableScrollShadow className="max-h-[480px] overflow-y-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
                     <tr className="border-b border-border/40">
@@ -2889,7 +2890,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             </div>
 
             <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex gap-3">
@@ -3022,7 +3023,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </div>
             ) : (
               <div className="rounded-2xl border border-border/40 overflow-hidden">
-                <div className="overflow-x-auto">
+                <TableScrollShadow>
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-border/40 bg-muted/40">
@@ -3090,7 +3091,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       </tr>
                     </tfoot>
                   </table>
-                </div>
+                </TableScrollShadow>
               </div>
             )}
 
