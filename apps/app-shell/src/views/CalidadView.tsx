@@ -13,6 +13,7 @@ import {
   IconAlertCircle, IconPlus, IconSearch, IconDownload, IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../lib/api';
@@ -915,7 +916,7 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; current
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <TableScrollShadow>
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-border/40 bg-muted/30">
@@ -951,7 +952,7 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; current
                   })}
                 </tbody>
               </table>
-            </div>
+            </TableScrollShadow>
           </CardContent>
         </Card>
       )}
@@ -1278,7 +1279,7 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <TableScrollShadow>
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-border/40 bg-muted/30">
@@ -1304,7 +1305,7 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollShadow>
           </CardContent>
         </Card>
       )}

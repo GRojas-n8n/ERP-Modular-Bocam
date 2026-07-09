@@ -7,6 +7,7 @@ import {
   IconFileText,
 } from '../components/Icons';
 import { cn } from '../lib/utils';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 
 interface Comparativa {
   id: string;
@@ -81,7 +82,7 @@ export const ComparativaPrecios: React.FC = () => {
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-border/40 bg-card shadow-xl backdrop-blur-sm">
-          <div className="overflow-x-auto">
+          <TableScrollShadow>
             <table className="min-w-[760px] w-full text-left">
               <thead>
                 <tr className="border-b border-border/40 bg-muted/30">
@@ -159,7 +160,7 @@ export const ComparativaPrecios: React.FC = () => {
                 )}
               </tbody>
             </table>
-          </div>
+          </TableScrollShadow>
         </div>
       )}
     </div>

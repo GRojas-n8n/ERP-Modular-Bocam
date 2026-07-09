@@ -10,7 +10,7 @@
       "@bocam/ui-core": ["../../packages/ui-core/src/index.tsx"],
       "@bocam/ui-core/dashboard": ["../../packages/ui-core/src/dashboard/index.tsx"]
     },
-    "types": ["vite/client"],
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "skipLibCheck": true,
 
     /* Bundler mode */

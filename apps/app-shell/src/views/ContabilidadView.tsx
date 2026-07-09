@@ -16,6 +16,7 @@ import {
   IconTrendingUp,
   IconWallet,
 } from '../components/Icons';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 
@@ -223,7 +224,7 @@ const ContabilidadView: React.FC = () => {
             description="Las pólizas se generan automáticamente desde los módulos de Finanzas, Compras y Control de Obra."
           />
         ) : (
-          <div className="overflow-x-auto">
+          <TableScrollShadow>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
@@ -277,6 +278,7 @@ const ContabilidadView: React.FC = () => {
                           ) : (
                             <div>
                               <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Movimientos contables</p>
+                              <TableScrollShadow>
                               <table className="w-full text-xs">
                                 <thead>
                                   <tr className="border-b">
@@ -306,6 +308,7 @@ const ContabilidadView: React.FC = () => {
                                   </tr>
                                 </tbody>
                               </table>
+                              </TableScrollShadow>
                             </div>
                           )}
                         </td>
@@ -315,7 +318,7 @@ const ContabilidadView: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScrollShadow>
         )}
       </CardContent>
     </Card>
@@ -429,7 +432,7 @@ const ContabilidadView: React.FC = () => {
                   {b.cuadrado ? 'Cuadrada' : 'Descuadrada'}
                 </SectionBadge>
               </div>
-              <div className="overflow-x-auto">
+              <TableScrollShadow>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b">
@@ -458,7 +461,7 @@ const ContabilidadView: React.FC = () => {
                     </tr>
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             </CardContent>
           </Card>
         );

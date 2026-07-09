@@ -30,6 +30,7 @@ import {
   IconWallet,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 
 /**
  * ---------------------------------------------------------------------------
@@ -1100,7 +1101,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-500/10 border-t-violet-600" />
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <TableScrollShadow>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border/30 bg-muted/30">
@@ -1149,7 +1150,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             )}
           </div>
         </div>

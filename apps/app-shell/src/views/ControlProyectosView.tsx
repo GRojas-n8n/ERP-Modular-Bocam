@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
+import { TableScrollShadow } from '../components/TableScrollShadow';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -359,7 +360,7 @@ export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ acti
                   </div>
                 </div>
               )}
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
+              <TableScrollShadow className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
                 <table className="w-full text-sm">
                   <thead className="bg-zinc-50 dark:bg-zinc-700/50 text-xs text-zinc-500 uppercase">
                     <tr>
@@ -400,7 +401,7 @@ export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ acti
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             </div>
           )
         )}
@@ -427,7 +428,7 @@ export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ acti
                   </div>
                 </div>
               )}
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
+              <TableScrollShadow className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
                 <table className="w-full text-sm">
                   <thead className="bg-zinc-50 dark:bg-zinc-700/50 text-xs text-zinc-500 uppercase">
                     <tr>
@@ -448,7 +449,7 @@ export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ acti
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             </div>
           )
         )}
@@ -511,7 +512,7 @@ export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ acti
                 <p className="text-zinc-400 text-sm mt-2">Use el endpoint <code className="font-mono text-xs bg-zinc-100 dark:bg-zinc-700 px-1 py-0.5 rounded">POST /api/v1/control-proyectos/programacion</code> para cargar la programación de obra.</p>
               </div>
             ) : (
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
+              <TableScrollShadow className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
                 <table className="w-full text-sm">
                   <thead className="bg-zinc-50 dark:bg-zinc-700/50 text-xs text-zinc-500 uppercase">
                     <tr>
@@ -553,7 +554,7 @@ export const ControlProyectosView: React.FC<ControlProyectosViewProps> = ({ acti
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollShadow>
             )}
           </div>
         )}

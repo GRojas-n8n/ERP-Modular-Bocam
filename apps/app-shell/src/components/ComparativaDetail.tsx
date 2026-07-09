@@ -24,6 +24,7 @@ import {
   IconSearch,
   IconX,
 } from './Icons';
+import { TableScrollShadow } from './TableScrollShadow';
 
 /**
  * ---------------------------------------------------------------------------
@@ -1438,7 +1439,7 @@ export const ComparativaDetail: React.FC<Props> = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="overflow-x-auto rounded-xl border border-border/30">
+            <TableScrollShadow className="rounded-xl border border-border/30">
               <table className="w-full text-[11px]">
                 <thead>
                   <tr className="border-b border-border/30 bg-muted/30">
@@ -1461,7 +1462,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollShadow>
           </CardContent>
         </Card>
       )}
@@ -1583,7 +1584,7 @@ export const ComparativaDetail: React.FC<Props> = ({
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          <TableScrollShadow>
             <table className="w-full" style={{ minWidth: `${420 + comp.proveedores.length * 140}px` }}>
               <thead>
                 <tr className="border-b border-border/30 bg-muted/30">
@@ -1871,7 +1872,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                 )}
               </tbody>
             </table>
-          </div>
+          </TableScrollShadow>
 
           {/* Footer: responder preguntas del Residente (modo compras, revisión) */}
           {!isResidenteMode && comp.revision_padre_id && comp.lineas.some(l => l.pregunta_residente && !l.respuesta_compras) && comp.estado === 'BORRADOR' && (
@@ -2655,7 +2656,7 @@ export const ComparativaDetail: React.FC<Props> = ({
         maxWidthClassName="max-w-2xl"
       >
         <div className="flex flex-col gap-4 p-6">
-          <div className="overflow-x-auto rounded-2xl border border-border/40">
+          <TableScrollShadow className="rounded-2xl border border-border/40">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border/30 bg-muted/40">
@@ -2709,7 +2710,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScrollShadow>
           <div className="flex justify-end gap-3 pt-2">
             <Button onClick={() => setShowPdfReview(false)} variant="outline" className="rounded-xl text-xs">
               Cancelar
