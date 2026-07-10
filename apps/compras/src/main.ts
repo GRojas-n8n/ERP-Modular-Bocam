@@ -23,6 +23,7 @@ import { resolveProyectoIdParaSolicitud } from './solicitud-cotizacion-policy';
 import { requisicionQuedoCubiertaPorLote, GrupoOcEmitido } from './requisicion-cobertura';
 import { buildOcPdfPayload, InsumoCatalogo } from './orden-compra-pdf-payload';
 import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
+import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from './purga-bloqueos';
 
 const eventBus = createEventBus('compras');
 
@@ -175,6 +176,15 @@ async function enviarCorreosSolicitudCotizacion(opts: {
   }
 
   return { enviados, fallidos, sin_correo: sinCorreo };
+}
+
+/** Ver openspec/changes/panel-purga-datos-prueba-compras. Lanzada dentro de la
+ * transacción de purga cuando una entidad tiene referencias fuera del lote —
+ * revierte toda la transacción y se traduce a 409 en el catch del endpoint. */
+class PurgaBloqueadaError extends Error {
+  constructor(public entidad: string, public id: string, public bloqueos: Bloqueo[]) {
+    super(`Purga bloqueada: ${entidad} ${id} tiene referencias fuera del lote.`);
+  }
 }
 
 const OC_STATUS = {
@@ -5655,6 +5665,223 @@ app.get('/api/v1/compras/comparativas/:id/auditoria-desbloqueos',
       res.json({ success: true, data });
     } catch (error: any) {
       logError(req, 'compras', 'compras.comparativa.auditoria_desbloqueos.error', 'Error al obtener historial de desbloqueos', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// ── Herramientas de Administrador: purga de datos de prueba ─────────────────
+// Ver openspec/changes/panel-purga-datos-prueba-compras.
+
+app.get('/api/v1/compras/admin/purga/resumen',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const [requisiciones, ordenesCompra, proveedores] = await Promise.all([
+            prisma.requisicion.findMany({
+              where: { tenant_id: tenantId, proyecto_id: proyectoId },
+              orderBy: { fecha_solicitud: 'desc' },
+              select: { id_requisicion: true, codigo: true, estado: true, fecha_solicitud: true },
+            }),
+            prisma.ordenCompra.findMany({
+              where: { tenant_id: tenantId, proyecto_id: proyectoId },
+              orderBy: { fecha_emision: 'desc' },
+              include: { proveedor: { select: { razon_social: true } } },
+            }),
+            prisma.proveedor.findMany({
+              where: { tenant_id: tenantId },
+              orderBy: { razon_social: 'asc' },
+            }),
+          ]);
+
+          return {
+            requisiciones: requisiciones.map((r) => ({
+              id: r.id_requisicion, codigo: r.codigo, estado: r.estado, fecha_solicitud: r.fecha_solicitud,
+            })),
+            ordenes_compra: ordenesCompra.map((o) => ({
+              id: o.id_orden, codigo: o.codigo, estado: o.estado, total: o.total.toNumber(),
+              fecha_emision: o.fecha_emision, proveedor: o.proveedor.razon_social,
+            })),
+            proveedores: proveedores.map((p) => ({
+              id: p.id_proveedor, razon_social: p.razon_social, rfc_tax_id: p.rfc_tax_id, estatus: p.estatus,
+            })),
+          };
+        }
+      );
+
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.admin.purga_resumen.error', 'Error al obtener resumen de purga', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+app.post('/api/v1/compras/admin/purga',
+  requireRoles('admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const token = req.headers.authorization;
+      const requisicionesIds: string[] = Array.isArray(req.body?.requisiciones) ? req.body.requisiciones : [];
+      const ordenesCompraIds: string[] = Array.isArray(req.body?.ordenes_compra) ? req.body.ordenes_compra : [];
+      const proveedoresIds: string[] = Array.isArray(req.body?.proveedores) ? req.body.proveedores : [];
+
+      if (requisicionesIds.length === 0 && ordenesCompraIds.length === 0 && proveedoresIds.length === 0) {
+        return void res.status(400).json({ success: false, message: 'Debes seleccionar al menos un registro para purgar.' });
+      }
+
+      // ── Liberación de fondos (best-effort, fuera de la transacción de BD) ──
+      const advertencias: string[] = [];
+      if (ordenesCompraIds.length > 0) {
+        const ocsConPresupuesto = await createTenantContext(
+          { tenantId, proyectoId, userId },
+          async (prisma) => prisma.ordenCompra.findMany({
+            where: { id_orden: { in: ordenesCompraIds }, tenant_id: tenantId, presupuesto_id: { not: null } },
+          })
+        );
+        for (const oc of ocsConPresupuesto) {
+          try {
+            await axios.post(`${FINANZAS_URL}/liberar-fondos`, {
+              presupuesto_id: oc.presupuesto_id,
+              monto: oc.total.toNumber(),
+              oc_id: oc.id_orden,
+              oc_codigo: oc.codigo,
+              concepto: `Liberación por purga de datos de prueba de OC ${oc.codigo}`,
+            }, { headers: buildForwardHeaders(req, { Authorization: token || '' }) });
+          } catch (error: any) {
+            const errMsg = error.response?.data?.error?.message || error.message;
+            advertencias.push(`No se pudo liberar el presupuesto de la OC ${oc.codigo}: ${errMsg}`);
+          }
+        }
+      }
+
+      // createTenantContext ya ejecuta el callback dentro de basePrisma.$transaction
+      // (ver apps/compras/src/db.ts) — todo lo que sigue corre en una sola
+      // transacción atómica; lanzar PurgaBloqueadaError revierte el lote completo.
+      const resultado = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          // ── Requisiciones ──────────────────────────────────────────────
+          for (const reqId of requisicionesIds) {
+            const ocAsociadas = await prisma.ordenCompra.findMany({
+              where: { requisicion_id: reqId, tenant_id: tenantId },
+              select: { id_orden: true },
+            });
+            const bloqueosOc = calcularBloqueosRequisicion(ocAsociadas.map((o) => o.id_orden), ordenesCompraIds);
+            if (bloqueosOc.length > 0) {
+              throw new PurgaBloqueadaError('requisicion', reqId, bloqueosOc);
+            }
+
+            const cuadros = await prisma.cuadroComparativo.findMany({
+              where: { requisicion_id: reqId, tenant_id: tenantId },
+              select: { id_cuadro: true },
+            });
+            const cuadroIds = cuadros.map((c) => c.id_cuadro);
+
+            const items = await prisma.requisicionItem.findMany({
+              where: { requisicion_id: reqId, tenant_id: tenantId },
+              select: { id_item: true },
+            });
+            const itemIds = items.map((i) => i.id_item);
+
+            const especificaciones = itemIds.length > 0
+              ? await prisma.especificacionDetalleReq.findMany({ where: { detalle_id: { in: itemIds }, tenant_id: tenantId }, select: { id_especificacion: true } })
+              : [];
+            const especificacionIds = especificaciones.map((e) => e.id_especificacion);
+
+            await prisma.solicitudCotizacion.deleteMany({ where: { requisicion_id: reqId, tenant_id: tenantId } });
+
+            if (cuadroIds.length > 0 || especificacionIds.length > 0) {
+              await prisma.anotacionEspecificacion.deleteMany({
+                where: {
+                  tenant_id: tenantId,
+                  OR: [
+                    ...(cuadroIds.length > 0 ? [{ cuadro_id: { in: cuadroIds } }] : []),
+                    ...(especificacionIds.length > 0 ? [{ especificacion_id: { in: especificacionIds } }] : []),
+                  ],
+                },
+              });
+            }
+
+            // El cuadro se borra ANTES que las especificaciones: EvaluacionEspecificacion
+            // tiene FK RESTRICT hacia EspecificacionDetalleReq, y solo cascada desde
+            // CuadroComparativo — borrar el cuadro primero libera esa referencia.
+            if (cuadroIds.length > 0) {
+              await prisma.cuadroComparativo.deleteMany({ where: { id_cuadro: { in: cuadroIds } } });
+            }
+
+            if (especificacionIds.length > 0) {
+              await prisma.especificacionDetalleReq.deleteMany({ where: { id_especificacion: { in: especificacionIds } } });
+            }
+
+            await prisma.requisicion.delete({ where: { id_requisicion: reqId } });
+          }
+
+          // ── Órdenes de Compra ──────────────────────────────────────────
+          for (const ocId of ordenesCompraIds) {
+            await prisma.alertaOcError.deleteMany({ where: { oc_id: ocId, tenant_id: tenantId } });
+            await prisma.ordenCompra.delete({ where: { id_orden: ocId } });
+          }
+
+          // ── Proveedores ─────────────────────────────────────────────────
+          for (const provId of proveedoresIds) {
+            const [ordenesCompra, comparativaDetalle, evaluacionEspecificacion, solicitudCotizacionProveedor] = await Promise.all([
+              prisma.ordenCompra.findMany({ where: { proveedor_id: provId, tenant_id: tenantId }, select: { id_orden: true } }),
+              prisma.comparativaDetalle.findMany({ where: { proveedor_id: provId, tenant_id: tenantId }, select: { id_detalle: true } }),
+              prisma.evaluacionEspecificacion.findMany({ where: { proveedor_id: provId, tenant_id: tenantId }, select: { id_evaluacion: true } }),
+              prisma.solicitudCotizacionProveedor.findMany({ where: { proveedor_id: provId, tenant_id: tenantId }, select: { id_scp: true } }),
+            ]);
+
+            const bloqueosProv = calcularBloqueosProveedor(
+              {
+                ordenesCompra: ordenesCompra.map((o) => o.id_orden),
+                comparativaDetalle: comparativaDetalle.map((c) => c.id_detalle),
+                evaluacionEspecificacion: evaluacionEspecificacion.map((e) => e.id_evaluacion),
+                solicitudCotizacionProveedor: solicitudCotizacionProveedor.map((s) => s.id_scp),
+              },
+              { ordenesCompra: ordenesCompraIds },
+            );
+            if (bloqueosProv.length > 0) {
+              throw new PurgaBloqueadaError('proveedor', provId, bloqueosProv);
+            }
+
+            await prisma.calificacionProveedor.deleteMany({ where: { proveedor_id: provId, tenant_id: tenantId } });
+            await prisma.documentoProveedor.deleteMany({ where: { proveedor_id: provId, tenant_id: tenantId } });
+            await prisma.proveedor.delete({ where: { id_proveedor: provId } });
+          }
+
+          return {
+            requisiciones: requisicionesIds.length,
+            ordenes_compra: ordenesCompraIds.length,
+            proveedores: proveedoresIds.length,
+          };
+        }
+      );
+
+      logInfo(req, 'compras', 'compras.admin.purga_ejecutada', 'Purga de datos de prueba ejecutada', {
+        usuario_id: userId,
+        requisiciones_ids: requisicionesIds,
+        ordenes_compra_ids: ordenesCompraIds,
+        proveedores_ids: proveedoresIds,
+        conteo: resultado,
+      });
+
+      res.json({ success: true, data: { ...resultado, advertencias } });
+    } catch (error: any) {
+      if (error instanceof PurgaBloqueadaError) {
+        return void res.status(409).json({
+          success: false,
+          message: `No se puede purgar ${error.entidad} ${error.id}: quedan referencias sin incluir en la selección.`,
+          data: { entidad: error.entidad, id: error.id, bloqueos: error.bloqueos },
+        });
+      }
+      logError(req, 'compras', 'compras.admin.purga.error', 'Error ejecutando purga de datos de prueba', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }

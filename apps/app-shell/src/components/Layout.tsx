@@ -26,6 +26,7 @@ import {
   IconScale,
   IconArrowRight,
   IconSend,
+  IconTrash2,
 } from './Icons';
 import { useTenant } from '../context/TenantContext';
 
@@ -108,6 +109,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'pendientes-gt',   label: 'Aprob. GT',      icon: IconCheckCircle2, roles: ['gerencia_tecnica', 'superintendent'] },
       { id: 'ordenes-compra',  label: 'Órdenes de Compra', icon: IconSend,      roles: ['compras', 'procurement', 'superintendent'] },
       { id: 'trazabilidad',    label: 'Trazabilidad',   icon: IconScale,        roles: ['compras', 'procurement', 'superintendent', 'gerencia_tecnica'] },
+      { id: 'admin-purga',     label: 'Herramientas Admin', icon: IconTrash2,   roles: ['admin'] },
     ],
   },
   {
