@@ -1,9 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: El proyecto de la Solicitud de Cotización SHALL coincidir con el de la requisición
-Al crear una Solicitud de Cotización a partir de una requisición, el sistema
-SHALL usar el `proyecto_id` de esa requisición — nunca el proyecto activo de
-la sesión del usuario que realiza la operación.
+Al crear una Solicitud de Cotización a partir de una requisición, el sistema SHALL usar el `proyecto_id` de esa requisición — nunca el proyecto activo de la sesión del usuario que realiza la operación.
 
 #### Scenario: Usuario de Compras con proyecto activo distinto al de la requisición
 - **WHEN** un usuario con rol `procurement` (acceso a nivel tenant, con un

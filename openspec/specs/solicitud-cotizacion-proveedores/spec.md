@@ -1,9 +1,17 @@
-## ADDED Requirements
+# solicitud-cotizacion-proveedores Specification
 
+## Purpose
+
+Cubre el ciclo de Solicitud de Cotización a proveedores: qué ve Compras antes
+de aprobar o cotizar una requisición, cómo se identifica al solicitante, la
+separación entre notas para proveedores y notas internas, el envío de correo
+a los proveedores invitados (con tema claro/oscuro), la captura de dirección
+de entrega, la posibilidad de modificar proveedores invitados después del
+envío inicial, y que el nombre real del proveedor (no un placeholder) se
+muestre siempre.
+## Requirements
 ### Requirement: Compras SHALL ver el detalle completo de items antes de aprobar o cotizar
-Toda tarjeta de requisición visible para Compras (y para el Residente que la creó)
-SHALL incluir una sección expandible con cada item: insumo o descripción libre,
-cantidad, unidad, especificación de marca/modelo, detalle técnico y notas.
+Toda tarjeta de requisición visible para Compras (y para el Residente que la creó) SHALL incluir una sección expandible con cada item: insumo o descripción libre, cantidad, unidad, especificación de marca/modelo, detalle técnico y notas.
 
 #### Scenario: Compras revisa una requisición con varios items
 - **WHEN** Compras abre la lista de requisiciones y hace clic en "Ver N ítems" de
@@ -36,12 +44,7 @@ proveedor.
   interna en ninguna parte
 
 ### Requirement: El sistema SHALL enviar un correo real a cada proveedor invitado
-Al crear o actualizar una Solicitud de Cotización con proveedores seleccionados, el
-sistema SHALL enviar un correo electrónico a cada proveedor que tenga un
-`email_contacto` registrado, con: folio de la requisición, prioridad, plazo de
-respuesta, cada item con sus especificaciones, y las notas para proveedores. El
-envío SHALL ser best-effort — un fallo de correo no SHALL revertir la Solicitud de
-Cotización ya creada en base de datos.
+Al crear o actualizar una Solicitud de Cotización con proveedores seleccionados, el sistema SHALL enviar un correo electrónico a cada proveedor que tenga un `email_contacto` registrado, con: folio de la requisición, prioridad, plazo de respuesta, cada item con sus especificaciones, y las notas para proveedores. El envío SHALL ser best-effort — un fallo de correo no SHALL revertir la Solicitud de Cotización ya creada en base de datos.
 
 #### Scenario: Proveedor con correo registrado
 - **WHEN** Compras crea una Solicitud de Cotización seleccionando un proveedor con
@@ -84,7 +87,9 @@ Cotización enviado a los proveedores.
 ### Requirement: Compras SHALL poder modificar los proveedores invitados de una solicitud ya enviada
 Una vez creada una Solicitud de Cotización, Compras SHALL poder reabrir la
 selección de proveedores para agregar nuevos o quitar los que no han respondido,
-sin perder el estado ni el PDF de los proveedores que ya respondieron.
+sin perder el estado de los proveedores que ya respondieron. El PDF de cotización
+de un proveedor ya NO se gestiona desde esta pantalla — se sube y persiste
+exclusivamente desde el cuadro comparativo (ver capability `cotizacion-compras-ux`).
 
 #### Scenario: Ningún proveedor cotiza — se invita a otros
 - **WHEN** Compras reabre la selección de proveedores de una solicitud existente,
@@ -108,3 +113,43 @@ valor de reemplazo genérico cuando el proveedor existe en el catálogo.
 - **WHEN** Compras abre una Solicitud de Cotización ya creada
 - **THEN** cada proveedor listado muestra su razón social correcta, obtenida del
   catálogo de proveedores del tenant
+
+### Requirement: El proyecto de la Solicitud de Cotización SHALL coincidir con el de la requisición
+Al crear una Solicitud de Cotización a partir de una requisición, el sistema SHALL usar el `proyecto_id` de esa requisición — nunca el proyecto activo de la sesión del usuario que realiza la operación.
+
+#### Scenario: Usuario de Compras con proyecto activo distinto al de la requisición
+- **WHEN** un usuario con rol `procurement` (acceso a nivel tenant, con un
+  proyecto activo en su sesión distinto al de la requisición) envía una
+  Solicitud de Cotización para una requisición de otro proyecto
+- **THEN** la `SolicitudCotizacion` creada tiene el `proyecto_id` de la
+  requisición, no el del proyecto activo de la sesión
+
+#### Scenario: Usuario de Compras sin proyecto activo válido en su sesión
+- **WHEN** un usuario con rol `procurement` cuya sesión no tiene ningún
+  proyecto activo válido (`proyecto_id` vacío en el token) envía una Solicitud
+  de Cotización
+- **THEN** la `SolicitudCotizacion` se crea igualmente, con el `proyecto_id`
+  correcto tomado de la requisición — la operación no falla por un campo
+  vacío en la sesión del usuario
+
+#### Scenario: Requisición inexistente o de otro tenant
+- **WHEN** se intenta crear una Solicitud de Cotización para un
+  `requisicion_id` que no existe o pertenece a otro tenant
+- **THEN** el sistema responde con el error de "no encontrado" existente,
+  sin llegar a intentar crear ninguna `SolicitudCotizacion`
+
+### Requirement: El panel de Solicitud de Cotización SHALL NOT ofrecer subida de PDF
+El panel "Solicitud de Cotización" SHALL permitir marcar `estado` (`RESPONDIO`, `DECLINO`, `PENDIENTE`) y capturar `notas_proveedor` de un proveedor invitado, pero SHALL NOT exponer ningún control para subir o reemplazar el archivo PDF de cotización de ese proveedor. Los campos `pdf_nombre`/`pdf_ruta`/`pdf_mime` de un proveedor invitado antes de este cambio se conservan como registro histórico de solo lectura, pero dejan de poder escribirse desde este flujo.
+
+#### Scenario: Compras marca a un proveedor como "Respondió" sin adjuntar archivo
+- **WHEN** Compras cambia el estado de un proveedor invitado a `RESPONDIO` desde el
+  panel de Solicitud de Cotización
+- **THEN** el sistema actualiza el estado y `fecha_respuesta` sin requerir ni
+  aceptar un archivo adjunto en esa misma acción
+
+#### Scenario: Intento de acceder a un endpoint de upload retirado
+- **WHEN** un cliente envía un archivo en el campo `archivo` al endpoint
+  `PUT /api/v1/compras/requisiciones/:reqId/solicitud-cotizacion/proveedores/:scpId`
+- **THEN** el sistema ignora el archivo recibido (no hay middleware de carga de
+  archivo en esa ruta) y solo procesa `estado`/`notas_proveedor`
+
