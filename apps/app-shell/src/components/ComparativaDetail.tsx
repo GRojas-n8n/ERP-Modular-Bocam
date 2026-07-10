@@ -99,6 +99,18 @@ export interface AnotacionSpec {
   created_at: string;
 }
 
+// Ver openspec/changes/evaluacion-tecnica-por-especificacion
+export interface EvaluacionEspecItem {
+  id_evaluacion: string;
+  cuadro_id: string;
+  especificacion_id: string;
+  proveedor_id: string;
+  evaluacion_tecnica: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?';
+  comentario_tecnico?: string | null;
+  pregunta_residente?: string | null;
+  respuesta_compras?: string | null;
+}
+
 export interface LineaDetalleTecnico {
   insumo_id: string;
   marca_modelo_ref?: string | null;
@@ -173,6 +185,7 @@ export interface ComparativaLocal {
   lineas: CotizacionLinea[];
   lineas_detalle?: LineaDetalleTecnico[];
   anotaciones_spec?: AnotacionSpec[];
+  evaluaciones_especificacion?: EvaluacionEspecItem[];
   ordenes_compra: OrdenCompraEnComparativa[];
 }
 
@@ -207,6 +220,14 @@ const EVAL_STYLE: Record<string, string> = {
   '?':       'border-indigo-500/30 bg-indigo-500/10 text-indigo-700',
   APROBADO:  'border-green-500/30 bg-green-500/10 text-green-700',
   RECHAZADO: 'border-red-500/30 bg-red-500/10 text-red-700',
+};
+
+// Botones C/NC/DA/? activos (relleno sólido) — matriz de evaluación por característica
+const EVAL_BTN_ACTIVE: Record<string, string> = {
+  C:  'border-green-500 bg-green-500 text-white',
+  NC: 'border-red-500 bg-red-500 text-white',
+  DA: 'border-amber-500 bg-amber-500 text-white',
+  '?': 'border-indigo-500 bg-indigo-500 text-white',
 };
 
 const OC_ESTADO_STYLE: Record<string, { badge: string; label: string }> = {
@@ -334,6 +355,14 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [anotacionPanel, setAnotacionPanel] = useState<{ especId: string; especDesc: string; proveedorId: string; proveedorNombre: string } | null>(null);
   const [anotacionForm, setAnotacionForm] = useState<{ tipo: 'pregunta' | 'respuesta'; texto: string }>({ tipo: 'pregunta', texto: '' });
   const [guardandoAnotacion, setGuardandoAnotacion] = useState(false);
+
+  // ── Evaluación técnica por característica (matriz) ──────────────────────────
+  const [evaluacionesEspec, setEvaluacionesEspec] = useState<EvaluacionEspecItem[]>([]);
+  const [dudaSpecAbierta, setDudaSpecAbierta] = useState<string | null>(null); // cellKey `${especId}:${provId}`
+  const [dudaSpecTexto, setDudaSpecTexto] = useState('');
+  const [guardandoEvalSpec, setGuardandoEvalSpec] = useState<string | null>(null);
+  const [respuestaSpecTexto, setRespuestaSpecTexto] = useState<Record<string, string>>({});
+  const [enviandoRevisionSpec, setEnviandoRevisionSpec] = useState(false);
 
   // ── Recepción de materiales contra OC ───────────────────────────────────────
   type RecepcionLinea = { cantidad_recibida: string; nota_discrepancia: string };
@@ -519,6 +548,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       });
       setDetallesTecnicos(init);
       if (comp.anotaciones_spec) setAnotacionesSpec(comp.anotaciones_spec);
+      if (comp.evaluaciones_especificacion) setEvaluacionesEspec(comp.evaluaciones_especificacion);
     };
     initFromProp();
     if (isDemo) return;
@@ -535,8 +565,86 @@ export const ComparativaDetail: React.FC<Props> = ({
       setDetallesTecnicos(init);
       setEspecsMap(newEspecsMap);
       setAnotacionesSpec(full.anotaciones_spec ?? []);
+      setEvaluacionesEspec(full.evaluaciones_especificacion ?? []);
     }).catch(() => { /* silencioso */ });
   }, [comp.id]);
+
+  // ── Evaluación técnica por característica × proveedor (matriz) ──────────────
+  // Ver openspec/changes/evaluacion-tecnica-por-especificacion.
+  const handleEvaluarEspec = async (especId: string, provId: string, decision: 'C' | 'NC' | 'DA' | '?', pregunta?: string) => {
+    if (decision === '?' && !pregunta?.trim()) return;
+    const cellKey = `${especId}:${provId}`;
+    setGuardandoEvalSpec(cellKey);
+    try {
+      if (isDemo) {
+        setEvaluacionesEspec(prev => {
+          const idx = prev.findIndex(e => e.especificacion_id === especId && e.proveedor_id === provId);
+          const updated: EvaluacionEspecItem = {
+            id_evaluacion: prev[idx]?.id_evaluacion ?? cellKey,
+            cuadro_id: comp.id,
+            especificacion_id: especId,
+            proveedor_id: provId,
+            evaluacion_tecnica: decision,
+            pregunta_residente: decision === '?' ? pregunta!.trim() : null,
+            respuesta_compras: null,
+          };
+          if (idx >= 0) { const copy = [...prev]; copy[idx] = updated; return copy; }
+          return [...prev, updated];
+        });
+        setDudaSpecAbierta(null);
+        setDudaSpecTexto('');
+        return;
+      }
+      await api.patch(`/api/v1/compras/comparativas/${comp.id}/evaluar-especificaciones`, {
+        evaluaciones: [{ especificacion_id: especId, proveedor_id: provId, evaluacion_tecnica: decision, pregunta_residente: decision === '?' ? pregunta!.trim() : undefined }],
+      });
+      const res = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
+      setEvaluacionesEspec(res.data?.data?.evaluaciones_especificacion ?? []);
+      onUpdate({ ...comp, ...res.data?.data });
+      setDudaSpecAbierta(null);
+      setDudaSpecTexto('');
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar evaluación', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoEvalSpec(null);
+    }
+  };
+
+  const handleResponderDudaEspec = async (especId: string, provId: string) => {
+    const cellKey = `${especId}:${provId}`;
+    const texto = respuestaSpecTexto[cellKey];
+    if (!texto?.trim()) return;
+    setGuardandoEvalSpec(cellKey);
+    try {
+      await api.put(`/api/v1/compras/comparativas/${comp.id}/responder-preguntas`, {
+        respuestas_especificacion: [{ especificacion_id: especId, proveedor_id: provId, respuesta_compras: texto.trim() }],
+      });
+      const res = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
+      setEvaluacionesEspec(res.data?.data?.evaluaciones_especificacion ?? []);
+      setRespuestaSpecTexto(prev => { const copy = { ...prev }; delete copy[cellKey]; return copy; });
+      notify({ type: 'success', title: 'Respuesta guardada' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al responder', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoEvalSpec(null);
+    }
+  };
+
+  const hayDudasEspecPendientes = evaluacionesEspec.some(e => e.evaluacion_tecnica === '?' && e.pregunta_residente);
+
+  const handleEnviarDudasEspec = async () => {
+    setEnviandoRevisionSpec(true);
+    try {
+      const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/revision-con-preguntas`, {});
+      const nuevaRevision = resp.data?.data?.revision_label ?? '?';
+      notify({ type: 'success', title: `Se creó la revisión ${nuevaRevision}`, message: 'Compras verá tus dudas y podrá responderlas.' });
+      onBack();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al crear revisión', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setEnviandoRevisionSpec(false);
+    }
+  };
 
   // Guardar anotación de especificación (10.4)
   const handleGuardarAnotacion = async () => {
@@ -680,7 +788,10 @@ export const ComparativaDetail: React.FC<Props> = ({
   const todasEvaluadas = comp.lineas.length > 0 && comp.lineas.every(
     l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE' && l.evaluacion_tecnica !== '?'
   );
-  const veredictoListo = veredicto.trim().length > 0 && provSugeridos.length > 0;
+  // Ver openspec/changes/seleccion-proveedor-recomendado-firma: la 1ª opción
+  // debe estar guardada antes de habilitar el botón de firma — antes solo
+  // el backend lo rechazaba (400 tras el clic), ahora se adelanta a la UI.
+  const veredictoListo = veredicto.trim().length > 0 && provSugeridos.length > 0 && !!comp.primera_opcion_proveedor_id;
   const showFirmaBtn = (isResident || roles.includes('admin')) && comp.estado === 'EN_EVALUACION_TECNICA' && todasEvaluadas && veredictoListo;
   const showNuevaRevisionBtn = (isProcurement || roles.includes('admin')) && (comp.estado === 'EN_EVALUACION_TECNICA' || comp.estado === 'LOCKED');
   const showDesbloquearBtn = roles.includes('admin') && isFirmadoBloqueado;
@@ -898,8 +1009,12 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   // Guardar evaluación técnica del Residente (C/NC/DA/?)
   const handleGuardarEvaluacion = async () => {
+    // Ver openspec/changes/evaluacion-tecnica-por-especificacion: solo
+    // renglones sin especificaciones capturadas usan este camino legacy —
+    // los que sí tienen se evalúan por característica en la tabla.
+    const lineasSinSpecs = comp.lineas.filter(l => !(especsMap[l.insumo_id]?.length));
     const REQUIRES_COMMENT = new Set(['NC', 'DA']);
-    for (const l of comp.lineas) {
+    for (const l of lineasSinSpecs) {
       const form = evalForm[l.id];
       if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
         notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${l.insumo_descripcion}".` });
@@ -911,11 +1026,11 @@ export const ComparativaDetail: React.FC<Props> = ({
       }
     }
 
-    const tienePreguntas = comp.lineas.some(l => evalForm[l.id]?.decision === '?');
+    const tienePreguntas = lineasSinSpecs.some(l => evalForm[l.id]?.decision === '?');
 
     setEnviandoEval(true);
     try {
-      const evaluaciones = comp.lineas.map(l => ({
+      const evaluaciones = lineasSinSpecs.map(l => ({
         detalle_id: l.id,
         evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE',
         comentario_tecnico: evalForm[l.id]?.comentario || undefined,
@@ -1415,54 +1530,6 @@ export const ComparativaDetail: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Sección: Recomendación del Residente (selección 1ª/2ª opción) */}
-      {comp.estado === 'EN_EVALUACION_TECNICA' && (isResident || roles.includes('admin')) && comp.proveedores.length > 0 && (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-3">Recomendación del Residente</p>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">1ª Opción *</label>
-              <select
-                value={primeraOpcion}
-                onChange={e => setPrimeraOpcion(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-              >
-                <option value="">— Seleccionar proveedor —</option>
-                {comp.proveedores.map((p, i) => (
-                  <option key={p.id} value={p.id}>{String.fromCharCode(65 + i)} · {p.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">2ª Opción (opcional)</label>
-              <select
-                value={segundaOpcion}
-                onChange={e => setSegundaOpcion(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-              >
-                <option value="">— Sin segunda opción —</option>
-                {comp.proveedores.filter(p => p.id !== primeraOpcion).map((p) => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <Button
-              onClick={handleGuardarSeleccion}
-              disabled={!primeraOpcion || guardandoSeleccion}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400"
-            >
-              {guardandoSeleccion ? 'Guardando...' : 'Guardar selección'}
-            </Button>
-          </div>
-          {comp.primera_opcion_proveedor_id && (
-            <p className="mt-2 text-[9px] text-amber-600/80">
-              Selección guardada: 1ª opción = {comp.proveedores.find(p => p.id === comp.primera_opcion_proveedor_id)?.nombre ?? comp.primera_opcion_proveedor_id}
-              {comp.segunda_opcion_proveedor_id && ` · 2ª opción = ${comp.proveedores.find(p => p.id === comp.segunda_opcion_proveedor_id)?.nombre ?? comp.segunda_opcion_proveedor_id}`}
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Sección: Partidas de la Requisición — referencia para Compras */}
       {(comp.estado === 'BORRADOR' || comp.estado === 'EN_PROCESO') && comp.lineas.length > 0 && (
         <Card className="border-border/40">
@@ -1862,24 +1929,118 @@ export const ComparativaDetail: React.FC<Props> = ({
                         <td className="px-3 py-1" />
                         {comp.proveedores.map(prov => {
                           const nota = anotacionesSpec.find(a => a.especificacion_id === esp.id_especificacion && a.proveedor_id === prov.id);
+                          const evalSpec = evaluacionesEspec.find(e => e.especificacion_id === esp.id_especificacion && e.proveedor_id === prov.id);
+                          const decisionActual = evalSpec?.evaluacion_tecnica ?? 'PENDIENTE';
+                          const cellKey = `${esp.id_especificacion}:${prov.id}`;
+                          const editable = isResidenteMode && comp.estado === 'EN_EVALUACION_TECNICA';
+                          const puedeResponder = !isResidenteMode && !!comp.revision_padre_id && comp.estado === 'BORRADOR'
+                            && evalSpec?.evaluacion_tecnica === '?' && !!evalSpec.pregunta_residente && !evalSpec.respuesta_compras;
+
                           return (
-                            <td key={prov.id} className="px-2 py-1 text-center">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAnotacionPanel({ especId: esp.id_especificacion, especDesc: esp.descripcion, proveedorId: prov.id, proveedorNombre: prov.nombre });
-                                  setAnotacionForm({ tipo: nota?.tipo === 'respuesta' ? 'respuesta' : 'pregunta', texto: '' });
-                                }}
-                                title={nota ? `${nota.tipo}: ${nota.texto}` : 'Agregar anotación'}
-                                className={cn(
-                                  'rounded-full px-2 py-0.5 text-[9px] font-black transition-all',
-                                  nota?.tipo === 'pregunta' ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/20' :
-                                  nota?.tipo === 'respuesta' ? 'bg-green-500/10 text-green-700 hover:bg-green-500/20' :
-                                  'text-muted-foreground/25 hover:text-indigo-500 hover:bg-indigo-500/10'
-                                )}
-                              >
-                                {nota?.tipo === 'pregunta' ? '?' : nota?.tipo === 'respuesta' ? '✓' : '+'}
-                              </button>
+                            <td key={prov.id} className="px-2 py-1.5 text-center align-top">
+                              {editable ? (
+                                <div className="space-y-1">
+                                  <div className="flex justify-center gap-0.5">
+                                    {(['C', 'NC', 'DA', '?'] as const).map(k => (
+                                      <button
+                                        key={k}
+                                        type="button"
+                                        disabled={guardandoEvalSpec === cellKey}
+                                        onClick={() => {
+                                          if (k === '?') { setDudaSpecAbierta(cellKey); setDudaSpecTexto(evalSpec?.pregunta_residente ?? ''); }
+                                          else void handleEvaluarEspec(esp.id_especificacion, prov.id, k);
+                                        }}
+                                        className={cn('w-7 rounded px-1 py-0.5 text-[8px] font-black transition-all',
+                                          decisionActual === k ? EVAL_BTN_ACTIVE[k] : 'border border-border/30 bg-muted/40 text-muted-foreground/50 hover:border-foreground/30'
+                                        )}
+                                      >
+                                        {k}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  {dudaSpecAbierta === cellKey && (
+                                    <div className="space-y-1 rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-1.5 text-left">
+                                      <textarea
+                                        autoFocus
+                                        className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-1 text-[9px] focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                                        placeholder="¿Qué necesitas aclarar? (obligatorio)"
+                                        value={dudaSpecTexto}
+                                        onChange={e => setDudaSpecTexto(e.target.value)}
+                                      />
+                                      <div className="flex justify-end gap-1">
+                                        <button type="button" onClick={() => { setDudaSpecAbierta(null); setDudaSpecTexto(''); }} className="rounded px-1.5 py-0.5 text-[8px] font-bold text-muted-foreground hover:bg-muted">Cancelar</button>
+                                        <button
+                                          type="button"
+                                          disabled={!dudaSpecTexto.trim() || guardandoEvalSpec === cellKey}
+                                          onClick={() => void handleEvaluarEspec(esp.id_especificacion, prov.id, '?', dudaSpecTexto)}
+                                          className="rounded bg-indigo-600 px-2 py-0.5 text-[8px] font-black text-white hover:bg-indigo-500 disabled:opacity-40"
+                                        >
+                                          Guardar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {decisionActual === '?' && dudaSpecAbierta !== cellKey && evalSpec?.pregunta_residente && (
+                                    <p className="text-[8px] text-indigo-600 leading-tight">{evalSpec.pregunta_residente}</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  {decisionActual !== 'PENDIENTE' ? (
+                                    <span className={cn('inline-block rounded px-1.5 py-0.5 text-[9px] font-black', EVAL_STYLE[decisionActual])}>{decisionActual}</span>
+                                  ) : (
+                                    <span className="text-[9px] text-muted-foreground/40">—</span>
+                                  )}
+                                  {!isResidenteMode && evalSpec?.pregunta_residente && (
+                                    <div className="rounded border border-amber-500/20 bg-amber-500/5 px-1.5 py-1 text-left">
+                                      <p className="text-[8px] font-black text-amber-700">Duda:</p>
+                                      <p className="text-[8px] text-foreground leading-tight">{evalSpec.pregunta_residente}</p>
+                                      {evalSpec.respuesta_compras ? (
+                                        <p className="mt-0.5 text-[8px] text-green-700">✓ {evalSpec.respuesta_compras}</p>
+                                      ) : puedeResponder ? (
+                                        <div className="mt-1 space-y-1">
+                                          <textarea
+                                            className="w-full resize-none rounded border border-border/40 bg-background px-1 py-0.5 text-[8px] focus:outline-none focus:border-amber-500 min-h-[36px]"
+                                            placeholder="Responder..."
+                                            value={respuestaSpecTexto[cellKey] ?? ''}
+                                            onChange={e => setRespuestaSpecTexto(prev => ({ ...prev, [cellKey]: e.target.value }))}
+                                          />
+                                          <button
+                                            type="button"
+                                            disabled={!respuestaSpecTexto[cellKey]?.trim() || guardandoEvalSpec === cellKey}
+                                            onClick={() => void handleResponderDudaEspec(esp.id_especificacion, prov.id)}
+                                            className="rounded bg-amber-500 px-2 py-0.5 text-[8px] font-black text-white hover:bg-amber-400 disabled:opacity-40"
+                                          >
+                                            Responder
+                                          </button>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  )}
+                                  {isResidenteMode && evalSpec?.pregunta_residente && (
+                                    <div className="rounded border border-indigo-500/20 bg-indigo-500/5 px-1.5 py-1 text-left">
+                                      <p className="text-[8px] font-black text-indigo-700">Tu duda:</p>
+                                      <p className="text-[8px] text-foreground leading-tight">{evalSpec.pregunta_residente}</p>
+                                      {evalSpec.respuesta_compras && (
+                                        <p className="mt-0.5 text-[8px] text-green-700">Compras: {evalSpec.respuesta_compras}</p>
+                                      )}
+                                    </div>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setAnotacionPanel({ especId: esp.id_especificacion, especDesc: esp.descripcion, proveedorId: prov.id, proveedorNombre: prov.nombre });
+                                      setAnotacionForm({ tipo: nota?.tipo === 'respuesta' ? 'respuesta' : 'pregunta', texto: '' });
+                                    }}
+                                    title={nota ? `${nota.tipo}: ${nota.texto}` : 'Agregar anotación libre'}
+                                    className={cn('rounded-full px-1.5 py-0.5 text-[8px] font-bold transition-all',
+                                      nota ? 'bg-slate-500/10 text-slate-600 hover:bg-slate-500/20' : 'text-muted-foreground/20 hover:text-indigo-500'
+                                    )}
+                                  >
+                                    {nota ? '💬' : '+ nota'}
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           );
                         })}
@@ -1946,6 +2107,19 @@ export const ComparativaDetail: React.FC<Props> = ({
                 className="rounded-xl bg-amber-600 px-4 text-xs font-black text-white hover:bg-amber-500 whitespace-nowrap"
               >
                 Guardar respuestas
+              </Button>
+            </div>
+          )}
+          {/* Footer: Residente envía dudas por característica y crea revisión */}
+          {isResidenteMode && comp.estado === 'EN_EVALUACION_TECNICA' && hayDudasEspecPendientes && (
+            <div className="border-t border-indigo-500/20 bg-indigo-500/5 px-6 py-4 flex items-center justify-between gap-3">
+              <p className="text-[10px] text-indigo-700 font-bold">⚠️ Tienes características marcadas con "?" — al enviar se creará una nueva revisión y Compras recibirá tus dudas.</p>
+              <Button
+                onClick={handleEnviarDudasEspec}
+                disabled={enviandoRevisionSpec}
+                className="rounded-xl bg-indigo-600 px-4 text-xs font-black text-white hover:bg-indigo-500 whitespace-nowrap disabled:opacity-40"
+              >
+                {enviandoRevisionSpec ? 'Enviando...' : 'Enviar dudas y crear revisión'}
               </Button>
             </div>
           )}
@@ -2139,6 +2313,56 @@ export const ComparativaDetail: React.FC<Props> = ({
       {comp.estado === 'EN_EVALUACION_TECNICA' && (isResident || roles.includes('admin')) && !isResidenteMode && (
         <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-4 space-y-3">
           <p className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Veredicto del Residente</p>
+
+          {/* Selección de 1ª/2ª opción — ver openspec/changes/seleccion-proveedor-recomendado-firma:
+              va primero, antes del veredicto y del botón de firma. */}
+          {comp.proveedores.length > 0 && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-amber-700 mb-2">Proveedor recomendado</p>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">1ª Opción *</label>
+                  <select
+                    value={primeraOpcion}
+                    onChange={e => setPrimeraOpcion(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="">— Seleccionar proveedor —</option>
+                    {comp.proveedores.map((p, i) => (
+                      <option key={p.id} value={p.id}>{String.fromCharCode(65 + i)} · {p.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[180px]">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">2ª Opción (opcional)</label>
+                  <select
+                    value={segundaOpcion}
+                    onChange={e => setSegundaOpcion(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="">— Sin segunda opción —</option>
+                    {comp.proveedores.filter(p => p.id !== primeraOpcion).map((p) => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  onClick={handleGuardarSeleccion}
+                  disabled={!primeraOpcion || guardandoSeleccion}
+                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400"
+                >
+                  {guardandoSeleccion ? 'Guardando...' : 'Guardar selección'}
+                </Button>
+              </div>
+              {comp.primera_opcion_proveedor_id && (
+                <p className="mt-2 text-[9px] text-amber-600/80">
+                  Selección guardada: 1ª opción = {comp.proveedores.find(p => p.id === comp.primera_opcion_proveedor_id)?.nombre ?? comp.primera_opcion_proveedor_id}
+                  {comp.segunda_opcion_proveedor_id && ` · 2ª opción = ${comp.proveedores.find(p => p.id === comp.segunda_opcion_proveedor_id)?.nombre ?? comp.segunda_opcion_proveedor_id}`}
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Veredicto técnico general *</label>
             <Textarea
@@ -2214,12 +2438,13 @@ export const ComparativaDetail: React.FC<Props> = ({
             <div className="flex items-center justify-between border-b border-border/40 bg-amber-500/10 px-6 py-4">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-tight">Evaluación Técnica</h2>
-                <p className="text-[10px] text-muted-foreground">C = Cumple · NC = No Cumple · DA = Diferencia Aclarada · ? = Información faltante</p>
+                <p className="text-[10px] text-muted-foreground">C = Cumple · NC = No Cumple · DA = Desviación Aceptada · ? = Duda del Residente</p>
+                <p className="text-[9px] text-amber-700 mt-0.5">Solo renglones sin características capturadas — los que sí tienen, se evalúan por característica en la tabla.</p>
               </div>
               <Button onClick={() => setShowEvalPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
             </div>
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
-              {comp.lineas.map(linea => {
+              {comp.lineas.filter(linea => !(especsMap[linea.insumo_id]?.length)).map(linea => {
                 const dt = detallesTecnicos[linea.insumo_id] ?? { marca: '', espec: '' };
                 const fichasEval = fichasInsumo[linea.insumo_id];
                 const decision = evalForm[linea.id]?.decision ?? 'PENDIENTE';

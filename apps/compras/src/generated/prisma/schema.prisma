@@ -37,11 +37,12 @@ model Proveedor {
   tipo_proveedor         String   @default("NACIONAL") @db.VarChar(20) // NACIONAL | EXTRANJERO
   calificacion_desempeno Decimal? @db.Decimal(3, 2) // 0.00–5.00
 
-  ordenes                OrdenCompra[]
-  comparativas           ComparativaDetalle[]
-  documentos             DocumentoProveedor[]
-  calificaciones         CalificacionProveedor[]
-  solicitudes_cotizacion SolicitudCotizacionProveedor[]
+  ordenes                     OrdenCompra[]
+  comparativas                ComparativaDetalle[]
+  documentos                  DocumentoProveedor[]
+  calificaciones              CalificacionProveedor[]
+  solicitudes_cotizacion      SolicitudCotizacionProveedor[]
+  evaluaciones_especificacion EvaluacionEspecificacion[]
 
   @@unique([tenant_id, rfc_tax_id])
   @@map("proveedores")
@@ -108,6 +109,10 @@ model Requisicion {
 
   /// Partida del catálogo de conceptos a la que pertenece esta requisición (obligatorio en nuevas reqs)
   concepto_id String? @db.Uuid
+
+  /// Cuadro comparativo y revisión (letra) con la que se cerró/bloqueó esta requisición — ver capability evaluacion-tecnica-por-especificacion
+  cuadro_comparativo_cierre_id String? @db.Uuid
+  revision_cierre              String? @db.VarChar(5)
 
   items RequisicionItem[]
 
@@ -178,22 +183,25 @@ model AsignacionExtraConcepto {
 
 // --- Transaccional: Órdenes de Compra ---
 model OrdenCompra {
-  id_orden       String   @id @default(uuid()) @db.Uuid
-  tenant_id      String   @db.Uuid
-  proyecto_id    String   @db.Uuid // Centro de Costos
-  proveedor_id   String   @db.Uuid
-  codigo         String   @db.VarChar(50) // Ej. OC-2026-001
-  fecha_emision  DateTime @default(now())
-  estado         String   @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, PARCIALMENTE_RECIBIDA, RECIBIDA, CANCELADA
-  estado_pago    String   @default("PENDIENTE_PAGO") // PENDIENTE_PAGO, PAGO_PARCIAL, PAGADA
-  moneda         String   @default("MXN")
-  tipo_cambio    Decimal  @default(1.0) @db.Decimal(18, 4)
-  subtotal       Decimal  @db.Decimal(18, 2)
-  iva            Decimal  @db.Decimal(18, 2)
-  total          Decimal  @db.Decimal(18, 2)
-  presupuesto_id String?  @db.Uuid // Referencia externa al Módulo de Finanzas
+  id_orden                String    @id @default(uuid()) @db.Uuid
+  tenant_id               String    @db.Uuid
+  proyecto_id             String    @db.Uuid // Centro de Costos
+  proveedor_id            String    @db.Uuid
+  codigo                  String    @db.VarChar(50) // Ej. OC-2026-001
+  fecha_emision           DateTime  @default(now())
+  estado                  String    @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, EMITIDA, PARCIALMENTE_RECIBIDA, RECIBIDA, CANCELADA
+  estado_pago             String    @default("PENDIENTE_PAGO") // PENDIENTE_PAGO, PAGO_PARCIAL, PAGADA
+  moneda                  String    @default("MXN")
+  tipo_cambio             Decimal   @default(1.0) @db.Decimal(18, 4)
+  subtotal                Decimal   @db.Decimal(18, 2)
+  iva                     Decimal   @db.Decimal(18, 2)
+  total                   Decimal   @db.Decimal(18, 2)
+  presupuesto_id          String?   @db.Uuid // Referencia externa al Módulo de Finanzas
   /// Requisición que originó esta OC — para cálculo de acumulados por partida
-  requisicion_id String?  @db.Uuid
+  requisicion_id          String?   @db.Uuid
+  /// Último envío por correo al proveedor (ver capability envio-oc-proveedor)
+  enviada_proveedor_at    DateTime?
+  enviada_proveedor_email String?
 
   proveedor   Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])
   items       OrdenCompraItem[]
@@ -294,11 +302,12 @@ model CuadroComparativo {
   fecha_aprobacion_gt   DateTime?
   comentario_gt_general String?   @db.Text
 
-  detalles              ComparativaDetalle[]
-  lineas                ComparativaLinea[]
-  aclaraciones          AclaracionComparativa[]
-  auditoria_desbloqueos AuditoriaDesbloqueoComparativa[]
-  archivos_proveedor    ComparativaProveedorArchivo[]
+  detalles                    ComparativaDetalle[]
+  lineas                      ComparativaLinea[]
+  aclaraciones                AclaracionComparativa[]
+  auditoria_desbloqueos       AuditoriaDesbloqueoComparativa[]
+  archivos_proveedor          ComparativaProveedorArchivo[]
+  evaluaciones_especificacion EvaluacionEspecificacion[]
 
   @@unique([tenant_id, codigo])
   @@index([tenant_id, proyecto_id])
@@ -437,8 +446,44 @@ model EspecificacionDetalleReq {
   orden             Int      @default(0)
   created_at        DateTime @default(now())
 
+  evaluaciones EvaluacionEspecificacion[]
+
   @@index([tenant_id, detalle_id])
   @@map("especificaciones_detalle_req")
+}
+
+// ── Evaluación técnica C/NC/DA/? por característica individual × proveedor ──
+// Ver openspec/changes/evaluacion-tecnica-por-especificacion. Una fila por
+// (cuadro, especificación, proveedor) — el veredicto de renglón en
+// ComparativaDetalle.evaluacion_tecnica se calcula automáticamente como el
+// peor caso entre estas filas (ver calcularVeredictoRenglon).
+model EvaluacionEspecificacion {
+  id_evaluacion     String @id @default(uuid()) @db.Uuid
+  tenant_id         String @db.Uuid
+  proyecto_id       String @db.Uuid
+  cuadro_id         String @db.Uuid
+  especificacion_id String @db.Uuid
+  proveedor_id      String @db.Uuid
+
+  // Valores: PENDIENTE | C | NC | DA | ?
+  evaluacion_tecnica String  @default("PENDIENTE")
+  comentario_tecnico String? @db.Text
+
+  /// Duda del Residente sobre esta característica×proveedor cuando marca "?" — dispara nueva revisión del cuadro
+  pregunta_residente String? @db.Text
+  /// Respuesta de Compras a esa duda — visible en la revisión siguiente
+  respuesta_compras  String? @db.Text
+
+  creado_por String   @db.Uuid
+  updated_at DateTime @updatedAt
+
+  cuadro         CuadroComparativo        @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
+  especificacion EspecificacionDetalleReq @relation(fields: [especificacion_id], references: [id_especificacion])
+  proveedor      Proveedor                @relation(fields: [proveedor_id], references: [id_proveedor])
+
+  @@unique([cuadro_id, especificacion_id, proveedor_id])
+  @@index([tenant_id, cuadro_id])
+  @@map("evaluaciones_especificacion")
 }
 
 // ── Solicitudes de Cotización ─────────────────────────────────────────────────

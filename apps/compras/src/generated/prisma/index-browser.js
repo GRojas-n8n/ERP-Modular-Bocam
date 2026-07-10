@@ -180,7 +180,9 @@ exports.Prisma.RequisicionScalarFieldEnum = {
   observaciones: 'observaciones',
   direccion_entrega: 'direccion_entrega',
   observaciones_internas: 'observaciones_internas',
-  concepto_id: 'concepto_id'
+  concepto_id: 'concepto_id',
+  cuadro_comparativo_cierre_id: 'cuadro_comparativo_cierre_id',
+  revision_cierre: 'revision_cierre'
 };
 
 exports.Prisma.RequisicionItemScalarFieldEnum = {
@@ -229,7 +231,9 @@ exports.Prisma.OrdenCompraScalarFieldEnum = {
   iva: 'iva',
   total: 'total',
   presupuesto_id: 'presupuesto_id',
-  requisicion_id: 'requisicion_id'
+  requisicion_id: 'requisicion_id',
+  enviada_proveedor_at: 'enviada_proveedor_at',
+  enviada_proveedor_email: 'enviada_proveedor_email'
 };
 
 exports.Prisma.OrdenCompraItemScalarFieldEnum = {
@@ -364,6 +368,21 @@ exports.Prisma.EspecificacionDetalleReqScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.EvaluacionEspecificacionScalarFieldEnum = {
+  id_evaluacion: 'id_evaluacion',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  cuadro_id: 'cuadro_id',
+  especificacion_id: 'especificacion_id',
+  proveedor_id: 'proveedor_id',
+  evaluacion_tecnica: 'evaluacion_tecnica',
+  comentario_tecnico: 'comentario_tecnico',
+  pregunta_residente: 'pregunta_residente',
+  respuesta_compras: 'respuesta_compras',
+  creado_por: 'creado_por',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.SolicitudCotizacionScalarFieldEnum = {
   id_solicitud: 'id_solicitud',
   tenant_id: 'tenant_id',
@@ -450,6 +469,7 @@ exports.Prisma.ModelName = {
   ComparativaDetalle: 'ComparativaDetalle',
   AclaracionComparativa: 'AclaracionComparativa',
   EspecificacionDetalleReq: 'EspecificacionDetalleReq',
+  EvaluacionEspecificacion: 'EvaluacionEspecificacion',
   SolicitudCotizacion: 'SolicitudCotizacion',
   SolicitudCotizacionProveedor: 'SolicitudCotizacionProveedor',
   AnotacionEspecificacion: 'AnotacionEspecificacion',
