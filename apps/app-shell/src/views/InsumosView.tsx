@@ -18,6 +18,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import api from '../lib/api';
+import { useArrowKeyNav } from '../hooks/useArrowKeyNav';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
@@ -966,6 +967,35 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
     return lista;
   }, [insumos, filtroTipo, searchInsumos]);
+
+  // ── Navegación con teclado en los 3 paneles de catálogo ─────────────────
+  // Ver openspec/changes/navegacion-teclado-catalogos.
+  useArrowKeyNav({
+    enabled: !!insumoFichasId,
+    items: insumosFiltrados,
+    currentId: insumoFichasId,
+    getId: (i) => i.id,
+    onNavigate: (i) => setInsumoFichasId(i.id),
+  });
+
+  useArrowKeyNav({
+    enabled: !!conceptoTakeoff,
+    items: conceptosFiltrados,
+    currentId: conceptoTakeoff?.id ?? null,
+    getId: (c) => c.id,
+    onNavigate: (c) => handleAbrirTakeoff(c),
+  });
+
+  useArrowKeyNav({
+    enabled: !!saldoPanelConcepto,
+    items: conceptosFiltrados,
+    currentId: saldoPanelConcepto?.concepto_id ?? null,
+    getId: (c) => c.id,
+    onNavigate: (c) => {
+      const saldo = saldoMap[c.id];
+      if (saldo) setSaldoPanelConcepto(saldo);
+    },
+  });
 
   const insumosPorTipo = useMemo(() => {
     const counts: Partial<Record<TipoInsumo, number>> = {};
