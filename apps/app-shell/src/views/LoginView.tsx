@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
-import { useTenant } from '../context/TenantContext';
+import { useTenant, LOGOUT_REASON_KEY } from '../context/TenantContext';
 
 const DEFAULT_TENANT_ID = (import.meta.env.VITE_DEFAULT_TENANT_ID || '8e07a7ac-8157-4e5d-8499-e985a9fcdbfc').trim();
 
@@ -47,6 +47,17 @@ export const LoginView: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
+
+  // Mensaje distinto si el logout fue por inactividad (sesion-jwt-inactividad)
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(LOGOUT_REASON_KEY) === 'inactivity') {
+        setSessionNotice('Tu sesión se cerró por inactividad. Vuelve a iniciar sesión.');
+        sessionStorage.removeItem(LOGOUT_REASON_KEY);
+      }
+    } catch { /* storage no disponible */ }
+  }, []);
 
   // ── Reacción de partículas al mouse ──────────────────────────────────────
   const mouseRef      = useRef({ x: -9999, y: -9999 });
@@ -419,6 +430,20 @@ export const LoginView: React.FC = () => {
                 Ingresa tus credenciales para continuar
               </p>
             </div>
+
+            {/* Aviso de sesión (ej. cierre por inactividad) — distinto del error de credenciales */}
+            {!error && sessionNotice && (
+              <div style={{
+                display:'flex', alignItems:'flex-start', gap:10,
+                padding:'12px 14px', borderRadius:12, marginBottom:20,
+                background:'rgba(56,189,248,.09)', border:'1px solid rgba(56,189,248,.24)',
+              }}>
+                <AlertCircle style={{ width:14, height:14, color:'rgba(125,211,252,.9)', flexShrink:0, marginTop:1 }} />
+                <span style={{ fontSize:12, color:'rgba(186,230,253,.9)', lineHeight:1.55, fontFamily:"'Inter',sans-serif" }}>
+                  {sessionNotice}
+                </span>
+              </div>
+            )}
 
             {/* Error */}
             {error && (

@@ -121,14 +121,19 @@ model UserProjectAccess {
 
 // --- Sesiones: Refresh Tokens (Rotación Segura) ---
 model RefreshToken {
-  id         String   @id @default(uuid()) @db.Uuid
-  user_id    String   @db.Uuid
-  token_hash String   @db.VarChar(255) // Almacenar hash, NUNCA el token raw
-  expires_at DateTime
-  revoked    Boolean  @default(false)
-  created_at DateTime @default(now())
-  user_agent String?  @db.VarChar(500)
-  ip_address String?  @db.VarChar(50)
+  id                 String    @id @default(uuid()) @db.Uuid
+  user_id            String    @db.Uuid
+  token_hash         String    @db.VarChar(255) // Almacenar hash, NUNCA el token raw
+  expires_at         DateTime
+  revoked            Boolean   @default(false)
+  created_at         DateTime  @default(now())
+  user_agent         String?   @db.VarChar(500)
+  ip_address         String?   @db.VarChar(50)
+  // Momento del login ORIGINAL de esta cadena de sesión — se propaga sin
+  // resetear en cada rotación (ver apps/auth/src/sesion-policy.ts). Permite
+  // imponer un límite absoluto de duración de sesión independiente de la
+  // actividad del usuario. Nullable: tokens emitidos antes de este campo.
+  sesion_iniciada_en DateTime?
 
   user User @relation(fields: [user_id], references: [id_usuario], onDelete: Cascade)
 

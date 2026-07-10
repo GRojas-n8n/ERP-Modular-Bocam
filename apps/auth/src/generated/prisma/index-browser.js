@@ -189,7 +189,8 @@ exports.Prisma.RefreshTokenScalarFieldEnum = {
   revoked: 'revoked',
   created_at: 'created_at',
   user_agent: 'user_agent',
-  ip_address: 'ip_address'
+  ip_address: 'ip_address',
+  sesion_iniciada_en: 'sesion_iniciada_en'
 };
 
 exports.Prisma.MasterAuditLogScalarFieldEnum = {
