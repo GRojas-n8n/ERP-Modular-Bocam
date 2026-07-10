@@ -198,6 +198,9 @@ export const comprasApi = {
   },
   cancelarOC:          (id: string, data: unknown) => api.post(`/api/v1/compras/ordenes-compra/${id}/cancelar`, data),
   enviarOrdenesCompraCorreo: (idsOrden: string[]) => api.post('/api/v1/compras/ordenes-compra/enviar-correo', { ids_orden: idsOrden }),
+  getResumenPurga:     ()         => api.get('/api/v1/compras/admin/purga/resumen'),
+  ejecutarPurga:       (lote: { requisiciones: string[]; ordenes_compra: string[]; proveedores: string[] }) =>
+    api.post('/api/v1/compras/admin/purga', lote),
 };
 
 // ── Control de Obra ──────────────────────────────────────────────────────────

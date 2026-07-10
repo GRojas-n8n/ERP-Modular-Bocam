@@ -39,6 +39,7 @@ import {
   IconSearch,
   IconSend,
   IconShoppingCart,
+  IconTrash2,
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
@@ -99,7 +100,7 @@ interface Insumo {
   activo?: boolean;
 }
 
-type TabId = 'requisiciones' | 'catalogo' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt' | 'ordenes-compra' | 'trazabilidad';
+type TabId = 'requisiciones' | 'catalogo' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt' | 'ordenes-compra' | 'trazabilidad' | 'admin-purga';
 
 interface OrdenCompraListItem {
   id_orden: string;
@@ -111,6 +112,13 @@ interface OrdenCompraListItem {
   enviada_proveedor_email: string | null;
   proveedor: { razon_social: string };
 }
+
+// ── Herramientas de Administrador — purga de datos de prueba ────────────────
+interface PurgaRequisicionItem { id: string; codigo: string; estado: string; fecha_solicitud: string; }
+interface PurgaOrdenCompraItem { id: string; codigo: string; estado: string; total: number; fecha_emision: string; proveedor: string; }
+interface PurgaProveedorItem { id: string; razon_social: string; rfc_tax_id: string; estatus: string; }
+interface PurgaResumen { requisiciones: PurgaRequisicionItem[]; ordenes_compra: PurgaOrdenCompraItem[]; proveedores: PurgaProveedorItem[]; }
+interface PurgaBloqueoDetalle { entidad: string; id: string; bloqueos: { tipo: string; cantidad: number }[]; }
 
 interface TrazabilidadMaterial {
   insumo_id: string | null;
@@ -272,6 +280,18 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [loadingOc, setLoadingOc] = useState(false);
   const [ocSeleccionadas, setOcSeleccionadas] = useState<Set<string>>(new Set());
   const [enviandoOc, setEnviandoOc] = useState(false);
+
+  // ── Herramientas de Administrador — purga de datos de prueba (admin-only) ──
+  const isAdminRole = roles.includes('admin');
+  const [purgaResumen, setPurgaResumen] = useState<PurgaResumen>({ requisiciones: [], ordenes_compra: [], proveedores: [] });
+  const [loadingPurga, setLoadingPurga] = useState(false);
+  const [purgaSelReq, setPurgaSelReq] = useState<Set<string>>(new Set());
+  const [purgaSelOc, setPurgaSelOc] = useState<Set<string>>(new Set());
+  const [purgaSelProv, setPurgaSelProv] = useState<Set<string>>(new Set());
+  const [showPurgaModal, setShowPurgaModal] = useState(false);
+  const [purgaConfirmText, setPurgaConfirmText] = useState('');
+  const [purgando, setPurgando] = useState(false);
+  const [purgaBloqueo, setPurgaBloqueo] = useState<PurgaBloqueoDetalle | null>(null);
 
   // ── Widget Resumen Presupuestal (Task 7) ─────────────────────────────────
   interface ResumenCP {
@@ -516,6 +536,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { fetchData(); }, [currentProjectId]);
   useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'ordenes-compra') { void loadOrdenesCompra(); } }, [activeTab, currentProjectId]);
+  useEffect(() => { if (activeTab === 'admin-purga' && isAdminRole) { void loadPurgaResumen(); } }, [activeTab, currentProjectId, isAdminRole]);
 
   // Cerrar dropdown al hacer clic afuera (requisición)
   useEffect(() => {
@@ -962,6 +983,57 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       notify({ type: 'error', title: 'Error al enviar OC', message: err.response?.data?.message || err.message });
     } finally {
       setEnviandoOc(false);
+    }
+  };
+
+  // ── Herramientas de Administrador — purga de datos de prueba — handlers ────
+  const loadPurgaResumen = async () => {
+    if (isDemo) return;
+    setLoadingPurga(true);
+    try {
+      const res = await comprasApi.getResumenPurga();
+      setPurgaResumen(res.data?.data ?? { requisiciones: [], ordenes_compra: [], proveedores: [] });
+    } catch { /* silencioso */ }
+    finally { setLoadingPurga(false); }
+  };
+
+  const togglePurgaSeleccion = (tipo: 'req' | 'oc' | 'prov', id: string) => {
+    const setter = tipo === 'req' ? setPurgaSelReq : tipo === 'oc' ? setPurgaSelOc : setPurgaSelProv;
+    setter(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const purgaTotalSeleccionado = purgaSelReq.size + purgaSelOc.size + purgaSelProv.size;
+
+  const handleEjecutarPurga = async () => {
+    if (purgaConfirmText !== 'ELIMINAR' || purgaTotalSeleccionado === 0) return;
+    setPurgando(true);
+    setPurgaBloqueo(null);
+    try {
+      await comprasApi.ejecutarPurga({
+        requisiciones: [...purgaSelReq],
+        ordenes_compra: [...purgaSelOc],
+        proveedores: [...purgaSelProv],
+      });
+      notify({ type: 'success', title: 'Purga completada', message: `${purgaTotalSeleccionado} registro(s) eliminado(s).`, duration: 6000 });
+      setPurgaSelReq(new Set());
+      setPurgaSelOc(new Set());
+      setPurgaSelProv(new Set());
+      setShowPurgaModal(false);
+      setPurgaConfirmText('');
+      await loadPurgaResumen();
+    } catch (err: any) {
+      const data = err.response?.data;
+      if (err.response?.status === 409 && data?.data) {
+        setPurgaBloqueo(data.data);
+      } else {
+        notify({ type: 'error', title: 'Error al purgar', message: data?.message || err.message });
+      }
+    } finally {
+      setPurgando(false);
     }
   };
 
@@ -2149,6 +2221,129 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB: Herramientas de Administrador — purga de datos de prueba ── */}
+          {activeTab === 'admin-purga' && isAdminRole && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-700">
+                  <IconAlertTriangle className="h-4 w-4" /> Zona de riesgo — borrado físico e irreversible
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Selecciona registros de prueba a eliminar. El borrado no se puede deshacer.
+                  Proyectos y Usuarios no están incluidos en esta herramienta.
+                </p>
+              </div>
+
+              {loadingPurga ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500/10 border-t-amber-600" />
+                </div>
+              ) : (
+                <>
+                  {([
+                    { tipo: 'req' as const, titulo: 'Requisiciones', items: purgaResumen.requisiciones, sel: purgaSelReq,
+                      cols: (r: PurgaRequisicionItem) => [r.codigo, r.estado, new Date(r.fecha_solicitud).toLocaleDateString('es-MX')] },
+                    { tipo: 'oc' as const, titulo: 'Órdenes de Compra', items: purgaResumen.ordenes_compra, sel: purgaSelOc,
+                      cols: (o: PurgaOrdenCompraItem) => [o.codigo, o.proveedor, `$${Number(o.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`] },
+                    { tipo: 'prov' as const, titulo: 'Proveedores', items: purgaResumen.proveedores, sel: purgaSelProv,
+                      cols: (p: PurgaProveedorItem) => [p.razon_social, p.rfc_tax_id, p.estatus] },
+                  ]).map(({ tipo, titulo, items, sel, cols }) => (
+                    <div key={tipo} className="overflow-hidden rounded-2xl border border-border/30">
+                      <div className="flex items-center justify-between bg-muted/40 px-3 py-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          {titulo} ({sel.size} de {items.length} seleccionado{sel.size === 1 ? '' : 's'})
+                        </p>
+                      </div>
+                      {items.length === 0 ? (
+                        <p className="p-4 text-center text-xs text-muted-foreground">Sin registros.</p>
+                      ) : (
+                        <table className="w-full text-left text-xs">
+                          <tbody>
+                            {items.map((item: any, idx: number) => (
+                              <tr key={item.id} className={cn('border-t border-border/20', idx % 2 === 1 && 'bg-muted/10')}>
+                                <td className="w-10 px-3 py-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={sel.has(item.id)}
+                                    onChange={() => togglePurgaSeleccion(tipo, item.id)}
+                                    className="h-4 w-4 rounded border-border/50"
+                                  />
+                                </td>
+                                {cols(item).map((c: string, i: number) => (
+                                  <td key={i} className="px-3 py-2 text-foreground">{c}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  ))}
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => { setPurgaBloqueo(null); setPurgaConfirmText(''); setShowPurgaModal(true); }}
+                      disabled={purgaTotalSeleccionado === 0}
+                      className="rounded-xl bg-red-600 px-4 text-xs font-black uppercase tracking-widest text-white hover:bg-red-500 disabled:opacity-40"
+                    >
+                      <IconTrash2 className="h-4 w-4" />
+                      Purgar seleccionados ({purgaTotalSeleccionado})
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {showPurgaModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                  <div className="w-full max-w-md rounded-2xl border border-border/30 bg-card p-6 shadow-2xl">
+                    <p className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-red-600">
+                      <IconAlertTriangle className="h-5 w-5" /> Confirmar purga
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Vas a eliminar <strong>{purgaTotalSeleccionado}</strong> registro(s) de forma permanente.
+                      Escribe <strong>ELIMINAR</strong> para confirmar.
+                    </p>
+
+                    {purgaBloqueo && (
+                      <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-xs text-red-700">
+                        No se puede purgar {purgaBloqueo.entidad} — quedan referencias sin incluir en la selección:
+                        <ul className="mt-1 list-disc pl-4">
+                          {purgaBloqueo.bloqueos.map((b, i) => (
+                            <li key={i}>{b.tipo}: {b.cantidad}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <input
+                      type="text"
+                      value={purgaConfirmText}
+                      onChange={(e) => setPurgaConfirmText(e.target.value)}
+                      placeholder="ELIMINAR"
+                      className="mt-4 w-full rounded-xl border border-border/50 bg-background px-3 py-2 text-sm"
+                    />
+
+                    <div className="mt-5 flex justify-end gap-2">
+                      <Button
+                        onClick={() => { setShowPurgaModal(false); setPurgaConfirmText(''); setPurgaBloqueo(null); }}
+                        className="rounded-xl bg-muted px-4 text-xs font-black uppercase tracking-widest text-foreground hover:bg-muted/80"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleEjecutarPurga}
+                        disabled={purgaConfirmText !== 'ELIMINAR' || purgando}
+                        className="rounded-xl bg-red-600 px-4 text-xs font-black uppercase tracking-widest text-white hover:bg-red-500 disabled:opacity-40"
+                      >
+                        {purgando ? 'Eliminando…' : 'Eliminar definitivamente'}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
