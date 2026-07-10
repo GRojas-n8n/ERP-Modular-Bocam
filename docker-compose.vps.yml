@@ -529,6 +529,7 @@ services:
       PERSONAL_URL: http://personal:3006/api/v1/personal
       SEGURIDAD_URL: http://seguridad:3007/api/v1/seguridad
       CALIDAD_URL: http://calidad:3009/api/v1/calidad
+      GERENCIA_TECNICA_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
     depends_on:
       redis:
         condition: service_healthy

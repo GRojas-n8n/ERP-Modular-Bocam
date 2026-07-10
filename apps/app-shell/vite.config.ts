@@ -45,6 +45,7 @@ export default defineConfig({
       '/api/v1/almacen':        'http://localhost:3012',
       '/api/v1/ventas':         'http://localhost:3012',
       '/api/v1/contabilidad':   'http://localhost:3008',
+      '/api/v1/asistente':      'http://localhost:3011',
     }
   },
   preview: {

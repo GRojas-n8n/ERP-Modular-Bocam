@@ -12,6 +12,7 @@ import { createObservabilityMiddleware, initSentry, setupSentryExpressHandler } 
 import leerCotizacionRouter from './routes/leer-cotizacion';
 import resumenEjecutivoRouter from './routes/resumen-ejecutivo';
 import alertasPredictivas from './routes/alertas-predictivas';
+import chatRouter from './routes/chat';
 
 const PORT       = process.env.PORT       || 3011;
 const JWT_SECRET = requireEnv('JWT_SECRET');
@@ -40,6 +41,23 @@ app.use('/api/v1/asistente/leer-cotizacion',    aiRateLimit);
 app.use('/api/v1/asistente/resumen-ejecutivo',  aiRateLimit);
 app.use('/api/v1/asistente/alertas-predictivas', aiRateLimit);
 
+// Rate limit dedicado para /chat (D5): más mensajes permitidos que los otros
+// tres endpoints (son operaciones puntuales pesadas; /chat es conversacional
+// y más frecuente), independiente del limiter de arriba.
+const chatRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req: Request) => {
+    const sc = (req as Request & { securityContext?: { tenantId?: string } }).securityContext;
+    return sc?.tenantId ?? req.ip ?? 'unknown';
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Límite de mensajes de chat alcanzado. Espera 15 minutos.' },
+});
+
+app.use('/api/v1/asistente/chat', chatRateLimit);
+
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'asistente', version: '1.0.0', timestamp: new Date().toISOString() });
@@ -49,6 +67,7 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use(leerCotizacionRouter);
 app.use(resumenEjecutivoRouter);
 app.use(alertasPredictivas);
+app.use(chatRouter);
 
 // ── Server ────────────────────────────────────────────────────────────────────
 setupSentryExpressHandler(app);
@@ -59,7 +78,9 @@ export async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error('[asistente] Error fatal al iniciar:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  startServer().catch((err) => {
+    console.error('[asistente] Error fatal al iniciar:', err);
+    process.exit(1);
+  });
+}
