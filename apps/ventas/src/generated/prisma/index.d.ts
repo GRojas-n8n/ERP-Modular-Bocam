@@ -1104,6 +1104,7 @@ export namespace Prisma {
     email_contacto: string | null
     telefono: string | null
     estatus: string | null
+    codigo_cliente: string | null
   }
 
   export type ClienteMaxAggregateOutputType = {
@@ -1115,6 +1116,7 @@ export namespace Prisma {
     email_contacto: string | null
     telefono: string | null
     estatus: string | null
+    codigo_cliente: string | null
   }
 
   export type ClienteCountAggregateOutputType = {
@@ -1126,6 +1128,7 @@ export namespace Prisma {
     email_contacto: number
     telefono: number
     estatus: number
+    codigo_cliente: number
     _all: number
   }
 
@@ -1139,6 +1142,7 @@ export namespace Prisma {
     email_contacto?: true
     telefono?: true
     estatus?: true
+    codigo_cliente?: true
   }
 
   export type ClienteMaxAggregateInputType = {
@@ -1150,6 +1154,7 @@ export namespace Prisma {
     email_contacto?: true
     telefono?: true
     estatus?: true
+    codigo_cliente?: true
   }
 
   export type ClienteCountAggregateInputType = {
@@ -1161,6 +1166,7 @@ export namespace Prisma {
     email_contacto?: true
     telefono?: true
     estatus?: true
+    codigo_cliente?: true
     _all?: true
   }
 
@@ -1245,6 +1251,7 @@ export namespace Prisma {
     email_contacto: string | null
     telefono: string | null
     estatus: string
+    codigo_cliente: string | null
     _count: ClienteCountAggregateOutputType | null
     _min: ClienteMinAggregateOutputType | null
     _max: ClienteMaxAggregateOutputType | null
@@ -1273,6 +1280,7 @@ export namespace Prisma {
     email_contacto?: boolean
     telefono?: boolean
     estatus?: boolean
+    codigo_cliente?: boolean
     cotizaciones?: boolean | Cliente$cotizacionesArgs<ExtArgs>
     facturas?: boolean | Cliente$facturasArgs<ExtArgs>
     _count?: boolean | ClienteCountOutputTypeDefaultArgs<ExtArgs>
@@ -1287,6 +1295,7 @@ export namespace Prisma {
     email_contacto?: boolean
     telefono?: boolean
     estatus?: boolean
+    codigo_cliente?: boolean
   }, ExtArgs["result"]["cliente"]>
 
   export type ClienteSelectScalar = {
@@ -1298,6 +1307,7 @@ export namespace Prisma {
     email_contacto?: boolean
     telefono?: boolean
     estatus?: boolean
+    codigo_cliente?: boolean
   }
 
   export type ClienteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1322,6 +1332,7 @@ export namespace Prisma {
       email_contacto: string | null
       telefono: string | null
       estatus: string
+      codigo_cliente: string | null
     }, ExtArgs["result"]["cliente"]>
     composites: {}
   }
@@ -1725,6 +1736,7 @@ export namespace Prisma {
     readonly email_contacto: FieldRef<"Cliente", 'String'>
     readonly telefono: FieldRef<"Cliente", 'String'>
     readonly estatus: FieldRef<"Cliente", 'String'>
+    readonly codigo_cliente: FieldRef<"Cliente", 'String'>
   }
     
 
@@ -4292,7 +4304,8 @@ export namespace Prisma {
     razon_social: 'razon_social',
     email_contacto: 'email_contacto',
     telefono: 'telefono',
-    estatus: 'estatus'
+    estatus: 'estatus',
+    codigo_cliente: 'codigo_cliente'
   };
 
   export type ClienteScalarFieldEnum = (typeof ClienteScalarFieldEnum)[keyof typeof ClienteScalarFieldEnum]
@@ -4435,6 +4448,7 @@ export namespace Prisma {
     email_contacto?: StringNullableFilter<"Cliente"> | string | null
     telefono?: StringNullableFilter<"Cliente"> | string | null
     estatus?: StringFilter<"Cliente"> | string
+    codigo_cliente?: StringNullableFilter<"Cliente"> | string | null
     cotizaciones?: CotizacionListRelationFilter
     facturas?: FacturaListRelationFilter
   }
@@ -4448,6 +4462,7 @@ export namespace Prisma {
     email_contacto?: SortOrderInput | SortOrder
     telefono?: SortOrderInput | SortOrder
     estatus?: SortOrder
+    codigo_cliente?: SortOrderInput | SortOrder
     cotizaciones?: CotizacionOrderByRelationAggregateInput
     facturas?: FacturaOrderByRelationAggregateInput
   }
@@ -4455,6 +4470,7 @@ export namespace Prisma {
   export type ClienteWhereUniqueInput = Prisma.AtLeast<{
     id_cliente?: string
     tenant_id_rfc_tax_id?: ClienteTenant_idRfc_tax_idCompoundUniqueInput
+    tenant_id_codigo_cliente?: ClienteTenant_idCodigo_clienteCompoundUniqueInput
     AND?: ClienteWhereInput | ClienteWhereInput[]
     OR?: ClienteWhereInput[]
     NOT?: ClienteWhereInput | ClienteWhereInput[]
@@ -4465,9 +4481,10 @@ export namespace Prisma {
     email_contacto?: StringNullableFilter<"Cliente"> | string | null
     telefono?: StringNullableFilter<"Cliente"> | string | null
     estatus?: StringFilter<"Cliente"> | string
+    codigo_cliente?: StringNullableFilter<"Cliente"> | string | null
     cotizaciones?: CotizacionListRelationFilter
     facturas?: FacturaListRelationFilter
-  }, "id_cliente" | "tenant_id_rfc_tax_id">
+  }, "id_cliente" | "tenant_id_rfc_tax_id" | "tenant_id_codigo_cliente">
 
   export type ClienteOrderByWithAggregationInput = {
     id_cliente?: SortOrder
@@ -4478,6 +4495,7 @@ export namespace Prisma {
     email_contacto?: SortOrderInput | SortOrder
     telefono?: SortOrderInput | SortOrder
     estatus?: SortOrder
+    codigo_cliente?: SortOrderInput | SortOrder
     _count?: ClienteCountOrderByAggregateInput
     _max?: ClienteMaxOrderByAggregateInput
     _min?: ClienteMinOrderByAggregateInput
@@ -4495,6 +4513,7 @@ export namespace Prisma {
     email_contacto?: StringNullableWithAggregatesFilter<"Cliente"> | string | null
     telefono?: StringNullableWithAggregatesFilter<"Cliente"> | string | null
     estatus?: StringWithAggregatesFilter<"Cliente"> | string
+    codigo_cliente?: StringNullableWithAggregatesFilter<"Cliente"> | string | null
   }
 
   export type CotizacionWhereInput = {
@@ -4703,6 +4722,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
     cotizaciones?: CotizacionCreateNestedManyWithoutClienteInput
     facturas?: FacturaCreateNestedManyWithoutClienteInput
   }
@@ -4716,6 +4736,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
     cotizaciones?: CotizacionUncheckedCreateNestedManyWithoutClienteInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutClienteInput
   }
@@ -4729,6 +4750,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
     cotizaciones?: CotizacionUpdateManyWithoutClienteNestedInput
     facturas?: FacturaUpdateManyWithoutClienteNestedInput
   }
@@ -4742,6 +4764,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
     cotizaciones?: CotizacionUncheckedUpdateManyWithoutClienteNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutClienteNestedInput
   }
@@ -4755,6 +4778,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
   }
 
   export type ClienteUpdateManyMutationInput = {
@@ -4766,6 +4790,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ClienteUncheckedUpdateManyInput = {
@@ -4777,6 +4802,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CotizacionCreateInput = {
@@ -5081,6 +5107,11 @@ export namespace Prisma {
     rfc_tax_id: string
   }
 
+  export type ClienteTenant_idCodigo_clienteCompoundUniqueInput = {
+    tenant_id: string
+    codigo_cliente: string
+  }
+
   export type ClienteCountOrderByAggregateInput = {
     id_cliente?: SortOrder
     tenant_id?: SortOrder
@@ -5090,6 +5121,7 @@ export namespace Prisma {
     email_contacto?: SortOrder
     telefono?: SortOrder
     estatus?: SortOrder
+    codigo_cliente?: SortOrder
   }
 
   export type ClienteMaxOrderByAggregateInput = {
@@ -5101,6 +5133,7 @@ export namespace Prisma {
     email_contacto?: SortOrder
     telefono?: SortOrder
     estatus?: SortOrder
+    codigo_cliente?: SortOrder
   }
 
   export type ClienteMinOrderByAggregateInput = {
@@ -5112,6 +5145,7 @@ export namespace Prisma {
     email_contacto?: SortOrder
     telefono?: SortOrder
     estatus?: SortOrder
+    codigo_cliente?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -5957,6 +5991,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
     facturas?: FacturaCreateNestedManyWithoutClienteInput
   }
 
@@ -5969,6 +6004,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
     facturas?: FacturaUncheckedCreateNestedManyWithoutClienteInput
   }
 
@@ -6035,6 +6071,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
     facturas?: FacturaUpdateManyWithoutClienteNestedInput
   }
 
@@ -6047,6 +6084,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
     facturas?: FacturaUncheckedUpdateManyWithoutClienteNestedInput
   }
 
@@ -6075,6 +6113,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
     cotizaciones?: CotizacionCreateNestedManyWithoutClienteInput
   }
 
@@ -6087,6 +6126,7 @@ export namespace Prisma {
     email_contacto?: string | null
     telefono?: string | null
     estatus?: string
+    codigo_cliente?: string | null
     cotizaciones?: CotizacionUncheckedCreateNestedManyWithoutClienteInput
   }
 
@@ -6152,6 +6192,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
     cotizaciones?: CotizacionUpdateManyWithoutClienteNestedInput
   }
 
@@ -6164,6 +6205,7 @@ export namespace Prisma {
     email_contacto?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     estatus?: StringFieldUpdateOperationsInput | string
+    codigo_cliente?: NullableStringFieldUpdateOperationsInput | string | null
     cotizaciones?: CotizacionUncheckedUpdateManyWithoutClienteNestedInput
   }
 

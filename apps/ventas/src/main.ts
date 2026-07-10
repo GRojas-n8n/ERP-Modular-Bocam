@@ -47,6 +47,62 @@ app.get('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
   }
 });
 
+// Rango válido para codigo_cliente: 3 dígitos, '000' a '050' (ver
+// openspec/changes/centro-costos-alta-formal). Se usa para ensamblar el
+// código de 13 posiciones del Centro de Costos en apps/auth.
+const CODIGO_CLIENTE_PATTERN = /^\d{3}$/;
+const CODIGO_CLIENTE_MAX = 50;
+
+app.post('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { rfc_tax_id, razon_social, email_contacto, telefono, codigo_cliente } = req.body as {
+      rfc_tax_id?: string; razon_social?: string; email_contacto?: string; telefono?: string; codigo_cliente?: string;
+    };
+
+    if (!rfc_tax_id || !razon_social) {
+      return res.status(400).json({ success: false, message: 'rfc_tax_id y razon_social son obligatorios.' });
+    }
+
+    if (codigo_cliente !== undefined && codigo_cliente !== null && codigo_cliente !== '') {
+      if (!CODIGO_CLIENTE_PATTERN.test(codigo_cliente) || Number(codigo_cliente) > CODIGO_CLIENTE_MAX) {
+        return res.status(400).json({ success: false, message: `codigo_cliente debe ser numérico de 3 dígitos entre "000" y "${String(CODIGO_CLIENTE_MAX).padStart(3, '0')}".` });
+      }
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      if (codigo_cliente) {
+        const existente = await prisma.cliente.findFirst({ where: { tenant_id: tenantId, codigo_cliente } });
+        if (existente) {
+          return { conflict: true as const };
+        }
+      }
+      const nuevo = await prisma.cliente.create({
+        data: {
+          tenant_id: tenantId,
+          rfc_tax_id,
+          razon_social,
+          email_contacto: email_contacto ?? null,
+          telefono: telefono ?? null,
+          codigo_cliente: codigo_cliente || null,
+        },
+      });
+      return { conflict: false as const, cliente: nuevo };
+    });
+
+    if (data.conflict) {
+      return res.status(409).json({ success: false, message: `Ya existe un cliente con codigo_cliente "${codigo_cliente}" en este tenant.` });
+    }
+
+    logInfo(req, 'ventas', 'ventas.cliente.creado', `Cliente ${data.cliente.razon_social} creado`, { cliente_id: data.cliente.id_cliente });
+    res.status(201).json({ success: true, data: data.cliente });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    logError(req, 'ventas', 'ventas.cliente.crear.error', message, {});
+    res.status(500).json({ success: false, message });
+  }
+});
+
 app.get('/api/v1/ventas/cotizaciones', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;

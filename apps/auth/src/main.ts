@@ -17,12 +17,30 @@ import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
 import { createTenantContext, disconnectDb, runAsSystem } from './db';
-import { createAuthMiddleware, requireEnv } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 import { resolveAutoAssignedUserIds } from './project-access-policy';
+import {
+  ensamblarCodigoCentroCostos,
+  siguienteConsecutivo,
+  validarEmpresaGrupo,
+  validarEstatus,
+} from './centro-costos-policy';
 
-const app = express();
+const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'] as const;
+const ROLES_ALTA_CENTRO_COSTOS = ['admin', 'gerencia_tecnica', 'control_proyectos'];
+
+// Acepta 'YYYY-MM-DD' (formato del input <input type="date">) o un ISO
+// datetime completo; Prisma exige datetime completo para columnas
+// TIMESTAMP(3). undefined/null se preservan tal cual.
+function normalizarFecha(valor: unknown): Date | undefined | null {
+  if (valor === undefined) return undefined;
+  if (valor === null || valor === '') return null;
+  return new Date(valor as string);
+}
+
+export const app = express();
 app.set('trust proxy', 1);
 app.use(express.json());
 
@@ -809,7 +827,7 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
 });
 
 // ─── GET /api/v1/auth/admin/proyectos ────────────────────────────────────────
-app.get('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
     const proyectos = await createTenantContext({ tenantId }, async (prisma) =>
@@ -822,27 +840,113 @@ app.get('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHandl
 });
 
 // ─── POST /api/v1/auth/admin/proyectos ───────────────────────────────────────
-app.post('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
-    const { codigo_centro_costos, nombre_oficial, tipo_contrato, moneda_base, estatus } = req.body;
-    if (!codigo_centro_costos || !nombre_oficial) {
-      res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'codigo_centro_costos y nombre_oficial son obligatorios.' } });
+    const {
+      nombre_oficial, tipo_contrato, moneda_base, estatus,
+      es_especial, tipo_especial, codigo_centro_costos: codigoEspecialInput,
+      empresa_grupo, anio_centro_costos, cliente_id, codigo_cliente,
+      monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
+      total_dias_naturales, total_dias_laborables,
+    } = req.body;
+    const fecha_inicio_real = normalizarFecha(req.body.fecha_inicio_real);
+    const fecha_firma_contrato = normalizarFecha(req.body.fecha_firma_contrato);
+    const fecha_programada_inicio = normalizarFecha(req.body.fecha_programada_inicio);
+    const fecha_programada_fin = normalizarFecha(req.body.fecha_programada_fin);
+
+    if (!nombre_oficial) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'nombre_oficial es obligatorio.' } });
       return;
     }
-    const proyecto = await createTenantContext({ tenantId }, async (prisma) => {
-      // 1. Crear el proyecto
-      const nuevo = await prisma.proyecto.create({
-        data: {
-          tenant_id: tenantId, codigo_centro_costos, nombre_oficial,
-          tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
-          moneda_base: moneda_base || 'MXN',
-          estatus: estatus || 'CONSTRUCCION',
-        },
-      });
 
-      // 2. Auto-asignar los usuarios con rol elegible (ver project-access-policy.ts)
-      //    para que el proyecto aparezca de inmediato en su selector de proyectos
+    if (estatus !== undefined && !validarEstatus(estatus)) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_ESTATUS_INVALIDO', message: 'estatus debe ser uno de: ABIERTO, EN EJECUCIÓN, EN COBRO, TERMINADO, CERRADO.' } });
+      return;
+    }
+
+    if (fecha_programada_inicio && fecha_programada_fin && new Date(fecha_programada_fin) < new Date(fecha_programada_inicio)) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_FECHAS_INVALIDAS', message: 'fecha_programada_fin no puede ser anterior a fecha_programada_inicio.' } });
+      return;
+    }
+
+    let camposCentroCostos: Record<string, any>;
+
+    if (es_especial) {
+      if (!TIPOS_ESPECIALES.includes(tipo_especial)) {
+        res.status(400).json({ success: false, error: { code: 'ADMIN_TIPO_ESPECIAL_INVALIDO', message: `tipo_especial debe ser uno de: ${TIPOS_ESPECIALES.join(', ')}.` } });
+        return;
+      }
+      if (!codigoEspecialInput) {
+        res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'codigo_centro_costos es obligatorio para un Centro de Costos especial.' } });
+        return;
+      }
+      camposCentroCostos = {
+        es_especial: true,
+        tipo_especial,
+        codigo_centro_costos: codigoEspecialInput,
+      };
+    } else {
+      if (!validarEmpresaGrupo(empresa_grupo)) {
+        res.status(400).json({ success: false, error: { code: 'ADMIN_EMPRESA_INVALIDA', message: `empresa_grupo debe ser uno de: CIB, HCO, HSE, SEO.` } });
+        return;
+      }
+      if (!anio_centro_costos || !cliente_id || !codigo_cliente) {
+        res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'anio_centro_costos, cliente_id y codigo_cliente son obligatorios.' } });
+        return;
+      }
+      camposCentroCostos = { es_especial: false, empresa_grupo, anio_centro_costos, cliente_id };
+    }
+
+    const proyecto = await createTenantContext({ tenantId }, async (prisma) => {
+      let nuevo;
+      if (es_especial) {
+        nuevo = await prisma.proyecto.create({
+          data: {
+            tenant_id: tenantId, nombre_oficial,
+            tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
+            moneda_base: moneda_base || 'MXN',
+            estatus: estatus || 'ABIERTO',
+            ...camposCentroCostos,
+            fecha_inicio_real, fecha_firma_contrato, fecha_programada_inicio, fecha_programada_fin,
+            monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
+            total_dias_naturales, total_dias_laborables,
+          } as any,
+        });
+      } else {
+        // Cálculo del consecutivo dentro de la misma transacción, con
+        // reintento ante colisión de unicidad (creación concurrente).
+        for (let intento = 0; intento < 3; intento++) {
+          const countExistente = await prisma.proyecto.count({
+            where: { tenant_id: tenantId, empresa_grupo, anio_centro_costos, cliente_id },
+          });
+          const consecutivo = siguienteConsecutivo(countExistente) + intento;
+          const codigo = ensamblarCodigoCentroCostos({ empresa: empresa_grupo, anio: anio_centro_costos, codigoCliente: codigo_cliente, consecutivo });
+          try {
+            nuevo = await prisma.proyecto.create({
+              data: {
+                tenant_id: tenantId, nombre_oficial,
+                tipo_contrato: tipo_contrato || 'PRECIOS_UNITARIOS',
+                moneda_base: moneda_base || 'MXN',
+                estatus: estatus || 'ABIERTO',
+                ...camposCentroCostos,
+                consecutivo_centro_costos: consecutivo,
+                codigo_centro_costos: codigo,
+                fecha_inicio_real, fecha_firma_contrato, fecha_programada_inicio, fecha_programada_fin,
+                monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
+                total_dias_naturales, total_dias_laborables,
+              },
+            });
+            break;
+          } catch (err: any) {
+            if (err?.code === 'P2002' && intento < 2) continue; // colisión de unicidad — reintentar
+            throw err;
+          }
+        }
+      }
+
+      // Auto-asignar los usuarios con rol elegible (ver project-access-policy.ts)
+      // para que el proyecto aparezca de inmediato en su selector de proyectos
       const candidatos = await prisma.user.findMany({
         where: { tenant_id: tenantId },
         select: { id_usuario: true, rol_global: true, activo: true },
@@ -851,12 +955,12 @@ app.post('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHand
 
       if (autoAssignIds.length > 0) {
         await prisma.userProjectAccess.createMany({
-          data: autoAssignIds.map(uid => ({ user_id: uid, proyecto_id: nuevo.id_proyecto })),
+          data: autoAssignIds.map(uid => ({ user_id: uid, proyecto_id: nuevo!.id_proyecto })),
           skipDuplicates: true,
         });
       }
 
-      return nuevo;
+      return nuevo!;
     });
     res.status(201).json({ success: true, data: proyecto });
   } catch (err) {
@@ -865,17 +969,45 @@ app.post('/api/v1/auth/admin/proyectos', requireAdminRole as express.RequestHand
 });
 
 // ─── PATCH /api/v1/auth/admin/proyectos/:id ──────────────────────────────────
-app.patch('/api/v1/auth/admin/proyectos/:id', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
+app.patch('/api/v1/auth/admin/proyectos/:id', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
     const { id } = req.params;
-    const { nombre_oficial, tipo_contrato, moneda_base, estatus, activo } = req.body;
+    const {
+      nombre_oficial, tipo_contrato, moneda_base, estatus, activo,
+      monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
+      total_dias_naturales, total_dias_laborables,
+    } = req.body;
+    const fecha_inicio_real = normalizarFecha(req.body.fecha_inicio_real);
+    const fecha_firma_contrato = normalizarFecha(req.body.fecha_firma_contrato);
+    const fecha_programada_inicio = normalizarFecha(req.body.fecha_programada_inicio);
+    const fecha_programada_fin = normalizarFecha(req.body.fecha_programada_fin);
+
+    if (estatus !== undefined && !validarEstatus(estatus)) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_ESTATUS_INVALIDO', message: 'estatus debe ser uno de: ABIERTO, EN EJECUCIÓN, EN COBRO, TERMINADO, CERRADO.' } });
+      return;
+    }
+    if (fecha_programada_inicio && fecha_programada_fin && new Date(fecha_programada_fin) < new Date(fecha_programada_inicio)) {
+      res.status(400).json({ success: false, error: { code: 'ADMIN_FECHAS_INVALIDAS', message: 'fecha_programada_fin no puede ser anterior a fecha_programada_inicio.' } });
+      return;
+    }
+
     const updateData: Record<string, unknown> = {};
     if (nombre_oficial !== undefined) updateData.nombre_oficial = nombre_oficial;
     if (tipo_contrato !== undefined) updateData.tipo_contrato = tipo_contrato;
     if (moneda_base !== undefined) updateData.moneda_base = moneda_base;
     if (estatus !== undefined) updateData.estatus = estatus;
     if (activo !== undefined) updateData.activo = activo;
+    if (fecha_inicio_real !== undefined) updateData.fecha_inicio_real = fecha_inicio_real;
+    if (fecha_firma_contrato !== undefined) updateData.fecha_firma_contrato = fecha_firma_contrato;
+    if (fecha_programada_inicio !== undefined) updateData.fecha_programada_inicio = fecha_programada_inicio;
+    if (fecha_programada_fin !== undefined) updateData.fecha_programada_fin = fecha_programada_fin;
+    if (monto_total_vendido !== undefined) updateData.monto_total_vendido = monto_total_vendido;
+    if (periodo_ejecucion !== undefined) updateData.periodo_ejecucion = periodo_ejecucion;
+    if (periodo_ejecucion_unidad !== undefined) updateData.periodo_ejecucion_unidad = periodo_ejecucion_unidad;
+    if (total_dias_naturales !== undefined) updateData.total_dias_naturales = total_dias_naturales;
+    if (total_dias_laborables !== undefined) updateData.total_dias_laborables = total_dias_laborables;
+
     const proyecto = await createTenantContext({ tenantId }, async (prisma) =>
       prisma.proyecto.update({ where: { id_proyecto: id }, data: updateData })
     );
@@ -1055,12 +1187,14 @@ async function startServer() {
   });
 }
 
-const server = startServer();
+if (require.main === module) {
+  const server = startServer();
 
-process.on('SIGINT', () => {
-  void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
-});
+  process.on('SIGINT', () => {
+    void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
+  });
 
-process.on('SIGTERM', () => {
-  void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
-});
+  process.on('SIGTERM', () => {
+    void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
+  });
+}

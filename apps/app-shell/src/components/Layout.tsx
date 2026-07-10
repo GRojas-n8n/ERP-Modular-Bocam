@@ -176,12 +176,16 @@ const ALL_NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    // Ampliado a gerencia_tecnica y control_proyectos para el alta de
+    // Centros de Costos (ver openspec/changes/centro-costos-alta-formal) —
+    // "Usuarios" y "Categorías de Gasto" quedan explícitamente admin-only
+    // para no exponerles gestión de usuarios ni tenants.
     name: 'Administración', icon: IconSettings, id: 'admin',
-    roles: ['admin'],
+    roles: ['admin', 'gerencia_tecnica', 'control_proyectos'],
     subItems: [
-      { id: 'usuarios',   label: 'Usuarios',           icon: IconUsers },
-      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase },
-      { id: 'categorias', label: 'Categorías de Gasto', icon: IconTrendingUp },
+      { id: 'usuarios',   label: 'Usuarios',           icon: IconUsers,       roles: ['admin'] },
+      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase,  roles: ['admin', 'gerencia_tecnica', 'control_proyectos'] },
+      { id: 'categorias', label: 'Categorías de Gasto', icon: IconTrendingUp, roles: ['admin'] },
     ],
   },
 ];

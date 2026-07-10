@@ -130,7 +130,8 @@ exports.Prisma.ClienteScalarFieldEnum = {
   razon_social: 'razon_social',
   email_contacto: 'email_contacto',
   telefono: 'telefono',
-  estatus: 'estatus'
+  estatus: 'estatus',
+  codigo_cliente: 'codigo_cliente'
 };
 
 exports.Prisma.CotizacionScalarFieldEnum = {
