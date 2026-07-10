@@ -22,7 +22,18 @@ vi.mock('../context/NotificationContext', () => ({
   useNotification: () => ({ notify }),
 }));
 
-let ordenesCompraMock = [
+interface OrdenCompraMockItem {
+  id_orden: string;
+  codigo: string;
+  estado: string;
+  fecha_emision: string;
+  total: number;
+  enviada_proveedor_at: string | null;
+  enviada_proveedor_email: string | null;
+  proveedor: { razon_social: string };
+}
+
+let ordenesCompraMock: OrdenCompraMockItem[] = [
   {
     id_orden: 'oc-1',
     codigo: 'OC-AUTO-1-1',
