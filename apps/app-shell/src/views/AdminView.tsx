@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../lib/api';
+import api, { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { cn } from '@bocam/ui-core';
 
@@ -13,7 +13,24 @@ interface AdminUser {
 interface Proyecto {
   id_proyecto: string; codigo_centro_costos: string; nombre_oficial: string;
   tipo_contrato: string; moneda_base: string; estatus: string; activo: boolean;
+  empresa_grupo?: string | null; anio_centro_costos?: number | null; cliente_id?: string | null;
+  consecutivo_centro_costos?: number | null; es_especial?: boolean; tipo_especial?: string | null;
+  fecha_inicio_real?: string | null; fecha_firma_contrato?: string | null;
+  fecha_programada_inicio?: string | null; fecha_programada_fin?: string | null;
+  monto_total_vendido?: number | null; periodo_ejecucion?: number | null; periodo_ejecucion_unidad?: string | null;
+  total_dias_naturales?: number | null; total_dias_laborables?: number | null;
 }
+interface ClienteVentas { id_cliente: string; razon_social: string; codigo_cliente: string | null; }
+
+// Ver openspec/changes/centro-costos-alta-formal
+const EMPRESAS_GRUPO = [
+  { value: 'CIB', label: 'CIB — Constructora e Inmobiliaria Bocam' },
+  { value: 'HCO', label: 'HCO — Hubi Construcciones' },
+  { value: 'HSE', label: 'HSE — Hubi Servicios Empresariales' },
+  { value: 'SEO', label: 'SEO — Servicios Empresariales Obhu' },
+];
+const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'];
+const ESTATUS_CENTRO_COSTOS = ['ABIERTO', 'EN EJECUCIÓN', 'EN COBRO', 'TERMINADO', 'CERRADO'];
 
 // ─── Role catalog ─────────────────────────────────────────────────────────────
 // IMPORTANTE: Mantener sincronizado con CLAUDE.md §11 y Layout.tsx ALL_NAV_ITEMS.
@@ -174,26 +191,165 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
   );
 };
 
-// ─── Project Modal ────────────────────────────────────────────────────────────
-interface ProyectoModalProps { proyecto?: Proyecto; onClose: () => void; onSaved: () => void; }
-const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSaved }) => {
-  const isEdit = !!proyecto;
-  const [form, setForm] = useState({
-    codigo_centro_costos: proyecto?.codigo_centro_costos ?? '',
-    nombre_oficial: proyecto?.nombre_oficial ?? '',
-    tipo_contrato: proyecto?.tipo_contrato ?? 'PRECIOS_UNITARIOS',
-    moneda_base: proyecto?.moneda_base ?? 'MXN',
-    estatus: proyecto?.estatus ?? 'CONSTRUCCION',
-  });
+// ─── Agregar Cliente (modal in-context, sin perder el progreso del formulario) ──
+interface AgregarClienteModalProps { onClose: () => void; onCreated: (cliente: ClienteVentas) => void; }
+const AgregarClienteModal: React.FC<AgregarClienteModalProps> = ({ onClose, onCreated }) => {
+  const [form, setForm] = useState({ razon_social: '', rfc_tax_id: '', codigo_cliente: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!form.codigo_centro_costos.trim() || !form.nombre_oficial.trim()) { setError('Código y nombre son obligatorios.'); return; }
+    if (!form.razon_social.trim() || !form.rfc_tax_id.trim()) { setError('Razón social y RFC son obligatorios.'); return; }
     setSaving(true); setError(null);
     try {
-      if (isEdit) await api.patch(`/api/v1/auth/admin/proyectos/${proyecto!.id_proyecto}`, form);
-      else await api.post('/api/v1/auth/admin/proyectos', form);
+      const res = await ventasApi.createCliente({
+        razon_social: form.razon_social.trim(),
+        rfc_tax_id: form.rfc_tax_id.trim(),
+        codigo_cliente: form.codigo_cliente.trim() || undefined,
+      });
+      onCreated(res.data.data as ClienteVentas);
+      onClose();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg ?? 'Error al crear el cliente.');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-border/40 bg-card shadow-2xl mx-4">
+        <div className="border-b border-border/30 px-6 py-4">
+          <h2 className="text-sm font-black uppercase tracking-widest">+ Agregar Cliente</h2>
+        </div>
+        <div className="space-y-4 px-6 py-5">
+          {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-400">{error}</div>}
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Razón Social *</label>
+            <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
+              value={form.razon_social} onChange={e => setForm(f => ({ ...f, razon_social: e.target.value }))} placeholder="Cliente S.A. de C.V." autoFocus />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">RFC *</label>
+            <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
+              value={form.rfc_tax_id} onChange={e => setForm(f => ({ ...f, rfc_tax_id: e.target.value.toUpperCase() }))} placeholder="XAXX010101000" maxLength={20} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código Cliente (000-050, opcional)</label>
+            <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono focus:border-primary/50 focus:outline-none"
+              value={form.codigo_cliente} onChange={e => setForm(f => ({ ...f, codigo_cliente: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
+              placeholder="051" maxLength={3} />
+          </div>
+        </div>
+        <div className="flex gap-3 border-t border-border/30 px-6 py-4">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50">Cancelar</button>
+          <button onClick={handleSubmit} disabled={saving}
+            className="flex-1 rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+            {saving ? 'Guardando...' : 'Agregar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Project Modal ────────────────────────────────────────────────────────────
+interface ProyectoModalProps { proyecto?: Proyecto; onClose: () => void; onSaved: () => void; }
+const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSaved }) => {
+  const isEdit = !!proyecto;
+  const anioActual = new Date().getFullYear();
+  const [form, setForm] = useState({
+    nombre_oficial: proyecto?.nombre_oficial ?? '',
+    tipo_contrato: proyecto?.tipo_contrato ?? 'PRECIOS_UNITARIOS',
+    moneda_base: proyecto?.moneda_base ?? 'MXN',
+    estatus: proyecto?.estatus ?? 'ABIERTO',
+    es_especial: proyecto?.es_especial ?? false,
+    tipo_especial: proyecto?.tipo_especial ?? '',
+    codigo_especial: proyecto?.es_especial ? (proyecto?.codigo_centro_costos ?? '') : '',
+    empresa_grupo: proyecto?.empresa_grupo ?? '',
+    anio_centro_costos: proyecto?.anio_centro_costos ?? anioActual,
+    cliente_id: proyecto?.cliente_id ?? '',
+    fecha_inicio_real: proyecto?.fecha_inicio_real?.slice(0, 10) ?? '',
+    fecha_firma_contrato: proyecto?.fecha_firma_contrato?.slice(0, 10) ?? '',
+    fecha_programada_inicio: proyecto?.fecha_programada_inicio?.slice(0, 10) ?? '',
+    fecha_programada_fin: proyecto?.fecha_programada_fin?.slice(0, 10) ?? '',
+    monto_total_vendido: proyecto?.monto_total_vendido != null ? String(proyecto.monto_total_vendido) : '',
+    periodo_ejecucion: proyecto?.periodo_ejecucion != null ? String(proyecto.periodo_ejecucion) : '',
+    periodo_ejecucion_unidad: proyecto?.periodo_ejecucion_unidad ?? 'MESES',
+    total_dias_naturales: proyecto?.total_dias_naturales != null ? String(proyecto.total_dias_naturales) : '',
+    total_dias_laborables: proyecto?.total_dias_laborables != null ? String(proyecto.total_dias_laborables) : '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [clientes, setClientes] = useState<ClienteVentas[]>([]);
+  const [showAgregarCliente, setShowAgregarCliente] = useState(false);
+
+  useEffect(() => {
+    if (isEdit) return; // el cliente/empresa/año ya no son editables tras crear
+    ventasApi.getClientes().then(res => setClientes((res.data.data ?? []) as ClienteVentas[])).catch(() => {});
+  }, [isEdit]);
+
+  const clienteSeleccionado = clientes.find(c => c.id_cliente === form.cliente_id);
+  const codigoPreview = form.es_especial
+    ? (form.codigo_especial || '—')
+    : (form.empresa_grupo && form.anio_centro_costos && clienteSeleccionado?.codigo_cliente)
+      ? `${form.empresa_grupo}${form.anio_centro_costos}${clienteSeleccionado.codigo_cliente.padStart(3, '0')}···`
+      : '—';
+
+  const fechasInvalidas = !!(form.fecha_programada_inicio && form.fecha_programada_fin
+    && form.fecha_programada_fin < form.fecha_programada_inicio);
+
+  const handleSubmit = async () => {
+    if (!form.nombre_oficial.trim()) { setError('El nombre oficial es obligatorio.'); return; }
+    if (fechasInvalidas) { setError('La fecha programada de fin no puede ser anterior a la de inicio.'); return; }
+    if (!isEdit) {
+      if (form.es_especial) {
+        if (!form.tipo_especial || !form.codigo_especial.trim()) {
+          setError('Tipo especial y código son obligatorios para un Centro de Costos especial.');
+          return;
+        }
+      } else {
+        if (!form.empresa_grupo || !form.anio_centro_costos || !form.cliente_id) {
+          setError('Empresa, año y cliente son obligatorios.');
+          return;
+        }
+        if (!clienteSeleccionado?.codigo_cliente) {
+          setError('El cliente seleccionado no tiene código asignado — edítalo desde "+ Agregar Cliente" o el catálogo de Ventas.');
+          return;
+        }
+      }
+    }
+
+    setSaving(true); setError(null);
+    try {
+      const body: Record<string, unknown> = {
+        nombre_oficial: form.nombre_oficial.trim(),
+        tipo_contrato: form.tipo_contrato,
+        moneda_base: form.moneda_base,
+        estatus: form.estatus,
+        fecha_inicio_real: form.fecha_inicio_real || undefined,
+        fecha_firma_contrato: form.fecha_firma_contrato || undefined,
+        fecha_programada_inicio: form.fecha_programada_inicio || undefined,
+        fecha_programada_fin: form.fecha_programada_fin || undefined,
+        monto_total_vendido: form.monto_total_vendido ? Number(form.monto_total_vendido) : undefined,
+        periodo_ejecucion: form.periodo_ejecucion ? Number(form.periodo_ejecucion) : undefined,
+        periodo_ejecucion_unidad: form.periodo_ejecucion_unidad,
+        total_dias_naturales: form.total_dias_naturales ? Number(form.total_dias_naturales) : undefined,
+        total_dias_laborables: form.total_dias_laborables ? Number(form.total_dias_laborables) : undefined,
+      };
+      if (!isEdit) {
+        if (form.es_especial) {
+          body.es_especial = true;
+          body.tipo_especial = form.tipo_especial;
+          body.codigo_centro_costos = form.codigo_especial.trim();
+        } else {
+          body.empresa_grupo = form.empresa_grupo;
+          body.anio_centro_costos = Number(form.anio_centro_costos);
+          body.cliente_id = form.cliente_id;
+          body.codigo_cliente = clienteSeleccionado!.codigo_cliente;
+        }
+      }
+      if (isEdit) await api.patch(`/api/v1/auth/admin/proyectos/${proyecto!.id_proyecto}`, body);
+      else await api.post('/api/v1/auth/admin/proyectos', body);
       onSaved(); onClose();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
@@ -202,18 +358,87 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-border/40 bg-card shadow-2xl mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8">
+      <div className="w-full max-w-lg rounded-2xl border border-border/40 bg-card shadow-2xl mx-4">
         <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-sm font-black uppercase tracking-widest">{isEdit ? 'Editar Proyecto' : 'Nuevo Proyecto'}</h2>
+          <h2 className="text-sm font-black uppercase tracking-widest">{isEdit ? 'Editar Centro de Costos' : 'Nuevo Centro de Costos'}</h2>
         </div>
-        <div className="space-y-4 px-6 py-5">
+        <div className="max-h-[70vh] overflow-y-auto space-y-4 px-6 py-5">
           {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-400">{error}</div>}
-          <div>
-            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código Centro de Costos *</label>
-            <input disabled={isEdit} className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none disabled:opacity-60"
-              value={form.codigo_centro_costos} onChange={e => setForm(f => ({ ...f, codigo_centro_costos: e.target.value }))} placeholder="CC-2026-GUA-01" />
-          </div>
+
+          {isEdit ? (
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código Centro de Costos</label>
+              <input disabled className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono opacity-70" value={proyecto!.codigo_centro_costos} />
+            </div>
+          ) : (
+            <>
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={form.es_especial} onChange={e => setForm(f => ({ ...f, es_especial: e.target.checked }))} />
+                Centro de Costos especial (gasto operativo interno)
+              </label>
+
+              {form.es_especial ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo Especial *</label>
+                    <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                      value={form.tipo_especial} onChange={e => setForm(f => ({ ...f, tipo_especial: e.target.value }))}>
+                      <option value="">Selecciona...</option>
+                      {TIPOS_ESPECIALES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código (libre) *</label>
+                    <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono focus:border-primary/50 focus:outline-none"
+                      value={form.codigo_especial} onChange={e => setForm(f => ({ ...f, codigo_especial: e.target.value.toUpperCase() }))} placeholder="OFICINA-CDMX" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Empresa *</label>
+                      <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                        value={form.empresa_grupo} onChange={e => setForm(f => ({ ...f, empresa_grupo: e.target.value }))}>
+                        <option value="">Selecciona...</option>
+                        {EMPRESAS_GRUPO.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Año *</label>
+                      <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
+                        value={form.anio_centro_costos} onChange={e => setForm(f => ({ ...f, anio_centro_costos: Number(e.target.value) }))} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cliente *</label>
+                    <div className="flex gap-2">
+                      <select className="flex-1 rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                        value={form.cliente_id} onChange={e => setForm(f => ({ ...f, cliente_id: e.target.value }))}>
+                        <option value="">Selecciona...</option>
+                        {clientes.map(c => (
+                          <option key={c.id_cliente} value={c.id_cliente}>
+                            {c.codigo_cliente ?? '···'} — {c.razon_social}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" onClick={() => setShowAgregarCliente(true)}
+                        className="shrink-0 rounded-xl border border-primary/40 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10">
+                        + Agregar Cliente
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código (vista previa)</label>
+                    <div className="w-full rounded-xl border border-dashed border-border/40 bg-muted/30 px-3 py-2 text-sm font-mono tracking-widest">{codigoPreview}</div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">El consecutivo (últimos 3 dígitos) lo asigna el sistema al guardar.</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           <div>
             <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre Oficial *</label>
             <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
@@ -243,22 +468,89 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
             <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estatus</label>
             <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
               value={form.estatus} onChange={e => setForm(f => ({ ...f, estatus: e.target.value }))}>
-              <option value="LICITACION">Licitación</option>
-              <option value="ADJUDICADO">Adjudicado</option>
-              <option value="CONSTRUCCION">Construcción</option>
-              <option value="CIERRE_TECNICO">Cierre Técnico</option>
-              <option value="CIERRE_FINANCIERO">Cierre Financiero</option>
+              {ESTATUS_CENTRO_COSTOS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
+          </div>
+
+          <div className="border-t border-border/30 pt-4">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Línea base financiera y de plazos</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha Inicio Real</label>
+                <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={form.fecha_inicio_real} onChange={e => setForm(f => ({ ...f, fecha_inicio_real: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha Firma Contrato</label>
+                <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={form.fecha_firma_contrato} onChange={e => setForm(f => ({ ...f, fecha_firma_contrato: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha Programada Inicio</label>
+                <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={form.fecha_programada_inicio} onChange={e => setForm(f => ({ ...f, fecha_programada_inicio: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha Programada Fin</label>
+                <input type="date" className={cn('w-full rounded-xl border bg-muted/50 px-3 py-2 text-sm focus:outline-none', fechasInvalidas ? 'border-red-500/60' : 'border-border/40')}
+                  value={form.fecha_programada_fin} onChange={e => setForm(f => ({ ...f, fecha_programada_fin: e.target.value }))} />
+              </div>
+            </div>
+            {fechasInvalidas && <p className="mt-1 text-[10px] font-semibold text-red-400">La fecha de fin no puede ser anterior a la de inicio.</p>}
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monto Total Vendido (sin IVA)</label>
+                <input type="number" step="0.01" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={form.monto_total_vendido} onChange={e => setForm(f => ({ ...f, monto_total_vendido: e.target.value }))} placeholder="0.00" />
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Periodo Ejecución</label>
+                  <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                    value={form.periodo_ejecucion} onChange={e => setForm(f => ({ ...f, periodo_ejecucion: e.target.value }))} />
+                </div>
+                <div className="w-24">
+                  <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Unidad</label>
+                  <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                    value={form.periodo_ejecucion_unidad} onChange={e => setForm(f => ({ ...f, periodo_ejecucion_unidad: e.target.value }))}>
+                    <option value="MESES">Meses</option>
+                    <option value="SEMANAS">Semanas</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Días Naturales</label>
+                <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={form.total_dias_naturales} onChange={e => setForm(f => ({ ...f, total_dias_naturales: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Días Laborables</label>
+                <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={form.total_dias_laborables} onChange={e => setForm(f => ({ ...f, total_dias_laborables: e.target.value }))} />
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex gap-3 border-t border-border/30 px-6 py-4">
           <button onClick={onClose} className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50">Cancelar</button>
-          <button onClick={handleSubmit} disabled={saving}
+          <button onClick={handleSubmit} disabled={saving || fechasInvalidas}
             className="flex-1 rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-            {saving ? 'Guardando...' : isEdit ? 'Guardar' : 'Crear Proyecto'}
+            {saving ? 'Guardando...' : isEdit ? 'Guardar' : 'Crear Centro de Costos'}
           </button>
         </div>
       </div>
+
+      {showAgregarCliente && (
+        <AgregarClienteModal
+          onClose={() => setShowAgregarCliente(false)}
+          onCreated={(nuevo) => {
+            setClientes(prev => [...prev, nuevo]);
+            setForm(f => ({ ...f, cliente_id: nuevo.id_cliente }));
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -142,7 +142,22 @@ exports.Prisma.ProyectoScalarFieldEnum = {
   moneda_base: 'moneda_base',
   estatus: 'estatus',
   activo: 'activo',
-  created_at: 'created_at'
+  created_at: 'created_at',
+  empresa_grupo: 'empresa_grupo',
+  anio_centro_costos: 'anio_centro_costos',
+  cliente_id: 'cliente_id',
+  consecutivo_centro_costos: 'consecutivo_centro_costos',
+  es_especial: 'es_especial',
+  tipo_especial: 'tipo_especial',
+  fecha_inicio_real: 'fecha_inicio_real',
+  fecha_firma_contrato: 'fecha_firma_contrato',
+  fecha_programada_inicio: 'fecha_programada_inicio',
+  fecha_programada_fin: 'fecha_programada_fin',
+  monto_total_vendido: 'monto_total_vendido',
+  periodo_ejecucion: 'periodo_ejecucion',
+  periodo_ejecucion_unidad: 'periodo_ejecucion_unidad',
+  total_dias_naturales: 'total_dias_naturales',
+  total_dias_laborables: 'total_dias_laborables'
 };
 
 exports.Prisma.UserScalarFieldEnum = {

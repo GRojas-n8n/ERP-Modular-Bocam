@@ -2397,8 +2397,28 @@ export namespace Prisma {
 
   export type AggregateProyecto = {
     _count: ProyectoCountAggregateOutputType | null
+    _avg: ProyectoAvgAggregateOutputType | null
+    _sum: ProyectoSumAggregateOutputType | null
     _min: ProyectoMinAggregateOutputType | null
     _max: ProyectoMaxAggregateOutputType | null
+  }
+
+  export type ProyectoAvgAggregateOutputType = {
+    anio_centro_costos: number | null
+    consecutivo_centro_costos: number | null
+    monto_total_vendido: Decimal | null
+    periodo_ejecucion: number | null
+    total_dias_naturales: number | null
+    total_dias_laborables: number | null
+  }
+
+  export type ProyectoSumAggregateOutputType = {
+    anio_centro_costos: number | null
+    consecutivo_centro_costos: number | null
+    monto_total_vendido: Decimal | null
+    periodo_ejecucion: number | null
+    total_dias_naturales: number | null
+    total_dias_laborables: number | null
   }
 
   export type ProyectoMinAggregateOutputType = {
@@ -2411,6 +2431,21 @@ export namespace Prisma {
     estatus: string | null
     activo: boolean | null
     created_at: Date | null
+    empresa_grupo: string | null
+    anio_centro_costos: number | null
+    cliente_id: string | null
+    consecutivo_centro_costos: number | null
+    es_especial: boolean | null
+    tipo_especial: string | null
+    fecha_inicio_real: Date | null
+    fecha_firma_contrato: Date | null
+    fecha_programada_inicio: Date | null
+    fecha_programada_fin: Date | null
+    monto_total_vendido: Decimal | null
+    periodo_ejecucion: number | null
+    periodo_ejecucion_unidad: string | null
+    total_dias_naturales: number | null
+    total_dias_laborables: number | null
   }
 
   export type ProyectoMaxAggregateOutputType = {
@@ -2423,6 +2458,21 @@ export namespace Prisma {
     estatus: string | null
     activo: boolean | null
     created_at: Date | null
+    empresa_grupo: string | null
+    anio_centro_costos: number | null
+    cliente_id: string | null
+    consecutivo_centro_costos: number | null
+    es_especial: boolean | null
+    tipo_especial: string | null
+    fecha_inicio_real: Date | null
+    fecha_firma_contrato: Date | null
+    fecha_programada_inicio: Date | null
+    fecha_programada_fin: Date | null
+    monto_total_vendido: Decimal | null
+    periodo_ejecucion: number | null
+    periodo_ejecucion_unidad: string | null
+    total_dias_naturales: number | null
+    total_dias_laborables: number | null
   }
 
   export type ProyectoCountAggregateOutputType = {
@@ -2435,9 +2485,42 @@ export namespace Prisma {
     estatus: number
     activo: number
     created_at: number
+    empresa_grupo: number
+    anio_centro_costos: number
+    cliente_id: number
+    consecutivo_centro_costos: number
+    es_especial: number
+    tipo_especial: number
+    fecha_inicio_real: number
+    fecha_firma_contrato: number
+    fecha_programada_inicio: number
+    fecha_programada_fin: number
+    monto_total_vendido: number
+    periodo_ejecucion: number
+    periodo_ejecucion_unidad: number
+    total_dias_naturales: number
+    total_dias_laborables: number
     _all: number
   }
 
+
+  export type ProyectoAvgAggregateInputType = {
+    anio_centro_costos?: true
+    consecutivo_centro_costos?: true
+    monto_total_vendido?: true
+    periodo_ejecucion?: true
+    total_dias_naturales?: true
+    total_dias_laborables?: true
+  }
+
+  export type ProyectoSumAggregateInputType = {
+    anio_centro_costos?: true
+    consecutivo_centro_costos?: true
+    monto_total_vendido?: true
+    periodo_ejecucion?: true
+    total_dias_naturales?: true
+    total_dias_laborables?: true
+  }
 
   export type ProyectoMinAggregateInputType = {
     id_proyecto?: true
@@ -2449,6 +2532,21 @@ export namespace Prisma {
     estatus?: true
     activo?: true
     created_at?: true
+    empresa_grupo?: true
+    anio_centro_costos?: true
+    cliente_id?: true
+    consecutivo_centro_costos?: true
+    es_especial?: true
+    tipo_especial?: true
+    fecha_inicio_real?: true
+    fecha_firma_contrato?: true
+    fecha_programada_inicio?: true
+    fecha_programada_fin?: true
+    monto_total_vendido?: true
+    periodo_ejecucion?: true
+    periodo_ejecucion_unidad?: true
+    total_dias_naturales?: true
+    total_dias_laborables?: true
   }
 
   export type ProyectoMaxAggregateInputType = {
@@ -2461,6 +2559,21 @@ export namespace Prisma {
     estatus?: true
     activo?: true
     created_at?: true
+    empresa_grupo?: true
+    anio_centro_costos?: true
+    cliente_id?: true
+    consecutivo_centro_costos?: true
+    es_especial?: true
+    tipo_especial?: true
+    fecha_inicio_real?: true
+    fecha_firma_contrato?: true
+    fecha_programada_inicio?: true
+    fecha_programada_fin?: true
+    monto_total_vendido?: true
+    periodo_ejecucion?: true
+    periodo_ejecucion_unidad?: true
+    total_dias_naturales?: true
+    total_dias_laborables?: true
   }
 
   export type ProyectoCountAggregateInputType = {
@@ -2473,6 +2586,21 @@ export namespace Prisma {
     estatus?: true
     activo?: true
     created_at?: true
+    empresa_grupo?: true
+    anio_centro_costos?: true
+    cliente_id?: true
+    consecutivo_centro_costos?: true
+    es_especial?: true
+    tipo_especial?: true
+    fecha_inicio_real?: true
+    fecha_firma_contrato?: true
+    fecha_programada_inicio?: true
+    fecha_programada_fin?: true
+    monto_total_vendido?: true
+    periodo_ejecucion?: true
+    periodo_ejecucion_unidad?: true
+    total_dias_naturales?: true
+    total_dias_laborables?: true
     _all?: true
   }
 
@@ -2514,6 +2642,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ProyectoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProyectoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ProyectoMinAggregateInputType
@@ -2544,6 +2684,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ProyectoCountAggregateInputType | true
+    _avg?: ProyectoAvgAggregateInputType
+    _sum?: ProyectoSumAggregateInputType
     _min?: ProyectoMinAggregateInputType
     _max?: ProyectoMaxAggregateInputType
   }
@@ -2558,7 +2700,24 @@ export namespace Prisma {
     estatus: string
     activo: boolean
     created_at: Date
+    empresa_grupo: string | null
+    anio_centro_costos: number | null
+    cliente_id: string | null
+    consecutivo_centro_costos: number | null
+    es_especial: boolean
+    tipo_especial: string | null
+    fecha_inicio_real: Date | null
+    fecha_firma_contrato: Date | null
+    fecha_programada_inicio: Date | null
+    fecha_programada_fin: Date | null
+    monto_total_vendido: Decimal | null
+    periodo_ejecucion: number | null
+    periodo_ejecucion_unidad: string | null
+    total_dias_naturales: number | null
+    total_dias_laborables: number | null
     _count: ProyectoCountAggregateOutputType | null
+    _avg: ProyectoAvgAggregateOutputType | null
+    _sum: ProyectoSumAggregateOutputType | null
     _min: ProyectoMinAggregateOutputType | null
     _max: ProyectoMaxAggregateOutputType | null
   }
@@ -2587,6 +2746,21 @@ export namespace Prisma {
     estatus?: boolean
     activo?: boolean
     created_at?: boolean
+    empresa_grupo?: boolean
+    anio_centro_costos?: boolean
+    cliente_id?: boolean
+    consecutivo_centro_costos?: boolean
+    es_especial?: boolean
+    tipo_especial?: boolean
+    fecha_inicio_real?: boolean
+    fecha_firma_contrato?: boolean
+    fecha_programada_inicio?: boolean
+    fecha_programada_fin?: boolean
+    monto_total_vendido?: boolean
+    periodo_ejecucion?: boolean
+    periodo_ejecucion_unidad?: boolean
+    total_dias_naturales?: boolean
+    total_dias_laborables?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     asignaciones?: boolean | Proyecto$asignacionesArgs<ExtArgs>
     _count?: boolean | ProyectoCountOutputTypeDefaultArgs<ExtArgs>
@@ -2602,6 +2776,21 @@ export namespace Prisma {
     estatus?: boolean
     activo?: boolean
     created_at?: boolean
+    empresa_grupo?: boolean
+    anio_centro_costos?: boolean
+    cliente_id?: boolean
+    consecutivo_centro_costos?: boolean
+    es_especial?: boolean
+    tipo_especial?: boolean
+    fecha_inicio_real?: boolean
+    fecha_firma_contrato?: boolean
+    fecha_programada_inicio?: boolean
+    fecha_programada_fin?: boolean
+    monto_total_vendido?: boolean
+    periodo_ejecucion?: boolean
+    periodo_ejecucion_unidad?: boolean
+    total_dias_naturales?: boolean
+    total_dias_laborables?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["proyecto"]>
 
@@ -2615,6 +2804,21 @@ export namespace Prisma {
     estatus?: boolean
     activo?: boolean
     created_at?: boolean
+    empresa_grupo?: boolean
+    anio_centro_costos?: boolean
+    cliente_id?: boolean
+    consecutivo_centro_costos?: boolean
+    es_especial?: boolean
+    tipo_especial?: boolean
+    fecha_inicio_real?: boolean
+    fecha_firma_contrato?: boolean
+    fecha_programada_inicio?: boolean
+    fecha_programada_fin?: boolean
+    monto_total_vendido?: boolean
+    periodo_ejecucion?: boolean
+    periodo_ejecucion_unidad?: boolean
+    total_dias_naturales?: boolean
+    total_dias_laborables?: boolean
   }
 
   export type ProyectoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2642,6 +2846,21 @@ export namespace Prisma {
       estatus: string
       activo: boolean
       created_at: Date
+      empresa_grupo: string | null
+      anio_centro_costos: number | null
+      cliente_id: string | null
+      consecutivo_centro_costos: number | null
+      es_especial: boolean
+      tipo_especial: string | null
+      fecha_inicio_real: Date | null
+      fecha_firma_contrato: Date | null
+      fecha_programada_inicio: Date | null
+      fecha_programada_fin: Date | null
+      monto_total_vendido: Prisma.Decimal | null
+      periodo_ejecucion: number | null
+      periodo_ejecucion_unidad: string | null
+      total_dias_naturales: number | null
+      total_dias_laborables: number | null
     }, ExtArgs["result"]["proyecto"]>
     composites: {}
   }
@@ -3046,6 +3265,21 @@ export namespace Prisma {
     readonly estatus: FieldRef<"Proyecto", 'String'>
     readonly activo: FieldRef<"Proyecto", 'Boolean'>
     readonly created_at: FieldRef<"Proyecto", 'DateTime'>
+    readonly empresa_grupo: FieldRef<"Proyecto", 'String'>
+    readonly anio_centro_costos: FieldRef<"Proyecto", 'Int'>
+    readonly cliente_id: FieldRef<"Proyecto", 'String'>
+    readonly consecutivo_centro_costos: FieldRef<"Proyecto", 'Int'>
+    readonly es_especial: FieldRef<"Proyecto", 'Boolean'>
+    readonly tipo_especial: FieldRef<"Proyecto", 'String'>
+    readonly fecha_inicio_real: FieldRef<"Proyecto", 'DateTime'>
+    readonly fecha_firma_contrato: FieldRef<"Proyecto", 'DateTime'>
+    readonly fecha_programada_inicio: FieldRef<"Proyecto", 'DateTime'>
+    readonly fecha_programada_fin: FieldRef<"Proyecto", 'DateTime'>
+    readonly monto_total_vendido: FieldRef<"Proyecto", 'Decimal'>
+    readonly periodo_ejecucion: FieldRef<"Proyecto", 'Int'>
+    readonly periodo_ejecucion_unidad: FieldRef<"Proyecto", 'String'>
+    readonly total_dias_naturales: FieldRef<"Proyecto", 'Int'>
+    readonly total_dias_laborables: FieldRef<"Proyecto", 'Int'>
   }
     
 
@@ -7384,7 +7618,22 @@ export namespace Prisma {
     moneda_base: 'moneda_base',
     estatus: 'estatus',
     activo: 'activo',
-    created_at: 'created_at'
+    created_at: 'created_at',
+    empresa_grupo: 'empresa_grupo',
+    anio_centro_costos: 'anio_centro_costos',
+    cliente_id: 'cliente_id',
+    consecutivo_centro_costos: 'consecutivo_centro_costos',
+    es_especial: 'es_especial',
+    tipo_especial: 'tipo_especial',
+    fecha_inicio_real: 'fecha_inicio_real',
+    fecha_firma_contrato: 'fecha_firma_contrato',
+    fecha_programada_inicio: 'fecha_programada_inicio',
+    fecha_programada_fin: 'fecha_programada_fin',
+    monto_total_vendido: 'monto_total_vendido',
+    periodo_ejecucion: 'periodo_ejecucion',
+    periodo_ejecucion_unidad: 'periodo_ejecucion_unidad',
+    total_dias_naturales: 'total_dias_naturales',
+    total_dias_laborables: 'total_dias_laborables'
   };
 
   export type ProyectoScalarFieldEnum = (typeof ProyectoScalarFieldEnum)[keyof typeof ProyectoScalarFieldEnum]
@@ -7529,6 +7778,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Decimal'
    */
   export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
@@ -7546,20 +7809,6 @@ export namespace Prisma {
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-  /**
-   * Reference to a field of type 'Int'
-   */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-  /**
-   * Reference to a field of type 'Int[]'
-   */
-  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -7666,6 +7915,21 @@ export namespace Prisma {
     estatus?: StringFilter<"Proyecto"> | string
     activo?: BoolFilter<"Proyecto"> | boolean
     created_at?: DateTimeFilter<"Proyecto"> | Date | string
+    empresa_grupo?: StringNullableFilter<"Proyecto"> | string | null
+    anio_centro_costos?: IntNullableFilter<"Proyecto"> | number | null
+    cliente_id?: UuidNullableFilter<"Proyecto"> | string | null
+    consecutivo_centro_costos?: IntNullableFilter<"Proyecto"> | number | null
+    es_especial?: BoolFilter<"Proyecto"> | boolean
+    tipo_especial?: StringNullableFilter<"Proyecto"> | string | null
+    fecha_inicio_real?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_firma_contrato?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_programada_inicio?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_programada_fin?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    monto_total_vendido?: DecimalNullableFilter<"Proyecto"> | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: IntNullableFilter<"Proyecto"> | number | null
+    periodo_ejecucion_unidad?: StringNullableFilter<"Proyecto"> | string | null
+    total_dias_naturales?: IntNullableFilter<"Proyecto"> | number | null
+    total_dias_laborables?: IntNullableFilter<"Proyecto"> | number | null
     tenant?: XOR<TenantRelationFilter, TenantWhereInput>
     asignaciones?: UserProjectAccessListRelationFilter
   }
@@ -7680,6 +7944,21 @@ export namespace Prisma {
     estatus?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
+    empresa_grupo?: SortOrderInput | SortOrder
+    anio_centro_costos?: SortOrderInput | SortOrder
+    cliente_id?: SortOrderInput | SortOrder
+    consecutivo_centro_costos?: SortOrderInput | SortOrder
+    es_especial?: SortOrder
+    tipo_especial?: SortOrderInput | SortOrder
+    fecha_inicio_real?: SortOrderInput | SortOrder
+    fecha_firma_contrato?: SortOrderInput | SortOrder
+    fecha_programada_inicio?: SortOrderInput | SortOrder
+    fecha_programada_fin?: SortOrderInput | SortOrder
+    monto_total_vendido?: SortOrderInput | SortOrder
+    periodo_ejecucion?: SortOrderInput | SortOrder
+    periodo_ejecucion_unidad?: SortOrderInput | SortOrder
+    total_dias_naturales?: SortOrderInput | SortOrder
+    total_dias_laborables?: SortOrderInput | SortOrder
     tenant?: TenantOrderByWithRelationInput
     asignaciones?: UserProjectAccessOrderByRelationAggregateInput
   }
@@ -7698,6 +7977,21 @@ export namespace Prisma {
     estatus?: StringFilter<"Proyecto"> | string
     activo?: BoolFilter<"Proyecto"> | boolean
     created_at?: DateTimeFilter<"Proyecto"> | Date | string
+    empresa_grupo?: StringNullableFilter<"Proyecto"> | string | null
+    anio_centro_costos?: IntNullableFilter<"Proyecto"> | number | null
+    cliente_id?: UuidNullableFilter<"Proyecto"> | string | null
+    consecutivo_centro_costos?: IntNullableFilter<"Proyecto"> | number | null
+    es_especial?: BoolFilter<"Proyecto"> | boolean
+    tipo_especial?: StringNullableFilter<"Proyecto"> | string | null
+    fecha_inicio_real?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_firma_contrato?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_programada_inicio?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_programada_fin?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    monto_total_vendido?: DecimalNullableFilter<"Proyecto"> | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: IntNullableFilter<"Proyecto"> | number | null
+    periodo_ejecucion_unidad?: StringNullableFilter<"Proyecto"> | string | null
+    total_dias_naturales?: IntNullableFilter<"Proyecto"> | number | null
+    total_dias_laborables?: IntNullableFilter<"Proyecto"> | number | null
     tenant?: XOR<TenantRelationFilter, TenantWhereInput>
     asignaciones?: UserProjectAccessListRelationFilter
   }, "id_proyecto" | "tenant_id_codigo_centro_costos">
@@ -7712,9 +8006,26 @@ export namespace Prisma {
     estatus?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
+    empresa_grupo?: SortOrderInput | SortOrder
+    anio_centro_costos?: SortOrderInput | SortOrder
+    cliente_id?: SortOrderInput | SortOrder
+    consecutivo_centro_costos?: SortOrderInput | SortOrder
+    es_especial?: SortOrder
+    tipo_especial?: SortOrderInput | SortOrder
+    fecha_inicio_real?: SortOrderInput | SortOrder
+    fecha_firma_contrato?: SortOrderInput | SortOrder
+    fecha_programada_inicio?: SortOrderInput | SortOrder
+    fecha_programada_fin?: SortOrderInput | SortOrder
+    monto_total_vendido?: SortOrderInput | SortOrder
+    periodo_ejecucion?: SortOrderInput | SortOrder
+    periodo_ejecucion_unidad?: SortOrderInput | SortOrder
+    total_dias_naturales?: SortOrderInput | SortOrder
+    total_dias_laborables?: SortOrderInput | SortOrder
     _count?: ProyectoCountOrderByAggregateInput
+    _avg?: ProyectoAvgOrderByAggregateInput
     _max?: ProyectoMaxOrderByAggregateInput
     _min?: ProyectoMinOrderByAggregateInput
+    _sum?: ProyectoSumOrderByAggregateInput
   }
 
   export type ProyectoScalarWhereWithAggregatesInput = {
@@ -7730,6 +8041,21 @@ export namespace Prisma {
     estatus?: StringWithAggregatesFilter<"Proyecto"> | string
     activo?: BoolWithAggregatesFilter<"Proyecto"> | boolean
     created_at?: DateTimeWithAggregatesFilter<"Proyecto"> | Date | string
+    empresa_grupo?: StringNullableWithAggregatesFilter<"Proyecto"> | string | null
+    anio_centro_costos?: IntNullableWithAggregatesFilter<"Proyecto"> | number | null
+    cliente_id?: UuidNullableWithAggregatesFilter<"Proyecto"> | string | null
+    consecutivo_centro_costos?: IntNullableWithAggregatesFilter<"Proyecto"> | number | null
+    es_especial?: BoolWithAggregatesFilter<"Proyecto"> | boolean
+    tipo_especial?: StringNullableWithAggregatesFilter<"Proyecto"> | string | null
+    fecha_inicio_real?: DateTimeNullableWithAggregatesFilter<"Proyecto"> | Date | string | null
+    fecha_firma_contrato?: DateTimeNullableWithAggregatesFilter<"Proyecto"> | Date | string | null
+    fecha_programada_inicio?: DateTimeNullableWithAggregatesFilter<"Proyecto"> | Date | string | null
+    fecha_programada_fin?: DateTimeNullableWithAggregatesFilter<"Proyecto"> | Date | string | null
+    monto_total_vendido?: DecimalNullableWithAggregatesFilter<"Proyecto"> | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: IntNullableWithAggregatesFilter<"Proyecto"> | number | null
+    periodo_ejecucion_unidad?: StringNullableWithAggregatesFilter<"Proyecto"> | string | null
+    total_dias_naturales?: IntNullableWithAggregatesFilter<"Proyecto"> | number | null
+    total_dias_laborables?: IntNullableWithAggregatesFilter<"Proyecto"> | number | null
   }
 
   export type UserWhereInput = {
@@ -8123,6 +8449,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
     tenant: TenantCreateNestedOneWithoutProyectosInput
     asignaciones?: UserProjectAccessCreateNestedManyWithoutProyectoInput
   }
@@ -8137,6 +8478,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
     asignaciones?: UserProjectAccessUncheckedCreateNestedManyWithoutProyectoInput
   }
 
@@ -8149,6 +8505,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
     tenant?: TenantUpdateOneRequiredWithoutProyectosNestedInput
     asignaciones?: UserProjectAccessUpdateManyWithoutProyectoNestedInput
   }
@@ -8163,6 +8534,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
     asignaciones?: UserProjectAccessUncheckedUpdateManyWithoutProyectoNestedInput
   }
 
@@ -8176,6 +8562,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
   }
 
   export type ProyectoUpdateManyMutationInput = {
@@ -8187,6 +8588,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type ProyectoUncheckedUpdateManyInput = {
@@ -8199,6 +8615,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type UserCreateInput = {
@@ -8709,6 +9140,51 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type TenantRelationFilter = {
     is?: TenantWhereInput
     isNot?: TenantWhereInput
@@ -8739,6 +9215,30 @@ export namespace Prisma {
     estatus?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
+    empresa_grupo?: SortOrder
+    anio_centro_costos?: SortOrder
+    cliente_id?: SortOrder
+    consecutivo_centro_costos?: SortOrder
+    es_especial?: SortOrder
+    tipo_especial?: SortOrder
+    fecha_inicio_real?: SortOrder
+    fecha_firma_contrato?: SortOrder
+    fecha_programada_inicio?: SortOrder
+    fecha_programada_fin?: SortOrder
+    monto_total_vendido?: SortOrder
+    periodo_ejecucion?: SortOrder
+    periodo_ejecucion_unidad?: SortOrder
+    total_dias_naturales?: SortOrder
+    total_dias_laborables?: SortOrder
+  }
+
+  export type ProyectoAvgOrderByAggregateInput = {
+    anio_centro_costos?: SortOrder
+    consecutivo_centro_costos?: SortOrder
+    monto_total_vendido?: SortOrder
+    periodo_ejecucion?: SortOrder
+    total_dias_naturales?: SortOrder
+    total_dias_laborables?: SortOrder
   }
 
   export type ProyectoMaxOrderByAggregateInput = {
@@ -8751,6 +9251,21 @@ export namespace Prisma {
     estatus?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
+    empresa_grupo?: SortOrder
+    anio_centro_costos?: SortOrder
+    cliente_id?: SortOrder
+    consecutivo_centro_costos?: SortOrder
+    es_especial?: SortOrder
+    tipo_especial?: SortOrder
+    fecha_inicio_real?: SortOrder
+    fecha_firma_contrato?: SortOrder
+    fecha_programada_inicio?: SortOrder
+    fecha_programada_fin?: SortOrder
+    monto_total_vendido?: SortOrder
+    periodo_ejecucion?: SortOrder
+    periodo_ejecucion_unidad?: SortOrder
+    total_dias_naturales?: SortOrder
+    total_dias_laborables?: SortOrder
   }
 
   export type ProyectoMinOrderByAggregateInput = {
@@ -8763,6 +9278,91 @@ export namespace Prisma {
     estatus?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
+    empresa_grupo?: SortOrder
+    anio_centro_costos?: SortOrder
+    cliente_id?: SortOrder
+    consecutivo_centro_costos?: SortOrder
+    es_especial?: SortOrder
+    tipo_especial?: SortOrder
+    fecha_inicio_real?: SortOrder
+    fecha_firma_contrato?: SortOrder
+    fecha_programada_inicio?: SortOrder
+    fecha_programada_fin?: SortOrder
+    monto_total_vendido?: SortOrder
+    periodo_ejecucion?: SortOrder
+    periodo_ejecucion_unidad?: SortOrder
+    total_dias_naturales?: SortOrder
+    total_dias_laborables?: SortOrder
+  }
+
+  export type ProyectoSumOrderByAggregateInput = {
+    anio_centro_costos?: SortOrder
+    consecutivo_centro_costos?: SortOrder
+    monto_total_vendido?: SortOrder
+    periodo_ejecucion?: SortOrder
+    total_dias_naturales?: SortOrder
+    total_dias_laborables?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type StringNullableListFilter<$PrismaModel = never> = {
@@ -8931,18 +9531,6 @@ export namespace Prisma {
     user_agent?: SortOrder
     ip_address?: SortOrder
   }
-
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
   export type JsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
         Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -9020,21 +9608,6 @@ export namespace Prisma {
 
   export type MasterAuditLogSumOrderByAggregateInput = {
     status_code?: SortOrder
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
   export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -9196,6 +9769,26 @@ export namespace Prisma {
     connectOrCreate?: UserProjectAccessCreateOrConnectWithoutProyectoInput | UserProjectAccessCreateOrConnectWithoutProyectoInput[]
     createMany?: UserProjectAccessCreateManyProyectoInputEnvelope
     connect?: UserProjectAccessWhereUniqueInput | UserProjectAccessWhereUniqueInput[]
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type TenantUpdateOneRequiredWithoutProyectosNestedInput = {
@@ -9546,6 +10139,110 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
   export type NestedDecimalFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
@@ -9571,31 +10268,6 @@ export namespace Prisma {
     _sum?: NestedDecimalFilter<$PrismaModel>
     _min?: NestedDecimalFilter<$PrismaModel>
     _max?: NestedDecimalFilter<$PrismaModel>
-  }
-
-  export type NestedUuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
   export type NestedJsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -9694,6 +10366,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
     asignaciones?: UserProjectAccessCreateNestedManyWithoutProyectoInput
   }
 
@@ -9706,6 +10393,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
     asignaciones?: UserProjectAccessUncheckedCreateNestedManyWithoutProyectoInput
   }
 
@@ -9780,6 +10482,21 @@ export namespace Prisma {
     estatus?: StringFilter<"Proyecto"> | string
     activo?: BoolFilter<"Proyecto"> | boolean
     created_at?: DateTimeFilter<"Proyecto"> | Date | string
+    empresa_grupo?: StringNullableFilter<"Proyecto"> | string | null
+    anio_centro_costos?: IntNullableFilter<"Proyecto"> | number | null
+    cliente_id?: UuidNullableFilter<"Proyecto"> | string | null
+    consecutivo_centro_costos?: IntNullableFilter<"Proyecto"> | number | null
+    es_especial?: BoolFilter<"Proyecto"> | boolean
+    tipo_especial?: StringNullableFilter<"Proyecto"> | string | null
+    fecha_inicio_real?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_firma_contrato?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_programada_inicio?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    fecha_programada_fin?: DateTimeNullableFilter<"Proyecto"> | Date | string | null
+    monto_total_vendido?: DecimalNullableFilter<"Proyecto"> | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: IntNullableFilter<"Proyecto"> | number | null
+    periodo_ejecucion_unidad?: StringNullableFilter<"Proyecto"> | string | null
+    total_dias_naturales?: IntNullableFilter<"Proyecto"> | number | null
+    total_dias_laborables?: IntNullableFilter<"Proyecto"> | number | null
   }
 
   export type TenantCreateWithoutProyectosInput = {
@@ -10103,6 +10820,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
     tenant: TenantCreateNestedOneWithoutProyectosInput
   }
 
@@ -10116,6 +10848,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
   }
 
   export type ProyectoCreateOrConnectWithoutAsignacionesInput = {
@@ -10182,6 +10929,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
     tenant?: TenantUpdateOneRequiredWithoutProyectosNestedInput
   }
 
@@ -10195,6 +10957,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type UserCreateWithoutTokensInput = {
@@ -10290,6 +11067,21 @@ export namespace Prisma {
     estatus?: string
     activo?: boolean
     created_at?: Date | string
+    empresa_grupo?: string | null
+    anio_centro_costos?: number | null
+    cliente_id?: string | null
+    consecutivo_centro_costos?: number | null
+    es_especial?: boolean
+    tipo_especial?: string | null
+    fecha_inicio_real?: Date | string | null
+    fecha_firma_contrato?: Date | string | null
+    fecha_programada_inicio?: Date | string | null
+    fecha_programada_fin?: Date | string | null
+    monto_total_vendido?: Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: number | null
+    periodo_ejecucion_unidad?: string | null
+    total_dias_naturales?: number | null
+    total_dias_laborables?: number | null
   }
 
   export type UserUpdateWithoutTenantInput = {
@@ -10341,6 +11133,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
     asignaciones?: UserProjectAccessUpdateManyWithoutProyectoNestedInput
   }
 
@@ -10353,6 +11160,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
     asignaciones?: UserProjectAccessUncheckedUpdateManyWithoutProyectoNestedInput
   }
 
@@ -10365,6 +11187,21 @@ export namespace Prisma {
     estatus?: StringFieldUpdateOperationsInput | string
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    empresa_grupo?: NullableStringFieldUpdateOperationsInput | string | null
+    anio_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    cliente_id?: NullableStringFieldUpdateOperationsInput | string | null
+    consecutivo_centro_costos?: NullableIntFieldUpdateOperationsInput | number | null
+    es_especial?: BoolFieldUpdateOperationsInput | boolean
+    tipo_especial?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_inicio_real?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_firma_contrato?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_inicio?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fecha_programada_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    monto_total_vendido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    periodo_ejecucion?: NullableIntFieldUpdateOperationsInput | number | null
+    periodo_ejecucion_unidad?: NullableStringFieldUpdateOperationsInput | string | null
+    total_dias_naturales?: NullableIntFieldUpdateOperationsInput | number | null
+    total_dias_laborables?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type UserProjectAccessCreateManyProyectoInput = {

@@ -39,19 +39,45 @@ model Tenant {
 model Proyecto {
   id_proyecto          String   @id @default(uuid()) @db.Uuid
   tenant_id            String   @db.Uuid
-  codigo_centro_costos String   @db.VarChar(50) // Ej. CC-2026-GUA-01
+  // Para proyectos creados antes de centro-costos-alta-formal: texto libre
+  // (ej. 'CC-2026-GUA-01'), sin garantía de formato. Para proyectos nuevos:
+  // ensamblado a partir de empresa_grupo+anio_centro_costos+cliente+consecutivo
+  // (13 posiciones), salvo es_especial=true (texto libre también en ese caso).
+  codigo_centro_costos String   @db.VarChar(50)
   nombre_oficial       String   @db.VarChar(255)
   tipo_contrato        String   @default("PRECIOS_UNITARIOS") // PRECIOS_UNITARIOS, PRECIO_ALZADO, EPC, MIXTO
   moneda_base          String   @default("MXN") @db.VarChar(5)
-  estatus              String   @default("CONSTRUCCION") // LICITACION, ADJUDICADO, CONSTRUCCION, CIERRE_TECNICO, CIERRE_FINANCIERO
+  estatus              String   @default("ABIERTO") // ABIERTO, EN EJECUCIÓN, EN COBRO, TERMINADO, CERRADO
   activo               Boolean  @default(true)
   created_at           DateTime @default(now())
+
+  // ── Centro de Costos: componentes estructurados del código de 13 posiciones ──
+  // Nullable: solo se completan para proyectos creados vía el flujo formal de
+  // este cambio. Proyectos legacy quedan con estos campos en null.
+  empresa_grupo             String? @db.VarChar(3) // CIB | HCO | HSE | SEO
+  anio_centro_costos        Int?
+  cliente_id                String? @db.Uuid // referencia lógica a Ventas.Cliente, sin FK cross-servicio
+  consecutivo_centro_costos Int?
+  es_especial               Boolean @default(false)
+  tipo_especial             String? @db.VarChar(20) // OFICINA | TALLER | ALMACÉN, solo si es_especial
+
+  // ── Línea base financiera y de plazos ──────────────────────────────────────
+  fecha_inicio_real        DateTime?
+  fecha_firma_contrato     DateTime?
+  fecha_programada_inicio  DateTime?
+  fecha_programada_fin     DateTime?
+  monto_total_vendido      Decimal?  @db.Decimal(18, 2) // sin IVA
+  periodo_ejecucion        Int?
+  periodo_ejecucion_unidad String?   @db.VarChar(10) // MESES | SEMANAS
+  total_dias_naturales     Int?
+  total_dias_laborables    Int?
 
   tenant       Tenant              @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
   asignaciones UserProjectAccess[]
 
   @@unique([tenant_id, codigo_centro_costos])
   @@index([tenant_id])
+  @@index([tenant_id, empresa_grupo, anio_centro_costos, cliente_id])
   @@map("proyectos")
 }
 

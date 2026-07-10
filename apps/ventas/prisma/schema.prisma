@@ -24,11 +24,17 @@ model Cliente {
   email_contacto String?  @db.VarChar(100)
   telefono       String?  @db.VarChar(20)
   estatus        String   @default("ACTIVO") // ACTIVO, INACTIVO, BLOQUEADO
+  // Código de 3 dígitos ('000'-'050') usado para ensamblar el código de
+  // Centro de Costos de 13 posiciones en apps/auth (ver change
+  // centro-costos-alta-formal). Nullable: clientes creados antes de este
+  // cambio no tienen código asignado hasta que se les edite.
+  codigo_cliente String?  @db.VarChar(3)
 
   cotizaciones   Cotizacion[]
   facturas       Factura[]
 
   @@unique([tenant_id, rfc_tax_id])
+  @@unique([tenant_id, codigo_cliente])
   @@map("clientes")
 }
 

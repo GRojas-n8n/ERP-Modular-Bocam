@@ -262,6 +262,7 @@ export const asistenteApi = {
 // ── Ventas ───────────────────────────────────────────────────────────────────
 export const ventasApi = {
   getClientes:     ()         => api.get('/api/v1/ventas/clientes'),
+  createCliente:   (data: unknown) => api.post('/api/v1/ventas/clientes', data),
   getCotizaciones: ()         => api.get('/api/v1/ventas/cotizaciones'),
   createCotizacion:(data: unknown) => api.post('/api/v1/ventas/cotizaciones', data),
   aceptarCotizacion:(id: string) => api.post(`/api/v1/ventas/cotizaciones/${id}/aceptar`, {}),
