@@ -21,6 +21,7 @@ import { createAuthMiddleware, requireEnv, requireRoles } from '../../../package
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 import { resolveAutoAssignedUserIds } from './project-access-policy';
+import { sesionExcedeLimite } from './sesion-policy';
 import {
   ensamblarCodigoCentroCostos,
   siguienteConsecutivo,
@@ -50,6 +51,10 @@ const JWT_SECRET = requireEnv('JWT_SECRET').trim();
 const MASTER_SECRET = (process.env.MASTER_SECRET || '').trim();
 const JWT_ACCESS_EXPIRATION = (process.env.JWT_ACCESS_EXPIRATION || '15m').trim();
 const JWT_REFRESH_EXPIRATION = (process.env.JWT_REFRESH_EXPIRATION || '7d').trim();
+// Límite absoluto de duración de sesión (horas desde el login original),
+// independiente de qué tan activo esté el usuario. Ver
+// openspec/changes/sesion-jwt-inactividad.
+const JWT_MAX_SESSION_HOURS = parseFloat((process.env.JWT_MAX_SESSION_HOURS || '16').trim());
 const BCRYPT_ROUNDS = 12;
 const PORT = process.env.PORT || 3003;
 initSentry(process.env.SENTRY_DSN || '', 'auth');
@@ -256,6 +261,7 @@ app.post('/api/v1/auth/login', loginLimiter as express.RequestHandler, async (re
             expires_at: refreshExpiry,
             user_agent: req.headers['user-agent'] || 'unknown',
             ip_address: req.ip || 'unknown',
+            sesion_iniciada_en: new Date(),
           },
         });
       }
@@ -499,10 +505,17 @@ app.post('/api/v1/auth/refresh', refreshLimiter as express.RequestHandler, async
           return null;
         }
 
+        // Revocar SIEMPRE el token usado, incluso si la sesión excede el
+        // límite absoluto — evita que se pueda reintentar con el mismo
+        // refresh token una vez detectado.
         await prisma.refreshToken.update({
           where: { id: storedToken.id },
           data: { revoked: true },
         });
+
+        if (sesionExcedeLimite(storedToken.sesion_iniciada_en, new Date(), JWT_MAX_SESSION_HOURS)) {
+          return null;
+        }
 
         const {
           accessToken,
@@ -519,6 +532,8 @@ app.post('/api/v1/auth/refresh', refreshLimiter as express.RequestHandler, async
             expires_at: refreshExpiry,
             user_agent: req.headers['user-agent'] || 'unknown',
             ip_address: req.ip || 'unknown',
+            // Se propaga SIN resetear — es el mismo inicio de sesión lógico.
+            sesion_iniciada_en: storedToken.sesion_iniciada_en,
           },
         });
 

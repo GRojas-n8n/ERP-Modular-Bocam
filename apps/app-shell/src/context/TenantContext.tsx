@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import * as Sentry from '@sentry/react';
 import type { TenantConfig, UserContext, AppState, ProjectAccess } from '../types';
 import { getAccessToken, setTokens, clearTokens, loginApi, fetchMe, switchProjectApi } from '../lib/api';
+import { useInactivityLogout } from '../hooks/useInactivityLogout';
+
+// Ver openspec/changes/sesion-jwt-inactividad. Coincide por default con el
+// TTL del access token (15 min), pero son mecanismos independientes: uno es
+// del token, este es de interacción real del usuario en la UI.
+const INACTIVITY_TIMEOUT_MIN = Number(import.meta.env.VITE_INACTIVITY_TIMEOUT_MIN) || 15;
+// Clave de sessionStorage para distinguir, en la pantalla de login, un
+// logout por inactividad de uno por expiración normal de la sesión.
+export const LOGOUT_REASON_KEY = 'iretum_logout_reason';
 
 /**
  * ---------------------------------------------------------------------------
@@ -198,6 +207,17 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isAuthenticated: false,
     });
   }, []);
+
+  // ─── Logout por inactividad (sesion-jwt-inactividad) ───────────────────
+  // Distinto del logout manual: marca la razón en sessionStorage para que
+  // LoginView pueda mostrar un mensaje específico ("se cerró por
+  // inactividad") en vez del genérico de sesión expirada.
+  const handleInactivityTimeout = useCallback(() => {
+    try { sessionStorage.setItem(LOGOUT_REASON_KEY, 'inactivity'); } catch { /* storage no disponible */ }
+    logout();
+  }, [logout]);
+
+  useInactivityLogout(state.isAuthenticated, INACTIVITY_TIMEOUT_MIN, handleInactivityTimeout);
 
   // ─── Switch Project ────────────────────────────────────────────────────
   const setCurrentProjectId = useCallback(async (projectId: string) => {

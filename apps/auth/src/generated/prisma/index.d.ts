@@ -5663,6 +5663,7 @@ export namespace Prisma {
     created_at: Date | null
     user_agent: string | null
     ip_address: string | null
+    sesion_iniciada_en: Date | null
   }
 
   export type RefreshTokenMaxAggregateOutputType = {
@@ -5674,6 +5675,7 @@ export namespace Prisma {
     created_at: Date | null
     user_agent: string | null
     ip_address: string | null
+    sesion_iniciada_en: Date | null
   }
 
   export type RefreshTokenCountAggregateOutputType = {
@@ -5685,6 +5687,7 @@ export namespace Prisma {
     created_at: number
     user_agent: number
     ip_address: number
+    sesion_iniciada_en: number
     _all: number
   }
 
@@ -5698,6 +5701,7 @@ export namespace Prisma {
     created_at?: true
     user_agent?: true
     ip_address?: true
+    sesion_iniciada_en?: true
   }
 
   export type RefreshTokenMaxAggregateInputType = {
@@ -5709,6 +5713,7 @@ export namespace Prisma {
     created_at?: true
     user_agent?: true
     ip_address?: true
+    sesion_iniciada_en?: true
   }
 
   export type RefreshTokenCountAggregateInputType = {
@@ -5720,6 +5725,7 @@ export namespace Prisma {
     created_at?: true
     user_agent?: true
     ip_address?: true
+    sesion_iniciada_en?: true
     _all?: true
   }
 
@@ -5804,6 +5810,7 @@ export namespace Prisma {
     created_at: Date
     user_agent: string | null
     ip_address: string | null
+    sesion_iniciada_en: Date | null
     _count: RefreshTokenCountAggregateOutputType | null
     _min: RefreshTokenMinAggregateOutputType | null
     _max: RefreshTokenMaxAggregateOutputType | null
@@ -5832,6 +5839,7 @@ export namespace Prisma {
     created_at?: boolean
     user_agent?: boolean
     ip_address?: boolean
+    sesion_iniciada_en?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["refreshToken"]>
 
@@ -5844,6 +5852,7 @@ export namespace Prisma {
     created_at?: boolean
     user_agent?: boolean
     ip_address?: boolean
+    sesion_iniciada_en?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["refreshToken"]>
 
@@ -5856,6 +5865,7 @@ export namespace Prisma {
     created_at?: boolean
     user_agent?: boolean
     ip_address?: boolean
+    sesion_iniciada_en?: boolean
   }
 
   export type RefreshTokenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5879,6 +5889,7 @@ export namespace Prisma {
       created_at: Date
       user_agent: string | null
       ip_address: string | null
+      sesion_iniciada_en: Date | null
     }, ExtArgs["result"]["refreshToken"]>
     composites: {}
   }
@@ -6281,6 +6292,7 @@ export namespace Prisma {
     readonly created_at: FieldRef<"RefreshToken", 'DateTime'>
     readonly user_agent: FieldRef<"RefreshToken", 'String'>
     readonly ip_address: FieldRef<"RefreshToken", 'String'>
+    readonly sesion_iniciada_en: FieldRef<"RefreshToken", 'DateTime'>
   }
     
 
@@ -7674,7 +7686,8 @@ export namespace Prisma {
     revoked: 'revoked',
     created_at: 'created_at',
     user_agent: 'user_agent',
-    ip_address: 'ip_address'
+    ip_address: 'ip_address',
+    sesion_iniciada_en: 'sesion_iniciada_en'
   };
 
   export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
@@ -8218,6 +8231,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"RefreshToken"> | Date | string
     user_agent?: StringNullableFilter<"RefreshToken"> | string | null
     ip_address?: StringNullableFilter<"RefreshToken"> | string | null
+    sesion_iniciada_en?: DateTimeNullableFilter<"RefreshToken"> | Date | string | null
     user?: XOR<UserRelationFilter, UserWhereInput>
   }
 
@@ -8230,6 +8244,7 @@ export namespace Prisma {
     created_at?: SortOrder
     user_agent?: SortOrderInput | SortOrder
     ip_address?: SortOrderInput | SortOrder
+    sesion_iniciada_en?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
   }
 
@@ -8245,6 +8260,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"RefreshToken"> | Date | string
     user_agent?: StringNullableFilter<"RefreshToken"> | string | null
     ip_address?: StringNullableFilter<"RefreshToken"> | string | null
+    sesion_iniciada_en?: DateTimeNullableFilter<"RefreshToken"> | Date | string | null
     user?: XOR<UserRelationFilter, UserWhereInput>
   }, "id">
 
@@ -8257,6 +8273,7 @@ export namespace Prisma {
     created_at?: SortOrder
     user_agent?: SortOrderInput | SortOrder
     ip_address?: SortOrderInput | SortOrder
+    sesion_iniciada_en?: SortOrderInput | SortOrder
     _count?: RefreshTokenCountOrderByAggregateInput
     _max?: RefreshTokenMaxOrderByAggregateInput
     _min?: RefreshTokenMinOrderByAggregateInput
@@ -8274,6 +8291,7 @@ export namespace Prisma {
     created_at?: DateTimeWithAggregatesFilter<"RefreshToken"> | Date | string
     user_agent?: StringNullableWithAggregatesFilter<"RefreshToken"> | string | null
     ip_address?: StringNullableWithAggregatesFilter<"RefreshToken"> | string | null
+    sesion_iniciada_en?: DateTimeNullableWithAggregatesFilter<"RefreshToken"> | Date | string | null
   }
 
   export type MasterAuditLogWhereInput = {
@@ -8792,6 +8810,7 @@ export namespace Prisma {
     created_at?: Date | string
     user_agent?: string | null
     ip_address?: string | null
+    sesion_iniciada_en?: Date | string | null
     user: UserCreateNestedOneWithoutTokensInput
   }
 
@@ -8804,6 +8823,7 @@ export namespace Prisma {
     created_at?: Date | string
     user_agent?: string | null
     ip_address?: string | null
+    sesion_iniciada_en?: Date | string | null
   }
 
   export type RefreshTokenUpdateInput = {
@@ -8814,6 +8834,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutTokensNestedInput
   }
 
@@ -8826,6 +8847,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type RefreshTokenCreateManyInput = {
@@ -8837,6 +8859,7 @@ export namespace Prisma {
     created_at?: Date | string
     user_agent?: string | null
     ip_address?: string | null
+    sesion_iniciada_en?: Date | string | null
   }
 
   export type RefreshTokenUpdateManyMutationInput = {
@@ -8847,6 +8870,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type RefreshTokenUncheckedUpdateManyInput = {
@@ -8858,6 +8882,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type MasterAuditLogCreateInput = {
@@ -9508,6 +9533,7 @@ export namespace Prisma {
     created_at?: SortOrder
     user_agent?: SortOrder
     ip_address?: SortOrder
+    sesion_iniciada_en?: SortOrder
   }
 
   export type RefreshTokenMaxOrderByAggregateInput = {
@@ -9519,6 +9545,7 @@ export namespace Prisma {
     created_at?: SortOrder
     user_agent?: SortOrder
     ip_address?: SortOrder
+    sesion_iniciada_en?: SortOrder
   }
 
   export type RefreshTokenMinOrderByAggregateInput = {
@@ -9530,6 +9557,7 @@ export namespace Prisma {
     created_at?: SortOrder
     user_agent?: SortOrder
     ip_address?: SortOrder
+    sesion_iniciada_en?: SortOrder
   }
   export type JsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -10651,6 +10679,7 @@ export namespace Prisma {
     created_at?: Date | string
     user_agent?: string | null
     ip_address?: string | null
+    sesion_iniciada_en?: Date | string | null
   }
 
   export type RefreshTokenUncheckedCreateWithoutUserInput = {
@@ -10661,6 +10690,7 @@ export namespace Prisma {
     created_at?: Date | string
     user_agent?: string | null
     ip_address?: string | null
+    sesion_iniciada_en?: Date | string | null
   }
 
   export type RefreshTokenCreateOrConnectWithoutUserInput = {
@@ -10760,6 +10790,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"RefreshToken"> | Date | string
     user_agent?: StringNullableFilter<"RefreshToken"> | string | null
     ip_address?: StringNullableFilter<"RefreshToken"> | string | null
+    sesion_iniciada_en?: DateTimeNullableFilter<"RefreshToken"> | Date | string | null
   }
 
   export type UserProjectAccessUpsertWithWhereUniqueWithoutUserInput = {
@@ -11240,6 +11271,7 @@ export namespace Prisma {
     created_at?: Date | string
     user_agent?: string | null
     ip_address?: string | null
+    sesion_iniciada_en?: Date | string | null
   }
 
   export type UserProjectAccessCreateManyUserInput = {
@@ -11257,6 +11289,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type RefreshTokenUncheckedUpdateWithoutUserInput = {
@@ -11267,6 +11300,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type RefreshTokenUncheckedUpdateManyWithoutUserInput = {
@@ -11277,6 +11311,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user_agent?: NullableStringFieldUpdateOperationsInput | string | null
     ip_address?: NullableStringFieldUpdateOperationsInput | string | null
+    sesion_iniciada_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserProjectAccessUpdateWithoutUserInput = {
