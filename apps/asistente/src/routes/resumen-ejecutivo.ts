@@ -76,6 +76,11 @@ router.get(
 
       logInfo(req, 'asistente', 'asistente.resumen-ejecutivo.ok', 'Resumen ejecutivo generado', {
         modulos_con_error: modulosConError.length,
+        model: message.model,
+        input_tokens: message.usage.input_tokens,
+        output_tokens: message.usage.output_tokens,
+        cache_creation_input_tokens: message.usage.cache_creation_input_tokens,
+        cache_read_input_tokens: message.usage.cache_read_input_tokens,
       });
 
       const result: ResumenEjecutivo = {
