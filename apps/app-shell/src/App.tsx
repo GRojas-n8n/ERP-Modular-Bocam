@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import { NotificationProvider } from './context/NotificationContext';
 import { ToastContainer } from './components/ToastContainer';
 import { Layout } from './components/Layout';
+import { ChatAsistente } from './components/ChatAsistente';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { LoginView } from './views/LoginView';
 import { DashboardView } from './views/DashboardView';
@@ -127,6 +128,7 @@ const AuthenticatedApp: React.FC = () => {
       <Suspense fallback={<ViewLoader />}>
         {renderView()}
       </Suspense>
+      <ChatAsistente />
     </Layout>
   );
 };
