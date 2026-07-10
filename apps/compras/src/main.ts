@@ -18,8 +18,11 @@ import {
   setupSentryExpressHandler,
 } from '../../../packages/observability/src';
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
-import { enviarSolicitudCotizacionEmail } from './mailer';
+import { enviarSolicitudCotizacionEmail, enviarOrdenCompraEmail } from './mailer';
 import { resolveProyectoIdParaSolicitud } from './solicitud-cotizacion-policy';
+import { requisicionQuedoCubiertaPorLote, GrupoOcEmitido } from './requisicion-cobertura';
+import { buildOcPdfPayload, InsumoCatalogo } from './orden-compra-pdf-payload';
+import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
 
 const eventBus = createEventBus('compras');
 
@@ -31,6 +34,7 @@ const PORT = process.env.PORT || 3002;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
 const GT_URL = process.env.GT_URL || 'http://localhost:3001/api/v1/gerencia-tecnica';
+const REPORTES_URL = process.env.REPORTES_SERVICE_URL || 'http://reportes:3010';
 const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
 const DOCS_PROVEEDORES_UPLOAD_DIR = process.env.DOCS_PROVEEDORES_UPLOAD_DIR || '/tmp/docs-proveedores';
 const DOCS_PROVEEDORES_MAX_SIZE_MB = parseInt(process.env.DOCS_PROVEEDORES_MAX_SIZE_MB ?? '10', 10);
@@ -1332,6 +1336,140 @@ app.get('/api/v1/compras/ordenes-compra', async (req: Request, res: Response) =>
   }
 });
 
+// Ver openspec/changes/envio-oc-correo-proveedores: envía por correo una o
+// varias OC ya generadas, agrupando en un solo correo las que compartan
+// proveedor. Best-effort por proveedor — un fallo no bloquea al resto del
+// lote (ver capability envio-oc-proveedor).
+app.post('/api/v1/compras/ordenes-compra/enviar-correo', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { ids_orden } = req.body as { ids_orden?: string[] };
+    const token = req.headers.authorization;
+
+    if (!Array.isArray(ids_orden) || ids_orden.length === 0) {
+      return res.status(400).json({ success: false, message: 'Se requiere un array ids_orden con al menos un elemento.' });
+    }
+
+    // Filtro explícito por tenant_id/proyecto_id (no solo RLS — la conexión
+    // de BD de este servicio usa un rol con BYPASSRLS, ver hallazgo de
+    // seguridad en openspec/changes/envio-oc-correo-proveedores): una OC de
+    // otro proyecto no debe poder enviarse por correo aunque su id_orden se
+    // incluya en la petición (aislamiento por proyecto activo, ver spec
+    // envio-oc-proveedor).
+    const ordenes = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => prisma.ordenCompra.findMany({
+        where: { id_orden: { in: ids_orden }, tenant_id: tenantId, proyecto_id: proyectoId },
+        include: { items: true, proveedor: true },
+      })
+    );
+
+    const insumoById = new Map<string, InsumoCatalogo>(
+      await axios.get(`${GT_URL}/insumos`, {
+        headers: buildForwardHeaders(req, { Authorization: token || '' }),
+        timeout: 5000,
+      }).then(r => ((r.data?.data ?? []) as any[]).map(i => [i.id, i] as [string, InsumoCatalogo])).catch(() => [])
+    );
+
+    const porProveedor = new Map<string, typeof ordenes>();
+    for (const oc of ordenes) {
+      if (!porProveedor.has(oc.proveedor_id)) porProveedor.set(oc.proveedor_id, []);
+      porProveedor.get(oc.proveedor_id)!.push(oc);
+    }
+
+    const enviadas: Array<{ id_orden: string; codigo: string; proveedor: string }> = [];
+    const fallidas: Array<{ id_orden: string; codigo: string; motivo: string }> = [];
+
+    for (const [, ordenesProveedor] of porProveedor) {
+      const proveedor = ordenesProveedor[0].proveedor;
+
+      if (!proveedor.email_contacto) {
+        for (const oc of ordenesProveedor) {
+          fallidas.push({ id_orden: oc.id_orden, codigo: oc.codigo, motivo: 'Proveedor sin correo registrado.' });
+        }
+        continue;
+      }
+
+      const resultadosPdf = await Promise.allSettled(
+        ordenesProveedor.map(async (oc) => {
+          const payload = buildOcPdfPayload(
+            {
+              codigo: oc.codigo,
+              proveedor_nombre: proveedor.razon_social,
+              subtotal: oc.subtotal.toNumber(),
+              iva: oc.iva.toNumber(),
+              total: oc.total.toNumber(),
+              items: oc.items.map((it: any) => ({
+                insumo_id: it.insumo_id,
+                cantidad: Number(it.cantidad),
+                precio_unitario: Number(it.precio_unitario),
+                importe: Number(it.importe),
+              })),
+            },
+            insumoById,
+          );
+          const resp = await axios.post(`${REPORTES_URL}/api/v1/reportes/oc-pdf`, payload, {
+            headers: buildForwardHeaders(req, { Authorization: token || '' }),
+            responseType: 'arraybuffer',
+            timeout: 10000,
+          });
+          return { oc, buffer: Buffer.from(resp.data as ArrayBuffer) };
+        })
+      );
+
+      const pdfsOk: Array<{ oc: (typeof ordenesProveedor)[number]; buffer: Buffer }> = [];
+      resultadosPdf.forEach((r, i) => {
+        if (r.status === 'fulfilled') {
+          pdfsOk.push(r.value);
+        } else {
+          const oc = ordenesProveedor[i];
+          fallidas.push({ id_orden: oc.id_orden, codigo: oc.codigo, motivo: 'No se pudo generar el PDF de la OC.' });
+        }
+      });
+
+      if (pdfsOk.length === 0) continue;
+
+      const result = await enviarOrdenCompraEmail(
+        {
+          razon_social: proveedor.razon_social,
+          rfc_tax_id: proveedor.rfc_tax_id,
+          email_contacto: proveedor.email_contacto,
+        },
+        pdfsOk.map(p => ({ codigo: p.oc.codigo, fecha_emision: p.oc.fecha_emision, subtotal: p.oc.subtotal.toNumber(), iva: p.oc.iva.toNumber(), total: p.oc.total.toNumber() })),
+        pdfsOk.map(p => ({ codigo: p.oc.codigo, buffer: p.buffer })),
+      );
+
+      if (result.enviado) {
+        const enviadaAt = new Date();
+        for (const { oc } of pdfsOk) {
+          await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+            prisma.ordenCompra.update({
+              where: { id_orden: oc.id_orden },
+              data: { enviada_proveedor_at: enviadaAt, enviada_proveedor_email: proveedor.email_contacto },
+            })
+          );
+          enviadas.push({ id_orden: oc.id_orden, codigo: oc.codigo, proveedor: proveedor.razon_social });
+        }
+      } else {
+        for (const { oc } of pdfsOk) {
+          fallidas.push({ id_orden: oc.id_orden, codigo: oc.codigo, motivo: result.error || 'Error al enviar el correo.' });
+        }
+      }
+    }
+
+    logInfo(req, 'compras', 'compras.orden_compra.envio_correo', 'Envío de OC por correo procesado', {
+      total_solicitadas: ids_orden.length,
+      enviadas: enviadas.length,
+      fallidas: fallidas.length,
+    });
+
+    res.json({ success: true, data: { enviadas, fallidas } });
+  } catch (error: any) {
+    logError(req, 'compras', 'compras.orden_compra.envio_correo.error', 'Error al enviar OC por correo', { error_message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // --- Recepción de materiales contra OC ---
 
 app.get('/api/v1/compras/ordenes-compra/:id',
@@ -2085,7 +2223,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        const [cuadro, lineas, aclaraciones, anotacionesSpec, archivosProveedor] = await Promise.all([
+        const [cuadro, lineas, aclaraciones, anotacionesSpec, archivosProveedor, evaluacionesEspecificacion] = await Promise.all([
           prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
             include: { detalles: { include: { proveedor: true } } },
@@ -2104,6 +2242,10 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           prisma.comparativaProveedorArchivo.findMany({
             where: { cuadro_id: id, tenant_id: tenantId },
             select: { proveedor_id: true, pdf_nombre: true, pdf_mime: true, updated_at: true },
+          }),
+          // Ver openspec/changes/evaluacion-tecnica-por-especificacion
+          prisma.evaluacionEspecificacion.findMany({
+            where: { cuadro_id: id, tenant_id: tenantId },
           }),
         ]);
         if (!cuadro) return null;
@@ -2209,6 +2351,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           detalles: detallesConCount,
           lineas_detalle: lineasDetalle,
           anotaciones_spec: anotacionesSpec,
+          evaluaciones_especificacion: evaluacionesEspecificacion,
           archivos_proveedor: archivosProveedor,
           ordenes_compra,
         };
@@ -2334,20 +2477,28 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         for (const g of grupos.values()) totalAgregadoSinIva += g.subtotal;
         const totalAgregado = totalAgregadoSinIva * (1 + IVA_RATE);
 
-        // Obtener concepto_id de la req para el gate de partida
+        // Obtener concepto_id de la req para el gate de partida, y todos sus
+        // renglones para calcular cobertura tras el lote (ver requisicion-cobertura.ts)
         let conceptoId: string | null = null;
+        let todosLosItemIds: string[] = [];
         if (comparativa.requisicion_id) {
           const req = await prisma.requisicion.findUnique({
             where: { id_requisicion: comparativa.requisicion_id },
             select: { concepto_id: true },
           });
           conceptoId = req?.concepto_id ?? null;
+          const itemsReq = await prisma.requisicionItem.findMany({
+            where: { requisicion_id: comparativa.requisicion_id, tenant_id: tenantId },
+            select: { id_item: true },
+          });
+          todosLosItemIds = itemsReq.map((i: any) => i.id_item);
         }
 
         return {
           comparativaId: comparativa.id_cuadro,
           requisicionId: comparativa.requisicion_id,
           conceptoId,
+          todosLosItemIds,
           grupos,
           lineaMap,
           cantidadMap,
@@ -2403,6 +2554,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
     const timestamp = Date.now();
     const ordenesCreadas: any[] = [];
     const advertencias: string[] = [];
+    const gruposEmitidos: GrupoOcEmitido[] = [];
     let idx = 0;
 
     if (saldoPartidaGT?.estado_tope === 'LIMITADO') {
@@ -2482,6 +2634,8 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada', 'Alerta de OC en ERROR_FINANZAS persistida en BD', { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id });
       }
 
+      if (ocEmitida) gruposEmitidos.push({ detalles: grupo.detalles.map((d: DetalleGanador) => ({ insumo_id: d.insumo_id })) });
+
       // 1.7: Comprometer saldo en GT para el concepto/partida (fire-and-forget)
       if (ocEmitida && loteData.conceptoId) {
         try {
@@ -2527,6 +2681,14 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         estado: ocEmitida ? OC_STATUS.EMITIDA : OC_STATUS.ERROR_FINANZAS,
         proveedor_id: proveedorId,
         total: oc.total.toNumber(),
+      });
+    }
+
+    // Ver capability multi-oc-generacion (delta): la requisición pasa a
+    // COMPRADA solo si el lote emitido cubrió el 100% de sus renglones.
+    if (loteData.requisicionId && requisicionQuedoCubiertaPorLote(loteData.todosLosItemIds, gruposEmitidos, loteData.lineaMap)) {
+      await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        await prisma.requisicion.update({ where: { id_requisicion: loteData.requisicionId as string }, data: { estado: 'COMPRADA' } });
       });
     }
 
@@ -2903,7 +3065,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            include: { detalles: true },
+            include: { detalles: true, lineas: true },
           });
 
           if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
@@ -2925,6 +3087,28 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
             return res.status(400).json({
               success: false,
               message: `Renglón ${invalid.detalle_id} no pertenece a este cuadro comparativo.`,
+            });
+          }
+
+          // Ver openspec/changes/evaluacion-tecnica-por-especificacion: un
+          // renglón con especificaciones capturadas SHALL evaluarse vía
+          // PATCH .../evaluar-especificaciones, no aquí — evita dos fuentes
+          // de verdad para el mismo veredicto de renglón.
+          const detalleReqIdsEnCuadro = [...new Set(cuadro.lineas.map(l => l.detalle_req_id).filter((v): v is string => !!v))];
+          const specsExistentes = detalleReqIdsEnCuadro.length > 0
+            ? await prisma.especificacionDetalleReq.findMany({ where: { detalle_id: { in: detalleReqIdsEnCuadro }, tenant_id: tenantId }, select: { detalle_id: true } })
+            : [];
+          const detalleReqIdsConSpecs = new Set(specsExistentes.map(s => s.detalle_id));
+          const lineaPorInsumo = new Map(cuadro.lineas.map(l => [l.insumo_id, l]));
+          const renglonConSpecs = evaluaciones.find((e) => {
+            const detalleActual = detalleMap.get(e.detalle_id)!;
+            const linea = lineaPorInsumo.get(detalleActual.insumo_id);
+            return !!linea?.detalle_req_id && detalleReqIdsConSpecs.has(linea.detalle_req_id);
+          });
+          if (renglonConSpecs) {
+            return res.status(400).json({
+              success: false,
+              message: 'EVALUACION_POR_ESPECIFICACION_REQUERIDA: Este renglón tiene características capturadas — evalúa cada característica vía PATCH .../evaluar-especificaciones en vez de editar el veredicto de renglón directamente.',
             });
           }
 
@@ -2988,6 +3172,145 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
       res.json({ success: true, data });
     } catch (error: any) {
       logError(req, 'compras', 'compras.comparativa.evaluar.error', 'Error al guardar evaluación técnica', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// Ver openspec/changes/evaluacion-tecnica-por-especificacion: el Residente
+// evalúa cada característica individual × proveedor, y el veredicto de
+// renglón (ComparativaDetalle.evaluacion_tecnica) se recalcula
+// automáticamente como el peor caso entre sus características.
+app.patch('/api/v1/compras/comparativas/:id/evaluar-especificaciones',
+  requireRoles('resident', 'residencia', 'control_obra', 'superintendent', 'procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { evaluaciones } = req.body as {
+        evaluaciones: {
+          especificacion_id: string;
+          proveedor_id: string;
+          evaluacion_tecnica: string;
+          comentario_tecnico?: string;
+          pregunta_residente?: string;
+        }[];
+      };
+
+      if (!evaluaciones || !Array.isArray(evaluaciones) || evaluaciones.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere un array "evaluaciones" con al menos un ítem.' });
+      }
+
+      const VALID_VALUES = new Set(['C', 'NC', 'DA', '?', 'PENDIENTE']);
+      for (const ev of evaluaciones) {
+        if (!VALID_VALUES.has(ev.evaluacion_tecnica)) {
+          return res.status(400).json({
+            success: false,
+            message: `Valor de evaluación inválido: "${ev.evaluacion_tecnica}". Valores permitidos: C, NC, DA, ?, PENDIENTE`,
+          });
+        }
+        if (ev.evaluacion_tecnica === '?' && !ev.pregunta_residente?.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `La característica ${ev.especificacion_id} (proveedor ${ev.proveedor_id}) tiene "?" pero no tiene pregunta_residente.`,
+          });
+        }
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id }, include: { lineas: true } });
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado === 'LOCKED' || cuadro.estado === 'FIRMADO_BLOQUEADO') {
+            return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: Este cuadro está firmado y no puede modificarse.' });
+          }
+          if (cuadro.estado !== 'EN_EVALUACION_TECNICA') {
+            return res.status(400).json({
+              success: false,
+              message: `El cuadro no está en evaluación técnica. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          const especIds = [...new Set(evaluaciones.map(e => e.especificacion_id))];
+          const especs = await prisma.especificacionDetalleReq.findMany({ where: { id_especificacion: { in: especIds }, tenant_id: tenantId } });
+          const especMap = new Map(especs.map(e => [e.id_especificacion, e]));
+          const especInvalida = evaluaciones.find(e => !especMap.has(e.especificacion_id));
+          if (especInvalida) {
+            return res.status(400).json({ success: false, message: `especificacion_id ${especInvalida.especificacion_id} no existe.` });
+          }
+
+          // 1. Upsert cada evaluación por característica×proveedor
+          await Promise.all(evaluaciones.map(ev => prisma.evaluacionEspecificacion.upsert({
+            where: {
+              cuadro_id_especificacion_id_proveedor_id: {
+                cuadro_id: id,
+                especificacion_id: ev.especificacion_id,
+                proveedor_id: ev.proveedor_id,
+              },
+            },
+            create: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              cuadro_id: id,
+              especificacion_id: ev.especificacion_id,
+              proveedor_id: ev.proveedor_id,
+              evaluacion_tecnica: ev.evaluacion_tecnica,
+              comentario_tecnico: ev.comentario_tecnico?.trim() ?? null,
+              pregunta_residente: ev.evaluacion_tecnica === '?' ? ev.pregunta_residente!.trim() : null,
+              creado_por: userId,
+            },
+            update: {
+              evaluacion_tecnica: ev.evaluacion_tecnica,
+              comentario_tecnico: ev.comentario_tecnico?.trim() ?? null,
+              pregunta_residente: ev.evaluacion_tecnica === '?' ? ev.pregunta_residente!.trim() : null,
+            },
+          })));
+
+          // 2. Recalcular el veredicto de renglón (rollup) para cada (insumo, proveedor) afectado
+          const detalleIdsAfectados = [...new Set(evaluaciones.map(e => especMap.get(e.especificacion_id)!.detalle_id))];
+          const lineasAfectadas = cuadro.lineas.filter(l => l.detalle_req_id && detalleIdsAfectados.includes(l.detalle_req_id));
+          const todasEspecsDeDetalles = await prisma.especificacionDetalleReq.findMany({ where: { detalle_id: { in: detalleIdsAfectados }, tenant_id: tenantId } });
+          const especIdsPorDetalle = new Map<string, string[]>();
+          for (const spec of todasEspecsDeDetalles) {
+            const lista = especIdsPorDetalle.get(spec.detalle_id) ?? [];
+            lista.push(spec.id_especificacion);
+            especIdsPorDetalle.set(spec.detalle_id, lista);
+          }
+          const proveedorIdsAfectados = [...new Set(evaluaciones.map(e => e.proveedor_id))];
+
+          for (const linea of lineasAfectadas) {
+            const especIdsDeEsteInsumo = especIdsPorDetalle.get(linea.detalle_req_id!) ?? [];
+            if (especIdsDeEsteInsumo.length === 0) continue;
+            for (const proveedorId of proveedorIdsAfectados) {
+              const evalsExistentes = await prisma.evaluacionEspecificacion.findMany({
+                where: { cuadro_id: id, proveedor_id: proveedorId, especificacion_id: { in: especIdsDeEsteInsumo } },
+                select: { especificacion_id: true, evaluacion_tecnica: true },
+              });
+              const evalMap = new Map(evalsExistentes.map(e => [e.especificacion_id, e.evaluacion_tecnica]));
+              const valores = especIdsDeEsteInsumo.map(specId => evalMap.get(specId) ?? 'PENDIENTE');
+              const veredictoRenglon = calcularVeredictoRenglon(valores);
+
+              await prisma.comparativaDetalle.updateMany({
+                where: { cuadro_id: id, insumo_id: linea.insumo_id, proveedor_id: proveedorId },
+                data: { evaluacion_tecnica: veredictoRenglon },
+              });
+            }
+          }
+
+          return prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: { include: { proveedor: true } }, evaluaciones_especificacion: true },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      logInfo(req, 'compras', 'compras.comparativa.evaluacion_especificacion_guardada', 'Evaluación por característica guardada', { cuadro_id: id, evaluador: userId, cantidad: evaluaciones.length });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.evaluar_especificaciones.error', 'Error al guardar evaluación por característica', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }
@@ -4429,6 +4752,10 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
       if (!primera_opcion_proveedor_id) {
         return res.status(400).json({ success: false, message: 'primera_opcion_proveedor_id es requerido.' });
       }
+      // Ver openspec/changes/seleccion-proveedor-recomendado-firma
+      if (segunda_opcion_proveedor_id && segunda_opcion_proveedor_id === primera_opcion_proveedor_id) {
+        return res.status(400).json({ success: false, message: 'segunda_opcion_proveedor_id debe ser distinto de primera_opcion_proveedor_id.' });
+      }
 
       const data = await createTenantContext(
         { tenantId, proyectoId, userId },
@@ -4442,7 +4769,7 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
             return res.status(400).json({ success: false, message: `Estado inválido para selección: ${cuadro.estado}` });
           }
 
-          // Validar que el proveedor existe en los detalles de este cuadro
+          // Validar que el/los proveedor(es) existen en los detalles de este cuadro
           const proveedoresEnCuadro = await prisma.comparativaDetalle.findMany({
             where: { cuadro_id: id, tenant_id: tenantId },
             select: { proveedor_id: true },
@@ -4451,6 +4778,9 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
           const proveedorIds = new Set(proveedoresEnCuadro.map(d => d.proveedor_id));
           if (!proveedorIds.has(primera_opcion_proveedor_id)) {
             return res.status(400).json({ success: false, message: 'primera_opcion_proveedor_id no participa en este cuadro.' });
+          }
+          if (segunda_opcion_proveedor_id && !proveedorIds.has(segunda_opcion_proveedor_id)) {
+            return res.status(400).json({ success: false, message: 'segunda_opcion_proveedor_id no participa en este cuadro.' });
           }
 
           return prisma.cuadroComparativo.update({
@@ -4551,6 +4881,23 @@ app.post('/api/v1/compras/comparativas/:id/firmar',
             });
           }
 
+          // Ver openspec/changes/seleccion-proveedor-recomendado-firma: si
+          // hay segunda opción guardada, exigirle el mismo criterio.
+          if (cuadro.segunda_opcion_proveedor_id) {
+            const detallesSegundaOpcion = cuadro.detalles.filter(
+              d => d.proveedor_id === cuadro.segunda_opcion_proveedor_id
+            );
+            const segundaOpcionConNC = detallesSegundaOpcion.some(
+              d => d.evaluacion_tecnica === 'NC' || d.evaluacion_tecnica === '?'
+            );
+            if (segundaOpcionConNC) {
+              return res.status(400).json({
+                success: false,
+                message: 'SEGUNDA_OPCION_INVALIDA_NC: La segunda opción de proveedor tiene renglones NC o ?. Solo puede ser segunda opción un proveedor con todos sus renglones en C o DA.',
+              });
+            }
+          }
+
           const cuadroFirmado = await prisma.cuadroComparativo.update({
             where: { id_cuadro: id },
             data: {
@@ -4563,6 +4910,19 @@ app.post('/api/v1/compras/comparativas/:id/firmar',
               proveedores_sugeridos: JSON.stringify(proveedores_sugeridos),
             },
             include: { detalles: { include: { proveedor: true } } },
+          });
+
+          // Ver openspec/changes/evaluacion-tecnica-por-especificacion: la
+          // Requisición conserva su folio y queda registrada con la
+          // revisión del cuadro que la cerró. updateMany (no update): la
+          // referencia no tiene FK declarada — si no corresponde a ninguna
+          // Requisicion real, no debe tumbar la firma ya aplicada.
+          await prisma.requisicion.updateMany({
+            where: { id_requisicion: cuadro.requisicion_id },
+            data: {
+              cuadro_comparativo_cierre_id: cuadro.id_cuadro,
+              revision_cierre: cuadro.revision,
+            },
           });
 
           const resumen = {
@@ -4931,22 +5291,16 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
       const { evaluaciones } = req.body as {
-        evaluaciones: {
+        evaluaciones?: {
           detalle_id: string;
           evaluacion_tecnica: string;
           comentario_tecnico?: string;
           pregunta_residente?: string;
         }[];
       };
+      const evaluacionesRenglon = evaluaciones ?? [];
 
-      if (!Array.isArray(evaluaciones) || evaluaciones.length === 0) {
-        return res.status(400).json({ success: false, message: 'Se requiere el array evaluaciones.' });
-      }
-      const tienePreguntas = evaluaciones.some(e => e.evaluacion_tecnica === '?');
-      if (!tienePreguntas) {
-        return res.status(400).json({ success: false, message: 'Debe haber al menos un renglón con "?" para crear una revisión con preguntas.' });
-      }
-      for (const ev of evaluaciones) {
+      for (const ev of evaluacionesRenglon) {
         if (ev.evaluacion_tecnica === '?' && !ev.pregunta_residente?.trim()) {
           return res.status(400).json({ success: false, message: `El renglón ${ev.detalle_id} tiene "?" pero no tiene pregunta_residente.` });
         }
@@ -4957,15 +5311,28 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
         async (prisma) => {
           const cuadroOriginal = await prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            include: { detalles: true, lineas: true },
+            include: { detalles: true, lineas: true, evaluaciones_especificacion: true },
           });
           if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
           if (cuadroOriginal.estado !== 'EN_EVALUACION_TECNICA') {
             return res.status(400).json({ success: false, message: `El cuadro debe estar en EN_EVALUACION_TECNICA. Estado actual: ${cuadroOriginal.estado}` });
           }
 
-          // 1. Guardar evaluaciones en el cuadro original (incluyendo pregunta_residente)
-          await Promise.all(evaluaciones.map(ev =>
+          // Ver openspec/changes/evaluacion-tecnica-por-especificacion: la
+          // condición de "hay preguntas" se evalúa tanto a nivel renglón
+          // (payload legacy, para renglones sin especificaciones) como a
+          // nivel característica (EvaluacionEspecificacion ya persistidas
+          // vía PATCH .../evaluar-especificaciones).
+          const hayPreguntaEnEspecificaciones = cuadroOriginal.evaluaciones_especificacion.some(
+            e => e.evaluacion_tecnica === '?' && e.pregunta_residente?.trim()
+          );
+          const hayPreguntaEnRenglones = evaluacionesRenglon.some(e => e.evaluacion_tecnica === '?');
+          if (!hayPreguntaEnEspecificaciones && !hayPreguntaEnRenglones) {
+            return res.status(400).json({ success: false, message: 'Debe haber al menos una característica o renglón con "?" para crear una revisión con preguntas.' });
+          }
+
+          // 1. Guardar evaluaciones de renglón legacy en el cuadro original (si las hay)
+          await Promise.all(evaluacionesRenglon.map(ev =>
             prisma.comparativaDetalle.update({
               where: { id_detalle: ev.detalle_id },
               data: {
@@ -4999,7 +5366,7 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
 
           // 4. Clonar detalles — copiar precios, heredar pregunta_residente para los "?", reset evaluaciones a PENDIENTE
           const detalleMap = new Map(cuadroOriginal.detalles.map(d => [d.id_detalle, d]));
-          const evalMap = new Map(evaluaciones.map(e => [e.detalle_id, e]));
+          const evalMap = new Map(evaluacionesRenglon.map(e => [e.detalle_id, e]));
           if (cuadroOriginal.detalles.length > 0) {
             await prisma.comparativaDetalle.createMany({
               data: cuadroOriginal.detalles.map(d => {
@@ -5041,11 +5408,33 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
             });
           }
 
+          // 6. Clonar evaluaciones por característica — reset a PENDIENTE,
+          // salvo las "?" que heredan pregunta_residente (mismo patrón que
+          // ComparativaDetalle arriba). Ninguna queda huérfana en el cuadro
+          // SUPERSEDIDO/REVISION_SOLICITADA (gap corregido, ver design.md).
+          if (cuadroOriginal.evaluaciones_especificacion.length > 0) {
+            await prisma.evaluacionEspecificacion.createMany({
+              data: cuadroOriginal.evaluaciones_especificacion.map(e => ({
+                tenant_id: e.tenant_id,
+                proyecto_id: e.proyecto_id,
+                cuadro_id: nuevoCuadro.id_cuadro,
+                especificacion_id: e.especificacion_id,
+                proveedor_id: e.proveedor_id,
+                evaluacion_tecnica: 'PENDIENTE',
+                comentario_tecnico: null,
+                pregunta_residente: e.evaluacion_tecnica === '?' ? e.pregunta_residente : null,
+                respuesta_compras: null,
+                creado_por: userId,
+              })),
+            });
+          }
+
           logInfo(req, 'compras', 'compras.comparativa.revision_con_preguntas', 'Revisión con preguntas creada por Residente', {
             cuadro_original_id: id,
             nuevo_cuadro_id: nuevoCuadro.id_cuadro,
             revision_nueva: siguienteRev,
-            preguntas: evaluaciones.filter(e => e.evaluacion_tecnica === '?').length,
+            preguntas_renglon: evaluacionesRenglon.filter(e => e.evaluacion_tecnica === '?').length,
+            preguntas_especificacion: cuadroOriginal.evaluaciones_especificacion.filter(e => e.evaluacion_tecnica === '?').length,
           });
 
           return { nueva_revision_id: nuevoCuadro.id_cuadro, revision_label: siguienteRev };
@@ -5068,12 +5457,15 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const { respuestas } = req.body as {
-        respuestas: { detalle_id: string; respuesta_compras: string }[];
+      const { respuestas, respuestas_especificacion } = req.body as {
+        respuestas?: { detalle_id: string; respuesta_compras: string }[];
+        respuestas_especificacion?: { especificacion_id: string; proveedor_id: string; respuesta_compras: string }[];
       };
+      const respuestasRenglon = respuestas ?? [];
+      const respuestasSpec = respuestas_especificacion ?? [];
 
-      if (!Array.isArray(respuestas) || respuestas.length === 0) {
-        return res.status(400).json({ success: false, message: 'Se requiere el array respuestas.' });
+      if (respuestasRenglon.length === 0 && respuestasSpec.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere el array respuestas o respuestas_especificacion.' });
       }
 
       const data = await createTenantContext(
@@ -5093,15 +5485,35 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas',
             return res.status(400).json({ success: false, message: 'Este cuadro no es una revisión — no tiene preguntas del Residente.' });
           }
 
-          await Promise.all(respuestas.map(r =>
+          await Promise.all(respuestasRenglon.map(r =>
             prisma.comparativaDetalle.update({
               where: { id_detalle: r.detalle_id },
               data: { respuesta_compras: r.respuesta_compras?.trim() ?? null },
             })
           ));
 
-          logInfo(req, 'compras', 'compras.comparativa.respuestas_guardadas', 'Compras respondió preguntas del Residente', { cuadro_id: id, respuestas: respuestas.length });
-          return { cuadro_id: id, respuestas_guardadas: respuestas.length };
+          // Ver openspec/changes/evaluacion-tecnica-por-especificacion:
+          // respuesta de Compras amarrada a la característica×proveedor
+          // exacta sobre la que el Residente preguntó.
+          await Promise.all(respuestasSpec.map(r =>
+            prisma.evaluacionEspecificacion.update({
+              where: {
+                cuadro_id_especificacion_id_proveedor_id: {
+                  cuadro_id: id,
+                  especificacion_id: r.especificacion_id,
+                  proveedor_id: r.proveedor_id,
+                },
+              },
+              data: { respuesta_compras: r.respuesta_compras?.trim() ?? null },
+            })
+          ));
+
+          logInfo(req, 'compras', 'compras.comparativa.respuestas_guardadas', 'Compras respondió preguntas del Residente', {
+            cuadro_id: id,
+            respuestas_renglon: respuestasRenglon.length,
+            respuestas_especificacion: respuestasSpec.length,
+          });
+          return { cuadro_id: id, respuestas_guardadas: respuestasRenglon.length + respuestasSpec.length };
         }
       );
 

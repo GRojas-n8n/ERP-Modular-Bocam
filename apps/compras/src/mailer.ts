@@ -444,3 +444,141 @@ export async function enviarSolicitudCotizacionEmail(
     return { enviado: false, error: err?.message || 'Error desconocido al enviar correo.' };
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Correo de Orden de Compra — ver openspec/changes/envio-oc-correo-proveedores
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface OrdenCompraResumenEmail {
+  codigo: string;
+  fecha_emision: Date;
+  subtotal: number;
+  iva: number;
+  total: number;
+}
+
+export interface OrdenCompraPdfAdjunto {
+  codigo: string;
+  buffer: Buffer;
+}
+
+const fmtMoneda = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+
+function buildHtmlOrdenCompra(ordenes: OrdenCompraResumenEmail[], proveedor: ProveedorContactoEmail): string {
+  const filas = ordenes.map((oc, idx) => `
+    <tr>
+      <td style="padding:10px 12px;border-bottom:1px solid ${CLARO_BORDER};font-size:13px;font-weight:700;color:${CLARO_INK};${idx % 2 === 1 ? `background:#f8fafc;` : ''}">${escapeHtml(oc.codigo)}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid ${CLARO_BORDER};font-size:13px;color:${CLARO_INK};white-space:nowrap;${idx % 2 === 1 ? `background:#f8fafc;` : ''}">${fmtFecha(oc.fecha_emision)}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid ${CLARO_BORDER};font-size:13px;color:${CLARO_INK};text-align:right;white-space:nowrap;${idx % 2 === 1 ? `background:#f8fafc;` : ''}">${fmtMoneda(oc.total)}</td>
+    </tr>`).join('');
+
+  const asuntoLista = ordenes.map(o => o.codigo).join(', ');
+
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#eef2f6;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f6;padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:92%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid ${CLARO_BORDER};">
+
+            <tr>
+              <td style="background:${CLARO_HEADER_BG};padding:20px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="left" style="width:50%;"><img src="cid:iretum-logo" alt="Iretum" height="26" style="height:26px;display:block;border:0;" /></td>
+                    <td align="right" style="width:50%;"><img src="cid:bocam-logo" alt="Constructora Bocam" height="16" style="height:16px;display:block;border:0;margin-left:auto;" /></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr><td style="height:3px;background:${CLARO_ACCENT};line-height:0;font-size:0;">&nbsp;</td></tr>
+
+            <tr>
+              <td style="padding:28px 32px 8px 32px;">
+                <p style="margin:0 0 6px 0;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${CLARO_ACCENT};">Orden${ordenes.length > 1 ? 'es' : ''} de Compra</p>
+                <h1 style="margin:0;font-size:21px;font-weight:800;color:${CLARO_INK};">${escapeHtml(asuntoLista)}</h1>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:20px 32px 0 32px;">
+                <p style="margin:0 0 6px 0;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${CLARO_MUTED};">Dirigido a</p>
+                <p style="margin:0;font-size:13px;font-weight:700;color:${CLARO_INK};">${escapeHtml(proveedor.razon_social)}</p>
+                ${proveedor.rfc_tax_id ? `<p style="margin:2px 0 0 0;font-size:12px;color:${CLARO_MUTED};">RFC: ${escapeHtml(proveedor.rfc_tax_id)}</p>` : ''}
+                <p style="margin:2px 0 0 0;font-size:12px;color:${CLARO_ACCENT};">${escapeHtml(proveedor.email_contacto)}</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px 32px 0 32px;">
+                <p style="margin:0 0 8px 0;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${CLARO_MUTED};">Órdenes de compra adjuntas</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${CLARO_BORDER};border-radius:8px;overflow:hidden;">
+                  <tr>
+                    <td style="padding:9px 12px;background:${CLARO_INK};font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#ffffff;">Código</td>
+                    <td style="padding:9px 12px;background:${CLARO_INK};font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#ffffff;">Fecha de emisión</td>
+                    <td style="padding:9px 12px;background:${CLARO_INK};font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#ffffff;text-align:right;">Total</td>
+                  </tr>
+                  ${filas}
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:28px 32px 24px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${CLARO_BORDER};">
+                  <tr>
+                    <td style="padding-top:16px;font-size:11px;line-height:1.6;color:${CLARO_MUTED};">
+                      Este correo fue generado automáticamente por el ERP Industrial iretum.com. El PDF de cada
+                      Orden de Compra va adjunto a este mensaje. Favor de confirmar recepción respondiendo
+                      directamente a este correo.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+/**
+ * Envía a un proveedor un correo con una o más Órdenes de Compra adjuntas
+ * (un solo correo agrupando todas las OC seleccionadas de ese proveedor, ver
+ * capability envio-oc-proveedor). No lanza excepción si falla (best-effort)
+ * — retorna { enviado, error }. `transporterOverride` existe únicamente para
+ * pruebas (inyecta un transporte `jsonTransport` en vez del SMTP real).
+ */
+export async function enviarOrdenCompraEmail(
+  proveedor: ProveedorContactoEmail,
+  ordenes: OrdenCompraResumenEmail[],
+  pdfs: OrdenCompraPdfAdjunto[],
+  transporterOverride?: nodemailer.Transporter,
+): Promise<{ enviado: boolean; error?: string }> {
+  const t = transporterOverride ?? getTransporter();
+  if (!t) {
+    return { enviado: false, error: 'SMTP no configurado (SMTP_HOST/SMTP_USER/SMTP_PASS faltantes).' };
+  }
+  try {
+    const html = buildHtmlOrdenCompra(ordenes, proveedor);
+    const asuntoLista = ordenes.map(o => o.codigo).join(', ');
+    await t.sendMail({
+      from: `"Compras · Constructora Bocam" <${SMTP_FROM}>`,
+      to: proveedor.email_contacto,
+      subject: `Orden${ordenes.length > 1 ? 'es' : ''} de Compra ${asuntoLista} — Constructora Bocam`,
+      html,
+      attachments: [
+        { filename: 'iretum-logo.png', content: Buffer.from(LOGO_PNG_BASE64, 'base64'), cid: 'iretum-logo', contentType: 'image/png' },
+        { filename: 'bocam-logo.png', content: Buffer.from(LOGO_BOCAM_PNG_BASE64, 'base64'), cid: 'bocam-logo', contentType: 'image/png' },
+        ...pdfs.map(p => ({ filename: `${p.codigo}.pdf`, content: p.buffer, contentType: 'application/pdf' })),
+      ],
+    });
+    return { enviado: true };
+  } catch (err: any) {
+    return { enviado: false, error: err?.message || 'Error desconocido al enviar correo.' };
+  }
+}

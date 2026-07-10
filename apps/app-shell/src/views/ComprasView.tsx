@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import api from '../lib/api';
+import api, { comprasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { DEMO_INSUMOS, DEMO_REQUISICIONES, DEMO_COMPARATIVAS } from '../lib/demoData';
@@ -99,7 +99,18 @@ interface Insumo {
   activo?: boolean;
 }
 
-type TabId = 'requisiciones' | 'catalogo' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt' | 'trazabilidad';
+type TabId = 'requisiciones' | 'catalogo' | 'proveedores' | 'pendientes-eval' | 'pendientes-gt' | 'ordenes-compra' | 'trazabilidad';
+
+interface OrdenCompraListItem {
+  id_orden: string;
+  codigo: string;
+  estado: string;
+  fecha_emision: string;
+  total: number | string;
+  enviada_proveedor_at: string | null;
+  enviada_proveedor_email: string | null;
+  proveedor: { razon_social: string };
+}
 
 interface TrazabilidadMaterial {
   insumo_id: string | null;
@@ -255,6 +266,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [asignForm, setAsignForm] = useState({ concepto_id: '', concepto_clave: '', concepto_descripcion: '', monto_extra: '' });
   const [asignSubmitting, setAsignSubmitting] = useState(false);
   const [expandedConceptoId, setExpandedConceptoId] = useState<string | null>(null);
+
+  // ── Órdenes de Compra — envío por correo (ver capability envio-oc-proveedor) ──
+  const [ordenesCompra, setOrdenesCompra] = useState<OrdenCompraListItem[]>([]);
+  const [loadingOc, setLoadingOc] = useState(false);
+  const [ocSeleccionadas, setOcSeleccionadas] = useState<Set<string>>(new Set());
+  const [enviandoOc, setEnviandoOc] = useState(false);
 
   // ── Widget Resumen Presupuestal (Task 7) ─────────────────────────────────
   interface ResumenCP {
@@ -498,6 +515,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   useEffect(() => { fetchData(); }, [currentProjectId]);
   useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
+  useEffect(() => { if (activeTab === 'ordenes-compra') { void loadOrdenesCompra(); } }, [activeTab, currentProjectId]);
 
   // Cerrar dropdown al hacer clic afuera (requisición)
   useEffect(() => {
@@ -904,6 +922,46 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       notify({ type: 'info', title: 'Proveedor marcado como Declinó' });
     } catch (err: any) {
       notify({ type: 'error', title: 'Error', message: err.response?.data?.message || err.message });
+    }
+  };
+
+  // ── Órdenes de Compra — handlers ──────────────────────────────────────────────
+  const loadOrdenesCompra = async () => {
+    if (isDemo) return;
+    setLoadingOc(true);
+    try {
+      const res = await comprasApi.getOrdenesCompra();
+      setOrdenesCompra(res.data?.data ?? []);
+    } catch { /* silencioso */ }
+    finally { setLoadingOc(false); }
+  };
+
+  const toggleOcSeleccionada = (id: string) => {
+    setOcSeleccionadas(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleEnviarOcCorreo = async () => {
+    if (ocSeleccionadas.size === 0) return;
+    setEnviandoOc(true);
+    try {
+      const res = await comprasApi.enviarOrdenesCompraCorreo([...ocSeleccionadas]);
+      const { enviadas, fallidas } = res.data?.data ?? { enviadas: [], fallidas: [] };
+      if (enviadas.length > 0) {
+        notify({ type: 'success', title: 'Órdenes de Compra enviadas', message: `${enviadas.length} OC notificada(s) por correo.`, duration: 6000 });
+      }
+      if (fallidas.length > 0) {
+        notify({ type: 'warning', title: 'Algunas OC no se enviaron', message: fallidas.map((f: { codigo: string; motivo: string }) => `${f.codigo}: ${f.motivo}`).join(' · '), duration: 8000 });
+      }
+      setOcSeleccionadas(new Set());
+      await loadOrdenesCompra();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al enviar OC', message: err.response?.data?.message || err.message });
+    } finally {
+      setEnviandoOc(false);
     }
   };
 
@@ -2016,6 +2074,82 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </CardContent>
                   </Card>
                 ))
+              )}
+            </div>
+          )}
+
+          {/* ── TAB: Órdenes de Compra — envío por correo ────────────────────── */}
+          {activeTab === 'ordenes-compra' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Selecciona una o varias OC para enviarlas por correo al proveedor
+                </p>
+                <Button
+                  onClick={handleEnviarOcCorreo}
+                  disabled={ocSeleccionadas.size === 0 || enviandoOc}
+                  className="rounded-xl bg-emerald-600 px-4 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-500 disabled:opacity-40"
+                >
+                  <IconSend className="h-4 w-4" />
+                  {enviandoOc ? 'Enviando…' : `Enviar por correo${ocSeleccionadas.size > 0 ? ` (${ocSeleccionadas.size})` : ''}`}
+                </Button>
+              </div>
+
+              {loadingOc ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500/10 border-t-emerald-600" />
+                </div>
+              ) : ordenesCompra.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
+                  <IconSend className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
+                  <p className="text-sm font-bold text-muted-foreground">Sin órdenes de compra generadas todavía</p>
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-border/30">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-muted/40">
+                        <th className="w-10 px-3 py-2"></th>
+                        <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Código</th>
+                        <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Proveedor</th>
+                        <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Fecha</th>
+                        <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Estado</th>
+                        <th className="px-3 py-2 text-right font-black uppercase tracking-widest text-muted-foreground">Total</th>
+                        <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Envío</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ordenesCompra.map((oc, idx) => (
+                        <tr key={oc.id_orden} className={cn('border-t border-border/20', idx % 2 === 1 && 'bg-muted/10')}>
+                          <td className="px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={ocSeleccionadas.has(oc.id_orden)}
+                              onChange={() => toggleOcSeleccionada(oc.id_orden)}
+                              className="h-4 w-4 rounded border-border/50"
+                            />
+                          </td>
+                          <td className="px-3 py-2 font-bold text-foreground">{oc.codigo}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{oc.proveedor?.razon_social ?? '—'}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{new Date(oc.fecha_emision).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                          <td className="px-3 py-2">
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{oc.estado}</span>
+                          </td>
+                          <td className="px-3 py-2 text-right font-bold text-foreground">${Number(oc.total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                          <td className="px-3 py-2">
+                            {oc.enviada_proveedor_at ? (
+                              <span className="text-[11px] font-semibold text-emerald-600">
+                                Enviada el {new Date(oc.enviada_proveedor_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-muted-foreground">No enviada</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
