@@ -11,6 +11,7 @@ import multer from 'multer';
 import { createCalidadContext, disconnectDb } from './db';
 import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
 import { createObservabilityMiddleware, initSentry, logError, logInfo, setupSentryExpressHandler } from '../../../packages/observability/src';
+import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import {
   TIPOS_DOCUMENTO,
   ESTADOS_DOCUMENTO,
@@ -23,6 +24,8 @@ import {
 const PORT     = process.env.PORT     || 3009;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const UPLOAD_DIR = process.env.UPLOAD_DIR || '/tmp/calidad-uploads';
+
+export const eventBus = createEventBus(process.env.CALIDAD_EVENT_BUS_NAME || 'calidad');
 initSentry(process.env.SENTRY_DSN || '', 'calidad');
 
 // Garantizar que el directorio de uploads exista
@@ -965,7 +968,23 @@ app.use((err: any, _req: Request, res: Response, next: any) => {
 // ── Server ───────────────────────────────────────────────────────────────────
 setupSentryExpressHandler(app);
 
+// Registro liviano — primer EventBus de este servicio (no tenía ninguno
+// hasta este change). Sin tabla de proyección nueva (ver design.md de
+// evento-centro-costos-creado, Decisión 3).
+export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<void> {
+  const { codigo_centro_costos } = (event.payload || {}) as { codigo_centro_costos?: string };
+  console.log(JSON.stringify({
+    action: 'calidad.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    codigo_centro_costos,
+  }));
+}
+
 export async function startServer() {
+  await eventBus.connect();
+  await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
   return app.listen(PORT, () => {
     console.log(`[calidad] Módulo Calidad escuchando en puerto ${PORT}`);
   });

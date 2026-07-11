@@ -474,6 +474,19 @@ app.get('/health', (_req: Request, res: Response) => {
 
 setupSentryExpressHandler(app);
 
+// Registro liviano — sin tabla de proyección nueva en este change (ver
+// design.md de evento-centro-costos-creado, Decisión 3).
+export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<void> {
+  const { codigo_centro_costos } = (event.payload || {}) as { codigo_centro_costos?: string };
+  console.log(JSON.stringify({
+    action: 'almacen.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    codigo_centro_costos,
+  }));
+}
+
 export async function startServer() {
   return app.listen(PORT, async () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -485,7 +498,8 @@ export async function startServer() {
     await eventBus.connect();
     await eventBus.subscribe('compras.oc_recibida_total',   handleOcRecibidaTotal);
     await eventBus.subscribe('compras.oc_recibida_parcial', handleOcRecibidaParcial);
-    console.log('[Almacén] Suscrito a: compras.oc_recibida_total, compras.oc_recibida_parcial');
+    await eventBus.subscribe('auth.centro_costos_creado',   handleCentroCostosCreadoEvent);
+    console.log('[Almacén] Suscrito a: compras.oc_recibida_total, compras.oc_recibida_parcial, auth.centro_costos_creado');
   });
 }
 

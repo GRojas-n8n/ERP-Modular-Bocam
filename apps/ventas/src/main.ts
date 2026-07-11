@@ -220,6 +220,19 @@ app.post('/api/v1/ventas/cotizaciones/:id/aceptar', async (req: Request, res: Re
 
 setupSentryExpressHandler(app);
 
+// Registro liviano — primer consumidor de eventos de este servicio (hasta
+// ahora solo publicaba). Sin tabla de proyección nueva en este change (ver
+// design.md de evento-centro-costos-creado, Decisión 3).
+export async function handleCentroCostosCreadoEvent(event: any): Promise<void> {
+  console.log(JSON.stringify({
+    action: 'ventas.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    codigo_centro_costos: event.payload?.codigo_centro_costos,
+  }));
+}
+
 export async function startServer() {
   return app.listen(PORT, async () => {
     console.log('----------------------------------------------------');
@@ -227,7 +240,8 @@ export async function startServer() {
     console.log(' Autenticación: JWT (Bearer Token)');
     console.log('----------------------------------------------------');
     await eventBus.connect();
-    console.log('[Ventas] Event bus conectado. Emite: ventas.cotizacion_aceptada');
+    await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+    console.log('[Ventas] Event bus conectado. Emite: ventas.cotizacion_aceptada. Suscrito: auth.centro_costos_creado');
   });
 }
 
