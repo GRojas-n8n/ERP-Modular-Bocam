@@ -620,6 +620,21 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 setupSentryExpressHandler(app);
 
+// Registro liviano — primer subscribe real de este servicio (hasta ahora
+// solo tenía eventBus.connect() sin ningún subscribe). Sin tabla de
+// proyección nueva en este change (ver design.md de
+// evento-centro-costos-creado, Decisión 3).
+export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<void> {
+  const { codigo_centro_costos } = (event.payload || {}) as { codigo_centro_costos?: string };
+  console.log(JSON.stringify({
+    action: 'seguridad.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    codigo_centro_costos,
+  }));
+}
+
 app.listen(PORT, async () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  🛡️  Módulo: SEGURIDAD / HSE');
@@ -649,7 +664,8 @@ app.listen(PORT, async () => {
   // Conectar al EventBus (no bloqueante)
   try {
     await eventBus.connect();
-    console.log(`[Seguridad] 🔌 EventBus conectado`);
+    await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+    console.log(`[Seguridad] 🔌 EventBus conectado. Suscrito: auth.centro_costos_creado`);
   } catch (err) {
     console.warn(`[Seguridad] ⚠️ EventBus no disponible (modo degradado)`);
   }

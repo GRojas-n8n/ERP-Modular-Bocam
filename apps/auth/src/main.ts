@@ -18,7 +18,8 @@ import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
 import { createTenantContext, disconnectDb, runAsSystem } from './db';
 import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
-import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
+import { getCorrelationId, initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
+import { createEventBus } from '../../../packages/event-bus/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 import { resolveAutoAssignedUserIds } from './project-access-policy';
 import { sesionExcedeLimite } from './sesion-policy';
@@ -31,6 +32,32 @@ import {
 
 const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'] as const;
 const ROLES_ALTA_CENTRO_COSTOS = ['admin', 'gerencia_tecnica', 'control_proyectos'];
+
+export const eventBus = createEventBus(process.env.AUTH_EVENT_BUS_NAME || 'auth');
+
+interface CentroCostosCreadoPayload {
+  proyecto_id: string;
+  codigo_centro_costos: string;
+  empresa_grupo: string | null;
+  anio_centro_costos: number | null;
+  cliente_id: string | null;
+  es_especial: boolean;
+  estatus: string;
+  nombre_oficial: string;
+  fecha_creacion: string;
+}
+
+async function publishCentroCostosCreado(
+  context: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string },
+  payload: CentroCostosCreadoPayload
+) {
+  await eventBus.publish({
+    event_type: 'auth.centro_costos_creado',
+    timestamp: new Date().toISOString(),
+    context,
+    payload,
+  });
+}
 
 // Acepta 'YYYY-MM-DD' (formato del input <input type="date">) o un ISO
 // datetime completo; Prisma exige datetime completo para columnas
@@ -977,6 +1004,29 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
 
       return nuevo!;
     });
+
+    void publishCentroCostosCreado(
+      {
+        tenant_id: tenantId,
+        proyecto_id: proyecto.id_proyecto,
+        user_id: req.securityContext.userId,
+        correlation_id: getCorrelationId(req),
+      },
+      {
+        proyecto_id: proyecto.id_proyecto,
+        codigo_centro_costos: proyecto.codigo_centro_costos,
+        empresa_grupo: proyecto.empresa_grupo ?? null,
+        anio_centro_costos: proyecto.anio_centro_costos ?? null,
+        cliente_id: proyecto.cliente_id ?? null,
+        es_especial: proyecto.es_especial,
+        estatus: proyecto.estatus,
+        nombre_oficial: proyecto.nombre_oficial,
+        fecha_creacion: proyecto.created_at.toISOString(),
+      }
+    ).catch((err) => {
+      console.error('[Auth] Error publicando auth.centro_costos_creado:', err);
+    });
+
     res.status(201).json({ success: true, data: proyecto });
   } catch (err) {
     res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
@@ -1171,6 +1221,7 @@ app.get('/api/v1/master/audit-log',
 setupSentryExpressHandler(app);
 
 async function startServer() {
+  await eventBus.connect();
   if (redisClient) {
     try {
       await redisClient.connect();
@@ -1206,10 +1257,10 @@ if (require.main === module) {
   const server = startServer();
 
   process.on('SIGINT', () => {
-    void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
+    void server.then(s => s?.close(async () => { await eventBus.close(); await disconnectDb(); process.exit(0); }));
   });
 
   process.on('SIGTERM', () => {
-    void server.then(s => s?.close(async () => { await disconnectDb(); process.exit(0); }));
+    void server.then(s => s?.close(async () => { await eventBus.close(); await disconnectDb(); process.exit(0); }));
   });
 }

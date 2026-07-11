@@ -28,6 +28,7 @@ import {
   FondosLiberadosPayload,
   NominaAutorizadaPayload,
   NominaPagadaPayload,
+  CentroCostosCreadoPayload,
   OrdenCompraCanceladaPayload,
   OrdenCompraCreadaPayload,
   PagoRegistradoPayload,
@@ -1611,6 +1612,21 @@ export async function handleNominaPagadaEvent(event: BocamEvent<NominaPagadaPayl
       payload.total_neto, concepto,
     );
   }
+}
+
+// Registro liviano — sin efecto en dominio contable en este change (ver
+// design.md de evento-centro-costos-creado, Decisión 3: no se diseña
+// provisión automática de CuentaContable aquí, es un Open Question para un
+// change futuro si el dueño del negocio lo confirma).
+export async function handleCentroCostosCreadoEvent(event: BocamEvent<CentroCostosCreadoPayload>): Promise<void> {
+  const payload = event.payload || ({} as CentroCostosCreadoPayload);
+  console.log(JSON.stringify({
+    action: 'contabilidad.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    codigo_centro_costos: payload.codigo_centro_costos,
+  }));
 }
 
 export const app = express();
@@ -3403,6 +3419,13 @@ async function ensureEventSubscriptions() {
     console.log(`[Contabilidad] EVENTO recibido: personal.nomina_pagada`);
     console.log(`Nómina pagada: ${codigo} (${prenomina_id}) | $${Number(total_neto).toLocaleString()}`);
     await handleNominaPagadaEvent(event);
+  });
+
+  await eventBus.subscribe(ContabilidadConsumedEvents.CENTRO_COSTOS_CREADO, async (event: BocamEvent<CentroCostosCreadoPayload>) => {
+    const { codigo_centro_costos } = event.payload as CentroCostosCreadoPayload;
+    console.log(`[Contabilidad] EVENTO recibido: auth.centro_costos_creado`);
+    console.log(`Centro de costos: ${codigo_centro_costos}`);
+    await handleCentroCostosCreadoEvent(event);
   });
 
   subscriptionsRegistered = true;

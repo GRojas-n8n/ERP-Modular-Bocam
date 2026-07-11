@@ -2036,6 +2036,46 @@ export async function handleAvanceFisicoValidadoEvent(event: BocamEvent): Promis
   );
 }
 
+export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<void> {
+  const tenantId = event.context?.tenant_id;
+  const proyectoId = event.context?.proyecto_id;
+
+  if (!tenantId || !proyectoId) {
+    console.error(JSON.stringify({
+      action: 'finanzas.event.centro_costos_creado.invalid_payload',
+      event_type: event.event_type,
+      correlation_id: event.context?.correlation_id,
+      payload: event.payload,
+    }));
+    return;
+  }
+
+  await createTenantContext(
+    { tenantId, proyectoId, userId: event.context.user_id },
+    async (prisma) => {
+      // Reemplaza la creación manual: en vez de esperar al primer POST de
+      // anticipo (que hoy es el único lugar que crea esta fila), se crea
+      // proactivamente en 0/0 al nacer el centro de costos. Si la fila ya
+      // existe (creada antes por ese flujo manual, o por reentrega del
+      // evento), `update: {}` es un no-op — nunca sobreescribe valores
+      // reales de anticipo ya registrados.
+      await (prisma as any).proyectoFinanzas.upsert({
+        where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: proyectoId } },
+        update: {},
+        create: { tenant_id: tenantId, proyecto_id: proyectoId, anticipo_total: 0, anticipo_usado: 0 },
+      });
+    }
+  );
+
+  console.log(JSON.stringify({
+    action: 'finanzas.event.centro_costos_creado.processed',
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: tenantId,
+    proyecto_id: proyectoId,
+  }));
+}
+
 export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<void> {
   const {
     oc_id,
@@ -2401,7 +2441,14 @@ export async function startServer() {
     console.log(`           └─ ${concepto} | ${porcentaje}% | $${Number(importe).toLocaleString()}`);
   });
 
-  console.log('[Finanzas] 📡 Suscrito a: compras.oc_creada, compras.oc_cancelada, control_obra.estimacion_aprobada, control_obra.avance_fisico_validado, control_obra.avance_fisico_registrado');
+  // ─── SUSCRIPCIÓN: Eventos de Auth (Administración) ──────────────────────────
+  await eventBus.subscribe('auth.centro_costos_creado', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Centro de Costos Creado`);
+    console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
+    await handleCentroCostosCreadoEvent(event);
+  });
+
+  console.log('[Finanzas] 📡 Suscrito a: compras.oc_creada, compras.oc_cancelada, control_obra.estimacion_aprobada, control_obra.avance_fisico_validado, control_obra.avance_fisico_registrado, auth.centro_costos_creado');
 });
 }
 

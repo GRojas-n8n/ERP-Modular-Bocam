@@ -631,6 +631,19 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'control-pro
 // EVENT SUBSCRIBERS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// Registro liviano — sin tabla de proyección nueva en este change (ver
+// design.md de evento-centro-costos-creado, Decisión 3).
+export async function handleCentroCostosCreadoEvent(event: BocamEvent<{ codigo_centro_costos: string }>): Promise<void> {
+  const { tenant_id, proyecto_id } = event.context;
+  console.log(JSON.stringify({
+    action: 'control_proyectos.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id,
+    proyecto_id,
+    codigo_centro_costos: event.payload?.codigo_centro_costos,
+  }));
+}
+
 async function initEventSubscribers(): Promise<void> {
   try {
     await eventBus.connect();
@@ -719,6 +732,9 @@ async function initEventSubscribers(): Promise<void> {
         console.error('[CP] transferencia_aprobada error:', err);
       }
     });
+
+    // Centro de costos creado → registro liviano (auditoría/log)
+    await eventBus.subscribe<{ codigo_centro_costos: string }>('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
 
     console.log('[CP] Suscriptores de eventos activos');
   } catch (err) {

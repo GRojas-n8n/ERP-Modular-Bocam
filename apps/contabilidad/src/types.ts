@@ -259,6 +259,7 @@ export enum ContabilidadConsumedEvents {
   AVANCE_FISICO_VALIDADO = 'control_obra.avance_fisico_validado',
   NOMINA_AUTORIZADA = 'personal.nomina_autorizada',
   NOMINA_PAGADA = 'personal.nomina_pagada',
+  CENTRO_COSTOS_CREADO = 'auth.centro_costos_creado',
 }
 
 export interface NominaAutorizadaPayload {
@@ -276,6 +277,18 @@ export interface NominaAutorizadaPayload {
 }
 
 export type NominaPagadaPayload = NominaAutorizadaPayload;
+
+export interface CentroCostosCreadoPayload {
+  proyecto_id: string;
+  codigo_centro_costos: string;
+  empresa_grupo: string | null;
+  anio_centro_costos: number | null;
+  cliente_id: string | null;
+  es_especial: boolean;
+  estatus: string;
+  nombre_oficial: string;
+  fecha_creacion: string;
+}
 
 export interface EstimacionAprobadaPayload {
   estimacion_id: string;

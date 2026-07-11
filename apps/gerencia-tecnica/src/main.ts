@@ -2725,6 +2725,31 @@ export async function handleCotizacionAceptadaEvent(event: any): Promise<void> {
   }
 }
 
+export async function handleCentroCostosCreadoEvent(event: any): Promise<void> {
+  const tenantId = event.context?.tenant_id;
+  const proyectoId = event.context?.proyecto_id;
+
+  if (!tenantId || !proyectoId) {
+    console.warn(JSON.stringify({ action: 'gt.centro_costos_creado.invalid_payload', payload: event.payload }));
+    return;
+  }
+
+  const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+  try {
+    // Reemplaza el auto-create perezoso: en vez de esperar al primer
+    // GET/POST de categorías-gasto, ProyectoCostosConfig (+ las 10
+    // categorías predefinidas) se crea proactivamente al nacer el centro
+    // de costos. getOrCreateProyectoConfig ya es idempotente (findUnique
+    // antes de create), así que si el fallback perezoso ya la creó antes
+    // de que llegara el evento, esta llamada es un no-op.
+    await getOrCreateProyectoConfig(db, tenantId, proyectoId);
+    console.log(JSON.stringify({ action: 'gt.centro_costos_creado.config_creado', tenant_id: tenantId, proyecto_id: proyectoId }));
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'gt.centro_costos_creado.error', proyecto_id: proyectoId, error: err.message }));
+  }
+}
+
 // GET /trazabilidad/resumen — datos ligeros por concepto (sin B2B)
 app.get('/api/v1/gerencia-tecnica/trazabilidad/resumen',
   requireRoles('gerencia_tecnica', 'director', 'admin', 'superintendent'),
@@ -2973,6 +2998,7 @@ async function bootstrap(): Promise<void> {
   await subscribeToEvent('compras.oc_creada',          handleOcCreadaParaProyeccion);
   await subscribeToEvent('compras.oc_cancelada',        handleOcCanceladaParaProyeccion);
   await subscribeToEvent('ventas.cotizacion_aceptada',  handleCotizacionAceptadaEvent);
+  await subscribeToEvent('auth.centro_costos_creado',   handleCentroCostosCreadoEvent);
 
   // 2. Levantar servidor HTTP
   const server = app.listen(PORT, () => {

@@ -1212,6 +1212,18 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 setupSentryExpressHandler(app);
 
+// Registro liviano — sin tabla de proyección nueva en este change (ver
+// design.md de evento-centro-costos-creado, Decisión 3).
+export async function handleCentroCostosCreadoEvent(event: any): Promise<void> {
+  console.log(JSON.stringify({
+    action: 'control_obra.event.centro_costos_creado.registrado',
+    correlation_id: event.context?.correlation_id,
+    tenant_id: event.context?.tenant_id,
+    proyecto_id: event.context?.proyecto_id,
+    codigo_centro_costos: event.payload?.codigo_centro_costos,
+  }));
+}
+
 export async function startServer() {
   return app.listen(PORT, async () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -1225,7 +1237,8 @@ export async function startServer() {
   await eventBus.connect();
   await eventBus.subscribe('finanzas.pago_registrado', handlePagoRegistradoEvent);
   await eventBus.subscribe('almacen.salida_obra',      handleSalidaObraEvent);
-  console.log(`[Control Obra] 📡 Eventos: avance_registrado, avance_validado, estimacion_aprobada, salida_obra`);
+  await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+  console.log(`[Control Obra] 📡 Eventos: avance_registrado, avance_validado, estimacion_aprobada, salida_obra, centro_costos_creado`);
 });
 }
 
