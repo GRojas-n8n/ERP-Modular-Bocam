@@ -149,19 +149,49 @@
 
 ## 6. Despliegue y verificación en producción (orden del Migration Plan)
 
-- [ ] 6.1 Desplegar `apps/auth` primero (contiene el publisher). Verificar
+- [x] 6.1 Desplegar `apps/auth` primero (contiene el publisher). Verificar
       en logs del VPS que publica (`📤 Publicado: auth.centro_costos_creado`)
       al crear un proyecto de prueba real en producción.
-- [ ] 6.2 Desplegar `gerencia-tecnica` y `finanzas` (Grupo A). Verificar en
+      Verificado con JWT real firmado dentro del contenedor: `POST
+      /api/v1/auth/admin/proyectos` → 201, log
+      `📤 Publicado: auth.centro_costos_creado`.
+- [x] 6.2 Desplegar `gerencia-tecnica` y `finanzas` (Grupo A). Verificar en
       BD que, al crear un proyecto de prueba, aparecen `ProyectoCostosConfig`
       (con 10 categorías) y `ProyectoFinanzas` (en 0) sin intervención
       manual.
-- [ ] 6.3 Desplegar el resto de los consumidores (Grupos B/C/D:
+      Verificado con un segundo proyecto de prueba (creado después de que
+      ambos servicios ya estaban suscritos): `proyecto_costos_config`
+      (`estado=CONFIGURACION`) + 10 filas en `categorias_gasto`, y
+      `proyectos_finanzas` con `anticipo_total=0`/`anticipo_usado=0` — las
+      tres en BD real de producción, sin ninguna llamada manual.
+- [x] 6.3 Desplegar el resto de los consumidores (Grupos B/C/D:
       `contabilidad`, `control-proyectos`, `control-obra`, `compras`,
       `almacen`, `ventas`, `personal`, `seguridad`, `calidad`). Verificar en
       logs de cada uno que reciben y confirman (`ack`) el evento del mismo
       proyecto de prueba.
-- [ ] 6.4 Limpiar cualquier dato de prueba creado durante 6.1-6.3 en todas
+      **Hallazgos bloqueantes encontrados y corregidos durante el deploy**
+      (ambos ya en `main`, commits aparte del PR #35 por ser fixes
+      mecánicos de infraestructura, no parte del spec original):
+      1. El build de Docker de `control-proyectos` fallaba (`tsc` incluía
+         `test/**` y un test preexistente usa `node-fetch` sin declararlo
+         como dependencia — bug latente expuesto porque este change
+         invalidó la cache de build). Fix: excluir `test/` del
+         `tsconfig.json` de producción, mismo patrón que ya usa `finanzas`.
+      2. `docker-compose.vps.yml` nunca le pasaba `RABBITMQ_URL` al
+         contenedor de `calidad` (a diferencia de todos los demás
+         servicios con EventBus) — el código ya manejaba la ausencia sin
+         romperse (arranca en modo degradado), pero nunca se conectaba.
+         Fix: agregar la variable al `environment:` de `calidad`.
+      Verificado con un tercer proyecto de prueba: los 9 servicios
+      registraron `<servicio>.event.centro_costos_creado.registrado` con
+      el mismo `correlation_id` — el evento llegó a los 10 consumidores en
+      un solo disparo (más `auth` como publisher = 11 servicios tocados).
+- [x] 6.4 Limpiar cualquier dato de prueba creado durante 6.1-6.3 en todas
       las bases tocadas.
-- [ ] 6.5 Actualizar memoria/roadmap del usuario: punto 3 del roadmap de 21
+      Eliminados los 3 proyectos de prueba en `bocam_auth` (cascada a
+      `user_project_access`), la fila de `proyecto_costos_config` + 10
+      `categorias_gasto` en `bocam_gerencia_tecnica`, y la fila de
+      `proyectos_finanzas` en `bocam_finanzas`. Verificado con `count(*)=0`
+      en las tres bases.
+- [x] 6.5 Actualizar memoria/roadmap del usuario: punto 3 del roadmap de 21
       puntos pasa de pendiente a completado.
