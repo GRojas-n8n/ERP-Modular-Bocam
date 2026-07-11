@@ -3013,7 +3013,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   <ul className="mb-3 space-y-1 text-xs text-amber-800">
                     {stockAdvertencia.map(s => {
                       const info = insumos.find(i => i.id === s.insumo_id);
-                      const item = req.items?.find(it => it.insumo_id === s.insumo_id);
+                      const item = req?.items?.find(it => it.insumo_id === s.insumo_id);
                       const label = info?.clave ? `[${info.clave}] ${info.descripcion}` : (item?.descripcion_libre ?? s.insumo_id);
                       return (
                         <li key={s.insumo_id}>
