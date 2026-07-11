@@ -133,7 +133,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
 
     const [r1, r2, r3, r4, r5, r6] = await Promise.allSettled([
       api.get('/api/v1/compras/resumen-dashboard'),
-      api.get('/api/v1/control-obra/resumen-dashboard'),
+      api.get('/api/v1/control-proyectos/resumen-dashboard'),
       api.get('/api/v1/personal/resumen-dashboard'),
       api.get('/api/v1/seguridad/resumen-dashboard'),
       api.get('/api/v1/calidad/resumen-dashboard'),

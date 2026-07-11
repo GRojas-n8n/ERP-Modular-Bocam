@@ -2619,7 +2619,8 @@ app.patch(
 // TRAZABILIDAD TRIÁNGULO — Presupuestado ↔ Comprado ↔ Consumido
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CO_URL = (process.env.CONTROL_OBRA_URL || 'http://localhost:3005/api/v1/control-obra').replace(/\/$/, '');
+// Migrado a control-proyectos (openspec: fusionar-control-obra-a-control-proyectos)
+const CO_URL = (process.env.CONTROL_PROYECTOS_URL || 'http://localhost:3013/api/v1/control-proyectos').replace(/\/$/, '');
 
 function semaforoPorDesviacion(presupuestado: number, comprado: number, consumido: number): string {
   if (comprado === 0) return 'GRIS';

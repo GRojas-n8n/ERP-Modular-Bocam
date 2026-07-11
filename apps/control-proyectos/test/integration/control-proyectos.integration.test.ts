@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
+import { createTenantContext } from '../../src/db';
 
 const DB_URL =
   process.env.CONTROL_PROYECTOS_DATABASE_URL ||
@@ -53,9 +54,11 @@ async function setup() {
 }
 
 async function teardown() {
-  await prisma.alertaProyecto.deleteMany({ where: { tenant_id: TENANT_ID } });
-  await prisma.programacionObra.deleteMany({ where: { tenant_id: TENANT_ID } });
-  await prisma.proyeccionCierre.deleteMany({ where: { tenant_id: TENANT_ID } });
+  await createTenantContext({ tenantId: TENANT_ID, proyectoId: PROYECTO_ID, userId: USER_ID }, async (tx) => {
+    await tx.alertaProyecto.deleteMany({ where: { tenant_id: TENANT_ID } });
+    await tx.programacionObra.deleteMany({ where: { tenant_id: TENANT_ID } });
+    await tx.proyeccionCierre.deleteMany({ where: { tenant_id: TENANT_ID } });
+  });
   await stopHttpApp(server);
   await prisma.$disconnect();
 }
@@ -138,18 +141,20 @@ async function test_curva_s_sin_programacion() {
 
 async function test_alerta_reconocer() {
   // Crear alerta directamente en DB
-  const alerta = await prisma.alertaProyecto.create({
-    data: {
-      tenant_id: TENANT_ID,
-      proyecto_id: PROYECTO_ID,
-      tipo: 'PARTIDA_BLOQUEADA',
-      severidad: 'CRITICA',
-      titulo: 'Test alerta bloqueada',
-      descripcion: 'Partida TEST bloqueada por exceso de comprometido',
-      datos: { concepto_clave: 'TEST-001' },
-      estado: 'ACTIVA',
-    },
-  });
+  const alerta = await createTenantContext({ tenantId: TENANT_ID, proyectoId: PROYECTO_ID, userId: USER_ID }, async (tx) =>
+    tx.alertaProyecto.create({
+      data: {
+        tenant_id: TENANT_ID,
+        proyecto_id: PROYECTO_ID,
+        tipo: 'PARTIDA_BLOQUEADA',
+        severidad: 'CRITICA',
+        titulo: 'Test alerta bloqueada',
+        descripcion: 'Partida TEST bloqueada por exceso de comprometido',
+        datos: { concepto_clave: 'TEST-001' },
+        estado: 'ACTIVA',
+      },
+    })
+  );
 
   const res = await api(`/api/v1/control-proyectos/alertas/${alerta.id}/reconocer`, {
     method: 'PATCH',

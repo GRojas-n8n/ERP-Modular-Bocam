@@ -410,7 +410,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       try {
         const [nomRes, dashRes] = await Promise.allSettled([
           api.get('/api/v1/personal/prenominas'),
-          api.get('/api/v1/control-obra/dashboard/residente'),
+          api.get('/api/v1/control-proyectos/dashboard/residente'),
         ]);
         setEstimaciones([]);
         if (nomRes.status === 'fulfilled') {

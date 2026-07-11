@@ -301,10 +301,10 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
         return;
       }
       const [bitRes, avRes, estRes, dashRes] = await Promise.allSettled([
-        api.get('/api/v1/control-obra/bitacoras'),
-        api.get('/api/v1/control-obra/avances'),
-        api.get('/api/v1/control-obra/estimaciones'),
-        api.get('/api/v1/control-obra/dashboard'),
+        api.get('/api/v1/control-proyectos/bitacoras'),
+        api.get('/api/v1/control-proyectos/avances'),
+        api.get('/api/v1/control-proyectos/estimaciones'),
+        api.get('/api/v1/control-proyectos/dashboard-obra'),
       ]);
       if (bitRes.status === 'fulfilled') setBitacoras(bitRes.value.data?.data || []);
       if (avRes.status === 'fulfilled') setAvances(avRes.value.data?.data || []);

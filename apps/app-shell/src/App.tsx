@@ -109,8 +109,6 @@ const AuthenticatedApp: React.FC = () => {
         return <AlmacenView activeSubView={currentSubView} />;
       case 'contabilidad':
         return <ContabilidadView />;
-      case 'control-proyectos':
-        return <ControlObraView activeSubView={currentSubView} />;
       case 'admin':
         return <AdminView activeSubView={currentSubView} />;
       default:

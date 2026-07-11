@@ -23,20 +23,21 @@ router.get(
       const headers = buildForwardHeaders(req, { Authorization: req.headers.authorization ?? '' });
       const COMPRAS_URL      = process.env.COMPRAS_URL      ?? 'http://compras:3002/api/v1/compras';
       const FINANZAS_URL     = process.env.FINANZAS_URL     ?? 'http://finanzas:3004/api/v1/finanzas';
-      const CONTROL_OBRA_URL = process.env.CONTROL_OBRA_URL ?? 'http://control-obra:3005/api/v1/control-obra';
+      // Migrado a control-proyectos (openspec: fusionar-control-obra-a-control-proyectos)
+      const CONTROL_PROYECTOS_URL = process.env.CONTROL_PROYECTOS_URL ?? 'http://control-proyectos:3013/api/v1/control-proyectos';
       const PERSONAL_URL     = process.env.PERSONAL_URL     ?? 'http://personal:3006/api/v1/personal';
       const SEGURIDAD_URL    = process.env.SEGURIDAD_URL    ?? 'http://seguridad:3007/api/v1/seguridad';
       const CALIDAD_URL      = process.env.CALIDAD_URL      ?? 'http://calidad:3009/api/v1/calidad';
 
-      const modulosNombres = ['compras', 'finanzas', 'control-obra', 'personal', 'seguridad', 'calidad'];
+      const modulosNombres = ['compras', 'finanzas', 'control-proyectos', 'personal', 'seguridad', 'calidad'];
 
       const [r1, r2, r3, r4, r5, r6] = await Promise.allSettled([
-        axios.get(`${COMPRAS_URL}/resumen-dashboard`,       { headers, timeout: 6000 }),
-        axios.get(`${FINANZAS_URL}/dashboard`,              { headers, timeout: 6000 }),
-        axios.get(`${CONTROL_OBRA_URL}/resumen-dashboard`,  { headers, timeout: 6000 }),
-        axios.get(`${PERSONAL_URL}/resumen-dashboard`,      { headers, timeout: 6000 }),
-        axios.get(`${SEGURIDAD_URL}/resumen-dashboard`,     { headers, timeout: 6000 }),
-        axios.get(`${CALIDAD_URL}/resumen-dashboard`,       { headers, timeout: 6000 }),
+        axios.get(`${COMPRAS_URL}/resumen-dashboard`,           { headers, timeout: 6000 }),
+        axios.get(`${FINANZAS_URL}/dashboard`,                  { headers, timeout: 6000 }),
+        axios.get(`${CONTROL_PROYECTOS_URL}/resumen-dashboard`, { headers, timeout: 6000 }),
+        axios.get(`${PERSONAL_URL}/resumen-dashboard`,          { headers, timeout: 6000 }),
+        axios.get(`${SEGURIDAD_URL}/resumen-dashboard`,         { headers, timeout: 6000 }),
+        axios.get(`${CALIDAD_URL}/resumen-dashboard`,           { headers, timeout: 6000 }),
       ]);
 
       const results = [r1, r2, r3, r4, r5, r6];

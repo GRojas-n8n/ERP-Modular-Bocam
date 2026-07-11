@@ -57,11 +57,12 @@ router.get(
     try {
       const headers = buildForwardHeaders(req, { Authorization: req.headers.authorization ?? '' });
       const FINANZAS_URL     = process.env.FINANZAS_URL     ?? 'http://finanzas:3004/api/v1/finanzas';
-      const CONTROL_OBRA_URL = process.env.CONTROL_OBRA_URL ?? 'http://control-obra:3005/api/v1/control-obra';
+      // Migrado a control-proyectos (openspec: fusionar-control-obra-a-control-proyectos)
+      const CONTROL_PROYECTOS_URL = process.env.CONTROL_PROYECTOS_URL ?? 'http://control-proyectos:3013/api/v1/control-proyectos';
 
       const [rFinanzas, rControlObra] = await Promise.allSettled([
         axios.get(`${FINANZAS_URL}/capitulos-gasto`, { headers, timeout: 6000 }),
-        axios.get(`${CONTROL_OBRA_URL}/resumen-dashboard`, { headers, timeout: 6000 }),
+        axios.get(`${CONTROL_PROYECTOS_URL}/resumen-dashboard`, { headers, timeout: 6000 }),
       ]);
 
       const avanceFisico: number =

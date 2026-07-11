@@ -182,6 +182,101 @@ exports.Prisma.ProyeccionCierreScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.BitacoraObraScalarFieldEnum = {
+  id_bitacora: 'id_bitacora',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  numero_entrada: 'numero_entrada',
+  fecha: 'fecha',
+  frente_trabajo: 'frente_trabajo',
+  turno: 'turno',
+  clima: 'clima',
+  temperatura_c: 'temperatura_c',
+  actividades_realizadas: 'actividades_realizadas',
+  personal_en_sitio: 'personal_en_sitio',
+  incidencias: 'incidencias',
+  material_recibido: 'material_recibido',
+  observaciones: 'observaciones',
+  residente_id: 'residente_id',
+  residente_nombre: 'residente_nombre',
+  superintendente_id: 'superintendente_id',
+  estado: 'estado',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.AvanceFisicoScalarFieldEnum = {
+  id_avance: 'id_avance',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_presupuesto: 'concepto_presupuesto',
+  descripcion_concepto: 'descripcion_concepto',
+  cantidad_presupuestada: 'cantidad_presupuestada',
+  cantidad_anterior: 'cantidad_anterior',
+  cantidad_periodo: 'cantidad_periodo',
+  cantidad_acumulada: 'cantidad_acumulada',
+  unidad: 'unidad',
+  precio_unitario: 'precio_unitario',
+  importe_periodo: 'importe_periodo',
+  importe_acumulado: 'importe_acumulado',
+  porcentaje_avance: 'porcentaje_avance',
+  periodo_inicio: 'periodo_inicio',
+  periodo_fin: 'periodo_fin',
+  registrado_por_id: 'registrado_por_id',
+  registrado_por_nombre: 'registrado_por_nombre',
+  validado_por_id: 'validado_por_id',
+  validado_por_nombre: 'validado_por_nombre',
+  estado: 'estado',
+  estimacion_id: 'estimacion_id',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.MaterialConsumidoObraScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
+  movimiento_almacen_id: 'movimiento_almacen_id',
+  insumo_id: 'insumo_id',
+  insumo_clave: 'insumo_clave',
+  insumo_nombre: 'insumo_nombre',
+  cantidad: 'cantidad',
+  unidad: 'unidad',
+  costo_unitario: 'costo_unitario',
+  costo_total: 'costo_total',
+  fecha: 'fecha',
+  frente_trabajo: 'frente_trabajo',
+  registrado_por: 'registrado_por',
+  created_at: 'created_at'
+};
+
+exports.Prisma.EstimacionScalarFieldEnum = {
+  id_estimacion: 'id_estimacion',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  numero_estimacion: 'numero_estimacion',
+  codigo: 'codigo',
+  periodo_inicio: 'periodo_inicio',
+  periodo_fin: 'periodo_fin',
+  subtotal: 'subtotal',
+  retencion_fondo_garantia: 'retencion_fondo_garantia',
+  amortizacion_anticipo: 'amortizacion_anticipo',
+  iva: 'iva',
+  total_neto: 'total_neto',
+  estado: 'estado',
+  elaborado_por_id: 'elaborado_por_id',
+  elaborado_por_nombre: 'elaborado_por_nombre',
+  revisado_por_id: 'revisado_por_id',
+  revisado_por_nombre: 'revisado_por_nombre',
+  aprobado_por_id: 'aprobado_por_id',
+  aprobado_por_nombre: 'aprobado_por_nombre',
+  fecha_aprobacion: 'fecha_aprobacion',
+  notas: 'notas',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -211,7 +306,11 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   ProgramacionObra: 'ProgramacionObra',
   AlertaProyecto: 'AlertaProyecto',
-  ProyeccionCierre: 'ProyeccionCierre'
+  ProyeccionCierre: 'ProyeccionCierre',
+  BitacoraObra: 'BitacoraObra',
+  AvanceFisico: 'AvanceFisico',
+  MaterialConsumidoObra: 'MaterialConsumidoObra',
+  Estimacion: 'Estimacion'
 };
 
 /**

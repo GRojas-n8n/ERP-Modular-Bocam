@@ -203,15 +203,16 @@ export const comprasApi = {
     api.post('/api/v1/compras/admin/purga', lote),
 };
 
-// ── Control de Obra ──────────────────────────────────────────────────────────
+// ── Control de Obra (servido por control-proyectos, ver openspec:
+// fusionar-control-obra-a-control-proyectos) ─────────────────────────────────
 export const controlObraApi = {
-  getBitacoras:    ()         => api.get('/api/v1/control-obra/bitacoras'),
-  createBitacora:  (data: unknown) => api.post('/api/v1/control-obra/bitacoras', data),
-  getAvances:      ()         => api.get('/api/v1/control-obra/avances'),
-  createAvance:    (data: unknown) => api.post('/api/v1/control-obra/avances', data),
-  validarAvance:   (id: string) => api.patch(`/api/v1/control-obra/avances/${id}/validar`, {}),
-  getEstimaciones: ()         => api.get('/api/v1/control-obra/estimaciones'),
-  createEstimacion:(data: unknown) => api.post('/api/v1/control-obra/estimaciones', data),
+  getBitacoras:    ()         => api.get('/api/v1/control-proyectos/bitacoras'),
+  createBitacora:  (data: unknown) => api.post('/api/v1/control-proyectos/bitacoras', data),
+  getAvances:      ()         => api.get('/api/v1/control-proyectos/avances'),
+  createAvance:    (data: unknown) => api.post('/api/v1/control-proyectos/avances', data),
+  validarAvance:   (id: string) => api.patch(`/api/v1/control-proyectos/avances/${id}/validar`, {}),
+  getEstimaciones: ()         => api.get('/api/v1/control-proyectos/estimaciones'),
+  createEstimacion:(data: unknown) => api.post('/api/v1/control-proyectos/estimaciones', data),
 };
 
 // ── Personal ─────────────────────────────────────────────────────────────────
