@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*", "test/**/*", "../../test-support/**/*", "../../packages/auth-middleware/src/**/*", "../../packages/event-bus/src/**/*", "../../packages/observability/src/**/*"],
+  "include": ["src/**/*", "../../packages/auth-middleware/src/**/*", "../../packages/event-bus/src/**/*", "../../packages/observability/src/**/*"],
   "exclude": ["node_modules"]
 }
