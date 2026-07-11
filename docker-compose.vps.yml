@@ -467,6 +467,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: ${CALIDAD_DATABASE_URL}
       CALIDAD_DATABASE_URL: ${CALIDAD_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
       UPLOAD_DIR: /data/calidad/uploads
       SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
