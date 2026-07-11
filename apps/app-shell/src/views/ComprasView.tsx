@@ -328,6 +328,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [editandoProveedores, setEditandoProveedores] = useState(false);
   const [solicitudForm, setSolicitudForm] = useState<{ dias_habiles: number; notas: string; provsSeleccionados: string[]; tema: 'claro' | 'oscuro' }>({ dias_habiles: 3, notas: '', provsSeleccionados: [], tema: 'claro' });
   const [solicitudSubmitting, setSolicitudSubmitting] = useState(false);
+  // Advertencia de stock antes de cotizar externo (ver
+  // openspec/changes/validar-stock-antes-cotizar-externo) — null mientras
+  // carga o si no aplica, [] si no hay insumos con stock.
+  const [stockAdvertencia, setStockAdvertencia] = useState<Array<{ insumo_id: string; cantidad_solicitada: number; stock_disponible: number }> | null>(null);
+  const [stockConfirmado, setStockConfirmado] = useState(false);
 
   // Panels
   const [showReqForm, setShowReqForm] = useState(false);
@@ -884,6 +889,20 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
     setEditandoProveedores(false);
     setSolicitudPanelReqId(req.id);
+    setStockConfirmado(false);
+    setStockAdvertencia(null);
+    if (!isDemo) {
+      try {
+        const res = await api.get(`/api/v1/compras/requisiciones/${req.id}/stock-almacen`);
+        setStockAdvertencia(res.data?.data ?? []);
+      } catch {
+        // Fail-soft: si Almacén no responde, no se muestra advertencia y el
+        // envío no queda bloqueado (ver design.md, Decisión 5).
+        setStockAdvertencia([]);
+      }
+    } else {
+      setStockAdvertencia([]);
+    }
   };
 
   const handleSubmitSolicitud = async (reqId: string) => {
@@ -2983,8 +3002,38 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </div>
               )}
 
+              {/* Advertencia de stock disponible en Almacén — no bloquea, solo
+                  exige confirmación explícita antes de enviar (ver
+                  openspec/changes/validar-stock-antes-cotizar-externo). */}
+              {(!solic || editandoProveedores) && isProcurement && !!stockAdvertencia?.length && !stockConfirmado && (
+                <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+                  <p className="mb-2 text-xs font-black uppercase tracking-widest text-amber-700">
+                    ⚠ Ya hay stock disponible en Almacén
+                  </p>
+                  <ul className="mb-3 space-y-1 text-xs text-amber-800">
+                    {stockAdvertencia.map(s => {
+                      const info = insumos.find(i => i.id === s.insumo_id);
+                      const item = req.items?.find(it => it.insumo_id === s.insumo_id);
+                      const label = info?.clave ? `[${info.clave}] ${info.descripcion}` : (item?.descripcion_libre ?? s.insumo_id);
+                      return (
+                        <li key={s.insumo_id}>
+                          {label} — se piden {s.cantidad_solicitada}, hay {s.stock_disponible} en almacén
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => setStockConfirmado(true)}
+                    className="rounded-xl border border-amber-600/50 px-3 py-1.5 text-xs font-black text-amber-800 hover:bg-amber-500/20"
+                  >
+                    Entiendo, enviar de todos modos
+                  </button>
+                </div>
+              )}
+
               {/* Botón enviar — al crear la primera solicitud, o al editar proveedores de una existente */}
-              {(!solic || editandoProveedores) && isProcurement && (
+              {(!solic || editandoProveedores) && isProcurement && (!stockAdvertencia?.length || stockConfirmado) && (
                 <SubmitButton
                   label={
                     solicitudSubmitting ? 'Enviando…'
