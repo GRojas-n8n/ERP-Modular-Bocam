@@ -71,6 +71,40 @@ app.get('/api/v1/almacen/inventario', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/v1/almacen/stock?insumo_ids=a,b,c — consulta batch de stock por
+// insumo, para integraciones B2B (ej. Compras antes de solicitar cotización
+// externa). Devuelve solo los insumo_id con fila en ItemInventario; los que
+// no tienen fila simplemente no aparecen (equivalente a stock cero).
+app.get('/api/v1/almacen/stock', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const insumoIdsParam = (req.query.insumo_ids as string | undefined) || '';
+    const insumoIds = insumoIdsParam.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (insumoIds.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.itemInventario.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, insumo_id: { in: insumoIds } },
+        select: { insumo_id: true, stock_actual: true },
+      });
+    });
+
+    const serialized = data.map(item => ({
+      insumo_id: item.insumo_id,
+      stock_actual: Number(item.stock_actual),
+    }));
+
+    logInfo(req, 'almacen', 'almacen.stock.consultado', 'Stock por insumo consultado (B2B)', { insumos_solicitados: insumoIds.length, insumos_con_stock: serialized.length });
+    res.json({ success: true, data: serialized });
+  } catch (error: any) {
+    logError(req, 'almacen', 'almacen.stock.error', 'Error al consultar stock por insumo', { error_message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.post('/api/v1/almacen/inventario',
   requireRoles('admin', 'superintendent', 'procurement', 'warehouse'),
   async (req: Request, res: Response) => {

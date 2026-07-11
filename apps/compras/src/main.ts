@@ -35,6 +35,7 @@ const PORT = process.env.PORT || 3002;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
 const GT_URL = process.env.GT_URL || 'http://localhost:3001/api/v1/gerencia-tecnica';
+const ALMACEN_URL = process.env.ALMACEN_URL || 'http://localhost:3012/api/v1/almacen';
 const REPORTES_URL = process.env.REPORTES_SERVICE_URL || 'http://reportes:3010';
 const IVA_RATE = parseFloat(process.env.IVA_RATE ?? '0.16');
 const DOCS_PROVEEDORES_UPLOAD_DIR = process.env.DOCS_PROVEEDORES_UPLOAD_DIR || '/tmp/docs-proveedores';
@@ -810,6 +811,76 @@ app.get(
       );
 
       if (!data) return res.status(404).json({ success: false, message: 'No existe solicitud de cotización para esta requisición.' });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
+ * Consulta batch de stock en Almacén para una lista de insumo_id. Mismo
+ * patrón fail-soft que las demás integraciones B2B de este archivo: un
+ * timeout o error de Almacén nunca debe bloquear el flujo de Compras, solo
+ * se pierde la advertencia de stock.
+ */
+async function consultarStockAlmacen(insumoIds: string[], req: Request): Promise<Map<string, number>> {
+  if (insumoIds.length === 0) return new Map();
+  try {
+    const resp = await axios.get(`${ALMACEN_URL}/stock`, {
+      params: { insumo_ids: insumoIds.join(',') },
+      headers: buildForwardHeaders(req),
+      timeout: 5000,
+    });
+    const data = (resp.data?.data ?? []) as Array<{ insumo_id: string; stock_actual: number }>;
+    return new Map(data.map(d => [d.insumo_id, d.stock_actual]));
+  } catch {
+    return new Map();
+  }
+}
+
+// GET .../stock-almacen — advertencia de stock antes de solicitar cotización
+// externa (ver openspec/changes/validar-stock-antes-cotizar-externo). Se
+// consulta en un endpoint separado del GET de solicitud-cotizacion de arriba
+// porque ese devuelve 404 cuando aún no existe una solicitud (el caso más
+// común al abrir el panel por primera vez), y esta advertencia debe estar
+// disponible también en ese caso.
+app.get(
+  '/api/v1/compras/requisiciones/:reqId/stock-almacen',
+  requireRoles('procurement', 'admin', 'superintendent'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId } = req.params;
+
+      const items = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const req_obj = await prisma.requisicion.findUnique({
+            where: { id_requisicion: reqId },
+            select: { tenant_id: true, items: { select: { insumo_id: true, cantidad: true, es_imprevisto: true } } },
+          });
+          if (!req_obj || req_obj.tenant_id !== tenantId) return null;
+          return req_obj.items;
+        }
+      );
+
+      if (!items) return res.status(404).json({ success: false, message: 'Requisición no encontrada.' });
+
+      const insumoIds = items
+        .filter(it => !it.es_imprevisto && it.insumo_id)
+        .map(it => it.insumo_id as string);
+
+      const stockPorInsumo = await consultarStockAlmacen(insumoIds, req);
+
+      const data = items
+        .filter(it => !it.es_imprevisto && it.insumo_id && (stockPorInsumo.get(it.insumo_id) ?? 0) > 0)
+        .map(it => ({
+          insumo_id: it.insumo_id,
+          cantidad_solicitada: Number(it.cantidad),
+          stock_disponible: stockPorInsumo.get(it.insumo_id as string) ?? 0,
+        }));
+
       res.json({ success: true, data });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });

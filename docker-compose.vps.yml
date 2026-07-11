@@ -217,6 +217,7 @@ services:
       RABBITMQ_URL: ${RABBITMQ_URL}
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
       GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
+      ALMACEN_URL: http://almacen:3012/api/v1/almacen
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-465}
       SMTP_USER: ${SMTP_USER:-}
