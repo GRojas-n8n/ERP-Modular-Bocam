@@ -1306,10 +1306,7 @@ controlObraRouter.get('/conceptos/:concepto_id/costo-real', async (req: Request,
   }
 });
 
-// Definitivo: bajo el prefijo fusionado.
 app.use('/api/v1/control-proyectos', controlObraRouter);
-// Alias temporal (tarea 2.9) — mismos handlers, se retira en la tarea 6.8.
-app.use('/api/v1/control-obra', controlObraRouter);
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // EVM / CURVA S / ALERTAS (preexistentes de control-proyectos, retrofiteados

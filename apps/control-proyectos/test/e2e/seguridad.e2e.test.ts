@@ -57,9 +57,10 @@ async function testProjectForbidden() {
   console.log('ok - control-proyectos bloquea acceso a proyecto no autorizado');
 }
 
-async function testAliasTemporalRespondeIgual() {
-  // Alias temporal (tarea 2.9): /api/v1/control-obra/* debe responder igual
-  // que /api/v1/control-proyectos/* mientras dure el rollout.
+async function testAliasTemporalRetirado() {
+  // El alias temporal /api/v1/control-obra/* (tarea 2.9) se retiró en la
+  // tarea 6.8 tras confirmar los 6 consumidores externos — ya no debe
+  // responder nada bajo ese prefijo.
   const token = signTenantToken({
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-control',
@@ -68,19 +69,12 @@ async function testAliasTemporalRespondeIgual() {
     projects: ['proyecto-seguridad-control'],
   });
 
-  const [viaNuevo, viaAlias] = await Promise.all([
-    fetch(`${baseUrl}/api/v1/control-proyectos/bitacoras`, { headers: { Authorization: `Bearer ${token}` } }),
-    fetch(`${baseUrl}/api/v1/control-obra/bitacoras`, { headers: { Authorization: `Bearer ${token}` } }),
-  ]);
+  const response = await fetch(`${baseUrl}/api/v1/control-obra/bitacoras`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-  assert.equal(viaNuevo.status, viaAlias.status);
-  const [dataNuevo, dataAlias] = await Promise.all([viaNuevo.json(), viaAlias.json()]);
-  // meta.timestamp difiere entre las dos requests (mismo handler, invocado
-  // dos veces) — se compara todo lo demás.
-  delete dataNuevo.meta?.timestamp;
-  delete dataAlias.meta?.timestamp;
-  assert.deepEqual(dataNuevo, dataAlias);
-  console.log('ok - alias temporal /api/v1/control-obra/* responde igual que /api/v1/control-proyectos/*');
+  assert.equal(response.status, 404);
+  console.log('ok - el alias temporal /api/v1/control-obra/* ya no responde (retirado en 6.8)');
 }
 
 async function main() {
@@ -89,7 +83,7 @@ async function main() {
   try {
     await testRoleForbidden();
     await testProjectForbidden();
-    await testAliasTemporalRespondeIgual();
+    await testAliasTemporalRetirado();
   } finally {
     await stopHttpApp(server);
   }
