@@ -20,6 +20,7 @@ import {
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
 import { enviarSolicitudCotizacionEmail, enviarOrdenCompraEmail } from './mailer';
 import { resolveProyectoIdParaSolicitud } from './solicitud-cotizacion-policy';
+import { resolveFichasTecnicasAdjuntas } from './fichas-tecnicas-adjuntas';
 import { requisicionQuedoCubiertaPorLote, GrupoOcEmitido } from './requisicion-cobertura';
 import { buildOcPdfPayload, InsumoCatalogo } from './orden-compra-pdf-payload';
 import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
@@ -142,6 +143,17 @@ async function enviarCorreosSolicitudCotizacion(opts: {
       };
     });
 
+    // Ver openspec/changes/adjuntos-requisicion-invitacion-cotizar: mismas
+    // fichas técnicas para todos los proveedores invitados — se resuelven
+    // una sola vez, no por proveedor.
+    const adjuntosFichas = await resolveFichasTecnicasAdjuntas({
+      gtUrl: GT_URL,
+      insumoIds: reqData.items.map((it: any) => it.insumo_id).filter(Boolean),
+      authHeader: opts.authHeader,
+      tenantHeader: opts.tenantHeader,
+      proyectoHeader: opts.proyectoHeader,
+    });
+
     for (const prov of proveedoresData) {
       if (!prov.email_contacto) {
         sinCorreo.push(prov.razon_social);
@@ -167,7 +179,8 @@ async function enviarCorreosSolicitudCotizacion(opts: {
           items,
           comprador: { nombre: opts.compradorNombre, email: opts.compradorEmail },
         },
-        opts.tema
+        opts.tema,
+        adjuntosFichas
       );
       if (result.enviado) enviados++;
       else fallidos.push({ proveedor: prov.razon_social, error: result.error || 'Error desconocido.' });

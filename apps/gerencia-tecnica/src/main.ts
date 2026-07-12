@@ -891,8 +891,8 @@ app.patch(
 // FICHAS TÉCNICAS DE INSUMO
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const ROLES_FICHAS_UPLOAD  = ['procurement', 'gerencia_tecnica', 'admin'] as const;
-const ROLES_FICHAS_LECTURA = ['resident', 'control_obra', 'gerencia_tecnica', 'superintendent', 'procurement', 'admin'] as const;
+const ROLES_FICHAS_UPLOAD  = ['procurement', 'gerencia_tecnica', 'admin', 'resident', 'residencia'] as const;
+const ROLES_FICHAS_LECTURA = ['resident', 'residencia', 'control_obra', 'gerencia_tecnica', 'superintendent', 'procurement', 'admin'] as const;
 
 // POST /api/v1/gerencia-tecnica/insumos/:id/fichas
 app.post(
