@@ -477,7 +477,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     if (!bitForm.frente_trabajo || !bitForm.actividades_realizadas) return;
     try {
       setFormLoading(true);
-      await api.post('/api/v1/control-obra/bitacoras', {
+      await api.post('/api/v1/control-proyectos/bitacoras', {
         ...bitForm,
         personal_en_sitio: Number(bitForm.personal_en_sitio) || 0,
         temperatura_c: bitForm.temperatura_c ? Number(bitForm.temperatura_c) : null,
@@ -499,7 +499,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     if (!avForm.concepto_presupuesto || !avForm.cantidad_periodo || !avForm.precio_unitario) return;
     try {
       setFormLoading(true);
-      await api.post('/api/v1/control-obra/avances', {
+      await api.post('/api/v1/control-proyectos/avances', {
         ...avForm,
         cantidad_presupuestada: Number(avForm.cantidad_presupuestada) || 0,
         cantidad_anterior: Number(avForm.cantidad_anterior) || 0,
