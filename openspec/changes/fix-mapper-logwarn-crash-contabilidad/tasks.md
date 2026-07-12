@@ -65,11 +65,12 @@
 
 ## 5. Cierre
 
-- [ ] 5.1 Push y confirmar que el workflow `Backend E2E Criticas` pasa en
+- [x] 5.1 Push y confirmar que el workflow `Backend E2E Criticas` pasa en
       verde en el PR (primera vez que pasa desde que se tiene registro en
       este repo, según `gh run list`).
-- [ ] 5.2 Abrir PR contra `main` desde branch
-      `fix/mapper-logwarn-crash-contabilidad`.
+      Confirmado: run 29176247687, `backend-e2e` pass en 2m29s, PR #39.
+- [x] 5.2 Abrir PR contra `main` desde branch
+      `fix/mapper-logwarn-crash-contabilidad`. PR #39 abierto.
 - [ ] 5.3 Redeploy manual del contenedor `contabilidad` en el VPS tras
       mergear (backend no tiene CI/CD) — no urgente, sin incidente activo
       en producción relacionado a este bug.
