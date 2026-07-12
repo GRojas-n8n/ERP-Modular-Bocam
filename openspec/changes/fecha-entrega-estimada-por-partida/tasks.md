@@ -90,6 +90,15 @@
       `tsc --noEmit -p apps/compras/tsconfig.json` también limpio.
 - [x] 4.4 Ejecutar la suite completa de vitest de `app-shell`. 31/31 ok,
       10/10 archivos.
+- [x] 4.5 Fix de code review (PR #42): `openspec/specs/tiempo-entrega-comparativa/`
+      seguía documentando el campo `tiempo_entrega` y la columna
+      "Tiempo" de solo lectura, que este change reemplaza por completo.
+      Se agregó un delta `REMOVED Requirements` en
+      `specs/tiempo-entrega-comparativa/` (con `Reason`/`Migration`
+      apuntando a `cotizacion-compras-ux`) y se eliminó el spec principal
+      obsoleto — la capability queda completamente superseded por
+      `cotizacion-compras-ux`, sin requirements activos que documentar
+      ahí.
 
 ## 5. Verificación manual en navegador (producción, con usuario real)
 
