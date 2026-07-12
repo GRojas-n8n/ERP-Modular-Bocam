@@ -154,15 +154,15 @@ async function test_comprometer_actualiza_saldo() {
   const ocId = randomUUID();
   const res = await fetch_(`/api/v1/gerencia-tecnica/partidas/${conceptoIds[0]}/comprometer`, {
     method: 'POST',
-    body: JSON.stringify({ monto: 50_000, referencia_id: ocId, referencia_codigo: 'OC-TEST-001', tipo: 'OC' }),
+    body: JSON.stringify({ monto: 85_000, referencia_id: ocId, referencia_codigo: 'OC-TEST-001', tipo: 'OC' }),
   });
   assert.equal(res.status, 200, 'comprometer debe retornar 200');
 
   const saldo = await prisma.saldoPartida.findUnique({
     where: { uq_saldo_partida: { tenant_id: TENANT_ID, proyecto_id: PROYECTO_ID, concepto_id: conceptoIds[0] } },
   });
-  assert.equal(Number(saldo!.monto_comprometido), 50_000);
-  assert.equal(Number(saldo!.monto_disponible), 50_000);
+  assert.equal(Number(saldo!.monto_comprometido), 85_000);
+  assert.equal(Number(saldo!.monto_disponible), 15_000);
   assert.equal(saldo!.estado_tope, 'LIMITADO', 'disponible < 20% → LIMITADO');
   console.log('✓ POST /comprometer actualiza monto_comprometido y estado_tope');
 }
