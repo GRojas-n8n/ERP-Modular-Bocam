@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { DEMO_CLIENTES, DEMO_COTIZACIONES, DEMO_FACTURAS } from '../lib/demoData';
@@ -6,9 +6,13 @@ import {
   IconRefreshCw,
   IconAlertCircle,
   IconSearch,
+  IconUpload,
+  IconCheckCircle2,
 } from '../components/Icons';
 import { cn } from '../lib/utils';
 import { TableScrollShadow } from '../components/TableScrollShadow';
+import { SlidePanel } from '../components/SlidePanel';
+import { parseCsvOrExcelFile } from '../lib/csvImport';
 
 // ─── Icono local para ventas ──────────────────────────────────────────────────
 const IconShoppingBag: React.FC<{ className?: string }> = ({ className }) => (
@@ -68,6 +72,65 @@ interface Factura {
 
 type TabKey = 'clientes' | 'cotizaciones' | 'facturas';
 
+// ─── Importación masiva de Clientes (CSV/Excel) ───────────────────────────────
+// Mismas reglas que POST /clientes en apps/ventas/src/main.ts:53-54.
+const CODIGO_CLIENTE_PATTERN = /^\d{3}$/;
+const CODIGO_CLIENTE_MAX = 50;
+
+interface ClienteImportRow {
+  rfc_tax_id: string;
+  razon_social: string;
+  email_contacto: string;
+  telefono: string;
+  codigo_cliente: string;
+  _valido: boolean;
+  _error?: string;
+}
+
+function leerColumnaImport(row: Record<string, string>, ...nombres: string[]): string {
+  for (const key of Object.keys(row)) {
+    if (nombres.includes(key.trim().toLowerCase())) {
+      return String(row[key] ?? '').trim();
+    }
+  }
+  return '';
+}
+
+// Validación cliente-side equivalente a la del backend (1.4) — solo para la
+// vista previa; el backend re-valida y es la fuente de verdad del resultado.
+function construirPreviewImportClientes(rows: Record<string, string>[]): ClienteImportRow[] {
+  const ocurrenciasPorRfc = new Map<string, number>();
+  rows.forEach(row => {
+    const rfc = leerColumnaImport(row, 'rfc_tax_id', 'rfc');
+    if (!rfc) return;
+    ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
+  });
+
+  return rows.map(row => {
+    const rfc_tax_id = leerColumnaImport(row, 'rfc_tax_id', 'rfc');
+    const razon_social = leerColumnaImport(row, 'razon_social', 'nombre');
+    const email_contacto = leerColumnaImport(row, 'email_contacto', 'email');
+    const telefono = leerColumnaImport(row, 'telefono');
+    const codigo_cliente = leerColumnaImport(row, 'codigo_cliente', 'codigo');
+
+    const errores: string[] = [];
+    if (!rfc_tax_id) errores.push('sin rfc_tax_id');
+    if (!razon_social) errores.push('sin razon_social');
+    if (codigo_cliente && (!CODIGO_CLIENTE_PATTERN.test(codigo_cliente) || Number(codigo_cliente) > CODIGO_CLIENTE_MAX)) {
+      errores.push('codigo_cliente inválido');
+    }
+    if (rfc_tax_id && (ocurrenciasPorRfc.get(rfc_tax_id) || 0) > 1) {
+      errores.push('RFC duplicado en el archivo');
+    }
+
+    return {
+      rfc_tax_id, razon_social, email_contacto, telefono, codigo_cliente,
+      _valido: errores.length === 0,
+      _error: errores.length ? errores.join(', ') : undefined,
+    };
+  });
+}
+
 // ─── Badge de estatus ─────────────────────────────────────────────────────────
 const EstatusBadge: React.FC<{ estatus: string }> = ({ estatus }) => {
   const colores: Record<string, string> = {
@@ -92,7 +155,7 @@ const EstatusBadge: React.FC<{ estatus: string }> = ({ estatus }) => {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export const VentasView: React.FC = () => {
-  const { tenant } = useTenant();
+  const { tenant, user } = useTenant();
   const [tab, setTab] = useState<TabKey>('clientes');
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -100,6 +163,17 @@ export const VentasView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState('');
+
+  // ── Importación masiva de Clientes (admin-only, mismo rol que el endpoint) ──
+  const rolesUsuario: string[] = user?.role ?? [];
+  const esAdmin = rolesUsuario.includes('admin');
+  const fileImportRef = useRef<HTMLInputElement>(null);
+  const [panelImportar, setPanelImportar] = useState(false);
+  const [archivoImportNombre, setArchivoImportNombre] = useState('');
+  const [filasImport, setFilasImport] = useState<ClienteImportRow[]>([]);
+  const [parseImportError, setParseImportError] = useState<string | null>(null);
+  const [importando, setImportando] = useState(false);
+  const [resultadoImport, setResultadoImport] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
 
   const fetchData = async (t: TabKey = tab) => {
     setLoading(true);
@@ -140,6 +214,56 @@ export const VentasView: React.FC = () => {
   const handleTab = (t: TabKey) => {
     setTab(t);
     setBusqueda('');
+  };
+
+  // ── Importación masiva de Clientes ────────────────────────────────────────
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setArchivoImportNombre(file.name);
+    setParseImportError(null);
+    setResultadoImport(null);
+    setPanelImportar(true);
+
+    try {
+      const rows = await parseCsvOrExcelFile(file);
+      setFilasImport(construirPreviewImportClientes(rows));
+    } catch (err: any) {
+      setParseImportError(err.message || 'Error al leer el archivo.');
+      setFilasImport([]);
+    }
+  };
+
+  const handleConfirmarImport = async () => {
+    setImportando(true);
+    try {
+      const registros = filasImport.map(({ rfc_tax_id, razon_social, email_contacto, telefono, codigo_cliente }) => ({
+        rfc_tax_id,
+        razon_social,
+        ...(email_contacto ? { email_contacto } : {}),
+        ...(telefono ? { telefono } : {}),
+        ...(codigo_cliente ? { codigo_cliente } : {}),
+      }));
+      const r = await ventasApi.importarClientesLote(registros);
+      setResultadoImport(r.data.data);
+      if (r.data.data.creados > 0) {
+        await fetchData('clientes');
+      }
+    } catch (err: any) {
+      setParseImportError(err.response?.data?.message || 'Error al importar el lote.');
+    } finally {
+      setImportando(false);
+    }
+  };
+
+  const handleCerrarPanelImportar = () => {
+    setPanelImportar(false);
+    setArchivoImportNombre('');
+    setFilasImport([]);
+    setParseImportError(null);
+    setResultadoImport(null);
   };
 
   // ── Filtrado local por búsqueda ───────────────────────────────────────────
@@ -188,6 +312,24 @@ export const VentasView: React.FC = () => {
           >
             <IconRefreshCw className={cn('h-5 w-5 text-muted-foreground', loading && 'animate-spin')} />
           </button>
+          {tab === 'clientes' && esAdmin && (
+            <>
+              <input
+                ref={fileImportRef}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                onChange={handleImportFileChange}
+              />
+              <button
+                onClick={() => fileImportRef.current?.click()}
+                className="px-6 py-3 bg-card border border-border/60 text-foreground text-xs font-black uppercase tracking-widest rounded-xl shadow-sm hover:bg-muted/50 transition-all flex items-center gap-2"
+              >
+                <IconUpload className="h-4 w-4" />
+                Importar CSV/Excel
+              </button>
+            </>
+          )}
           <button className="px-6 py-3 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-95 transition-all">
             {tab === 'clientes' ? 'Nuevo Cliente' : tab === 'cotizaciones' ? 'Nueva Cotizacion' : 'Nueva Factura'}
           </button>
@@ -380,6 +522,133 @@ export const VentasView: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* PANEL: Importación masiva de Clientes (CSV/Excel)                    */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <SlidePanel
+        isOpen={panelImportar}
+        onClose={handleCerrarPanelImportar}
+        title={resultadoImport ? 'Resultado de la importación' : 'Vista previa — Importación de Clientes'}
+        subtitle={archivoImportNombre}
+        accentColor="emerald"
+        maxWidthClassName="max-w-4xl"
+      >
+        <div className="space-y-6 pb-28">
+          {parseImportError ? (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+              <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive">{parseImportError}</p>
+            </div>
+          ) : resultadoImport ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{resultadoImport.creados}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Clientes creados</p>
+                </div>
+                <div className={cn('rounded-2xl p-4 text-center border', resultadoImport.errores.length > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                  <p className={cn('text-2xl font-black', resultadoImport.errores.length > 0 ? 'text-amber-600' : 'text-muted-foreground')}>{resultadoImport.errores.length}</p>
+                  <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', resultadoImport.errores.length > 0 ? 'text-amber-600/70' : 'text-muted-foreground')}>Filas con error</p>
+                </div>
+              </div>
+
+              {resultadoImport.errores.length > 0 && (
+                <div className="rounded-2xl border border-border/40 overflow-hidden">
+                  <TableScrollShadow className="max-h-[420px] overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                        <tr className="border-b border-border/40">
+                          <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Fila</th>
+                          <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Motivo</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/20">
+                        {resultadoImport.errores.map((e, i) => (
+                          <tr key={i}>
+                            <td className="px-4 py-2.5 font-black text-amber-600">{e.fila}</td>
+                            <td className="px-4 py-2.5 text-foreground">{e.motivo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableScrollShadow>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{filasImport.filter(f => f._valido).length}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Listos para importar</p>
+                </div>
+                <div className={cn('rounded-2xl p-4 text-center border', filasImport.some(f => !f._valido) ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                  <p className={cn('text-2xl font-black', filasImport.some(f => !f._valido) ? 'text-amber-600' : 'text-muted-foreground')}>{filasImport.filter(f => !f._valido).length}</p>
+                  <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', filasImport.some(f => !f._valido) ? 'text-amber-600/70' : 'text-muted-foreground')}>Con error</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/40 overflow-hidden">
+                <TableScrollShadow className="max-h-[420px] overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                      <tr className="border-b border-border/40">
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">RFC</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Razon Social</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Codigo</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {filasImport.map((row, i) => (
+                        <tr key={i} className={cn('transition-colors', row._valido ? 'hover:bg-emerald-500/[0.03]' : 'bg-amber-500/5 opacity-60')}>
+                          <td className="px-4 py-2.5 text-center">
+                            {row._valido
+                              ? <IconCheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                              : <span className="text-[9px] text-amber-600 font-bold" title={row._error}>error</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 font-mono text-muted-foreground">{row.rfc_tax_id || '—'}</td>
+                          <td className="px-4 py-2.5 font-bold text-foreground">{row.razon_social || '—'}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">{row.codigo_cliente || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableScrollShadow>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-end gap-3">
+          {resultadoImport || parseImportError ? (
+            <button
+              onClick={handleCerrarPanelImportar}
+              className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+            >
+              Cerrar
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCerrarPanelImportar}
+                className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarImport}
+                disabled={importando || filasImport.length === 0}
+                className="px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {importando ? 'Importando...' : `Importar ${filasImport.length} registro${filasImport.length === 1 ? '' : 's'}`}
+              </button>
+            </>
+          )}
+        </div>
+      </SlidePanel>
     </div>
   );
 };
