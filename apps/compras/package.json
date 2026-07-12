@@ -13,6 +13,7 @@
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
     "test:integration:oc-error-alert": "node -r ts-node/register/transpile-only test/integration/oc-error-alert.integration.test.ts",
     "test:integration:oc-enviar-correo": "node -r ts-node/register/transpile-only test/integration/orden-compra-enviar-correo.integration.test.ts",
+    "test:integration:fecha-entrega-partida": "node -r ts-node/register/transpile-only test/integration/fecha-entrega-estimada-por-partida.integration.test.ts",
     "test:integration:fichas-tecnicas-adjuntas": "node -r ts-node/register/transpile-only test/integration/fichas-tecnicas-adjuntas.integration.test.ts",
     "test:integration:proveedores-importar-lote": "node -r ts-node/register/transpile-only test/integration/proveedores-importar-lote.integration.test.ts"
   },

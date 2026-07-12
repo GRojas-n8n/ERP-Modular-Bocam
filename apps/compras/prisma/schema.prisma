@@ -383,7 +383,7 @@ model ComparativaDetalle {
   proveedor_id   String   @db.Uuid
   insumo_id      String   @db.Uuid
   precio_ofertado Decimal @db.Decimal(18, 4)
-  tiempo_entrega String?  @db.VarChar(50)
+  fecha_entrega_estimada DateTime?
   es_ganador     Boolean  @default(false)
 
   // ── Evaluación técnica del Residente ─────────────────────────────────────
