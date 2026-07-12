@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
@@ -22,15 +22,18 @@ import {
 import {
   IconAlertCircle,
   IconBriefcase,
+  IconCheckCircle2,
   IconClock,
   IconDownload,
   IconPlus,
   IconShieldCheck,
+  IconUpload,
   IconUsers,
   IconWallet,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
+import { parseCsvOrExcelFile } from '../lib/csvImport';
 
 /**
  * ---------------------------------------------------------------------------
@@ -150,11 +153,90 @@ const DEMO_PASES: PaseAcceso[] = [
 
 type TabId = 'empleados' | 'cuadrillas' | 'prenomina' | 'pases';
 
+// ─── Importación masiva de Empleados (CSV/Excel) ──────────────────────────────
+// Mismas reglas que POST /empleados en apps/personal/src/main.ts:74.
+interface EmpleadoImportRow {
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  rfc: string;
+  curp: string;
+  nss: string;
+  puesto: string;
+  categoria: string;
+  tipo_contrato: string;
+  fecha_ingreso: string;
+  salario_diario: string;
+  telefono: string;
+  email: string;
+  _valido: boolean;
+  _error?: string;
+}
+
+function leerColumnaImportEmpleado(row: Record<string, string>, ...nombres: string[]): string {
+  for (const key of Object.keys(row)) {
+    if (nombres.includes(key.trim().toLowerCase())) {
+      return String(row[key] ?? '').trim();
+    }
+  }
+  return '';
+}
+
+// Validación cliente-side equivalente a la del backend — solo para la vista
+// previa; el backend re-valida y es la fuente de verdad del resultado.
+function construirPreviewImportEmpleados(rows: Record<string, string>[]): EmpleadoImportRow[] {
+  const ocurrenciasPorRfc = new Map<string, number>();
+  rows.forEach(row => {
+    const rfc = leerColumnaImportEmpleado(row, 'rfc');
+    if (!rfc) return;
+    ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
+  });
+
+  return rows.map(row => {
+    const nombre = leerColumnaImportEmpleado(row, 'nombre');
+    const apellido_paterno = leerColumnaImportEmpleado(row, 'apellido_paterno');
+    const apellido_materno = leerColumnaImportEmpleado(row, 'apellido_materno');
+    const rfc = leerColumnaImportEmpleado(row, 'rfc');
+    const curp = leerColumnaImportEmpleado(row, 'curp');
+    const nss = leerColumnaImportEmpleado(row, 'nss');
+    const puesto = leerColumnaImportEmpleado(row, 'puesto');
+    const categoria = leerColumnaImportEmpleado(row, 'categoria');
+    const tipo_contrato = leerColumnaImportEmpleado(row, 'tipo_contrato');
+    const fecha_ingreso = leerColumnaImportEmpleado(row, 'fecha_ingreso');
+    const salario_diario = leerColumnaImportEmpleado(row, 'salario_diario');
+    const telefono = leerColumnaImportEmpleado(row, 'telefono');
+    const email = leerColumnaImportEmpleado(row, 'email');
+
+    const errores: string[] = [];
+    if (!nombre) errores.push('sin nombre');
+    if (!apellido_paterno) errores.push('sin apellido_paterno');
+    if (!rfc) errores.push('sin rfc');
+    if (!puesto) errores.push('sin puesto');
+    if (!salario_diario) {
+      errores.push('sin salario_diario');
+    } else if (Number.isNaN(Number(salario_diario))) {
+      errores.push('salario_diario no numérico');
+    }
+    if (rfc && (ocurrenciasPorRfc.get(rfc) || 0) > 1) {
+      errores.push('RFC duplicado en el archivo');
+    }
+
+    return {
+      nombre, apellido_paterno, apellido_materno, rfc, curp, nss, puesto,
+      categoria, tipo_contrato, fecha_ingreso, salario_diario, telefono, email,
+      _valido: errores.length === 0,
+      _error: errores.length ? errores.join(', ') : undefined,
+    };
+  });
+}
+
 export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant } = useTenant();
+  const { tenant, user } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
   const activeTab: TabId = (activeSubView as TabId) || 'empleados';
+  // Mismos roles que POST /empleados/importar-lote (apps/personal/src/main.ts).
+  const puedeImportarEmpleados = (user?.role ?? []).some(r => ['personal_rh', 'admin'].includes(r));
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cuadrillas, setCuadrillas] = useState<Cuadrilla[]>([]);
   const [prenominas, setPrenominas] = useState<PreNomina[]>([]);
@@ -174,6 +256,76 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [savingConfig, setSavingConfig] = useState(false);
   const [jornadaPanel, setJornadaPanel] = useState<{ empleado: Empleado; config: ConfigJornada } | null>(null);
   const [savingJornada, setSavingJornada] = useState(false);
+
+  // ── Importación masiva de Empleados ───────────────────────────────────────
+  const fileImportEmpleadosRef = useRef<HTMLInputElement>(null);
+  const [panelImportarEmpleados, setPanelImportarEmpleados] = useState(false);
+  const [archivoImportEmpleadosNombre, setArchivoImportEmpleadosNombre] = useState('');
+  const [filasImportEmpleados, setFilasImportEmpleados] = useState<EmpleadoImportRow[]>([]);
+  const [parseImportEmpleadosError, setParseImportEmpleadosError] = useState<string | null>(null);
+  const [importandoEmpleados, setImportandoEmpleados] = useState(false);
+  const [resultadoImportEmpleados, setResultadoImportEmpleados] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
+
+  const handleImportEmpleadosFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setArchivoImportEmpleadosNombre(file.name);
+    setParseImportEmpleadosError(null);
+    setResultadoImportEmpleados(null);
+    setPanelImportarEmpleados(true);
+
+    try {
+      const rows = await parseCsvOrExcelFile(file);
+      setFilasImportEmpleados(construirPreviewImportEmpleados(rows));
+    } catch (err: any) {
+      setParseImportEmpleadosError(err.message || 'Error al leer el archivo.');
+      setFilasImportEmpleados([]);
+    }
+  };
+
+  const handleConfirmarImportEmpleados = async () => {
+    setImportandoEmpleados(true);
+    try {
+      const registros = filasImportEmpleados.map(({
+        nombre, apellido_paterno, apellido_materno, rfc, curp, nss, puesto,
+        categoria, tipo_contrato, fecha_ingreso, salario_diario, telefono, email,
+      }) => ({
+        nombre, apellido_paterno, rfc, puesto,
+        // Se envía tal cual (no Number() aquí): un valor no numérico
+        // convertido a NaN se serializa como null en JSON, y el backend
+        // lo reportaría como "obligatorio faltante" en vez de "no
+        // numérico" — el backend ya valida y convierte con Number().
+        salario_diario,
+        ...(apellido_materno ? { apellido_materno } : {}),
+        ...(curp ? { curp } : {}),
+        ...(nss ? { nss } : {}),
+        ...(categoria ? { categoria } : {}),
+        ...(tipo_contrato ? { tipo_contrato } : {}),
+        ...(fecha_ingreso ? { fecha_ingreso } : {}),
+        ...(telefono ? { telefono } : {}),
+        ...(email ? { email } : {}),
+      }));
+      const r = await api.post('/api/v1/personal/empleados/importar-lote', { registros });
+      setResultadoImportEmpleados(r.data.data);
+      if (r.data.data.creados > 0) {
+        setEmpleados(prev => [...prev, ...r.data.data.empleados]);
+      }
+    } catch (err: any) {
+      setParseImportEmpleadosError(err.response?.data?.error?.message || 'Error al importar el lote.');
+    } finally {
+      setImportandoEmpleados(false);
+    }
+  };
+
+  const handleCerrarPanelImportarEmpleados = () => {
+    setPanelImportarEmpleados(false);
+    setArchivoImportEmpleadosNombre('');
+    setFilasImportEmpleados([]);
+    setParseImportEmpleadosError(null);
+    setResultadoImportEmpleados(null);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -408,14 +560,34 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           </div>
         </div>
 
-        <Button className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500">
-          <IconPlus className="h-4 w-4" />
-          {activeTab === 'empleados'
-            ? 'Nuevo Empleado'
-            : activeTab === 'cuadrillas'
-              ? 'Nueva Cuadrilla'
-              : 'Calcular Nomina'}
-        </Button>
+        <div className="flex items-center gap-3">
+          {activeTab === 'empleados' && puedeImportarEmpleados && (
+            <>
+              <input
+                ref={fileImportEmpleadosRef}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                onChange={handleImportEmpleadosFileChange}
+              />
+              <Button
+                onClick={() => fileImportEmpleadosRef.current?.click()}
+                className="rounded-2xl border border-border/60 bg-card text-xs font-black uppercase tracking-widest text-foreground shadow-sm hover:bg-muted/50"
+              >
+                <IconUpload className="h-4 w-4" />
+                Importar CSV/Excel
+              </Button>
+            </>
+          )}
+          <Button className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500">
+            <IconPlus className="h-4 w-4" />
+            {activeTab === 'empleados'
+              ? 'Nuevo Empleado'
+              : activeTab === 'cuadrillas'
+                ? 'Nueva Cuadrilla'
+                : 'Calcular Nomina'}
+          </Button>
+        </div>
       </div>
 
       {/* ── Banner de alertas de pases ── */}
@@ -839,6 +1011,131 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           )}
         </>
       )}
+      {/* ── Importación masiva de Empleados (CSV/Excel) ─────────────────────── */}
+      <SlidePanel
+        isOpen={panelImportarEmpleados}
+        onClose={handleCerrarPanelImportarEmpleados}
+        title={resultadoImportEmpleados ? 'Resultado de la importación' : 'Vista previa — Importación de Empleados'}
+        subtitle={archivoImportEmpleadosNombre}
+        accentColor="violet"
+        maxWidthClassName="max-w-4xl"
+      >
+        <div className="space-y-6 pb-28">
+          {parseImportEmpleadosError ? (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+              <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive">{parseImportEmpleadosError}</p>
+            </div>
+          ) : resultadoImportEmpleados ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{resultadoImportEmpleados.creados}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Empleados creados</p>
+                </div>
+                <div className={cn('rounded-2xl p-4 text-center border', resultadoImportEmpleados.errores.length > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                  <p className={cn('text-2xl font-black', resultadoImportEmpleados.errores.length > 0 ? 'text-amber-600' : 'text-muted-foreground')}>{resultadoImportEmpleados.errores.length}</p>
+                  <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', resultadoImportEmpleados.errores.length > 0 ? 'text-amber-600/70' : 'text-muted-foreground')}>Filas con error</p>
+                </div>
+              </div>
+
+              {resultadoImportEmpleados.errores.length > 0 && (
+                <div className="rounded-2xl border border-border/40 overflow-hidden">
+                  <TableScrollShadow className="max-h-[420px] overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                        <tr className="border-b border-border/40">
+                          <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Fila</th>
+                          <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Motivo</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/20">
+                        {resultadoImportEmpleados.errores.map((e, i) => (
+                          <tr key={i}>
+                            <td className="px-4 py-2.5 font-black text-amber-600">{e.fila}</td>
+                            <td className="px-4 py-2.5 text-foreground">{e.motivo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableScrollShadow>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{filasImportEmpleados.filter(f => f._valido).length}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Listos para importar</p>
+                </div>
+                <div className={cn('rounded-2xl p-4 text-center border', filasImportEmpleados.some(f => !f._valido) ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                  <p className={cn('text-2xl font-black', filasImportEmpleados.some(f => !f._valido) ? 'text-amber-600' : 'text-muted-foreground')}>{filasImportEmpleados.filter(f => !f._valido).length}</p>
+                  <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', filasImportEmpleados.some(f => !f._valido) ? 'text-amber-600/70' : 'text-muted-foreground')}>Con error</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/40 overflow-hidden">
+                <TableScrollShadow className="max-h-[420px] overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                      <tr className="border-b border-border/40">
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">RFC</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Nombre</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Puesto</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {filasImportEmpleados.map((row, i) => (
+                        <tr key={i} className={cn('transition-colors', row._valido ? 'hover:bg-emerald-500/[0.03]' : 'bg-amber-500/5 opacity-60')}>
+                          <td className="px-4 py-2.5 text-center">
+                            {row._valido
+                              ? <IconCheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                              : <span className="text-[9px] text-amber-600 font-bold" title={row._error}>error</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 font-mono text-muted-foreground">{row.rfc || '—'}</td>
+                          <td className="px-4 py-2.5 font-bold text-foreground">{row.nombre} {row.apellido_paterno}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">{row.puesto || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableScrollShadow>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-end gap-3">
+          {resultadoImportEmpleados || parseImportEmpleadosError ? (
+            <button
+              onClick={handleCerrarPanelImportarEmpleados}
+              className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+            >
+              Cerrar
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCerrarPanelImportarEmpleados}
+                className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarImportEmpleados}
+                disabled={importandoEmpleados || filasImportEmpleados.length === 0}
+                className="px-6 py-3 bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-violet-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {importandoEmpleados ? 'Importando...' : `Importar ${filasImportEmpleados.length} registro${filasImportEmpleados.length === 1 ? '' : 's'}`}
+              </button>
+            </>
+          )}
+        </div>
+      </SlidePanel>
+
       {/* ── Panel Config. Jornada ───────────────────────────────────────────── */}
       <SlidePanel
         isOpen={!!jornadaPanel}
