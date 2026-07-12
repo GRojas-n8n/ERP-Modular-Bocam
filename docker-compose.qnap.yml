@@ -11,7 +11,6 @@ services:
       AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
       COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
       FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
-      CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
       CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
       PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
       SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
@@ -179,34 +178,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    networks:
-      - bocam-qnap-network
-    restart: unless-stopped
-
-  control-obra:
-    profiles: ["core", "full"]
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
-      args:
-        WORKSPACE_NAME: "@bocam/control-obra"
-        APP_PATH: "apps/control-obra"
-    container_name: bocam-qnap-control-obra
-    environment:
-      PORT: 3005
-      NODE_ENV: ${NODE_ENV}
-      JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
-      CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
-      RABBITMQ_URL: ${RABBITMQ_URL}
-      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      finanzas:
-        condition: service_started
     networks:
       - bocam-qnap-network
     restart: unless-stopped

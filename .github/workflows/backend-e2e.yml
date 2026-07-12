@@ -65,7 +65,7 @@ jobs:
         run: |
           npx prisma generate --schema apps/compras/prisma/schema.prisma
           npx prisma generate --schema apps/finanzas/prisma/schema.prisma
-          npx prisma generate --schema apps/control-obra/prisma/schema.prisma
+          npx prisma generate --schema apps/control-proyectos/prisma/schema.prisma
           npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
 
       # ── Aplicar schemas al DB ─────────────────────────────────────────────────
@@ -75,17 +75,17 @@ jobs:
       # Los tests derivan el URL del modulo peer con string-replace del schema name.
       - name: Push Prisma schemas
         run: |
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npx prisma db push --schema apps/compras/prisma/schema.prisma      --skip-generate --accept-data-loss
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npx prisma db push --schema apps/finanzas/prisma/schema.prisma     --skip-generate --accept-data-loss
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npx prisma db push --schema apps/control-obra/prisma/schema.prisma --skip-generate --accept-data-loss
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad" npx prisma db push --schema apps/contabilidad/prisma/schema.prisma --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"           npx prisma db push --schema apps/compras/prisma/schema.prisma           --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npx prisma db push --schema apps/finanzas/prisma/schema.prisma          --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npx prisma db push --schema apps/control-proyectos/prisma/schema.prisma --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"      npx prisma db push --schema apps/contabilidad/prisma/schema.prisma      --skip-generate --accept-data-loss
 
       # ── TypeScript check ──────────────────────────────────────────────────────
       - name: Typecheck critical modules
         run: |
           npx tsc --noEmit -p apps/compras/tsconfig.json
           npx tsc --noEmit -p apps/finanzas/tsconfig.json
-          npx tsc --noEmit -p apps/control-obra/tsconfig.json
+          npx tsc --noEmit -p apps/control-proyectos/tsconfig.json
           npx tsc --noEmit -p apps/contabilidad/tsconfig.json
 
       # ── Tests ─────────────────────────────────────────────────────────────────
@@ -95,17 +95,19 @@ jobs:
       # ── Tests inter-modulo ────────────────────────────────────────────────────
       # Cada test recibe DATABASE_URL apuntando al schema de SU modulo.
       # Los tests derivan el schema del modulo peer via string-replace:
-      #   finanzas  -> schema=finanzas  (compras.events, control-obra.event, etc.)
+      #   finanzas  -> schema=finanzas  (compras.events, control_obra.* event, etc.
+      #                ver fusionar-control-obra-a-control-proyectos: el nombre del
+      #                evento se preservo aunque el publisher ahora es control-proyectos)
       #   compras   -> DATABASE_URL=schema=compras, deriva schema=finanzas
-      #   control_obra -> DATABASE_URL=schema=control_obra, deriva schema=finanzas
+      #   control_proyectos -> DATABASE_URL=schema=control_proyectos, deriva schema=finanzas
       #   contabilidad -> DATABASE_URL=schema=finanzas, deriva schema=contabilidad
       - name: Run inter-module RabbitMQ integration
         run: |
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:control-obra-event   -w @bocam/finanzas
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:control-obra-avance  -w @bocam/finanzas
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:compras-events       -w @bocam/finanzas
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npm run test:integration:finanzas-feedback    -w @bocam/compras
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npm run test:integration:finanzas-pago-feedback -w @bocam/control-obra
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npm run test:integration:control-obra-event   -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npm run test:integration:control-obra-avance  -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npm run test:integration:compras-events       -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"           npm run test:integration:finanzas-feedback    -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npm run test:integration:finanzas-pago-feedback -w @bocam/control-proyectos
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago        -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:compras-oc           -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:compras-oc-cancelada -w @bocam/contabilidad
@@ -124,9 +126,9 @@ jobs:
 
       - name: Run critical E2E suite
         run: |
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npm run test:e2e:reconciliacion -w @bocam/compras
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npm run test:e2e:reconciliacion -w @bocam/control-obra
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"      npm run test:e2e:seguridad      -w @bocam/compras
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_obra" npm run test:e2e:seguridad      -w @bocam/control-obra
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:e2e:seguridad      -w @bocam/finanzas
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:e2e:idempotencia   -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"           npm run test:e2e:reconciliacion -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npm run test:e2e:reconciliacion -w @bocam/control-proyectos
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras"           npm run test:e2e:seguridad      -w @bocam/compras
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npm run test:e2e:seguridad      -w @bocam/control-proyectos
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npm run test:e2e:seguridad      -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npm run test:e2e:idempotencia   -w @bocam/finanzas

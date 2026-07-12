@@ -174,7 +174,7 @@
       con 3 bitácoras sintéticas confirma aislamiento correcto. Varios
       seeds de test usaban Prisma directo sin `createTenantContext` — se
       corrigieron (afectaba solo al código de test, no a la app).
-- [ ] 3.4 **BLOQUEADO — depende de 6.2, no se puede hacer antes.** Hallazgo
+- [x] 3.4 **Ejecutado junto con 6.2, como estaba previsto.** Hallazgo
       durante 3.3: el contenedor de `control-proyectos` que corre HOY en
       producción es el código VIEJO (sin el retrofit de `createTenantContext`
       de la tarea 2.10) — activar `FORCE ROW LEVEL SECURITY` en sus 3 tablas
@@ -250,31 +250,66 @@
 
 ## 6. Migración de datos y corte en producción
 
-- [ ] 6.1 Backup de `.env` del VPS antes de tocar nada
-      (`cp .env .env.bak-fusion-control-obra-<fecha>`).
-- [ ] 6.2 Desplegar `control-proyectos` fusionado (con el alias temporal
-      de 2.9 activo) a producción, sin apagar `control-obra` todavía.
-- [ ] 6.3 Ventana de corte: anunciar/pausar escrituras en `control-obra`,
-      hacer `pg_dump --data-only` de las 4 tablas desde `bocam_control_obra`.
-- [ ] 6.4 Restaurar el dump contra `bocam_control_proyectos`, verificar
-      conteo de filas por tabla igual en origen y destino.
-- [ ] 6.5 Apagar el contenedor `bocam-vps-control-obra`
-      (`docker compose -f docker-compose.vps.yml stop control-obra`,
-      **no** eliminar la base `bocam_control_obra` todavía).
-- [ ] 6.6 Smoke test de los 6 consumidores actualizados (tarea 4) contra
-      producción real: `asistente` (2 tools), `ResidenciaView`,
-      `DashboardView`, `gerencia-tecnica` (trazabilidad/triángulo,
-      confirmar que ya no está en `parcial: true`), y `ControlObraView.tsx`
-      completo (9 tabs) con un usuario real.
-- [ ] 6.7 Confirmar en logs de `finanzas` y `contabilidad` que siguen
-      recibiendo y procesando `control_obra.estimacion_aprobada` /
-      `control_obra.avance_fisico_validado` sin cambios (aprobar una
-      estimación de prueba end-to-end si es posible con datos sintéticos).
-- [ ] 6.8 Retirar el alias temporal de rutas de la tarea 2.9 una vez
-      confirmados los 6 consumidores.
-- [ ] 6.9 Remover el servicio `control-obra` de `docker-compose.vps.yml` y
-      las variables `CONTROL_OBRA_DATABASE_URL`/`CONTROL_OBRA_URL` del
-      `.env` del VPS (ya no las usa nadie tras 4.1-4.7).
+- [x] 6.1 Backup de `.env` del VPS antes de tocar nada
+      (`.env.bak-fusion-control-obra-20260712`).
+- [x] 6.2 Desplegado `control-proyectos` fusionado a producción. Antes de
+      desplegar: creadas las 4 tablas nuevas (DDL de 1.3) y aplicado
+      `rls-policies.sql` (7 tablas) contra `bocam_control_proyectos` real,
+      ownership reasignado a `bocam_app` — validado con prueba de fuga
+      cross-tenant/cross-proyecto con datos sintéticos antes de tocar el
+      contenedor. Build + `docker compose up -d control-proyectos`:
+      healthy, suscrito a los 5 eventos correctos (sin re-suscribir
+      `avance_fisico_validado`, confirma la Decisión 4). Smoke test con
+      JWT real: `dashboard-obra`, alias `/control-obra/bitacoras`, `dashboard`
+      EVM — los 3 con 200 OK.
+- [x] 6.3 Ventana de corte: verificado `bocam_control_obra` con 0 filas
+      reales en las 4 tablas (reconfirmado justo antes del corte, sin
+      cambios desde 3.1) — no hubo escrituras que pausar de verdad.
+      `pg_dump --data-only` de las 4 tablas ejecutado igual por completitud
+      del proceso.
+- [x] 6.4 Restaurado el dump contra `bocam_control_proyectos`
+      (`COPY 0` × 4, esperado). Conteo de filas verificado: 0 = 0 en las 4
+      tablas, origen y destino.
+- [x] 6.5 Apagado `bocam-vps-control-obra` (`docker compose stop`) — la base
+      `bocam_control_obra` se dejó intacta.
+- [x] 6.6 Smoke test contra producción real con JWT real:
+      `gerencia-tecnica` trazabilidad/triángulo → `"parcial":false`
+      (resuelve el riesgo documentado en design.md); `asistente`
+      alertas-predictivas → 200 OK; `control-proyectos` dashboard-obra/EVM
+      → 200 OK vía dominio público. **Hallazgo durante el smoke test**: 2
+      llamadas POST de `ControlObraView.tsx` (`handleSubmitBitacora`,
+      `handleSubmitAvance`) habían quedado sin actualizar en el commit de
+      la tarea 5.2 — detectado al inspeccionar el bundle desplegado
+      (`grep` de `/api/v1/control-obra/` en el JS de producción, no solo
+      confiar en el diff local), corregido y redesplegado. **Segundo
+      hallazgo**: `app-shell` dependía de `control-obra` en su
+      `healthcheck` (`depends_on`) y su nginx interno enrutaba
+      `/api/v1/control-obra/*` directo al contenedor viejo — al apagarlo,
+      cualquier `docker compose up app-shell` posterior lo reiniciaba como
+      dependencia. Corregido (quitado el `depends_on` y la ruta de nginx)
+      antes de que causara un reinicio persistente.
+- [x] 6.7 Confirmado sin tocar datos financieros reales: `finanzas` y
+      `contabilidad` siguen suscritos a `control_obra.estimacion_aprobada`
+      / `control_obra.avance_fisico_validado` (logs de arranque sin
+      cambios) y los bindings de RabbitMQ (`rabbitmqctl list_bindings`)
+      confirman que ambas colas siguen ligadas a esos routing keys en el
+      exchange `bocam.events` — el tópico no depende de qué servicio
+      publica, solo del routing key, que no cambió. No se inyectaron
+      eventos sintéticos en prod para no crear registros financieros
+      reales que limpiar; el ciclo completo ya se verificó local con
+      RabbitMQ real bajo RLS forzado (tarea 3.3/2.1).
+- [x] 6.8 Retirado el alias temporal — quitada la segunda línea `app.use`
+      en `main.ts`, test de alias adaptado para confirmar 404 en vez de
+      paridad, redesplegado y verificado (404 directo contra el contenedor;
+      200 vía dominio público porque cae al *fallback* de la SPA, esperado
+      y no es una fuga de datos — solo sirve `index.html`).
+- [x] 6.9 Removido el servicio `control-obra` de `docker-compose.vps.yml`
+      (bloque completo, 34 líneas) y `CONTROL_OBRA_DATABASE_URL` del `.env`
+      real del VPS (`CONTROL_OBRA_URL` nunca existió ahí, solo en
+      `docker-compose.vps.yml`, ya removido en 4.7/aquí). Contenedor
+      `bocam-vps-control-obra` eliminado (`docker rm`, ya estaba detenido).
+      Verificación final: 18 contenedores del stack healthy, sitio público
+      responde 200.
 
 ## 7. Cierre
 

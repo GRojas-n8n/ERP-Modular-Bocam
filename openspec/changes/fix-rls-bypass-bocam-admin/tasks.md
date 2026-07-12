@@ -125,8 +125,18 @@
       genuinemente tienen 0 filas para ese tenant/proyecto hoy (el módulo de
       Finanzas aún no tiene datos reales cargados en producción), así que no
       es un falso negativo de RLS (Riesgo 1 descartado).
-- [ ] 3.4 `control-obra`: repetir 2.1–2.7 (`CONTROL_OBRA_DATABASE_URL` /
-      `bocam_control_obra`).
+- [x] 3.4 **Resuelto por fusión, no por migración directa.** `control-obra`
+      se fusionó a `control-proyectos` (ver
+      `openspec/changes/fusionar-control-obra-a-control-proyectos/`,
+      2026-07-11/12) — el servicio y su base `bocam_control_obra` dejaron
+      de recibir tráfico (contenedor apagado y removido de
+      `docker-compose.vps.yml`; la base se conserva ≥7 días como backup de
+      solo lectura). RLS real ya no aplica ahí porque no hay nada que
+      proteger: sus 4 modelos migraron al schema de `control-proyectos` y
+      quedaron cubiertos por las políticas de la tarea 4.3 (actualizada).
+      `CONTROL_OBRA_DATABASE_URL` seguía en `bocam_admin` (nunca se llegó a
+      migrar directamente) — irrelevante ya, la variable se eliminó del
+      `.env` del VPS.
 - [x] 3.5 `personal`: repetir 2.1–2.7 (`PERSONAL_DATABASE_URL` /
       `bocam_personal`). **Hallazgo crítico adicional**: `apps/personal/prisma/rls-policies.sql`
       declaraba `cuadrillas`, `asignaciones_frente`, `pre_nominas` y
@@ -234,15 +244,31 @@
 - [x] 4.2 `almacen`: ídem (`ALMACEN_DATABASE_URL`). Mismo resultado:
       ownership reasignado, contenedor healthy sin errores.
 - [x] 4.3 `control-proyectos`: ídem (`CONTROL_PROYECTOS_DATABASE_URL`).
-      Mismo resultado: ownership reasignado, contenedor healthy sin
-      errores.
+      **Actualizado 2026-07-12**: originalmente marcado como "sin políticas,
+      solo cambio de rol" (correcto en ese momento — sus 3 tablas no tenían
+      RLS declarado). Tras la fusión con `control-obra`
+      (`fusionar-control-obra-a-control-proyectos`), `control-proyectos`
+      ahora tiene RLS real completo sobre las 7 tablas del schema fusionado
+      (`apps/control-proyectos/prisma/rls-policies.sql`), incluido un
+      retrofit de todo el código preexistente (nunca usaba
+      `createTenantContext`) que habría hecho fallar RLS en silencio si se
+      activaba sin ese cambio. Ver esa change para el detalle completo
+      (auditoría, validación local con rol no-superusuario, aplicación
+      contra prod, prueba de fuga).
 
 ## 5. Cierre
 
-- [ ] 5.1 Confirmar que los 12 `<SERVICIO>_DATABASE_URL` del `.env` del VPS
-      usan `bocam_app`, ninguno usa `bocam_admin`.
-- [ ] 5.2 Confirmar que `bocam_admin` sigue existiendo y con acceso completo
-      (no se modificó ni se revocó) — sigue siendo la cuenta de operación
-      manual.
-- [ ] 5.3 Actualizar `ESTADO_DEL_SISTEMA.md`/memoria del proyecto con el
-      cierre de este hallazgo.
+- [x] 5.1 Confirmado: **11** `<SERVICIO>_DATABASE_URL` (no 12 — `control-obra`
+      dejó de existir como servicio tras la fusión con `control-proyectos`)
+      del `.env` del VPS usan `bocam_app`. Verificado por inspección directa
+      del `.env` real: `auth`, `gerencia-tecnica`, `seguridad`, `ventas`,
+      `finanzas`, `compras`, `contabilidad`, `calidad`, `personal`,
+      `almacen`, `control-proyectos` — los 11, ninguno usa `bocam_admin`.
+- [x] 5.2 Confirmado: `bocam_admin` sigue existiendo, `rolsuper=true`,
+      `rolcanlogin=true` — no se modificó ni se revocó, sigue siendo la
+      cuenta de operación manual.
+- [x] 5.3 Documentado en memoria del proyecto
+      (`hallazgo-rls-bypass-bocam-admin.md`), ver actualización 2026-07-12.
+      El hallazgo queda cerrado: 12 servicios originales, 11 sobreviven
+      (uno se fusionó), todos con RLS real donde aplica y sin
+      `BYPASSRLS`/superusuario en el rol de runtime.
