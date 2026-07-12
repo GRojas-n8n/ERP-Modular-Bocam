@@ -628,8 +628,6 @@ services:
         condition: service_healthy
       finanzas:
         condition: service_healthy
-      control-obra:
-        condition: service_healthy
       contabilidad:
         condition: service_healthy
       almacen:
