@@ -32,7 +32,13 @@
 
 ## 4. Verificación E2E (bloqueaba PR #44)
 
-- [ ] 4.1 Re-correr `apps/app-shell/test/e2e/clientes-importar-lote.e2e.spec.ts`
+- [x] 4.1 Re-correr `apps/app-shell/test/e2e/clientes-importar-lote.e2e.spec.ts`
       (de `carga-masiva-clientes-ventas`, PR #44) contra este fix aplicado
       sobre esa branch, y confirmar que pasa en verde — era el bloqueo
       original que motivó este change.
+      Verificado localmente antes de mergear este PR (aplicando el fix a
+      mano sobre la branch de PR #44) — flujo completo en verde,
+      documentado en la tarea 4.1 de `carga-masiva-clientes-ventas`.
+      PR #47 mergeado a `main`; pendiente que la branch de PR #44 lo
+      incorpore (merge de `main`) para que el test quede en verde en su
+      propio CI.
