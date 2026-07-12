@@ -293,7 +293,11 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         categoria, tipo_contrato, fecha_ingreso, salario_diario, telefono, email,
       }) => ({
         nombre, apellido_paterno, rfc, puesto,
-        salario_diario: Number(salario_diario),
+        // Se envía tal cual (no Number() aquí): un valor no numérico
+        // convertido a NaN se serializa como null en JSON, y el backend
+        // lo reportaría como "obligatorio faltante" en vez de "no
+        // numérico" — el backend ya valida y convierte con Number().
+        salario_diario,
         ...(apellido_materno ? { apellido_materno } : {}),
         ...(curp ? { curp } : {}),
         ...(nss ? { nss } : {}),

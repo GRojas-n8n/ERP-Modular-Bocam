@@ -121,12 +121,31 @@
 
 ## 4. Verificación manual
 
-- [ ] 4.1 Verificación manual en navegador: como usuario `personal_rh`,
+- [x] 4.1 Verificación manual en navegador: como usuario `personal_rh`,
       importar un archivo con filas válidas, inválidas y un RFC
       duplicado dentro del mismo archivo — confirmar que la vista previa
       y el resultado final coinciden con el detalle esperado por fila,
       que los `numero_empleado` asignados son correlativos sin huecos, y
       que los empleados válidos aparecen en el catálogo tras refrescar.
+      Automatizado en `apps/app-shell/test/e2e/empleados-importar-lote.e2e.spec.ts`
+      (Playwright, mismo patrón que las 2 series anteriores). Login real
+      como `admin@alfa.bocam.com` (rol `admin`, satisface
+      `personal_rh`/`admin`) — no hay usuario `personal_rh` puro en el
+      seed. CSV con 2 filas válidas + 1 con `salario_diario` no numérico
+      + 2 con RFC duplicado.
+      **Bug real encontrado y arreglado en este mismo change** (no
+      legacy, código de este PR sin mergear): `handleConfirmarImportEmpleados`
+      hacía `Number(salario_diario)` en el frontend antes de enviar — un
+      valor no numérico se volvía `NaN`, que `JSON.stringify` serializa
+      como `null`, así que el backend lo reportaba como "obligatorio
+      faltante" en vez de "no numérico". Se corrigió enviando
+      `salario_diario` tal cual (string), dejando que el backend haga su
+      propia conversión/validación con `Number(...)`. Con el fix, el
+      flujo completo pasa en verde: vista previa (2 listos/3 con error),
+      resultado (2 creados/3 errores con motivo correcto — incluyendo
+      "no numérico" para la fila correcta), y catálogo refrescado
+      (verificado sin necesidad de búsqueda: `PersonalView.tsx` no
+      pagina ni virtualiza la tabla de empleados).
 - [ ] 4.2 Verificación manual: confirmar que un usuario sin rol
       `personal_rh`/`admin` no ve el botón "Importar CSV/Excel" y que,
       si llama al endpoint directamente, recibe 403.
