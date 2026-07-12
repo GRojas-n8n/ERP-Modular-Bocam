@@ -2391,6 +2391,19 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
             })
           : [];
 
+        // Estado de respuesta de cada proveedor invitado vía Solicitud de Cotización
+        // (ver openspec/changes/estado-respuesta-proveedor-comparativo)
+        const solicitudCotizacion = (cuadro as any).requisicion_id
+          ? await prisma.solicitudCotizacion.findUnique({
+              where: { tenant_id_requisicion_id: { tenant_id: tenantId, requisicion_id: (cuadro as any).requisicion_id } },
+              include: { proveedores: { select: { proveedor_id: true, estado: true, fecha_respuesta: true } } },
+            })
+          : null;
+        const estado_respuesta_proveedor: Record<string, { estado: string; fecha_respuesta: Date | null }> = {};
+        for (const scp of solicitudCotizacion?.proveedores ?? []) {
+          estado_respuesta_proveedor[scp.proveedor_id] = { estado: scp.estado, fecha_respuesta: scp.fecha_respuesta };
+        }
+
         // Acumulados de recepciones para todas las OC de esta comparativa
         const todosItemIds = ordenesRaw.flatMap((o: any) => o.items.map((i: any) => i.id_item));
         const todasRecepciones = todosItemIds.length > 0
@@ -2435,6 +2448,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
           evaluaciones_especificacion: evaluacionesEspecificacion,
           archivos_proveedor: archivosProveedor,
           ordenes_compra,
+          estado_respuesta_proveedor,
         };
       },
     );
