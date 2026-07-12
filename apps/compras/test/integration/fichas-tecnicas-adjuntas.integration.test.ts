@@ -102,11 +102,40 @@ async function testInsumoSinFichasNoAgregaAdjuntos() {
   }
 }
 
+// ── Test 2.4: GT caído con varios insumos no escala linealmente (paralelo) ──
+// Regresión del hallazgo de code review en PR #43: la versión original
+// resolvía insumo por insumo de forma secuencial, por lo que con GT caído
+// el tiempo total era insumoIds.length * timeoutMs — contradiciendo el
+// spec ("el envío no se bloquea"). Con 5 insumos y timeout de 300ms, la
+// versión secuencial tardaría >=1500ms; en paralelo debe tardar ~300ms.
+
+async function testGtCaidoConVariosInsumosNoEscalaLinealmente() {
+  const insumoIds = Array.from({ length: 5 }, () => randomUUID());
+  const timeoutMs = 300;
+
+  const inicio = Date.now();
+  const adjuntos = await resolveFichasTecnicasAdjuntas({
+    gtUrl: 'http://127.0.0.1:1/api/v1/gerencia-tecnica',
+    insumoIds,
+    timeoutMs,
+  });
+  const duracionMs = Date.now() - inicio;
+
+  assert.deepEqual(adjuntos, []);
+  assert.ok(
+    duracionMs < timeoutMs * insumoIds.length,
+    `con ${insumoIds.length} insumos y timeout ${timeoutMs}ms, la resolución en paralelo debe tardar mucho menos que ${timeoutMs * insumoIds.length}ms secuencial (tardó ${duracionMs}ms)`,
+  );
+
+  console.log(`ok - 2.4 GT caído con ${insumoIds.length} insumos no escala linealmente (tardó ${duracionMs}ms, no ~${timeoutMs * insumoIds.length}ms)`);
+}
+
 async function main() {
   try {
-    await testFichasExistentesSeResuelvenComoAdjuntos(); // 2.1
-    await testGtCaidoNoBloquea();                          // 2.2
-    await testInsumoSinFichasNoAgregaAdjuntos();            // 2.3
+    await testFichasExistentesSeResuelvenComoAdjuntos();          // 2.1
+    await testGtCaidoNoBloquea();                                   // 2.2
+    await testInsumoSinFichasNoAgregaAdjuntos();                    // 2.3
+    await testGtCaidoConVariosInsumosNoEscalaLinealmente();         // 2.4
   } finally {
     await stopGt();
   }

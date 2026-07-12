@@ -31,27 +31,31 @@ export async function resolveFichasTecnicasAdjuntas(opts: ResolveFichasOpts): Pr
   };
 
   const insumoIdsUnicos = Array.from(new Set(opts.insumoIds.filter(Boolean)));
-  const adjuntos: AdjuntoExtra[] = [];
 
-  for (const insumoId of insumoIdsUnicos) {
-    const fichas = await axios
-      .get(`${opts.gtUrl}/insumos/${insumoId}/fichas`, { headers, timeout })
-      .then(r => (r.data?.data ?? []) as FichaTecnicaListItem[])
-      .catch(() => [] as FichaTecnicaListItem[]);
+  // Listados en paralelo — con muchos insumos y GT caído, resolver uno por
+  // uno haría esperar hasta insumoIdsUnicos.length * timeout antes de
+  // degradar. En paralelo, el peor caso es una sola ventana de timeout.
+  const fichasPorInsumo = await Promise.all(
+    insumoIdsUnicos.map(insumoId =>
+      axios
+        .get(`${opts.gtUrl}/insumos/${insumoId}/fichas`, { headers, timeout })
+        .then(r => (r.data?.data ?? []) as FichaTecnicaListItem[])
+        .catch(() => [] as FichaTecnicaListItem[])
+        .then(fichas => fichas.map(ficha => ({ insumoId, ficha })))
+    )
+  );
 
-    for (const ficha of fichas) {
-      const buffer = await axios
+  // Descargas también en paralelo, por el mismo motivo.
+  const adjuntos = await Promise.all(
+    fichasPorInsumo.flat().map(({ insumoId, ficha }) =>
+      axios
         .get(`${opts.gtUrl}/insumos/${insumoId}/fichas/${ficha.id_ficha}/descargar`, {
           headers, timeout, responseType: 'arraybuffer',
         })
-        .then(r => Buffer.from(r.data))
-        .catch(() => null);
+        .then(r => ({ filename: ficha.nombre_doc, content: Buffer.from(r.data), contentType: ficha.mime_type } as AdjuntoExtra))
+        .catch(() => null)
+    )
+  );
 
-      if (buffer) {
-        adjuntos.push({ filename: ficha.nombre_doc, content: buffer, contentType: ficha.mime_type });
-      }
-    }
-  }
-
-  return adjuntos;
+  return adjuntos.filter((a): a is AdjuntoExtra => a !== null);
 }

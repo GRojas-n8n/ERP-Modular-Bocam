@@ -44,6 +44,16 @@
       cada llamada de `enviarSolicitudCotizacionEmail`.
 - [x] 2.6 Ejecutar los tests de 2.1-2.3 y confirmar que pasan en verde.
       3/3 ok.
+- [x] 2.7 Fix de code review (PR #43): `resolveFichasTecnicasAdjuntas`
+      resolvía insumo por insumo de forma secuencial (`for` con `await`
+      anidado) — con GT caído, el tiempo total escalaba a
+      `insumoIds.length * timeoutMs`, contradiciendo el scenario del spec
+      ("el envío no se bloquea"). Reescrito con `Promise.all` (listados en
+      paralelo, luego descargas en paralelo) para acotar el peor caso a una
+      sola ventana de timeout sin importar cuántos insumos tenga la
+      requisición. Agregado test 2.4 (5 insumos, GT caído, timeout 300ms):
+      confirma que la duración real (~10ms) es muchísimo menor que el
+      escenario secuencial (~1500ms). 4/4 ok.
 
 ## 3. Frontend — subir ficha técnica al crear una requisición
 
