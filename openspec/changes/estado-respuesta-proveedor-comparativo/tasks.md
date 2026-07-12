@@ -85,6 +85,7 @@
 ## 5. Cierre
 
 - [ ] 5.1 Redeploy manual del contenedor `compras` en el VPS (backend no
-      tiene CI/CD) tras mergear a `main`.
-- [ ] 5.2 Abrir PR contra `main` desde branch
+      tiene CI/CD) tras mergear a `main`. PENDIENTE — se hace después del
+      merge.
+- [x] 5.2 Abrir PR contra `main` desde branch
       `feat/estado-respuesta-proveedor-comparativo`.
