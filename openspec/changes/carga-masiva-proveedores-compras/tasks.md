@@ -105,12 +105,23 @@
 
 ## 4. Verificación manual
 
-- [ ] 4.1 Verificación manual en navegador: como usuario `procurement`,
+- [x] 4.1 Verificación manual en navegador: como usuario `procurement`,
       importar un archivo con filas válidas, inválidas y un RFC duplicado
       dentro del mismo archivo (incluyendo un caso de mismo RFC en
       distinto case) — confirmar que la vista previa y el resultado final
       coinciden con el detalle esperado por fila, y que los proveedores
       válidos aparecen en el catálogo tras refrescar.
+      Automatizado en `apps/app-shell/test/e2e/proveedores-importar-lote.e2e.spec.ts`
+      (Playwright, mismo patrón que `carga-masiva-clientes-ventas`).
+      Login real como `comprador@alfa.bocam.com` (rol `procurement`),
+      CSV con 2 filas válidas + 1 sin razon_social + 2 con RFC duplicado
+      en distinto case (`pwpXXXdup`/`PWPXXXDUP`) — vista previa (2
+      listos/3 con error), confirmación, resultado (2 creados/3 errores)
+      y catálogo refrescado (búsqueda por RFC) — todo en verde a la
+      primera corrida. A diferencia de `carga-masiva-clientes-ventas`,
+      `ComprasView.tsx` ya usa los nombres de campo reales del backend
+      (`razon_social`, `rfc_tax_id`) directamente — no tiene el bug de
+      `fix-ventas-clientes-render-campos-backend`.
 - [ ] 4.2 Verificación manual: confirmar que un usuario `superintendent`
       (tiene acceso a la tab Proveedores vía `isProcurement`, pero no
       está en los roles del endpoint) no ve el botón "Importar CSV/Excel"
