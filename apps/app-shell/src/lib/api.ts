@@ -186,6 +186,7 @@ export const comprasApi = {
   createRequisicion:   (data: unknown) => api.post('/api/v1/compras/requisiciones', data),
   getOrdenesCompra:    ()         => api.get('/api/v1/compras/ordenes-compra'),
   getProveedores:      ()         => api.get('/api/v1/compras/proveedores'),
+  importarProveedoresLote: (registros: unknown[]) => api.post('/api/v1/compras/proveedores/importar-lote', { registros }),
   getComparativas:     ()         => api.get('/api/v1/compras/comparativas'),
   getComparativa:      (id: string) => api.get(`/api/v1/compras/comparativas/${id}`),
   convertirAOC:        (id: string, data: unknown) => api.post(`/api/v1/compras/comparativas/${id}/convertir-oc`, data),
