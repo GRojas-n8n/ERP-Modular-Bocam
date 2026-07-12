@@ -2963,7 +2963,7 @@ app.put('/api/v1/compras/comparativas/:compId/proveedores/:provId/cotizacion-pdf
 );
 
 // PUT /comparativas/:id/cotizaciones — guarda proveedores y precios de cotización (batch upsert)
-// Body: { proveedores: [{ nombre: string, precios: [{ insumo_id, precio, tiempo_entrega? }] }] }
+// Body: { proveedores: [{ nombre: string, precios: [{ insumo_id, precio, fecha_entrega_estimada? }] }] }
 app.put('/api/v1/compras/comparativas/:id/cotizaciones',
   requireRoles('procurement', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
@@ -2973,7 +2973,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
       const { proveedores } = req.body as {
         proveedores: Array<{
           nombre: string;
-          precios: Array<{ insumo_id: string; precio: number; tiempo_entrega?: string }>;
+          precios: Array<{ insumo_id: string; precio: number; fecha_entrega_estimada?: string }>;
         }>;
       };
 
@@ -3022,7 +3022,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
                   proveedor_id:   proveedor.id_proveedor,
                   insumo_id:      p.insumo_id,
                   precio_ofertado: p.precio,
-                  tiempo_entrega: p.tiempo_entrega || null,
+                  fecha_entrega_estimada: p.fecha_entrega_estimada ? new Date(p.fecha_entrega_estimada) : null,
                 },
               });
             }
@@ -5118,7 +5118,7 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
                 proveedor_id: d.proveedor_id,
                 insumo_id: d.insumo_id,
                 precio_ofertado: d.precio_ofertado,
-                tiempo_entrega: d.tiempo_entrega,
+                fecha_entrega_estimada: d.fecha_entrega_estimada,
                 es_ganador: false,
                 evaluacion_tecnica: 'PENDIENTE',
                 comentario_tecnico: null,
@@ -5473,7 +5473,7 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
                   proveedor_id: d.proveedor_id,
                   insumo_id: d.insumo_id,
                   precio_ofertado: d.precio_ofertado,
-                  tiempo_entrega: d.tiempo_entrega,
+                  fecha_entrega_estimada: d.fecha_entrega_estimada,
                   es_ganador: false,
                   evaluacion_tecnica: 'PENDIENTE',
                   comentario_tecnico: null,

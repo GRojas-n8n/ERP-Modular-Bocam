@@ -17812,7 +17812,7 @@ export namespace Prisma {
     proveedor_id: string | null
     insumo_id: string | null
     precio_ofertado: Decimal | null
-    tiempo_entrega: string | null
+    fecha_entrega_estimada: Date | null
     es_ganador: boolean | null
     evaluacion_tecnica: string | null
     comentario_tecnico: string | null
@@ -17831,7 +17831,7 @@ export namespace Prisma {
     proveedor_id: string | null
     insumo_id: string | null
     precio_ofertado: Decimal | null
-    tiempo_entrega: string | null
+    fecha_entrega_estimada: Date | null
     es_ganador: boolean | null
     evaluacion_tecnica: string | null
     comentario_tecnico: string | null
@@ -17850,7 +17850,7 @@ export namespace Prisma {
     proveedor_id: number
     insumo_id: number
     precio_ofertado: number
-    tiempo_entrega: number
+    fecha_entrega_estimada: number
     es_ganador: number
     evaluacion_tecnica: number
     comentario_tecnico: number
@@ -17879,7 +17879,7 @@ export namespace Prisma {
     proveedor_id?: true
     insumo_id?: true
     precio_ofertado?: true
-    tiempo_entrega?: true
+    fecha_entrega_estimada?: true
     es_ganador?: true
     evaluacion_tecnica?: true
     comentario_tecnico?: true
@@ -17898,7 +17898,7 @@ export namespace Prisma {
     proveedor_id?: true
     insumo_id?: true
     precio_ofertado?: true
-    tiempo_entrega?: true
+    fecha_entrega_estimada?: true
     es_ganador?: true
     evaluacion_tecnica?: true
     comentario_tecnico?: true
@@ -17917,7 +17917,7 @@ export namespace Prisma {
     proveedor_id?: true
     insumo_id?: true
     precio_ofertado?: true
-    tiempo_entrega?: true
+    fecha_entrega_estimada?: true
     es_ganador?: true
     evaluacion_tecnica?: true
     comentario_tecnico?: true
@@ -18023,7 +18023,7 @@ export namespace Prisma {
     proveedor_id: string
     insumo_id: string
     precio_ofertado: Decimal
-    tiempo_entrega: string | null
+    fecha_entrega_estimada: Date | null
     es_ganador: boolean
     evaluacion_tecnica: string
     comentario_tecnico: string | null
@@ -18061,7 +18061,7 @@ export namespace Prisma {
     proveedor_id?: boolean
     insumo_id?: boolean
     precio_ofertado?: boolean
-    tiempo_entrega?: boolean
+    fecha_entrega_estimada?: boolean
     es_ganador?: boolean
     evaluacion_tecnica?: boolean
     comentario_tecnico?: boolean
@@ -18082,7 +18082,7 @@ export namespace Prisma {
     proveedor_id?: boolean
     insumo_id?: boolean
     precio_ofertado?: boolean
-    tiempo_entrega?: boolean
+    fecha_entrega_estimada?: boolean
     es_ganador?: boolean
     evaluacion_tecnica?: boolean
     comentario_tecnico?: boolean
@@ -18103,7 +18103,7 @@ export namespace Prisma {
     proveedor_id?: boolean
     insumo_id?: boolean
     precio_ofertado?: boolean
-    tiempo_entrega?: boolean
+    fecha_entrega_estimada?: boolean
     es_ganador?: boolean
     evaluacion_tecnica?: boolean
     comentario_tecnico?: boolean
@@ -18137,7 +18137,7 @@ export namespace Prisma {
       proveedor_id: string
       insumo_id: string
       precio_ofertado: Prisma.Decimal
-      tiempo_entrega: string | null
+      fecha_entrega_estimada: Date | null
       es_ganador: boolean
       evaluacion_tecnica: string
       comentario_tecnico: string | null
@@ -18554,7 +18554,7 @@ export namespace Prisma {
     readonly proveedor_id: FieldRef<"ComparativaDetalle", 'String'>
     readonly insumo_id: FieldRef<"ComparativaDetalle", 'String'>
     readonly precio_ofertado: FieldRef<"ComparativaDetalle", 'Decimal'>
-    readonly tiempo_entrega: FieldRef<"ComparativaDetalle", 'String'>
+    readonly fecha_entrega_estimada: FieldRef<"ComparativaDetalle", 'DateTime'>
     readonly es_ganador: FieldRef<"ComparativaDetalle", 'Boolean'>
     readonly evaluacion_tecnica: FieldRef<"ComparativaDetalle", 'String'>
     readonly comentario_tecnico: FieldRef<"ComparativaDetalle", 'String'>
@@ -26125,7 +26125,7 @@ export namespace Prisma {
     proveedor_id: 'proveedor_id',
     insumo_id: 'insumo_id',
     precio_ofertado: 'precio_ofertado',
-    tiempo_entrega: 'tiempo_entrega',
+    fecha_entrega_estimada: 'fecha_entrega_estimada',
     es_ganador: 'es_ganador',
     evaluacion_tecnica: 'evaluacion_tecnica',
     comentario_tecnico: 'comentario_tecnico',
@@ -27656,7 +27656,7 @@ export namespace Prisma {
     proveedor_id?: UuidFilter<"ComparativaDetalle"> | string
     insumo_id?: UuidFilter<"ComparativaDetalle"> | string
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    fecha_entrega_estimada?: DateTimeNullableFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
     evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
@@ -27677,7 +27677,7 @@ export namespace Prisma {
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
     precio_ofertado?: SortOrder
-    tiempo_entrega?: SortOrderInput | SortOrder
+    fecha_entrega_estimada?: SortOrderInput | SortOrder
     es_ganador?: SortOrder
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrderInput | SortOrder
@@ -27701,7 +27701,7 @@ export namespace Prisma {
     proveedor_id?: UuidFilter<"ComparativaDetalle"> | string
     insumo_id?: UuidFilter<"ComparativaDetalle"> | string
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    fecha_entrega_estimada?: DateTimeNullableFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
     evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
@@ -27722,7 +27722,7 @@ export namespace Prisma {
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
     precio_ofertado?: SortOrder
-    tiempo_entrega?: SortOrderInput | SortOrder
+    fecha_entrega_estimada?: SortOrderInput | SortOrder
     es_ganador?: SortOrder
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrderInput | SortOrder
@@ -27749,7 +27749,7 @@ export namespace Prisma {
     proveedor_id?: UuidWithAggregatesFilter<"ComparativaDetalle"> | string
     insumo_id?: UuidWithAggregatesFilter<"ComparativaDetalle"> | string
     precio_ofertado?: DecimalWithAggregatesFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    fecha_entrega_estimada?: DateTimeNullableWithAggregatesFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolWithAggregatesFilter<"ComparativaDetalle"> | boolean
     evaluacion_tecnica?: StringWithAggregatesFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
@@ -29812,7 +29812,7 @@ export namespace Prisma {
     proyecto_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -29833,7 +29833,7 @@ export namespace Prisma {
     proveedor_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -29850,7 +29850,7 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29871,7 +29871,7 @@ export namespace Prisma {
     proveedor_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29890,7 +29890,7 @@ export namespace Prisma {
     proveedor_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -29907,7 +29907,7 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29926,7 +29926,7 @@ export namespace Prisma {
     proveedor_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31746,7 +31746,7 @@ export namespace Prisma {
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
     precio_ofertado?: SortOrder
-    tiempo_entrega?: SortOrder
+    fecha_entrega_estimada?: SortOrder
     es_ganador?: SortOrder
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrder
@@ -31769,7 +31769,7 @@ export namespace Prisma {
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
     precio_ofertado?: SortOrder
-    tiempo_entrega?: SortOrder
+    fecha_entrega_estimada?: SortOrder
     es_ganador?: SortOrder
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrder
@@ -31788,7 +31788,7 @@ export namespace Prisma {
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
     precio_ofertado?: SortOrder
-    tiempo_entrega?: SortOrder
+    fecha_entrega_estimada?: SortOrder
     es_ganador?: SortOrder
     evaluacion_tecnica?: SortOrder
     comentario_tecnico?: SortOrder
@@ -33511,7 +33511,7 @@ export namespace Prisma {
     proyecto_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -33530,7 +33530,7 @@ export namespace Prisma {
     cuadro_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -33761,7 +33761,7 @@ export namespace Prisma {
     proveedor_id?: UuidFilter<"ComparativaDetalle"> | string
     insumo_id?: UuidFilter<"ComparativaDetalle"> | string
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    fecha_entrega_estimada?: DateTimeNullableFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
     evaluacion_tecnica?: StringFilter<"ComparativaDetalle"> | string
     comentario_tecnico?: StringNullableFilter<"ComparativaDetalle"> | string | null
@@ -34834,7 +34834,7 @@ export namespace Prisma {
     proyecto_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -34853,7 +34853,7 @@ export namespace Prisma {
     proveedor_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -36553,7 +36553,7 @@ export namespace Prisma {
     cuadro_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -36683,7 +36683,7 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36702,7 +36702,7 @@ export namespace Prisma {
     cuadro_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36720,7 +36720,7 @@ export namespace Prisma {
     cuadro_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37080,7 +37080,7 @@ export namespace Prisma {
     proveedor_id: string
     insumo_id: string
     precio_ofertado: Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: string | null
+    fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
     evaluacion_tecnica?: string
     comentario_tecnico?: string | null
@@ -37154,7 +37154,7 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37173,7 +37173,7 @@ export namespace Prisma {
     proveedor_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37191,7 +37191,7 @@ export namespace Prisma {
     proveedor_id?: StringFieldUpdateOperationsInput | string
     insumo_id?: StringFieldUpdateOperationsInput | string
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    tiempo_entrega?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
     evaluacion_tecnica?: StringFieldUpdateOperationsInput | string
     comentario_tecnico?: NullableStringFieldUpdateOperationsInput | string | null
