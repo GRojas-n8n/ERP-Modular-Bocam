@@ -157,6 +157,46 @@ exports.Prisma.MovimientoAlmacenScalarFieldEnum = {
   oc_item_id: 'oc_item_id'
 };
 
+exports.Prisma.ActivoScalarFieldEnum = {
+  id_activo: 'id_activo',
+  tenant_id: 'tenant_id',
+  numero_activo: 'numero_activo',
+  clave: 'clave',
+  descripcion: 'descripcion',
+  clasificacion: 'clasificacion',
+  estado: 'estado',
+  proyecto_id: 'proyecto_id',
+  ubicacion: 'ubicacion',
+  asignado_a_empleado_id: 'asignado_a_empleado_id',
+  asignado_a_empleado_nombre: 'asignado_a_empleado_nombre',
+  fecha_alta: 'fecha_alta',
+  fecha_baja: 'fecha_baja',
+  motivo_baja: 'motivo_baja',
+  valor_adquisicion: 'valor_adquisicion',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.TraspasoActivoScalarFieldEnum = {
+  id_traspaso: 'id_traspaso',
+  tenant_id: 'tenant_id',
+  activo_id: 'activo_id',
+  tipo: 'tipo',
+  estado: 'estado',
+  proyecto_origen_id: 'proyecto_origen_id',
+  proyecto_destino_id: 'proyecto_destino_id',
+  empleado_origen_id: 'empleado_origen_id',
+  empleado_origen_nombre: 'empleado_origen_nombre',
+  empleado_destino_id: 'empleado_destino_id',
+  empleado_destino_nombre: 'empleado_destino_nombre',
+  solicitado_por: 'solicitado_por',
+  solicitado_en: 'solicitado_en',
+  confirmado_por: 'confirmado_por',
+  rechazado_por: 'rechazado_por',
+  resuelto_en: 'resuelto_en',
+  notas: 'notas'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -175,7 +215,9 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   ItemInventario: 'ItemInventario',
-  MovimientoAlmacen: 'MovimientoAlmacen'
+  MovimientoAlmacen: 'MovimientoAlmacen',
+  Activo: 'Activo',
+  TraspasoActivo: 'TraspasoActivo'
 };
 
 /**

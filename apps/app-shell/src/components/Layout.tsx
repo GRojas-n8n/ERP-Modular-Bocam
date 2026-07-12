@@ -121,6 +121,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     subItems: [
       { id: 'inventario',   label: 'Inventario',   icon: IconLayers },
       { id: 'movimientos',  label: 'Movimientos',  icon: IconPackage },
+      { id: 'activos',      label: 'Activos',      icon: IconBriefcase },
     ],
   },
   { name: 'Finanzas',     icon: IconWallet,         id: 'finanzas',     roles: ['finanzas'] },
