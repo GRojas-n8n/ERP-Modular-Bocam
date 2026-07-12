@@ -71,11 +71,21 @@ test('admin importa un lote de Clientes con filas válidas, inválidas y RFC dup
   await expect(creadosCount).toHaveText('2');
   const erroresCount = page.locator('text=Filas con error').locator('..').locator('p').first();
   await expect(erroresCount).toHaveText('3');
-  await expect(page.getByText(/RFC duplicado/)).toBeVisible();
+  await expect(page.getByText(/RFC duplicado/).first()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Cerrar' }).click();
+  // NOTA: el botón "Cerrar" del footer del panel (bottom-right) queda
+  // detrás del FAB "Asistente IA" (ChatAsistente, fixed bottom-6
+  // right-6 z-50 — mismo z-index que SideSheet, gana por orden de DOM)
+  // y es realmente inclicable ahí, no solo un problema del test —
+  // hallazgo de UX preexistente y no relacionado, fuera de alcance de
+  // este change. Se usa la "X" del header del panel en su lugar, que no
+  // tiene el problema.
+  await page.getByRole('button', { name: 'Cerrar panel' }).click();
 
   // ── Confirmar que el catálogo se refrescó con los 2 clientes creados ───
+  // (el catálogo real tiene decenas de clientes ordenados alfabéticamente;
+  // se busca por RFC para no depender de la posición en la tabla)
+  await page.getByPlaceholder('BUSCAR CLIENTES...').fill(`PWA${sufijo}`);
   await expect(page.getByText('Cliente Playwright Uno')).toBeVisible();
   await expect(page.getByText('Cliente Playwright Dos')).toBeVisible();
 
