@@ -108,6 +108,148 @@ app.post('/api/v1/personal/empleados', async (req: Request, res: Response) => {
   }
 });
 
+type EmpleadoImportRegistro = {
+  nombre?: string;
+  apellido_paterno?: string;
+  apellido_materno?: string;
+  rfc?: string;
+  curp?: string;
+  nss?: string;
+  puesto?: string;
+  categoria?: string;
+  tipo_contrato?: string;
+  fecha_ingreso?: string;
+  salario_diario?: number | string;
+  telefono?: string;
+  email?: string;
+};
+
+type EmpleadoImportError = { fila: number; motivo: string };
+
+app.post('/api/v1/personal/empleados/importar-lote', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { registros } = req.body as { registros?: EmpleadoImportRegistro[] };
+
+    if (!Array.isArray(registros)) {
+      res.status(400).json(createApiError('PER_INVALID_BODY', '"registros" debe ser un arreglo.'));
+      return;
+    }
+
+    const errores: EmpleadoImportError[] = [];
+
+    // 1.3 — RFC duplicado dentro del mismo archivo: ninguna de las filas
+    // repetidas se crea, se reportan todas como error antes de tocar la BD.
+    const filasPorRfc = new Map<string, number[]>();
+    registros.forEach((registro, index) => {
+      const rfc = registro.rfc;
+      if (!rfc) return;
+      const filas = filasPorRfc.get(rfc) ?? [];
+      filas.push(index);
+      filasPorRfc.set(rfc, filas);
+    });
+    const filasDuplicadas = new Set<number>();
+    for (const filas of filasPorRfc.values()) {
+      if (filas.length > 1) {
+        filas.forEach(index => filasDuplicadas.add(index));
+      }
+    }
+    filasDuplicadas.forEach(index => {
+      errores.push({ fila: index + 1, motivo: 'RFC duplicado dentro del archivo.' });
+    });
+
+    const candidatos = registros
+      .map((registro, index) => ({ registro, fila: index + 1 }))
+      .filter(({ fila }) => !filasDuplicadas.has(fila - 1));
+
+    // 1.4 — mismas reglas de validación que POST /empleados (línea 74),
+    // más validación de salario_diario numérico (D2 de design.md: todo el
+    // lote corre en una sola transacción, un Decimal inválido revertiría
+    // el lote completo si no se valida antes).
+    const validos: Array<{ registro: EmpleadoImportRegistro; fila: number }> = [];
+    for (const { registro, fila } of candidatos) {
+      const { nombre, apellido_paterno, rfc, puesto, salario_diario } = registro;
+
+      if (!nombre || !apellido_paterno || !rfc || !puesto || !salario_diario) {
+        errores.push({ fila, motivo: 'nombre, apellido_paterno, rfc, puesto y salario_diario son obligatorios.' });
+        continue;
+      }
+
+      if (Number.isNaN(Number(salario_diario))) {
+        errores.push({ fila, motivo: 'salario_diario debe ser numérico.' });
+        continue;
+      }
+
+      validos.push({ registro, fila });
+    }
+
+    const creados = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const creadosLote: Array<Awaited<ReturnType<typeof prisma.empleado.create>>> = [];
+      for (const { registro, fila } of validos) {
+        const {
+          nombre, apellido_paterno, apellido_materno, rfc, curp, nss,
+          puesto, categoria, tipo_contrato, fecha_ingreso, salario_diario,
+          telefono, email,
+        } = registro;
+
+        // 1.5 — mismo par de unicidad que @@unique([tenant_id, rfc]).
+        const existente = await prisma.empleado.findFirst({
+          where: { tenant_id: tenantId, rfc: rfc as string },
+        });
+        if (existente) {
+          errores.push({ fila, motivo: 'Ya existe un empleado con ese rfc en este tenant.' });
+          continue;
+        }
+
+        // 1.6 — numero_empleado autoincremental, mismo cálculo que la alta
+        // individual (línea 80-85), dentro del mismo bucle secuencial para
+        // que cada lectura vea los creados por iteraciones previas de este
+        // lote (D3 de design.md).
+        const lastEmp = await prisma.empleado.findFirst({
+          where: { tenant_id: tenantId },
+          orderBy: { numero_empleado: 'desc' },
+          select: { numero_empleado: true },
+        });
+        const lastNum = lastEmp ? parseInt(lastEmp.numero_empleado.replace('EMP-', '')) : 0;
+        const numero = `EMP-${String(lastNum + 1).padStart(3, '0')}`;
+
+        const nuevo = await prisma.empleado.create({
+          data: {
+            tenant_id: tenantId,
+            numero_empleado: numero,
+            nombre: nombre as string,
+            apellido_paterno: apellido_paterno as string,
+            apellido_materno,
+            rfc: rfc as string,
+            curp,
+            nss,
+            puesto: puesto as string,
+            categoria: categoria || 'OBRERO',
+            tipo_contrato: tipo_contrato || 'PLANTA',
+            fecha_ingreso: new Date(fecha_ingreso || new Date()),
+            salario_diario: Number(salario_diario),
+            telefono,
+            email,
+            estado: 'ACTIVO',
+          },
+        });
+        creadosLote.push(nuevo);
+      }
+      return creadosLote;
+    });
+
+    console.log(`[Personal] Importación de empleados: ${creados.length} creados, ${errores.length} errores`);
+
+    res.status(200).json(createApiResponse({
+      creados: creados.length,
+      empleados: creados,
+      errores: errores.sort((a, b) => a.fila - b.fila),
+    }, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
 app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
