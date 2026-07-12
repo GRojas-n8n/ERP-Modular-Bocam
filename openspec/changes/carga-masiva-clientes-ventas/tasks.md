@@ -103,9 +103,10 @@
       error), confirmación, resultado (2 creados/3 errores con motivo
       correcto por fila) y catálogo refrescado con los 2 clientes nuevos
       (búsqueda por RFC, dado que el catálogo real tiene 65+ clientes
-      ordenados alfabéticamente) — todo en verde. Pendiente: mergear PR
-      #47 a `main` y luego a esta branch para que el test quede en verde
-      en CI (hoy solo se verificó localmente con el fix aplicado a mano).
+      ordenados alfabéticamente) — todo en verde. PR #47 mergeado a
+      `main` y `main` mergeado a esta branch (sin conflictos): el mismo
+      test vuelve a pasar en verde ahora contra el fix real, sin ningún
+      parche manual — 18.7s, 1/1 passed.
       Hallazgo adicional menor, no arreglado aquí: el botón "Cerrar" del
       footer del panel de resultado queda detrás del FAB flotante
       "Asistente IA" (`ChatAsistente`, mismo z-index que `SideSheet`,
