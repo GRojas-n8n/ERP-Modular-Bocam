@@ -26,6 +26,9 @@
 
 ## Behavior
 
+- Consume `GET /api/v1/control-proyectos/dashboard-obra` (endpoint fusionado
+  en `control-proyectos`; antes `GET /api/v1/control-obra/dashboard`) al
+  montar, sin cambios visuales respecto al comportamiento previo
 - Barra de avance: física en verde, financiera en azul; si financiero > físico mostrar diferencia en rojo
 - Semáforo WBS: punto ● verde/amarillo/rojo según estado del endpoint
 - Si `parcial: true`: banner "Datos financieros no disponibles (Finanzas offline)"

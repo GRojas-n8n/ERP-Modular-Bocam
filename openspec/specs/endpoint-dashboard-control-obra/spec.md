@@ -3,7 +3,9 @@
 ## Interface
 
 ```
-GET /api/v1/control-obra/dashboard?proyectoId=<uuid>
+GET /api/v1/control-proyectos/dashboard-obra?proyectoId=<uuid>
+(anteriormente GET /api/v1/control-obra/dashboard, antes de la fusión del
+servicio control-obra a control-proyectos)
 Headers: Authorization: Bearer <jwt>
 Roles: director, control_obra, admin
 
