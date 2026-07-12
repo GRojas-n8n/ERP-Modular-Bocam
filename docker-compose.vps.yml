@@ -248,40 +248,6 @@ services:
       retries: 6
       start_period: 15s
     restart: unless-stopped
-  control-obra:
-    profiles: ["core", "full", "staging"]
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
-      args:
-        WORKSPACE_NAME: "@bocam/control-obra"
-        APP_PATH: "apps/control-obra"
-    container_name: bocam-vps-control-obra
-    environment:
-      PORT: 3005
-      NODE_ENV: ${NODE_ENV}
-      JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
-      CONTROL_OBRA_DATABASE_URL: ${CONTROL_OBRA_DATABASE_URL}
-      RABBITMQ_URL: ${RABBITMQ_URL}
-      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
-      SENTRY_DSN: ${SENTRY_DSN:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      finanzas:
-        condition: service_healthy
-    networks:
-      - bocam-vps-network
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3005/health >/dev/null || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 6
-      start_period: 15s
-    restart: unless-stopped
   personal:
     profiles: ["full", "staging"]
     build:
