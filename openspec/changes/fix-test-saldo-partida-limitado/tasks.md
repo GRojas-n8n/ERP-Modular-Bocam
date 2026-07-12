@@ -35,5 +35,6 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 Abrir PR contra `main` desde branch
-      `fix/test-saldo-partida-limitado`.
+- [x] 4.1 Abrir PR contra `main` desde branch
+      `fix/test-saldo-partida-limitado`. PR #40 abierto, CI verde (run
+      29177855542, 2m29s).
