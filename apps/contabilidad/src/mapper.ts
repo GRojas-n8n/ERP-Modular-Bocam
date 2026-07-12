@@ -1,5 +1,3 @@
-import { logWarn } from '../../../packages/observability/src';
-
 export type TipoPoliza =
   | 'EGRESO'
   | 'PASIVO_PROYECTADO'
@@ -50,7 +48,11 @@ export async function resolveCuentaId(
 ): Promise<string | null> {
   const cuenta = await prisma.cuentaContable.findUnique({ where: { clave } });
   if (!cuenta) {
-    logWarn(null as any, 'contabilidad', 'contabilidad.mapper.cuenta_not_found', `Cuenta ${clave} no encontrada en catálogo`, { clave });
+    console.warn(JSON.stringify({
+      action: 'contabilidad.mapper.cuenta_not_found',
+      message: `Cuenta ${clave} no encontrada en catálogo`,
+      clave,
+    }));
     return null;
   }
   return cuenta.id_cuenta;
@@ -68,11 +70,13 @@ export async function persistMovimientos(
   const totalAbono = movimientosDefs.reduce((s, m) => s + m.monto, 0);
 
   if (Math.abs(totalCargo - totalAbono) > 0.01) {
-    logWarn(null as any, 'contabilidad', 'contabilidad.mapper.descuadre', 'Póliza descuadrada — no se persisten movimientos', {
+    console.warn(JSON.stringify({
+      action: 'contabilidad.mapper.descuadre',
+      message: 'Póliza descuadrada — no se persisten movimientos',
       asiento_id: asientoId,
       totalCargo,
       totalAbono,
-    });
+    }));
     return;
   }
 
@@ -94,11 +98,13 @@ export async function persistMovimientos(
     const cuentaAbonoId = await resolveCuentaId(prisma, def.clave_abono);
 
     if (!cuentaCargoId || !cuentaAbonoId) {
-      logWarn(null as any, 'contabilidad', 'contabilidad.mapper.cuenta_missing', 'No se pudo resolver cuenta — omitiendo línea', {
+      console.warn(JSON.stringify({
+        action: 'contabilidad.mapper.cuenta_missing',
+        message: 'No se pudo resolver cuenta — omitiendo línea',
         asiento_id: asientoId,
         clave_cargo: def.clave_cargo,
         clave_abono: def.clave_abono,
-      });
+      }));
       continue;
     }
 
