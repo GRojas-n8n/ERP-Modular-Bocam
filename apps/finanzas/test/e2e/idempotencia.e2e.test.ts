@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
+import { createTenantContext } from '../../src/db';
 
 const prisma = new PrismaClient();
 
@@ -18,10 +19,12 @@ async function setup() {
   finanzasBaseUrl = finanzasStarted.baseUrl;
 }
 
-async function cleanupTenantData(tenantId: string) {
-  await prisma.movimientoPresupuestal.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId } });
+async function cleanupTenantData(tenantId: string, proyectoId: string) {
+  await createTenantContext({ tenantId, proyectoId, userId: 'system' }, async (tx) => {
+    await tx.movimientoPresupuestal.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId } });
+  });
 }
 
 async function seedBudget(overrides?: {
@@ -34,27 +37,26 @@ async function seedBudget(overrides?: {
   const tenantId = overrides?.tenantId || randomUUID();
   const proyectoId = overrides?.proyectoId || randomUUID();
 
-  const presupuesto = await prisma.presupuestoAsignado.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      codigo: `PRES-E2E-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      descripcion: 'Presupuesto E2E Idempotencia',
-      monto_autorizado: overrides?.authorized ?? 10000,
-      monto_disponible: overrides?.available ?? 10000,
-      monto_comprometido: overrides?.committed ?? 0,
-      monto_ejercido: 0,
-      capitulo: 'MATERIALES',
-      moneda: 'MXN',
-      estatus: 'ACTIVO',
-    },
+  const presupuestoId = await createTenantContext({ tenantId, proyectoId, userId: 'system' }, async (tx) => {
+    const presupuesto = await tx.presupuestoAsignado.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        codigo: `PRES-E2E-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        descripcion: 'Presupuesto E2E Idempotencia',
+        monto_autorizado: overrides?.authorized ?? 10000,
+        monto_disponible: overrides?.available ?? 10000,
+        monto_comprometido: overrides?.committed ?? 0,
+        monto_ejercido: 0,
+        capitulo: 'MATERIALES',
+        moneda: 'MXN',
+        estatus: 'ACTIVO',
+      },
+    });
+    return presupuesto.id_presupuesto;
   });
 
-  return {
-    tenantId,
-    proyectoId,
-    presupuestoId: presupuesto.id_presupuesto,
-  };
+  return { tenantId, proyectoId, presupuestoId };
 }
 
 function buildFinanceToken(tenantId: string, proyectoId: string) {
@@ -70,6 +72,8 @@ function buildFinanceToken(tenantId: string, proyectoId: string) {
 
 async function testComprometerFondosIdempotente() {
   const seeded = await seedBudget();
+  const withCtx = <T,>(fn: (tx: PrismaClient) => Promise<T>) =>
+    createTenantContext({ tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, userId: 'system' }, fn);
   const token = buildFinanceToken(seeded.tenantId, seeded.proyectoId);
   const ocId = randomUUID();
   const ocCodigo = `OC-IDEMP-${Date.now()}`;
@@ -110,23 +114,23 @@ async function testComprometerFondosIdempotente() {
     assert.equal(secondPayload.success, true);
     assert.equal(secondPayload.data.idempotente, true);
 
-    const movimientos = await prisma.movimientoPresupuestal.findMany({
+    const movimientos = await withCtx((tx) => tx.movimientoPresupuestal.findMany({
       where: {
         tenant_id: seeded.tenantId,
         referencia_id: ocId,
         tipo: 'COMPROMISO',
       },
-    });
-    const presupuesto = await prisma.presupuestoAsignado.findUnique({
+    }));
+    const presupuesto = await withCtx((tx) => tx.presupuestoAsignado.findUnique({
       where: { id_presupuesto: seeded.presupuestoId },
-    });
+    }));
 
     assert.equal(movimientos.length, 1);
     assert.equal(Number(presupuesto?.monto_comprometido), 1500);
     assert.equal(Number(presupuesto?.monto_disponible), 8500);
     console.log('ok - finanzas comprometer-fondos es idempotente');
   } finally {
-    await cleanupTenantData(seeded.tenantId);
+    await cleanupTenantData(seeded.tenantId, seeded.proyectoId);
   }
 }
 
@@ -136,11 +140,13 @@ async function testLiberarFondosIdempotente() {
     available: 7000,
     committed: 3000,
   });
+  const withCtx = <T,>(fn: (tx: PrismaClient) => Promise<T>) =>
+    createTenantContext({ tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, userId: 'system' }, fn);
   const token = buildFinanceToken(seeded.tenantId, seeded.proyectoId);
   const ocId = randomUUID();
   const ocCodigo = `OC-LIB-${Date.now()}`;
 
-  await prisma.movimientoPresupuestal.create({
+  await withCtx((tx) => tx.movimientoPresupuestal.create({
     data: {
       tenant_id: seeded.tenantId,
       proyecto_id: seeded.proyectoId,
@@ -155,7 +161,7 @@ async function testLiberarFondosIdempotente() {
       usuario_id: randomUUID(),
       notas: 'Semilla para idempotencia de liberacion',
     },
-  });
+  }));
 
   try {
     const payload = {
@@ -191,28 +197,30 @@ async function testLiberarFondosIdempotente() {
     assert.equal(secondPayload.success, true);
     assert.equal(secondPayload.data.idempotente, true);
 
-    const movimientos = await prisma.movimientoPresupuestal.findMany({
+    const movimientos = await withCtx((tx) => tx.movimientoPresupuestal.findMany({
       where: {
         tenant_id: seeded.tenantId,
         referencia_id: ocId,
         tipo: 'LIBERACION',
       },
-    });
-    const presupuesto = await prisma.presupuestoAsignado.findUnique({
+    }));
+    const presupuesto = await withCtx((tx) => tx.presupuestoAsignado.findUnique({
       where: { id_presupuesto: seeded.presupuestoId },
-    });
+    }));
 
     assert.equal(movimientos.length, 1);
     assert.equal(Number(presupuesto?.monto_comprometido), 0);
     assert.equal(Number(presupuesto?.monto_disponible), 10000);
     console.log('ok - finanzas liberar-fondos es idempotente');
   } finally {
-    await cleanupTenantData(seeded.tenantId);
+    await cleanupTenantData(seeded.tenantId, seeded.proyectoId);
   }
 }
 
 async function testPagosIdempotente() {
   const seeded = await seedBudget();
+  const withCtx = <T,>(fn: (tx: PrismaClient) => Promise<T>) =>
+    createTenantContext({ tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, userId: 'system' }, fn);
   const token = buildFinanceToken(seeded.tenantId, seeded.proyectoId);
   const referenciaId = randomUUID();
 
@@ -255,19 +263,19 @@ async function testPagosIdempotente() {
     assert.equal(secondPayload.success, true);
     assert.equal(firstPayload.data.id_pago, secondPayload.data.id_pago);
 
-    const pagos = await prisma.programaPagos.findMany({
+    const pagos = await withCtx((tx) => tx.programaPagos.findMany({
       where: {
         tenant_id: seeded.tenantId,
         referencia_modulo: 'control-obra',
         referencia_entidad: 'Estimacion',
         referencia_id: referenciaId,
       },
-    });
+    }));
 
     assert.equal(pagos.length, 1);
     console.log('ok - finanzas pagos es idempotente');
   } finally {
-    await cleanupTenantData(seeded.tenantId);
+    await cleanupTenantData(seeded.tenantId, seeded.proyectoId);
   }
 }
 

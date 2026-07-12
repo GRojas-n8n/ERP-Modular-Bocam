@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '../../src/generated/prisma';
 import { createEventBus } from '../../../../packages/event-bus/src';
 import { handleEstimacionAprobadaEvent } from '../../src/main';
+import { createTenantContext } from '../../src/db';
 
 const prisma = new PrismaClient();
 const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://user:password@127.0.0.1:5672';
@@ -35,42 +36,45 @@ async function waitFor(assertion: () => Promise<void>, timeoutMs = 10000) {
   await assertion();
 }
 
-async function cleanupTenantData(tenantId: string) {
-  await prisma.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.movimientoPresupuestal.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId } });
+async function cleanupTenantData(tenantId: string, proyectoId: string) {
+  await createTenantContext({ tenantId, proyectoId, userId: 'system' }, async (tx) => {
+    await tx.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.movimientoPresupuestal.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId } });
+  });
 }
 
 async function seedBudget() {
   const tenantId = randomUUID();
   const proyectoId = randomUUID();
 
-  const presupuesto = await prisma.presupuestoAsignado.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      codigo: `PRES-EVT-${Date.now()}`,
-      descripcion: 'Presupuesto de integracion Control Obra -> Finanzas',
-      monto_autorizado: 25000,
-      monto_disponible: 25000,
-      monto_comprometido: 0,
-      monto_ejercido: 0,
-      capitulo: 'SUBCONTRATOS',
-      moneda: 'MXN',
-      estatus: 'ACTIVO',
-    },
+  const presupuestoId = await createTenantContext({ tenantId, proyectoId, userId: 'system' }, async (tx) => {
+    const presupuesto = await tx.presupuestoAsignado.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        codigo: `PRES-EVT-${Date.now()}`,
+        descripcion: 'Presupuesto de integracion Control Obra -> Finanzas',
+        monto_autorizado: 25000,
+        monto_disponible: 25000,
+        monto_comprometido: 0,
+        monto_ejercido: 0,
+        capitulo: 'SUBCONTRATOS',
+        moneda: 'MXN',
+        estatus: 'ACTIVO',
+      },
+    });
+    return presupuesto.id_presupuesto;
   });
 
-  return {
-    tenantId,
-    proyectoId,
-    presupuestoId: presupuesto.id_presupuesto,
-  };
+  return { tenantId, proyectoId, presupuestoId };
 }
 
 async function main() {
   const runId = randomUUID();
   const seeded = await seedBudget();
+  const withCtx = <T,>(fn: (tx: PrismaClient) => Promise<T>) =>
+    createTenantContext({ tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, userId: 'system' }, fn);
   const correlationId = `corr-${randomUUID()}`;
   const estimacionId = randomUUID();
   const publisher = createEventBus('control-obra');
@@ -109,14 +113,14 @@ async function main() {
     await publishEvent();
 
     await waitFor(async () => {
-      const pagos = await prisma.programaPagos.findMany({
+      const pagos = await withCtx((tx) => tx.programaPagos.findMany({
         where: {
           tenant_id: seeded.tenantId,
           referencia_modulo: 'control-obra',
           referencia_entidad: 'Estimacion',
           referencia_id: estimacionId,
         },
-      });
+      }));
 
       assert.equal(pagos.length, 1);
     });
@@ -133,14 +137,14 @@ async function main() {
     await publishEvent();
 
     await waitFor(async () => {
-      const pagos = await prisma.programaPagos.findMany({
+      const pagos = await withCtx((tx) => tx.programaPagos.findMany({
         where: {
           tenant_id: seeded.tenantId,
           referencia_modulo: 'control-obra',
           referencia_entidad: 'Estimacion',
           referencia_id: estimacionId,
         },
-      });
+      }));
 
       assert.equal(pagos.length, 1);
     });
@@ -159,7 +163,7 @@ async function main() {
     await publisher.close();
     await consumer.close();
 
-    await cleanupTenantData(seeded.tenantId);
+    await cleanupTenantData(seeded.tenantId, seeded.proyectoId);
     await prisma.$disconnect();
     console.log = originalLog;
   }
