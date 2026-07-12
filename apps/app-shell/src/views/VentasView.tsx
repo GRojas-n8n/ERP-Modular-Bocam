@@ -182,7 +182,19 @@ export const VentasView: React.FC = () => {
       if (tenant?.id === 'iretum-demo') { setClientes(DEMO_CLIENTES as Cliente[]); setCotizaciones(DEMO_COTIZACIONES as Cotizacion[]); setFacturas(DEMO_FACTURAS as Factura[]); return; }
       if (t === 'clientes') {
         const r = await ventasApi.getClientes();
-        setClientes(r.data.data || []);
+        // El backend devuelve las columnas reales del schema
+        // (razon_social, rfc_tax_id, email_contacto) — normalizar al
+        // shape de Cliente que el filtro/render de este componente ya
+        // esperan (mismo shape que DEMO_CLIENTES). Ver
+        // openspec/changes/fix-ventas-clientes-render-campos-backend.
+        const clientesBackend: any[] = r.data.data || [];
+        setClientes(clientesBackend.map(c => ({
+          id: c.id_cliente,
+          nombre: c.razon_social,
+          rfc: c.rfc_tax_id,
+          email: c.email_contacto,
+          telefono: c.telefono,
+        })));
       } else if (t === 'cotizaciones') {
         const r = await ventasApi.getCotizaciones();
         setCotizaciones(r.data.data || []);
