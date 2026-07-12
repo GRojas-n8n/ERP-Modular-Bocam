@@ -87,6 +87,18 @@
       mismo archivo — confirmar que la vista previa y el resultado final
       coinciden con el detalle esperado por fila, y que los clientes
       válidos aparecen en el catálogo tras refrescar.
+      Automatizado en `apps/app-shell/test/e2e/clientes-importar-lote.e2e.spec.ts`
+      (Playwright, agregado en este change). Al correrlo contra datos reales
+      (tenant Alfa, 50 clientes ya sembrados) se encontró un bug preexistente
+      y no relacionado con este change: `VentasView.tsx` crashea con
+      `TypeError: Cannot read properties of undefined (reading 'toLowerCase')`
+      en `clientesFiltrados` porque la interfaz `Cliente` espera
+      `nombre`/`rfc` pero el backend real devuelve `razon_social`/
+      `rfc_tax_id` (solo `DEMO_CLIENTES` usa los nombres viejos). El refetch
+      de esta misma tarea (`fetchData('clientes')` tras importar) dispara el
+      crash de forma consistente. Reportado y arreglado por separado en
+      `fix-ventas-clientes-render-campos-backend` — pendiente re-correr este
+      test una vez que ese fix esté mergeado a esta branch.
 - [ ] 4.2 Verificación manual: confirmar que un usuario sin rol `admin` no
       ve el botón "Importar CSV/Excel" y que, si llama al endpoint
       directamente, recibe 403.
