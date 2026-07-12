@@ -32,6 +32,12 @@ function getTransporter(): nodemailer.Transporter | null {
 
 export type TemaCorreo = 'claro' | 'oscuro';
 
+export interface AdjuntoExtra {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
 export interface ItemCotizacionEmail {
   partida: string;
   descripcion: string;
@@ -421,7 +427,8 @@ function buildHtmlOscuro(data: SolicitudCotizacionEmailData, proveedor: Proveedo
 export async function enviarSolicitudCotizacionEmail(
   proveedor: ProveedorContactoEmail,
   data: SolicitudCotizacionEmailData,
-  tema: TemaCorreo = 'claro'
+  tema: TemaCorreo = 'claro',
+  adjuntosExtra: AdjuntoExtra[] = []
 ): Promise<{ enviado: boolean; error?: string }> {
   const t = getTransporter();
   if (!t) {
@@ -437,6 +444,7 @@ export async function enviarSolicitudCotizacionEmail(
       attachments: [
         { filename: 'iretum-logo.png', content: Buffer.from(LOGO_PNG_BASE64, 'base64'), cid: 'iretum-logo', contentType: 'image/png' },
         { filename: 'bocam-logo.png', content: Buffer.from(LOGO_BOCAM_PNG_BASE64, 'base64'), cid: 'bocam-logo', contentType: 'image/png' },
+        ...adjuntosExtra,
       ],
     });
     return { enviado: true };

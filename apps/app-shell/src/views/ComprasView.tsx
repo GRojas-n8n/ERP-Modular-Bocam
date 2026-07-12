@@ -40,10 +40,12 @@ import {
   IconSend,
   IconShoppingCart,
   IconTrash2,
+  IconUpload,
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
+import { parseCsvOrExcelFile } from '../lib/csvImport';
 
 /**
  * ---------------------------------------------------------------------------
@@ -192,6 +194,65 @@ const PROVEEDOR_FORM_EMPTY = {
   estatus_credito: 'ACTIVO', limite_credito: '', tipo_proveedor: 'NACIONAL', calificacion_desempeno: '',
 };
 
+// ─── Importación masiva de Proveedores (CSV/Excel) ────────────────────────────
+// Mismas reglas que POST /proveedores en apps/compras/src/main.ts:1817-1822.
+interface ProveedorImportRow {
+  rfc_tax_id: string;
+  razon_social: string;
+  email_contacto: string;
+  telefono: string;
+  tipo_proveedor: string;
+  calificacion_desempeno: string;
+  _valido: boolean;
+  _error?: string;
+}
+
+function leerColumnaImportProveedor(row: Record<string, string>, ...nombres: string[]): string {
+  for (const key of Object.keys(row)) {
+    if (nombres.includes(key.trim().toLowerCase())) {
+      return String(row[key] ?? '').trim();
+    }
+  }
+  return '';
+}
+
+// Validación cliente-side equivalente a la del backend — solo para la vista
+// previa; el backend re-valida y es la fuente de verdad del resultado.
+function construirPreviewImportProveedores(rows: Record<string, string>[]): ProveedorImportRow[] {
+  const ocurrenciasPorRfc = new Map<string, number>();
+  rows.forEach(row => {
+    const rfc = leerColumnaImportProveedor(row, 'rfc_tax_id', 'rfc').toUpperCase();
+    if (!rfc) return;
+    ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
+  });
+
+  return rows.map(row => {
+    const rfc_tax_id = leerColumnaImportProveedor(row, 'rfc_tax_id', 'rfc');
+    const razon_social = leerColumnaImportProveedor(row, 'razon_social', 'nombre');
+    const email_contacto = leerColumnaImportProveedor(row, 'email_contacto', 'email');
+    const telefono = leerColumnaImportProveedor(row, 'telefono');
+    const tipo_proveedor = leerColumnaImportProveedor(row, 'tipo_proveedor');
+    const calificacion_desempeno = leerColumnaImportProveedor(row, 'calificacion_desempeno', 'calificacion');
+
+    const errores: string[] = [];
+    if (!rfc_tax_id) errores.push('sin rfc_tax_id');
+    if (!razon_social) errores.push('sin razon_social');
+    if (calificacion_desempeno) {
+      const cal = Number(calificacion_desempeno);
+      if (Number.isNaN(cal) || cal < 0 || cal > 5) errores.push('calificacion_desempeno inválida');
+    }
+    if (rfc_tax_id && (ocurrenciasPorRfc.get(rfc_tax_id.toUpperCase()) || 0) > 1) {
+      errores.push('RFC duplicado en el archivo');
+    }
+
+    return {
+      rfc_tax_id, razon_social, email_contacto, telefono, tipo_proveedor, calificacion_desempeno,
+      _valido: errores.length === 0,
+      _error: errores.length ? errores.join(', ') : undefined,
+    };
+  });
+}
+
 // ─── Colores por categoría ───────────────────────────────────────────────────
 const CLASE_STYLE: Record<string, { badge: string; chip: string; label: string }> = {
   MATERIALES:   { badge: 'border-blue-500/20 bg-blue-500/10 text-blue-700',      chip: 'bg-blue-500/10 text-blue-700',      label: 'Materiales' },
@@ -228,6 +289,18 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
   const roles: string[] = user?.role ?? [];
   const isProcurement = roles.some(r => ['procurement', 'admin', 'superintendent'].includes(r));
+  // El endpoint de importación masiva de proveedores NO incluye 'superintendent'
+  // (mismos roles que POST /proveedores) — a diferencia de isProcurement.
+  const puedeImportarProveedores = roles.some(r => ['procurement', 'admin'].includes(r));
+
+  // ── Importación masiva de Proveedores ─────────────────────────────────────
+  const fileImportProveedoresRef = useRef<HTMLInputElement>(null);
+  const [panelImportarProveedores, setPanelImportarProveedores] = useState(false);
+  const [archivoImportProveedoresNombre, setArchivoImportProveedoresNombre] = useState('');
+  const [filasImportProveedores, setFilasImportProveedores] = useState<ProveedorImportRow[]>([]);
+  const [parseImportProveedoresError, setParseImportProveedoresError] = useState<string | null>(null);
+  const [importandoProveedores, setImportandoProveedores] = useState(false);
+  const [resultadoImportProveedores, setResultadoImportProveedores] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
 
   // ─── State ────────────────────────────────────────────────────────────────
   const activeTab: TabId = (activeSubView as TabId) || 'requisiciones';
@@ -542,6 +615,57 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'ordenes-compra') { void loadOrdenesCompra(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'admin-purga' && isAdminRole) { void loadPurgaResumen(); } }, [activeTab, currentProjectId, isAdminRole]);
+
+  // ── Importación masiva de Proveedores ─────────────────────────────────────
+  const handleImportProveedoresFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setArchivoImportProveedoresNombre(file.name);
+    setParseImportProveedoresError(null);
+    setResultadoImportProveedores(null);
+    setPanelImportarProveedores(true);
+
+    try {
+      const rows = await parseCsvOrExcelFile(file);
+      setFilasImportProveedores(construirPreviewImportProveedores(rows));
+    } catch (err: any) {
+      setParseImportProveedoresError(err.message || 'Error al leer el archivo.');
+      setFilasImportProveedores([]);
+    }
+  };
+
+  const handleConfirmarImportProveedores = async () => {
+    setImportandoProveedores(true);
+    try {
+      const registros = filasImportProveedores.map(({ rfc_tax_id, razon_social, email_contacto, telefono, tipo_proveedor, calificacion_desempeno }) => ({
+        rfc_tax_id,
+        razon_social,
+        ...(email_contacto ? { email_contacto } : {}),
+        ...(telefono ? { telefono } : {}),
+        ...(tipo_proveedor ? { tipo_proveedor } : {}),
+        ...(calificacion_desempeno ? { calificacion_desempeno: Number(calificacion_desempeno) } : {}),
+      }));
+      const r = await comprasApi.importarProveedoresLote(registros);
+      setResultadoImportProveedores(r.data.data);
+      if (r.data.data.creados > 0) {
+        setProveedoresList(list => [...list, ...r.data.data.proveedores]);
+      }
+    } catch (err: any) {
+      setParseImportProveedoresError(err.response?.data?.message || 'Error al importar el lote.');
+    } finally {
+      setImportandoProveedores(false);
+    }
+  };
+
+  const handleCerrarPanelImportarProveedores = () => {
+    setPanelImportarProveedores(false);
+    setArchivoImportProveedoresNombre('');
+    setFilasImportProveedores([]);
+    setParseImportProveedoresError(null);
+    setResultadoImportProveedores(null);
+  };
 
   // Cerrar dropdown al hacer clic afuera (requisición)
   useEffect(() => {
@@ -1305,13 +1429,33 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </Button>
         )}
         {activeTab === 'proveedores' && isProcurement && (
-          <Button
-            onClick={() => { setEditingProveedor(null); setProveedorForm(PROVEEDOR_FORM_EMPTY); setShowProveedorForm(true); }}
-            className="rounded-2xl bg-emerald-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500"
-          >
-            <IconPlus className="h-4 w-4" />
-            Nuevo Proveedor
-          </Button>
+          <div className="flex items-center gap-3">
+            {puedeImportarProveedores && (
+              <>
+                <input
+                  ref={fileImportProveedoresRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="hidden"
+                  onChange={handleImportProveedoresFileChange}
+                />
+                <Button
+                  onClick={() => fileImportProveedoresRef.current?.click()}
+                  className="rounded-2xl border border-border/60 bg-card text-xs font-black uppercase tracking-widest text-foreground shadow-sm hover:bg-muted/50"
+                >
+                  <IconUpload className="h-4 w-4" />
+                  Importar CSV/Excel
+                </Button>
+              </>
+            )}
+            <Button
+              onClick={() => { setEditingProveedor(null); setProveedorForm(PROVEEDOR_FORM_EMPTY); setShowProveedorForm(true); }}
+              className="rounded-2xl bg-emerald-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500"
+            >
+              <IconPlus className="h-4 w-4" />
+              Nuevo Proveedor
+            </Button>
+          </div>
         )}
         {activeTab === 'catalogo' && (
           <Button
@@ -3509,6 +3653,131 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       </SlidePanel>
 
       {/* ── Documentos del Proveedor ─── */}
+      {/* ── Importación masiva de Proveedores (CSV/Excel) ────────────────── */}
+      <SlidePanel
+        isOpen={panelImportarProveedores}
+        onClose={handleCerrarPanelImportarProveedores}
+        title={resultadoImportProveedores ? 'Resultado de la importación' : 'Vista previa — Importación de Proveedores'}
+        subtitle={archivoImportProveedoresNombre}
+        accentColor="emerald"
+        maxWidthClassName="max-w-4xl"
+      >
+        <div className="space-y-6 pb-28">
+          {parseImportProveedoresError ? (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+              <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive">{parseImportProveedoresError}</p>
+            </div>
+          ) : resultadoImportProveedores ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{resultadoImportProveedores.creados}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Proveedores creados</p>
+                </div>
+                <div className={cn('rounded-2xl p-4 text-center border', resultadoImportProveedores.errores.length > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                  <p className={cn('text-2xl font-black', resultadoImportProveedores.errores.length > 0 ? 'text-amber-600' : 'text-muted-foreground')}>{resultadoImportProveedores.errores.length}</p>
+                  <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', resultadoImportProveedores.errores.length > 0 ? 'text-amber-600/70' : 'text-muted-foreground')}>Filas con error</p>
+                </div>
+              </div>
+
+              {resultadoImportProveedores.errores.length > 0 && (
+                <div className="rounded-2xl border border-border/40 overflow-hidden">
+                  <TableScrollShadow className="max-h-[420px] overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                        <tr className="border-b border-border/40">
+                          <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Fila</th>
+                          <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Motivo</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/20">
+                        {resultadoImportProveedores.errores.map((e, i) => (
+                          <tr key={i}>
+                            <td className="px-4 py-2.5 font-black text-amber-600">{e.fila}</td>
+                            <td className="px-4 py-2.5 text-foreground">{e.motivo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableScrollShadow>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+                  <p className="text-2xl font-black text-emerald-600">{filasImportProveedores.filter(f => f._valido).length}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 mt-1">Listos para importar</p>
+                </div>
+                <div className={cn('rounded-2xl p-4 text-center border', filasImportProveedores.some(f => !f._valido) ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border/30')}>
+                  <p className={cn('text-2xl font-black', filasImportProveedores.some(f => !f._valido) ? 'text-amber-600' : 'text-muted-foreground')}>{filasImportProveedores.filter(f => !f._valido).length}</p>
+                  <p className={cn('text-[9px] font-black uppercase tracking-widest mt-1', filasImportProveedores.some(f => !f._valido) ? 'text-amber-600/70' : 'text-muted-foreground')}>Con error</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/40 overflow-hidden">
+                <TableScrollShadow className="max-h-[420px] overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                      <tr className="border-b border-border/40">
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">RFC</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Razon Social</th>
+                        <th className="px-4 py-3 text-[9px] font-black text-muted-foreground uppercase tracking-widest">Calificación</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {filasImportProveedores.map((row, i) => (
+                        <tr key={i} className={cn('transition-colors', row._valido ? 'hover:bg-emerald-500/[0.03]' : 'bg-amber-500/5 opacity-60')}>
+                          <td className="px-4 py-2.5 text-center">
+                            {row._valido
+                              ? <IconCheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                              : <span className="text-[9px] text-amber-600 font-bold" title={row._error}>error</span>
+                            }
+                          </td>
+                          <td className="px-4 py-2.5 font-mono text-muted-foreground">{row.rfc_tax_id || '—'}</td>
+                          <td className="px-4 py-2.5 font-bold text-foreground">{row.razon_social || '—'}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">{row.calificacion_desempeno || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableScrollShadow>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40 flex items-center justify-end gap-3">
+          {resultadoImportProveedores || parseImportProveedoresError ? (
+            <button
+              onClick={handleCerrarPanelImportarProveedores}
+              className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+            >
+              Cerrar
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCerrarPanelImportarProveedores}
+                className="px-5 py-2.5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarImportProveedores}
+                disabled={importandoProveedores || filasImportProveedores.length === 0}
+                className="px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {importandoProveedores ? 'Importando...' : `Importar ${filasImportProveedores.length} registro${filasImportProveedores.length === 1 ? '' : 's'}`}
+              </button>
+            </>
+          )}
+        </div>
+      </SlidePanel>
+
       <SlidePanel
         isOpen={!!docsProveedorId}
         onClose={() => setDocsProveedorId(null)}
