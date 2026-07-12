@@ -110,5 +110,6 @@
 
 - [ ] 6.1 Redeploy manual de los contenedores `gerencia-tecnica` y
       `compras` en el VPS tras mergear a `main` (backend sin CI/CD).
-- [ ] 6.2 Abrir PR contra `main` desde branch
+      PENDIENTE — se hace después del merge.
+- [x] 6.2 Abrir PR contra `main` desde branch
       `feat/adjuntos-requisicion-invitacion-cotizar`.
