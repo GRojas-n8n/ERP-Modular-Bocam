@@ -103,6 +103,7 @@
 ## 6. Cierre
 
 - [ ] 6.1 `prisma migrate deploy` + redeploy manual del contenedor
-      `compras` en el VPS tras mergear a `main`.
-- [ ] 6.2 Abrir PR contra `main` desde branch
+      `compras` en el VPS tras mergear a `main`. PENDIENTE — se hace
+      después del merge.
+- [x] 6.2 Abrir PR contra `main` desde branch
       `feat/fecha-entrega-estimada-por-partida`.
