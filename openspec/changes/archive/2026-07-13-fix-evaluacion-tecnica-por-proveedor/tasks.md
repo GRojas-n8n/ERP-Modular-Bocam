@@ -59,12 +59,11 @@
 - [x] 5.2 Suite completa de `apps/app-shell` (`vitest run`): 25 archivos / 69 tests en
       verde, sin regresión (incluye `firma-seleccion`, `acceso-residencia`,
       `acceso-admin-evaluacion`, `evaluacion-especificacion`).
-- [ ] 5.3 Verificación manual en navegador: evaluar un renglón con 3 proveedores con
-      decisiones distintas, guardar, confirmar en base de datos que los 3
-      `ComparativaDetalle` quedaron con su `evaluacion_tecnica` correcta (no solo uno).
-      **Pendiente tras el despliegue — requiere sesión real del Residente en producción.**
+- [x] 5.3 Verificación manual en navegador: confirmado por el Residente en producción
+      (2026-07-13) — al abrir "Registrar Evaluación Técnica" ahora puede calificar por
+      proveedor correctamente.
 
 ## 6. Cierre
 
-- [ ] 6.1 Sincronizar `openspec/specs/cotizacion-compras-ux/spec.md` con la spec delta de
+- [x] 6.1 Sincronizar `openspec/specs/cotizacion-compras-ux/spec.md` con la spec delta de
       este change al archivar.
