@@ -1,5 +1,38 @@
 import * as XLSX from 'xlsx';
 
+const PALABRAS_CONECTORAS = new Set(['de', 'del', 'la', 'el', 'los', 'las']);
+
+function normalizarEncabezado(texto: string): string {
+  const sinAcentos = texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+  const palabras = sinAcentos
+    .split(/[\s_-]+/)
+    .filter(p => p.length > 0 && !PALABRAS_CONECTORAS.has(p));
+  return palabras.join('_');
+}
+
+/**
+ * Busca en `row` la primera columna cuyo encabezado, normalizado (sin
+ * acentos, en minúsculas, espacios/guiones equivalentes a "_", sin
+ * palabras conectoras como "de"/"del"), coincida con alguno de `alias`
+ * (también normalizados). Reutilizable por cualquier import masivo
+ * (Clientes, Proveedores, Empleados) — un encabezado natural en español
+ * ("RAZÓN SOCIAL", "Fecha de Ingreso") empareja igual que su forma
+ * snake_case exacta.
+ */
+export function leerColumnaCsv(row: Record<string, string>, ...alias: string[]): string {
+  const aliasNormalizados = alias.map(normalizarEncabezado);
+  for (const key of Object.keys(row)) {
+    if (aliasNormalizados.includes(normalizarEncabezado(key))) {
+      return String(row[key] ?? '').trim();
+    }
+  }
+  return '';
+}
+
 /**
  * Parsea un archivo CSV o Excel a un arreglo de objetos, usando la primera
  * fila como nombres de columna (mismo motor XLSX que ya usa InsumosView.tsx

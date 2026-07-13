@@ -33,7 +33,7 @@ import {
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
-import { parseCsvOrExcelFile } from '../lib/csvImport';
+import { leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 
 /**
  * ---------------------------------------------------------------------------
@@ -173,39 +173,30 @@ interface EmpleadoImportRow {
   _error?: string;
 }
 
-function leerColumnaImportEmpleado(row: Record<string, string>, ...nombres: string[]): string {
-  for (const key of Object.keys(row)) {
-    if (nombres.includes(key.trim().toLowerCase())) {
-      return String(row[key] ?? '').trim();
-    }
-  }
-  return '';
-}
-
 // Validación cliente-side equivalente a la del backend — solo para la vista
 // previa; el backend re-valida y es la fuente de verdad del resultado.
 function construirPreviewImportEmpleados(rows: Record<string, string>[]): EmpleadoImportRow[] {
   const ocurrenciasPorRfc = new Map<string, number>();
   rows.forEach(row => {
-    const rfc = leerColumnaImportEmpleado(row, 'rfc');
+    const rfc = leerColumnaCsv(row, 'rfc');
     if (!rfc) return;
     ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
   });
 
   return rows.map(row => {
-    const nombre = leerColumnaImportEmpleado(row, 'nombre');
-    const apellido_paterno = leerColumnaImportEmpleado(row, 'apellido_paterno');
-    const apellido_materno = leerColumnaImportEmpleado(row, 'apellido_materno');
-    const rfc = leerColumnaImportEmpleado(row, 'rfc');
-    const curp = leerColumnaImportEmpleado(row, 'curp');
-    const nss = leerColumnaImportEmpleado(row, 'nss');
-    const puesto = leerColumnaImportEmpleado(row, 'puesto');
-    const categoria = leerColumnaImportEmpleado(row, 'categoria');
-    const tipo_contrato = leerColumnaImportEmpleado(row, 'tipo_contrato');
-    const fecha_ingreso = leerColumnaImportEmpleado(row, 'fecha_ingreso');
-    const salario_diario = leerColumnaImportEmpleado(row, 'salario_diario');
-    const telefono = leerColumnaImportEmpleado(row, 'telefono');
-    const email = leerColumnaImportEmpleado(row, 'email');
+    const nombre = leerColumnaCsv(row, 'nombre');
+    const apellido_paterno = leerColumnaCsv(row, 'apellido_paterno');
+    const apellido_materno = leerColumnaCsv(row, 'apellido_materno');
+    const rfc = leerColumnaCsv(row, 'rfc');
+    const curp = leerColumnaCsv(row, 'curp');
+    const nss = leerColumnaCsv(row, 'nss');
+    const puesto = leerColumnaCsv(row, 'puesto');
+    const categoria = leerColumnaCsv(row, 'categoria');
+    const tipo_contrato = leerColumnaCsv(row, 'tipo_contrato');
+    const fecha_ingreso = leerColumnaCsv(row, 'fecha_ingreso');
+    const salario_diario = leerColumnaCsv(row, 'salario_diario');
+    const telefono = leerColumnaCsv(row, 'telefono');
+    const email = leerColumnaCsv(row, 'email');
 
     const errores: string[] = [];
     if (!nombre) errores.push('sin nombre');

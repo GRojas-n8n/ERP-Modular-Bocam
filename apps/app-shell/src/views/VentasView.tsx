@@ -12,7 +12,7 @@ import {
 import { cn } from '../lib/utils';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { SlidePanel } from '../components/SlidePanel';
-import { parseCsvOrExcelFile } from '../lib/csvImport';
+import { leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 
 // ─── Icono local para ventas ──────────────────────────────────────────────────
 const IconShoppingBag: React.FC<{ className?: string }> = ({ className }) => (
@@ -87,31 +87,22 @@ interface ClienteImportRow {
   _error?: string;
 }
 
-function leerColumnaImport(row: Record<string, string>, ...nombres: string[]): string {
-  for (const key of Object.keys(row)) {
-    if (nombres.includes(key.trim().toLowerCase())) {
-      return String(row[key] ?? '').trim();
-    }
-  }
-  return '';
-}
-
 // Validación cliente-side equivalente a la del backend (1.4) — solo para la
 // vista previa; el backend re-valida y es la fuente de verdad del resultado.
 function construirPreviewImportClientes(rows: Record<string, string>[]): ClienteImportRow[] {
   const ocurrenciasPorRfc = new Map<string, number>();
   rows.forEach(row => {
-    const rfc = leerColumnaImport(row, 'rfc_tax_id', 'rfc');
+    const rfc = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
     if (!rfc) return;
     ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
   });
 
   return rows.map(row => {
-    const rfc_tax_id = leerColumnaImport(row, 'rfc_tax_id', 'rfc');
-    const razon_social = leerColumnaImport(row, 'razon_social', 'nombre');
-    const email_contacto = leerColumnaImport(row, 'email_contacto', 'email');
-    const telefono = leerColumnaImport(row, 'telefono');
-    const codigo_cliente = leerColumnaImport(row, 'codigo_cliente', 'codigo');
+    const rfc_tax_id = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
+    const razon_social = leerColumnaCsv(row, 'razon_social', 'nombre');
+    const email_contacto = leerColumnaCsv(row, 'email_contacto', 'email');
+    const telefono = leerColumnaCsv(row, 'telefono');
+    const codigo_cliente = leerColumnaCsv(row, 'codigo_cliente', 'codigo');
 
     const errores: string[] = [];
     if (!rfc_tax_id) errores.push('sin rfc_tax_id');

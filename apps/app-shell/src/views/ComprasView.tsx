@@ -45,7 +45,7 @@ import {
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
-import { parseCsvOrExcelFile } from '../lib/csvImport';
+import { leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 
 /**
  * ---------------------------------------------------------------------------
@@ -207,32 +207,23 @@ interface ProveedorImportRow {
   _error?: string;
 }
 
-function leerColumnaImportProveedor(row: Record<string, string>, ...nombres: string[]): string {
-  for (const key of Object.keys(row)) {
-    if (nombres.includes(key.trim().toLowerCase())) {
-      return String(row[key] ?? '').trim();
-    }
-  }
-  return '';
-}
-
 // Validación cliente-side equivalente a la del backend — solo para la vista
 // previa; el backend re-valida y es la fuente de verdad del resultado.
 function construirPreviewImportProveedores(rows: Record<string, string>[]): ProveedorImportRow[] {
   const ocurrenciasPorRfc = new Map<string, number>();
   rows.forEach(row => {
-    const rfc = leerColumnaImportProveedor(row, 'rfc_tax_id', 'rfc').toUpperCase();
+    const rfc = leerColumnaCsv(row, 'rfc_tax_id', 'rfc').toUpperCase();
     if (!rfc) return;
     ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
   });
 
   return rows.map(row => {
-    const rfc_tax_id = leerColumnaImportProveedor(row, 'rfc_tax_id', 'rfc');
-    const razon_social = leerColumnaImportProveedor(row, 'razon_social', 'nombre');
-    const email_contacto = leerColumnaImportProveedor(row, 'email_contacto', 'email');
-    const telefono = leerColumnaImportProveedor(row, 'telefono');
-    const tipo_proveedor = leerColumnaImportProveedor(row, 'tipo_proveedor');
-    const calificacion_desempeno = leerColumnaImportProveedor(row, 'calificacion_desempeno', 'calificacion');
+    const rfc_tax_id = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
+    const razon_social = leerColumnaCsv(row, 'razon_social', 'nombre');
+    const email_contacto = leerColumnaCsv(row, 'email_contacto', 'email');
+    const telefono = leerColumnaCsv(row, 'telefono');
+    const tipo_proveedor = leerColumnaCsv(row, 'tipo_proveedor');
+    const calificacion_desempeno = leerColumnaCsv(row, 'calificacion_desempeno', 'calificacion');
 
     const errores: string[] = [];
     if (!rfc_tax_id) errores.push('sin rfc_tax_id');
