@@ -5,7 +5,7 @@ import { useNotification } from '../context/NotificationContext';
 import { DEMO_INSUMOS, DEMO_REQUISICIONES, DEMO_COMPARATIVAS } from '../lib/demoData';
 import { ComparativaDetail } from '../components/ComparativaDetail';
 import type { ComparativaLocal } from '../components/ComparativaDetail';
-import { seedProveedoresDesdeSolicitud } from '../lib/comparativa-proveedores';
+import { mergeProveedoresConSolicitud, seedProveedoresDesdeSolicitud } from '../lib/comparativa-proveedores';
 import {
   Button,
   Card,
@@ -888,10 +888,36 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       // La comparativa ya existe en estado local — abrir directamente
       // Si las lineas están vacías pero la req tiene items (posible si el cuadro existe en BD sin detalles),
       // pre-poblar con los items de la req para que Compras sepa qué cotizar
-      if (existing.lineas.length === 0 && (req.items?.length ?? 0) > 0) {
-        const lineasFromReq = buildLineasFromReq(req);
+      const lineasFromReq = (existing.lineas.length === 0 && (req.items?.length ?? 0) > 0)
+        ? buildLineasFromReq(req)
+        : null;
+
+      // Re-fusionar proveedores con la Solicitud de Cotización: `proveedores` se deriva de
+      // ComparativaDetalle (solo existe con precios ya capturados), así que al recargar la
+      // página o reabrir el cuadro se pierde el prepoblado si no se repite este merge aquí.
+      let proveedoresFusionados: ComparativaLocal['proveedores'] | null = null;
+      if (!isDemo) {
+        const solicitud = solicitudesMap[req.id] ?? (await loadSolicitud(req.id));
+        if (solicitud) {
+          const fusion = mergeProveedoresConSolicitud(
+            existing.proveedores,
+            solicitud.proveedores.map(p => ({ proveedor_id: p.proveedor_id, proveedor_nombre: p.proveedor_nombre })),
+          );
+          if (fusion.length !== existing.proveedores.length) {
+            proveedoresFusionados = fusion;
+          }
+        }
+      }
+
+      if (lineasFromReq || proveedoresFusionados) {
         setComparativas(prev => prev.map(c =>
-          c.requisicion_id === req.id ? { ...c, lineas: lineasFromReq } : c
+          c.requisicion_id === req.id
+            ? {
+                ...c,
+                ...(lineasFromReq ? { lineas: lineasFromReq } : {}),
+                ...(proveedoresFusionados ? { proveedores: proveedoresFusionados } : {}),
+              }
+            : c
         ));
       }
     } else {
