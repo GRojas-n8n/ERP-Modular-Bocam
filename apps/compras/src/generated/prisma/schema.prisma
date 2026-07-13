@@ -376,15 +376,15 @@ model ComparativaLinea {
 }
 
 model ComparativaDetalle {
-  id_detalle      String  @id @default(uuid()) @db.Uuid
-  tenant_id       String  @db.Uuid
-  proyecto_id     String  @db.Uuid
-  cuadro_id       String  @db.Uuid
-  proveedor_id    String  @db.Uuid
-  insumo_id       String  @db.Uuid
-  precio_ofertado Decimal @db.Decimal(18, 4)
-  tiempo_entrega  String? @db.VarChar(50)
-  es_ganador      Boolean @default(false)
+  id_detalle             String    @id @default(uuid()) @db.Uuid
+  tenant_id              String    @db.Uuid
+  proyecto_id            String    @db.Uuid
+  cuadro_id              String    @db.Uuid
+  proveedor_id           String    @db.Uuid
+  insumo_id              String    @db.Uuid
+  precio_ofertado        Decimal   @db.Decimal(18, 4)
+  fecha_entrega_estimada DateTime?
+  es_ganador             Boolean   @default(false)
 
   // ── Evaluación técnica del Residente ─────────────────────────────────────
   // Valores escritura nueva: PENDIENTE | C | NC | DA | ?

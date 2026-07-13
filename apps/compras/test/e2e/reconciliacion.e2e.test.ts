@@ -110,7 +110,7 @@ async function seedComparativa() {
             proveedor_id: proveedor.id_proveedor,
             insumo_id: randomUUID(),
             precio_ofertado: '2500.0000',
-            tiempo_entrega: '5 dias',
+            fecha_entrega_estimada: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
             es_ganador: true,
             aprobacion_gt: 'APROBADO',
           },

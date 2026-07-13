@@ -89,7 +89,7 @@ async function main() {
               proveedor_id: prov1.id_proveedor,
               insumo_id: INSUMO_CEMENTO_ID,
               precio_ofertado: 3200.50,
-              tiempo_entrega: '2 días',
+              fecha_entrega_estimada: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
               es_ganador: true
             },
             {
@@ -98,7 +98,7 @@ async function main() {
               proveedor_id: prov2.id_proveedor,
               insumo_id: INSUMO_CEMENTO_ID,
               precio_ofertado: 3450.00,
-              tiempo_entrega: '5 días',
+              fecha_entrega_estimada: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
               es_ganador: false
             }
           ]

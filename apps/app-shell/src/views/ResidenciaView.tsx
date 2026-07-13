@@ -130,6 +130,9 @@ interface InsumoSeleccionado extends InsumoReq {
   justificacion: string;
   especificacion_marca_modelo: string;
   especificacion_detalle: string;
+  // Ficha técnica opcional, subida al insumo (GT) tras crear la requisición —
+  // ver openspec/changes/adjuntos-requisicion-invitacion-cotizar.
+  fichaTecnica?: File | null;
 }
 
 const UNIDADES_REQ = ['PZA', 'SAC', 'M3', 'M2', 'ML', 'KG', 'TON', 'LT', 'CUB', 'DIA', 'SEM', 'MES', 'PTO', 'JGO'];
@@ -733,6 +736,21 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                 `/api/v1/compras/requisiciones/${r.id_requisicion}/items/${backendItem.id_item}/especificaciones`,
                 { especificaciones: insumo.especificaciones }
               );
+            })
+          );
+        }
+        // subir fichas técnicas adjuntas por insumo (best-effort) — ver
+        // openspec/changes/adjuntos-requisicion-invitacion-cotizar
+        const itemsConFicha = insumosSeleccionados.filter(i => i.fichaTecnica);
+        if (itemsConFicha.length > 0) {
+          await Promise.allSettled(
+            itemsConFicha.map(async (insumo) => {
+              const fd = new FormData();
+              fd.append('archivo', insumo.fichaTecnica as File);
+              fd.append('nombre_doc', (insumo.fichaTecnica as File).name);
+              await api.post(`/api/v1/gerencia-tecnica/insumos/${insumo.insumo_id}/fichas`, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              });
             })
           );
         }
@@ -2027,6 +2045,21 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                             onChange={e => setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx ? { ...p, especificacion_detalle: e.target.value } : p))}
                             className="w-full resize-none text-[10px] bg-background border border-border/40 rounded-lg px-2.5 py-1.5 focus:border-indigo-400 outline-none placeholder:text-muted-foreground/60"
                           />
+                          <label className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <span className="shrink-0">📎 Ficha técnica (opcional):</span>
+                            <input
+                              type="file"
+                              data-testid={`ficha-tecnica-${item.insumo_id}`}
+                              onChange={e => {
+                                const file = e.target.files?.[0] ?? null;
+                                setInsumosSeleccionados(prev => prev.map((p, pi) => pi === idx ? { ...p, fichaTecnica: file } : p));
+                              }}
+                              className="flex-1 text-[10px] text-muted-foreground file:mr-2 file:rounded file:border-0 file:bg-indigo-500/10 file:px-2 file:py-1 file:text-[9px] file:font-black file:text-indigo-700"
+                            />
+                          </label>
+                          {item.fichaTecnica && (
+                            <p className="text-[9px] text-emerald-600 truncate">✓ {item.fichaTecnica.name}</p>
+                          )}
                         </div>
                       </div>
                     );

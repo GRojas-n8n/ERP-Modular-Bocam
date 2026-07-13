@@ -20,6 +20,7 @@ import {
 import { applyTerminalMutationInContext, buildTerminalHttpResponse, logTerminalState } from '../../../packages/tenant-idempotency/src';
 import { enviarSolicitudCotizacionEmail, enviarOrdenCompraEmail } from './mailer';
 import { resolveProyectoIdParaSolicitud } from './solicitud-cotizacion-policy';
+import { resolveFichasTecnicasAdjuntas } from './fichas-tecnicas-adjuntas';
 import { requisicionQuedoCubiertaPorLote, GrupoOcEmitido } from './requisicion-cobertura';
 import { buildOcPdfPayload, InsumoCatalogo } from './orden-compra-pdf-payload';
 import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
@@ -142,6 +143,17 @@ async function enviarCorreosSolicitudCotizacion(opts: {
       };
     });
 
+    // Ver openspec/changes/adjuntos-requisicion-invitacion-cotizar: mismas
+    // fichas técnicas para todos los proveedores invitados — se resuelven
+    // una sola vez, no por proveedor.
+    const adjuntosFichas = await resolveFichasTecnicasAdjuntas({
+      gtUrl: GT_URL,
+      insumoIds: reqData.items.map((it: any) => it.insumo_id).filter(Boolean),
+      authHeader: opts.authHeader,
+      tenantHeader: opts.tenantHeader,
+      proyectoHeader: opts.proyectoHeader,
+    });
+
     for (const prov of proveedoresData) {
       if (!prov.email_contacto) {
         sinCorreo.push(prov.razon_social);
@@ -167,7 +179,8 @@ async function enviarCorreosSolicitudCotizacion(opts: {
           items,
           comprador: { nombre: opts.compradorNombre, email: opts.compradorEmail },
         },
-        opts.tema
+        opts.tema,
+        adjuntosFichas
       );
       if (result.enviado) enviados++;
       else fallidos.push({ proveedor: prov.razon_social, error: result.error || 'Error desconocido.' });
@@ -1838,6 +1851,131 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
   }
 });
 
+type ProveedorImportRegistro = {
+  rfc_tax_id?: string;
+  razon_social?: string;
+  email_contacto?: string;
+  telefono?: string;
+  tipo_proveedor?: string;
+  calificacion_desempeno?: number | string;
+};
+
+type ProveedorImportError = { fila: number; motivo: string };
+
+app.post('/api/v1/compras/proveedores/importar-lote', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { registros } = req.body as { registros?: ProveedorImportRegistro[] };
+
+    if (!Array.isArray(registros)) {
+      return res.status(400).json({ success: false, message: '"registros" debe ser un arreglo.' });
+    }
+
+    const errores: ProveedorImportError[] = [];
+
+    // 1.3 — normalizar rfc_tax_id igual que la alta individual (línea 1829).
+    const normalizados = registros.map(registro => ({
+      ...registro,
+      rfc_tax_id: registro.rfc_tax_id ? registro.rfc_tax_id.trim().toUpperCase() : registro.rfc_tax_id,
+    }));
+
+    // 1.4 — RFC duplicado dentro del mismo archivo: ninguna de las filas
+    // repetidas se crea, se reportan todas como error antes de tocar la BD.
+    const filasPorRfc = new Map<string, number[]>();
+    normalizados.forEach((registro, index) => {
+      const rfc = registro.rfc_tax_id;
+      if (!rfc) return;
+      const filas = filasPorRfc.get(rfc) ?? [];
+      filas.push(index);
+      filasPorRfc.set(rfc, filas);
+    });
+    const filasDuplicadas = new Set<number>();
+    for (const filas of filasPorRfc.values()) {
+      if (filas.length > 1) {
+        filas.forEach(index => filasDuplicadas.add(index));
+      }
+    }
+    filasDuplicadas.forEach(index => {
+      errores.push({ fila: index + 1, motivo: 'RFC duplicado dentro del archivo.' });
+    });
+
+    const candidatos = normalizados
+      .map((registro, index) => ({ registro, fila: index + 1 }))
+      .filter(({ fila }) => !filasDuplicadas.has(fila - 1));
+
+    // 1.5 — mismas reglas de validación que POST /proveedores (línea 1817-1822).
+    const validos: Array<{ registro: ProveedorImportRegistro; fila: number }> = [];
+    for (const { registro, fila } of candidatos) {
+      const { rfc_tax_id, razon_social, calificacion_desempeno } = registro;
+
+      if (!rfc_tax_id || !razon_social) {
+        errores.push({ fila, motivo: 'rfc_tax_id y razon_social son obligatorios.' });
+        continue;
+      }
+
+      if (calificacion_desempeno !== undefined && calificacion_desempeno !== null && calificacion_desempeno !== '') {
+        const cal = Number(calificacion_desempeno);
+        if (Number.isNaN(cal) || cal < 0 || cal > 5) {
+          errores.push({ fila, motivo: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
+          continue;
+        }
+      }
+
+      validos.push({ registro, fila });
+    }
+
+    const creados = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const creadosLote: Array<Awaited<ReturnType<typeof prisma.proveedor.create>>> = [];
+      for (const { registro, fila } of validos) {
+        const { rfc_tax_id, razon_social, email_contacto, telefono, tipo_proveedor, calificacion_desempeno } = registro;
+
+        // 1.6 — mismo par de unicidad que @@unique([tenant_id, rfc_tax_id]).
+        const existente = await prisma.proveedor.findFirst({
+          where: { tenant_id: tenantId, rfc_tax_id: rfc_tax_id as string },
+        });
+        if (existente) {
+          errores.push({ fila, motivo: 'Ya existe un proveedor con ese rfc_tax_id en este tenant.' });
+          continue;
+        }
+
+        const nuevo = await prisma.proveedor.create({
+          data: {
+            tenant_id: tenantId,
+            rfc_tax_id: rfc_tax_id as string,
+            razon_social: (razon_social as string).trim(),
+            email_contacto: email_contacto ?? null,
+            telefono: telefono ?? null,
+            tipo_proveedor: tipo_proveedor ?? 'NACIONAL',
+            calificacion_desempeno: calificacion_desempeno !== undefined && calificacion_desempeno !== null && calificacion_desempeno !== ''
+              ? Number(calificacion_desempeno)
+              : null,
+          },
+        });
+        creadosLote.push(nuevo);
+      }
+      return creadosLote;
+    });
+
+    logInfo(req, 'compras', 'compras.proveedores.importar_lote', `Importación de proveedores: ${creados.length} creados, ${errores.length} errores`, {
+      creados: creados.length,
+      errores: errores.length,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        creados: creados.length,
+        proveedores: creados,
+        errores: errores.sort((a, b) => a.fila - b.fila),
+      },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    logError(req, 'compras', 'compras.proveedores.importar_lote.error', message, {});
+    res.status(500).json({ success: false, message });
+  }
+});
+
 app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2963,7 +3101,7 @@ app.put('/api/v1/compras/comparativas/:compId/proveedores/:provId/cotizacion-pdf
 );
 
 // PUT /comparativas/:id/cotizaciones — guarda proveedores y precios de cotización (batch upsert)
-// Body: { proveedores: [{ nombre: string, precios: [{ insumo_id, precio, tiempo_entrega? }] }] }
+// Body: { proveedores: [{ nombre: string, precios: [{ insumo_id, precio, fecha_entrega_estimada? }] }] }
 app.put('/api/v1/compras/comparativas/:id/cotizaciones',
   requireRoles('procurement', 'admin', 'superintendent'),
   async (req: Request, res: Response) => {
@@ -2973,7 +3111,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
       const { proveedores } = req.body as {
         proveedores: Array<{
           nombre: string;
-          precios: Array<{ insumo_id: string; precio: number; tiempo_entrega?: string }>;
+          precios: Array<{ insumo_id: string; precio: number; fecha_entrega_estimada?: string }>;
         }>;
       };
 
@@ -3022,7 +3160,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
                   proveedor_id:   proveedor.id_proveedor,
                   insumo_id:      p.insumo_id,
                   precio_ofertado: p.precio,
-                  tiempo_entrega: p.tiempo_entrega || null,
+                  fecha_entrega_estimada: p.fecha_entrega_estimada ? new Date(p.fecha_entrega_estimada) : null,
                 },
               });
             }
@@ -5118,7 +5256,7 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
                 proveedor_id: d.proveedor_id,
                 insumo_id: d.insumo_id,
                 precio_ofertado: d.precio_ofertado,
-                tiempo_entrega: d.tiempo_entrega,
+                fecha_entrega_estimada: d.fecha_entrega_estimada,
                 es_ganador: false,
                 evaluacion_tecnica: 'PENDIENTE',
                 comentario_tecnico: null,
@@ -5473,7 +5611,7 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
                   proveedor_id: d.proveedor_id,
                   insumo_id: d.insumo_id,
                   precio_ofertado: d.precio_ofertado,
-                  tiempo_entrega: d.tiempo_entrega,
+                  fecha_entrega_estimada: d.fecha_entrega_estimada,
                   es_ganador: false,
                   evaluacion_tecnica: 'PENDIENTE',
                   comentario_tecnico: null,
