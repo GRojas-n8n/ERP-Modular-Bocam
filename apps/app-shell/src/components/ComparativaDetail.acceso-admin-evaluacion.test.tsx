@@ -6,13 +6,15 @@ import type { ComparativaLocal } from './ComparativaDetail';
 /**
  * Ver openspec/changes/fix-evaluacion-tecnica-admin-y-descripcion.
  *
- * Bug: showEvalTecnicaBtn (el botón que abre el panel de evaluación
- * técnica con los controles C/NC/DA/?) solo revisaba isResident ||
- * isSuperint — a diferencia de showFirmaBtn y la sección "Veredicto del
- * Residente", que sí incluyen roles.includes('admin'). Confirmado en
- * producción (2026-07-13, usuario administrador): nunca veía el botón
- * para abrir el panel de evaluación, en ningún cuadro (catálogo o texto
- * libre).
+ * Bug original: showEvalTecnicaBtn (que gatea el acceso a evaluar C/NC/DA/?)
+ * solo revisaba isResident || isSuperint — a diferencia de showFirmaBtn y la
+ * sección "Veredicto del Residente", que sí incluyen roles.includes('admin').
+ * Confirmado en producción (2026-07-13, usuario administrador): nunca podía
+ * evaluar, en ningún cuadro (catálogo o texto libre).
+ *
+ * Desde openspec/changes/evaluacion-tecnica-inline-tabla-comparativa, la
+ * evaluación ya no vive en un modal — showEvalTecnicaBtn ahora gatea si la
+ * sub-fila inline en "TABLA DE COTIZACIONES" es editable.
  */
 
 vi.mock('../context/TenantContext', () => ({
@@ -23,6 +25,8 @@ vi.mock('../context/NotificationContext', () => ({
   useNotification: () => ({ notify: vi.fn() }),
 }));
 
+const PROV_ID = 'prov-1';
+
 function buildComparativa(overrides: Partial<ComparativaLocal> = {}): ComparativaLocal {
   return {
     id: 'cuadro-1',
@@ -32,7 +36,7 @@ function buildComparativa(overrides: Partial<ComparativaLocal> = {}): Comparativ
     revision: 'A',
     primera_opcion_proveedor_id: null,
     segunda_opcion_proveedor_id: null,
-    proveedores: [{ id: 'prov-1', nombre: 'Proveedor Uno' } as any],
+    proveedores: [{ id: PROV_ID, nombre: 'Proveedor Uno' } as any],
     lineas: [
       {
         id: 'linea-1',
@@ -41,10 +45,13 @@ function buildComparativa(overrides: Partial<ComparativaLocal> = {}): Comparativ
         insumo_descripcion: 'Varilla 3/8',
         insumo_unidad: 'PZA',
         cantidad: 10,
-        precios: {},
+        precios: { [PROV_ID]: '100' },
         tiempos: {},
         ganador: null,
         evaluacion_tecnica: 'PENDIENTE',
+        evaluacionesPorProveedor: {
+          [PROV_ID]: { id_detalle: 'detalle-1', evaluacion_tecnica: 'PENDIENTE' },
+        },
       } as any,
     ],
     lineas_detalle: [{ insumo_id: 'insumo-1', especificaciones: [] }],
@@ -55,8 +62,8 @@ function buildComparativa(overrides: Partial<ComparativaLocal> = {}): Comparativ
   } as unknown as ComparativaLocal;
 }
 
-describe('ComparativaDetail — acceso del rol admin al panel de evaluación técnica', () => {
-  it('un usuario con rol admin (sin residencia ni superintendent) ve "Registrar Evaluación Técnica" y puede abrir el panel', async () => {
+describe('ComparativaDetail — acceso del rol admin a la evaluación técnica inline', () => {
+  it('un usuario con rol admin (sin residencia ni superintendent) ve controles C/NC/DA/? editables en la tabla', async () => {
     render(
       <ComparativaDetail
         requisicionFolio="REQ-TEST-1"
@@ -71,6 +78,7 @@ describe('ComparativaDetail — acceso del rol admin al panel de evaluación té
 
     await waitFor(() => expect(screen.getByText('Varilla 3/8')).toBeInTheDocument());
 
-    expect(screen.getByRole('button', { name: /Registrar Evaluación Técnica/i })).toBeInTheDocument();
+    expect(screen.getByTestId(`eval-btn-linea-1-${PROV_ID}-C`)).toBeInTheDocument();
+    expect(screen.getByTestId('eval-guardar-linea-linea-1')).toBeInTheDocument();
   });
 });

@@ -9,11 +9,12 @@ primero. El botón "🔒 Firmar y Bloquear →" SHALL permanecer deshabilitado m
 al menos un proveedor de algún renglón sin evaluar.
 
 #### Scenario: Cuadro con 3 proveedores en un mismo renglón
-- **WHEN** el Residente hace clic en "Evaluar ▾" de un renglón sin especificaciones
-  cotizado por 3 proveedores, dentro de "TABLA DE COTIZACIONES"
-- **THEN** se expande una fila debajo del renglón, dentro de la misma tabla, con 3 bloques
-  de evaluación independientes (uno por proveedor), cada uno con sus propios controles
-  C/NC/DA/? y comentario — sin salir de la tabla ni abrir un modal
+- **WHEN** el Residente abre "TABLA DE COTIZACIONES" y ve un renglón sin especificaciones
+  cotizado por 3 proveedores
+- **THEN** ve, sin ningún clic adicional, una fila justo debajo del renglón con 3 bloques
+  de evaluación independientes (uno por proveedor, alineado bajo la columna de ese
+  proveedor), cada uno con sus propios controles C/NC/DA/? y comentario — sin salir de la
+  tabla ni abrir un modal
 
 #### Scenario: Guardar una línea sin "?" persiste los 3 proveedores de esa línea
 - **WHEN** el Residente evalúa los 3 proveedores de un renglón con decisiones C/NC/DA
@@ -36,5 +37,4 @@ al menos un proveedor de algún renglón sin evaluar.
 #### Scenario: Proveedor sin precio capturado en un renglón no requiere evaluación
 - **WHEN** un renglón tiene 3 proveedores en el cuadro pero solo 2 capturaron precio para
   ese renglón específico
-- **THEN** la sub-fila expandida solo pide evaluar a los 2 proveedores que sí cotizaron ese
-  renglón
+- **THEN** la sub-fila solo pide evaluar a los 2 proveedores que sí cotizaron ese renglón

@@ -35,22 +35,31 @@ El modelo de datos ya existe: `CotizacionLinea.evaluacionesPorProveedor`.
 
 ## Decisions
 
-### D1: Sub-fila expandible por línea (no columnas siempre visibles)
+### D1: Sub-fila siempre visible, alineada por columna de proveedor (no colSpan, no toggle)
 
-A diferencia de la matriz (que agrega una `<tr>` fija por especificación porque cada una
-es un ítem real a evaluar), el panel simple solo tiene un ítem por proveedor por línea —
-mostrar 3 proveedores × (4 botones + comentario) como columnas fijas en la fila principal
-haría la tabla demasiado ancha, especialmente sumado a precio+fecha por proveedor que ya
-existen.
+Revisando el código real de la sub-fila de especificaciones
+(`ComparativaDetail.tsx:2089-2221`): NO usa un bloque `colSpan` ancho — alinea los
+controles C/NC/DA/? de cada proveedor dentro de su propia `<td>`, en la misma columna
+angosta (`w-36`, ~144px) donde ya viven precio y fecha de entrega. La pregunta obligatoria
+para "?" ya cabe en ese ancho (`textarea` con `min-h-[44px]` dentro del `<td>` de esp.).
+Esto invalida la premisa de D1 original (que asumía que un bloque por proveedor no cabía
+sin `colSpan`) — si ya funciona para la matriz, funciona igual para el panel simple.
 
-Se opta por una `<tr>` adicional colapsable por línea, con un botón "Evaluar ▾" en la
-columna de resumen (la misma celda que hoy muestra "N/M evaluados" —
-`fix-evaluacion-tecnica-por-proveedor`) que la expande. Expandida, muestra un bloque
-C/NC/DA/? + comentario/pregunta por proveedor, en una fila `colSpan` sobre todo el ancho
-de la tabla (mismo patrón de layout que ya usa el modal, pero embebido).
+Se adopta el mismo patrón exacto: una `<tr>` adicional por línea sin especificaciones,
+**siempre visible** (sin toggle "Evaluar ▾", sin estado de expansión) — igual que la
+matriz ya hace incondicionalmente. Cada `<td>` de esa fila, alineado bajo la columna del
+proveedor correspondiente, contiene sus botones C/NC/DA/? y (si aplica) comentario o
+pregunta. Como el panel simple solo tiene 1 fila por línea (no N por especificación como
+la matriz), el costo de espacio vertical es mínimo — no justifica la complejidad de un
+expand/collapse.
 
-**Alternativa descartada**: columnas siempre visibles por proveedor. Se descarta por ancho
-de tabla con 3+ proveedores.
+**Alternativa descartada (versión original de este documento)**: sub-fila colapsable con
+botón "Evaluar ▾" y colSpan ancho. Descartada tras revisar el patrón real de la matriz —
+innecesariamente compleja para el mismo resultado.
+**Alternativa descartada**: columnas siempre visibles junto al precio en la fila
+principal (en vez de una fila aparte). Descartada porque mezclaría captura de precio y
+evaluación técnica en la misma celda, distinto momento del flujo (Compras cotiza, Residente
+evalúa después) — la fila separada ya es el patrón usado por la matriz por la misma razón.
 
 ### D2: Guardado mixto — por línea para C/NC/DA, agregado para "?"
 
