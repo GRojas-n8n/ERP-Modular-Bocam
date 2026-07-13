@@ -775,7 +775,7 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   // 6.2 Determinar qué botones de acción muestra el usuario según su rol y el estado del cuadro
   const isProcurement = roles.some(r => ['procurement', 'admin'].includes(r));
-  const isResident    = roles.some(r => ['resident', 'control_obra'].includes(r));
+  const isResident    = roles.some(r => ['resident', 'residencia', 'control_obra'].includes(r));
   const isSuperint    = roles.includes('superintendent');
   const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
 
@@ -2329,7 +2329,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       )}
 
       {/* Sección: Veredicto del Residente */}
-      {comp.estado === 'EN_EVALUACION_TECNICA' && (isResident || roles.includes('admin')) && !isResidenteMode && (
+      {comp.estado === 'EN_EVALUACION_TECNICA' && (isResident || roles.includes('admin')) && (
         <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-4 space-y-3">
           <p className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Veredicto del Residente</p>
 
