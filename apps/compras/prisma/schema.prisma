@@ -365,7 +365,9 @@ model ComparativaLinea {
   /// Nullable para ítems de requisición de texto libre (imprevisto, sin catálogo) —
   /// en ese caso detalle_req_id es la llave de identificación de la línea.
   insumo_id                 String?  @db.Uuid
-  marca_modelo_ref          String?  @db.VarChar(100)
+  // VarChar(200) para igualar el límite real de RequisicionItem.especificacion_marca_modelo
+  // (origen del valor al crear el cuadro) — ver openspec/changes/fix-crear-cuadro-comparativo-500.
+  marca_modelo_ref          String?  @db.VarChar(200)
   especificaciones_requeridas String? @db.Text
   // Referencia al RequisicionItem de origen (nullable para cuadros anteriores)
   detalle_req_id            String?  @db.Uuid
