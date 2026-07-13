@@ -52,10 +52,13 @@ function buildComparativa(): ComparativaLocal {
         insumo_descripcion: 'Cemento sin características capturadas',
         insumo_unidad: 'SACO',
         cantidad: 5,
-        precios: {},
+        precios: { [PROV_ID]: '50' },
         tiempos: {},
         ganador: null,
         evaluacion_tecnica: 'PENDIENTE',
+        evaluacionesPorProveedor: {
+          [PROV_ID]: { id_detalle: 'detalle-sin-specs', evaluacion_tecnica: 'PENDIENTE' },
+        },
       } as any,
     ],
     lineas_detalle: [
@@ -124,18 +127,13 @@ describe('ComparativaDetail — evaluación técnica por característica (matriz
     // El renglón sin specs NO debe generar sub-fila de característica
     expect(screen.queryByText(/Resistencia mínima/)).not.toBeNull(); // el otro renglón sí la tiene
     const filaSinSpecs = screen.getByText('Cemento sin características capturadas').closest('tr')!;
-    // No debe haber botones C/NC/DA/? dentro de esa fila (esos viven en la matriz, no en la tabla principal)
+    // No debe haber botones C/NC/DA/? dentro de la fila principal (viven en la sub-fila
+    // de evaluación inline, ver openspec/changes/evaluacion-tecnica-inline-tabla-comparativa)
     expect(within(filaSinSpecs).queryByRole('button', { name: 'C' })).toBeNull();
 
-    // Abrir el panel de evaluación directa (legacy)
-    const botonEvaluar = screen.getByRole('button', { name: /Evaluación Técnica/i });
-    fireEvent.click(botonEvaluar);
-
-    await waitFor(() => expect(screen.getByText('Evaluación Técnica')).toBeInTheDocument());
-    const modal = screen.getByText('Evaluación Técnica').closest('div.fixed') as HTMLElement;
-    // El modal legacy debe listar el renglón sin specs, con sus botones C/NC/DA/? directos
-    expect(within(modal).getByText('Cemento sin características capturadas')).toBeInTheDocument();
-    // El renglón CON specs no debe aparecer en este modal (usa la matriz en su lugar)
-    expect(within(modal).queryByText('Varilla 3/8 con características')).not.toBeInTheDocument();
+    // La sub-fila de evaluación inline sí tiene los controles C/NC/DA/? directos
+    expect(screen.getByTestId(`eval-btn-linea-sin-specs-${PROV_ID}-C`)).toBeInTheDocument();
+    // El renglón CON specs no genera esta sub-fila (usa la matriz por especificación)
+    expect(screen.queryByTestId(`eval-btn-linea-con-specs-${PROV_ID}-C`)).not.toBeInTheDocument();
   });
 });

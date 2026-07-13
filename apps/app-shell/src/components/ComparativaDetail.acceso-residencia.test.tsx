@@ -50,10 +50,13 @@ function buildComparativa(overrides: Partial<ComparativaLocal> = {}): Comparativ
         insumo_descripcion: 'Varilla 3/8',
         insumo_unidad: 'PZA',
         cantidad: 10,
-        precios: {},
+        precios: { [PROV_ID]: '100' },
         tiempos: {},
         ganador: null,
         evaluacion_tecnica: 'C',
+        evaluacionesPorProveedor: {
+          [PROV_ID]: { id_detalle: 'detalle-1', evaluacion_tecnica: 'C' },
+        },
       } as any,
     ],
     lineas_detalle: [{ insumo_id: 'insumo-1', especificaciones: [] }],
@@ -65,7 +68,7 @@ function buildComparativa(overrides: Partial<ComparativaLocal> = {}): Comparativ
 }
 
 describe('ComparativaDetail — acceso del rol residencia a la evaluación técnica', () => {
-  it('un usuario con rol residencia, en modo residente, ve "Registrar Evaluación Técnica" y el veredicto del Residente', async () => {
+  it('un usuario con rol residencia, en modo residente, ve controles de evaluación editables y el veredicto del Residente', async () => {
     render(
       <ComparativaDetail
         requisicionFolio="REQ-TEST-1"
@@ -80,7 +83,8 @@ describe('ComparativaDetail — acceso del rol residencia a la evaluación técn
 
     await waitFor(() => expect(screen.getByText('Varilla 3/8')).toBeInTheDocument());
 
-    expect(screen.getByRole('button', { name: /Registrar Evaluación Técnica/i })).toBeInTheDocument();
+    expect(screen.getByTestId(`eval-btn-linea-1-${PROV_ID}-C`)).toBeInTheDocument();
+    expect(screen.getByTestId('eval-guardar-linea-linea-1')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Describe tu evaluación general/i)).toBeInTheDocument();
   });
 
@@ -136,7 +140,10 @@ describe('ComparativaDetail — acceso del rol residencia a la evaluación técn
 
     await waitFor(() => expect(screen.getByText('Varilla 3/8')).toBeInTheDocument());
 
-    expect(screen.queryByRole('button', { name: /Registrar Evaluación Técnica/i })).not.toBeInTheDocument();
+    // Sin rol habilitado: la sub-fila muestra el badge de solo lectura ("C"), no
+    // controles editables ni el botón de guardar.
+    expect(screen.queryByTestId(`eval-btn-linea-1-${PROV_ID}-C`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('eval-guardar-linea-linea-1')).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Describe tu evaluación general/i)).not.toBeInTheDocument();
   });
 });

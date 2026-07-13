@@ -327,11 +327,12 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [addLineaCantidad, setAddLineaCantidad] = useState('');
   const [autorizando, setAutorizando] = useState(false);
 
-  // 7.1 Panel evaluación técnica (Residente)
-  const [showEvalPanel, setShowEvalPanel] = useState(false);
+  // 7.1 Evaluación técnica inline (Residente) — sub-fila en "TABLA DE COTIZACIONES", ver
+  // openspec/changes/evaluacion-tecnica-inline-tabla-comparativa.
   const [evalForm, setEvalForm] = useState<Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }>>({});
   const [preguntasEval, setPreguntasEval] = useState<Record<string, string>>({});
   const [enviandoEval, setEnviandoEval] = useState(false);
+  const [guardandoLineaId, setGuardandoLineaId] = useState<string | null>(null);
 
   // Veredicto del Residente
   const [veredicto, setVeredicto] = useState<string>(comp.veredicto_residente ?? '');
@@ -546,11 +547,13 @@ export const ComparativaDetail: React.FC<Props> = ({
     return () => window.removeEventListener('mousedown', handler);
   }, [provDropdownOpen]);
 
-  // Inicializar form de evaluación cuando se abre el panel — una entrada por
-  // (línea, proveedor), no una por línea. Ver
-  // openspec/changes/fix-evaluacion-tecnica-por-proveedor.
+  // Inicializar form de evaluación al montar — una entrada por (línea, proveedor), no
+  // una por línea. La sub-fila de evaluación en la tabla es siempre visible (sin modal),
+  // así que se inicializa una sola vez, no re-sincroniza en cada cambio de `comp` para no
+  // perder ediciones sin guardar de otras líneas cuando se guarda una. Ver
+  // openspec/changes/fix-evaluacion-tecnica-por-proveedor y
+  // openspec/changes/evaluacion-tecnica-inline-tabla-comparativa.
   useEffect(() => {
-    if (!showEvalPanel) return;
     const init: Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }> = {};
     const preguntas: Record<string, string> = {};
     comp.lineas.forEach(l => {
@@ -573,7 +576,8 @@ export const ComparativaDetail: React.FC<Props> = ({
     });
     setEvalForm(init);
     setPreguntasEval(preguntas);
-  }, [showEvalPanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Inicializar form GT cuando se abre el panel
   useEffect(() => {
@@ -872,6 +876,17 @@ export const ComparativaDetail: React.FC<Props> = ({
   const showNuevaRevisionBtn = (isProcurement || roles.includes('admin')) && (comp.estado === 'EN_EVALUACION_TECNICA' || comp.estado === 'LOCKED');
   const showDesbloquearBtn = roles.includes('admin') && isFirmadoBloqueado;
 
+  // Evaluación técnica inline — ver openspec/changes/evaluacion-tecnica-inline-tabla-comparativa.
+  // `showEvalTecnicaBtn` (rol + estado) decide si la sub-fila es editable; ya no abre un
+  // modal, controla directamente si se muestran controles o solo el badge de solo lectura.
+  const lineasSinSpecsEval = comp.lineas.filter(l => !(especsMap[lineaDetalleKey(l)]?.length));
+  const formKeysDeLineaEval = (linea: CotizacionLinea): string[] => {
+    const provIds = Object.keys(linea.evaluacionesPorProveedor ?? {});
+    return provIds.length > 0 ? provIds.map(p => `${linea.id}:${p}`) : [linea.id];
+  };
+  const algunaEnDuda = lineasSinSpecsEval.some(l => formKeysDeLineaEval(l).some(k => evalForm[k]?.decision === '?'));
+  const faltaPreguntaEval = lineasSinSpecsEval.some(l => formKeysDeLineaEval(l).some(k => evalForm[k]?.decision === '?' && !preguntasEval[k]?.trim()));
+
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleAddProveedorFromCatalog = (prov: ProveedorCatalogoItem) => {
@@ -1105,6 +1120,70 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
+  // Guardar la evaluación de UNA línea sin "?" (C/NC/DA únicamente) — sub-fila inline.
+  // Las líneas con algún "?" no usan este guardado individual: el endpoint
+  // revision-con-preguntas crea una revisión de cuadro nueva por llamada, así que los "?"
+  // se acumulan y se guardan juntos vía handleGuardarEvaluacion (botón agregado). Ver
+  // openspec/changes/evaluacion-tecnica-inline-tabla-comparativa.
+  const handleGuardarLineaEvaluacion = async (linea: CotizacionLinea) => {
+    const provEntries = Object.entries(linea.evaluacionesPorProveedor ?? {});
+    const pares = provEntries.length > 0
+      ? provEntries.map(([provId, ev]) => ({ detalleId: ev.id_detalle, formKey: `${linea.id}:${provId}` }))
+      : [{ detalleId: linea.id, formKey: linea.id }];
+
+    if (pares.some(({ formKey }) => evalForm[formKey]?.decision === '?')) return;
+
+    const REQUIRES_COMMENT = new Set(['NC', 'DA']);
+    for (const { formKey } of pares) {
+      const form = evalForm[formKey];
+      if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
+        notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${linea.insumo_descripcion}".` });
+        return;
+      }
+    }
+
+    setGuardandoLineaId(linea.id);
+    try {
+      const evaluaciones = pares.map(({ detalleId, formKey }) => ({
+        detalle_id: detalleId,
+        evaluacion_tecnica: evalForm[formKey]?.decision ?? 'PENDIENTE',
+        comentario_tecnico: evalForm[formKey]?.comentario || undefined,
+      }));
+
+      const mergeLinea = (l: CotizacionLinea): CotizacionLinea => {
+        if (l.id !== linea.id) return l;
+        const entries = Object.entries(l.evaluacionesPorProveedor ?? {});
+        if (entries.length > 0) {
+          const evaluacionesPorProveedor = Object.fromEntries(entries.map(([provId, ev]) => [provId, {
+            ...ev,
+            evaluacion_tecnica: evalForm[`${l.id}:${provId}`]?.decision ?? ev.evaluacion_tecnica,
+            comentario_tecnico: evalForm[`${l.id}:${provId}`]?.comentario || ev.comentario_tecnico,
+          }]));
+          const primero = Object.values(evaluacionesPorProveedor)[0];
+          return { ...l, evaluacionesPorProveedor, evaluacion_tecnica: primero.evaluacion_tecnica, comentario_tecnico: primero.comentario_tecnico };
+        }
+        return {
+          ...l,
+          evaluacion_tecnica: evalForm[l.id]?.decision ?? l.evaluacion_tecnica,
+          comentario_tecnico: evalForm[l.id]?.comentario || l.comentario_tecnico,
+        };
+      };
+
+      if (isDemo) {
+        onUpdate({ ...comp, lineas: comp.lineas.map(mergeLinea) });
+      } else {
+        const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/evaluar`, { evaluaciones });
+        const updatedData = resp.data.data ?? {};
+        onUpdate({ ...comp, ...updatedData, lineas: comp.lineas.map(mergeLinea) });
+      }
+      notify({ type: 'success', title: 'Evaluación guardada', message: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar evaluación', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoLineaId(null);
+    }
+  };
+
   // Guardar evaluación técnica del Residente (C/NC/DA/?) — una entrada por
   // (línea, proveedor). Ver openspec/changes/fix-evaluacion-tecnica-por-proveedor.
   const handleGuardarEvaluacion = async () => {
@@ -1171,7 +1250,6 @@ export const ComparativaDetail: React.FC<Props> = ({
         const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/revision-con-preguntas`, { evaluaciones });
         const nuevaRevision = resp.data.data?.revision_label ?? '?';
         notify({ type: 'success', title: `Se creó la revisión ${nuevaRevision}`, message: 'Compras verá tus preguntas y podrá responderlas.' });
-        setShowEvalPanel(false);
         onBack();
         return;
       } else {
@@ -1197,7 +1275,6 @@ export const ComparativaDetail: React.FC<Props> = ({
         onUpdate({ ...comp, ...updatedData, lineas: lineasActualizadas });
         notify({ type: 'success', title: 'Evaluación guardada', message: 'Llena el veredicto y firma para bloquear el cuadro.' });
       }
-      setShowEvalPanel(false);
     } catch (err: any) {
       notify({ type: 'error', title: 'Error al guardar evaluación', message: err.response?.data?.message ?? err.message });
     } finally {
@@ -1545,7 +1622,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       })()}
 
       {/* Barra de acciones según rol y estado */}
-      {(showEnviarEvalBtn || showEvalTecnicaBtn || showEnviarGTBtn || showRevisarGTBtn || showGenerarOCBtn || showFirmaBtn || showNuevaRevisionBtn) && (
+      {(showEnviarEvalBtn || (showEvalTecnicaBtn && algunaEnDuda) || showEnviarGTBtn || showRevisarGTBtn || showGenerarOCBtn || showFirmaBtn || showNuevaRevisionBtn) && (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/40 bg-muted/30 px-4 py-3">
           <span className="mr-auto text-[10px] font-black uppercase tracking-widest text-muted-foreground">
             Siguiente acción requerida
@@ -1557,9 +1634,19 @@ export const ComparativaDetail: React.FC<Props> = ({
             </Button>
           )}
 
-          {showEvalTecnicaBtn && (
-            <Button onClick={() => setShowEvalPanel(true)} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400">
-              Registrar Evaluación Técnica →
+          {/* Guarda TODAS las evaluaciones pendientes (incluyendo los "?") en una sola
+              llamada — visible mientras exista al menos un "?" en cualquier renglón sin
+              especificaciones, porque revision-con-preguntas crea una revisión nueva por
+              llamada y no puede dispararse línea por línea. Ver
+              openspec/changes/evaluacion-tecnica-inline-tabla-comparativa. */}
+          {showEvalTecnicaBtn && algunaEnDuda && (
+            <Button
+              data-testid="eval-guardar-agregado"
+              onClick={handleGuardarEvaluacion}
+              disabled={enviandoEval || faltaPreguntaEval}
+              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400 disabled:opacity-40"
+            >
+              {enviandoEval ? 'Guardando...' : 'Guardar y Crear Revisión'}
             </Button>
           )}
 
@@ -2221,6 +2308,104 @@ export const ComparativaDetail: React.FC<Props> = ({
                       </tr>
                     );
                   })}
+                  {/* ── Sub-fila de evaluación técnica por proveedor — renglones SIN
+                      especificaciones capturadas, alineada bajo la columna de cada
+                      proveedor (mismo patrón que las sub-filas de especificaciones de
+                      arriba). Reemplaza el panel modal. Ver
+                      openspec/changes/evaluacion-tecnica-inline-tabla-comparativa. ── */}
+                  {!(especsMap[lineaDetalleKey(linea)]?.length) && Object.keys(linea.evaluacionesPorProveedor ?? {}).length > 0 && (() => {
+                    const provIds = Object.keys(linea.evaluacionesPorProveedor ?? {});
+                    const algunaEnDudaLinea = provIds.some(provId => evalForm[`${linea.id}:${provId}`]?.decision === '?');
+                    return (
+                      <tr className="border-b border-amber-500/5 bg-amber-500/[0.02]">
+                        <td className="pl-10 pr-2 py-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-amber-400 text-[8px]">◆</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">Evaluación técnica</span>
+                            {showEvalTecnicaBtn && !algunaEnDudaLinea && (
+                              <button
+                                type="button"
+                                data-testid={`eval-guardar-linea-${linea.id}`}
+                                disabled={guardandoLineaId === linea.id}
+                                onClick={() => void handleGuardarLineaEvaluacion(linea)}
+                                className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[8px] font-black text-amber-700 hover:bg-amber-500/20 disabled:opacity-40"
+                              >
+                                {guardandoLineaId === linea.id ? 'Guardando...' : 'Guardar'}
+                              </button>
+                            )}
+                            {algunaEnDudaLinea && (
+                              <span className="text-[8px] text-indigo-600">Se guardará con el resto de preguntas ↓</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-1.5" />
+                        <td className="px-3 py-1.5" />
+                        {comp.proveedores.map(prov => {
+                          const provData = linea.evaluacionesPorProveedor?.[prov.id];
+                          if (!provData) return <td key={prov.id} className="px-2 py-1.5" />;
+                          const formKey = `${linea.id}:${prov.id}`;
+                          const decision = evalForm[formKey]?.decision ?? 'PENDIENTE';
+                          return (
+                            <td key={prov.id} className="px-2 py-1.5 text-center align-top">
+                              {showEvalTecnicaBtn ? (
+                                <div className="space-y-1">
+                                  <div className="flex justify-center gap-0.5">
+                                    {(['C', 'NC', 'DA', '?'] as const).map(k => (
+                                      <button
+                                        key={k}
+                                        type="button"
+                                        data-testid={`eval-btn-${linea.id}-${prov.id}-${k}`}
+                                        onClick={() => setEvalForm(f => ({ ...f, [formKey]: { ...f[formKey], decision: k } }))}
+                                        className={cn('w-7 rounded px-1 py-0.5 text-[8px] font-black transition-all',
+                                          decision === k ? EVAL_BTN_ACTIVE[k] : 'border border-border/30 bg-muted/40 text-muted-foreground/50 hover:border-foreground/30'
+                                        )}
+                                      >
+                                        {k}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  {decision === '?' ? (
+                                    <div className="space-y-1 rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-1.5 text-left">
+                                      <textarea
+                                        data-testid={`eval-pregunta-${linea.id}-${prov.id}`}
+                                        className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-1 text-[9px] focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                                        placeholder="¿Qué necesitas aclarar? (obligatorio)"
+                                        value={preguntasEval[formKey] ?? ''}
+                                        onChange={e => setPreguntasEval(p => ({ ...p, [formKey]: e.target.value }))}
+                                      />
+                                      {!preguntasEval[formKey]?.trim() && (
+                                        <p className="text-[8px] text-indigo-600">Obligatoria para "?"</p>
+                                      )}
+                                    </div>
+                                  ) : decision !== 'PENDIENTE' ? (
+                                    <div className="space-y-1 text-left">
+                                      <textarea
+                                        data-testid={`eval-comentario-${linea.id}-${prov.id}`}
+                                        className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-1 text-[9px] focus:outline-none focus:border-amber-500 min-h-[36px]"
+                                        placeholder={(decision === 'NC' || decision === 'DA') ? 'Comentario (obligatorio)...' : 'Comentario (opcional)...'}
+                                        value={evalForm[formKey]?.comentario ?? ''}
+                                        onChange={e => setEvalForm(f => ({ ...f, [formKey]: { ...f[formKey], comentario: e.target.value } }))}
+                                      />
+                                      {(decision === 'NC' || decision === 'DA') && !evalForm[formKey]?.comentario?.trim() && (
+                                        <p className="text-[8px] text-red-500">Requerido para {decision}</p>
+                                      )}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : provData.evaluacion_tecnica && provData.evaluacion_tecnica !== 'PENDIENTE' ? (
+                                <span className={cn('inline-block rounded px-1.5 py-0.5 text-[9px] font-black', EVAL_STYLE[provData.evaluacion_tecnica])}>{provData.evaluacion_tecnica}</span>
+                              ) : (
+                                <span className="text-[9px] text-muted-foreground/40">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        {!isResidenteMode && <td className="px-3 py-1.5" />}
+                        {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && <td />}
+                        {!locked && <td />}
+                      </tr>
+                    );
+                  })()}
                   </React.Fragment>
                   );
                 })}
@@ -2601,162 +2786,6 @@ export const ComparativaDetail: React.FC<Props> = ({
           )}
         </div>
       )}
-
-      {/* Panel: Evaluación Técnica — C / NC / DA / ? por proveedor. Ver
-          openspec/changes/fix-evaluacion-tecnica-por-proveedor. */}
-      {showEvalPanel && (() => {
-        const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
-        type EvalBtn = { key: 'C' | 'NC' | 'DA' | '?'; label: string; activeClass: string };
-        const EVAL_BTNS: EvalBtn[] = [
-          { key: 'C',  label: 'C',  activeClass: 'border-green-500 bg-green-500 text-white' },
-          { key: 'NC', label: 'NC', activeClass: 'border-red-500 bg-red-500 text-white' },
-          { key: 'DA', label: 'DA', activeClass: 'border-amber-500 bg-amber-500 text-white' },
-          { key: '?',  label: '?',  activeClass: 'border-indigo-500 bg-indigo-500 text-white' },
-        ];
-        const lineasSinSpecsPanel = comp.lineas.filter(linea => !(especsMap[lineaDetalleKey(linea)]?.length));
-        // Llaves de evalForm relevantes a cada línea: una por proveedor si hay
-        // datos por proveedor, o la llave legacy (solo linea.id) si no.
-        const formKeysDeLinea = (linea: CotizacionLinea): string[] => {
-          const provIds = Object.keys(linea.evaluacionesPorProveedor ?? {});
-          return provIds.length > 0 ? provIds.map(p => `${linea.id}:${p}`) : [linea.id];
-        };
-        const algunaEnDuda = lineasSinSpecsPanel.some(l => formKeysDeLinea(l).some(k => evalForm[k]?.decision === '?'));
-        const faltaPregunta = lineasSinSpecsPanel.some(l => formKeysDeLinea(l).some(k => evalForm[k]?.decision === '?' && !preguntasEval[k]?.trim()));
-
-        return (
-        <div data-testid="eval-panel" className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center" onClick={e => { if (e.target === e.currentTarget) setShowEvalPanel(false); }}>
-          <div className="w-full max-w-3xl rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-border/40 bg-amber-500/10 px-6 py-4">
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tight">Evaluación Técnica</h2>
-                <p className="text-[10px] text-muted-foreground">C = Cumple · NC = No Cumple · DA = Desviación Aceptada · ? = Duda del Residente</p>
-                <p className="text-[9px] text-amber-700 mt-0.5">Solo renglones sin características capturadas — los que sí tienen, se evalúan por característica en la tabla. Cada proveedor se evalúa por separado.</p>
-              </div>
-              <Button onClick={() => setShowEvalPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
-            </div>
-            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
-              {lineasSinSpecsPanel.map(linea => {
-                const dt = detallesTecnicos[lineaDetalleKey(linea)] ?? { marca: '', espec: '' };
-                const fichasEval = linea.insumo_id ? fichasInsumo[linea.insumo_id] : undefined;
-                const provIds = Object.keys(linea.evaluacionesPorProveedor ?? {});
-                const bloques = provIds.length > 0
-                  ? provIds.map(provId => ({
-                      provId,
-                      provNombre: comp.proveedores.find(p => p.id === provId)?.nombre ?? provId,
-                      formKey: `${linea.id}:${provId}`,
-                    }))
-                  : [{ provId: null as string | null, provNombre: null as string | null, formKey: linea.id }];
-
-                return (
-                <div key={linea.id} className="rounded-2xl border border-border/40 bg-background p-4">
-                  <div>
-                    <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{linea.insumo_clave}</span>
-                    <span className="ml-2 text-xs font-semibold text-foreground">{linea.insumo_descripcion}</span>
-                    <span className="ml-2 text-[10px] text-muted-foreground">{linea.cantidad} {linea.insumo_unidad}</span>
-                  </div>
-                  {/* Lo que el proveedor ofrece (capturado por Compras) */}
-                  {linea.valor_ofrecido_spec && (
-                    <div className="mt-2 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2">
-                      <span className="text-[9px] font-black uppercase tracking-widest text-sky-600">Proveedor ofrece: </span>
-                      <span className="text-[10px] text-foreground">{linea.valor_ofrecido_spec}</span>
-                    </div>
-                  )}
-                  {(dt.marca || dt.espec) && (
-                    <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-3 py-2 space-y-0.5">
-                      {dt.marca && <div className="text-[10px] font-bold text-indigo-600">Marca/Modelo: {dt.marca}</div>}
-                      {dt.espec && <div className="text-[10px] text-muted-foreground leading-tight">{dt.espec}</div>}
-                    </div>
-                  )}
-                  {linea.insumo_id && (
-                    <button
-                      onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id!); fetchFichas(linea.insumo_id!); }}
-                      className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
-                        fichasEval && fichasEval.length > 0 ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20' : 'text-muted-foreground/40 hover:text-indigo-500'
-                      )}
-                    >
-                      📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
-                    </button>
-                  )}
-                  <div className="mt-3 space-y-2">
-                    {bloques.map(({ provId, provNombre, formKey }) => {
-                      const decision = evalForm[formKey]?.decision ?? 'PENDIENTE';
-                      return (
-                        <div key={formKey} className={cn('rounded-xl border p-3', decision === '?' ? 'border-indigo-500/30 bg-indigo-500/5' : 'border-border/30 bg-muted/20')}>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            {provNombre ? (
-                              <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{provNombre}</span>
-                            ) : <span />}
-                            <div className="flex gap-2">
-                              {EVAL_BTNS.map(btn => (
-                                <button
-                                  key={btn.key}
-                                  data-testid={`eval-btn-${linea.id}-${provId ?? 'x'}-${btn.key}`}
-                                  onClick={() => setEvalForm(f => ({ ...f, [formKey]: { ...f[formKey], decision: btn.key } }))}
-                                  className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all w-10',
-                                    decision === btn.key ? btn.activeClass : 'border-border/40 bg-muted text-muted-foreground hover:border-foreground/30'
-                                  )}
-                                >
-                                  {btn.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {decision === '?' && (
-                            <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 space-y-1.5">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">¿Qué necesitas aclarar? (obligatorio)</p>
-                              <Textarea
-                                data-testid={`eval-pregunta-${linea.id}-${provId ?? 'x'}`}
-                                className="rounded-xl text-xs min-h-[56px]"
-                                placeholder="Describe la duda o información faltante..."
-                                value={preguntasEval[formKey] ?? ''}
-                                onChange={e => setPreguntasEval(p => ({ ...p, [formKey]: e.target.value }))}
-                              />
-                              {!preguntasEval[formKey]?.trim() && (
-                                <p className="text-[9px] text-indigo-600">La pregunta es obligatoria para usar "?"</p>
-                              )}
-                            </div>
-                          )}
-                          {decision !== '?' && (
-                            <>
-                              <Textarea
-                                data-testid={`eval-comentario-${linea.id}-${provId ?? 'x'}`}
-                                className="mt-2 rounded-xl text-xs min-h-[48px]"
-                                placeholder={REQUIRES_COMMENT.has(decision) ? 'Comentario técnico (obligatorio)...' : 'Comentario técnico (opcional)...'}
-                                value={evalForm[formKey]?.comentario ?? ''}
-                                onChange={e => setEvalForm(f => ({ ...f, [formKey]: { ...f[formKey], comentario: e.target.value } }))}
-                              />
-                              {REQUIRES_COMMENT.has(decision) && !evalForm[formKey]?.comentario?.trim() && (
-                                <p className="mt-1 text-[9px] text-red-500">Requerido para {decision}</p>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-            <div className="border-t border-border/40 px-6 py-4 flex flex-wrap justify-end gap-3">
-              {algunaEnDuda && (
-                <p className="w-full text-[10px] text-indigo-700 font-bold">
-                  ⚠️ Tienes evaluaciones con "?" — al guardar se creará una nueva revisión y Compras recibirá tus preguntas.
-                </p>
-              )}
-              <Button onClick={() => setShowEvalPanel(false)} variant="outline" className="rounded-xl">Cancelar</Button>
-              <Button
-                onClick={handleGuardarEvaluacion}
-                disabled={enviandoEval || faltaPregunta}
-                className="rounded-xl bg-amber-500 px-6 font-black text-white hover:bg-amber-400 disabled:opacity-40"
-              >
-                {enviandoEval ? 'Guardando...' : algunaEnDuda ? 'Guardar y Crear Revisión' : 'Guardar Evaluación'}
-              </Button>
-            </div>
-          </div>
-        </div>
-        );
-      })()}
 
       {/* ─── 8.1–8.4 Panel: Revisión GT ─────────────────────────────────────── */}
       {showGTPanel && (
