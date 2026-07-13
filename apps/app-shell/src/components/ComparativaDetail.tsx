@@ -815,7 +815,7 @@ export const ComparativaDetail: React.FC<Props> = ({
   const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
 
   const showEnviarEvalBtn      = isProcurement && comp.estado === 'BORRADOR';
-  const showEvalTecnicaBtn     = (isResident || isSuperint) && comp.estado === 'EN_EVALUACION_TECNICA';
+  const showEvalTecnicaBtn     = (isResident || isSuperint || roles.includes('admin')) && comp.estado === 'EN_EVALUACION_TECNICA';
   const showEnviarGTBtn        = (isResident || isProcurement || isSuperint) && (comp.estado === 'EVALUADO_TECNICAMENTE' || comp.estado === 'LOCKED');
   const showRevisarGTBtn       = isGT && comp.estado === 'EN_APROBACION_GT';
   const showGenerarOCBtn       = isProcurement && comp.estado === 'APROBADO_GT';

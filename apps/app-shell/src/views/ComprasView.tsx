@@ -528,6 +528,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         }
       }
 
+      // Respaldo de descripción/unidad para líneas sin insumo_id (texto libre) —
+      // GET /comparativas no incluye datos del insumo de catálogo para ellas, así
+      // que se toman de la requisición ya cargada (mismo criterio que
+      // buildLineasFromReq). Ver openspec/changes/fix-evaluacion-tecnica-admin-y-descripcion.
+      const reqItemsMap = new Map(
+        requisicionesNormalizadas.flatMap(r => (r.items ?? []).map(it => [it.id, it] as const))
+      );
+
       // Normalizar comparativas: backend usa id_cuadro + detalles, frontend usa id + lineas
       const normalizeComp = (c: any): ComparativaLocal => {
         const detalles: any[] = c.detalles ?? [];
@@ -541,14 +549,15 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         detalles.forEach(d => {
           const lineaKey: string = d.insumo_id ?? d.detalle_req_id;
           const info = d.insumo_id ? insumosNormalizados.find(i => i.id === d.insumo_id) : undefined;
+          const reqItem = !d.insumo_id && d.detalle_req_id ? reqItemsMap.get(d.detalle_req_id) : undefined;
           if (!lineaMap.has(lineaKey)) {
             lineaMap.set(lineaKey, {
               id:                  d.id_detalle,
               insumo_id:           d.insumo_id,
               detalle_req_id:      d.detalle_req_id ?? null,
               insumo_clave:        info?.clave ?? '—',
-              insumo_descripcion:  info?.descripcion ?? '—',
-              insumo_unidad:       info?.unidad ?? '—',
+              insumo_descripcion:  info?.descripcion ?? reqItem?.descripcion_libre ?? '—',
+              insumo_unidad:       info?.unidad ?? reqItem?.unidad_libre ?? '—',
               cantidad:            Number(d.cantidad ?? 0),
               precios:             {},
               fechasEntrega:       {},
