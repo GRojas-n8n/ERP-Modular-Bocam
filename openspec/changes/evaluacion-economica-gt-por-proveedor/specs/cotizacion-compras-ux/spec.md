@@ -1,18 +1,25 @@
 ## ADDED Requirements
 
-### Requirement: La evaluación económica de Gerencia Técnica SHALL registrarse C/NC/DA/? por proveedor, con costo y días de suministro visibles
+### Requirement: La evaluación económica de Gerencia Técnica SHALL registrarse C/NC/DA/? por proveedor, con costo, días de suministro y condiciones de crédito visibles
 El sistema SHALL permitir a Gerencia Técnica (roles `gerencia_tecnica`, `superintendent`,
 `admin`) registrar una decisión C/NC/DA/? independiente para cada proveedor de cada
-renglón de un cuadro en `EN_APROBACION_GT`, mostrando el costo cotizado y los días de
-suministro estimados de cada proveedor en el momento de evaluar — directamente en "TABLA
-DE COTIZACIONES", sin un panel modal separado. GT SHALL persistir la evaluación de todos
-los proveedores, no solo la del primero agrupado.
+renglón de un cuadro en `EN_APROBACION_GT`, mostrando el costo cotizado, los días de
+suministro estimados y las condiciones de crédito (si el proveedor otorga crédito y a
+cuántos días) de cada proveedor en el momento de evaluar — directamente en "TABLA DE
+COTIZACIONES", sin un panel modal separado. GT SHALL persistir la evaluación de todos los
+proveedores, no solo la del primero agrupado.
 
 #### Scenario: Cuadro con 3 proveedores en un mismo renglón
 - **WHEN** Gerencia Técnica revisa un renglón cotizado por 3 proveedores en un cuadro
   `EN_APROBACION_GT`
-- **THEN** ve, por cada proveedor, su costo cotizado, sus días de suministro estimados y
-  controles C/NC/DA/? independientes
+- **THEN** ve, por cada proveedor, su costo cotizado, sus días de suministro estimados,
+  sus condiciones de crédito y controles C/NC/DA/? independientes
+
+#### Scenario: Proveedor sin crédito frente a proveedor con crédito
+- **WHEN** Gerencia Técnica compara dos proveedores del mismo renglón, uno con
+  `ofrece_credito = true` y `dias_credito = 30`, y otro con `ofrece_credito = false`
+- **THEN** ve claramente "Crédito 30 días" para el primero y "Sin crédito" para el
+  segundo, sin necesidad de consultar el catálogo de Proveedores por separado
 
 #### Scenario: GT no puede aprobar un proveedor que el Residente rechazó técnicamente
 - **WHEN** Gerencia Técnica intenta marcar `C` en un proveedor cuya `evaluacion_tecnica`

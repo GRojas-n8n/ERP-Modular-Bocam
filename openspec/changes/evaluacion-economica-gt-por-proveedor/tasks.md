@@ -10,6 +10,9 @@
 - [ ] 1.3 Actualizar el comentario de `aprobacion_gt` en el schema para documentar el
       nuevo vocabulario `PENDIENTE | C | NC | DA | ?` + legacy `APROBADO | RECHAZADO`
       (mismo patrón que `evaluacion_tecnica`) — sin cambio de tipo de columna.
+- [ ] 1.4 Agregar `ofrece_credito` (`Boolean @default(false)`) y `dias_credito` (`Int?`) al
+      modelo `Proveedor` (`schema.prisma:18-49`), junto a `estatus_credito`/
+      `limite_credito` — atributo fijo del proveedor en su catálogo, no por cotización.
 
 ## 2. Backend — reproducir el comportamiento actual con un test que falle
 
@@ -49,7 +52,10 @@
 - [ ] 3.4 Endpoint para que Compras responda `pregunta_gt` (`respuesta_gt`) — mismo patrón
       que la respuesta a `pregunta_residente` (revisar si puede reutilizarse el endpoint
       existente de respuesta o si requiere uno nuevo, según cómo esté implementado hoy).
-- [ ] 3.5 Verificar que los tests 2.1-2.5 pasan.
+- [ ] 3.5 Extender los endpoints de creación/edición de `Proveedor` (junto a donde ya
+      manejan `estatus_credito`/`limite_credito`) para aceptar `ofrece_credito`/
+      `dias_credito`.
+- [ ] 3.6 Verificar que los tests 2.1-2.5 pasan.
 
 ## 4. Frontend — modelo de datos
 
@@ -61,12 +67,20 @@
       iterando todos los `detalles` de cada línea, keyed por `proveedor_id`.
 - [ ] 4.3 Calcular `diasSuministro` por proveedor: `Math.round((fecha_entrega_estimada -
       comp.fecha_firma) / 86400000)` cuando ambas fechas existen.
+- [ ] 4.4 Extender `ProveedorComp` (`ComparativaDetail.tsx`) con `ofrece_credito?: boolean`
+      y `dias_credito?: number | null`; poblar desde el proveedor en `normalizeComp`
+      (`ComprasView.tsx`) — ya viene incluido en la consulta del proveedor, sin requerir
+      un endpoint nuevo.
+- [ ] 4.5 Agregar `ofrece_credito`/`dias_credito` al formulario de alta/edición de
+      Proveedores en `ComprasView.tsx`, junto a los campos de `estatus_credito`/
+      `limite_credito` ya existentes ahí.
 
 ## 5. Frontend — sub-fila de evaluación económica GT (reemplaza showGTPanel)
 
 - [ ] 5.1 Test de componente en `ComparativaDetail.evaluacion-economica-gt.test.tsx`: un
       renglón con 3 proveedores en un cuadro `EN_APROBACION_GT` muestra, sin clic previo,
-      costo + días de suministro + controles C/NC/DA/? por proveedor.
+      costo + días de suministro + condición de crédito ("Crédito N días" / "Sin
+      crédito") + controles C/NC/DA/? por proveedor.
 - [ ] 5.2 Test: guardar evaluaciones sin "?" llama a `PATCH .../evaluar-gt` con las
       evaluaciones de esa línea.
 - [ ] 5.3 Test: marcar "?" en un proveedor oculta el guardado individual y muestra el
@@ -77,7 +91,8 @@
       `showGTPanel`) antes de implementar.
 - [ ] 5.6 Renderizar la sub-fila de evaluación GT reutilizando el patrón de
       `evaluacion-tecnica-inline-tabla-comparativa` (misma estructura de `<tr>` alineada
-      por columna de proveedor), agregando las celdas de costo y días de suministro.
+      por columna de proveedor), agregando las celdas de costo, días de suministro y
+      condición de crédito (leída de `comp.proveedores`, no de `ComparativaDetalle`).
 - [ ] 5.7 Botón "Guardar" por línea (sin "?") → `evaluar-gt`; botón agregado a nivel de
       tabla (con algún "?" pendiente) → `revision-con-preguntas-gt`.
 - [ ] 5.8 Eliminar `showGTPanel` y su bloque JSX modal.

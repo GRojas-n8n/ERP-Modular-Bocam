@@ -98,6 +98,16 @@ Compras al cotizar. Descartada por ahora — duplicaría información con
 `fecha_entrega_estimada` y requeriría mantener ambos sincronizados; calcular la derivada
 es más simple y suficiente para lo que GT necesita ver.
 
+Crédito: nuevos campos `ofrece_credito` (`Boolean`) y `dias_credito` (`Int?`, solo
+relevante si `ofrece_credito`) en el modelo `Proveedor` (`schema.prisma:18-49`), junto a
+`estatus_credito`/`limite_credito` que ya existen ahí — confirmado con el usuario que es
+un atributo fijo del proveedor en su catálogo, no algo que Compras capture por cotización.
+Se muestra en la sub-fila de GT junto a costo y días de suministro (ej. "Crédito 30 días"
+o "Sin crédito"), leído directamente de `comp.proveedores[i]` (ya incluye los datos del
+proveedor). El formulario de alta/edición de Proveedores en `ComprasView.tsx` (junto a los
+campos de `estatus_credito`/`limite_credito` ya existentes ahí) gana los inputs
+correspondientes.
+
 ### D4: Revisión con pregunta de GT hereda la evaluación técnica
 
 Nuevo endpoint `POST /comparativas/:id/revision-con-preguntas-gt`, análogo a

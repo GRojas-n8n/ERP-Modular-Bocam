@@ -5,8 +5,8 @@ renglón — colapsa al primer `ComparativaDetalle` visto en vez de evaluar cada
 (mismo bug ya corregido en la evaluación técnica del Residente vía PR #59), y no muestra
 costo ni días de suministro por proveedor, la información que GT necesita para decidir. El
 usuario pidió (2026-07-13) que GT evalúe con el mismo vocabulario C/NC/DA/? que ya usa el
-Residente, por proveedor, viendo costo y días de entrega, y que un "?" de GT genere una
-nueva revisión sin obligar al Residente a re-evaluar lo técnico.
+Residente, por proveedor, viendo costo, días de entrega y condiciones de crédito, y que un
+"?" de GT genere una nueva revisión sin obligar al Residente a re-evaluar lo técnico.
 
 ## What Changes
 
@@ -19,6 +19,12 @@ nueva revisión sin obligar al Residente a re-evaluar lo técnico.
 - El panel de GT muestra, por cada renglón y proveedor, el costo cotizado y los días de
   suministro estimados (calculados desde `fecha_entrega_estimada`) — información ausente
   hoy en el panel.
+- El catálogo de Proveedores gana dos campos nuevos: `ofrece_credito` (booleano) y
+  `dias_credito` (número, solo aplica si `ofrece_credito`) — atributo fijo del proveedor,
+  junto a `estatus_credito`/`limite_credito` que ya existen ahí. El panel de GT muestra
+  esta condición de crédito por cada proveedor participante en el renglón, para que GT
+  decida a quién comprar considerando no solo precio y plazo de entrega sino también las
+  condiciones de pago.
 - Cuando GT marca "?" en cualquier proveedor y redacta una pregunta, se crea una nueva
   revisión del cuadro (mismo mecanismo A→B→C... ya usado por el Residente) — pero, a
   diferencia del "?" del Residente, esta nueva revisión **hereda la evaluación técnica ya
@@ -52,6 +58,8 @@ nueva revisión sin obligar al Residente a re-evaluar lo técnico.
   reiniciar a `BORRADOR`.
 - **Frontend** (`apps/app-shell/src/components/ComparativaDetail.tsx`,
   `apps/app-shell/src/views/ComprasView.tsx`): rediseño del panel/vista de GT para mostrar
-  costo y días por proveedor y capturar C/NC/DA/? por proveedor.
+  costo, días y crédito por proveedor y capturar C/NC/DA/? por proveedor; el formulario de
+  alta/edición de Proveedores (dentro de `ComprasView.tsx`, junto a
+  `estatus_credito`/`limite_credito`) gana los campos `ofrece_credito`/`dias_credito`.
 - No afecta el flujo de evaluación técnica del Residente salvo por la herencia de sus datos
   hacia la nueva revisión de GT.
