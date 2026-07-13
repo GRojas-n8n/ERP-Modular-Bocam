@@ -564,6 +564,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               ganador:             d.es_ganador ? d.proveedor_id : null,
               evaluacion_tecnica:  d.evaluacion_tecnica ?? 'PENDIENTE',
               comentario_tecnico:  d.comentario_tecnico ?? undefined,
+              evaluacionesPorProveedor: {},
               aprobacion_gt:       d.aprobacion_gt ?? 'PENDIENTE',
               comentario_gt:       d.comentario_gt ?? undefined,
             });
@@ -572,6 +573,15 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           linea.precios[d.proveedor_id] = String(d.precio_ofertado);
           linea.fechasEntrega[d.proveedor_id] = d.fecha_entrega_estimada ? String(d.fecha_entrega_estimada).slice(0, 10) : null;
           if (d.es_ganador) linea.ganador = d.proveedor_id;
+          // Evaluación técnica por proveedor — cada ComparativaDetalle es un
+          // (línea, proveedor) independiente, no colapsar al primero. Ver
+          // openspec/changes/fix-evaluacion-tecnica-por-proveedor.
+          linea.evaluacionesPorProveedor![d.proveedor_id] = {
+            id_detalle:          d.id_detalle,
+            evaluacion_tecnica:  d.evaluacion_tecnica ?? 'PENDIENTE',
+            comentario_tecnico:  d.comentario_tecnico ?? undefined,
+            pregunta_residente:  d.pregunta_residente ?? null,
+          };
         });
         return {
           id:             c.id_cuadro ?? c.id,
