@@ -940,7 +940,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         try {
           const res = await api.post('/api/v1/compras/comparativas', { requisicion_id: req.id });
           backendId = res.data.data?.id_cuadro ?? res.data.data?.id ?? backendId;
-        } catch { /* si falla, usar ID local */ }
+        } catch (err: any) {
+          // No usar un ID local como si el cuadro existiera — eso deja a Compras
+          // trabajando sobre un cuadro fantasma que nunca persiste nada (ver
+          // openspec/changes/fix-crear-cuadro-comparativo-500).
+          notify({
+            type: 'error',
+            title: 'No se pudo crear el Cuadro Comparativo',
+            message: err?.response?.data?.message || 'Ocurrió un error al crear el cuadro. Intenta de nuevo.',
+          });
+          return;
+        }
       }
 
       // Pre-poblar proveedores desde la Solicitud de Cotización ya enviada (si existe),
