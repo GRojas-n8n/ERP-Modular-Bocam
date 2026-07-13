@@ -32,6 +32,10 @@ model Proveedor {
   // ── Calificación Crediticia ──────────────────────────────────────────────
   estatus_credito String   @default("ACTIVO") @db.VarChar(20) // ACTIVO | BLOQUEADO
   limite_credito  Decimal? @db.Decimal(18, 2)
+  /// Atributo fijo del proveedor en su catálogo (no se captura por cotización). Ver
+  /// openspec/changes/evaluacion-economica-gt-por-proveedor.
+  ofrece_credito  Boolean  @default(false)
+  dias_credito    Int?
 
   // ── Perfil de Cumplimiento ───────────────────────────────────────────────
   tipo_proveedor         String   @default("NACIONAL") @db.VarChar(20) // NACIONAL | EXTRANJERO
@@ -407,11 +411,21 @@ model ComparativaDetalle {
   /// Respuesta de Compras a la pregunta del Residente — visible en la revisión siguiente
   respuesta_compras  String? @db.Text
 
-  // ── Aprobación del Gerente Técnico ────────────────────────────────────────
-  // Valores: PENDIENTE | APROBADO | RECHAZADO
-  // Regla: no puede ser APROBADO si evaluacion_tecnica = RECHAZADO
+  // ── Aprobación del Gerente Técnico (evaluación económica) ────────────────
+  // Valores escritura nueva: PENDIENTE | C | NC | DA | ?
+  // Valores legacy (solo lectura): APROBADO | RECHAZADO
+  // Regla: no puede ser C si evaluacion_tecnica = NC (ni APROBADO si RECHAZADO, legacy)
   aprobacion_gt String  @default("PENDIENTE")
   comentario_gt String? @db.Text
+
+  // ── Pregunta del Gerente Técnico (cuando marca "?") y respuesta de Compras ──
+  // Ver openspec/changes/evaluacion-economica-gt-por-proveedor.
+  /// Pregunta de GT cuando marcó "?" — dispara nueva revisión del cuadro que hereda la
+  /// evaluación técnica ya aprobada (a diferencia de pregunta_residente, que reinicia el
+  /// cuadro a BORRADOR).
+  pregunta_gt  String? @db.Text
+  /// Respuesta de Compras a la pregunta de GT — visible en la revisión siguiente
+  respuesta_gt String? @db.Text
 
   cuadro    CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
   proveedor Proveedor         @relation(fields: [proveedor_id], references: [id_proveedor])

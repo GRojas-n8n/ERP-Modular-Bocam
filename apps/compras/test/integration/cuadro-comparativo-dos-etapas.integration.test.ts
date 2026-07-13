@@ -297,20 +297,28 @@ async function testHappyPathCompleto() {
     const b5 = (await r5.json()) as any;
     assert.equal(b5.data.estado, 'EN_APROBACION_GT', 'Estado debe ser EN_APROBACION_GT');
 
-    // Paso 6: GT aprueba el renglón → APROBADO_GT
+    // Paso 6a: GT guarda su evaluación económica (C) — no finaliza el cuadro
+    const r6a = await patch(
+      `/api/v1/compras/comparativas/${seeded.cuadroId}/evaluar-gt`,
+      tokenGT,
+      { evaluaciones: [{ detalle_id: seeded.detalleId, aprobacion_gt: 'C', comentario_gt: 'Precio justo. Autorizado.' }] }
+    );
+    assert.equal(r6a.status, 200, 'evaluar-gt debe retornar 200');
+    const b6a = (await r6a.json()) as any;
+    assert.equal(b6a.data.estado, 'EN_APROBACION_GT', 'Guardar evaluación GT no debe finalizar el cuadro');
+    assert.equal(b6a.data.detalles[0].aprobacion_gt, 'C', 'Detalle debe tener aprobacion_gt=C');
+
+    // Paso 6b: GT finaliza la aprobación → APROBADO_GT
     const r6 = await patch(
       `/api/v1/compras/comparativas/${seeded.cuadroId}/revisar-gt`,
       tokenGT,
-      {
-        aprobaciones: [{ detalle_id: seeded.detalleId, aprobacion_gt: 'APROBADO', comentario_gt: 'Precio justo. Autorizado.' }],
-        comentario_gt_general: 'Cuadro aprobado. Proceder con OC.',
-      }
+      { comentario_gt_general: 'Cuadro aprobado. Proceder con OC.' }
     );
     assert.equal(r6.status, 200, 'revisar-gt debe retornar 200');
     const b6 = (await r6.json()) as any;
     assert.equal(b6.data.estado, 'APROBADO_GT', 'Estado debe ser APROBADO_GT');
     assert.equal(b6.data.gerente_tecnico_id !== null, true, 'gerente_tecnico_id debe estar seteado');
-    assert.equal(b6.data.detalles[0].aprobacion_gt, 'APROBADO', 'Detalle debe tener aprobacion_gt=APROBADO');
+    assert.equal(b6.data.detalles[0].aprobacion_gt, 'C', 'Detalle debe conservar aprobacion_gt=C tras finalizar');
 
     // Paso 7: Procurement genera OC → CERRADO (Finanzas acepta)
     const r7 = await post(
@@ -351,18 +359,18 @@ async function testGTNoPuedeAprobarRenglonRechazadoPorResidente() {
 
     // Intentar aprobar el renglón que fue rechazado por el Residente → debe fallar con 400
     const r = await patch(
-      `/api/v1/compras/comparativas/${seeded.cuadroId}/revisar-gt`,
+      `/api/v1/compras/comparativas/${seeded.cuadroId}/evaluar-gt`,
       tokenGT,
       {
-        aprobaciones: [{
+        evaluaciones: [{
           detalle_id: seeded.detalleRechazadoId,
-          aprobacion_gt: 'APROBADO',  // ❌ intento de aprobar un rechazado técnicamente
+          aprobacion_gt: 'C',  // ❌ intento de aprobar un rechazado técnicamente
           comentario_gt: 'El GT quiere aprobarlo igual',
         }],
       }
     );
 
-    assert.equal(r.status, 400, 'revisar-gt debe retornar 400 al intentar aprobar un renglón rechazado por Residente');
+    assert.equal(r.status, 400, 'evaluar-gt debe retornar 400 al intentar aprobar un renglón rechazado por Residente');
     const body = (await r.json()) as any;
     assert.equal(body.success, false, 'La respuesta debe indicar fallo');
     assert.ok(
@@ -391,18 +399,19 @@ async function testTodosRengloneRechazadosGTResultaEnRechazadoGT() {
       proyectoId: seeded.proyectoId, roles: ['gerencia_tecnica'],
     });
 
-    // GT rechaza el único renglón aprobado técnicamente
-    // (el rechazado técnicamente también se pasa como RECHAZADO, que sí es válido)
+    // GT marca NC en el único renglón aprobado técnicamente — el rechazado técnicamente
+    // queda fuera del alcance de GT (no bloquea el gate de finalización)
+    const rEval = await patch(
+      `/api/v1/compras/comparativas/${seeded.cuadroId}/evaluar-gt`,
+      tokenGT,
+      { evaluaciones: [{ detalle_id: seeded.detalleAprobadoId, aprobacion_gt: 'NC', comentario_gt: 'Precio fuera de presupuesto.' }] }
+    );
+    assert.equal(rEval.status, 200, 'evaluar-gt debe retornar 200');
+
     const r = await patch(
       `/api/v1/compras/comparativas/${seeded.cuadroId}/revisar-gt`,
       tokenGT,
-      {
-        aprobaciones: [
-          { detalle_id: seeded.detalleAprobadoId, aprobacion_gt: 'RECHAZADO', comentario_gt: 'Precio fuera de presupuesto.' },
-          // El rechazado técnicamente no lo enviamos — el GT solo decide sobre los aprobados técnicamente
-        ],
-        comentario_gt_general: 'Requiere nueva cotización.',
-      }
+      { comentario_gt_general: 'Requiere nueva cotización.' }
     );
 
     assert.equal(r.status, 200, 'revisar-gt debe retornar 200');

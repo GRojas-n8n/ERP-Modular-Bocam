@@ -1810,7 +1810,7 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
     const {
       rfc_tax_id, razon_social, email_contacto, telefono, estatus,
       ciudad, tipo_ubicacion, entrega_en_sitio,
-      estatus_credito, limite_credito,
+      estatus_credito, limite_credito, ofrece_credito, dias_credito,
       tipo_proveedor, calificacion_desempeno,
     } = req.body;
 
@@ -1836,6 +1836,8 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
           entrega_en_sitio: entrega_en_sitio ?? false,
           estatus_credito: estatus_credito ?? 'ACTIVO',
           limite_credito: limite_credito != null ? limite_credito : null,
+          ofrece_credito: ofrece_credito ?? false,
+          dias_credito: dias_credito != null ? dias_credito : null,
           tipo_proveedor: tipo_proveedor ?? 'NACIONAL',
           calificacion_desempeno: calificacion_desempeno != null ? calificacion_desempeno : null,
         },
@@ -1983,7 +1985,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     const {
       razon_social, email_contacto, telefono, estatus,
       ciudad, tipo_ubicacion, entrega_en_sitio,
-      estatus_credito, limite_credito,
+      estatus_credito, limite_credito, ofrece_credito, dias_credito,
       tipo_proveedor, calificacion_desempeno,
     } = req.body;
 
@@ -2010,6 +2012,8 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
             ...(entrega_en_sitio !== undefined && { entrega_en_sitio }),
             ...(estatus_credito !== undefined && { estatus_credito }),
             ...(limite_credito !== undefined && { limite_credito }),
+            ...(ofrece_credito !== undefined && { ofrece_credito }),
+            ...(dias_credito !== undefined && { dias_credito }),
             ...(tipo_proveedor !== undefined && { tipo_proveedor }),
             ...(calificacion_desempeno !== undefined && { calificacion_desempeno }),
           },
@@ -2685,7 +2689,9 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       async (prisma) => {
         const comparativa = await prisma.cuadroComparativo.findUnique({
           where: { id_cuadro: id },
-          include: { detalles: { where: { es_ganador: true, aprobacion_gt: 'APROBADO' } } }
+          // 'C'/'DA' son los valores nuevos de aprobacion_gt; 'APROBADO' se conserva por
+          // compatibilidad con cuadros aprobados antes de evaluacion-economica-gt-por-proveedor.
+          include: { detalles: { where: { es_ganador: true, aprobacion_gt: { in: ['C', 'DA', 'APROBADO'] } } } }
         });
 
         if (!comparativa) throw new Error('Cuadro comparativo no encontrado.');
@@ -3633,21 +3639,121 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
   }
 );
 
-// 2.4 + 3.1 PATCH revisar-gt — Gerente Técnico aprueba/rechaza por renglón + evento
+// PATCH evaluar-gt — Gerente Técnico guarda evaluación C/NC/DA/? por proveedor, SIN
+// finalizar el cuadro. Mismo patrón que PATCH .../evaluar (evaluación técnica). Ver
+// openspec/changes/evaluacion-economica-gt-por-proveedor.
+app.patch('/api/v1/compras/comparativas/:id/evaluar-gt',
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { evaluaciones } = req.body as {
+        evaluaciones: { detalle_id: string; aprobacion_gt: string; comentario_gt?: string }[];
+      };
+
+      if (!evaluaciones || !Array.isArray(evaluaciones) || evaluaciones.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere un array "evaluaciones" con al menos un ítem.' });
+      }
+
+      const VALID_VALUES = new Set(['C', 'NC', 'DA', '?', 'PENDIENTE']);
+      const REQUIRES_COMMENT = new Set(['NC', 'DA']);
+      for (const ev of evaluaciones) {
+        if (!VALID_VALUES.has(ev.aprobacion_gt)) {
+          return res.status(400).json({
+            success: false,
+            message: `Valor de evaluación inválido: "${ev.aprobacion_gt}". Valores permitidos: C, NC, DA, ?, PENDIENTE`,
+          });
+        }
+        if (REQUIRES_COMMENT.has(ev.aprobacion_gt) && !ev.comentario_gt?.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `El valor "${ev.aprobacion_gt}" requiere comentario_gt no vacío.`,
+          });
+        }
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true },
+          });
+
+          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+
+          if (cuadro.estado !== 'EN_APROBACION_GT') {
+            return res.status(400).json({
+              success: false,
+              message: `El cuadro no está en aprobación GT. Estado actual: ${cuadro.estado}`,
+            });
+          }
+
+          const detalleMap = new Map(cuadro.detalles.map(d => [d.id_detalle, d]));
+
+          // Regla: GT no puede marcar C/DA en un proveedor que el Residente rechazó
+          // técnicamente (NC, o legacy RECHAZADO).
+          for (const ev of evaluaciones) {
+            const detalle = detalleMap.get(ev.detalle_id);
+            if (!detalle) {
+              return res.status(400).json({
+                success: false,
+                message: `Renglón ${ev.detalle_id} no pertenece a este cuadro comparativo.`,
+              });
+            }
+            const rechazadoTecnicamente = detalle.evaluacion_tecnica === 'NC' || detalle.evaluacion_tecnica === 'RECHAZADO';
+            if (['C', 'DA'].includes(ev.aprobacion_gt) && rechazadoTecnicamente) {
+              return res.status(400).json({
+                success: false,
+                message: `No es posible aprobar el renglón ${detalle.id_detalle}: fue rechazado en la evaluación técnica del Residente.`,
+              });
+            }
+          }
+
+          await Promise.all(
+            evaluaciones.map(ev =>
+              prisma.comparativaDetalle.update({
+                where: { id_detalle: ev.detalle_id },
+                data: {
+                  aprobacion_gt: ev.aprobacion_gt,
+                  comentario_gt: ev.comentario_gt?.trim() ?? null,
+                  pregunta_gt: ev.aprobacion_gt === '?' ? (ev.comentario_gt?.trim() ?? null) : null,
+                },
+              })
+            )
+          );
+
+          return prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: { include: { proveedor: true } } },
+          });
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.evaluar_gt.error', 'Error al guardar evaluación económica GT', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// 2.4 + 3.1 PATCH revisar-gt — Gerente Técnico finaliza el cuadro (APROBADO_GT/RECHAZADO_GT).
+// Ya NO recibe aprobaciones[] — las evaluaciones se guardan por adelantado vía
+// PATCH .../evaluar-gt. Exige que todos los proveedores de todos los renglones estén
+// evaluados (gate, mismo patrón que /firmar para la evaluación técnica). Ver
+// openspec/changes/evaluacion-economica-gt-por-proveedor.
 app.patch('/api/v1/compras/comparativas/:id/revisar-gt',
   requireRoles('gerencia_tecnica', 'superintendent', 'admin'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const { aprobaciones, comentario_gt_general } = req.body as {
-        aprobaciones: { detalle_id: string; aprobacion_gt: 'APROBADO' | 'RECHAZADO'; comentario_gt?: string }[];
+      const { comentario_gt_general } = req.body as {
         comentario_gt_general?: string;
       };
-
-      if (!aprobaciones || !Array.isArray(aprobaciones) || aprobaciones.length === 0) {
-        return res.status(400).json({ success: false, message: 'Se requiere un array "aprobaciones" con al menos un ítem.' });
-      }
 
       const result = await createTenantContext(
         { tenantId, proyectoId, userId },
@@ -3666,41 +3772,25 @@ app.patch('/api/v1/compras/comparativas/:id/revisar-gt',
             });
           }
 
-          // Mapa de detalles para validación rápida
-          const detalleMap = new Map(cuadro.detalles.map(d => [d.id_detalle, d]));
-
-          // Regla: GT no puede APROBAR un renglón rechazado por el Residente
-          for (const ap of aprobaciones) {
-            const detalle = detalleMap.get(ap.detalle_id);
-            if (!detalle) {
-              return res.status(400).json({
-                success: false,
-                message: `Renglón ${ap.detalle_id} no pertenece a este cuadro comparativo.`,
-              });
-            }
-            if (ap.aprobacion_gt === 'APROBADO' && detalle.evaluacion_tecnica === 'RECHAZADO') {
-              return res.status(400).json({
-                success: false,
-                message: `No es posible aprobar el renglón ${detalle.id_detalle}: fue rechazado en la evaluación técnica del Residente.`,
-              });
-            }
+          if (cuadro.detalles.length === 0) {
+            return res.status(400).json({ success: false, message: 'El cuadro no tiene renglones para evaluar.' });
           }
 
-          // Actualizar aprobación GT por renglón
-          await Promise.all(
-            aprobaciones.map(ap =>
-              prisma.comparativaDetalle.update({
-                where: { id_detalle: ap.detalle_id },
-                data: {
-                  aprobacion_gt: ap.aprobacion_gt,
-                  comentario_gt: ap.comentario_gt ?? null,
-                },
-              })
-            )
-          );
+          // Renglones/proveedores rechazados técnicamente por el Residente quedan fuera
+          // del alcance de GT (nunca pueden ser C/DA) — no bloquean el gate de
+          // finalización, igual que "el GT solo decide sobre los aprobados técnicamente".
+          const evaluablesPorGT = cuadro.detalles.filter(d => d.evaluacion_tecnica !== 'NC' && d.evaluacion_tecnica !== 'RECHAZADO');
+          const sinEvaluar = evaluablesPorGT.filter(d => d.aprobacion_gt === 'PENDIENTE' || d.aprobacion_gt === '?');
+          if (sinEvaluar.length > 0) {
+            return res.status(400).json({
+              success: false,
+              message: `Faltan ${sinEvaluar.length} proveedor(es) por evaluar antes de finalizar la aprobación GT.`,
+            });
+          }
 
-          // Determinar estado final: si al menos uno aprobado → APROBADO_GT, si todos rechazados → RECHAZADO_GT
-          const hayAprobadosGT = aprobaciones.some(ap => ap.aprobacion_gt === 'APROBADO');
+          // Determinar estado final: al menos un C/DA (o legacy APROBADO) → APROBADO_GT;
+          // si todos son NC (o legacy RECHAZADO) → RECHAZADO_GT.
+          const hayAprobadosGT = cuadro.detalles.some(d => ['C', 'DA', 'APROBADO'].includes(d.aprobacion_gt));
           const estadoFinal = hayAprobadosGT ? 'APROBADO_GT' : 'RECHAZADO_GT';
 
           return prisma.cuadroComparativo.update({
@@ -3720,7 +3810,7 @@ app.patch('/api/v1/compras/comparativas/:id/revisar-gt',
 
       const cuadroActualizado = result as any;
       const estadoFinal = cuadroActualizado.estado;
-      const renglones_aprobados = (cuadroActualizado.detalles || []).filter((d: any) => d.aprobacion_gt === 'APROBADO').length;
+      const renglones_aprobados = (cuadroActualizado.detalles || []).filter((d: any) => ['C', 'DA', 'APROBADO'].includes(d.aprobacion_gt)).length;
 
       logInfo(req, 'compras', `compras.comparativa.${estadoFinal === 'APROBADO_GT' ? 'aprobada_gt' : 'rechazada_gt'}`,
         `Cuadro comparativo ${estadoFinal} por Gerencia Técnica`,
@@ -5722,6 +5812,232 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
       res.status(201).json({ success: true, data });
     } catch (error: any) {
       logError(req, 'compras', 'compras.comparativa.revision_con_preguntas.error', 'Error al crear revisión con preguntas', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// POST revision-con-preguntas-gt — Gerente Técnico guarda eval económica con "?" y crea
+// revisión que HEREDA la evaluación técnica ya aprobada (a diferencia de
+// revision-con-preguntas del Residente, que reinicia todo a BORRADOR). El cuadro nuevo
+// nace directo en EN_APROBACION_GT — no se le pide al Residente re-evaluar. Ver
+// openspec/changes/evaluacion-economica-gt-por-proveedor.
+app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas-gt',
+  requireRoles('gerencia_tecnica', 'superintendent', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { evaluaciones } = req.body as {
+        evaluaciones?: { detalle_id: string; aprobacion_gt: string; comentario_gt?: string; pregunta_gt?: string }[];
+      };
+      const evaluacionesRenglon = evaluaciones ?? [];
+
+      for (const ev of evaluacionesRenglon) {
+        if (ev.aprobacion_gt === '?' && !ev.pregunta_gt?.trim()) {
+          return res.status(400).json({ success: false, message: `El renglón ${ev.detalle_id} tiene "?" pero no tiene pregunta_gt.` });
+        }
+      }
+      if (!evaluacionesRenglon.some(e => e.aprobacion_gt === '?')) {
+        return res.status(400).json({ success: false, message: 'Debe haber al menos un renglón con "?" para crear una revisión con preguntas de GT.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadroOriginal = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            include: { detalles: true, lineas: true, evaluaciones_especificacion: true },
+          });
+          if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (cuadroOriginal.estado !== 'EN_APROBACION_GT') {
+            return res.status(400).json({ success: false, message: `El cuadro debe estar en EN_APROBACION_GT. Estado actual: ${cuadroOriginal.estado}` });
+          }
+
+          // 1. Guardar evaluaciones GT en el cuadro original (si las hay)
+          await Promise.all(evaluacionesRenglon.map(ev =>
+            prisma.comparativaDetalle.update({
+              where: { id_detalle: ev.detalle_id },
+              data: {
+                aprobacion_gt: ev.aprobacion_gt,
+                comentario_gt: ev.comentario_gt?.trim() ?? null,
+                pregunta_gt: ev.aprobacion_gt === '?' ? ev.pregunta_gt!.trim() : null,
+              },
+            })
+          ));
+
+          // 2. Calcular siguiente letra de revisión (mismo mecanismo que revision-con-preguntas)
+          const revActual = cuadroOriginal.revision || 'A';
+          const siguienteRev = String.fromCharCode(revActual.charCodeAt(0) + 1);
+          const codigoNuevo = cuadroOriginal.codigo.replace(`-Rev${revActual}`, '') + `-Rev${siguienteRev}`;
+
+          // 3. Transicionar el original y crear la nueva revisión — YA en EN_APROBACION_GT,
+          // heredando todos los campos de la evaluación técnica del Residente (firma,
+          // veredicto, selección de proveedor) tal cual, sin reiniciar ese ciclo.
+          await prisma.cuadroComparativo.update({ where: { id_cuadro: id }, data: { estado: 'REVISION_SOLICITADA' } });
+
+          const nuevoCuadro = await prisma.cuadroComparativo.create({
+            data: {
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+              requisicion_id: cuadroOriginal.requisicion_id,
+              codigo: codigoNuevo,
+              estado: 'EN_APROBACION_GT',
+              notas: cuadroOriginal.notas,
+              revision: siguienteRev,
+              revision_padre_id: id,
+              firmado_por: cuadroOriginal.firmado_por,
+              fecha_firma: cuadroOriginal.fecha_firma,
+              primera_opcion_proveedor_id: cuadroOriginal.primera_opcion_proveedor_id,
+              segunda_opcion_proveedor_id: cuadroOriginal.segunda_opcion_proveedor_id,
+              veredicto_residente: cuadroOriginal.veredicto_residente,
+              proveedores_sugeridos: cuadroOriginal.proveedores_sugeridos,
+              evaluacion_residente_id: cuadroOriginal.evaluacion_residente_id,
+              fecha_evaluacion_tecnica: cuadroOriginal.fecha_evaluacion_tecnica,
+            },
+          });
+
+          // 4. Clonar detalles — precio/entrega y evaluación TÉCNICA se preservan tal
+          // cual (no se reinician); solo aprobacion_gt vuelve a PENDIENTE, heredando
+          // pregunta_gt para los proveedores marcados "?".
+          const evalMap = new Map(evaluacionesRenglon.map(e => [e.detalle_id, e]));
+          if (cuadroOriginal.detalles.length > 0) {
+            await prisma.comparativaDetalle.createMany({
+              data: cuadroOriginal.detalles.map(d => {
+                const evActual = evalMap.get(d.id_detalle);
+                return {
+                  tenant_id: d.tenant_id,
+                  proyecto_id: d.proyecto_id,
+                  cuadro_id: nuevoCuadro.id_cuadro,
+                  proveedor_id: d.proveedor_id,
+                  insumo_id: d.insumo_id,
+                  detalle_req_id: d.detalle_req_id,
+                  precio_ofertado: d.precio_ofertado,
+                  fecha_entrega_estimada: d.fecha_entrega_estimada,
+                  es_ganador: d.es_ganador,
+                  evaluacion_tecnica: d.evaluacion_tecnica,
+                  comentario_tecnico: d.comentario_tecnico,
+                  valor_ofrecido_spec: d.valor_ofrecido_spec,
+                  pregunta_residente: d.pregunta_residente,
+                  respuesta_compras: d.respuesta_compras,
+                  aprobacion_gt: 'PENDIENTE',
+                  comentario_gt: null,
+                  pregunta_gt: evActual?.aprobacion_gt === '?' ? evActual.pregunta_gt?.trim() ?? null : null,
+                  respuesta_gt: null,
+                };
+              }),
+            });
+          }
+
+          // 5. Clonar líneas de especificación (marca/modelo, texto libre)
+          if (cuadroOriginal.lineas.length > 0) {
+            await prisma.comparativaLinea.createMany({
+              data: cuadroOriginal.lineas.map(l => ({
+                tenant_id: l.tenant_id,
+                proyecto_id: l.proyecto_id,
+                cuadro_id: nuevoCuadro.id_cuadro,
+                insumo_id: l.insumo_id,
+                marca_modelo_ref: l.marca_modelo_ref,
+                especificaciones_requeridas: l.especificaciones_requeridas,
+                detalle_req_id: l.detalle_req_id,
+              })),
+            });
+          }
+
+          // 6. Clonar evaluaciones por característica TAL CUAL — es evaluación técnica
+          // ya completa, no se reinicia (a diferencia de revision-con-preguntas del
+          // Residente, que sí las resetea a PENDIENTE porque ahí se está re-evaluando).
+          if (cuadroOriginal.evaluaciones_especificacion.length > 0) {
+            await prisma.evaluacionEspecificacion.createMany({
+              data: cuadroOriginal.evaluaciones_especificacion.map(e => ({
+                tenant_id: e.tenant_id,
+                proyecto_id: e.proyecto_id,
+                cuadro_id: nuevoCuadro.id_cuadro,
+                especificacion_id: e.especificacion_id,
+                proveedor_id: e.proveedor_id,
+                evaluacion_tecnica: e.evaluacion_tecnica,
+                comentario_tecnico: e.comentario_tecnico,
+                pregunta_residente: e.pregunta_residente,
+                respuesta_compras: e.respuesta_compras,
+                creado_por: e.creado_por,
+              })),
+            });
+          }
+
+          logInfo(req, 'compras', 'compras.comparativa.revision_con_preguntas_gt', 'Revisión con preguntas creada por Gerencia Técnica (hereda evaluación técnica)', {
+            cuadro_original_id: id,
+            nuevo_cuadro_id: nuevoCuadro.id_cuadro,
+            revision_nueva: siguienteRev,
+            preguntas_gt: evaluacionesRenglon.filter(e => e.aprobacion_gt === '?').length,
+          });
+
+          return { nueva_revision_id: nuevoCuadro.id_cuadro, revision_label: siguienteRev };
+        }
+      );
+
+      if (res.headersSent) return;
+      res.status(201).json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.revision_con_preguntas_gt.error', 'Error al crear revisión con preguntas de GT', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// PUT responder-preguntas-gt — Compras responde las preguntas económicas de GT.
+// Precondición de estado distinta de responder-preguntas (BORRADOR): aquí el cuadro nace
+// directo en EN_APROBACION_GT (ver revision-con-preguntas-gt), nunca pasa por BORRADOR.
+app.put('/api/v1/compras/comparativas/:id/responder-preguntas-gt',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { respuestas } = req.body as {
+        respuestas?: { detalle_id: string; respuesta_gt: string }[];
+      };
+      const respuestasRenglon = respuestas ?? [];
+
+      if (respuestasRenglon.length === 0) {
+        return res.status(400).json({ success: false, message: 'Se requiere el array respuestas.' });
+      }
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const cuadro = await prisma.cuadroComparativo.findUnique({
+            where: { id_cuadro: id },
+            select: { estado: true, revision_padre_id: true, tenant_id: true },
+          });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          }
+          if (cuadro.estado !== 'EN_APROBACION_GT') {
+            return res.status(400).json({ success: false, message: 'Solo se pueden responder preguntas de GT en un cuadro en estado EN_APROBACION_GT.' });
+          }
+          if (!cuadro.revision_padre_id) {
+            return res.status(400).json({ success: false, message: 'Este cuadro no es una revisión — no tiene preguntas de Gerencia Técnica.' });
+          }
+
+          await Promise.all(respuestasRenglon.map(r =>
+            prisma.comparativaDetalle.update({
+              where: { id_detalle: r.detalle_id },
+              data: { respuesta_gt: r.respuesta_gt?.trim() ?? null },
+            })
+          ));
+
+          logInfo(req, 'compras', 'compras.comparativa.respuestas_gt_guardadas', 'Compras respondió preguntas de Gerencia Técnica', {
+            cuadro_id: id,
+            respuestas_renglon: respuestasRenglon.length,
+          });
+          return { cuadro_id: id, respuestas_guardadas: respuestasRenglon.length };
+        }
+      );
+
+      if (res.headersSent) return;
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.comparativa.responder_preguntas_gt.error', 'Error al responder preguntas de GT', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }

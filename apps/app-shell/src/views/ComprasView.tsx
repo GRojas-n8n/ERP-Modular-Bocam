@@ -184,6 +184,10 @@ interface ProveedorCatalogo {
   entrega_en_sitio: boolean;
   estatus_credito: string;
   limite_credito?: number;
+  // Condiciones de crédito — atributo fijo del catálogo, ver
+  // openspec/changes/evaluacion-economica-gt-por-proveedor.
+  ofrece_credito?: boolean;
+  dias_credito?: number;
   tipo_proveedor: string;
   calificacion_desempeno?: number;
 }
@@ -191,7 +195,8 @@ interface ProveedorCatalogo {
 const PROVEEDOR_FORM_EMPTY = {
   rfc_tax_id: '', razon_social: '', email_contacto: '', telefono: '',
   estatus: 'ACTIVO', ciudad: '', tipo_ubicacion: 'LOCAL', entrega_en_sitio: false,
-  estatus_credito: 'ACTIVO', limite_credito: '', tipo_proveedor: 'NACIONAL', calificacion_desempeno: '',
+  estatus_credito: 'ACTIVO', limite_credito: '', ofrece_credito: false, dias_credito: '',
+  tipo_proveedor: 'NACIONAL', calificacion_desempeno: '',
 };
 
 // ─── Importación masiva de Proveedores (CSV/Excel) ────────────────────────────
@@ -539,10 +544,16 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       // Normalizar comparativas: backend usa id_cuadro + detalles, frontend usa id + lineas
       const normalizeComp = (c: any): ComparativaLocal => {
         const detalles: any[] = c.detalles ?? [];
-        // Extraer proveedores únicos
-        const provMap = new Map<string, string>();
-        detalles.forEach(d => provMap.set(d.proveedor_id, d.proveedor?.razon_social ?? '—'));
-        const proveedores = Array.from(provMap.entries()).map(([id, nombre]) => ({ id, nombre }));
+        // Extraer proveedores únicos — incluye condiciones de crédito (atributo fijo del
+        // catálogo, no de la cotización). Ver
+        // openspec/changes/evaluacion-economica-gt-por-proveedor.
+        const provMap = new Map<string, { nombre: string; ofrece_credito?: boolean; dias_credito?: number | null }>();
+        detalles.forEach(d => provMap.set(d.proveedor_id, {
+          nombre: d.proveedor?.razon_social ?? '—',
+          ofrece_credito: d.proveedor?.ofrece_credito ?? false,
+          dias_credito: d.proveedor?.dias_credito ?? null,
+        }));
+        const proveedores = Array.from(provMap.entries()).map(([id, p]) => ({ id, nombre: p.nombre, ofrece_credito: p.ofrece_credito, dias_credito: p.dias_credito }));
         // Agrupar por insumo_id (o detalle_req_id para ítems de texto libre sin
         // catálogo, ver openspec/changes/cotizar-items-texto-libre-comparativa)
         const lineaMap = new Map<string, import('../components/ComparativaDetail').CotizacionLinea>();
@@ -567,6 +578,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               evaluacionesPorProveedor: {},
               aprobacion_gt:       d.aprobacion_gt ?? 'PENDIENTE',
               comentario_gt:       d.comentario_gt ?? undefined,
+              aprobacionesGtPorProveedor: {},
             });
           }
           const linea = lineaMap.get(lineaKey)!;
@@ -581,6 +593,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             evaluacion_tecnica:  d.evaluacion_tecnica ?? 'PENDIENTE',
             comentario_tecnico:  d.comentario_tecnico ?? undefined,
             pregunta_residente:  d.pregunta_residente ?? null,
+          };
+          // Aprobación GT por proveedor — mismo patrón. Ver
+          // openspec/changes/evaluacion-economica-gt-por-proveedor.
+          linea.aprobacionesGtPorProveedor![d.proveedor_id] = {
+            id_detalle:    d.id_detalle,
+            aprobacion_gt: d.aprobacion_gt ?? 'PENDIENTE',
+            comentario_gt: d.comentario_gt ?? undefined,
+            pregunta_gt:   d.pregunta_gt ?? null,
           };
         });
         return {
@@ -2165,6 +2185,9 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                             {p.limite_credito != null && (
                               <p className="mt-0.5 text-[10px] text-muted-foreground">Límite: ${Number(p.limite_credito).toLocaleString()}</p>
                             )}
+                            <p className="mt-0.5 text-[10px] text-muted-foreground">
+                              {p.ofrece_credito ? `Crédito ${p.dias_credito ?? '?'} días` : 'Sin crédito'}
+                            </p>
                           </td>
                           <td className="px-4 py-3">
                             {p.calificacion_desempeno != null ? (() => {
@@ -2210,6 +2233,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                       tipo_ubicacion: p.tipo_ubicacion, entrega_en_sitio: p.entrega_en_sitio,
                                       estatus_credito: p.estatus_credito,
                                       limite_credito: p.limite_credito != null ? String(p.limite_credito) : '',
+                                      ofrece_credito: p.ofrece_credito ?? false,
+                                      dias_credito: p.dias_credito != null ? String(p.dias_credito) : '',
                                       tipo_proveedor: p.tipo_proveedor,
                                       calificacion_desempeno: p.calificacion_desempeno != null ? String(p.calificacion_desempeno) : '',
                                     });
@@ -4037,6 +4062,23 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             <FormField label="Límite de Crédito (MXN)" hint="Dejar vacío = sin límite">
               <Input type="number" placeholder="0.00" value={proveedorForm.limite_credito} onChange={e => setProveedorForm(f => ({ ...f, limite_credito: e.target.value }))} />
             </FormField>
+            <FormField label="¿Otorga crédito?" hint="Visible para Gerencia Técnica al evaluar económicamente">
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={proveedorForm.ofrece_credito} onChange={e => setProveedorForm(f => ({ ...f, ofrece_credito: e.target.checked }))} className="rounded" />
+                  <span>Sí</span>
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Días de crédito"
+                  disabled={!proveedorForm.ofrece_credito}
+                  value={proveedorForm.dias_credito}
+                  onChange={e => setProveedorForm(f => ({ ...f, dias_credito: e.target.value }))}
+                />
+              </div>
+            </FormField>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <FormField label="Score de Desempeño" hint="Calculado automáticamente del historial de calificaciones">
               <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/20 px-3 py-2">
                 {proveedorForm.calificacion_desempeno ? (
@@ -4080,6 +4122,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     entrega_en_sitio: proveedorForm.entrega_en_sitio,
                     estatus_credito: proveedorForm.estatus_credito,
                     limite_credito: proveedorForm.limite_credito !== '' ? Number(proveedorForm.limite_credito) : null,
+                    ofrece_credito: proveedorForm.ofrece_credito,
+                    dias_credito: proveedorForm.ofrece_credito && proveedorForm.dias_credito !== '' ? Number(proveedorForm.dias_credito) : null,
                     tipo_proveedor: proveedorForm.tipo_proveedor,
                     calificacion_desempeno: proveedorForm.calificacion_desempeno !== '' ? Number(proveedorForm.calificacion_desempeno) : null,
                   };
