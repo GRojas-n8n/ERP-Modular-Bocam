@@ -53,7 +53,11 @@ export interface AclaracionComparativa {
 
 export interface CotizacionLinea {
   id: string;
-  insumo_id: string;
+  // Nullable para ítems de requisición de texto libre (imprevisto, sin catálogo) —
+  // ver openspec/changes/cotizar-items-texto-libre-comparativa. En ese caso
+  // detalle_req_id identifica la línea.
+  insumo_id: string | null;
+  detalle_req_id?: string | null;
   insumo_clave: string;
   insumo_descripcion: string;
   insumo_unidad: string;
@@ -120,11 +124,18 @@ export interface EvaluacionEspecItem {
 }
 
 export interface LineaDetalleTecnico {
-  insumo_id: string;
+  insumo_id: string | null;
   marca_modelo_ref?: string | null;
   especificaciones_requeridas?: string | null;
   detalle_req_id?: string | null;
   especificaciones?: EspecificacionLinea[];
+}
+
+// Llave de línea para "Detalles técnicos": insumo_id de catálogo, o detalle_req_id
+// para ítems de texto libre sin catálogo (ver
+// openspec/changes/cotizar-items-texto-libre-comparativa).
+function lineaDetalleKey(l: { insumo_id?: string | null; detalle_req_id?: string | null }): string {
+  return l.insumo_id ?? l.detalle_req_id ?? '';
 }
 
 export interface FichaTecnica {
@@ -565,9 +576,10 @@ export const ComparativaDetail: React.FC<Props> = ({
     const initFromProp = () => {
       const init: Record<string, { marca: string; espec: string }> = {};
       (comp.lineas_detalle ?? []).forEach(ld => {
-        init[ld.insumo_id] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
+        const key = lineaDetalleKey(ld);
+        init[key] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
         if ((ld.especificaciones?.length ?? 0) > 0) {
-          setEspecsMap(prev => ({ ...prev, [ld.insumo_id]: ld.especificaciones! }));
+          setEspecsMap(prev => ({ ...prev, [key]: ld.especificaciones! }));
         }
       });
       setDetallesTecnicos(init);
@@ -583,8 +595,9 @@ export const ComparativaDetail: React.FC<Props> = ({
       const init: Record<string, { marca: string; espec: string }> = {};
       const newEspecsMap: Record<string, EspecificacionLinea[]> = {};
       for (const ld of (full.lineas_detalle ?? [])) {
-        init[ld.insumo_id] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
-        if ((ld.especificaciones?.length ?? 0) > 0) newEspecsMap[ld.insumo_id] = ld.especificaciones;
+        const key = lineaDetalleKey(ld);
+        init[key] = { marca: ld.marca_modelo_ref ?? '', espec: ld.especificaciones_requeridas ?? '' };
+        if ((ld.especificaciones?.length ?? 0) > 0) newEspecsMap[key] = ld.especificaciones;
       }
       setDetallesTecnicos(init);
       setEspecsMap(newEspecsMap);
@@ -1031,7 +1044,7 @@ export const ComparativaDetail: React.FC<Props> = ({
         const proveedoresPayload = comp.proveedores.map(prov => ({
           nombre: prov.nombre,
           precios: comp.lineas.map(l => ({
-            insumo_id: l.insumo_id,
+            ...(l.insumo_id ? { insumo_id: l.insumo_id } : { detalle_req_id: l.detalle_req_id ?? l.id }),
             precio:    Number(l.precios[prov.id] ?? 0),
             fecha_entrega_estimada: l.fechasEntrega?.[prov.id] || undefined,
           })).filter(p => p.precio > 0),
@@ -1058,7 +1071,7 @@ export const ComparativaDetail: React.FC<Props> = ({
     // Ver openspec/changes/evaluacion-tecnica-por-especificacion: solo
     // renglones sin especificaciones capturadas usan este camino legacy —
     // los que sí tienen se evalúan por característica en la tabla.
-    const lineasSinSpecs = comp.lineas.filter(l => !(especsMap[l.insumo_id]?.length));
+    const lineasSinSpecs = comp.lineas.filter(l => !(especsMap[lineaDetalleKey(l)]?.length));
     const REQUIRES_COMMENT = new Set(['NC', 'DA']);
     for (const l of lineasSinSpecs) {
       const form = evalForm[l.id];
@@ -1781,8 +1794,8 @@ export const ComparativaDetail: React.FC<Props> = ({
               </thead>
               <tbody>
                 {comp.lineas.map(linea => {
-                  const dt = detallesTecnicos[linea.insumo_id] ?? { marca: '', espec: '' };
-                  const fichas = fichasInsumo[linea.insumo_id];
+                  const dt = detallesTecnicos[lineaDetalleKey(linea)] ?? { marca: '', espec: '' };
+                  const fichas = linea.insumo_id ? fichasInsumo[linea.insumo_id] : undefined;
                   const nFichas = fichas?.length ?? null;
                   const canUpload = isProcurement;
                   return (
@@ -1810,16 +1823,16 @@ export const ComparativaDetail: React.FC<Props> = ({
                             placeholder="Marca / Modelo ref."
                             maxLength={100}
                             value={dt.marca}
-                            onChange={e => setDetallesTecnicos(prev => ({ ...prev, [linea.insumo_id]: { ...dt, marca: e.target.value } }))}
-                            onBlur={() => handleDetalleBlur(linea.insumo_id)}
+                            onChange={e => setDetallesTecnicos(prev => ({ ...prev, [lineaDetalleKey(linea)]: { ...dt, marca: e.target.value } }))}
+                            onBlur={() => handleDetalleBlur(lineaDetalleKey(linea))}
                             className="w-full rounded border border-border/40 bg-background px-1.5 py-0.5 text-[10px] placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-400"
                           />
                           <textarea
                             placeholder="Especificaciones requeridas"
                             rows={2}
                             value={dt.espec}
-                            onChange={e => setDetallesTecnicos(prev => ({ ...prev, [linea.insumo_id]: { ...dt, espec: e.target.value } }))}
-                            onBlur={() => handleDetalleBlur(linea.insumo_id)}
+                            onChange={e => setDetallesTecnicos(prev => ({ ...prev, [lineaDetalleKey(linea)]: { ...dt, espec: e.target.value } }))}
+                            onBlur={() => handleDetalleBlur(lineaDetalleKey(linea))}
                             className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-0.5 text-[10px] placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-400"
                           />
                         </div>
@@ -1972,7 +1985,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                     )}
                   </tr>
                   {/* ── Sub-filas de especificaciones (10.2-10.3) ─────────── */}
-                  {(especsMap[linea.insumo_id] ?? []).map(esp => {
+                  {(especsMap[lineaDetalleKey(linea)] ?? []).map(esp => {
                     return (
                       <tr key={esp.id_especificacion} className="border-b border-indigo-500/5 bg-indigo-500/[0.02]">
                         <td className="pl-10 pr-2 py-1">
@@ -2500,9 +2513,9 @@ export const ComparativaDetail: React.FC<Props> = ({
               <Button onClick={() => setShowEvalPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
             </div>
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
-              {comp.lineas.filter(linea => !(especsMap[linea.insumo_id]?.length)).map(linea => {
-                const dt = detallesTecnicos[linea.insumo_id] ?? { marca: '', espec: '' };
-                const fichasEval = fichasInsumo[linea.insumo_id];
+              {comp.lineas.filter(linea => !(especsMap[lineaDetalleKey(linea)]?.length)).map(linea => {
+                const dt = detallesTecnicos[lineaDetalleKey(linea)] ?? { marca: '', espec: '' };
+                const fichasEval = linea.insumo_id ? fichasInsumo[linea.insumo_id] : undefined;
                 const decision = evalForm[linea.id]?.decision ?? 'PENDIENTE';
                 const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
                 type EvalBtn = { key: 'C' | 'NC' | 'DA' | '?'; label: string; activeClass: string };
