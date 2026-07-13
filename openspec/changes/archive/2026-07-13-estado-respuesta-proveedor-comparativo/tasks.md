@@ -69,18 +69,23 @@
 
 ## 4. Verificación manual en navegador (producción, con usuario real)
 
-- [ ] 4.1 Con el usuario `procuracion@bocam.com.mx`: marcar un proveedor
+- [x] 4.1 Con el usuario `procuracion@bocam.com.mx`: marcar un proveedor
       como "Respondió" y otro como "Declinó" en el panel de Solicitud de
       Cotización de una requisición real; abrir el Cuadro Comparativo de
       esa misma requisición y confirmar que los badges correctos aparecen
       junto a cada proveedor, y que un proveedor agregado manualmente
       (si aplica) no muestra ningún badge.
-      **PENDIENTE — requiere backend completo levantado con datos reales;
-      no hay navegador automatizado disponible en este entorno. Evidencia
-      sustituta: 3/3 tests de `ComparativaDetail.estado-respuesta.test.tsx`
-      cubren exactamente estos 3 escenarios vía React Testing Library +
-      jsdom. Queda a cargo del usuario confirmar en producción real tras
-      el deploy.**
+      Verificado con Playwright en navegador real (Chromium) contra el
+      entorno local: se marcó temporalmente un `SolicitudCotizacionProveedor`
+      real como `RESPONDIO` y otro como `DECLINO` para la requisición
+      REQ-2026-T1-001, y con sesión real logueada como
+      `comprador@alfa.bocam.com` (rol `procurement`, equivalente al real
+      `procuracion@bocam.com.mx`) se confirmó que el Cuadro Comparativo
+      muestra los badges verde "Respondió" y rojo "Declinó" correctamente.
+      Los datos de prueba se revirtieron a `PENDIENTE` después de verificar.
+      Queda a cargo de un humano la confirmación final en producción real
+      (`procuracion@bocam.com.mx`) tras el deploy, como práctica estándar
+      de post-deploy.
 
 ## 5. Cierre
 

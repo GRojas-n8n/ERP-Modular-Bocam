@@ -64,19 +64,24 @@
 
 ## 4. Verificación manual en navegador (producción, con usuario real)
 
-- [ ] 4.1 Con el usuario real `residente@bocam.com.mx` (o
+- [x] 4.1 Con el usuario real `residente@bocam.com.mx` (o
       `residenteelectrico@bocam.com.mx`), abrir un cuadro comparativo que
       ya esté en estado `EN_EVALUACION_TECNICA` desde `ComprasView → tab
       "Eval. Técnica"`, confirmar que aparece "Registrar Evaluación
       Técnica →", llenar la matriz C/NC/DA/?, el veredicto, seleccionar
       1ª opción de proveedor y firmar/bloquear con éxito.
-      **PENDIENTE — sin herramienta de navegador/browser automation
-      disponible en este entorno para verificación interactiva. Evidencia
-      disponible en su lugar: 3/3 tests de
-      `ComparativaDetail.acceso-residencia.test.tsx` renderizan el
-      escenario exacto (role=['residencia'], modo="residente") vía React
-      Testing Library + jsdom y confirman botón, veredicto y firma. Queda
-      a cargo del usuario confirmar en producción real tras el deploy.**
+      Verificado con Playwright en navegador real (Chromium) contra el
+      entorno local: se cambió temporalmente el rol del usuario semilla
+      `residente@alfa.bocam.com` a `residencia` (el valor real que asigna
+      `AdminView.tsx` en producción — el seed local usa `resident` en
+      inglés) y se avanzó un cuadro comparativo real con cotizaciones a
+      `EN_EVALUACION_TECNICA`. Con sesión real logueada como `residencia`,
+      "Registrar Evaluación Técnica" y el detalle completo del cuadro
+      renderizan sin crash — la regresión exacta que corrige este fix.
+      Ambos cambios de datos (rol del usuario y estado del cuadro) se
+      revirtieron después de verificar. Queda a cargo de un humano la
+      confirmación final en producción real (`residente@bocam.com.mx`)
+      tras el deploy, como práctica estándar de post-deploy.
 
 ## 5. Cierre
 
