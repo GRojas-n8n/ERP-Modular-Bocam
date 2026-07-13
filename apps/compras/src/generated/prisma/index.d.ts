@@ -16971,7 +16971,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     cuadro_id: string
-    insumo_id: string
+    insumo_id: string | null
     marca_modelo_ref: string | null
     especificaciones_requeridas: string | null
     detalle_req_id: string | null
@@ -17046,7 +17046,11 @@ export namespace Prisma {
       tenant_id: string
       proyecto_id: string
       cuadro_id: string
-      insumo_id: string
+      /**
+       * Nullable para ítems de requisición de texto libre (imprevisto, sin catálogo) —
+       * en ese caso detalle_req_id es la llave de identificación de la línea.
+       */
+      insumo_id: string | null
       marca_modelo_ref: string | null
       especificaciones_requeridas: string | null
       detalle_req_id: string | null
@@ -17811,6 +17815,7 @@ export namespace Prisma {
     cuadro_id: string | null
     proveedor_id: string | null
     insumo_id: string | null
+    detalle_req_id: string | null
     precio_ofertado: Decimal | null
     fecha_entrega_estimada: Date | null
     es_ganador: boolean | null
@@ -17830,6 +17835,7 @@ export namespace Prisma {
     cuadro_id: string | null
     proveedor_id: string | null
     insumo_id: string | null
+    detalle_req_id: string | null
     precio_ofertado: Decimal | null
     fecha_entrega_estimada: Date | null
     es_ganador: boolean | null
@@ -17849,6 +17855,7 @@ export namespace Prisma {
     cuadro_id: number
     proveedor_id: number
     insumo_id: number
+    detalle_req_id: number
     precio_ofertado: number
     fecha_entrega_estimada: number
     es_ganador: number
@@ -17878,6 +17885,7 @@ export namespace Prisma {
     cuadro_id?: true
     proveedor_id?: true
     insumo_id?: true
+    detalle_req_id?: true
     precio_ofertado?: true
     fecha_entrega_estimada?: true
     es_ganador?: true
@@ -17897,6 +17905,7 @@ export namespace Prisma {
     cuadro_id?: true
     proveedor_id?: true
     insumo_id?: true
+    detalle_req_id?: true
     precio_ofertado?: true
     fecha_entrega_estimada?: true
     es_ganador?: true
@@ -17916,6 +17925,7 @@ export namespace Prisma {
     cuadro_id?: true
     proveedor_id?: true
     insumo_id?: true
+    detalle_req_id?: true
     precio_ofertado?: true
     fecha_entrega_estimada?: true
     es_ganador?: true
@@ -18021,7 +18031,8 @@ export namespace Prisma {
     proyecto_id: string
     cuadro_id: string
     proveedor_id: string
-    insumo_id: string
+    insumo_id: string | null
+    detalle_req_id: string | null
     precio_ofertado: Decimal
     fecha_entrega_estimada: Date | null
     es_ganador: boolean
@@ -18060,6 +18071,7 @@ export namespace Prisma {
     cuadro_id?: boolean
     proveedor_id?: boolean
     insumo_id?: boolean
+    detalle_req_id?: boolean
     precio_ofertado?: boolean
     fecha_entrega_estimada?: boolean
     es_ganador?: boolean
@@ -18081,6 +18093,7 @@ export namespace Prisma {
     cuadro_id?: boolean
     proveedor_id?: boolean
     insumo_id?: boolean
+    detalle_req_id?: boolean
     precio_ofertado?: boolean
     fecha_entrega_estimada?: boolean
     es_ganador?: boolean
@@ -18102,6 +18115,7 @@ export namespace Prisma {
     cuadro_id?: boolean
     proveedor_id?: boolean
     insumo_id?: boolean
+    detalle_req_id?: boolean
     precio_ofertado?: boolean
     fecha_entrega_estimada?: boolean
     es_ganador?: boolean
@@ -18135,7 +18149,14 @@ export namespace Prisma {
       proyecto_id: string
       cuadro_id: string
       proveedor_id: string
-      insumo_id: string
+      /**
+       * Nullable para ítems de requisición de texto libre (imprevisto, sin catálogo).
+       */
+      insumo_id: string | null
+      /**
+       * Referencia al RequisicionItem de origen, poblado cuando insumo_id es nulo.
+       */
+      detalle_req_id: string | null
       precio_ofertado: Prisma.Decimal
       fecha_entrega_estimada: Date | null
       es_ganador: boolean
@@ -18553,6 +18574,7 @@ export namespace Prisma {
     readonly cuadro_id: FieldRef<"ComparativaDetalle", 'String'>
     readonly proveedor_id: FieldRef<"ComparativaDetalle", 'String'>
     readonly insumo_id: FieldRef<"ComparativaDetalle", 'String'>
+    readonly detalle_req_id: FieldRef<"ComparativaDetalle", 'String'>
     readonly precio_ofertado: FieldRef<"ComparativaDetalle", 'Decimal'>
     readonly fecha_entrega_estimada: FieldRef<"ComparativaDetalle", 'DateTime'>
     readonly es_ganador: FieldRef<"ComparativaDetalle", 'Boolean'>
@@ -26124,6 +26146,7 @@ export namespace Prisma {
     cuadro_id: 'cuadro_id',
     proveedor_id: 'proveedor_id',
     insumo_id: 'insumo_id',
+    detalle_req_id: 'detalle_req_id',
     precio_ofertado: 'precio_ofertado',
     fecha_entrega_estimada: 'fecha_entrega_estimada',
     es_ganador: 'es_ganador',
@@ -27582,7 +27605,7 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"ComparativaLinea"> | string
     proyecto_id?: UuidFilter<"ComparativaLinea"> | string
     cuadro_id?: UuidFilter<"ComparativaLinea"> | string
-    insumo_id?: UuidFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
     marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
     detalle_req_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
@@ -27594,7 +27617,7 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     cuadro_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
     marca_modelo_ref?: SortOrderInput | SortOrder
     especificaciones_requeridas?: SortOrderInput | SortOrder
     detalle_req_id?: SortOrderInput | SortOrder
@@ -27604,25 +27627,26 @@ export namespace Prisma {
   export type ComparativaLineaWhereUniqueInput = Prisma.AtLeast<{
     id_linea?: string
     cuadro_id_insumo_id?: ComparativaLineaCuadro_idInsumo_idCompoundUniqueInput
+    cuadro_id_detalle_req_id?: ComparativaLineaCuadro_idDetalle_req_idCompoundUniqueInput
     AND?: ComparativaLineaWhereInput | ComparativaLineaWhereInput[]
     OR?: ComparativaLineaWhereInput[]
     NOT?: ComparativaLineaWhereInput | ComparativaLineaWhereInput[]
     tenant_id?: UuidFilter<"ComparativaLinea"> | string
     proyecto_id?: UuidFilter<"ComparativaLinea"> | string
     cuadro_id?: UuidFilter<"ComparativaLinea"> | string
-    insumo_id?: UuidFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
     marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
     detalle_req_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
-  }, "id_linea" | "cuadro_id_insumo_id">
+  }, "id_linea" | "cuadro_id_insumo_id" | "cuadro_id_detalle_req_id">
 
   export type ComparativaLineaOrderByWithAggregationInput = {
     id_linea?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     cuadro_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
     marca_modelo_ref?: SortOrderInput | SortOrder
     especificaciones_requeridas?: SortOrderInput | SortOrder
     detalle_req_id?: SortOrderInput | SortOrder
@@ -27639,7 +27663,7 @@ export namespace Prisma {
     tenant_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
     proyecto_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
     cuadro_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
-    insumo_id?: UuidWithAggregatesFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
     marca_modelo_ref?: StringNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
     detalle_req_id?: UuidNullableWithAggregatesFilter<"ComparativaLinea"> | string | null
@@ -27654,7 +27678,8 @@ export namespace Prisma {
     proyecto_id?: UuidFilter<"ComparativaDetalle"> | string
     cuadro_id?: UuidFilter<"ComparativaDetalle"> | string
     proveedor_id?: UuidFilter<"ComparativaDetalle"> | string
-    insumo_id?: UuidFilter<"ComparativaDetalle"> | string
+    insumo_id?: UuidNullableFilter<"ComparativaDetalle"> | string | null
+    detalle_req_id?: UuidNullableFilter<"ComparativaDetalle"> | string | null
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: DateTimeNullableFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
@@ -27675,7 +27700,8 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     cuadro_id?: SortOrder
     proveedor_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
+    detalle_req_id?: SortOrderInput | SortOrder
     precio_ofertado?: SortOrder
     fecha_entrega_estimada?: SortOrderInput | SortOrder
     es_ganador?: SortOrder
@@ -27699,7 +27725,8 @@ export namespace Prisma {
     proyecto_id?: UuidFilter<"ComparativaDetalle"> | string
     cuadro_id?: UuidFilter<"ComparativaDetalle"> | string
     proveedor_id?: UuidFilter<"ComparativaDetalle"> | string
-    insumo_id?: UuidFilter<"ComparativaDetalle"> | string
+    insumo_id?: UuidNullableFilter<"ComparativaDetalle"> | string | null
+    detalle_req_id?: UuidNullableFilter<"ComparativaDetalle"> | string | null
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: DateTimeNullableFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
@@ -27720,7 +27747,8 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     cuadro_id?: SortOrder
     proveedor_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
+    detalle_req_id?: SortOrderInput | SortOrder
     precio_ofertado?: SortOrder
     fecha_entrega_estimada?: SortOrderInput | SortOrder
     es_ganador?: SortOrder
@@ -27747,7 +27775,8 @@ export namespace Prisma {
     proyecto_id?: UuidWithAggregatesFilter<"ComparativaDetalle"> | string
     cuadro_id?: UuidWithAggregatesFilter<"ComparativaDetalle"> | string
     proveedor_id?: UuidWithAggregatesFilter<"ComparativaDetalle"> | string
-    insumo_id?: UuidWithAggregatesFilter<"ComparativaDetalle"> | string
+    insumo_id?: UuidNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    detalle_req_id?: UuidNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
     precio_ofertado?: DecimalWithAggregatesFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: DateTimeNullableWithAggregatesFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolWithAggregatesFilter<"ComparativaDetalle"> | boolean
@@ -29734,7 +29763,7 @@ export namespace Prisma {
     id_linea?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
     detalle_req_id?: string | null
@@ -29746,7 +29775,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     cuadro_id: string
-    insumo_id: string
+    insumo_id?: string | null
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
     detalle_req_id?: string | null
@@ -29756,7 +29785,7 @@ export namespace Prisma {
     id_linea?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29768,7 +29797,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     cuadro_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29779,7 +29808,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     cuadro_id: string
-    insumo_id: string
+    insumo_id?: string | null
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
     detalle_req_id?: string | null
@@ -29789,7 +29818,7 @@ export namespace Prisma {
     id_linea?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29800,7 +29829,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     cuadro_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29810,7 +29839,8 @@ export namespace Prisma {
     id_detalle?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -29831,7 +29861,8 @@ export namespace Prisma {
     proyecto_id: string
     cuadro_id: string
     proveedor_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -29848,7 +29879,8 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -29869,7 +29901,8 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     cuadro_id?: StringFieldUpdateOperationsInput | string
     proveedor_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -29888,7 +29921,8 @@ export namespace Prisma {
     proyecto_id: string
     cuadro_id: string
     proveedor_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -29905,7 +29939,8 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -29924,7 +29959,8 @@ export namespace Prisma {
     proyecto_id?: StringFieldUpdateOperationsInput | string
     cuadro_id?: StringFieldUpdateOperationsInput | string
     proveedor_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -31705,6 +31741,11 @@ export namespace Prisma {
     insumo_id: string
   }
 
+  export type ComparativaLineaCuadro_idDetalle_req_idCompoundUniqueInput = {
+    cuadro_id: string
+    detalle_req_id: string
+  }
+
   export type ComparativaLineaCountOrderByAggregateInput = {
     id_linea?: SortOrder
     tenant_id?: SortOrder
@@ -31745,6 +31786,7 @@ export namespace Prisma {
     cuadro_id?: SortOrder
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
+    detalle_req_id?: SortOrder
     precio_ofertado?: SortOrder
     fecha_entrega_estimada?: SortOrder
     es_ganador?: SortOrder
@@ -31768,6 +31810,7 @@ export namespace Prisma {
     cuadro_id?: SortOrder
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
+    detalle_req_id?: SortOrder
     precio_ofertado?: SortOrder
     fecha_entrega_estimada?: SortOrder
     es_ganador?: SortOrder
@@ -31787,6 +31830,7 @@ export namespace Prisma {
     cuadro_id?: SortOrder
     proveedor_id?: SortOrder
     insumo_id?: SortOrder
+    detalle_req_id?: SortOrder
     precio_ofertado?: SortOrder
     fecha_entrega_estimada?: SortOrder
     es_ganador?: SortOrder
@@ -33509,7 +33553,8 @@ export namespace Prisma {
     id_detalle?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -33528,7 +33573,8 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     cuadro_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -33759,7 +33805,8 @@ export namespace Prisma {
     proyecto_id?: UuidFilter<"ComparativaDetalle"> | string
     cuadro_id?: UuidFilter<"ComparativaDetalle"> | string
     proveedor_id?: UuidFilter<"ComparativaDetalle"> | string
-    insumo_id?: UuidFilter<"ComparativaDetalle"> | string
+    insumo_id?: UuidNullableFilter<"ComparativaDetalle"> | string | null
+    detalle_req_id?: UuidNullableFilter<"ComparativaDetalle"> | string | null
     precio_ofertado?: DecimalFilter<"ComparativaDetalle"> | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: DateTimeNullableFilter<"ComparativaDetalle"> | Date | string | null
     es_ganador?: BoolFilter<"ComparativaDetalle"> | boolean
@@ -34832,7 +34879,8 @@ export namespace Prisma {
     id_detalle?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -34851,7 +34899,8 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     proveedor_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -34878,7 +34927,7 @@ export namespace Prisma {
     id_linea?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
     detalle_req_id?: string | null
@@ -34888,7 +34937,7 @@ export namespace Prisma {
     id_linea?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
     detalle_req_id?: string | null
@@ -35078,7 +35127,7 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"ComparativaLinea"> | string
     proyecto_id?: UuidFilter<"ComparativaLinea"> | string
     cuadro_id?: UuidFilter<"ComparativaLinea"> | string
-    insumo_id?: UuidFilter<"ComparativaLinea"> | string
+    insumo_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
     marca_modelo_ref?: StringNullableFilter<"ComparativaLinea"> | string | null
     especificaciones_requeridas?: StringNullableFilter<"ComparativaLinea"> | string | null
     detalle_req_id?: UuidNullableFilter<"ComparativaLinea"> | string | null
@@ -36551,7 +36600,8 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     cuadro_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -36681,7 +36731,8 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -36700,7 +36751,8 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     cuadro_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -36718,7 +36770,8 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     cuadro_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -37078,7 +37131,8 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     proveedor_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
     precio_ofertado: Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: Date | string | null
     es_ganador?: boolean
@@ -37095,7 +37149,7 @@ export namespace Prisma {
     id_linea?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
     marca_modelo_ref?: string | null
     especificaciones_requeridas?: string | null
     detalle_req_id?: string | null
@@ -37152,7 +37206,8 @@ export namespace Prisma {
     id_detalle?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -37171,7 +37226,8 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     proveedor_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -37189,7 +37245,8 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     proveedor_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
     precio_ofertado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     fecha_entrega_estimada?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     es_ganador?: BoolFieldUpdateOperationsInput | boolean
@@ -37206,7 +37263,7 @@ export namespace Prisma {
     id_linea?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37216,7 +37273,7 @@ export namespace Prisma {
     id_linea?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37226,7 +37283,7 @@ export namespace Prisma {
     id_linea?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
     marca_modelo_ref?: NullableStringFieldUpdateOperationsInput | string | null
     especificaciones_requeridas?: NullableStringFieldUpdateOperationsInput | string | null
     detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null

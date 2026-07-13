@@ -362,7 +362,9 @@ model ComparativaLinea {
   tenant_id                 String   @db.Uuid
   proyecto_id               String   @db.Uuid
   cuadro_id                 String   @db.Uuid
-  insumo_id                 String   @db.Uuid
+  /// Nullable para ítems de requisición de texto libre (imprevisto, sin catálogo) —
+  /// en ese caso detalle_req_id es la llave de identificación de la línea.
+  insumo_id                 String?  @db.Uuid
   marca_modelo_ref          String?  @db.VarChar(100)
   especificaciones_requeridas String? @db.Text
   // Referencia al RequisicionItem de origen (nullable para cuadros anteriores)
@@ -371,6 +373,7 @@ model ComparativaLinea {
   cuadro  CuadroComparativo @relation(fields: [cuadro_id], references: [id_cuadro], onDelete: Cascade)
 
   @@unique([cuadro_id, insumo_id])
+  @@unique([cuadro_id, detalle_req_id])
   @@index([tenant_id, cuadro_id])
   @@map("comparativas_lineas")
 }
@@ -381,7 +384,10 @@ model ComparativaDetalle {
   proyecto_id    String   @db.Uuid
   cuadro_id      String   @db.Uuid
   proveedor_id   String   @db.Uuid
-  insumo_id      String   @db.Uuid
+  /// Nullable para ítems de requisición de texto libre (imprevisto, sin catálogo).
+  insumo_id      String?  @db.Uuid
+  /// Referencia al RequisicionItem de origen, poblado cuando insumo_id es nulo.
+  detalle_req_id String?  @db.Uuid
   precio_ofertado Decimal @db.Decimal(18, 4)
   fecha_entrega_estimada DateTime?
   es_ganador     Boolean  @default(false)

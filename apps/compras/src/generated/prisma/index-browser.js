@@ -332,6 +332,7 @@ exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   cuadro_id: 'cuadro_id',
   proveedor_id: 'proveedor_id',
   insumo_id: 'insumo_id',
+  detalle_req_id: 'detalle_req_id',
   precio_ofertado: 'precio_ofertado',
   fecha_entrega_estimada: 'fecha_entrega_estimada',
   es_ganador: 'es_ganador',

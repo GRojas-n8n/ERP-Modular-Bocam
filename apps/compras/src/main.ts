@@ -2622,21 +2622,33 @@ app.put('/api/v1/compras/comparativas/:id/lineas/:insumoId',
             return { locked: true };
           }
 
-          const linea = await prisma.comparativaLinea.upsert({
-            where:  { cuadro_id_insumo_id: { cuadro_id: id, insumo_id: insumoId } },
-            create: {
-              tenant_id:   tenantId,
-              proyecto_id: proyectoId,
-              cuadro_id:   id,
-              insumo_id:   insumoId,
-              marca_modelo_ref:           marca_modelo_ref?.trim() ?? null,
-              especificaciones_requeridas: especificaciones_requeridas?.trim() ?? null,
-            },
-            update: {
-              marca_modelo_ref:           marca_modelo_ref?.trim() ?? null,
-              especificaciones_requeridas: especificaciones_requeridas?.trim() ?? null,
+          // El parámetro :insumoId identifica la línea por insumo_id de catálogo, o —
+          // para ítems de texto libre sin catálogo — por detalle_req_id (id del
+          // RequisicionItem de origen). Se detecta cuál de los dos es consultando la
+          // línea existente primero.
+          const existente = await prisma.comparativaLinea.findFirst({
+            where: {
+              cuadro_id: id,
+              OR: [{ insumo_id: insumoId }, { detalle_req_id: insumoId }],
             },
           });
+          const esPorDetalleReq = existente ? !existente.insumo_id : false;
+
+          const datosBase = {
+            marca_modelo_ref:           marca_modelo_ref?.trim() ?? null,
+            especificaciones_requeridas: especificaciones_requeridas?.trim() ?? null,
+          };
+          const linea = esPorDetalleReq
+            ? await prisma.comparativaLinea.upsert({
+                where:  { cuadro_id_detalle_req_id: { cuadro_id: id, detalle_req_id: insumoId } },
+                create: { tenant_id: tenantId, proyecto_id: proyectoId, cuadro_id: id, detalle_req_id: insumoId, ...datosBase },
+                update: datosBase,
+              })
+            : await prisma.comparativaLinea.upsert({
+                where:  { cuadro_id_insumo_id: { cuadro_id: id, insumo_id: insumoId } },
+                create: { tenant_id: tenantId, proyecto_id: proyectoId, cuadro_id: id, insumo_id: insumoId, ...datosBase },
+                update: datosBase,
+              });
           return { linea };
         },
       );
@@ -2695,13 +2707,18 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         const cantidadMap = new Map(reqItems.map((i: any) => [i.id_item, Number(i.cantidad)]));
 
         // 1.1: Agrupar detalles ganadores por proveedor_id
+        // Nota: líneas sin insumo_id (ítems de texto libre/imprevisto) aún no soportan
+        // conversión a OC — ver openspec/changes/cotizar-items-texto-libre-comparativa
+        // (Non-Goals). Se excluyen aquí en vez de fallar.
         const grupos = new Map<string, GrupoProveedor>();
         for (const d of comparativa.detalles) {
+          const insumoId = d.insumo_id;
+          if (!insumoId) continue;
           if (!grupos.has(d.proveedor_id)) grupos.set(d.proveedor_id, { detalles: [], subtotal: 0 });
           const grupo = grupos.get(d.proveedor_id)!;
-          const detailReqId = lineaMap.get(d.insumo_id) ?? null;
+          const detailReqId = lineaMap.get(insumoId) ?? null;
           const cantidad = detailReqId ? (cantidadMap.get(detailReqId) ?? 1) : 1;
-          grupo.detalles.push(d);
+          grupo.detalles.push({ ...d, insumo_id: insumoId });
           grupo.subtotal += d.precio_ofertado.toNumber() * cantidad;
         }
 
@@ -3005,7 +3022,6 @@ app.post('/api/v1/compras/comparativas',
             }
 
             for (const item of items) {
-              if (!item.insumo_id) continue;
               // EspecificacionDetalleReq (estructurado, evaluación técnica por
               // especificación) tiene prioridad; si no hay filas, usar el texto libre
               // que el Residente ya capturó en la requisición como respaldo.
@@ -3013,22 +3029,24 @@ app.post('/api/v1/compras/comparativas',
                 || item.especificacion_detalle?.trim()
                 || null;
               const marcaModeloRef = item.especificacion_marca_modelo?.trim() || null;
+              const lineaData = {
+                tenant_id: tenantId,
+                proyecto_id: proyectoId,
+                cuadro_id: cuadro.id_cuadro,
+                insumo_id: item.insumo_id,
+                especificaciones_requeridas: specsTexto,
+                marca_modelo_ref: marcaModeloRef,
+                detalle_req_id: item.id_item,
+              };
+              // Ítem sin insumo_id de catálogo (imprevisto/texto libre): la línea se
+              // identifica por detalle_req_id en vez de insumo_id.
+              const where = item.insumo_id
+                ? { cuadro_id_insumo_id: { cuadro_id: cuadro.id_cuadro, insumo_id: item.insumo_id } }
+                : { cuadro_id_detalle_req_id: { cuadro_id: cuadro.id_cuadro, detalle_req_id: item.id_item } };
               await prisma.comparativaLinea.upsert({
-                where: { cuadro_id_insumo_id: { cuadro_id: cuadro.id_cuadro, insumo_id: item.insumo_id } },
-                create: {
-                  tenant_id: tenantId,
-                  proyecto_id: proyectoId,
-                  cuadro_id: cuadro.id_cuadro,
-                  insumo_id: item.insumo_id,
-                  especificaciones_requeridas: specsTexto,
-                  marca_modelo_ref: marcaModeloRef,
-                  detalle_req_id: item.id_item,
-                },
-                update: {
-                  especificaciones_requeridas: specsTexto,
-                  marca_modelo_ref: marcaModeloRef,
-                  detalle_req_id: item.id_item,
-                },
+                where,
+                create: lineaData,
+                update: lineaData,
               });
             }
           }
@@ -3133,7 +3151,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
       const { proveedores } = req.body as {
         proveedores: Array<{
           nombre: string;
-          precios: Array<{ insumo_id: string; precio: number; fecha_entrega_estimada?: string }>;
+          precios: Array<{ insumo_id?: string; detalle_req_id?: string; precio: number; fecha_entrega_estimada?: string }>;
         }>;
       };
 
@@ -3171,16 +3189,17 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
               });
             }
 
-            // Crear detalles (un detalle por insumo por proveedor)
+            // Crear detalles (un detalle por insumo/línea por proveedor)
             for (const p of prov.precios || []) {
-              if (!p.insumo_id || p.precio === undefined) continue;
+              if ((!p.insumo_id && !p.detalle_req_id) || p.precio === undefined) continue;
               await prisma.comparativaDetalle.create({
                 data: {
                   tenant_id:      tenantId,
                   proyecto_id:    proyectoId,
                   cuadro_id:      id,
                   proveedor_id:   proveedor.id_proveedor,
-                  insumo_id:      p.insumo_id,
+                  insumo_id:      p.insumo_id ?? null,
+                  detalle_req_id: p.detalle_req_id ?? null,
                   precio_ofertado: p.precio,
                   fecha_entrega_estimada: p.fecha_entrega_estimada ? new Date(p.fecha_entrega_estimada) : null,
                 },
@@ -3370,7 +3389,10 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
               });
 
               // ? → crear AclaracionComparativa de tipo PREGUNTA
-              if (ev.evaluacion_tecnica === '?') {
+              // Nota: las aclaraciones por celda aún no soportan líneas sin insumo_id
+              // (texto libre/imprevisto) — ver openspec/changes/cotizar-items-texto-libre-comparativa
+              // (Non-Goals). El veredicto técnico en sí (arriba) sí aplica igual.
+              if (ev.evaluacion_tecnica === '?' && detalleActual.insumo_id) {
                 await prisma.aclaracionComparativa.create({
                   data: {
                     tenant_id: tenantId,
@@ -3387,7 +3409,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
               }
 
               // ? → C/NC/DA: resolver aclaraciones abiertas de esa celda
-              if (detalleActual.evaluacion_tecnica === '?' && ['C', 'NC', 'DA'].includes(ev.evaluacion_tecnica)) {
+              if (detalleActual.evaluacion_tecnica === '?' && ['C', 'NC', 'DA'].includes(ev.evaluacion_tecnica) && detalleActual.insumo_id) {
                 await prisma.aclaracionComparativa.updateMany({
                   where: {
                     cuadro_id: id,

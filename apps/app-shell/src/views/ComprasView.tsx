@@ -534,14 +534,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         const provMap = new Map<string, string>();
         detalles.forEach(d => provMap.set(d.proveedor_id, d.proveedor?.razon_social ?? '—'));
         const proveedores = Array.from(provMap.entries()).map(([id, nombre]) => ({ id, nombre }));
-        // Agrupar por insumo_id para obtener lineas
+        // Agrupar por insumo_id (o detalle_req_id para ítems de texto libre sin
+        // catálogo, ver openspec/changes/cotizar-items-texto-libre-comparativa)
         const lineaMap = new Map<string, import('../components/ComparativaDetail').CotizacionLinea>();
         detalles.forEach(d => {
-          const info = insumosNormalizados.find(i => i.id === d.insumo_id);
-          if (!lineaMap.has(d.insumo_id)) {
-            lineaMap.set(d.insumo_id, {
+          const lineaKey: string = d.insumo_id ?? d.detalle_req_id;
+          const info = d.insumo_id ? insumosNormalizados.find(i => i.id === d.insumo_id) : undefined;
+          if (!lineaMap.has(lineaKey)) {
+            lineaMap.set(lineaKey, {
               id:                  d.id_detalle,
               insumo_id:           d.insumo_id,
+              detalle_req_id:      d.detalle_req_id ?? null,
               insumo_clave:        info?.clave ?? '—',
               insumo_descripcion:  info?.descripcion ?? '—',
               insumo_unidad:       info?.unidad ?? '—',
@@ -555,7 +558,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               comentario_gt:       d.comentario_gt ?? undefined,
             });
           }
-          const linea = lineaMap.get(d.insumo_id)!;
+          const linea = lineaMap.get(lineaKey)!;
           linea.precios[d.proveedor_id] = String(d.precio_ofertado);
           linea.fechasEntrega[d.proveedor_id] = d.fecha_entrega_estimada ? String(d.fecha_entrega_estimada).slice(0, 10) : null;
           if (d.es_ganador) linea.ganador = d.proveedor_id;
@@ -962,7 +965,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       const info = insumos.find(i => i.id === item.insumo_id);
       return {
         id:                 item.id,
-        insumo_id:          item.insumo_id ?? '',
+        insumo_id:          item.insumo_id ?? null,
+        detalle_req_id:     item.id,
         insumo_clave:       info?.clave ?? item.descripcion_libre ?? '—',
         insumo_descripcion: info?.descripcion ?? item.descripcion_libre ?? '—',
         insumo_unidad:      info?.unidad ?? item.unidad_libre ?? '—',
