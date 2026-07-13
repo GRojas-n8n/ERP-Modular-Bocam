@@ -3006,7 +3006,13 @@ app.post('/api/v1/compras/comparativas',
 
             for (const item of items) {
               if (!item.insumo_id) continue;
-              const specsTexto = specsMap.get(item.id_item)?.join('\n') ?? null;
+              // EspecificacionDetalleReq (estructurado, evaluación técnica por
+              // especificación) tiene prioridad; si no hay filas, usar el texto libre
+              // que el Residente ya capturó en la requisición como respaldo.
+              const specsTexto = specsMap.get(item.id_item)?.join('\n')
+                || item.especificacion_detalle?.trim()
+                || null;
+              const marcaModeloRef = item.especificacion_marca_modelo?.trim() || null;
               await prisma.comparativaLinea.upsert({
                 where: { cuadro_id_insumo_id: { cuadro_id: cuadro.id_cuadro, insumo_id: item.insumo_id } },
                 create: {
@@ -3015,10 +3021,12 @@ app.post('/api/v1/compras/comparativas',
                   cuadro_id: cuadro.id_cuadro,
                   insumo_id: item.insumo_id,
                   especificaciones_requeridas: specsTexto,
+                  marca_modelo_ref: marcaModeloRef,
                   detalle_req_id: item.id_item,
                 },
                 update: {
                   especificaciones_requeridas: specsTexto,
+                  marca_modelo_ref: marcaModeloRef,
                   detalle_req_id: item.id_item,
                 },
               });
