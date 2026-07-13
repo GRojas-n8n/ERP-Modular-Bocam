@@ -85,9 +85,20 @@ export interface CotizacionLinea {
   }>;
   valor_ofrecido_spec?: string;
   aclaraciones_count?: number;
-  // Aprobación GT
-  aprobacion_gt?: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+  // Aprobación GT (evaluación económica) — nuevos valores: C | NC | DA | ? | PENDIENTE;
+  // legacy: APROBADO | RECHAZADO. Representa el estado del primer proveedor únicamente
+  // (compatibilidad legacy) — para evaluar/leer por proveedor usar
+  // aprobacionesGtPorProveedor. Ver openspec/changes/evaluacion-economica-gt-por-proveedor.
+  aprobacion_gt?: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?' | 'APROBADO' | 'RECHAZADO';
   comentario_gt?: string;
+  // Aprobación GT por proveedor — mismo patrón que evaluacionesPorProveedor. Ver
+  // openspec/changes/evaluacion-economica-gt-por-proveedor.
+  aprobacionesGtPorProveedor?: Record<string, {
+    id_detalle: string;
+    aprobacion_gt: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?';
+    comentario_gt?: string;
+    pregunta_gt?: string | null;
+  }>;
   // Specs de la req (heredadas del item de requisición)
   especificacion_marca_modelo?: string | null;
   especificacion_detalle?: string | null;
@@ -104,6 +115,10 @@ export interface ProveedorComp {
   // proveedor se agregó manualmente desde catálogo (nunca invitado).
   estado_respuesta?: 'PENDIENTE' | 'RESPONDIO' | 'DECLINO';
   fecha_respuesta?: string | null;
+  // Condiciones de crédito — atributo fijo del catálogo de Proveedores, no de la
+  // cotización. Ver openspec/changes/evaluacion-economica-gt-por-proveedor.
+  ofrece_credito?: boolean;
+  dias_credito?: number | null;
 }
 
 export interface EspecificacionLinea {
@@ -369,9 +384,11 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [showRevisionConfirm, setShowRevisionConfirm] = useState(false);
   const [creandoRevision, setCreandoRevision] = useState(false);
 
-  // 8.1 Panel revisión GT
-  const [showGTPanel, setShowGTPanel] = useState(false);
-  const [gtForm, setGtForm] = useState<Record<string, { decision: 'APROBADO' | 'RECHAZADO'; comentario: string }>>({});
+  // 8.1 Evaluación económica GT inline — sub-fila en "TABLA DE COTIZACIONES", ver
+  // openspec/changes/evaluacion-economica-gt-por-proveedor.
+  const [gtForm, setGtForm] = useState<Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }>>({});
+  const [preguntasGT, setPreguntasGT] = useState<Record<string, string>>({});
+  const [guardandoLineaGtId, setGuardandoLineaGtId] = useState<string | null>(null);
   const [comentarioGTGeneral, setComentarioGTGeneral] = useState('');
   const [enviandoGT, setEnviandoGT] = useState(false);
 
@@ -579,21 +596,35 @@ export const ComparativaDetail: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Inicializar form GT cuando se abre el panel
+  // Inicializar form GT al montar — una entrada por (línea, proveedor), no una por línea.
+  // La sub-fila de evaluación económica en la tabla es siempre visible (sin modal), así
+  // que se inicializa una sola vez, no re-sincroniza en cada cambio de `comp`. Ver
+  // openspec/changes/evaluacion-economica-gt-por-proveedor.
   useEffect(() => {
-    if (!showGTPanel) return;
-    const init: Record<string, { decision: 'APROBADO' | 'RECHAZADO'; comentario: string }> = {};
+    const init: Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }> = {};
+    const preguntas: Record<string, string> = {};
     comp.lineas.forEach(l => {
-      // Solo las líneas que pasaron evaluación técnica son candidatas a APROBADO en GT
-      const defaultDecision = l.evaluacion_tecnica === 'RECHAZADO' ? 'RECHAZADO' : 'APROBADO';
-      init[l.id] = {
-        decision: (l.aprobacion_gt === 'APROBADO' || l.aprobacion_gt === 'RECHAZADO') ? l.aprobacion_gt : defaultDecision,
-        comentario: l.comentario_gt ?? '',
-      };
+      const porProveedor = Object.entries(l.aprobacionesGtPorProveedor ?? {});
+      if (porProveedor.length > 0) {
+        porProveedor.forEach(([provId, ap]) => {
+          const v = ap.aprobacion_gt;
+          const mapped: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE' =
+            (v as any) === 'APROBADO' ? 'C' : (v as any) === 'RECHAZADO' ? 'NC' : v ?? 'PENDIENTE';
+          init[`${l.id}:${provId}`] = { decision: mapped, comentario: ap.comentario_gt ?? '' };
+          if (ap.pregunta_gt) preguntas[`${l.id}:${provId}`] = ap.pregunta_gt;
+        });
+      } else {
+        const v = l.aprobacion_gt;
+        const mapped: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE' =
+          v === 'APROBADO' ? 'C' : v === 'RECHAZADO' ? 'NC' : (v as 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE') ?? 'PENDIENTE';
+        init[l.id] = { decision: mapped, comentario: l.comentario_gt ?? '' };
+      }
     });
     setGtForm(init);
+    setPreguntasGT(preguntas);
     setComentarioGTGeneral('');
-  }, [showGTPanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cargar auditoría de desbloqueos si admin y cuadro firmado
   useEffect(() => {
@@ -886,6 +917,28 @@ export const ComparativaDetail: React.FC<Props> = ({
   };
   const algunaEnDuda = lineasSinSpecsEval.some(l => formKeysDeLineaEval(l).some(k => evalForm[k]?.decision === '?'));
   const faltaPreguntaEval = lineasSinSpecsEval.some(l => formKeysDeLineaEval(l).some(k => evalForm[k]?.decision === '?' && !preguntasEval[k]?.trim()));
+
+  // Evaluación económica GT inline — ver openspec/changes/evaluacion-economica-gt-por-proveedor.
+  // `showRevisarGTBtn` (rol + estado) decide si la sub-fila es editable. Los proveedores
+  // rechazados técnicamente por el Residente quedan fuera del alcance de GT (nunca pueden
+  // ser C/DA) — no se les pide evaluación y no bloquean el gate de finalización, mismo
+  // criterio que el backend (revisar-gt).
+  const paresGtDeLinea = (linea: CotizacionLinea): { detalleId: string; formKey: string }[] => {
+    const provEntries = Object.entries(linea.aprobacionesGtPorProveedor ?? {});
+    if (provEntries.length === 0) return [{ detalleId: linea.id, formKey: linea.id }];
+    return provEntries
+      .filter(([provId]) => {
+        const tec: string | undefined = linea.evaluacionesPorProveedor?.[provId]?.evaluacion_tecnica;
+        return tec !== 'NC' && tec !== 'RECHAZADO';
+      })
+      .map(([provId, ap]) => ({ detalleId: ap.id_detalle, formKey: `${linea.id}:${provId}` }));
+  };
+  const formKeysDeLineaGT = (linea: CotizacionLinea): string[] => paresGtDeLinea(linea).map(p => p.formKey);
+  const algunaEnDudaGT = comp.lineas.some(l => formKeysDeLineaGT(l).some(k => gtForm[k]?.decision === '?'));
+  const faltaPreguntaGT = comp.lineas.some(l => formKeysDeLineaGT(l).some(k => gtForm[k]?.decision === '?' && !preguntasGT[k]?.trim()));
+  const todasEvaluadasGT = comp.lineas.length > 0 && comp.lineas.every(l =>
+    formKeysDeLineaGT(l).every(k => gtForm[k]?.decision && gtForm[k]?.decision !== 'PENDIENTE' && gtForm[k]?.decision !== '?')
+  );
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -1431,25 +1484,119 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
-  // 8.4 Guardar revisión del GT
-  const handleGuardarRevisionGT = async () => {
+  // Guardar la evaluación económica GT de UNA línea sin "?" — sub-fila inline. Las líneas
+  // con algún "?" no usan este guardado individual: revision-con-preguntas-gt crea una
+  // revisión de cuadro nueva por llamada, así que los "?" se acumulan y se guardan juntos
+  // vía handleGuardarEvaluacionGT (botón agregado). Ver
+  // openspec/changes/evaluacion-economica-gt-por-proveedor.
+  const handleGuardarLineaGT = async (linea: CotizacionLinea) => {
+    const pares = paresGtDeLinea(linea);
+
+    if (pares.some(({ formKey }) => gtForm[formKey]?.decision === '?')) return;
+
+    const REQUIRES_COMMENT = new Set(['NC', 'DA']);
+    for (const { formKey } of pares) {
+      const form = gtForm[formKey];
+      if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
+        notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${linea.insumo_descripcion}".` });
+        return;
+      }
+    }
+
+    setGuardandoLineaGtId(linea.id);
+    try {
+      const evaluaciones = pares.map(({ detalleId, formKey }) => ({
+        detalle_id: detalleId,
+        aprobacion_gt: gtForm[formKey]?.decision ?? 'PENDIENTE',
+        comentario_gt: gtForm[formKey]?.comentario || undefined,
+      }));
+
+      const mergeLinea = (l: CotizacionLinea): CotizacionLinea => {
+        if (l.id !== linea.id) return l;
+        const entries = Object.entries(l.aprobacionesGtPorProveedor ?? {});
+        if (entries.length > 0) {
+          const aprobacionesGtPorProveedor = Object.fromEntries(entries.map(([provId, ap]) => [provId, {
+            ...ap,
+            aprobacion_gt: gtForm[`${l.id}:${provId}`]?.decision ?? ap.aprobacion_gt,
+            comentario_gt: gtForm[`${l.id}:${provId}`]?.comentario || ap.comentario_gt,
+          }]));
+          const primero = Object.values(aprobacionesGtPorProveedor)[0];
+          return { ...l, aprobacionesGtPorProveedor, aprobacion_gt: primero.aprobacion_gt, comentario_gt: primero.comentario_gt };
+        }
+        return {
+          ...l,
+          aprobacion_gt: gtForm[l.id]?.decision ?? l.aprobacion_gt,
+          comentario_gt: gtForm[l.id]?.comentario || l.comentario_gt,
+        };
+      };
+
+      if (isDemo) {
+        onUpdate({ ...comp, lineas: comp.lineas.map(mergeLinea) });
+      } else {
+        const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/evaluar-gt`, { evaluaciones });
+        const updatedData = resp.data.data ?? {};
+        onUpdate({ ...comp, ...updatedData, lineas: comp.lineas.map(mergeLinea) });
+      }
+      notify({ type: 'success', title: 'Evaluación GT guardada', message: '' });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar evaluación GT', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setGuardandoLineaGtId(null);
+    }
+  };
+
+  // Guardar evaluación económica GT con al menos un "?" — botón agregado, una sola
+  // llamada a revision-con-preguntas-gt con todas las evaluaciones pendientes.
+  const handleGuardarEvaluacionGT = async () => {
+    const REQUIRES_COMMENT = new Set(['NC', 'DA']);
+    const pares = comp.lineas.flatMap(l => paresGtDeLinea(l).map(p => ({ linea: l, ...p })));
+
+    for (const { linea, formKey } of pares) {
+      const form = gtForm[formKey];
+      if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
+        notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${linea.insumo_descripcion}".` });
+        return;
+      }
+      if (form?.decision === '?' && !preguntasGT[formKey]?.trim()) {
+        notify({ type: 'error', title: 'Pregunta requerida', message: `El renglón "${linea.insumo_descripcion}" tiene "?" pero no tiene pregunta.` });
+        return;
+      }
+    }
+
     setEnviandoGT(true);
     try {
-      const aprobaciones = comp.lineas.map(l => ({
-        detalle_id: l.id,
-        aprobacion_gt: gtForm[l.id]?.decision ?? 'RECHAZADO',
-        comentario_gt: gtForm[l.id]?.comentario || undefined,
+      const evaluaciones = pares.map(({ detalleId, formKey }) => ({
+        detalle_id: detalleId,
+        aprobacion_gt: gtForm[formKey]?.decision ?? 'PENDIENTE',
+        comentario_gt: gtForm[formKey]?.comentario || undefined,
+        pregunta_gt: gtForm[formKey]?.decision === '?' ? (preguntasGT[formKey] ?? undefined) : undefined,
       }));
 
       if (isDemo) {
-        const lineasActualizadas = comp.lineas.map(l => ({
-          ...l,
-          aprobacion_gt: gtForm[l.id]?.decision ?? 'RECHAZADO',
-          comentario_gt: gtForm[l.id]?.comentario || undefined,
-        }));
-        const hayAprobados = aprobaciones.some(a => a.aprobacion_gt === 'APROBADO');
+        notify({ type: 'success', title: 'Evaluación GT guardada', message: 'Se enviarán las preguntas a Compras.' });
+      } else {
+        const resp = await api.post(`/api/v1/compras/comparativas/${comp.id}/revision-con-preguntas-gt`, { evaluaciones });
+        const nuevaRevision = resp.data.data?.revision_label ?? '?';
+        notify({ type: 'success', title: `Se creó la revisión ${nuevaRevision}`, message: 'Compras verá tus preguntas y podrá responderlas.' });
+        onBack();
+        return;
+      }
+    } catch (err: any) {
+      notify({ type: 'error', title: 'Error al guardar evaluación GT', message: err.response?.data?.message ?? err.message });
+    } finally {
+      setEnviandoGT(false);
+    }
+  };
+
+  // Finalizar la aprobación económica GT (APROBADO_GT / RECHAZADO_GT) — solo cuando todos
+  // los proveedores evaluables ya están evaluados (gate `todasEvaluadasGT`).
+  const handleFinalizarGT = async () => {
+    setEnviandoGT(true);
+    try {
+      if (isDemo) {
+        const hayAprobados = comp.lineas.some(l => Object.values(l.aprobacionesGtPorProveedor ?? {}).some(ap => ['C', 'DA'].includes(ap.aprobacion_gt)));
         const nuevoEstado = hayAprobados ? 'APROBADO_GT' as const : 'RECHAZADO_GT' as const;
-        onUpdate({ ...comp, estado: nuevoEstado, lineas: lineasActualizadas });
+        onUpdate({ ...comp, estado: nuevoEstado });
         notify({
           type: hayAprobados ? 'success' : 'error',
           title: hayAprobados ? 'Cuadro aprobado por GT' : 'Cuadro rechazado por GT',
@@ -1457,7 +1604,6 @@ export const ComparativaDetail: React.FC<Props> = ({
         });
       } else {
         const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/revisar-gt`, {
-          aprobaciones,
           comentario_gt_general: comentarioGTGeneral || undefined,
         });
         const estadoFinal = resp.data.data?.estado;
@@ -1468,7 +1614,6 @@ export const ComparativaDetail: React.FC<Props> = ({
           message: estadoFinal === 'APROBADO_GT' ? 'Ya puedes generar la Orden de Compra.' : 'El cuadro requiere una nueva cotización.',
         });
       }
-      setShowGTPanel(false);
     } catch (err: any) {
       notify({ type: 'error', title: 'Error en revisión GT', message: err.response?.data?.message ?? err.message });
     } finally {
@@ -1663,10 +1808,42 @@ export const ComparativaDetail: React.FC<Props> = ({
             </Button>
           )}
 
-          {showRevisarGTBtn && (
-            <Button onClick={() => setShowGTPanel(true)} className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500">
-              Revisar y Aprobar →
+          {/* Guarda TODAS las evaluaciones GT pendientes (incluyendo los "?") en una sola
+              llamada — visible mientras exista al menos un "?" en cualquier renglón,
+              porque revision-con-preguntas-gt crea una revisión nueva por llamada y no
+              puede dispararse línea por línea. Ver
+              openspec/changes/evaluacion-economica-gt-por-proveedor. */}
+          {showRevisarGTBtn && algunaEnDudaGT && (
+            <Button
+              data-testid="gt-guardar-agregado"
+              onClick={handleGuardarEvaluacionGT}
+              disabled={enviandoGT || faltaPreguntaGT}
+              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500 disabled:opacity-40"
+            >
+              {enviandoGT ? 'Guardando...' : 'Guardar y Crear Revisión'}
             </Button>
+          )}
+
+          {showRevisarGTBtn && !algunaEnDudaGT && (
+            <>
+              <input
+                type="text"
+                data-testid="gt-comentario-general"
+                placeholder="Comentario general GT (opcional)..."
+                value={comentarioGTGeneral}
+                onChange={e => setComentarioGTGeneral(e.target.value)}
+                className="w-56 rounded-xl border border-border/40 bg-background px-3 py-2 text-xs focus:outline-none focus:border-violet-500"
+              />
+              <Button
+                data-testid="gt-finalizar"
+                onClick={handleFinalizarGT}
+                disabled={enviandoGT || !todasEvaluadasGT}
+                title={!todasEvaluadasGT ? 'Faltan proveedores por evaluar' : undefined}
+                className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500 disabled:opacity-40"
+              >
+                {enviandoGT ? 'Finalizando...' : 'Finalizar Aprobación GT →'}
+              </Button>
+            </>
           )}
 
           {showGenerarOCBtn && (
@@ -2406,6 +2583,121 @@ export const ComparativaDetail: React.FC<Props> = ({
                       </tr>
                     );
                   })()}
+                  {/* ── Sub-fila de evaluación económica GT — costo, días de suministro y
+                      condición de crédito por proveedor, alineada bajo su columna (mismo
+                      patrón que la sub-fila de evaluación técnica). Reemplaza el panel
+                      modal de GT. Ver
+                      openspec/changes/evaluacion-economica-gt-por-proveedor. ── */}
+                  {Object.keys(linea.aprobacionesGtPorProveedor ?? {}).length > 0
+                    && comp.estado !== 'BORRADOR' && comp.estado !== 'EN_EVALUACION_TECNICA' && (() => {
+                    const gtProvIds = formKeysDeLineaGT(linea).map(k => k.split(':')[1]);
+                    const algunaEnDudaLineaGT = gtProvIds.some(provId => gtForm[`${linea.id}:${provId}`]?.decision === '?');
+                    return (
+                      <tr className="border-b border-violet-500/5 bg-violet-500/[0.02]">
+                        <td className="pl-10 pr-2 py-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-violet-400 text-[8px]">◆</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-violet-700">Evaluación económica GT</span>
+                            {showRevisarGTBtn && !algunaEnDudaLineaGT && (
+                              <button
+                                type="button"
+                                data-testid={`gt-guardar-linea-${linea.id}`}
+                                disabled={guardandoLineaGtId === linea.id}
+                                onClick={() => void handleGuardarLineaGT(linea)}
+                                className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[8px] font-black text-violet-700 hover:bg-violet-500/20 disabled:opacity-40"
+                              >
+                                {guardandoLineaGtId === linea.id ? 'Guardando...' : 'Guardar'}
+                              </button>
+                            )}
+                            {algunaEnDudaLineaGT && (
+                              <span className="text-[8px] text-indigo-600">Se guardará con el resto de preguntas ↓</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-1.5" />
+                        <td className="px-3 py-1.5" />
+                        {comp.proveedores.map(prov => {
+                          const provData = linea.aprobacionesGtPorProveedor?.[prov.id];
+                          if (!provData) return <td key={prov.id} className="px-2 py-1.5" />;
+                          const tecProv: string | undefined = linea.evaluacionesPorProveedor?.[prov.id]?.evaluacion_tecnica;
+                          const rechazadoTecnico = tecProv === 'NC' || tecProv === 'RECHAZADO';
+                          const formKey = `${linea.id}:${prov.id}`;
+                          const decision = gtForm[formKey]?.decision ?? 'PENDIENTE';
+                          const precio = parseFloat(linea.precios[prov.id] || '0') || 0;
+                          const fechaEntrega = linea.fechasEntrega[prov.id];
+                          const diasSuministro = fechaEntrega && comp.fecha_firma
+                            ? Math.round((new Date(fechaEntrega).getTime() - new Date(comp.fecha_firma).getTime()) / 86400000)
+                            : null;
+                          return (
+                            <td key={prov.id} className="px-2 py-1.5 text-center align-top">
+                              <div className="mb-1 space-y-0.5 text-left">
+                                {precio > 0 && <div className="text-[9px] font-bold text-foreground">{formatMXN(precio)}</div>}
+                                {diasSuministro !== null && <div className="text-[8px] text-sky-700">{diasSuministro} día{diasSuministro !== 1 ? 's' : ''} de suministro</div>}
+                                <div className="text-[8px] text-muted-foreground">
+                                  {prov.ofrece_credito ? `Crédito ${prov.dias_credito ?? '?'} días` : 'Sin crédito'}
+                                </div>
+                              </div>
+                              {rechazadoTecnico ? (
+                                <span className="text-[9px] text-red-500/70" title="Rechazado en evaluación técnica — fuera del alcance de GT">🔒 Rechazado técnica</span>
+                              ) : showRevisarGTBtn ? (
+                                <div className="space-y-1">
+                                  <div className="flex justify-center gap-0.5">
+                                    {(['C', 'NC', 'DA', '?'] as const).map(k => (
+                                      <button
+                                        key={k}
+                                        type="button"
+                                        data-testid={`gt-btn-${linea.id}-${prov.id}-${k}`}
+                                        onClick={() => setGtForm(f => ({ ...f, [formKey]: { ...f[formKey], decision: k } }))}
+                                        className={cn('w-7 rounded px-1 py-0.5 text-[8px] font-black transition-all',
+                                          decision === k ? EVAL_BTN_ACTIVE[k] : 'border border-border/30 bg-muted/40 text-muted-foreground/50 hover:border-foreground/30'
+                                        )}
+                                      >
+                                        {k}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  {decision === '?' ? (
+                                    <div className="space-y-1 rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-1.5 text-left">
+                                      <textarea
+                                        data-testid={`gt-pregunta-${linea.id}-${prov.id}`}
+                                        className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-1 text-[9px] focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                                        placeholder="¿Qué necesitas aclarar? (obligatorio)"
+                                        value={preguntasGT[formKey] ?? ''}
+                                        onChange={e => setPreguntasGT(p => ({ ...p, [formKey]: e.target.value }))}
+                                      />
+                                      {!preguntasGT[formKey]?.trim() && (
+                                        <p className="text-[8px] text-indigo-600">Obligatoria para "?"</p>
+                                      )}
+                                    </div>
+                                  ) : decision !== 'PENDIENTE' ? (
+                                    <div className="space-y-1 text-left">
+                                      <textarea
+                                        data-testid={`gt-comentario-${linea.id}-${prov.id}`}
+                                        className="w-full resize-none rounded border border-border/40 bg-background px-1.5 py-1 text-[9px] focus:outline-none focus:border-violet-500 min-h-[36px]"
+                                        placeholder={(decision === 'NC' || decision === 'DA') ? 'Comentario (obligatorio)...' : 'Comentario (opcional)...'}
+                                        value={gtForm[formKey]?.comentario ?? ''}
+                                        onChange={e => setGtForm(f => ({ ...f, [formKey]: { ...f[formKey], comentario: e.target.value } }))}
+                                      />
+                                      {(decision === 'NC' || decision === 'DA') && !gtForm[formKey]?.comentario?.trim() && (
+                                        <p className="text-[8px] text-red-500">Requerido para {decision}</p>
+                                      )}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : provData.aprobacion_gt && provData.aprobacion_gt !== 'PENDIENTE' ? (
+                                <span className={cn('inline-block rounded px-1.5 py-0.5 text-[9px] font-black', EVAL_STYLE[provData.aprobacion_gt])}>{provData.aprobacion_gt}</span>
+                              ) : (
+                                <span className="text-[9px] text-muted-foreground/40">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        {!isResidenteMode && <td className="px-3 py-1.5" />}
+                        {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && <td />}
+                        {!locked && <td />}
+                      </tr>
+                    );
+                  })()}
                   </React.Fragment>
                   );
                 })}
@@ -2784,97 +3076,6 @@ export const ComparativaDetail: React.FC<Props> = ({
           {comp.fecha_firma && (
             <p className="text-[9px] text-muted-foreground">Firmado el {new Date(comp.fecha_firma).toLocaleString('es-MX')}</p>
           )}
-        </div>
-      )}
-
-      {/* ─── 8.1–8.4 Panel: Revisión GT ─────────────────────────────────────── */}
-      {showGTPanel && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center" onClick={e => { if (e.target === e.currentTarget) setShowGTPanel(false); }}>
-          <div className="w-full max-w-3xl rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-border/40 bg-violet-500/10 px-6 py-4">
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-tight">Revisión Gerencia Técnica</h2>
-                <p className="text-[10px] text-muted-foreground">Revisa la evaluación técnica del Residente y aprueba o rechaza por renglón</p>
-              </div>
-              <Button onClick={() => setShowGTPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
-            </div>
-            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
-              {comp.lineas.map(linea => {
-                const rechazadoTecnico = linea.evaluacion_tecnica === 'RECHAZADO';
-                return (
-                  <div key={linea.id} className={cn('rounded-2xl border p-4', rechazadoTecnico ? 'border-red-500/20 bg-red-500/5' : 'border-border/40 bg-background')}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{linea.insumo_clave}</span>
-                        <span className="ml-2 text-xs font-semibold text-foreground">{linea.insumo_descripcion}</span>
-                        <span className="ml-2 text-[10px] text-muted-foreground">{linea.cantidad} {linea.insumo_unidad}</span>
-                      </div>
-                      {/* Evaluación técnica del Residente (solo lectura) */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Residente:</span>
-                        <span className={cn('rounded-lg border px-2 py-0.5 text-[9px] font-black', EVAL_STYLE[linea.evaluacion_tecnica ?? 'PENDIENTE'])}>
-                          {linea.evaluacion_tecnica ?? 'PENDIENTE'}
-                        </span>
-                        {linea.comentario_tecnico && (
-                          <span className="text-[10px] text-muted-foreground italic">"{linea.comentario_tecnico}"</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 8.2 Selector GT — APROBADO deshabilitado si rechazado por Residente */}
-                    <div className="mt-3 flex items-center gap-3 flex-wrap">
-                      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">GT:</span>
-                      {(['APROBADO', 'RECHAZADO'] as const).map(opcion => {
-                        const disabled = rechazadoTecnico && opcion === 'APROBADO';
-                        return (
-                          <button
-                            key={opcion}
-                            disabled={disabled}
-                            title={disabled ? 'Rechazado en evaluación técnica — no puede aprobarse' : undefined}
-                            onClick={() => !disabled && setGtForm(f => ({ ...f, [linea.id]: { ...f[linea.id], decision: opcion } }))}
-                            className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all',
-                              disabled
-                                ? 'cursor-not-allowed border-border/20 bg-muted/50 text-muted-foreground/40'
-                                : gtForm[linea.id]?.decision === opcion
-                                ? opcion === 'APROBADO' ? 'border-green-500 bg-green-500 text-white' : 'border-red-500 bg-red-500 text-white'
-                                : 'border-border/40 bg-muted text-muted-foreground hover:border-foreground/30'
-                            )}
-                          >
-                            {opcion}
-                            {disabled && ' 🔒'}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <Textarea
-                      className="mt-2 rounded-xl text-xs min-h-[48px]"
-                      placeholder="Comentario GT (opcional)..."
-                      value={gtForm[linea.id]?.comentario ?? ''}
-                      onChange={e => setGtForm(f => ({ ...f, [linea.id]: { ...f[linea.id], comentario: e.target.value } }))}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* 8.3 Comentario general GT */}
-              <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-violet-700">Comentario general (opcional)</label>
-                <Textarea
-                  className="mt-2 rounded-xl text-xs min-h-[60px]"
-                  placeholder="Observaciones generales sobre el cuadro comparativo..."
-                  value={comentarioGTGeneral}
-                  onChange={e => setComentarioGTGeneral(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
-              <Button onClick={() => setShowGTPanel(false)} variant="outline" className="rounded-xl">Cancelar</Button>
-              <Button onClick={handleGuardarRevisionGT} disabled={enviandoGT} className="rounded-xl bg-violet-600 px-6 font-black text-white hover:bg-violet-500">
-                {enviandoGT ? 'Guardando...' : 'Guardar Revisión'}
-              </Button>
-            </div>
-          </div>
         </div>
       )}
 

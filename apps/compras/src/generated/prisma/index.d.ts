@@ -2978,11 +2978,13 @@ export namespace Prisma {
 
   export type ProveedorAvgAggregateOutputType = {
     limite_credito: Decimal | null
+    dias_credito: number | null
     calificacion_desempeno: Decimal | null
   }
 
   export type ProveedorSumAggregateOutputType = {
     limite_credito: Decimal | null
+    dias_credito: number | null
     calificacion_desempeno: Decimal | null
   }
 
@@ -2999,6 +3001,8 @@ export namespace Prisma {
     entrega_en_sitio: boolean | null
     estatus_credito: string | null
     limite_credito: Decimal | null
+    ofrece_credito: boolean | null
+    dias_credito: number | null
     tipo_proveedor: string | null
     calificacion_desempeno: Decimal | null
   }
@@ -3016,6 +3020,8 @@ export namespace Prisma {
     entrega_en_sitio: boolean | null
     estatus_credito: string | null
     limite_credito: Decimal | null
+    ofrece_credito: boolean | null
+    dias_credito: number | null
     tipo_proveedor: string | null
     calificacion_desempeno: Decimal | null
   }
@@ -3033,6 +3039,8 @@ export namespace Prisma {
     entrega_en_sitio: number
     estatus_credito: number
     limite_credito: number
+    ofrece_credito: number
+    dias_credito: number
     tipo_proveedor: number
     calificacion_desempeno: number
     _all: number
@@ -3041,11 +3049,13 @@ export namespace Prisma {
 
   export type ProveedorAvgAggregateInputType = {
     limite_credito?: true
+    dias_credito?: true
     calificacion_desempeno?: true
   }
 
   export type ProveedorSumAggregateInputType = {
     limite_credito?: true
+    dias_credito?: true
     calificacion_desempeno?: true
   }
 
@@ -3062,6 +3072,8 @@ export namespace Prisma {
     entrega_en_sitio?: true
     estatus_credito?: true
     limite_credito?: true
+    ofrece_credito?: true
+    dias_credito?: true
     tipo_proveedor?: true
     calificacion_desempeno?: true
   }
@@ -3079,6 +3091,8 @@ export namespace Prisma {
     entrega_en_sitio?: true
     estatus_credito?: true
     limite_credito?: true
+    ofrece_credito?: true
+    dias_credito?: true
     tipo_proveedor?: true
     calificacion_desempeno?: true
   }
@@ -3096,6 +3110,8 @@ export namespace Prisma {
     entrega_en_sitio?: true
     estatus_credito?: true
     limite_credito?: true
+    ofrece_credito?: true
+    dias_credito?: true
     tipo_proveedor?: true
     calificacion_desempeno?: true
     _all?: true
@@ -3200,6 +3216,8 @@ export namespace Prisma {
     entrega_en_sitio: boolean
     estatus_credito: string
     limite_credito: Decimal | null
+    ofrece_credito: boolean
+    dias_credito: number | null
     tipo_proveedor: string
     calificacion_desempeno: Decimal | null
     _count: ProveedorCountAggregateOutputType | null
@@ -3236,6 +3254,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: boolean
     limite_credito?: boolean
+    ofrece_credito?: boolean
+    dias_credito?: boolean
     tipo_proveedor?: boolean
     calificacion_desempeno?: boolean
     ordenes?: boolean | Proveedor$ordenesArgs<ExtArgs>
@@ -3260,6 +3280,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: boolean
     limite_credito?: boolean
+    ofrece_credito?: boolean
+    dias_credito?: boolean
     tipo_proveedor?: boolean
     calificacion_desempeno?: boolean
   }, ExtArgs["result"]["proveedor"]>
@@ -3277,6 +3299,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: boolean
     limite_credito?: boolean
+    ofrece_credito?: boolean
+    dias_credito?: boolean
     tipo_proveedor?: boolean
     calificacion_desempeno?: boolean
   }
@@ -3315,6 +3339,12 @@ export namespace Prisma {
       entrega_en_sitio: boolean
       estatus_credito: string
       limite_credito: Prisma.Decimal | null
+      /**
+       * Atributo fijo del proveedor en su catálogo (no se captura por cotización). Ver
+       * openspec/changes/evaluacion-economica-gt-por-proveedor.
+       */
+      ofrece_credito: boolean
+      dias_credito: number | null
       tipo_proveedor: string
       calificacion_desempeno: Prisma.Decimal | null
     }, ExtArgs["result"]["proveedor"]>
@@ -3728,6 +3758,8 @@ export namespace Prisma {
     readonly entrega_en_sitio: FieldRef<"Proveedor", 'Boolean'>
     readonly estatus_credito: FieldRef<"Proveedor", 'String'>
     readonly limite_credito: FieldRef<"Proveedor", 'Decimal'>
+    readonly ofrece_credito: FieldRef<"Proveedor", 'Boolean'>
+    readonly dias_credito: FieldRef<"Proveedor", 'Int'>
     readonly tipo_proveedor: FieldRef<"Proveedor", 'String'>
     readonly calificacion_desempeno: FieldRef<"Proveedor", 'Decimal'>
   }
@@ -17826,6 +17858,8 @@ export namespace Prisma {
     respuesta_compras: string | null
     aprobacion_gt: string | null
     comentario_gt: string | null
+    pregunta_gt: string | null
+    respuesta_gt: string | null
   }
 
   export type ComparativaDetalleMaxAggregateOutputType = {
@@ -17846,6 +17880,8 @@ export namespace Prisma {
     respuesta_compras: string | null
     aprobacion_gt: string | null
     comentario_gt: string | null
+    pregunta_gt: string | null
+    respuesta_gt: string | null
   }
 
   export type ComparativaDetalleCountAggregateOutputType = {
@@ -17866,6 +17902,8 @@ export namespace Prisma {
     respuesta_compras: number
     aprobacion_gt: number
     comentario_gt: number
+    pregunta_gt: number
+    respuesta_gt: number
     _all: number
   }
 
@@ -17896,6 +17934,8 @@ export namespace Prisma {
     respuesta_compras?: true
     aprobacion_gt?: true
     comentario_gt?: true
+    pregunta_gt?: true
+    respuesta_gt?: true
   }
 
   export type ComparativaDetalleMaxAggregateInputType = {
@@ -17916,6 +17956,8 @@ export namespace Prisma {
     respuesta_compras?: true
     aprobacion_gt?: true
     comentario_gt?: true
+    pregunta_gt?: true
+    respuesta_gt?: true
   }
 
   export type ComparativaDetalleCountAggregateInputType = {
@@ -17936,6 +17978,8 @@ export namespace Prisma {
     respuesta_compras?: true
     aprobacion_gt?: true
     comentario_gt?: true
+    pregunta_gt?: true
+    respuesta_gt?: true
     _all?: true
   }
 
@@ -18043,6 +18087,8 @@ export namespace Prisma {
     respuesta_compras: string | null
     aprobacion_gt: string
     comentario_gt: string | null
+    pregunta_gt: string | null
+    respuesta_gt: string | null
     _count: ComparativaDetalleCountAggregateOutputType | null
     _avg: ComparativaDetalleAvgAggregateOutputType | null
     _sum: ComparativaDetalleSumAggregateOutputType | null
@@ -18082,6 +18128,8 @@ export namespace Prisma {
     respuesta_compras?: boolean
     aprobacion_gt?: boolean
     comentario_gt?: boolean
+    pregunta_gt?: boolean
+    respuesta_gt?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["comparativaDetalle"]>
@@ -18104,6 +18152,8 @@ export namespace Prisma {
     respuesta_compras?: boolean
     aprobacion_gt?: boolean
     comentario_gt?: boolean
+    pregunta_gt?: boolean
+    respuesta_gt?: boolean
     cuadro?: boolean | CuadroComparativoDefaultArgs<ExtArgs>
     proveedor?: boolean | ProveedorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["comparativaDetalle"]>
@@ -18126,6 +18176,8 @@ export namespace Prisma {
     respuesta_compras?: boolean
     aprobacion_gt?: boolean
     comentario_gt?: boolean
+    pregunta_gt?: boolean
+    respuesta_gt?: boolean
   }
 
   export type ComparativaDetalleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -18173,6 +18225,16 @@ export namespace Prisma {
       respuesta_compras: string | null
       aprobacion_gt: string
       comentario_gt: string | null
+      /**
+       * Pregunta de GT cuando marcó "?" — dispara nueva revisión del cuadro que hereda la
+       * evaluación técnica ya aprobada (a diferencia de pregunta_residente, que reinicia el
+       * cuadro a BORRADOR).
+       */
+      pregunta_gt: string | null
+      /**
+       * Respuesta de Compras a la pregunta de GT — visible en la revisión siguiente
+       */
+      respuesta_gt: string | null
     }, ExtArgs["result"]["comparativaDetalle"]>
     composites: {}
   }
@@ -18585,6 +18647,8 @@ export namespace Prisma {
     readonly respuesta_compras: FieldRef<"ComparativaDetalle", 'String'>
     readonly aprobacion_gt: FieldRef<"ComparativaDetalle", 'String'>
     readonly comentario_gt: FieldRef<"ComparativaDetalle", 'String'>
+    readonly pregunta_gt: FieldRef<"ComparativaDetalle", 'String'>
+    readonly respuesta_gt: FieldRef<"ComparativaDetalle", 'String'>
   }
     
 
@@ -25907,6 +25971,8 @@ export namespace Prisma {
     entrega_en_sitio: 'entrega_en_sitio',
     estatus_credito: 'estatus_credito',
     limite_credito: 'limite_credito',
+    ofrece_credito: 'ofrece_credito',
+    dias_credito: 'dias_credito',
     tipo_proveedor: 'tipo_proveedor',
     calificacion_desempeno: 'calificacion_desempeno'
   };
@@ -26156,7 +26222,9 @@ export namespace Prisma {
     pregunta_residente: 'pregunta_residente',
     respuesta_compras: 'respuesta_compras',
     aprobacion_gt: 'aprobacion_gt',
-    comentario_gt: 'comentario_gt'
+    comentario_gt: 'comentario_gt',
+    pregunta_gt: 'pregunta_gt',
+    respuesta_gt: 'respuesta_gt'
   };
 
   export type ComparativaDetalleScalarFieldEnum = (typeof ComparativaDetalleScalarFieldEnum)[keyof typeof ComparativaDetalleScalarFieldEnum]
@@ -26339,20 +26407,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'DateTime'
-   */
-  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime[]'
-   */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -26363,6 +26417,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 
@@ -26399,6 +26467,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFilter<"Proveedor"> | boolean
     estatus_credito?: StringFilter<"Proveedor"> | string
     limite_credito?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFilter<"Proveedor"> | boolean
+    dias_credito?: IntNullableFilter<"Proveedor"> | number | null
     tipo_proveedor?: StringFilter<"Proveedor"> | string
     calificacion_desempeno?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraListRelationFilter
@@ -26422,6 +26492,8 @@ export namespace Prisma {
     entrega_en_sitio?: SortOrder
     estatus_credito?: SortOrder
     limite_credito?: SortOrderInput | SortOrder
+    ofrece_credito?: SortOrder
+    dias_credito?: SortOrderInput | SortOrder
     tipo_proveedor?: SortOrder
     calificacion_desempeno?: SortOrderInput | SortOrder
     ordenes?: OrdenCompraOrderByRelationAggregateInput
@@ -26449,6 +26521,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFilter<"Proveedor"> | boolean
     estatus_credito?: StringFilter<"Proveedor"> | string
     limite_credito?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFilter<"Proveedor"> | boolean
+    dias_credito?: IntNullableFilter<"Proveedor"> | number | null
     tipo_proveedor?: StringFilter<"Proveedor"> | string
     calificacion_desempeno?: DecimalNullableFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraListRelationFilter
@@ -26472,6 +26546,8 @@ export namespace Prisma {
     entrega_en_sitio?: SortOrder
     estatus_credito?: SortOrder
     limite_credito?: SortOrderInput | SortOrder
+    ofrece_credito?: SortOrder
+    dias_credito?: SortOrderInput | SortOrder
     tipo_proveedor?: SortOrder
     calificacion_desempeno?: SortOrderInput | SortOrder
     _count?: ProveedorCountOrderByAggregateInput
@@ -26497,6 +26573,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolWithAggregatesFilter<"Proveedor"> | boolean
     estatus_credito?: StringWithAggregatesFilter<"Proveedor"> | string
     limite_credito?: DecimalNullableWithAggregatesFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolWithAggregatesFilter<"Proveedor"> | boolean
+    dias_credito?: IntNullableWithAggregatesFilter<"Proveedor"> | number | null
     tipo_proveedor?: StringWithAggregatesFilter<"Proveedor"> | string
     calificacion_desempeno?: DecimalNullableWithAggregatesFilter<"Proveedor"> | Decimal | DecimalJsLike | number | string | null
   }
@@ -27690,6 +27768,8 @@ export namespace Prisma {
     respuesta_compras?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    pregunta_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    respuesta_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
   }
@@ -27712,6 +27792,8 @@ export namespace Prisma {
     respuesta_compras?: SortOrderInput | SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrderInput | SortOrder
+    pregunta_gt?: SortOrderInput | SortOrder
+    respuesta_gt?: SortOrderInput | SortOrder
     cuadro?: CuadroComparativoOrderByWithRelationInput
     proveedor?: ProveedorOrderByWithRelationInput
   }
@@ -27737,6 +27819,8 @@ export namespace Prisma {
     respuesta_compras?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    pregunta_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    respuesta_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
     cuadro?: XOR<CuadroComparativoRelationFilter, CuadroComparativoWhereInput>
     proveedor?: XOR<ProveedorRelationFilter, ProveedorWhereInput>
   }, "id_detalle">
@@ -27759,6 +27843,8 @@ export namespace Prisma {
     respuesta_compras?: SortOrderInput | SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrderInput | SortOrder
+    pregunta_gt?: SortOrderInput | SortOrder
+    respuesta_gt?: SortOrderInput | SortOrder
     _count?: ComparativaDetalleCountOrderByAggregateInput
     _avg?: ComparativaDetalleAvgOrderByAggregateInput
     _max?: ComparativaDetalleMaxOrderByAggregateInput
@@ -27787,6 +27873,8 @@ export namespace Prisma {
     respuesta_compras?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringWithAggregatesFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    pregunta_gt?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
+    respuesta_gt?: StringNullableWithAggregatesFilter<"ComparativaDetalle"> | string | null
   }
 
   export type AclaracionComparativaWhereInput = {
@@ -28373,6 +28461,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
@@ -28396,6 +28486,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
@@ -28419,6 +28511,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
@@ -28442,6 +28536,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
@@ -28465,6 +28561,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
   }
@@ -28482,6 +28580,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
@@ -28499,6 +28599,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
@@ -29851,6 +29953,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutDetallesInput
     proveedor: ProveedorCreateNestedOneWithoutComparativasInput
   }
@@ -29873,6 +29977,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
   }
 
   export type ComparativaDetalleUpdateInput = {
@@ -29891,6 +29997,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput
     proveedor?: ProveedorUpdateOneRequiredWithoutComparativasNestedInput
   }
@@ -29913,6 +30021,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleCreateManyInput = {
@@ -29933,6 +30043,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
   }
 
   export type ComparativaDetalleUpdateManyMutationInput = {
@@ -29951,6 +30063,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUncheckedUpdateManyInput = {
@@ -29971,6 +30085,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AclaracionComparativaCreateInput = {
@@ -30670,6 +30786,17 @@ export namespace Prisma {
     not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type OrdenCompraListRelationFilter = {
     every?: OrdenCompraWhereInput
     some?: OrdenCompraWhereInput
@@ -30753,12 +30880,15 @@ export namespace Prisma {
     entrega_en_sitio?: SortOrder
     estatus_credito?: SortOrder
     limite_credito?: SortOrder
+    ofrece_credito?: SortOrder
+    dias_credito?: SortOrder
     tipo_proveedor?: SortOrder
     calificacion_desempeno?: SortOrder
   }
 
   export type ProveedorAvgOrderByAggregateInput = {
     limite_credito?: SortOrder
+    dias_credito?: SortOrder
     calificacion_desempeno?: SortOrder
   }
 
@@ -30775,6 +30905,8 @@ export namespace Prisma {
     entrega_en_sitio?: SortOrder
     estatus_credito?: SortOrder
     limite_credito?: SortOrder
+    ofrece_credito?: SortOrder
+    dias_credito?: SortOrder
     tipo_proveedor?: SortOrder
     calificacion_desempeno?: SortOrder
   }
@@ -30792,12 +30924,15 @@ export namespace Prisma {
     entrega_en_sitio?: SortOrder
     estatus_credito?: SortOrder
     limite_credito?: SortOrder
+    ofrece_credito?: SortOrder
+    dias_credito?: SortOrder
     tipo_proveedor?: SortOrder
     calificacion_desempeno?: SortOrder
   }
 
   export type ProveedorSumOrderByAggregateInput = {
     limite_credito?: SortOrder
+    dias_credito?: SortOrder
     calificacion_desempeno?: SortOrder
   }
 
@@ -30874,6 +31009,22 @@ export namespace Prisma {
     _sum?: NestedDecimalNullableFilter<$PrismaModel>
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type DecimalFilter<$PrismaModel = never> = {
@@ -31797,6 +31948,8 @@ export namespace Prisma {
     respuesta_compras?: SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrder
+    pregunta_gt?: SortOrder
+    respuesta_gt?: SortOrder
   }
 
   export type ComparativaDetalleAvgOrderByAggregateInput = {
@@ -31821,6 +31974,8 @@ export namespace Prisma {
     respuesta_compras?: SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrder
+    pregunta_gt?: SortOrder
+    respuesta_gt?: SortOrder
   }
 
   export type ComparativaDetalleMinOrderByAggregateInput = {
@@ -31841,6 +31996,8 @@ export namespace Prisma {
     respuesta_compras?: SortOrder
     aprobacion_gt?: SortOrder
     comentario_gt?: SortOrder
+    pregunta_gt?: SortOrder
+    respuesta_gt?: SortOrder
   }
 
   export type ComparativaDetalleSumOrderByAggregateInput = {
@@ -32269,6 +32426,14 @@ export namespace Prisma {
     decrement?: Decimal | DecimalJsLike | number | string
     multiply?: Decimal | DecimalJsLike | number | string
     divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type OrdenCompraUpdateManyWithoutProveedorNestedInput = {
@@ -33274,6 +33439,17 @@ export namespace Prisma {
     not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
   }
 
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -33333,17 +33509,6 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
   export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
@@ -33366,6 +33531,33 @@ export namespace Prisma {
     _sum?: NestedDecimalNullableFilter<$PrismaModel>
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedDecimalFilter<$PrismaModel = never> = {
@@ -33565,6 +33757,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
     cuadro: CuadroComparativoCreateNestedOneWithoutDetallesInput
   }
 
@@ -33585,6 +33779,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
   }
 
   export type ComparativaDetalleCreateOrConnectWithoutProveedorInput = {
@@ -33817,6 +34013,8 @@ export namespace Prisma {
     respuesta_compras?: StringNullableFilter<"ComparativaDetalle"> | string | null
     aprobacion_gt?: StringFilter<"ComparativaDetalle"> | string
     comentario_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    pregunta_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
+    respuesta_gt?: StringNullableFilter<"ComparativaDetalle"> | string | null
   }
 
   export type DocumentoProveedorUpsertWithWhereUniqueWithoutProveedorInput = {
@@ -33964,6 +34162,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
@@ -33986,6 +34186,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
@@ -34024,6 +34226,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
@@ -34046,6 +34250,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
@@ -34068,6 +34274,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
@@ -34090,6 +34298,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
@@ -34128,6 +34338,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
@@ -34150,6 +34362,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
@@ -34345,6 +34559,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleCreateNestedManyWithoutProveedorInput
@@ -34367,6 +34583,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUncheckedCreateNestedManyWithoutProveedorInput
@@ -34467,6 +34685,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUpdateManyWithoutProveedorNestedInput
@@ -34489,6 +34709,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     comparativas?: ComparativaDetalleUncheckedUpdateManyWithoutProveedorNestedInput
@@ -34891,6 +35113,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
     proveedor: ProveedorCreateNestedOneWithoutComparativasInput
   }
 
@@ -34911,6 +35135,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
   }
 
   export type ComparativaDetalleCreateOrConnectWithoutCuadroInput = {
@@ -35714,6 +35940,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
@@ -35736,6 +35964,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
@@ -35843,6 +36073,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
@@ -35865,6 +36097,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
@@ -36161,6 +36395,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
@@ -36183,6 +36419,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
@@ -36321,6 +36559,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
@@ -36343,6 +36583,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
@@ -36448,6 +36690,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraCreateNestedManyWithoutProveedorInput
@@ -36470,6 +36714,8 @@ export namespace Prisma {
     entrega_en_sitio?: boolean
     estatus_credito?: string
     limite_credito?: Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: boolean
+    dias_credito?: number | null
     tipo_proveedor?: string
     calificacion_desempeno?: Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedCreateNestedManyWithoutProveedorInput
@@ -36545,6 +36791,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUpdateManyWithoutProveedorNestedInput
@@ -36567,6 +36815,8 @@ export namespace Prisma {
     entrega_en_sitio?: BoolFieldUpdateOperationsInput | boolean
     estatus_credito?: StringFieldUpdateOperationsInput | string
     limite_credito?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ofrece_credito?: BoolFieldUpdateOperationsInput | boolean
+    dias_credito?: NullableIntFieldUpdateOperationsInput | number | null
     tipo_proveedor?: StringFieldUpdateOperationsInput | string
     calificacion_desempeno?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     ordenes?: OrdenCompraUncheckedUpdateManyWithoutProveedorNestedInput
@@ -36612,6 +36862,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
   }
 
   export type DocumentoProveedorCreateManyProveedorInput = {
@@ -36743,6 +36995,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
     cuadro?: CuadroComparativoUpdateOneRequiredWithoutDetallesNestedInput
   }
 
@@ -36763,6 +37017,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUncheckedUpdateManyWithoutProveedorInput = {
@@ -36782,6 +37038,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DocumentoProveedorUpdateWithoutProveedorInput = {
@@ -37143,6 +37401,8 @@ export namespace Prisma {
     respuesta_compras?: string | null
     aprobacion_gt?: string
     comentario_gt?: string | null
+    pregunta_gt?: string | null
+    respuesta_gt?: string | null
   }
 
   export type ComparativaLineaCreateManyCuadroInput = {
@@ -37218,6 +37478,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
     proveedor?: ProveedorUpdateOneRequiredWithoutComparativasNestedInput
   }
 
@@ -37238,6 +37500,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaDetalleUncheckedUpdateManyWithoutCuadroInput = {
@@ -37257,6 +37521,8 @@ export namespace Prisma {
     respuesta_compras?: NullableStringFieldUpdateOperationsInput | string | null
     aprobacion_gt?: StringFieldUpdateOperationsInput | string
     comentario_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    pregunta_gt?: NullableStringFieldUpdateOperationsInput | string | null
+    respuesta_gt?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ComparativaLineaUpdateWithoutCuadroInput = {

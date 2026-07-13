@@ -135,6 +135,8 @@ exports.Prisma.ProveedorScalarFieldEnum = {
   entrega_en_sitio: 'entrega_en_sitio',
   estatus_credito: 'estatus_credito',
   limite_credito: 'limite_credito',
+  ofrece_credito: 'ofrece_credito',
+  dias_credito: 'dias_credito',
   tipo_proveedor: 'tipo_proveedor',
   calificacion_desempeno: 'calificacion_desempeno'
 };
@@ -342,7 +344,9 @@ exports.Prisma.ComparativaDetalleScalarFieldEnum = {
   pregunta_residente: 'pregunta_residente',
   respuesta_compras: 'respuesta_compras',
   aprobacion_gt: 'aprobacion_gt',
-  comentario_gt: 'comentario_gt'
+  comentario_gt: 'comentario_gt',
+  pregunta_gt: 'pregunta_gt',
+  respuesta_gt: 'respuesta_gt'
 };
 
 exports.Prisma.AclaracionComparativaScalarFieldEnum = {
