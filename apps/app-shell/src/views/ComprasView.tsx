@@ -525,6 +525,16 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           })),
         }));
         setRequisiciones(requisicionesNormalizadas);
+
+        // Precargar Solicitud de Cotización de las requisiciones APROBADA — sin esto,
+        // el botón "Crear Cuadro Comparativo" depende de que el usuario haya abierto
+        // "Ver Solicitud de Cotización" en la sesión actual (solicitudesMap solo se
+        // llena bajo demanda), y desaparece tras recargar/volver a la vista aunque los
+        // proveedores ya hayan respondido. Ver openspec/changes/precargar-solicitud-cotizacion.
+        if (!isDemo) {
+          const aprobadas = requisicionesNormalizadas.filter(r => r.estado === 'APROBADA');
+          void Promise.allSettled(aprobadas.map(r => loadSolicitud(r.id)));
+        }
       }
 
       // Normalizar comparativas: backend usa id_cuadro + detalles, frontend usa id + lineas
