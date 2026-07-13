@@ -68,8 +68,21 @@ export interface CotizacionLinea {
   fechasEntrega: Record<string, string | null>;
   ganador: string | null;
   // Evaluación técnica (Residente) — nuevos valores: C | NC | DA | ? | PENDIENTE; legacy: APROBADO | RECHAZADO
+  // Representa el estado del primer proveedor únicamente (compatibilidad legacy) — para
+  // evaluar/leer por proveedor usar evaluacionesPorProveedor. Ver
+  // openspec/changes/fix-evaluacion-tecnica-por-proveedor.
   evaluacion_tecnica?: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?' | 'APROBADO' | 'RECHAZADO';
   comentario_tecnico?: string;
+  // Evaluación técnica por proveedor — un ComparativaDetalle es naturalmente
+  // (línea, proveedor); el panel de evaluación simple debe evaluar cada proveedor por
+  // separado, no colapsar a uno solo por renglón. Ver
+  // openspec/changes/fix-evaluacion-tecnica-por-proveedor.
+  evaluacionesPorProveedor?: Record<string, {
+    id_detalle: string;
+    evaluacion_tecnica: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?';
+    comentario_tecnico?: string;
+    pregunta_residente?: string | null;
+  }>;
   valor_ofrecido_spec?: string;
   aclaraciones_count?: number;
   // Aprobación GT
@@ -533,18 +546,33 @@ export const ComparativaDetail: React.FC<Props> = ({
     return () => window.removeEventListener('mousedown', handler);
   }, [provDropdownOpen]);
 
-  // Inicializar form de evaluación cuando se abre el panel
+  // Inicializar form de evaluación cuando se abre el panel — una entrada por
+  // (línea, proveedor), no una por línea. Ver
+  // openspec/changes/fix-evaluacion-tecnica-por-proveedor.
   useEffect(() => {
     if (!showEvalPanel) return;
     const init: Record<string, { decision: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE'; comentario: string }> = {};
+    const preguntas: Record<string, string> = {};
     comp.lineas.forEach(l => {
-      const v = l.evaluacion_tecnica;
-      // Map legacy APROBADO→C, RECHAZADO→NC for new UI
-      const mapped: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE' =
-        v === 'APROBADO' ? 'C' : v === 'RECHAZADO' ? 'NC' : (v as 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE') ?? 'PENDIENTE';
-      init[l.id] = { decision: mapped, comentario: l.comentario_tecnico ?? '' };
+      const porProveedor = Object.entries(l.evaluacionesPorProveedor ?? {});
+      if (porProveedor.length > 0) {
+        porProveedor.forEach(([provId, ev]) => {
+          const v = ev.evaluacion_tecnica;
+          const mapped: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE' =
+            (v as any) === 'APROBADO' ? 'C' : (v as any) === 'RECHAZADO' ? 'NC' : v ?? 'PENDIENTE';
+          init[`${l.id}:${provId}`] = { decision: mapped, comentario: ev.comentario_tecnico ?? '' };
+          if (ev.pregunta_residente) preguntas[`${l.id}:${provId}`] = ev.pregunta_residente;
+        });
+      } else {
+        // Fallback legacy: sin datos por proveedor, usar el campo singular de la línea.
+        const v = l.evaluacion_tecnica;
+        const mapped: 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE' =
+          v === 'APROBADO' ? 'C' : v === 'RECHAZADO' ? 'NC' : (v as 'C' | 'NC' | 'DA' | '?' | 'PENDIENTE') ?? 'PENDIENTE';
+        init[l.id] = { decision: mapped, comentario: l.comentario_tecnico ?? '' };
+      }
     });
     setEvalForm(init);
+    setPreguntasEval(preguntas);
   }, [showEvalPanel]);
 
   // Inicializar form GT cuando se abre el panel
@@ -822,9 +850,20 @@ export const ComparativaDetail: React.FC<Props> = ({
   const showAutorizarLegacyBtn = canAuthorize && comp.estado !== 'APROBADO_GT' && (comp.estado === 'BORRADOR' || comp.estado === 'EN_PROCESO');
 
   // Firma: solo cuando EN_EVALUACION_TECNICA + todos evaluados sin PENDIENTE o ?
-  const todasEvaluadas = comp.lineas.length > 0 && comp.lineas.every(
-    l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE' && l.evaluacion_tecnica !== '?'
-  );
+  // Ver openspec/changes/fix-evaluacion-tecnica-por-proveedor: los renglones sin
+  // especificaciones capturadas (panel simple) exigen que TODOS sus proveedores estén
+  // evaluados, no solo el primero. Los renglones con specs (matriz) conservan el gate
+  // legacy sobre el campo singular — no se tocan en este fix.
+  const todasEvaluadas = comp.lineas.length > 0 && comp.lineas.every(l => {
+    if (especsMap[lineaDetalleKey(l)]?.length) {
+      return l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE' && l.evaluacion_tecnica !== '?';
+    }
+    const porProveedor = Object.values(l.evaluacionesPorProveedor ?? {});
+    if (porProveedor.length > 0) {
+      return porProveedor.every(ev => ev.evaluacion_tecnica && ev.evaluacion_tecnica !== 'PENDIENTE' && ev.evaluacion_tecnica !== '?');
+    }
+    return l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE' && l.evaluacion_tecnica !== '?';
+  });
   // Ver openspec/changes/seleccion-proveedor-recomendado-firma: la 1ª opción
   // debe estar guardada antes de habilitar el botón de firma — antes solo
   // el backend lo rechazaba (400 tras el clic), ahora se adelanta a la UI.
@@ -1066,42 +1105,65 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
-  // Guardar evaluación técnica del Residente (C/NC/DA/?)
+  // Guardar evaluación técnica del Residente (C/NC/DA/?) — una entrada por
+  // (línea, proveedor). Ver openspec/changes/fix-evaluacion-tecnica-por-proveedor.
   const handleGuardarEvaluacion = async () => {
     // Ver openspec/changes/evaluacion-tecnica-por-especificacion: solo
     // renglones sin especificaciones capturadas usan este camino legacy —
     // los que sí tienen se evalúan por característica en la tabla.
     const lineasSinSpecs = comp.lineas.filter(l => !(especsMap[lineaDetalleKey(l)]?.length));
     const REQUIRES_COMMENT = new Set(['NC', 'DA']);
-    for (const l of lineasSinSpecs) {
-      const form = evalForm[l.id];
+    // (línea, proveedor|null, detalle_id, formKey) — formKey es `linea.id:proveedorId`
+    // cuando hay datos por proveedor, o `linea.id` en el fallback legacy.
+    const pares = lineasSinSpecs.flatMap(l => {
+      const provEntries = Object.entries(l.evaluacionesPorProveedor ?? {});
+      if (provEntries.length > 0) {
+        return provEntries.map(([provId, ev]) => ({ linea: l, detalleId: ev.id_detalle, formKey: `${l.id}:${provId}` }));
+      }
+      return [{ linea: l, detalleId: l.id, formKey: l.id }];
+    });
+
+    for (const { linea, formKey } of pares) {
+      const form = evalForm[formKey];
       if (form && REQUIRES_COMMENT.has(form.decision) && !form.comentario.trim()) {
-        notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${l.insumo_descripcion}".` });
+        notify({ type: 'error', title: 'Comentario requerido', message: `El valor "${form.decision}" requiere un comentario en "${linea.insumo_descripcion}".` });
         return;
       }
-      if (form?.decision === '?' && !preguntasEval[l.id]?.trim()) {
-        notify({ type: 'error', title: 'Pregunta requerida', message: `El renglón "${l.insumo_descripcion}" tiene "?" pero no tiene pregunta.` });
+      if (form?.decision === '?' && !preguntasEval[formKey]?.trim()) {
+        notify({ type: 'error', title: 'Pregunta requerida', message: `El renglón "${linea.insumo_descripcion}" tiene "?" pero no tiene pregunta.` });
         return;
       }
     }
 
-    const tienePreguntas = lineasSinSpecs.some(l => evalForm[l.id]?.decision === '?');
+    const tienePreguntas = pares.some(({ formKey }) => evalForm[formKey]?.decision === '?');
 
     setEnviandoEval(true);
     try {
-      const evaluaciones = lineasSinSpecs.map(l => ({
-        detalle_id: l.id,
-        evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE',
-        comentario_tecnico: evalForm[l.id]?.comentario || undefined,
-        pregunta_residente: evalForm[l.id]?.decision === '?' ? (preguntasEval[l.id] ?? undefined) : undefined,
+      const evaluaciones = pares.map(({ detalleId, formKey }) => ({
+        detalle_id: detalleId,
+        evaluacion_tecnica: evalForm[formKey]?.decision ?? 'PENDIENTE',
+        comentario_tecnico: evalForm[formKey]?.comentario || undefined,
+        pregunta_residente: evalForm[formKey]?.decision === '?' ? (preguntasEval[formKey] ?? undefined) : undefined,
       }));
 
       if (isDemo) {
-        const lineasActualizadas = comp.lineas.map(l => ({
-          ...l,
-          evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE' as const,
-          comentario_tecnico: evalForm[l.id]?.comentario || undefined,
-        }));
+        const lineasActualizadas = comp.lineas.map(l => {
+          const provEntries = Object.entries(l.evaluacionesPorProveedor ?? {});
+          if (provEntries.length > 0) {
+            const evaluacionesPorProveedor = Object.fromEntries(provEntries.map(([provId, ev]) => [provId, {
+              ...ev,
+              evaluacion_tecnica: evalForm[`${l.id}:${provId}`]?.decision ?? ev.evaluacion_tecnica,
+              comentario_tecnico: evalForm[`${l.id}:${provId}`]?.comentario || ev.comentario_tecnico,
+            }]));
+            const primero = Object.values(evaluacionesPorProveedor)[0];
+            return { ...l, evaluacionesPorProveedor, evaluacion_tecnica: primero.evaluacion_tecnica, comentario_tecnico: primero.comentario_tecnico };
+          }
+          return {
+            ...l,
+            evaluacion_tecnica: evalForm[l.id]?.decision ?? 'PENDIENTE' as const,
+            comentario_tecnico: evalForm[l.id]?.comentario || undefined,
+          };
+        });
         onUpdate({ ...comp, lineas: lineasActualizadas });
         notify({ type: 'success', title: 'Evaluación guardada', message: tienePreguntas ? 'Se enviarán las preguntas a Compras.' : 'Llena el veredicto y firma para bloquear el cuadro.' });
       } else if (tienePreguntas) {
@@ -1115,11 +1177,23 @@ export const ComparativaDetail: React.FC<Props> = ({
       } else {
         const resp = await api.patch(`/api/v1/compras/comparativas/${comp.id}/evaluar`, { evaluaciones });
         const updatedData = resp.data.data ?? {};
-        const lineasActualizadas = comp.lineas.map(l => ({
-          ...l,
-          evaluacion_tecnica: evalForm[l.id]?.decision ?? l.evaluacion_tecnica,
-          comentario_tecnico: evalForm[l.id]?.comentario || l.comentario_tecnico,
-        }));
+        const lineasActualizadas = comp.lineas.map(l => {
+          const provEntries = Object.entries(l.evaluacionesPorProveedor ?? {});
+          if (provEntries.length > 0) {
+            const evaluacionesPorProveedor = Object.fromEntries(provEntries.map(([provId, ev]) => [provId, {
+              ...ev,
+              evaluacion_tecnica: evalForm[`${l.id}:${provId}`]?.decision ?? ev.evaluacion_tecnica,
+              comentario_tecnico: evalForm[`${l.id}:${provId}`]?.comentario || ev.comentario_tecnico,
+            }]));
+            const primero = Object.values(evaluacionesPorProveedor)[0];
+            return { ...l, evaluacionesPorProveedor, evaluacion_tecnica: primero.evaluacion_tecnica, comentario_tecnico: primero.comentario_tecnico };
+          }
+          return {
+            ...l,
+            evaluacion_tecnica: evalForm[l.id]?.decision ?? l.evaluacion_tecnica,
+            comentario_tecnico: evalForm[l.id]?.comentario || l.comentario_tecnico,
+          };
+        });
         onUpdate({ ...comp, ...updatedData, lineas: lineasActualizadas });
         notify({ type: 'success', title: 'Evaluación guardada', message: 'Llena el veredicto y firma para bloquear el cuadro.' });
       }
@@ -1955,25 +2029,53 @@ export const ComparativaDetail: React.FC<Props> = ({
                         </div>
                       </td>
                     )}
-                    {/* Columna evaluación técnica */}
+                    {/* Columna evaluación técnica — ver
+                        openspec/changes/fix-evaluacion-tecnica-por-proveedor: renglones
+                        sin specs muestran fracción evaluada por proveedor, no un solo
+                        badge que puede ocultar evaluaciones faltantes o divergentes. */}
                     {comp.lineas.some(l => l.evaluacion_tecnica && l.evaluacion_tecnica !== 'PENDIENTE') && (
                       <td className="px-3 py-3 text-center">
-                        {linea.evaluacion_tecnica && linea.evaluacion_tecnica !== 'PENDIENTE' ? (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className={cn('rounded-lg border px-2 py-1 text-[9px] font-black', EVAL_STYLE[linea.evaluacion_tecnica] ?? EVAL_STYLE.PENDIENTE)}>
-                              {linea.evaluacion_tecnica}
-                            </span>
-                            {(linea.aclaraciones_count ?? 0) > 0 && linea.insumo_id && (
-                              <button
-                                onClick={() => { setAclaracionCelda({ insumo_id: linea.insumo_id!, proveedor_id: linea.ganador ?? comp.proveedores[0]?.id ?? '' }); fetchAclaraciones(); }}
-                                className="rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[8px] font-black text-indigo-600 hover:bg-indigo-500/20"
-                                title="Ver aclaraciones"
-                              >
-                                ? {linea.aclaraciones_count}
-                              </button>
-                            )}
-                          </div>
-                        ) : <span className="text-[10px] text-muted-foreground/50">—</span>}
+                        {(() => {
+                          const tieneSpecs = !!(especsMap[lineaDetalleKey(linea)]?.length);
+                          const provEvals = tieneSpecs ? [] : Object.values(linea.evaluacionesPorProveedor ?? {});
+                          const aclaracionesBtn = (linea.aclaraciones_count ?? 0) > 0 && linea.insumo_id ? (
+                            <button
+                              onClick={() => { setAclaracionCelda({ insumo_id: linea.insumo_id!, proveedor_id: linea.ganador ?? comp.proveedores[0]?.id ?? '' }); fetchAclaraciones(); }}
+                              className="rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[8px] font-black text-indigo-600 hover:bg-indigo-500/20"
+                              title="Ver aclaraciones"
+                            >
+                              ? {linea.aclaraciones_count}
+                            </button>
+                          ) : null;
+
+                          if (provEvals.length === 0) {
+                            return linea.evaluacion_tecnica && linea.evaluacion_tecnica !== 'PENDIENTE' ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={cn('rounded-lg border px-2 py-1 text-[9px] font-black', EVAL_STYLE[linea.evaluacion_tecnica] ?? EVAL_STYLE.PENDIENTE)}>
+                                  {linea.evaluacion_tecnica}
+                                </span>
+                                {aclaracionesBtn}
+                              </div>
+                            ) : <span className="text-[10px] text-muted-foreground/50">—</span>;
+                          }
+
+                          const decisiones = provEvals.map(e => e.evaluacion_tecnica).filter((v): v is 'C' | 'NC' | 'DA' | '?' => !!v && v !== 'PENDIENTE');
+                          if (decisiones.length < provEvals.length) {
+                            return <span className="rounded-lg border border-border/40 bg-muted px-2 py-1 text-[9px] font-black text-muted-foreground">{decisiones.length}/{provEvals.length} evaluados</span>;
+                          }
+                          const unicas = Array.from(new Set(decisiones));
+                          if (unicas.length === 1) {
+                            return (
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={cn('rounded-lg border px-2 py-1 text-[9px] font-black', EVAL_STYLE[unicas[0]] ?? EVAL_STYLE.PENDIENTE)}>{unicas[0]}</span>
+                                {aclaracionesBtn}
+                              </div>
+                            );
+                          }
+                          const conteos = decisiones.reduce<Record<string, number>>((acc, d) => { acc[d] = (acc[d] ?? 0) + 1; return acc; }, {});
+                          const resumen = Object.entries(conteos).map(([k, n]) => `${n} ${k}`).join(' · ');
+                          return <span className="text-[9px] font-black text-muted-foreground" title={resumen}>{resumen}</span>;
+                        })()}
                       </td>
                     )}
                     {!locked && (
@@ -2500,52 +2602,57 @@ export const ComparativaDetail: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Panel: Evaluación Técnica — C / NC / DA / ? */}
-      {showEvalPanel && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center" onClick={e => { if (e.target === e.currentTarget) setShowEvalPanel(false); }}>
+      {/* Panel: Evaluación Técnica — C / NC / DA / ? por proveedor. Ver
+          openspec/changes/fix-evaluacion-tecnica-por-proveedor. */}
+      {showEvalPanel && (() => {
+        const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
+        type EvalBtn = { key: 'C' | 'NC' | 'DA' | '?'; label: string; activeClass: string };
+        const EVAL_BTNS: EvalBtn[] = [
+          { key: 'C',  label: 'C',  activeClass: 'border-green-500 bg-green-500 text-white' },
+          { key: 'NC', label: 'NC', activeClass: 'border-red-500 bg-red-500 text-white' },
+          { key: 'DA', label: 'DA', activeClass: 'border-amber-500 bg-amber-500 text-white' },
+          { key: '?',  label: '?',  activeClass: 'border-indigo-500 bg-indigo-500 text-white' },
+        ];
+        const lineasSinSpecsPanel = comp.lineas.filter(linea => !(especsMap[lineaDetalleKey(linea)]?.length));
+        // Llaves de evalForm relevantes a cada línea: una por proveedor si hay
+        // datos por proveedor, o la llave legacy (solo linea.id) si no.
+        const formKeysDeLinea = (linea: CotizacionLinea): string[] => {
+          const provIds = Object.keys(linea.evaluacionesPorProveedor ?? {});
+          return provIds.length > 0 ? provIds.map(p => `${linea.id}:${p}`) : [linea.id];
+        };
+        const algunaEnDuda = lineasSinSpecsPanel.some(l => formKeysDeLinea(l).some(k => evalForm[k]?.decision === '?'));
+        const faltaPregunta = lineasSinSpecsPanel.some(l => formKeysDeLinea(l).some(k => evalForm[k]?.decision === '?' && !preguntasEval[k]?.trim()));
+
+        return (
+        <div data-testid="eval-panel" className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center" onClick={e => { if (e.target === e.currentTarget) setShowEvalPanel(false); }}>
           <div className="w-full max-w-3xl rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-border/40 bg-amber-500/10 px-6 py-4">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-tight">Evaluación Técnica</h2>
                 <p className="text-[10px] text-muted-foreground">C = Cumple · NC = No Cumple · DA = Desviación Aceptada · ? = Duda del Residente</p>
-                <p className="text-[9px] text-amber-700 mt-0.5">Solo renglones sin características capturadas — los que sí tienen, se evalúan por característica en la tabla.</p>
+                <p className="text-[9px] text-amber-700 mt-0.5">Solo renglones sin características capturadas — los que sí tienen, se evalúan por característica en la tabla. Cada proveedor se evalúa por separado.</p>
               </div>
               <Button onClick={() => setShowEvalPanel(false)} variant="ghost" className="h-8 w-8 rounded-xl p-0"><IconX className="h-4 w-4" /></Button>
             </div>
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
-              {comp.lineas.filter(linea => !(especsMap[lineaDetalleKey(linea)]?.length)).map(linea => {
+              {lineasSinSpecsPanel.map(linea => {
                 const dt = detallesTecnicos[lineaDetalleKey(linea)] ?? { marca: '', espec: '' };
                 const fichasEval = linea.insumo_id ? fichasInsumo[linea.insumo_id] : undefined;
-                const decision = evalForm[linea.id]?.decision ?? 'PENDIENTE';
-                const REQUIRES_COMMENT = new Set(['NC', 'DA', '?']);
-                type EvalBtn = { key: 'C' | 'NC' | 'DA' | '?'; label: string; activeClass: string };
-                const EVAL_BTNS: EvalBtn[] = [
-                  { key: 'C',  label: 'C',  activeClass: 'border-green-500 bg-green-500 text-white' },
-                  { key: 'NC', label: 'NC', activeClass: 'border-red-500 bg-red-500 text-white' },
-                  { key: 'DA', label: 'DA', activeClass: 'border-amber-500 bg-amber-500 text-white' },
-                  { key: '?',  label: '?',  activeClass: 'border-indigo-500 bg-indigo-500 text-white' },
-                ];
+                const provIds = Object.keys(linea.evaluacionesPorProveedor ?? {});
+                const bloques = provIds.length > 0
+                  ? provIds.map(provId => ({
+                      provId,
+                      provNombre: comp.proveedores.find(p => p.id === provId)?.nombre ?? provId,
+                      formKey: `${linea.id}:${provId}`,
+                    }))
+                  : [{ provId: null as string | null, provNombre: null as string | null, formKey: linea.id }];
+
                 return (
-                <div key={linea.id} className={cn('rounded-2xl border p-4', decision === '?' ? 'border-indigo-500/30 bg-indigo-500/5' : 'border-border/40 bg-background')}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{linea.insumo_clave}</span>
-                      <span className="ml-2 text-xs font-semibold text-foreground">{linea.insumo_descripcion}</span>
-                      <span className="ml-2 text-[10px] text-muted-foreground">{linea.cantidad} {linea.insumo_unidad}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      {EVAL_BTNS.map(btn => (
-                        <button
-                          key={btn.key}
-                          onClick={() => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], decision: btn.key } }))}
-                          className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all w-10',
-                            decision === btn.key ? btn.activeClass : 'border-border/40 bg-muted text-muted-foreground hover:border-foreground/30'
-                          )}
-                        >
-                          {btn.label}
-                        </button>
-                      ))}
-                    </div>
+                <div key={linea.id} className="rounded-2xl border border-border/40 bg-background p-4">
+                  <div>
+                    <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-700">{linea.insumo_clave}</span>
+                    <span className="ml-2 text-xs font-semibold text-foreground">{linea.insumo_descripcion}</span>
+                    <span className="ml-2 text-[10px] text-muted-foreground">{linea.cantidad} {linea.insumo_unidad}</span>
                   </div>
                   {/* Lo que el proveedor ofrece (capturado por Compras) */}
                   {linea.valor_ofrecido_spec && (
@@ -2570,55 +2677,86 @@ export const ComparativaDetail: React.FC<Props> = ({
                       📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
                     </button>
                   )}
-                  {decision === '?' && (
-                    <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 space-y-1.5">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">¿Qué necesitas aclarar? (obligatorio)</p>
-                      <Textarea
-                        className="rounded-xl text-xs min-h-[56px]"
-                        placeholder="Describe la duda o información faltante..."
-                        value={preguntasEval[linea.id] ?? ''}
-                        onChange={e => setPreguntasEval(p => ({ ...p, [linea.id]: e.target.value }))}
-                      />
-                      {!preguntasEval[linea.id]?.trim() && (
-                        <p className="text-[9px] text-indigo-600">La pregunta es obligatoria para usar "?"</p>
-                      )}
-                    </div>
-                  )}
-                  {decision !== '?' && (
-                    <>
-                      <Textarea
-                        className="mt-2 rounded-xl text-xs min-h-[48px]"
-                        placeholder={REQUIRES_COMMENT.has(decision) ? 'Comentario técnico (obligatorio)...' : 'Comentario técnico (opcional)...'}
-                        value={evalForm[linea.id]?.comentario ?? ''}
-                        onChange={e => setEvalForm(f => ({ ...f, [linea.id]: { ...f[linea.id], comentario: e.target.value } }))}
-                      />
-                      {REQUIRES_COMMENT.has(decision) && !evalForm[linea.id]?.comentario?.trim() && (
-                        <p className="mt-1 text-[9px] text-red-500">Requerido para {decision}</p>
-                      )}
-                    </>
-                  )}
+                  <div className="mt-3 space-y-2">
+                    {bloques.map(({ provId, provNombre, formKey }) => {
+                      const decision = evalForm[formKey]?.decision ?? 'PENDIENTE';
+                      return (
+                        <div key={formKey} className={cn('rounded-xl border p-3', decision === '?' ? 'border-indigo-500/30 bg-indigo-500/5' : 'border-border/30 bg-muted/20')}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            {provNombre ? (
+                              <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{provNombre}</span>
+                            ) : <span />}
+                            <div className="flex gap-2">
+                              {EVAL_BTNS.map(btn => (
+                                <button
+                                  key={btn.key}
+                                  data-testid={`eval-btn-${linea.id}-${provId ?? 'x'}-${btn.key}`}
+                                  onClick={() => setEvalForm(f => ({ ...f, [formKey]: { ...f[formKey], decision: btn.key } }))}
+                                  className={cn('rounded-xl border px-3 py-1.5 text-[10px] font-black transition-all w-10',
+                                    decision === btn.key ? btn.activeClass : 'border-border/40 bg-muted text-muted-foreground hover:border-foreground/30'
+                                  )}
+                                >
+                                  {btn.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {decision === '?' && (
+                            <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 space-y-1.5">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">¿Qué necesitas aclarar? (obligatorio)</p>
+                              <Textarea
+                                data-testid={`eval-pregunta-${linea.id}-${provId ?? 'x'}`}
+                                className="rounded-xl text-xs min-h-[56px]"
+                                placeholder="Describe la duda o información faltante..."
+                                value={preguntasEval[formKey] ?? ''}
+                                onChange={e => setPreguntasEval(p => ({ ...p, [formKey]: e.target.value }))}
+                              />
+                              {!preguntasEval[formKey]?.trim() && (
+                                <p className="text-[9px] text-indigo-600">La pregunta es obligatoria para usar "?"</p>
+                              )}
+                            </div>
+                          )}
+                          {decision !== '?' && (
+                            <>
+                              <Textarea
+                                data-testid={`eval-comentario-${linea.id}-${provId ?? 'x'}`}
+                                className="mt-2 rounded-xl text-xs min-h-[48px]"
+                                placeholder={REQUIRES_COMMENT.has(decision) ? 'Comentario técnico (obligatorio)...' : 'Comentario técnico (opcional)...'}
+                                value={evalForm[formKey]?.comentario ?? ''}
+                                onChange={e => setEvalForm(f => ({ ...f, [formKey]: { ...f[formKey], comentario: e.target.value } }))}
+                              />
+                              {REQUIRES_COMMENT.has(decision) && !evalForm[formKey]?.comentario?.trim() && (
+                                <p className="mt-1 text-[9px] text-red-500">Requerido para {decision}</p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
                 );
               })}
             </div>
             <div className="border-t border-border/40 px-6 py-4 flex flex-wrap justify-end gap-3">
-              {comp.lineas.some(l => evalForm[l.id]?.decision === '?') && (
+              {algunaEnDuda && (
                 <p className="w-full text-[10px] text-indigo-700 font-bold">
-                  ⚠️ Tienes renglones con "?" — al guardar se creará una nueva revisión y Compras recibirá tus preguntas.
+                  ⚠️ Tienes evaluaciones con "?" — al guardar se creará una nueva revisión y Compras recibirá tus preguntas.
                 </p>
               )}
               <Button onClick={() => setShowEvalPanel(false)} variant="outline" className="rounded-xl">Cancelar</Button>
               <Button
                 onClick={handleGuardarEvaluacion}
-                disabled={enviandoEval || comp.lineas.some(l => evalForm[l.id]?.decision === '?' && !preguntasEval[l.id]?.trim())}
+                disabled={enviandoEval || faltaPregunta}
                 className="rounded-xl bg-amber-500 px-6 font-black text-white hover:bg-amber-400 disabled:opacity-40"
               >
-                {enviandoEval ? 'Guardando...' : comp.lineas.some(l => evalForm[l.id]?.decision === '?') ? 'Guardar y Crear Revisión' : 'Guardar Evaluación'}
+                {enviandoEval ? 'Guardando...' : algunaEnDuda ? 'Guardar y Crear Revisión' : 'Guardar Evaluación'}
               </Button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ─── 8.1–8.4 Panel: Revisión GT ─────────────────────────────────────── */}
       {showGTPanel && (
