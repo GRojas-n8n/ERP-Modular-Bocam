@@ -81,6 +81,11 @@ export interface CotizacionLinea {
 export interface ProveedorComp {
   id: string;
   nombre: string;
+  // Estado de respuesta a la Solicitud de Cotización — ver
+  // openspec/changes/estado-respuesta-proveedor-comparativo. Ausente si el
+  // proveedor se agregó manualmente desde catálogo (nunca invitado).
+  estado_respuesta?: 'PENDIENTE' | 'RESPONDIO' | 'DECLINO';
+  fecha_respuesta?: string | null;
 }
 
 export interface EspecificacionLinea {
@@ -230,6 +235,12 @@ const EVAL_BTN_ACTIVE: Record<string, string> = {
   NC: 'border-red-500 bg-red-500 text-white',
   DA: 'border-amber-500 bg-amber-500 text-white',
   '?': 'border-indigo-500 bg-indigo-500 text-white',
+};
+
+const ESTADO_RESPUESTA_STYLE: Record<string, { badge: string; label: string }> = {
+  RESPONDIO:  { badge: 'border-green-500/30 bg-green-500/10 text-green-700', label: 'Respondió' },
+  DECLINO:    { badge: 'border-red-500/30 bg-red-500/10 text-red-700',      label: 'Declinó' },
+  PENDIENTE:  { badge: 'border-slate-300 bg-slate-100 text-slate-500',      label: 'Pendiente' },
 };
 
 const OC_ESTADO_STYLE: Record<string, { badge: string; label: string }> = {
@@ -395,8 +406,18 @@ export const ComparativaDetail: React.FC<Props> = ({
     const id = compRef.current.id;
     api.get(`/api/v1/compras/comparativas/${id}`)
       .then(resp => {
-        if (resp.data?.data?.ordenes_compra) {
-          onUpdate({ ...compRef.current, ordenes_compra: resp.data.data.ordenes_compra });
+        const estadoRespuestaProveedor = resp.data?.data?.estado_respuesta_proveedor as
+          Record<string, { estado: 'PENDIENTE' | 'RESPONDIO' | 'DECLINO'; fecha_respuesta: string | null }> | undefined;
+        if (resp.data?.data?.ordenes_compra || estadoRespuestaProveedor) {
+          onUpdate({
+            ...compRef.current,
+            ...(resp.data.data.ordenes_compra ? { ordenes_compra: resp.data.data.ordenes_compra } : {}),
+            ...(estadoRespuestaProveedor ? {
+              proveedores: compRef.current.proveedores.map(p => estadoRespuestaProveedor[p.id]
+                ? { ...p, estado_respuesta: estadoRespuestaProveedor[p.id].estado, fecha_respuesta: estadoRespuestaProveedor[p.id].fecha_respuesta }
+                : p),
+            } : {}),
+          });
         }
         const archivos = resp.data?.data?.archivos_proveedor as { proveedor_id: string; pdf_nombre: string; updated_at: string }[] | undefined;
         if (archivos) {
@@ -1663,6 +1684,11 @@ export const ComparativaDetail: React.FC<Props> = ({
                   <div key={prov.id} className={cn('flex items-center gap-2 rounded-xl border px-3 py-2', c.chip)}>
                     <span className="text-[11px] font-black">{String.fromCharCode(65 + i)}</span>
                     <span className="text-xs font-semibold">{prov.nombre}</span>
+                    {prov.estado_respuesta && ESTADO_RESPUESTA_STYLE[prov.estado_respuesta] && (
+                      <span className={cn('rounded-md border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest', ESTADO_RESPUESTA_STYLE[prov.estado_respuesta].badge)}>
+                        {ESTADO_RESPUESTA_STYLE[prov.estado_respuesta].label}
+                      </span>
+                    )}
                     {archivosProveedor[prov.id] && (
                       <span
                         title={`Cotización en respaldo: ${archivosProveedor[prov.id].pdf_nombre}`}
