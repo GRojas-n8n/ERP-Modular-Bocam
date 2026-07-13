@@ -1875,10 +1875,10 @@ export const ComparativaDetail: React.FC<Props> = ({
                           )}
                         </div>
                       )}
-                      {/* Badge / botón de fichas técnicas */}
-                      {!isResidenteMode && (
+                      {/* Badge / botón de fichas técnicas — solo aplica a ítems de catálogo */}
+                      {!isResidenteMode && linea.insumo_id && (
                         <button
-                          onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
+                          onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id!); fetchFichas(linea.insumo_id!); }}
                           className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
                             nFichas && nFichas > 0
                               ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20'
@@ -1963,9 +1963,9 @@ export const ComparativaDetail: React.FC<Props> = ({
                             <span className={cn('rounded-lg border px-2 py-1 text-[9px] font-black', EVAL_STYLE[linea.evaluacion_tecnica] ?? EVAL_STYLE.PENDIENTE)}>
                               {linea.evaluacion_tecnica}
                             </span>
-                            {(linea.aclaraciones_count ?? 0) > 0 && (
+                            {(linea.aclaraciones_count ?? 0) > 0 && linea.insumo_id && (
                               <button
-                                onClick={() => { setAclaracionCelda({ insumo_id: linea.insumo_id, proveedor_id: linea.ganador ?? comp.proveedores[0]?.id ?? '' }); fetchAclaraciones(); }}
+                                onClick={() => { setAclaracionCelda({ insumo_id: linea.insumo_id!, proveedor_id: linea.ganador ?? comp.proveedores[0]?.id ?? '' }); fetchAclaraciones(); }}
                                 className="rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[8px] font-black text-indigo-600 hover:bg-indigo-500/20"
                                 title="Ver aclaraciones"
                               >
@@ -2560,14 +2560,16 @@ export const ComparativaDetail: React.FC<Props> = ({
                       {dt.espec && <div className="text-[10px] text-muted-foreground leading-tight">{dt.espec}</div>}
                     </div>
                   )}
-                  <button
-                    onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id); fetchFichas(linea.insumo_id); }}
-                    className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
-                      fichasEval && fichasEval.length > 0 ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20' : 'text-muted-foreground/40 hover:text-indigo-500'
-                    )}
-                  >
-                    📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
-                  </button>
+                  {linea.insumo_id && (
+                    <button
+                      onClick={() => { setSideSheetFichasInsumoId(linea.insumo_id!); fetchFichas(linea.insumo_id!); }}
+                      className={cn('mt-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors',
+                        fichasEval && fichasEval.length > 0 ? 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20' : 'text-muted-foreground/40 hover:text-indigo-500'
+                      )}
+                    >
+                      📎 {fichasEval != null ? `${fichasEval.length} ficha${fichasEval.length !== 1 ? 's' : ''}` : 'Ver fichas'}
+                    </button>
+                  )}
                   {decision === '?' && (
                     <div className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 space-y-1.5">
                       <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">¿Qué necesitas aclarar? (obligatorio)</p>
