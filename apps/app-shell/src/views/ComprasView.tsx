@@ -624,6 +624,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  // Cambiar de proyecto activo debe regresar siempre a la lista de requisiciones —
+  // activeReqId puede apuntar a un requisicion_id que no existe en los datos del
+  // proyecto nuevo, dejando la vista atorada en una pantalla en blanco. Ver
+  // openspec/changes/fix-estado-detalle-al-cambiar-proyecto.
+  useEffect(() => { setActiveReqId(null); setComparativaModo('compras'); }, [currentProjectId]);
   useEffect(() => { fetchData(); }, [currentProjectId]);
   useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'ordenes-compra') { void loadOrdenesCompra(); } }, [activeTab, currentProjectId]);
