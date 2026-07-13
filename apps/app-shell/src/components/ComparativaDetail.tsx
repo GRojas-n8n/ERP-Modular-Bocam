@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api, { asistenteApi, comprasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
+import { emparejarRenglonesConLineas } from '../lib/cotizacion-pdf-match';
 import {
   Button,
   Card,
@@ -887,14 +888,16 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const handleAplicarCotizacion = async () => {
     if (!pdfProveedorId) return;
+    const matches = emparejarRenglonesConLineas(
+      comp.lineas.map(l => ({ id: l.id, insumo_descripcion: l.insumo_descripcion })),
+      renglonesPdf,
+    );
+    let sinMatch = 0;
     const lineasActualizadas = comp.lineas.map((linea) => {
-      const match = renglonesPdf.find(
-        r => r.descripcion.toLowerCase().includes(linea.insumo_descripcion.toLowerCase().slice(0, 10))
-          || linea.insumo_descripcion.toLowerCase().includes(r.descripcion.toLowerCase().slice(0, 10)),
-      );
-      if (!match) return linea;
+      const match = matches.get(linea.id) ?? null;
+      if (!match) { sinMatch++; return linea; }
       const precio = parseFloat(match.precio_unitario);
-      if (isNaN(precio)) return linea;
+      if (isNaN(precio)) { sinMatch++; return linea; }
       return { ...linea, precios: { ...linea.precios, [pdfProveedorId]: String(precio) } };
     });
     onUpdate({ ...comp, lineas: lineasActualizadas });
@@ -918,7 +921,15 @@ export const ComparativaDetail: React.FC<Props> = ({
 
     setShowPdfReview(false);
     setPdfFile(null);
-    notify({ type: 'success', title: 'Cotización aplicada', message: 'Precios del PDF aplicados al cuadro.' });
+    if (sinMatch === 0) {
+      notify({ type: 'success', title: 'Cotización aplicada', message: 'Precios del PDF aplicados al cuadro.' });
+    } else {
+      notify({
+        type: 'warning',
+        title: 'Cotización aplicada parcialmente',
+        message: `${sinMatch} de ${comp.lineas.length} línea${comp.lineas.length === 1 ? '' : 's'} no se pudo${sinMatch === 1 ? '' : 'ieron'} relacionar automáticamente con el PDF. Captúra${sinMatch === 1 ? 'la' : 'las'} manualmente.`,
+      });
+    }
   };
 
   const handleRemoveProveedor = (provId: string) => {
