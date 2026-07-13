@@ -58,7 +58,9 @@ export interface CotizacionLinea {
   insumo_unidad: string;
   cantidad: number;
   precios: Record<string, string>;
-  tiempos: Record<string, string | null>;
+  // Fecha de entrega estimada por proveedor, capturada al cotizar (YYYY-MM-DD).
+  // Ver openspec/changes/fecha-entrega-estimada-por-partida.
+  fechasEntrega: Record<string, string | null>;
   ganador: string | null;
   // Evaluación técnica (Residente) — nuevos valores: C | NC | DA | ? | PENDIENTE; legacy: APROBADO | RECHAZADO
   evaluacion_tecnica?: 'PENDIENTE' | 'C' | 'NC' | 'DA' | '?' | 'APROBADO' | 'RECHAZADO';
@@ -942,6 +944,17 @@ export const ComparativaDetail: React.FC<Props> = ({
     });
   };
 
+  const handleUpdateFechaEntrega = (lineaId: string, provId: string, value: string) => {
+    onUpdate({
+      ...comp,
+      lineas: comp.lineas.map(l =>
+        l.id === lineaId
+          ? { ...l, fechasEntrega: { ...l.fechasEntrega, [provId]: value || null } }
+          : l
+      ),
+    });
+  };
+
   const handleSetGanador = (lineaId: string, provId: string) => {
     if (locked) return;
     onUpdate({
@@ -966,7 +979,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       insumo_unidad: insumo.unidad,
       cantidad: Number(addLineaCantidad),
       precios: {},
-      tiempos: {},
+      fechasEntrega: {},
       ganador: null,
     };
     onUpdate({ ...comp, estado: 'EN_PROCESO', lineas: [...comp.lineas, newLinea] });
@@ -1009,6 +1022,7 @@ export const ComparativaDetail: React.FC<Props> = ({
           precios: comp.lineas.map(l => ({
             insumo_id: l.insumo_id,
             precio:    Number(l.precios[prov.id] ?? 0),
+            fecha_entrega_estimada: l.fechasEntrega?.[prov.id] || undefined,
           })).filter(p => p.precio > 0),
         }));
 
@@ -1734,7 +1748,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                     return (
                       <th key={prov.id} className="px-3 py-3 text-right text-[9px] font-black uppercase tracking-widest w-36" style={{ color: c.col }}>
                         {String.fromCharCode(65 + i)} · {prov.nombre.split(' ').slice(0, 2).join(' ')}
-                        <div className="text-[8px] font-medium normal-case tracking-normal text-muted-foreground mt-0.5">Precio · Tiempo</div>
+                        <div className="text-[8px] font-medium normal-case tracking-normal text-muted-foreground mt-0.5">Precio · Fecha entrega</div>
                       </th>
                     );
                   })}
@@ -1872,9 +1886,14 @@ export const ComparativaDetail: React.FC<Props> = ({
                             </div>
                           )}
                           {modo === 'compras' && (
-                            <div className="mt-0.5 text-[9px] text-sky-600 text-right font-medium">
-                              {linea.tiempos?.[prov.id] ?? '—'}
-                            </div>
+                            <input
+                              type="date"
+                              data-testid={`fecha-entrega-${prov.id}-${linea.id}`}
+                              className={cn('mt-0.5 w-28 rounded-lg border bg-background px-1.5 py-1 text-right text-[9px] font-medium text-sky-700 transition-colors focus:outline-none', locked ? 'border-transparent bg-transparent cursor-default' : 'border-border/40 focus:border-sky-500')}
+                              value={linea.fechasEntrega?.[prov.id] || ''}
+                              onChange={e => !locked && handleUpdateFechaEntrega(linea.id, prov.id, e.target.value)}
+                              disabled={locked}
+                            />
                           )}
                         </td>
                       );
