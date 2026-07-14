@@ -24,5 +24,7 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 PR contra main (branch `fix/`), CI verde, merge.
-- [ ] 4.2 Redeploy manual de `app-shell` en VPS (compose build + up -d) y smoke 200.
+- [x] 4.1 PR contra main (branch `fix/`), CI verde, merge.
+- [x] 4.2 Redeploy manual de `app-shell` en VPS (compose build + up -d) y smoke 200.
+      → Hecho 2026-07-14: PR #66 mergeado (squash 1ec49e1) con CI verde; contenedor
+      bocam-vps-app-shell recreado 16:21 UTC, healthy; https://iretum.com → 200.

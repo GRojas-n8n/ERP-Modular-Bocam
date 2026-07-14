@@ -67,3 +67,17 @@ Solo cambia la etiqueta del selector: "📋 Desde APU (take-off completo)".
 ### Invariante de negocio
 
 Ambos flujos (Por Insumo y Desde APU) generan requisiciones con `tipo = 'NORMAL'` e `insumo_id` vinculado al catálogo. Esto permite trazabilidad presupuestal en reportes de desviación.
+
+---
+
+### Campo común de notas: siempre identificado como visible para proveedores
+
+En el formulario "Nueva Requisición", el campo común de notas (`reqNotas`, persistido
+como `observaciones` de la requisición) se muestra con la etiqueta "Notas para
+Proveedores", el placeholder orientado a proveedores y la leyenda "Se verán en la
+Solicitud de Cotización y pueden llegar a los proveedores." para TODOS los tipos de
+requisición, incluido IMPREVISTO — nunca como "Justificación". La justificación interna
+del imprevisto se captura exclusivamente en el campo obligatorio por ítem
+(`item.justificacion`). (Ver change `renombrar-notas-proveedores-imprevisto`: el dato
+viaja a proveedores vía Solicitud de Cotización/correo, por lo que etiquetarlo como
+justificación interna filtraba información sensible.)
