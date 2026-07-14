@@ -2344,17 +2344,15 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             <div />
           </div>
 
-          <FormField label={reqTipo === 'IMPREVISTO' ? 'Justificación' : 'Notas para Proveedores'}>
+          <FormField label="Notas para Proveedores">
             <Textarea className="min-h-[70px]"
-              placeholder={reqTipo === 'IMPREVISTO' ? 'Motivo del imprevisto...' : 'Instrucciones, certificaciones, consideraciones para el proveedor...'}
+              placeholder="Instrucciones, certificaciones, consideraciones para el proveedor..."
               value={reqNotas}
               onChange={e => setReqNotas(e.target.value)}
             />
-            {reqTipo !== 'IMPREVISTO' && (
-              <p className="mt-1 text-[9px] text-muted-foreground">
-                Se verán en la Solicitud de Cotización y pueden llegar a los proveedores.
-              </p>
-            )}
+            <p className="mt-1 text-[9px] text-muted-foreground">
+              Se verán en la Solicitud de Cotización y pueden llegar a los proveedores.
+            </p>
           </FormField>
 
           <FormField label="Notas internas para Compras">
