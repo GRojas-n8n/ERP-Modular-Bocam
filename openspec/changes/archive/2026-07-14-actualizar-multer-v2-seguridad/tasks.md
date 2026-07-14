@@ -76,8 +76,19 @@
 
 ## 5. Cierre
 
-- [ ] 5.1 Redeploy manual en VPS de los 4 contenedores (`gerencia-tecnica`, `compras`,
+- [x] 5.1 Redeploy manual en VPS de los 4 contenedores (`gerencia-tecnica`, `compras`,
       `calidad`, `asistente`) — build + `up -d`, uno por uno, verificando `docker ps`
       healthy antes de seguir al siguiente (sin migración de BD).
-- [ ] 5.2 Confirmar en el panel de Dependabot de GitHub que las 40 alertas de `multer`
+      → Hecho 2026-07-14 tras merge de PR #62 (multer) y PR #63 (axios/overrides, chore
+      aparte): redeploy secuencial de 9 contenedores (los 4 de multer + control-proyectos,
+      personal, seguridad, ventas y app-shell por el bump de axios), script nohup en el VPS
+      con espera de healthy por servicio. Verificación final por contenedor: los 9
+      recreados hoy (15:19–15:28 UTC), `health=healthy`, y `multer@2.2.0` + `axios@1.18.1`
+      confirmados DENTRO de los 8 contenedores backend (app-shell es nginx estático, sin
+      node). Smoke test de producción: https://iretum.com y los 7 health endpoints → 200.
+- [x] 5.2 Confirmar en el panel de Dependabot de GitHub que las 40 alertas de `multer`
       pasan a estado `fixed`.
+      → Verificado 2026-07-14 vía API de GitHub tras el merge del PR #62: las 40 alertas
+      de multer están en estado `fixed` (0 abiertas). Las alertas de axios/qs/tmp/form-data
+      también cerraron con el PR #63. Quedan abiertas (fuera de alcance): xlsx ×4 high
+      (sin fix), uuid ×1, js-yaml, hono ×5, @opentelemetry/core ×2, @babel/core ×1.
