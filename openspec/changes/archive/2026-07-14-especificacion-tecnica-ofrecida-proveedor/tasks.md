@@ -76,6 +76,9 @@
 
 ## 8. Cierre
 
-- [ ] 8.1 PR contra main (branch `feat/`), CI verde, merge.
-- [ ] 8.2 Redeploy manual de `compras` y `app-shell` en VPS (compose build + up -d, sin
+- [x] 8.1 PR contra main (branch `feat/`), CI verde, merge.
+      → PR #67 mergeado (squash `4f88e2c`).
+- [x] 8.2 Redeploy manual de `compras` y `app-shell` en VPS (compose build + up -d, sin
       migración de BD) y smoke 200.
+      → Hecho 2026-07-14: ambos contenedores recreados 17:50-17:51 UTC, healthy;
+      https://iretum.com y /api/v1/compras/health → 200.
