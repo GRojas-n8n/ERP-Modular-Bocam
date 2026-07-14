@@ -881,7 +881,7 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   const showEnviarEvalBtn      = isProcurement && comp.estado === 'BORRADOR';
   const showEvalTecnicaBtn     = (isResident || isSuperint || roles.includes('admin')) && comp.estado === 'EN_EVALUACION_TECNICA';
-  const showEnviarGTBtn        = (isResident || isProcurement || isSuperint) && (comp.estado === 'EVALUADO_TECNICAMENTE' || comp.estado === 'LOCKED');
+  const showEnviarGTBtn        = (isResident || isProcurement || isSuperint) && (comp.estado === 'EVALUADO_TECNICAMENTE' || comp.estado === 'LOCKED' || comp.estado === 'FIRMADO_BLOQUEADO');
   const showRevisarGTBtn       = isGT && comp.estado === 'EN_APROBACION_GT';
   const showGenerarOCBtn       = isProcurement && comp.estado === 'APROBADO_GT';
   const showAutorizarLegacyBtn = canAuthorize && comp.estado !== 'APROBADO_GT' && (comp.estado === 'BORRADOR' || comp.estado === 'EN_PROCESO');
