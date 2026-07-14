@@ -66,6 +66,9 @@ export interface CotizacionLinea {
   // Fecha de entrega estimada por proveedor, capturada al cotizar (YYYY-MM-DD).
   // Ver openspec/changes/fecha-entrega-estimada-por-partida.
   fechasEntrega: Record<string, string | null>;
+  // Especificación técnica que cada proveedor ofrece para este renglón, capturada por
+  // Compras al cotizar. Ver openspec/changes/especificacion-tecnica-ofrecida-proveedor.
+  especOfrecida: Record<string, string>;
   ganador: string | null;
   // Evaluación técnica (Residente) — nuevos valores: C | NC | DA | ? | PENDIENTE; legacy: APROBADO | RECHAZADO
   // Representa el estado del primer proveedor únicamente (compatibilidad legacy) — para
@@ -83,7 +86,6 @@ export interface CotizacionLinea {
     comentario_tecnico?: string;
     pregunta_residente?: string | null;
   }>;
-  valor_ofrecido_spec?: string;
   aclaraciones_count?: number;
   // Aprobación GT (evaluación económica) — nuevos valores: C | NC | DA | ? | PENDIENTE;
   // legacy: APROBADO | RECHAZADO. Representa el estado del primer proveedor únicamente
@@ -1086,6 +1088,17 @@ export const ComparativaDetail: React.FC<Props> = ({
     });
   };
 
+  const handleUpdateEspecOfrecida = (lineaId: string, provId: string, value: string) => {
+    onUpdate({
+      ...comp,
+      lineas: comp.lineas.map(l =>
+        l.id === lineaId
+          ? { ...l, especOfrecida: { ...l.especOfrecida, [provId]: value } }
+          : l
+      ),
+    });
+  };
+
   const handleSetGanador = (lineaId: string, provId: string) => {
     if (locked) return;
     onUpdate({
@@ -1111,6 +1124,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       cantidad: Number(addLineaCantidad),
       precios: {},
       fechasEntrega: {},
+      especOfrecida: {},
       ganador: null,
     };
     onUpdate({ ...comp, estado: 'EN_PROCESO', lineas: [...comp.lineas, newLinea] });
@@ -1154,6 +1168,7 @@ export const ComparativaDetail: React.FC<Props> = ({
             ...(l.insumo_id ? { insumo_id: l.insumo_id } : { detalle_req_id: l.detalle_req_id ?? l.id }),
             precio:    Number(l.precios[prov.id] ?? 0),
             fecha_entrega_estimada: l.fechasEntrega?.[prov.id] || undefined,
+            especificacion_ofrecida: l.especOfrecida?.[prov.id]?.trim() || undefined,
           })).filter(p => p.precio > 0),
         }));
 
@@ -2257,14 +2272,26 @@ export const ComparativaDetail: React.FC<Props> = ({
                               disabled={locked}
                             />
                           )}
+                          {modo === 'compras' && (
+                            <input
+                              type="text"
+                              data-testid={`espec-ofrecida-${prov.id}-${linea.id}`}
+                              placeholder="Especificación ofrecida…"
+                              className={cn('mt-0.5 w-28 rounded-lg border bg-background px-1.5 py-1 text-right text-[9px] font-medium text-muted-foreground transition-colors focus:outline-none', locked ? 'border-transparent bg-transparent cursor-default' : 'border-border/40 focus:border-indigo-500')}
+                              value={linea.especOfrecida?.[prov.id] || ''}
+                              onChange={e => !locked && handleUpdateEspecOfrecida(linea.id, prov.id, e.target.value)}
+                              readOnly={locked}
+                            />
+                          )}
                         </td>
                       );
                     })}
                     {isResidenteMode && comp.proveedores.map((prov) => {
+                      const especOfrecida = linea.especOfrecida?.[prov.id];
                       return (
                         <td key={prov.id} className="px-2 py-2 text-left align-top">
-                          {linea.valor_ofrecido_spec ? (
-                            <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[9px] text-sky-700">{linea.valor_ofrecido_spec}</span>
+                          {especOfrecida ? (
+                            <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[9px] text-sky-700">{especOfrecida}</span>
                           ) : (
                             <span className="text-[10px] text-muted-foreground/40">—</span>
                           )}

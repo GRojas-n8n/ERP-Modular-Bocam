@@ -572,6 +572,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               cantidad:            Number(d.cantidad ?? 0),
               precios:             {},
               fechasEntrega:       {},
+              especOfrecida:       {},
               ganador:             d.es_ganador ? d.proveedor_id : null,
               evaluacion_tecnica:  d.evaluacion_tecnica ?? 'PENDIENTE',
               comentario_tecnico:  d.comentario_tecnico ?? undefined,
@@ -584,6 +585,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           const linea = lineaMap.get(lineaKey)!;
           linea.precios[d.proveedor_id] = String(d.precio_ofertado);
           linea.fechasEntrega[d.proveedor_id] = d.fecha_entrega_estimada ? String(d.fecha_entrega_estimada).slice(0, 10) : null;
+          linea.especOfrecida[d.proveedor_id] = d.valor_ofrecido_spec ?? '';
           if (d.es_ganador) linea.ganador = d.proveedor_id;
           // Evaluación técnica por proveedor — cada ComparativaDetalle es un
           // (línea, proveedor) independiente, no colapsar al primero. Ver
@@ -1028,6 +1030,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         cantidad:           item.cantidad,
         precios:            {},
         fechasEntrega:      {},
+        especOfrecida:      {},
         ganador:            null,
         evaluacion_tecnica: 'PENDIENTE' as const,
       };
