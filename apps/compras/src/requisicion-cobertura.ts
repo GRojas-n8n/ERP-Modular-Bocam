@@ -1,5 +1,8 @@
 export interface GrupoOcEmitido {
-  detalles: Array<{ insumo_id: string }>;
+  // insumo_id es null para renglones de texto libre/imprevisto (ver
+  // openspec/changes/generar-oc-imprevisto-y-ganador-automatico) — en ese caso
+  // detalle_req_id viaja directo, no se deriva del mapa insumo->detalle_req_id.
+  detalles: Array<{ insumo_id: string | null; detalle_req_id?: string | null }>;
 }
 
 /**
@@ -22,7 +25,7 @@ export function requisicionQuedoCubiertaPorLote(
   const cubiertos = new Set<string>();
   for (const grupo of gruposEmitidos) {
     for (const d of grupo.detalles) {
-      const detalleReqId = detalleReqIdPorInsumo.get(d.insumo_id) ?? null;
+      const detalleReqId = d.detalle_req_id ?? (d.insumo_id ? detalleReqIdPorInsumo.get(d.insumo_id) ?? null : null);
       if (!detalleReqId) return false;
       cubiertos.add(detalleReqId);
     }

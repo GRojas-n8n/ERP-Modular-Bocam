@@ -46,3 +46,15 @@ test('renglon ganador sin detalle_req_id -> cobertura incierta, false', () => {
 test('requisicion sin items -> false (nunca marca COMPRADA sin renglones)', () => {
   assert.equal(requisicionQuedoCubiertaPorLote([], [], new Map()), false);
 });
+
+// Ver openspec/changes/generar-oc-imprevisto-y-ganador-automatico: renglones de texto
+// libre (imprevisto) no tienen insumo_id — el detalle_req_id viaja directo en el grupo,
+// no se deriva del mapa insumo->detalle_req_id (que para estos renglones no aplica).
+test('renglon de texto libre (sin insumo_id, detalle_req_id directo) -> cobertura correcta', () => {
+  const todosLosItemIds = ['item-libre-1'];
+  const gruposEmitidos = [
+    { detalles: [{ insumo_id: null, detalle_req_id: 'item-libre-1' }] },
+  ];
+
+  assert.equal(requisicionQuedoCubiertaPorLote(todosLosItemIds, gruposEmitidos, new Map()), true);
+});

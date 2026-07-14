@@ -10676,6 +10676,9 @@ export namespace Prisma {
     proyecto_id: string | null
     orden_id: string | null
     insumo_id: string | null
+    detalle_req_id: string | null
+    descripcion_libre: string | null
+    unidad_libre: string | null
     cantidad: Decimal | null
     precio_unitario: Decimal | null
     importe: Decimal | null
@@ -10687,6 +10690,9 @@ export namespace Prisma {
     proyecto_id: string | null
     orden_id: string | null
     insumo_id: string | null
+    detalle_req_id: string | null
+    descripcion_libre: string | null
+    unidad_libre: string | null
     cantidad: Decimal | null
     precio_unitario: Decimal | null
     importe: Decimal | null
@@ -10698,6 +10704,9 @@ export namespace Prisma {
     proyecto_id: number
     orden_id: number
     insumo_id: number
+    detalle_req_id: number
+    descripcion_libre: number
+    unidad_libre: number
     cantidad: number
     precio_unitario: number
     importe: number
@@ -10723,6 +10732,9 @@ export namespace Prisma {
     proyecto_id?: true
     orden_id?: true
     insumo_id?: true
+    detalle_req_id?: true
+    descripcion_libre?: true
+    unidad_libre?: true
     cantidad?: true
     precio_unitario?: true
     importe?: true
@@ -10734,6 +10746,9 @@ export namespace Prisma {
     proyecto_id?: true
     orden_id?: true
     insumo_id?: true
+    detalle_req_id?: true
+    descripcion_libre?: true
+    unidad_libre?: true
     cantidad?: true
     precio_unitario?: true
     importe?: true
@@ -10745,6 +10760,9 @@ export namespace Prisma {
     proyecto_id?: true
     orden_id?: true
     insumo_id?: true
+    detalle_req_id?: true
+    descripcion_libre?: true
+    unidad_libre?: true
     cantidad?: true
     precio_unitario?: true
     importe?: true
@@ -10842,7 +10860,10 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     orden_id: string
-    insumo_id: string
+    insumo_id: string | null
+    detalle_req_id: string | null
+    descripcion_libre: string | null
+    unidad_libre: string | null
     cantidad: Decimal
     precio_unitario: Decimal
     importe: Decimal
@@ -10873,6 +10894,9 @@ export namespace Prisma {
     proyecto_id?: boolean
     orden_id?: boolean
     insumo_id?: boolean
+    detalle_req_id?: boolean
+    descripcion_libre?: boolean
+    unidad_libre?: boolean
     cantidad?: boolean
     precio_unitario?: boolean
     importe?: boolean
@@ -10885,6 +10909,9 @@ export namespace Prisma {
     proyecto_id?: boolean
     orden_id?: boolean
     insumo_id?: boolean
+    detalle_req_id?: boolean
+    descripcion_libre?: boolean
+    unidad_libre?: boolean
     cantidad?: boolean
     precio_unitario?: boolean
     importe?: boolean
@@ -10897,6 +10924,9 @@ export namespace Prisma {
     proyecto_id?: boolean
     orden_id?: boolean
     insumo_id?: boolean
+    detalle_req_id?: boolean
+    descripcion_libre?: boolean
+    unidad_libre?: boolean
     cantidad?: boolean
     precio_unitario?: boolean
     importe?: boolean
@@ -10919,7 +10949,20 @@ export namespace Prisma {
       tenant_id: string
       proyecto_id: string
       orden_id: string
-      insumo_id: string
+      /**
+       * Referencia a MDM: Insumo_Catalogo. Nullable: null para items de texto libre /
+       * imprevisto (ver detalle_req_id) — ver openspec/changes/generar-oc-imprevisto-y-ganador-automatico.
+       */
+      insumo_id: string | null
+      /**
+       * Ref a RequisicionItem (misma BD) — poblado cuando insumo_id es null.
+       */
+      detalle_req_id: string | null
+      /**
+       * Snapshot de descripción/unidad para items de texto libre (insumo_id nulo).
+       */
+      descripcion_libre: string | null
+      unidad_libre: string | null
       cantidad: Prisma.Decimal
       precio_unitario: Prisma.Decimal
       importe: Prisma.Decimal
@@ -11322,6 +11365,9 @@ export namespace Prisma {
     readonly proyecto_id: FieldRef<"OrdenCompraItem", 'String'>
     readonly orden_id: FieldRef<"OrdenCompraItem", 'String'>
     readonly insumo_id: FieldRef<"OrdenCompraItem", 'String'>
+    readonly detalle_req_id: FieldRef<"OrdenCompraItem", 'String'>
+    readonly descripcion_libre: FieldRef<"OrdenCompraItem", 'String'>
+    readonly unidad_libre: FieldRef<"OrdenCompraItem", 'String'>
     readonly cantidad: FieldRef<"OrdenCompraItem", 'Decimal'>
     readonly precio_unitario: FieldRef<"OrdenCompraItem", 'Decimal'>
     readonly importe: FieldRef<"OrdenCompraItem", 'Decimal'>
@@ -26101,6 +26147,9 @@ export namespace Prisma {
     proyecto_id: 'proyecto_id',
     orden_id: 'orden_id',
     insumo_id: 'insumo_id',
+    detalle_req_id: 'detalle_req_id',
+    descripcion_libre: 'descripcion_libre',
+    unidad_libre: 'unidad_libre',
     cantidad: 'cantidad',
     precio_unitario: 'precio_unitario',
     importe: 'importe'
@@ -27179,7 +27228,10 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"OrdenCompraItem"> | string
     proyecto_id?: UuidFilter<"OrdenCompraItem"> | string
     orden_id?: UuidFilter<"OrdenCompraItem"> | string
-    insumo_id?: UuidFilter<"OrdenCompraItem"> | string
+    insumo_id?: UuidNullableFilter<"OrdenCompraItem"> | string | null
+    detalle_req_id?: UuidNullableFilter<"OrdenCompraItem"> | string | null
+    descripcion_libre?: StringNullableFilter<"OrdenCompraItem"> | string | null
+    unidad_libre?: StringNullableFilter<"OrdenCompraItem"> | string | null
     cantidad?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     importe?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
@@ -27191,7 +27243,10 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     orden_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
+    detalle_req_id?: SortOrderInput | SortOrder
+    descripcion_libre?: SortOrderInput | SortOrder
+    unidad_libre?: SortOrderInput | SortOrder
     cantidad?: SortOrder
     precio_unitario?: SortOrder
     importe?: SortOrder
@@ -27206,7 +27261,10 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"OrdenCompraItem"> | string
     proyecto_id?: UuidFilter<"OrdenCompraItem"> | string
     orden_id?: UuidFilter<"OrdenCompraItem"> | string
-    insumo_id?: UuidFilter<"OrdenCompraItem"> | string
+    insumo_id?: UuidNullableFilter<"OrdenCompraItem"> | string | null
+    detalle_req_id?: UuidNullableFilter<"OrdenCompraItem"> | string | null
+    descripcion_libre?: StringNullableFilter<"OrdenCompraItem"> | string | null
+    unidad_libre?: StringNullableFilter<"OrdenCompraItem"> | string | null
     cantidad?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     importe?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
@@ -27218,7 +27276,10 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     orden_id?: SortOrder
-    insumo_id?: SortOrder
+    insumo_id?: SortOrderInput | SortOrder
+    detalle_req_id?: SortOrderInput | SortOrder
+    descripcion_libre?: SortOrderInput | SortOrder
+    unidad_libre?: SortOrderInput | SortOrder
     cantidad?: SortOrder
     precio_unitario?: SortOrder
     importe?: SortOrder
@@ -27237,7 +27298,10 @@ export namespace Prisma {
     tenant_id?: UuidWithAggregatesFilter<"OrdenCompraItem"> | string
     proyecto_id?: UuidWithAggregatesFilter<"OrdenCompraItem"> | string
     orden_id?: UuidWithAggregatesFilter<"OrdenCompraItem"> | string
-    insumo_id?: UuidWithAggregatesFilter<"OrdenCompraItem"> | string
+    insumo_id?: UuidNullableWithAggregatesFilter<"OrdenCompraItem"> | string | null
+    detalle_req_id?: UuidNullableWithAggregatesFilter<"OrdenCompraItem"> | string | null
+    descripcion_libre?: StringNullableWithAggregatesFilter<"OrdenCompraItem"> | string | null
+    unidad_libre?: StringNullableWithAggregatesFilter<"OrdenCompraItem"> | string | null
     cantidad?: DecimalWithAggregatesFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalWithAggregatesFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     importe?: DecimalWithAggregatesFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
@@ -29296,7 +29360,10 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
@@ -29308,7 +29375,10 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     orden_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
@@ -29318,7 +29388,10 @@ export namespace Prisma {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -29330,7 +29403,10 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     orden_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -29341,7 +29417,10 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     orden_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
@@ -29351,7 +29430,10 @@ export namespace Prisma {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -29362,7 +29444,10 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     orden_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -31569,6 +31654,9 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     orden_id?: SortOrder
     insumo_id?: SortOrder
+    detalle_req_id?: SortOrder
+    descripcion_libre?: SortOrder
+    unidad_libre?: SortOrder
     cantidad?: SortOrder
     precio_unitario?: SortOrder
     importe?: SortOrder
@@ -31586,6 +31674,9 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     orden_id?: SortOrder
     insumo_id?: SortOrder
+    detalle_req_id?: SortOrder
+    descripcion_libre?: SortOrder
+    unidad_libre?: SortOrder
     cantidad?: SortOrder
     precio_unitario?: SortOrder
     importe?: SortOrder
@@ -31597,6 +31688,9 @@ export namespace Prisma {
     proyecto_id?: SortOrder
     orden_id?: SortOrder
     insumo_id?: SortOrder
+    detalle_req_id?: SortOrder
+    descripcion_libre?: SortOrder
+    unidad_libre?: SortOrder
     cantidad?: SortOrder
     precio_unitario?: SortOrder
     importe?: SortOrder
@@ -34603,7 +34697,10 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
@@ -34613,7 +34710,10 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
@@ -34744,7 +34844,10 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"OrdenCompraItem"> | string
     proyecto_id?: UuidFilter<"OrdenCompraItem"> | string
     orden_id?: UuidFilter<"OrdenCompraItem"> | string
-    insumo_id?: UuidFilter<"OrdenCompraItem"> | string
+    insumo_id?: UuidNullableFilter<"OrdenCompraItem"> | string | null
+    detalle_req_id?: UuidNullableFilter<"OrdenCompraItem"> | string | null
+    descripcion_libre?: StringNullableFilter<"OrdenCompraItem"> | string | null
+    unidad_libre?: StringNullableFilter<"OrdenCompraItem"> | string | null
     cantidad?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
     importe?: DecimalFilter<"OrdenCompraItem"> | Decimal | DecimalJsLike | number | string
@@ -37270,7 +37373,10 @@ export namespace Prisma {
     id_item?: string
     tenant_id: string
     proyecto_id: string
-    insumo_id: string
+    insumo_id?: string | null
+    detalle_req_id?: string | null
+    descripcion_libre?: string | null
+    unidad_libre?: string | null
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
@@ -37290,7 +37396,10 @@ export namespace Prisma {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -37300,7 +37409,10 @@ export namespace Prisma {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -37310,7 +37422,10 @@ export namespace Prisma {
     id_item?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
-    insumo_id?: StringFieldUpdateOperationsInput | string
+    insumo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    detalle_req_id?: NullableStringFieldUpdateOperationsInput | string | null
+    descripcion_libre?: NullableStringFieldUpdateOperationsInput | string | null
+    unidad_libre?: NullableStringFieldUpdateOperationsInput | string | null
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
