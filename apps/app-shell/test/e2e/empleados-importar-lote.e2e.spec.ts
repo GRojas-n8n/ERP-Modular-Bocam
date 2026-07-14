@@ -16,6 +16,8 @@ import path from 'node:path';
 
 const ADMIN_EMAIL = 'admin@alfa.bocam.com';
 const ADMIN_PASSWORD = 'Admin.2026';
+const COMPRADOR_EMAIL = 'comprador@alfa.bocam.com';
+const COMPRADOR_PASSWORD = 'Comp.2026';
 
 async function login(page: import('@playwright/test').Page) {
   await page.goto('/');
@@ -79,4 +81,27 @@ test('admin importa un lote de Empleados con filas válidas, inválidas y RFC du
   await expect(page.getByText(`PlaywrightNombre2 ApellidoE2E${sufijo}`)).toBeVisible();
 
   fs.unlinkSync(csvPath);
+});
+
+test('usuario sin rol personal_rh/admin no ve "Importar CSV/Excel" y el endpoint responde 403', async ({ page }) => {
+  page.on('pageerror', err => console.log('[pageerror]', err.message));
+
+  // comprador@alfa.bocam.com solo tiene el rol `procurement` — no tiene
+  // acceso al módulo Recursos Humanos (Layout.tsx exige rol `personal_rh`),
+  // lo cual ya satisface "no ve el botón Importar CSV/Excel".
+  await page.goto('/');
+  await page.locator('#login-email-input').fill(COMPRADOR_EMAIL);
+  await page.locator('#login-password-input').fill(COMPRADOR_PASSWORD);
+  await page.locator('#login-submit-btn').click();
+  await expect(page.getByRole('button', { name: 'Dashboard', exact: true })).toBeVisible({ timeout: 15_000 });
+
+  await expect(page.getByRole('button', { name: 'Recursos Humanos', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Importar CSV/Excel' })).toHaveCount(0);
+
+  const token = await page.evaluate(() => localStorage.getItem('iretum_access_token'));
+  const resp = await page.request.post('/api/v1/personal/empleados/importar-lote', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { registros: [{ nombre: 'No', apellido_paterno: 'Debería', rfc: 'NOADMIN01', puesto: 'X', salario_diario: 100 }] },
+  });
+  expect(resp.status()).toBe(403);
 });

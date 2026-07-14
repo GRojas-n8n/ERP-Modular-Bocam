@@ -16,6 +16,8 @@ import path from 'node:path';
 
 const PROCUREMENT_EMAIL = 'comprador@alfa.bocam.com';
 const PROCUREMENT_PASSWORD = 'Comp.2026';
+const ADMIN_EMAIL = 'admin@alfa.bocam.com';
+const ADMIN_PASSWORD = 'Admin.2026';
 
 async function login(page: import('@playwright/test').Page, email: string, password: string) {
   await page.goto('/');
@@ -78,4 +80,56 @@ test('procurement importa un lote de Proveedores con filas válidas, inválidas 
   await expect(page.getByText('Proveedor Playwright Dos')).toBeVisible();
 
   fs.unlinkSync(csvPath);
+});
+
+test('superintendent ve la tab Proveedores pero no el botón "Importar CSV/Excel", y el endpoint responde 403', async ({ page, request }) => {
+  page.on('pageerror', err => console.log('[pageerror]', err.message));
+
+  // `comprador@alfa.bocam.com` no tiene un usuario seed "superintendent puro"
+  // (admin@alfa ya trae ['admin','superintendent'], lo que enmascararía el
+  // gate porque `admin` sí puede importar) — se le cambia el rol
+  // temporalmente vía el endpoint admin (mismo patrón usado en sesiones
+  // anteriores para bugs dependientes de rol exacto) y se revierte al final.
+  const TENANT_ALFA_ID = '11111111-aaaa-bbbb-cccc-111111111111';
+  const adminLoginResp = await request.post('http://localhost:3003/api/v1/auth/login', {
+    data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, tenant_id: TENANT_ALFA_ID },
+  });
+  const adminToken = (await adminLoginResp.json()).data.access_token;
+
+  const usersResp = await request.get('http://localhost:3003/api/v1/auth/admin/users', {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  const comprador = (await usersResp.json()).data.find((u: any) => u.email === PROCUREMENT_EMAIL);
+
+  await request.patch(`http://localhost:3003/api/v1/auth/admin/users/${comprador.id}`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+    data: { roles: ['superintendent'] },
+  });
+
+  try {
+    await page.goto('/');
+    await page.locator('#login-email-input').fill(PROCUREMENT_EMAIL);
+    await page.locator('#login-password-input').fill(PROCUREMENT_PASSWORD);
+    await page.locator('#login-submit-btn').click();
+    await expect(page.getByRole('button', { name: 'Compras', exact: true })).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole('button', { name: 'Compras', exact: true }).click();
+    await page.getByRole('button', { name: 'Proveedores', exact: true }).click();
+    // Sí tiene acceso a la tab (isProcurement incluye 'superintendent')...
+    await expect(page.getByPlaceholder('Buscar proveedor por nombre o RFC...')).toBeVisible();
+    // ...pero NO el botón de importar (puedeImportarProveedores solo admite 'procurement'/'admin').
+    await expect(page.getByRole('button', { name: 'Importar CSV/Excel' })).toHaveCount(0);
+
+    const token = await page.evaluate(() => localStorage.getItem('iretum_access_token'));
+    const resp = await page.request.post('/api/v1/compras/proveedores/importar-lote', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { registros: [{ rfc_tax_id: 'NOSUPER01', razon_social: 'No debería crearse' }] },
+    });
+    expect(resp.status()).toBe(403);
+  } finally {
+    await request.patch(`http://localhost:3003/api/v1/auth/admin/users/${comprador.id}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      data: { roles: ['procurement'] },
+    });
+  }
 });

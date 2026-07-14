@@ -16,11 +16,13 @@ import path from 'node:path';
 
 const ADMIN_EMAIL = 'admin@alfa.bocam.com';
 const ADMIN_PASSWORD = 'Admin.2026';
+const COMPRADOR_EMAIL = 'comprador@alfa.bocam.com';
+const COMPRADOR_PASSWORD = 'Comp.2026';
 
-async function login(page: import('@playwright/test').Page) {
+async function login(page: import('@playwright/test').Page, email = ADMIN_EMAIL, password = ADMIN_PASSWORD) {
   await page.goto('/');
-  await page.locator('#login-email-input').fill(ADMIN_EMAIL);
-  await page.locator('#login-password-input').fill(ADMIN_PASSWORD);
+  await page.locator('#login-email-input').fill(email);
+  await page.locator('#login-password-input').fill(password);
   await page.locator('#login-submit-btn').click();
   // El dashboard confirma sesión iniciada (sidebar con "Ventas" visible para admin).
   await expect(page.getByRole('button', { name: 'Ventas', exact: true })).toBeVisible({ timeout: 15_000 });
@@ -90,4 +92,29 @@ test('admin importa un lote de Clientes con filas válidas, inválidas y RFC dup
   await expect(page.getByText('Cliente Playwright Dos')).toBeVisible();
 
   fs.unlinkSync(csvPath);
+});
+
+test('usuario sin rol admin no ve "Importar CSV/Excel" y el endpoint responde 403', async ({ page }) => {
+  page.on('pageerror', err => console.log('[pageerror]', err.message));
+
+  // comprador@alfa.bocam.com solo tiene el rol `procurement` — ni siquiera
+  // tiene acceso al módulo Ventas (Layout.tsx exige rol `ventas`), lo cual
+  // ya satisface "no ve el botón Importar CSV/Excel" de forma más fuerte
+  // (no hay ningún seed user con rol `ventas` sin `admin` para probar el
+  // caso "ve el módulo pero no el botón admin-only").
+  await page.goto('/');
+  await page.locator('#login-email-input').fill(COMPRADOR_EMAIL);
+  await page.locator('#login-password-input').fill(COMPRADOR_PASSWORD);
+  await page.locator('#login-submit-btn').click();
+  await expect(page.getByRole('button', { name: 'Dashboard', exact: true })).toBeVisible({ timeout: 15_000 });
+
+  await expect(page.getByRole('button', { name: 'Ventas', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Importar CSV/Excel' })).toHaveCount(0);
+
+  const token = await page.evaluate(() => localStorage.getItem('iretum_access_token'));
+  const resp = await page.request.post('/api/v1/ventas/clientes/importar-lote', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { registros: [{ rfc_tax_id: 'NOADMIN01', razon_social: 'No debería crearse' }] },
+  });
+  expect(resp.status()).toBe(403);
 });
