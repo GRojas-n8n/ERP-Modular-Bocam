@@ -1072,6 +1072,7 @@ app.get(
             where: { tenant_id: tenantId, proyecto_id: proyectoId },
             select: {
               insumo_id: true,
+              descripcion_libre: true,
               cantidad: true,
               precio_unitario: true,
               importe: true,
@@ -1142,11 +1143,11 @@ app.get(
 
           for (const oc of ocItems) {
             if (!['EMITIDA', 'RECIBIDA'].includes(oc.orden.estado)) continue;
-            const key: InsumoKey = oc.insumo_id;
+            const key: InsumoKey = oc.insumo_id ?? `LIBRE:${oc.descripcion_libre ?? ''}`;
             if (!agg.has(key)) {
               agg.set(key, {
                 insumo_id: oc.insumo_id,
-                descripcion_libre: null,
+                descripcion_libre: oc.descripcion_libre,
                 unidad_libre: null,
                 cantidad_presupuestada: 0,
                 cantidad_requisicionada: 0,
@@ -1495,6 +1496,8 @@ app.post('/api/v1/compras/ordenes-compra/enviar-correo', requireRoles('procureme
               total: oc.total.toNumber(),
               items: oc.items.map((it: any) => ({
                 insumo_id: it.insumo_id,
+                descripcion_libre: it.descripcion_libre,
+                unidad_libre: it.unidad_libre,
                 cantidad: Number(it.cantidad),
                 precio_unitario: Number(it.precio_unitario),
                 importe: Number(it.importe),
@@ -2681,7 +2684,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
     }
 
     // ── 1.1–1.3: Cargar comparativa, lineas y cantidades reales de requisición ──
-    type DetalleGanador = { proveedor_id: string; insumo_id: string; precio_ofertado: { toNumber(): number } };
+    type DetalleGanador = { proveedor_id: string; insumo_id: string | null; detalle_req_id: string | null; precio_ofertado: { toNumber(): number } };
     type GrupoProveedor = { detalles: DetalleGanador[]; subtotal: number };
 
     const loteData = await createTenantContext(
@@ -2702,29 +2705,35 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           throw new Error('No hay renglones aprobados por Gerencia Técnica con proveedor ganador seleccionado.');
         }
 
-        // Lineas del cuadro para obtener detalle_req_id → cantidad real
+        // Lineas del cuadro para obtener detalle_req_id → cantidad real (renglones de
+        // catálogo). Los renglones de texto libre/imprevisto ya traen detalle_req_id
+        // directo en ComparativaDetalle — no necesitan este mapa.
         const lineas = await prisma.comparativaLinea.findMany({ where: { cuadro_id: id, tenant_id: tenantId } });
         const lineaMap = new Map(lineas.map((l: any) => [l.insumo_id, l.detalle_req_id as string | null]));
 
-        const detalleReqIds = [...new Set(lineas.map((l: any) => l.detalle_req_id).filter(Boolean))] as string[];
+        const detalleReqIdsDeLineas = [...new Set(lineas.map((l: any) => l.detalle_req_id).filter(Boolean))] as string[];
+        const detalleReqIdsDeDetalles = [...new Set(comparativa.detalles.map((d: any) => d.detalle_req_id).filter(Boolean))] as string[];
+        const detalleReqIds = [...new Set([...detalleReqIdsDeLineas, ...detalleReqIdsDeDetalles])];
         const reqItems = detalleReqIds.length > 0
           ? await prisma.requisicionItem.findMany({ where: { id_item: { in: detalleReqIds }, tenant_id: tenantId } })
           : [];
         const cantidadMap = new Map(reqItems.map((i: any) => [i.id_item, Number(i.cantidad)]));
+        const reqItemsMap = new Map(reqItems.map((i: any) => [i.id_item, i]));
 
-        // 1.1: Agrupar detalles ganadores por proveedor_id
-        // Nota: líneas sin insumo_id (ítems de texto libre/imprevisto) aún no soportan
-        // conversión a OC — ver openspec/changes/cotizar-items-texto-libre-comparativa
-        // (Non-Goals). Se excluyen aquí en vez de fallar.
+        // 1.1: Agrupar detalles ganadores por proveedor_id — incluye renglones de
+        // catálogo (insumo_id) y de texto libre/imprevisto (detalle_req_id directo). Ver
+        // openspec/changes/generar-oc-imprevisto-y-ganador-automatico: antes se excluían
+        // los renglones sin insumo_id (Non-Goal de cotizar-items-texto-libre-comparativa),
+        // bloqueando por completo la generación de OC para imprevistos vinculados a una
+        // partida real — caso de uso real y frecuente, no un caso raro.
         const grupos = new Map<string, GrupoProveedor>();
         for (const d of comparativa.detalles) {
           const insumoId = d.insumo_id;
-          if (!insumoId) continue;
+          const detalleReqId: string | null = insumoId ? (lineaMap.get(insumoId) ?? null) : d.detalle_req_id;
           if (!grupos.has(d.proveedor_id)) grupos.set(d.proveedor_id, { detalles: [], subtotal: 0 });
           const grupo = grupos.get(d.proveedor_id)!;
-          const detailReqId = lineaMap.get(insumoId) ?? null;
-          const cantidad = detailReqId ? (cantidadMap.get(detailReqId) ?? 1) : 1;
-          grupo.detalles.push({ ...d, insumo_id: insumoId });
+          const cantidad = detalleReqId ? (cantidadMap.get(detalleReqId) ?? 1) : 1;
+          grupo.detalles.push({ ...d, insumo_id: insumoId, detalle_req_id: detalleReqId });
           grupo.subtotal += d.precio_ofertado.toNumber() * cantidad;
         }
 
@@ -2758,6 +2767,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           grupos,
           lineaMap,
           cantidadMap,
+          reqItemsMap,
           totalAgregado,
         };
       }
@@ -2840,13 +2850,17 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
             requisicion_id: loteData.requisicionId || null,
             items: {
               create: grupo.detalles.map((d: DetalleGanador) => {
-                const detailReqId = loteData.lineaMap.get(d.insumo_id) ?? null;
+                const detailReqId = d.detalle_req_id ?? (d.insumo_id ? loteData.lineaMap.get(d.insumo_id) ?? null : null);
                 const cantidad = detailReqId ? (loteData.cantidadMap.get(detailReqId) ?? 1) : 1;
                 const precioUnitario = d.precio_ofertado.toNumber();
+                const reqItem = !d.insumo_id && detailReqId ? loteData.reqItemsMap.get(detailReqId) : undefined;
                 return {
                   tenant_id: tenantId,
                   proyecto_id: proyectoId,
                   insumo_id: d.insumo_id,
+                  detalle_req_id: d.insumo_id ? null : detailReqId,
+                  descripcion_libre: reqItem?.descripcion_libre ?? null,
+                  unidad_libre: reqItem?.unidad_libre ?? null,
                   cantidad,
                   precio_unitario: precioUnitario,
                   importe: cantidad * precioUnitario,
@@ -2890,7 +2904,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada', 'Alerta de OC en ERROR_FINANZAS persistida en BD', { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id });
       }
 
-      if (ocEmitida) gruposEmitidos.push({ detalles: grupo.detalles.map((d: DetalleGanador) => ({ insumo_id: d.insumo_id })) });
+      if (ocEmitida) gruposEmitidos.push({ detalles: grupo.detalles.map((d: DetalleGanador) => ({ insumo_id: d.insumo_id, detalle_req_id: d.detalle_req_id })) });
 
       // 1.7: Comprometer saldo en GT para el concepto/partida (fire-and-forget)
       if (ocEmitida && loteData.conceptoId) {
@@ -2922,7 +2936,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
               requisicion_id: loteData.requisicionId || null,
               concepto_id:    loteData.conceptoId   || null,
               items:          grupo.detalles.map((d: any) => {
-                const reqLineId = loteData.lineaMap.get(d.insumo_id) ?? null;
+                const reqLineId = d.detalle_req_id ?? (d.insumo_id ? loteData.lineaMap.get(d.insumo_id) ?? null : null);
                 const cantidad  = reqLineId ? (loteData.cantidadMap.get(reqLineId) ?? 1) : 1;
                 return { insumo_id: d.insumo_id, cantidad, precio_unitario: d.precio_ofertado.toNumber() };
               }),
@@ -3793,6 +3807,34 @@ app.patch('/api/v1/compras/comparativas/:id/revisar-gt',
           // si todos son NC (o legacy RECHAZADO) → RECHAZADO_GT.
           const hayAprobadosGT = cuadro.detalles.some(d => ['C', 'DA', 'APROBADO'].includes(d.aprobacion_gt));
           const estadoFinal = hayAprobadosGT ? 'APROBADO_GT' : 'RECHAZADO_GT';
+
+          // Ver openspec/changes/generar-oc-imprevisto-y-ganador-automatico: antes,
+          // es_ganador solo se marcaba con un clic manual en la tabla de precios de
+          // Compras — un paso que en la práctica casi nunca se hacía (la tabla ya está
+          // bloqueada para cuando el cuadro llega aquí), dejando convertir-oc sin
+          // ningún renglón para generar la OC. Se determina automáticamente por
+          // renglón: primera opción aprobada > segunda opción aprobada > menor precio
+          // entre los aprobados.
+          if (hayAprobadosGT) {
+            const APROBADOS_GT = new Set(['C', 'DA', 'APROBADO']);
+            const porRenglon = new Map<string, typeof cuadro.detalles>();
+            for (const d of cuadro.detalles) {
+              const key = d.insumo_id ?? d.detalle_req_id ?? d.id_detalle;
+              if (!porRenglon.has(key)) porRenglon.set(key, []);
+              porRenglon.get(key)!.push(d);
+            }
+            for (const detallesRenglon of porRenglon.values()) {
+              const aprobados = detallesRenglon.filter(d => APROBADOS_GT.has(d.aprobacion_gt));
+              if (aprobados.length === 0) continue;
+              const ganador = aprobados.find(d => d.proveedor_id === cuadro.primera_opcion_proveedor_id)
+                ?? aprobados.find(d => d.proveedor_id === cuadro.segunda_opcion_proveedor_id)
+                ?? aprobados.reduce((min, d) => d.precio_ofertado.toNumber() < min.precio_ofertado.toNumber() ? d : min);
+              await Promise.all(detallesRenglon.map(d => prisma.comparativaDetalle.update({
+                where: { id_detalle: d.id_detalle },
+                data: { es_ganador: d.id_detalle === ganador.id_detalle },
+              })));
+            }
+          }
 
           return prisma.cuadroComparativo.update({
             where: { id_cuadro: id },

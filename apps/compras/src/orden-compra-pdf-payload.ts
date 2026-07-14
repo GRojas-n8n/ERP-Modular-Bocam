@@ -1,5 +1,9 @@
 export interface OrdenCompraItemConInsumo {
-  insumo_id: string;
+  insumo_id: string | null;
+  // Descripción/unidad de texto libre (imprevisto) — presentes cuando insumo_id es null.
+  // Ver openspec/changes/generar-oc-imprevisto-y-ganador-automatico.
+  descripcion_libre?: string | null;
+  unidad_libre?: string | null;
   cantidad: number;
   precio_unitario: number;
   importe: number;
@@ -34,6 +38,15 @@ export function buildOcPdfPayload(
   insumoById: Map<string, InsumoCatalogo>,
 ): { oc: { numero: string; proveedor: string; items: Array<{ descripcion: string; unidad: string; cantidad: number; precio_unitario: number; importe: number }>; subtotal: number; iva: number; total: number } } {
   const items = orden.items.map((it) => {
+    if (!it.insumo_id) {
+      return {
+        descripcion: it.descripcion_libre || 'Material imprevisto (sin catálogo)',
+        unidad: it.unidad_libre || '',
+        cantidad: it.cantidad,
+        precio_unitario: it.precio_unitario,
+        importe: it.importe,
+      };
+    }
     const insumo = insumoById.get(it.insumo_id);
     return {
       descripcion: insumo ? `[${insumo.clave ?? ''}] ${insumo.descripcion}`.trim() : 'Insumo no encontrado en catálogo',

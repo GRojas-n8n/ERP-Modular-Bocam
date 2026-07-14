@@ -222,7 +222,14 @@ model OrdenCompraItem {
   tenant_id      String   @db.Uuid
   proyecto_id    String   @db.Uuid
   orden_id       String   @db.Uuid
-  insumo_id      String   @db.Uuid // Referencia a MDM: Insumo_Catalogo
+  /// Referencia a MDM: Insumo_Catalogo. Nullable: null para items de texto libre /
+  /// imprevisto (ver detalle_req_id) — ver openspec/changes/generar-oc-imprevisto-y-ganador-automatico.
+  insumo_id      String?  @db.Uuid
+  /// Ref a RequisicionItem (misma BD) — poblado cuando insumo_id es null.
+  detalle_req_id String?  @db.Uuid
+  /// Snapshot de descripción/unidad para items de texto libre (insumo_id nulo).
+  descripcion_libre String? @db.Text
+  unidad_libre   String?  @db.VarChar(20)
   cantidad       Decimal  @db.Decimal(18, 4)
   precio_unitario Decimal @db.Decimal(18, 4)
   importe        Decimal  @db.Decimal(18, 2)
