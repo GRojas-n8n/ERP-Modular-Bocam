@@ -23,6 +23,8 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 PR contra main (branch `fix/`), CI verde, merge.
-- [ ] 4.2 Redeploy manual de `app-shell` en VPS (compose build + up -d, sin migración de
+- [x] 4.1 PR contra main (branch `fix/`), CI verde, merge.
+      → PR #68 mergeado (squash `963192e`).
+- [x] 4.2 Redeploy manual de `app-shell` en VPS (compose build + up -d, sin migración de
       BD) y smoke 200.
+      → Hecho 2026-07-14: contenedor recreado 18:56 UTC, healthy; https://iretum.com → 200.
