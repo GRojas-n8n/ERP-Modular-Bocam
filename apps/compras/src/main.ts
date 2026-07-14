@@ -3157,7 +3157,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
       const { proveedores } = req.body as {
         proveedores: Array<{
           nombre: string;
-          precios: Array<{ insumo_id?: string; detalle_req_id?: string; precio: number; fecha_entrega_estimada?: string }>;
+          precios: Array<{ insumo_id?: string; detalle_req_id?: string; precio: number; fecha_entrega_estimada?: string; especificacion_ofrecida?: string }>;
         }>;
       };
 
@@ -3208,6 +3208,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
                   detalle_req_id: p.detalle_req_id ?? null,
                   precio_ofertado: p.precio,
                   fecha_entrega_estimada: p.fecha_entrega_estimada ? new Date(p.fecha_entrega_estimada) : null,
+                  valor_ofrecido_spec: p.especificacion_ofrecida?.trim() || null,
                 },
               });
             }
