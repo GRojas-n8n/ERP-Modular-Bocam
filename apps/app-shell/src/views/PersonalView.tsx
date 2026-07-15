@@ -33,7 +33,7 @@ import {
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
-import { leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
+import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 
 /**
  * ---------------------------------------------------------------------------
@@ -568,6 +568,27 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 <IconUpload className="h-4 w-4" />
                 Importar CSV/Excel
               </Button>
+              <button
+                onClick={() => descargarPlantillaXlsx('plantilla_empleados.xlsx', [
+                  { header: 'Nombre', ejemplo: 'Juan' },
+                  { header: 'Apellido paterno', ejemplo: 'Pérez' },
+                  { header: 'Apellido materno', ejemplo: 'García' },
+                  { header: 'RFC', ejemplo: 'PEGJ900101AB1' },
+                  { header: 'CURP', ejemplo: 'PEGJ900101HDFRRN01' },
+                  { header: 'NSS', ejemplo: '12345678901' },
+                  { header: 'Puesto', ejemplo: 'Albañil' },
+                  { header: 'Categoría', ejemplo: 'Obra' },
+                  { header: 'Tipo de contrato', ejemplo: 'PLANTA' },
+                  { header: 'Fecha de ingreso', ejemplo: '2026-01-15' },
+                  { header: 'Salario diario', ejemplo: '450.00' },
+                  { header: 'Teléfono', ejemplo: '5512345678' },
+                  { header: 'Email', ejemplo: 'juan.perez@ejemplo.com' },
+                ])}
+                className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 text-xs font-black uppercase tracking-widest text-foreground shadow-sm hover:bg-muted/50"
+              >
+                <IconDownload className="h-4 w-4" />
+                Descargar plantilla
+              </button>
             </>
           )}
           <Button className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500">
