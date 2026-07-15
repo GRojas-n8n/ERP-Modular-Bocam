@@ -194,7 +194,7 @@ const TenantModal: React.FC<TenantModalProps> = ({ masterKey, tenant, onClose, o
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-500 disabled:opacity-50"
+            className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {saving ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Crear Tenant'}
           </button>

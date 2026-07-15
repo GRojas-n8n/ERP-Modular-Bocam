@@ -669,11 +669,11 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </div>
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Archivo (PDF, DWG, DOCX, XLSX…)</label>
-            <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-5 text-center">
+            <div className="rounded-xl border-2 border-dashed border-emerald-600 bg-emerald-500/10 px-4 py-5 text-center">
               {archivoVersion ? (
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <IconFileText className="h-4 w-4 shrink-0 text-violet-600" />
+                    <IconFileText className="h-4 w-4 shrink-0 text-emerald-700" />
                     <span className="text-xs font-medium truncate">{archivoVersion.name}</span>
                     <span className="text-[10px] text-muted-foreground shrink-0">{formatBytes(archivoVersion.size)}</span>
                   </div>
@@ -683,7 +683,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </div>
               ) : (
                 <label className="cursor-pointer">
-                  <span className="text-xs text-muted-foreground">Arrastra o <span className="text-violet-600 font-semibold">selecciona</span> un archivo (máx. 50 MB)</span>
+                  <span className="text-xs text-emerald-700">Arrastra o <span className="font-semibold">selecciona</span> un archivo (máx. 50 MB)</span>
                   <input
                     type="file"
                     className="hidden"
@@ -1020,7 +1020,7 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; current
                     className="w-full rounded-lg border border-border/40 bg-background p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   <div className="flex gap-2">
                     <button onClick={() => void handleCausaRaiz()}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-black uppercase text-primary-foreground hover:opacity-90">
+                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-[10px] font-black uppercase text-white hover:bg-emerald-700">
                       Guardar
                     </button>
                     <button onClick={() => setCausaEdit(false)} className="text-[10px] text-muted-foreground hover:text-foreground">Cancelar</button>

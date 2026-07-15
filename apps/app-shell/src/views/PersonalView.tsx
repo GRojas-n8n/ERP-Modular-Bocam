@@ -1224,7 +1224,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             <SubmitButton
               label={savingJornada ? 'Guardando…' : 'Guardar configuración'}
               loading={savingJornada}
-              color="violet"
+              color="emerald"
               onClick={handleSaveConfigJornada}
             />
           </div>
@@ -1337,7 +1337,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             <SubmitButton
               label={savingConfig ? 'Guardando…' : 'Guardar configuración'}
               loading={savingConfig}
-              color="indigo"
+              color="emerald"
               onClick={handleSaveConfigDeducciones}
             />
           </div>

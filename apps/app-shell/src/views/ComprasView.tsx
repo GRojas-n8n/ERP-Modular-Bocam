@@ -3982,7 +3982,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   }
                 }}
               />
-              <Button onClick={() => docFileRef.current?.click()} className="w-full rounded-xl border border-dashed border-border bg-muted/20 text-sm font-semibold text-muted-foreground hover:bg-muted/40">
+              <Button onClick={() => docFileRef.current?.click()} className="w-full rounded-xl border-2 border-dashed !border-emerald-600 !bg-emerald-500/10 text-sm font-semibold !text-emerald-700 hover:!bg-emerald-500/20">
                 + Seleccionar archivo (PDF, XML, JPG, PNG — máx. 10 MB)
               </Button>
             </div>
