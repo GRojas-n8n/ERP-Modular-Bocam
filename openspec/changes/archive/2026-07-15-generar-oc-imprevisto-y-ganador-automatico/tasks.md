@@ -62,9 +62,20 @@
 
 ## 6. Cierre y corrección puntual
 
-- [ ] 6.1 PR contra main, CI verde, merge.
-- [ ] 6.2 Redeploy VPS de `compras`: `prisma migrate deploy` + build + `up -d`, smoke 200.
-- [ ] 6.3 Script de un solo uso: corregir el cuadro real bloqueado (`CC-1784053191713`,
+- [x] 6.1 PR contra main, CI verde, merge.
+      → PR #69 mergeado (squash `72eb681`).
+- [x] 6.2 Redeploy VPS de `compras`: `prisma migrate deploy` + build + `up -d`, smoke 200.
+      → Hecho 2026-07-14: migración aplicada limpiamente (`_prisma_migrations` del VPS
+      estaba sano, sin el issue de shadow DB del entorno local); contenedor recreado
+      20:02 UTC, healthy.
+- [x] 6.3 Script de un solo uso: corregir el cuadro real bloqueado (`CC-1784053191713`,
       `c93661e9-4b18-4309-8962-01b2885e4cbe`) fijando `es_ganador` en el proveedor
       correcto, y verificar que `convertir-oc` genera la OC correctamente para ese caso
       real ya con el fix desplegado.
+      → Verificado 2026-07-15 directamente contra la BD de prod (solo lectura): no hizo
+      falta script — el caso ya se resolvió por el flujo normal de la app tras el deploy
+      de las 20:02 UTC del 2026-07-14. `es_ganador = true` está en el proveedor correcto
+      (`40f2979f...`, coincide con `primera_opcion_proveedor_id`, `aprobacion_gt = 'C'`)
+      y la OC `OC-AUTO-1784063462446-1` existe, `EMITIDA`, emitida 21:11 UTC ese mismo
+      día, con `descripcion_libre` correcta ("Suministro e instalación de 5 equipos de
+      aire acondicionado..."). Cuadro en estado `CERRADO`.
