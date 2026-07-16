@@ -49,7 +49,6 @@ function validarTransicionNC(
   estadoActual: string,
   estadoNuevo: string,
   acciones: { estado: string }[],
-  rol: string,
 ): { ok: true } | { ok: false; codigo: string } {
   const transiciones: Record<string, string[]> = {
     ABIERTA:           ['EN_ANALISIS'],
@@ -174,8 +173,7 @@ app.patch('/api/v1/calidad/no-conformidades/:id',
   requireRoles('calidad', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId, proyectoId } = req.securityContext;
-      const { rol } = req.securityContext as any;
+      const { tenantId, userId, proyectoId, roles } = req.securityContext;
       const { estado, causa_raiz, responsable_id, fecha_limite, reabrir } = req.body;
 
       const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
@@ -187,7 +185,7 @@ app.patch('/api/v1/calidad/no-conformidades/:id',
 
         // Reapertura administrativa
         if (reabrir === true) {
-          if (rol !== 'admin') return { forbidden: true, codigo: 'REABRIR_SOLO_ADMIN' };
+          if (!roles.includes('admin')) return { forbidden: true, codigo: 'REABRIR_SOLO_ADMIN' };
           const updated = await prisma.noConformidad.update({
             where: { id_nc: req.params.id },
             data: { estado: 'ABIERTA', fecha_cierre: null },
@@ -197,7 +195,7 @@ app.patch('/api/v1/calidad/no-conformidades/:id',
         }
 
         if (estado) {
-          const validacion = validarTransicionNC(nc.estado, estado, nc.acciones, rol);
+          const validacion = validarTransicionNC(nc.estado, estado, nc.acciones);
           if (!validacion.ok) return { transicionInvalida: true, codigo: validacion.codigo };
         }
 
@@ -359,8 +357,7 @@ app.patch('/api/v1/calidad/auditorias/:id',
   requireRoles('calidad', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, userId } = req.securityContext;
-      const { rol } = req.securityContext as any;
+      const { tenantId, userId, roles } = req.securityContext;
       const { estado, observaciones } = req.body;
 
       const result = await createCalidadContext({ tenantId, userId }, async (prisma) => {
@@ -380,7 +377,7 @@ app.patch('/api/v1/calidad/auditorias/:id',
           if (!permitidos.includes(estado)) {
             return { transicionInvalida: true, estadoActual: aud.estado, permitidos };
           }
-          if (estado === 'CANCELADA' && rol !== 'admin') {
+          if (estado === 'CANCELADA' && !roles.includes('admin')) {
             return { forbidden: true };
           }
         }
