@@ -37,5 +37,7 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 PR contra `main`, CI verde, merge.
-- [ ] 4.2 Redeploy VPS de `calidad` (build + `up -d`, sin migración).
+- [x] 4.1 PR contra `main`, CI verde, merge.
+      → PR #72 mergeado (squash `23976b1`).
+- [x] 4.2 Redeploy VPS de `calidad` (build + `up -d`, sin migración).
+      → Hecho 2026-07-16: build limpio, contenedor recreado, healthy.
