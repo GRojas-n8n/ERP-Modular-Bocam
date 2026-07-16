@@ -51,24 +51,33 @@
 
 ## 3. app-shell — componente compartido de tabla + drill-down
 
-- [ ] 3.1 Test (RTL, rojo primero): al hacer clic en una fila de partida
+- [x] 3.1 Test (RTL, rojo primero): al hacer clic en una fila de partida
       en la tabla de Control Presupuestal, se despliegan sus movimientos
       combinando GT + Finanzas.
-- [ ] 3.2 Test (RTL, rojo primero): partida sin movimientos en ningún
+- [x] 3.2 Test (RTL, rojo primero): partida sin movimientos en ningún
       servicio muestra "Sin movimientos registrados para esta partida".
-- [ ] 3.3 Test (RTL, rojo primero): si Finanzas falla pero GT responde
+- [x] 3.3 Test (RTL, rojo primero): si Finanzas falla pero GT responde
       (o viceversa), se muestran los movimientos disponibles con nota de
       lista incompleta, sin bloquear el drill-down.
-- [ ] 3.4 Extraer la tabla de Control Presupuestal de `InsumosView.tsx` a
+      → `ControlPresupuestalTabla.test.tsx`, confirmado rojo (módulo
+      inexistente) antes de implementar. Incluye además un 4º test: sin
+      controles de escritura visibles.
+- [x] 3.4 Extraer la tabla de Control Presupuestal de `InsumosView.tsx` a
       un componente reusable (ej. `ControlPresupuestalTabla.tsx`) que
       incluya el nuevo drill-down, etiquetado como "Movimientos" (no
       "Trazabilidad", para no confundir con la pestaña existente basada
       en `CompraProyectada`).
-- [ ] 3.5 Montar el componente en `InsumosView.tsx` (pestaña "Control
+      → Filas de detalle sin encabezado "Trazabilidad"; drill-down
+      combina GT+Finanzas vía `Promise.allSettled` (fail-soft por
+      servicio, sin bloquear el otro).
+- [x] 3.5 Montar el componente en `InsumosView.tsx` (pestaña "Control
       Presupuestal" existente, sin cambiar su comportamiento previo,
       solo agregar el drill-down).
-- [ ] 3.6 `npm run build` limpio en `app-shell` y suite de tests
+- [x] 3.6 `npm run build` limpio en `app-shell` y suite de tests
       correspondiente en verde.
+      → `tsc -b` limpio (no `--noEmit`, ver gotcha de CI en memoria).
+      `ControlPresupuestalTabla.test.tsx` 4/4 verde,
+      `InsumosView.catalogo-scroll.test.tsx` sin regresión.
 
 ## 4. app-shell — nueva pestaña de solo lectura para Control de Proyectos
 
