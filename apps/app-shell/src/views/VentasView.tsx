@@ -7,12 +7,13 @@ import {
   IconAlertCircle,
   IconSearch,
   IconUpload,
+  IconDownload,
   IconCheckCircle2,
 } from '../components/Icons';
 import { cn } from '../lib/utils';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { SlidePanel } from '../components/SlidePanel';
-import { leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
+import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 
 // ─── Icono local para ventas ──────────────────────────────────────────────────
 const IconShoppingBag: React.FC<{ className?: string }> = ({ className }) => (
@@ -318,6 +319,19 @@ export const VentasView: React.FC = () => {
               >
                 <IconUpload className="h-4 w-4" />
                 Importar CSV/Excel
+              </button>
+              <button
+                onClick={() => descargarPlantillaXlsx('plantilla_clientes.xlsx', [
+                  { header: 'RFC', ejemplo: 'ABC010101AB1' },
+                  { header: 'Razón Social', ejemplo: 'Cliente de Ejemplo, S.A. de C.V.' },
+                  { header: 'Email de contacto', ejemplo: 'contacto@clienteejemplo.com' },
+                  { header: 'Teléfono', ejemplo: '5512345678' },
+                  { header: 'Código de cliente', ejemplo: '001' },
+                ])}
+                className="px-6 py-3 bg-card border border-border/60 text-foreground text-xs font-black uppercase tracking-widest rounded-xl shadow-sm hover:bg-muted/50 transition-all flex items-center gap-2"
+              >
+                <IconDownload className="h-4 w-4" />
+                Descargar plantilla
               </button>
             </>
           )}

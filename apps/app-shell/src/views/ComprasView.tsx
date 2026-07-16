@@ -32,6 +32,7 @@ import {
   IconAlertTriangle,
   IconCheckCircle2,
   IconClock,
+  IconDownload,
   IconFileText,
   IconPackage,
   IconPlus,
@@ -45,7 +46,7 @@ import {
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
-import { leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
+import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 
 /**
  * ---------------------------------------------------------------------------
@@ -1534,6 +1535,20 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   <IconUpload className="h-4 w-4" />
                   Importar CSV/Excel
                 </Button>
+                <button
+                  onClick={() => descargarPlantillaXlsx('plantilla_proveedores.xlsx', [
+                    { header: 'RFC', ejemplo: 'ABC010101AB1' },
+                    { header: 'Razón Social', ejemplo: 'Proveedor de Ejemplo, S.A. de C.V.' },
+                    { header: 'Email de contacto', ejemplo: 'contacto@proveedorejemplo.com' },
+                    { header: 'Teléfono', ejemplo: '5512345678' },
+                    { header: 'Tipo de proveedor', ejemplo: 'NACIONAL' },
+                    { header: 'Calificación de desempeño', ejemplo: '4.50' },
+                  ])}
+                  className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 text-xs font-black uppercase tracking-widest text-foreground shadow-sm hover:bg-muted/50"
+                >
+                  <IconDownload className="h-4 w-4" />
+                  Descargar plantilla
+                </button>
               </>
             )}
             <Button

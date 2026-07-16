@@ -68,3 +68,22 @@ export function parseCsvOrExcelFile(file: File): Promise<Record<string, string>[
     }
   });
 }
+
+/**
+ * Genera y descarga un .xlsx con una fila de encabezados + una fila de
+ * ejemplo. Reutilizable por cualquier pantalla de carga masiva (Clientes,
+ * Proveedores, Empleados) — cada vista pasa exactamente los mismos alias
+ * que ya usa en su `construirPreviewImport*`, así que la plantilla nunca
+ * puede desincronizarse del conjunto de columnas que el parser reconoce.
+ */
+export function descargarPlantillaXlsx(
+  nombreArchivo: string,
+  columnas: { header: string; ejemplo?: string }[]
+): void {
+  const encabezados = columnas.map(c => c.header);
+  const ejemplo = columnas.map(c => c.ejemplo ?? '');
+  const ws = XLSX.utils.aoa_to_sheet([encabezados, ejemplo]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+  XLSX.writeFile(wb, nombreArchivo);
+}
