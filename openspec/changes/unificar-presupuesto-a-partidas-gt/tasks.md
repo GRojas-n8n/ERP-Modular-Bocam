@@ -52,50 +52,76 @@
 
 ## 2. Finanzas — schema + sincronización desde GT
 
-- [ ] 2.1 `apps/finanzas/prisma/schema.prisma`: agregar
+- [x] 2.1 `apps/finanzas/prisma/schema.prisma`: agregar
       `concepto_id String? @db.Uuid` y `concepto_clave String? @db.VarChar(100)`
       a `PresupuestoAsignado` (migración aditiva, índice en
       `concepto_id`).
-- [ ] 2.2 Test (rojo primero): al recibir
+      → Migración `20260716130000_add_concepto_a_presupuesto_asignado` +
+      índice único `uq_presupuesto_concepto` (permite múltiples
+      `concepto_id = null` — Postgres trata cada NULL como distinto).
+- [x] 2.2 Test (rojo primero): al recibir
       `gerencia_tecnica.saldo_partida_creado`, Finanzas crea/actualiza
       (upsert por `concepto_id`) un `PresupuestoAsignado` por cada
       partida del payload, con `capitulo` mapeado desde
       `categoria_predominante` (`MANO_DE_OBRA→MANO_OBRA`,
       `null→INDIRECTOS`), `estatus = 'ACTIVO'`, `codigo = concepto_clave`.
-- [ ] 2.3 Nuevo subscriber en `apps/finanzas/src/main.ts` para
+      → Nuevo archivo `sincronizacion-partida-gt.integration.test.ts`,
+      RabbitMQ real. Confirmado en rojo (`handler is not a function`)
+      antes del fix.
+- [x] 2.3 Nuevo subscriber en `apps/finanzas/src/main.ts` para
       `gerencia_tecnica.saldo_partida_creado`, idempotente (upsert por
       `(tenant_id, proyecto_id, concepto_id)`).
-- [ ] 2.4 Test (rojo primero): `GET
+      → `handleSaldoPartidaCreadoEvent`, exportado.
+- [x] 2.4 Test (rojo primero): `GET
       /api/v1/finanzas/presupuestos/por-concepto/:conceptoId` retorna el
       `PresupuestoAsignado` sincronizado para esa partida, 404 si no
       existe.
-- [ ] 2.5 Implementar el endpoint anterior.
-- [ ] 2.6 Test (rojo primero): `POST /api/v1/finanzas/presupuestos` con
+- [x] 2.5 Implementar el endpoint anterior.
+      → Registrado ANTES de `GET /presupuestos/:id` para no ser
+      capturado por ese parámetro genérico.
+- [x] 2.6 Test (rojo primero): `POST /api/v1/finanzas/presupuestos` con
       `capitulo` distinto de `MANO_OBRA` retorna 422 con mensaje
       explicando la sincronización automática; con `capitulo =
       'MANO_OBRA'` sigue funcionando como hoy.
-- [ ] 2.7 Restringir `POST /api/v1/finanzas/presupuestos` según el punto
+- [x] 2.7 Restringir `POST /api/v1/finanzas/presupuestos` según el punto
       anterior.
-- [ ] 2.8 Test (rojo primero): `PATCH` (si existe endpoint de edición de
+      → Efecto colateral encontrado y corregido: el test e2e existente
+      `seguridad.e2e.test.ts` creaba presupuestos sin `capitulo` (default
+      `MATERIALES`) para probar el límite de autoridad financiera —
+      ahora chocaba con el gate nuevo (422 antes de llegar al 403
+      esperado). Corregido agregando `capitulo: 'MANO_OBRA'` al body del
+      test, sin cambiar su intención original.
+- [x] 2.8 Test (rojo primero): `PATCH` (si existe endpoint de edición de
       presupuesto) sobre un `PresupuestoAsignado` con `concepto_id !=
       null` retorna 422 — solo lectura.
-- [ ] 2.9 Implementar la restricción anterior si aplica (revisar si ya
-      existe un endpoint de edición; si no existe, esta tarea se marca
-      N/A en la verificación).
-- [ ] 2.10 Test (rojo primero): al recibir `personal.nomina_autorizada`,
+      → N/A: no existe ningún endpoint `PATCH /presupuestos/:id` en el
+      código actual (verificado con grep). Nada que restringir todavía;
+      si se agrega en el futuro, debe respetar la decisión 9 del design.md.
+- [x] 2.9 Implementar la restricción anterior si aplica.
+      → N/A, ver 2.8.
+- [x] 2.10 Test (rojo primero): al recibir `personal.nomina_autorizada`,
       se crea `MovimientoPresupuestal` tipo `COMPROMISO` sobre el
       `PresupuestoAsignado` `MANO_OBRA` `ACTIVO` del proyecto; sin ese
       presupuesto, no falla, solo genera alerta/log.
-- [ ] 2.11 Test (rojo primero): al recibir `personal.nomina_pagada`, se
+- [x] 2.11 Test (rojo primero): al recibir `personal.nomina_pagada`, se
       crea `MovimientoPresupuestal` tipo `EJERCIDO`, mueve monto de
       comprometido a ejercido.
-- [ ] 2.12 Test (rojo primero): eventos duplicados (mismo
+- [x] 2.12 Test (rojo primero): eventos duplicados (mismo
       `prenomina_id`) no duplican el `MovimientoPresupuestal`.
-- [ ] 2.13 Implementar los 2 nuevos subscribers (`personal.nomina_autorizada`,
+      → Los 3 tests anteriores en
+      `nomina-presupuesto-mano-obra.integration.test.ts` (4 tests, incluye
+      también el caso "sin presupuesto no falla"), RabbitMQ real.
+      Confirmados en rojo antes del fix.
+- [x] 2.13 Implementar los 2 nuevos subscribers (`personal.nomina_autorizada`,
       `personal.nomina_pagada`) — capacidad `presupuesto-mano-obra-proyecto`.
-- [ ] 2.14 `tsc --noEmit` y suite de integración de `finanzas` en verde
+      → `handleNominaAutorizadaEvent`/`handleNominaPagadaEvent`, exportados.
+      No requirió NINGÚN cambio en `apps/personal` — los eventos ya
+      existían con el payload completo.
+- [x] 2.14 `tsc --noEmit` y suite de integración de `finanzas` en verde
       (incluye los 2 e2e y 5 integration existentes ya cubiertos por
       sesiones anteriores), sin regresión.
+      → `tsc --noEmit` limpio. 9 archivos de test (7 existentes + 2
+      nuevos), todos en verde tras corregir 2.7.
 - [ ] 2.15 PR, CI verde, merge, redeploy VPS de `finanzas`.
 
 ## 3. Compras — resolución automática de presupuesto + eliminar doble-commit

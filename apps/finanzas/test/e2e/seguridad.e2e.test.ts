@@ -63,6 +63,11 @@ async function testLimitExceededPresupuesto() {
       codigo: 'PRES-SEC-002',
       descripcion: 'Presupuesto excedido',
       monto_autorizado: 2500,
+      // MANO_OBRA es el único capítulo que aún se crea manualmente — los demás se
+      // sincronizan desde GT (ver unificar-presupuesto-a-partidas-gt). Sin esto,
+      // el gate de capítulo bloquearía la petición con 422 antes de llegar al
+      // límite de autoridad financiera que este test quiere ejercitar.
+      capitulo: 'MANO_OBRA',
     }),
   });
 
