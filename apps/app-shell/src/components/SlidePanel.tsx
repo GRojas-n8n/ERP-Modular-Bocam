@@ -81,14 +81,19 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
   color = 'sky',
   onClick,
 }) => {
+  // Nota: `!` (important) es necesario porque `Button` (ui-core) inyecta
+  // `bg-primary text-primary-foreground` por defecto (variant="primary") y su
+  // `cn()` es un join de strings, no tailwind-merge — sin `!important` el
+  // orden de la cascada compilada decide qué clase gana, no el orden en JSX,
+  // y `bg-primary` termina ganando (botón cian en vez del color pedido).
   const colorMap: Record<string, string> = {
-    sky:     'bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500',
-    emerald: 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500',
-    violet:  'bg-violet-600 text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500',
-    amber:   'bg-amber-600 text-white shadow-xl shadow-amber-600/20 hover:bg-amber-500',
-    indigo:  'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-500',
-    red:     'bg-red-600 text-white shadow-xl shadow-red-600/20 hover:bg-red-500',
-    blue:    'bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:bg-blue-500',
+    sky:     '!bg-sky-600 !text-white shadow-xl shadow-sky-600/20 hover:!bg-sky-500',
+    emerald: '!bg-emerald-600 !text-white shadow-xl shadow-emerald-600/20 hover:!bg-emerald-700',
+    violet:  '!bg-violet-600 !text-white shadow-xl shadow-violet-600/20 hover:!bg-violet-500',
+    amber:   '!bg-amber-600 !text-white shadow-xl shadow-amber-600/20 hover:!bg-amber-500',
+    indigo:  '!bg-indigo-600 !text-white shadow-xl shadow-indigo-600/20 hover:!bg-indigo-500',
+    red:     '!bg-red-600 !text-white shadow-xl shadow-red-600/20 hover:!bg-red-500',
+    blue:    '!bg-blue-600 !text-white shadow-xl shadow-blue-600/20 hover:!bg-blue-500',
   };
 
   return (

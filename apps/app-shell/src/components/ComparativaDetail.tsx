@@ -1804,7 +1804,7 @@ export const ComparativaDetail: React.FC<Props> = ({
               data-testid="eval-guardar-agregado"
               onClick={handleGuardarEvaluacion}
               disabled={enviandoEval || faltaPreguntaEval}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400 disabled:opacity-40"
+              className="rounded-xl !bg-emerald-600 px-4 py-2 text-xs font-black !text-white hover:!bg-emerald-700 disabled:opacity-40"
             >
               {enviandoEval ? 'Guardando...' : 'Guardar y Crear Revisión'}
             </Button>
@@ -1833,7 +1833,7 @@ export const ComparativaDetail: React.FC<Props> = ({
               data-testid="gt-guardar-agregado"
               onClick={handleGuardarEvaluacionGT}
               disabled={enviandoGT || faltaPreguntaGT}
-              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white hover:bg-violet-500 disabled:opacity-40"
+              className="rounded-xl !bg-emerald-600 px-4 py-2 text-xs font-black !text-white hover:!bg-emerald-700 disabled:opacity-40"
             >
               {enviandoGT ? 'Guardando...' : 'Guardar y Crear Revisión'}
             </Button>
@@ -2079,7 +2079,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                         onClick={() => handleSubirCotizacionClick(prov.id)}
                         disabled={uploadingPdf}
                         title={archivosProveedor[prov.id] ? 'Re-subir cotización PDF' : 'Subir cotización PDF'}
-                        className="ml-1 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                        className="ml-1 flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/20 transition-colors disabled:opacity-30"
                       >
                         {uploadingPdf && pdfProveedorId === prov.id ? (
                           <span className="h-2.5 w-2.5 animate-spin rounded-full border border-current border-t-transparent" />
@@ -2435,7 +2435,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                                           type="button"
                                           disabled={!dudaSpecTexto.trim() || guardandoEvalSpec === cellKey}
                                           onClick={() => void handleEvaluarEspec(esp.id_especificacion, prov.id, '?', dudaSpecTexto)}
-                                          className="rounded bg-indigo-600 px-2 py-0.5 text-[8px] font-black text-white hover:bg-indigo-500 disabled:opacity-40"
+                                          className="rounded bg-emerald-600 px-2 py-0.5 text-[8px] font-black text-white hover:bg-emerald-700 disabled:opacity-40"
                                         >
                                           Guardar
                                         </button>
@@ -2532,7 +2532,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                                 data-testid={`eval-guardar-linea-${linea.id}`}
                                 disabled={guardandoLineaId === linea.id}
                                 onClick={() => void handleGuardarLineaEvaluacion(linea)}
-                                className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[8px] font-black text-amber-700 hover:bg-amber-500/20 disabled:opacity-40"
+                                className="rounded-full bg-emerald-600 px-2 py-0.5 text-[8px] font-black text-white hover:bg-emerald-700 disabled:opacity-40"
                               >
                                 {guardandoLineaId === linea.id ? 'Guardando...' : 'Guardar'}
                               </button>
@@ -2631,7 +2631,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                                 data-testid={`gt-guardar-linea-${linea.id}`}
                                 disabled={guardandoLineaGtId === linea.id}
                                 onClick={() => void handleGuardarLineaGT(linea)}
-                                className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[8px] font-black text-violet-700 hover:bg-violet-500/20 disabled:opacity-40"
+                                className="rounded-full bg-emerald-600 px-2 py-0.5 text-[8px] font-black text-white hover:bg-emerald-700 disabled:opacity-40"
                               >
                                 {guardandoLineaGtId === linea.id ? 'Guardando...' : 'Guardar'}
                               </button>
@@ -2779,7 +2779,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                     notify({ type: 'error', title: 'Error al guardar respuestas', message: err.response?.data?.message ?? err.message });
                   }
                 }}
-                className="rounded-xl bg-amber-600 px-4 text-xs font-black text-white hover:bg-amber-500 whitespace-nowrap"
+                className="rounded-xl !bg-emerald-600 px-4 text-xs font-black !text-white hover:!bg-emerald-700 whitespace-nowrap"
               >
                 Guardar respuestas
               </Button>
@@ -3024,7 +3024,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                 <Button
                   onClick={handleGuardarSeleccion}
                   disabled={!primeraOpcion || guardandoSeleccion}
-                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-400"
+                  className="rounded-xl !bg-emerald-600 px-4 py-2 text-xs font-black !text-white hover:!bg-emerald-700"
                 >
                   {guardandoSeleccion ? 'Guardando...' : 'Guardar selección'}
                 </Button>
@@ -3074,7 +3074,7 @@ export const ComparativaDetail: React.FC<Props> = ({
               <Button
                 onClick={handleGuardarVeredicto}
                 disabled={!veredicto.trim() || provSugeridos.length === 0 || guardandoVeredicto}
-                className="rounded-xl bg-indigo-600 px-4 text-xs font-black text-white hover:bg-indigo-500 disabled:opacity-40"
+                className="rounded-xl !bg-emerald-600 px-4 text-xs font-black !text-white hover:!bg-emerald-700 disabled:opacity-40"
               >
                 {guardandoVeredicto ? 'Guardando...' : 'Guardar veredicto'}
               </Button>
@@ -3487,7 +3487,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                 fichaFileRef.current?.click();
               }}
               disabled={uploadingFicha}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-indigo-400/40 bg-indigo-500/5 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-600 bg-emerald-500/10 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
             >
               {uploadingFicha ? 'Subiendo...' : '📎 Subir ficha técnica'}
             </button>
@@ -3588,7 +3588,7 @@ export const ComparativaDetail: React.FC<Props> = ({
               <Button
                 onClick={handleGuardarAnotacion}
                 disabled={guardandoAnotacion || !anotacionForm.texto.trim()}
-                className="w-full rounded-xl bg-indigo-600 text-white text-xs font-black disabled:opacity-40"
+                className="w-full rounded-xl !bg-emerald-600 !text-white text-xs font-black hover:!bg-emerald-700 disabled:opacity-40"
               >
                 {guardandoAnotacion ? 'Guardando…' : 'Guardar anotación'}
               </Button>

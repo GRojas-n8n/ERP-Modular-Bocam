@@ -182,7 +182,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
         <div className="flex gap-3 border-t border-border/30 px-6 py-4">
           <button onClick={onClose} className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50">Cancelar</button>
           <button onClick={handleSubmit} disabled={saving}
-            className="flex-1 rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+            className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700 disabled:opacity-50">
             {saving ? 'Guardando...' : isEdit ? 'Guardar' : 'Crear Usuario'}
           </button>
         </div>
@@ -536,7 +536,7 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
         <div className="flex gap-3 border-t border-border/30 px-6 py-4">
           <button onClick={onClose} className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50">Cancelar</button>
           <button onClick={handleSubmit} disabled={saving || fechasInvalidas}
-            className="flex-1 rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+            className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700 disabled:opacity-50">
             {saving ? 'Guardando...' : isEdit ? 'Guardar' : 'Crear Centro de Costos'}
           </button>
         </div>
@@ -781,7 +781,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                           autoFocus
                         />
                         <button onClick={() => handleEditarCategoria(cat.id_categoria)} disabled={savingCat}
-                          className="rounded-xl bg-sky-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-sky-500 disabled:opacity-50">
+                          className="rounded-xl bg-emerald-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-emerald-700 disabled:opacity-50">
                           Guardar
                         </button>
                         <button onClick={() => setEditCatId(null)}

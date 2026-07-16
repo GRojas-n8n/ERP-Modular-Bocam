@@ -3471,7 +3471,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           <button
             onClick={() => fichaInsFileRef.current?.click()}
             disabled={uploadingFichaIns}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-indigo-400/40 bg-indigo-500/5 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-600 bg-emerald-500/10 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
           >
             {uploadingFichaIns ? 'Subiendo...' : '📎 Subir ficha técnica'}
           </button>
