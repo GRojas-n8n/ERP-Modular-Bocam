@@ -133,7 +133,7 @@ async function main() {
       userId: seeded.userId,
       tenantId: seeded.tenantId,
       proyectoId: seeded.proyectoId,
-      roles: ['finance'],
+      roles: ['finanzas'],
       projects: [seeded.proyectoId],
       limiteAprobacion: 999999999,
     });

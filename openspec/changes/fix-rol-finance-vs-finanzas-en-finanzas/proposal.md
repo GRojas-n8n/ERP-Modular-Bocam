@@ -61,7 +61,13 @@ las 6 acciones principales del módulo.
 
 - **Archivos afectados**: `apps/finanzas/src/main.ts` (6 gates + 6
   mensajes), `apps/finanzas/test/e2e/seguridad.e2e.test.ts`,
-  `apps/finanzas/test/e2e/idempotencia.e2e.test.ts`.
+  `apps/finanzas/test/e2e/idempotencia.e2e.test.ts`. Además, 9 tests de
+  integración en otros dos servicios (`apps/control-proyectos`,
+  `apps/contabilidad`) que simulaban a un usuario de Finanzas con el rol
+  ficticio `'finance'` contra los mismos 6 endpoints — actualizados a
+  `'finanzas'` (ver tasks.md sección 3.4 para el detalle de por qué 6 de
+  ellos necesitan además `'finance'` para un gate no relacionado en
+  `contabilidad`).
 - Sin cambios de esquema, sin cambios de contrato de API (mismo shape de
   respuesta, solo cambia qué rol pasa el gate).
 - Requiere redeploy VPS de `finanzas` tras merge (sin migración).

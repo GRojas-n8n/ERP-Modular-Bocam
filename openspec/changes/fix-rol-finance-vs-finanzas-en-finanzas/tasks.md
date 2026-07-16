@@ -30,6 +30,28 @@
 - [x] 3.2 `tsc --noEmit` en `apps/finanzas` limpio.
 - [x] 3.3 Suite completa de tests de `finanzas` (2 e2e + 5 integration)
       en verde, sin regresión.
+- [x] 3.4 CI (`backend-e2e`) detectó que 9 tests de integración de OTROS
+      servicios (`apps/control-proyectos`, `apps/contabilidad`) construían
+      su token de prueba con `roles: ['finance']` para simular a un
+      usuario de Finanzas llamando a los 6 endpoints ahora corregidos —
+      quedaron en rojo tras el fix (403). Corregidos:
+      `apps/control-proyectos/test/integration/finanzas.pago-registrado.integration.test.ts`
+      y 8 archivos en `apps/contabilidad/test/integration/` (`finanzas.pago-registrado`,
+      `finanzas.transferencia`, `finanzas.pago-cfdi.conciliacion`,
+      `finanzas.pago-sat-externo`, `finanzas.pago-sat-worker`,
+      `finanzas.pago-sat-banco.conciliacion`, `finanzas.banco-lote.conciliacion`,
+      `finanzas.banco-archivo.conciliacion`) → `roles: ['finanzas']`.
+      6 de estos archivos reusan el mismo token para además llamar
+      `POST /api/v1/contabilidad/asientos/:id/conciliar-cfdi`, que tiene su
+      propio gate `requireRoles('admin', 'finance')` en
+      `apps/contabilidad/src/main.ts:1948` — bug análogo pero en otro
+      servicio, fuera de alcance de este change (ver design.md). Para no
+      romper esos 6 tests sin arreglar el bug de contabilidad, sus tokens
+      quedaron con `roles: ['finanzas', 'finance']` (ambos), con comentario
+      explicando por qué. Verificado `tsc --noEmit` limpio en
+      `apps/contabilidad` y `apps/control-proyectos`, y los 8 tests +
+      el de control-proyectos en verde tras el ajuste (32+9 = 41 tests
+      totales entre los 3 servicios tocados).
 
 ## 4. Cierre
 
