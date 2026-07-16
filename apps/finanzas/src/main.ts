@@ -333,16 +333,31 @@ app.post('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) =>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Listar movimientos del proyecto
+// ?presupuesto_id= filtra directo; ?concepto_id= resuelve primero el presupuesto
+// ACTIVO sincronizado a esa partida (ver openspec/changes/trazabilidad-partida-gt-cp) —
+// permite a GT/CP consultar sin conocer el presupuesto_id interno de Finanzas.
+// presupuesto_id tiene precedencia si ambos se envían.
 app.get('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const presupuestoId = req.query.presupuesto_id as string;
+    const presupuestoId = req.query.presupuesto_id as string | undefined;
+    const conceptoId    = req.query.concepto_id as string | undefined;
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
+        let resolvedPresupuestoId = presupuestoId;
+
+        if (!resolvedPresupuestoId && conceptoId) {
+          const presupuesto = await prisma.presupuestoAsignado.findFirst({
+            where: { concepto_id: conceptoId, estatus: 'ACTIVO' },
+          });
+          if (!presupuesto) return [];
+          resolvedPresupuestoId = presupuesto.id_presupuesto;
+        }
+
         return await prisma.movimientoPresupuestal.findMany({
-          where: presupuestoId ? { presupuesto_id: presupuestoId } : undefined,
+          where: resolvedPresupuestoId ? { presupuesto_id: resolvedPresupuestoId } : undefined,
           include: { presupuesto: { select: { codigo: true, capitulo: true } } },
           orderBy: { fecha_registro: 'desc' },
           take: 100,

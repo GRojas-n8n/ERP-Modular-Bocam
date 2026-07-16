@@ -28,21 +28,26 @@
 
 ## 2. Finanzas — filtro concepto_id en /movimientos
 
-- [ ] 2.1 Test (rojo primero): `GET /movimientos?concepto_id=X` con
+- [x] 2.1 Test (rojo primero): `GET /movimientos?concepto_id=X` con
       presupuesto sincronizado retorna los mismos movimientos que
       `?presupuesto_id=` para ese presupuesto.
-- [ ] 2.2 Test (rojo primero): `concepto_id` sin presupuesto sincronizado
+- [x] 2.2 Test (rojo primero): `concepto_id` sin presupuesto sincronizado
       retorna 200 `[]` (no 404).
-- [ ] 2.3 Test (rojo primero): si se envían `presupuesto_id` y
+- [x] 2.3 Test (rojo primero): si se envían `presupuesto_id` y
       `concepto_id` juntos, `presupuesto_id` tiene precedencia
       (comportamiento existente sin cambios).
-- [ ] 2.4 Implementar el filtro en
+      → `movimientos-por-concepto.integration.test.ts`, confirmado rojo
+      (2/3 fallando) antes de implementar.
+- [x] 2.4 Implementar el filtro en
       `apps/finanzas/src/main.ts` (`GET /api/v1/finanzas/movimientos`):
       resolver `presupuesto_id` desde `concepto_id` (mismo criterio que
       `GET /presupuestos/por-concepto/:conceptoId`, estatus `ACTIVO`)
       antes de filtrar `MovimientoPresupuestal`.
-- [ ] 2.5 `tsc --noEmit` y suite de integración de `finanzas` en verde,
+- [x] 2.5 `tsc --noEmit` y suite de integración de `finanzas` en verde,
       sin regresión.
+      → `tsc --noEmit` limpio. `movimientos-por-concepto.integration.test.ts`
+      3/3 verde. `sincronizacion-partida-gt.integration.test.ts` 9/9
+      verde (sin regresión).
 
 ## 3. app-shell — componente compartido de tabla + drill-down
 
