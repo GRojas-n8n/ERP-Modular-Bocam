@@ -2233,6 +2233,36 @@ app.delete(
   }
 );
 
+// GET /api/v1/gerencia-tecnica/partidas/:concepto_id/movimientos
+// Historial de auditoría (SaldoMovimiento) de una partida — trazabilidad para GT y Control de Proyectos.
+// Ver openspec/changes/trazabilidad-partida-gt-cp.
+app.get(
+  '/api/v1/gerencia-tecnica/partidas/:concepto_id/movimientos',
+  requireRoles('admin', 'superintendent', 'gerencia_tecnica', 'control_proyectos', 'control_obra'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { concepto_id } = req.params;
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const saldo = await db.saldoPartida.findUnique({
+        where: { uq_saldo_partida: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id } },
+      });
+      if (!saldo) return res.status(404).json(createApiError('SALDO_NO_INICIALIZADO', 'No existe SaldoPartida para este concepto. Aprueba el presupuesto primero.'));
+
+      const movimientos = await db.saldoMovimiento.findMany({
+        where: { saldo_partida_id: saldo.id },
+        orderBy: { created_at: 'desc' },
+      });
+
+      res.json(createApiResponse(movimientos, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[GT] Error GET /partidas/:id/movimientos:', error.message);
+      res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al obtener movimientos de partida.', error.message));
+    }
+  }
+);
+
 // PATCH /api/v1/gerencia-tecnica/partidas/:concepto_id/anular-bloqueo
 app.patch(
   '/api/v1/gerencia-tecnica/partidas/:concepto_id/anular-bloqueo',
