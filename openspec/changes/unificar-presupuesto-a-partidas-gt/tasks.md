@@ -45,7 +45,10 @@
       → `tsc --noEmit` limpio. 7 archivos de test, todos en verde
       (incluye los 2 nuevos: `saldo-partida.integration.test.ts` 11/11,
       `saldo-partida-evento.integration.test.ts` 1/1).
-- [ ] 1.8 PR, CI verde, merge, redeploy VPS de `gerencia-tecnica`.
+- [x] 1.8 PR, CI verde, merge, redeploy VPS de `gerencia-tecnica`.
+      → PR #77 mergeado (squash `4f6fc9a`). Redeploy VPS 2026-07-16:
+      migración aplicada limpiamente (`prisma migrate deploy`), build
+      limpio, contenedor recreado, healthy, logs de arranque sin errores.
 
 ## 2. Finanzas — schema + sincronización desde GT
 
