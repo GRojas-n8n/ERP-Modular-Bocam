@@ -252,7 +252,11 @@
       `ComparativaDetail.*.test.tsx` en verde sin regresión.
       → `tsc -b && vite build` limpio. 11 archivos, 28 tests, todos en
       verde.
-- [ ] 5.5 PR, CI verde, merge, redeploy VPS de `app-shell`.
+- [x] 5.5 PR, CI verde, merge, redeploy VPS de `app-shell`.
+      → PR #80 mergeado (squash `44b0d07`). Redeploy VPS 2026-07-16: build
+      limpio, contenedor recreado, healthy, smoke `https://iretum.com/` →
+      HTTP 200. Las 5 secciones de código del change ya están en
+      producción.
 
 ## 6. Migración de datos en producción
 
