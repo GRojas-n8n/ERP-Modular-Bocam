@@ -48,7 +48,7 @@ async function testLimitExceededPresupuesto() {
     userId: 'user-finance',
     tenantId: 'tenant-seguridad-finanzas',
     proyectoId: 'proyecto-seguridad-finanzas',
-    roles: ['finance'],
+    roles: ['finanzas'],
     projects: ['proyecto-seguridad-finanzas'],
     limiteAprobacion: 1000,
   });

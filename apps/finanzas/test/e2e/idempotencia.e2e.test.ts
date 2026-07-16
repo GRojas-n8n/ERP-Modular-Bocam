@@ -64,7 +64,7 @@ function buildFinanceToken(tenantId: string, proyectoId: string) {
     userId: randomUUID(),
     tenantId,
     proyectoId,
-    roles: ['finance'],
+    roles: ['finanzas'],
     projects: [proyectoId],
     limiteAprobacion: 999999999,
   });
