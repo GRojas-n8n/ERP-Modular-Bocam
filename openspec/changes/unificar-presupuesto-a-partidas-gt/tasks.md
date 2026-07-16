@@ -122,7 +122,12 @@
       sesiones anteriores), sin regresión.
       → `tsc --noEmit` limpio. 9 archivos de test (7 existentes + 2
       nuevos), todos en verde tras corregir 2.7.
-- [ ] 2.15 PR, CI verde, merge, redeploy VPS de `finanzas`.
+- [x] 2.15 PR, CI verde, merge, redeploy VPS de `finanzas`.
+      → PR #78 mergeado (squash `d536910`). Redeploy VPS 2026-07-16:
+      migración aplicada limpiamente, build limpio, contenedor recreado,
+      healthy, suscrito a las 3 colas nuevas
+      (`gerencia_tecnica.saldo_partida_creado`, `personal.nomina_autorizada`,
+      `personal.nomina_pagada`).
 
 ## 3. Compras — resolución automática de presupuesto + eliminar doble-commit
 
