@@ -182,6 +182,10 @@ model SaldoPartida {
   concepto_id     String   @db.Uuid
   concepto_clave  String   @db.VarChar(50)
   concepto_desc   String   @db.Text
+  /// Tipo de insumo con mayor costo acumulado en el APU del concepto (MATERIAL, MANO_DE_OBRA,
+  /// EQUIPO, SUBCONTRATO, INDIRECTO), o null si el concepto no tiene composición APU.
+  /// Se usa para clasificar el presupuesto sincronizado en Finanzas por capítulo.
+  categoria_predominante String? @db.VarChar(20)
 
   monto_aprobado     Decimal @default(0) @db.Decimal(18, 2)
   monto_comprometido Decimal @default(0) @db.Decimal(18, 2)

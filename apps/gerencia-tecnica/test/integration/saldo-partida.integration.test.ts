@@ -59,6 +59,7 @@ async function teardown() {
   await prisma.saldoMovimiento.deleteMany({ where: { tenant_id: TENANT_ID } });
   await prisma.saldoPartida.deleteMany({ where: { tenant_id: TENANT_ID } });
   await prisma.conceptoInsumo.deleteMany({ where: { tenant_id: TENANT_ID } });
+  await prisma.insumo.deleteMany({ where: { tenant_id: TENANT_ID } });
   await prisma.concepto.deleteMany({ where: { tenant_id: TENANT_ID } });
   await prisma.presupuestoBase.deleteMany({ where: { tenant_id: TENANT_ID } });
   await stopHttpApp(server);
@@ -110,7 +111,79 @@ async function crearPresupuestoConConceptos(numConceptos = 2): Promise<{ presupu
   return { presupuestoId: presupuesto.id, conceptoIds };
 }
 
+async function crearPresupuestoConAPU(): Promise<{ presupuestoId: string; conceptoId: string }> {
+  const presupuesto = await prisma.presupuestoBase.create({
+    data: {
+      id: randomUUID(),
+      tenant_id:  TENANT_ID,
+      proyecto_id: PROYECTO_ID,
+      estado:     'BORRADOR',
+      importe_total: 0,
+    },
+  });
+
+  const conceptoId = randomUUID();
+  await prisma.concepto.create({
+    data: {
+      id: conceptoId,
+      tenant_id:      TENANT_ID,
+      proyecto_id:    PROYECTO_ID,
+      presupuesto_id: presupuesto.id,
+      clave:          'APU-001',
+      descripcion:    'Concepto con composición APU',
+      unidad_medida:  'M2',
+      cantidad:       10,
+      precio_unitario: 1000,
+      importe:        10000,
+    },
+  });
+
+  const insumoMaterialId = randomUUID();
+  const insumoManoObraId = randomUUID();
+  await prisma.insumo.create({
+    data: { id: insumoMaterialId, tenant_id: TENANT_ID, clave: 'MAT-APU-1', descripcion: 'Material APU', unidad_medida: 'PZA', tipo_insumo: 'MATERIAL', costo_base: 100 },
+  });
+  await prisma.insumo.create({
+    data: { id: insumoManoObraId, tenant_id: TENANT_ID, clave: 'MO-APU-1', descripcion: 'Mano de obra APU', unidad_medida: 'JOR', tipo_insumo: 'MANO_DE_OBRA', costo_base: 50 },
+  });
+
+  // MATERIAL: 5 x 100 = 500 acumulado. MANO_DE_OBRA: 2 x 50 = 100 acumulado.
+  // MATERIAL debe ganar como categoria_predominante.
+  await prisma.conceptoInsumo.create({
+    data: { tenant_id: TENANT_ID, proyecto_id: PROYECTO_ID, concepto_id: conceptoId, insumo_id: insumoMaterialId, tipo_insumo: 'MATERIAL', cantidad: 5, costo_unitario: 100 },
+  });
+  await prisma.conceptoInsumo.create({
+    data: { tenant_id: TENANT_ID, proyecto_id: PROYECTO_ID, concepto_id: conceptoId, insumo_id: insumoManoObraId, tipo_insumo: 'MANO_DE_OBRA', cantidad: 2, costo_unitario: 50 },
+  });
+
+  return { presupuestoId: presupuesto.id, conceptoId };
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
+
+async function test_categoria_predominante_persistida_al_aprobar() {
+  const { presupuestoId, conceptoId } = await crearPresupuestoConAPU();
+  const res = await fetch_(`/api/v1/gerencia-tecnica/presupuestos/${presupuestoId}/aprobar`, { method: 'PATCH' });
+  assert.equal(res.status, 200);
+
+  const saldo = await prisma.saldoPartida.findUnique({
+    where: { uq_saldo_partida: { tenant_id: TENANT_ID, proyecto_id: PROYECTO_ID, concepto_id: conceptoId } },
+  });
+  assert.ok(saldo, 'SaldoPartida debe existir');
+  assert.equal((saldo as any).categoria_predominante, 'MATERIAL', 'categoria_predominante debe ser el tipo con mayor costo acumulado (MATERIAL: 500 > MANO_DE_OBRA: 100)');
+  console.log('✓ categoria_predominante se calcula y persiste correctamente al aprobar');
+}
+
+async function test_categoria_predominante_null_sin_apu() {
+  const { presupuestoId, conceptoIds } = await crearPresupuestoConConceptos(1);
+  await fetch_(`/api/v1/gerencia-tecnica/presupuestos/${presupuestoId}/aprobar`, { method: 'PATCH' });
+
+  const saldo = await prisma.saldoPartida.findUnique({
+    where: { uq_saldo_partida: { tenant_id: TENANT_ID, proyecto_id: PROYECTO_ID, concepto_id: conceptoIds[0] } },
+  });
+  assert.equal((saldo as any).categoria_predominante, null, 'sin ConceptoInsumo, categoria_predominante debe ser null');
+  console.log('✓ categoria_predominante es null cuando el concepto no tiene composición APU');
+}
 
 async function test_aprobar_presupuesto_crea_saldo_partida() {
   const { presupuestoId, conceptoIds } = await crearPresupuestoConConceptos(2);
@@ -305,6 +378,8 @@ async function test_comprometer_en_partida_bloqueada_devuelve_bloqueado() {
   let passed = 0;
   let failed = 0;
   const tests = [
+    test_categoria_predominante_persistida_al_aprobar,
+    test_categoria_predominante_null_sin_apu,
     test_aprobar_presupuesto_crea_saldo_partida,
     test_saldo_endpoint_retorna_detalle,
     test_comprometer_actualiza_saldo,

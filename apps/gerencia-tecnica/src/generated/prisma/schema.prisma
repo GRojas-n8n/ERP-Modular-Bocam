@@ -176,12 +176,16 @@ model ConceptoInsumo {
 /// Se crea automáticamente al aprobar un presupuesto (uno por concepto).
 /// Es el gate de control antes de generar OC o aprobar requisiciones.
 model SaldoPartida {
-  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenant_id      String @db.Uuid
-  proyecto_id    String @db.Uuid
-  concepto_id    String @db.Uuid
-  concepto_clave String @db.VarChar(50)
-  concepto_desc  String @db.Text
+  id                     String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id              String  @db.Uuid
+  proyecto_id            String  @db.Uuid
+  concepto_id            String  @db.Uuid
+  concepto_clave         String  @db.VarChar(50)
+  concepto_desc          String  @db.Text
+  /// Tipo de insumo con mayor costo acumulado en el APU del concepto (MATERIAL, MANO_DE_OBRA,
+  /// EQUIPO, SUBCONTRATO, INDIRECTO), o null si el concepto no tiene composición APU.
+  /// Se usa para clasificar el presupuesto sincronizado en Finanzas por capítulo.
+  categoria_predominante String? @db.VarChar(20)
 
   monto_aprobado     Decimal @default(0) @db.Decimal(18, 2)
   monto_comprometido Decimal @default(0) @db.Decimal(18, 2)

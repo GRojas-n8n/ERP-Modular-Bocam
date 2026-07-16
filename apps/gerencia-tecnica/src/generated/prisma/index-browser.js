@@ -206,6 +206,7 @@ exports.Prisma.SaldoPartidaScalarFieldEnum = {
   concepto_id: 'concepto_id',
   concepto_clave: 'concepto_clave',
   concepto_desc: 'concepto_desc',
+  categoria_predominante: 'categoria_predominante',
   monto_aprobado: 'monto_aprobado',
   monto_comprometido: 'monto_comprometido',
   monto_ejercido: 'monto_ejercido',
