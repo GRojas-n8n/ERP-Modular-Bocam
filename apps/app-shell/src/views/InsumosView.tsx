@@ -23,6 +23,7 @@ import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
+import { ControlPresupuestalTabla } from '../components/ControlPresupuestalTabla';
 import {
   IconBriefcase,
   IconSearch,
@@ -2397,60 +2398,12 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   ))}
                 </div>
 
-                {/* Tabla de partidas (6.2 + 6.4) */}
-                <TableScrollShadow className="rounded-2xl border border-border/30">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border/30 bg-muted/30">
-                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[9px] text-muted-foreground">Clave</th>
-                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[9px] text-muted-foreground">Descripción</th>
-                        <th className="px-4 py-3 text-left font-black uppercase tracking-widest text-[9px] text-muted-foreground">Categoría</th>
-                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Presupuestado</th>
-                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Comprometido</th>
-                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Pagado</th>
-                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">Disponible</th>
-                        <th className="px-4 py-3 text-right font-black uppercase tracking-widest text-[9px] text-muted-foreground">% Ejerc.</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/20">
-                      {cpData.partidas.map(p => {
-                        const isRisk = p.comprometido > p.presupuestado * 0.9;
-                        return (
-                          <tr key={p.concepto_id} className={isRisk ? 'bg-amber-500/5' : 'hover:bg-muted/20'}>
-                            <td className="px-4 py-2.5 font-mono font-bold text-foreground">{p.clave}</td>
-                            <td className="px-4 py-2.5 text-foreground max-w-[220px] truncate">{p.descripcion}</td>
-                            <td className="px-4 py-2.5 text-muted-foreground">{p.categoria_predominante ?? '—'}</td>
-                            <td className="px-4 py-2.5 text-right font-mono font-bold text-foreground">{formatMXN(p.presupuestado)}</td>
-                            <td className={`px-4 py-2.5 text-right font-mono font-bold ${isRisk ? 'text-amber-700' : 'text-amber-600'}`}>{formatMXN(p.comprometido)}</td>
-                            <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-600">{formatMXN(p.pagado)}</td>
-                            <td className={`px-4 py-2.5 text-right font-mono font-bold ${p.disponible < 0 ? 'text-destructive' : 'text-indigo-600'}`}>{formatMXN(p.disponible)}</td>
-                            <td className="px-4 py-2.5 text-right font-mono font-bold text-primary">{p.pct_ejercido}%</td>
-                          </tr>
-                        );
-                      })}
-                      {/* Fila sin partida (6.4) */}
-                      {((cpData.sin_partida_comprometido ?? 0) + (cpData.sin_partida_pagado ?? 0)) > 0 && (
-                        <tr className="bg-muted/10 italic">
-                          <td className="px-4 py-2.5 font-mono text-muted-foreground text-[10px]">—</td>
-                          <td className="px-4 py-2.5 text-muted-foreground text-[10px]">[Sin partida asignada]</td>
-                          <td className="px-4 py-2.5 text-muted-foreground">—</td>
-                          <td className="px-4 py-2.5 text-right text-muted-foreground">—</td>
-                          <td className="px-4 py-2.5 text-right font-mono text-amber-600">{formatMXN(cpData.sin_partida_comprometido ?? 0)}</td>
-                          <td className="px-4 py-2.5 text-right font-mono text-emerald-600">{formatMXN(cpData.sin_partida_pagado ?? 0)}</td>
-                          <td className="px-4 py-2.5 text-right text-muted-foreground">—</td>
-                          <td className="px-4 py-2.5 text-right text-muted-foreground">—</td>
-                        </tr>
-                      )}
-                      {cpData.partidas.length === 0 && (
-                        <tr>
-                          <td colSpan={8} className="px-5 py-12 text-center text-xs text-muted-foreground">
-                            Sin partidas en el presupuesto activo.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </TableScrollShadow>
+                {/* Tabla de partidas con drill-down de movimientos (6.2 + 6.4 + trazabilidad-partida-gt-cp) */}
+                <ControlPresupuestalTabla
+                  partidas={cpData.partidas}
+                  sinPartidaComprometido={cpData.sin_partida_comprometido}
+                  sinPartidaPagado={cpData.sin_partida_pagado}
+                />
               </>
             )}
           </div>
