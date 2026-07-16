@@ -203,7 +203,9 @@ async function runVigenteScenario(
     userId: seeded.userId,
     tenantId: seeded.tenantId,
     proyectoId: seeded.proyectoId,
-    roles: ['finance'],
+    // 'finanzas' habilita finanzas (pagar); 'finance' sigue siendo lo que exige
+    // conciliar-cfdi en contabilidad (bug propio, no corregido en este change).
+    roles: ['finanzas', 'finance'],
     projects: [seeded.proyectoId],
     limiteAprobacion: 999999999,
   });
@@ -356,7 +358,9 @@ async function runCanceladoScenario(
     userId: seeded.userId,
     tenantId: seeded.tenantId,
     proyectoId: seeded.proyectoId,
-    roles: ['finance'],
+    // 'finanzas' habilita finanzas (pagar); 'finance' sigue siendo lo que exige
+    // conciliar-cfdi en contabilidad (bug propio, no corregido en este change).
+    roles: ['finanzas', 'finance'],
     projects: [seeded.proyectoId],
     limiteAprobacion: 999999999,
   });

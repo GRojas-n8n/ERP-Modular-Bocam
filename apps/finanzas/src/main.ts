@@ -227,12 +227,12 @@ app.post('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) =>
     const correlationId = getCorrelationId(req);
     const { codigo, descripcion, monto_autorizado, capitulo, moneda } = req.body;
 
-    // Validación RBAC: Solo admin, superintendent o finance pueden crear presupuestos
-    const rolesAutorizados = ['admin', 'superintendent', 'finance'];
+    // Validación RBAC: Solo admin, superintendent o finanzas pueden crear presupuestos
+    const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
       res.status(403).json(createApiError(
         'FIN_FORBIDDEN',
-        'No tienes permisos para crear presupuestos. Roles requeridos: admin, superintendent o finance.'
+        'No tienes permisos para crear presupuestos. Roles requeridos: admin, superintendent o finanzas.'
       ));
       return;
     }
@@ -328,7 +328,7 @@ app.post('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => 
     } = req.body;
 
     // Validación RBAC
-    const rolesAutorizados = ['admin', 'superintendent', 'finance'];
+    const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
       res.status(403).json(createApiError(
         'FIN_FORBIDDEN',
@@ -484,7 +484,7 @@ app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, 
       concepto,
     } = req.body;
 
-    const rolesAutorizados = ['admin', 'finance', 'superintendent'];
+    const rolesAutorizados = ['admin', 'finanzas', 'superintendent'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
       res.status(403).json(createApiError(
         'FIN_FORBIDDEN',
@@ -1071,7 +1071,7 @@ app.post('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
     } = req.body;
 
     // Validación RBAC
-    const rolesAutorizados = ['admin', 'superintendent', 'finance'];
+    const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
       res.status(403).json(createApiError(
         'FIN_FORBIDDEN',
@@ -1196,7 +1196,7 @@ app.post('/api/v1/finanzas/pagos/bulk', async (req: Request, res: Response) => {
     const { pagos } = req.body; // Array de pagos
 
     // Validación RBAC
-    const rolesAutorizados = ['admin', 'superintendent', 'finance'];
+    const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
       res.status(403).json(createApiError(
         'FIN_FORBIDDEN',
@@ -1257,11 +1257,11 @@ app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response
     const correlationId = getCorrelationId(req);
 
     // Validación RBAC
-    const rolesAutorizados = ['admin', 'finance'];
+    const rolesAutorizados = ['admin', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
       res.status(403).json(createApiError(
         'FIN_FORBIDDEN',
-        'Solo admin o finance pueden registrar pagos.'
+        'Solo admin o finanzas pueden registrar pagos.'
       ));
       return;
     }

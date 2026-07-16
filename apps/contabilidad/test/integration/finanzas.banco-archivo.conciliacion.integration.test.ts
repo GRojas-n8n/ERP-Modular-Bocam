@@ -188,7 +188,9 @@ async function main() {
       userId,
       tenantId,
       proyectoId,
-      roles: ['finance'],
+      // 'finanzas' habilita finanzas (pagar); 'finance' sigue siendo lo que exige
+      // conciliar-cfdi en contabilidad (bug propio, no corregido en este change).
+      roles: ['finanzas', 'finance'],
       projects: [proyectoId],
       limiteAprobacion: 999999999,
     });
