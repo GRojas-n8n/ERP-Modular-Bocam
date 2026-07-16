@@ -124,6 +124,31 @@ async function main() {
       });
     });
 
+    await test('sincroniza correctamente una partida con descripción larga (>500 caracteres, caso real de producción)', async () => {
+      const conceptoDescLargaId = randomUUID();
+      const descLarga = 'DEMOLICION DE CONCRETO REFORZADO. '.repeat(30); // > 500 chars, como conceptos reales de GT
+      assert.ok(descLarga.length > 500, 'la descripción de prueba debe superar 500 caracteres');
+
+      const published = await publisher.publish({
+        event_type: 'gerencia_tecnica.saldo_partida_creado',
+        timestamp: new Date().toISOString(),
+        context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+        payload: {
+          partidas: [
+            { concepto_id: conceptoDescLargaId, concepto_clave: 'LARGA-001', concepto_desc: descLarga, monto_aprobado: 1000, categoria_predominante: 'MATERIAL' },
+          ],
+        },
+      });
+      assert.equal(published, true);
+
+      await waitFor(async () => {
+        const p = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+          tx.presupuestoAsignado.findFirst({ where: { concepto_id: conceptoDescLargaId } }));
+        assert.ok(p, 'debe sincronizar sin fallar aunque la descripción supere 500 caracteres');
+        assert.equal(p!.descripcion, descLarga, 'la descripción completa debe persistirse sin truncar');
+      });
+    });
+
     await test('reenviar el mismo evento actualiza (no duplica) el presupuesto sincronizado', async () => {
       const republished = await publisher.publish({
         event_type: 'gerencia_tecnica.saldo_partida_creado',

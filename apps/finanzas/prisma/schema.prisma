@@ -28,7 +28,9 @@ model PresupuestoAsignado {
   proyecto_id     String   @db.Uuid  // Centro de Costos
 
   codigo          String   @db.VarChar(50) // Ej. PRES-2026-GUA-01
-  descripcion     String   @db.VarChar(500)
+  // Text (no VarChar): las partidas sincronizadas desde GT usan Concepto.descripcion,
+  // que es Text sin límite — descripciones reales de obra superan 500 caracteres.
+  descripcion     String   @db.Text
   monto_autorizado Decimal @db.Decimal(18, 2) // Techo máximo aprobado
   monto_ejercido   Decimal @db.Decimal(18, 2) @default(0) // Total gastado
   monto_comprometido Decimal @db.Decimal(18, 2) @default(0) // Congelado por OC emitidas
