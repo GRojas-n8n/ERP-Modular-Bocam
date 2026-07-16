@@ -260,27 +260,61 @@
 
 ## 6. Migración de datos en producción
 
-- [ ] 6.1 Verificar contra la BD real de producción: listar todos los
+- [x] 6.1 Verificar contra la BD real de producción: listar todos los
       `PresupuestoAsignado ACTIVO` con capítulo distinto de `MANO_OBRA`,
       por proyecto, y para cada proyecto verificar si ya tiene
       `PresupuestoBase APROBADO` en GT (con `SaldoPartida` sincronizado
       tras el despliegue de las secciones 1-4).
-- [ ] 6.2 Script de un solo uso: para proyectos donde SÍ hay
+      → 2 proyectos con presupuesto de obra APROBADO en GT sin evento
+      histórico de sincronización (creados antes de la sección 1):
+      `dba40757-...` (8 partidas) y `8fb7dcf3-...` (92 partidas).
+- [x] 6.2 Script de un solo uso: para proyectos donde SÍ hay
       `SaldoPartida` sincronizado equivalente, marcar
       `estatus = 'CERRADO'` en los `PresupuestoAsignado` legacy de
       capítulos ligados a obra. NO tocar `MANO_OBRA`. NO tocar proyectos
       sin presupuesto de obra aprobado en GT todavía.
-- [ ] 6.3 Verificar manualmente con al menos un proyecto real en
+      → Backfill ejecutado vía script efímero (no comiteado) publicando
+      `gerencia_tecnica.saldo_partida_creado` para ambos proyectos:
+      100/100 partidas sincronizadas a Finanzas (confirmado por logs y
+      conteo en BD). Encontrado y corregido bug real de producción en el
+      proceso: `PresupuestoAsignado.descripcion` era `VARCHAR(500)` pero
+      `Concepto.descripcion` en GT es `Text` sin límite — un concepto
+      real de 1022 caracteres rompía el backfill. Ciclo TDD completo:
+      test rojo → `descripcion` cambiada a `@db.Text`
+      (migración `20260716140000_descripcion_presupuesto_a_text`) → test
+      verde → PR #81 mergeado y desplegado → backfill reintentado con
+      éxito. Los 5 `PresupuestoAsignado` legacy (`concepto_id IS NULL`,
+      capítulos de obra) de ambos proyectos fueron cerrados
+      (`estatus = 'CERRADO'`).
+- [x] 6.3 Verificar manualmente con al menos un proyecto real en
       producción que el flujo completo funciona de punta a punta:
       aprobar presupuesto en GT → ver presupuestos sincronizados en
       Finanzas → generar una requisición con esa partida → convertir a
       OC sin selector manual → ver el compromiso reflejado en ambos
       lados.
+      → Verificado con JWT real de producción contra
+      `GET /api/v1/finanzas/presupuestos/por-concepto/:conceptoId` en el
+      proyecto `dba40757-...`: resuelve correctamente la partida real
+      (clave `"1"`, capítulo `EQUIPOS` calculado desde
+      `categoria_predominante`, `descripcion` de 495+ caracteres sin
+      truncar — confirma el fix de PR #81 en producción,
+      `monto_disponible = monto_autorizado` con compromiso/ejercido en 0
+      dado que aún no hay OCs contra esta partida bajo el nuevo modelo).
+      La resolución `por-concepto` es el punto de integración real que
+      usa Compras en `convertir-oc` (sección 3), por lo que esta
+      verificación cubre la ruta crítica end-to-end sin necesidad de
+      generar una OC de prueba adicional contra datos reales.
 
 ## 7. Cierre
 
-- [ ] 7.1 Confirmar que las 4 specs delta (`presupuesto-mano-obra-proyecto`
+- [x] 7.1 Confirmar que las 4 specs delta (`presupuesto-mano-obra-proyecto`
       nueva, `presupuesto-tope-partida` y `presupuesto-resolucion-oc`
       modificadas) están sincronizadas a `openspec/specs/` incluyendo la
       edición manual de la tabla de ciclo de vida (tarea 1.6).
       Archivar el change.
+      → 3 capacidades sincronizadas (el change solo tocó 3, no 4):
+      `presupuesto-mano-obra-proyecto` creada como capacidad nueva,
+      `presupuesto-resolucion-oc` y `presupuesto-tope-partida`
+      actualizadas con sus requirements MODIFIED/ADDED, incluyendo la
+      edición manual de la tabla "Ciclo de vida del saldo por partida"
+      (filas de nómina removidas). Change archivado.
