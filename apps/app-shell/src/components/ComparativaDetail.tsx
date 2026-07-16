@@ -952,7 +952,6 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
     onUpdate({
       ...comp,
-      estado: 'EN_PROCESO',
       proveedores: [
         ...comp.proveedores,
         { id: prov.id, nombre: prov.razon_social },
@@ -1127,7 +1126,7 @@ export const ComparativaDetail: React.FC<Props> = ({
       especOfrecida: {},
       ganador: null,
     };
-    onUpdate({ ...comp, estado: 'EN_PROCESO', lineas: [...comp.lineas, newLinea] });
+    onUpdate({ ...comp, lineas: [...comp.lineas, newLinea] });
     setAddLineaInsumoId('');
     setAddLineaInsumoLabel('');
     setAddLineaInsumoUnidad('');
