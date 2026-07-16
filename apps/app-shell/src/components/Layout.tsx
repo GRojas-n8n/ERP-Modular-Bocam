@@ -134,6 +134,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'curva-s',       label: 'Curva S',           icon: IconActivity },
       { id: 'alertas',       label: 'Alertas',           icon: IconAlertCircle },
       { id: 'costos',        label: 'Costos',            icon: IconTrendingUp },
+      // Trazabilidad de solo lectura por partida real (SaldoMovimiento GT +
+      // MovimientoPresupuestal Finanzas) — ver openspec/changes/trazabilidad-partida-gt-cp.
+      { id: 'presupuesto-partida', label: 'Presupuesto por Partida', icon: IconWallet },
       { id: 'programacion',  label: 'Programación',      icon: IconFileText },
       { id: 'configuracion', label: 'Configuración',     icon: IconBriefcase },
     ],

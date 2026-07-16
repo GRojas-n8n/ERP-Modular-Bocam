@@ -35,6 +35,7 @@ import {
   IconSearch,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { ControlPresupuestalTabla, type PartidaCP } from '../components/ControlPresupuestalTabla';
 
 // ─── Tipos Campo ──────────────────────────────────────────────────────────────
 
@@ -224,6 +225,7 @@ type TabId =
   | 'curva-s'
   | 'alertas'
   | 'costos'
+  | 'presupuesto-partida'
   | 'programacion'
   | 'configuracion';
 
@@ -274,6 +276,13 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [costosCategorias, setCostosCategorias] = useState<CostosCategoriaRow[]>([]);
   const [costosWbsCO, setCostosWbsCO] = useState<any[]>([]);
   const [loadingCostos, setLoadingCostos] = useState(false);
+
+  // ── Estado: Presupuesto por Partida (solo lectura, ver trazabilidad-partida-gt-cp) ──
+  const [ppPartidas, setPpPartidas] = useState<PartidaCP[]>([]);
+  const [ppSinPartidaComprometido, setPpSinPartidaComprometido] = useState(0);
+  const [ppSinPartidaPagado, setPpSinPartidaPagado] = useState(0);
+  const [loadingPP, setLoadingPP] = useState(false);
+  const [errorPP, setErrorPP] = useState<string | null>(null);
 
   // ── Estado: EVM / Control Proyectos ─────────────────────────────────────────
   const [dashCP, setDashCP] = useState<DashboardCP | null>(null);
@@ -413,6 +422,26 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     } catch { /* silencioso */ } finally { setLoadingCostos(false); }
   };
 
+  // Lectura desde GT — mismo endpoint agregado que usa Gerencia Técnica
+  // (precedente: loadCostosCO también consulta gerencia-tecnica directo desde esta vista).
+  const loadPresupuestoPartida = async () => {
+    if (!currentProjectId) return;
+    setLoadingPP(true);
+    setErrorPP(null);
+    try {
+      const res = await api.get('/api/v1/gerencia-tecnica/reportes/control-presupuestal');
+      const data = res.data?.data ?? res.data;
+      setPpPartidas(data?.partidas ?? []);
+      setPpSinPartidaComprometido(Number(data?.sin_partida_comprometido ?? 0));
+      setPpSinPartidaPagado(Number(data?.sin_partida_pagado ?? 0));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al cargar presupuesto por partida.';
+      setErrorPP(msg);
+    } finally {
+      setLoadingPP(false);
+    }
+  };
+
   // ── Effects ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetchData();
@@ -426,6 +455,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     if (activeTab === 'curva-s')      void fetchCurvaS();
     if (activeTab === 'configuracion' && canConfig && !isDemo) void loadConfiguracion();
     if (activeTab === 'costos' && !isDemo) void loadCostosCO();
+    if (activeTab === 'presupuesto-partida' && !isDemo) void loadPresupuestoPartida();
   }, [activeTab, currentProjectId]);
 
   // ── Acciones campo ───────────────────────────────────────────────────────────
@@ -1165,6 +1195,23 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                   <EmptyStatePanel title="Sin datos de costos" description="Asigna categorías a los insumos y crea requisiciones con partida para ver el resumen." />
                 )}
               </div>
+            )
+          )}
+
+          {/* ── PRESUPUESTO POR PARTIDA (solo lectura) ──────────────────────────── */}
+          {activeTab === 'presupuesto-partida' && (
+            loadingPP ? (
+              <Card className="border-border/40"><CardContent className="flex h-64 items-center justify-center gap-3"><div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-500/10 border-t-sky-600" /></CardContent></Card>
+            ) : errorPP ? (
+              <Card className="border-destructive/20 bg-destructive/5"><CardContent className="p-6 text-center text-sm font-bold text-destructive">{errorPP}</CardContent></Card>
+            ) : ppPartidas.length === 0 ? (
+              <EmptyStatePanel title="Sin presupuesto por partida" description="No hay un presupuesto de obra aprobado y sincronizado para este proyecto todavía." />
+            ) : (
+              <ControlPresupuestalTabla
+                partidas={ppPartidas}
+                sinPartidaComprometido={ppSinPartidaComprometido}
+                sinPartidaPagado={ppSinPartidaPagado}
+              />
             )
           )}
 
