@@ -15,6 +15,8 @@ import { PrismaClient } from '../../src/generated/prisma';
 import { createEventBus } from '../../../../packages/event-bus/src';
 import {
   handleSaldoPartidaCreadoEvent,
+  handlePartidaComprometidaEvent,
+  handleOrdenCompraCreadaEvent,
   initEventBus,
   app,
 } from '../../src/main';
@@ -73,6 +75,8 @@ async function main() {
     await publisher.connect();
     await consumer.connect();
     await consumer.subscribe('gerencia_tecnica.saldo_partida_creado', handleSaldoPartidaCreadoEvent);
+    await consumer.subscribe('gerencia_tecnica.partida_comprometida', handlePartidaComprometidaEvent);
+    await consumer.subscribe('compras.oc_creada', handleOrdenCompraCreadaEvent);
     await delay(500);
 
     const started = await startHttpApp(app as any);
@@ -180,6 +184,69 @@ async function main() {
         body: JSON.stringify({ codigo: `PRES-MO-${Date.now()}`, descripcion: 'Mano de obra del proyecto', monto_autorizado: 200000, capitulo: 'MANO_OBRA' }),
       });
       assert.equal(res.status, 201);
+    });
+
+    await test('gerencia_tecnica.partida_comprometida incrementa monto_comprometido del presupuesto sincronizado', async () => {
+      const ocId = randomUUID();
+      const published = await publisher.publish({
+        event_type: 'gerencia_tecnica.partida_comprometida',
+        timestamp: new Date().toISOString(),
+        context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+        payload: {
+          concepto_id: conceptoMaterialId, monto: 60000, referencia_id: ocId,
+          referencia_codigo: 'OC-COMP-001', tipo: 'OC', monto_comprometido: 60000, monto_disponible: 440000,
+        },
+      });
+      assert.equal(published, true);
+
+      await waitFor(async () => {
+        const p = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+          tx.presupuestoAsignado.findFirst({ where: { concepto_id: conceptoMaterialId } }));
+        assert.equal(Number(p!.monto_comprometido), 60000);
+        assert.equal(Number(p!.monto_disponible), 440000);
+
+        const mov = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+          tx.movimientoPresupuestal.findFirst({ where: { referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id: ocId, tipo: 'COMPROMISO' } }));
+        assert.ok(mov, 'debe crear un MovimientoPresupuestal con la misma clave de idempotencia que usa el flujo de compras.oc_creada');
+      });
+    });
+
+    await test('interopera con compras.oc_creada sin duplicar el compromiso (misma clave de idempotencia)', async () => {
+      const ocId = randomUUID();
+      // Simula que compras.oc_creada llega PRIMERO (camino existente) — crea el
+      // movimiento real. El evento nuevo de GT debe ver el registro existente y
+      // no duplicar el compromiso.
+      const presupuesto = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+        tx.presupuestoAsignado.findFirst({ where: { concepto_id: conceptoMaterialId } }));
+
+      await handleOrdenCompraCreadaEvent({
+        event_type: 'compras.oc_creada',
+        timestamp: new Date().toISOString(),
+        context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+        payload: { oc_id: ocId, codigo: 'OC-INTEROP-001', total: 15000, presupuesto_id: presupuesto!.id_presupuesto },
+      } as any);
+
+      const antes = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+        tx.presupuestoAsignado.findUnique({ where: { id_presupuesto: presupuesto!.id_presupuesto } }));
+
+      await publisher.publish({
+        event_type: 'gerencia_tecnica.partida_comprometida',
+        timestamp: new Date().toISOString(),
+        context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
+        payload: {
+          concepto_id: conceptoMaterialId, monto: 15000, referencia_id: ocId,
+          referencia_codigo: 'OC-INTEROP-001', tipo: 'OC', monto_comprometido: 15000, monto_disponible: 0,
+        },
+      });
+      await delay(1500);
+
+      const despues = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+        tx.presupuestoAsignado.findUnique({ where: { id_presupuesto: presupuesto!.id_presupuesto } }));
+      assert.equal(Number(despues!.monto_comprometido), Number(antes!.monto_comprometido), 'el evento de GT no debe duplicar el compromiso ya aplicado por compras.oc_creada');
+
+      const count = await createTenantContext({ tenantId, proyectoId, userId }, (tx) =>
+        tx.movimientoPresupuestal.count({ where: { referencia_entidad: 'OrdenCompra', referencia_id: ocId, tipo: 'COMPROMISO' } }));
+      assert.equal(count, 1, 'solo debe existir 1 movimiento para esa OC, sin importar cuántos caminos la reporten');
     });
 
     console.log(`\n${passed + failed} tests | ${passed} passed | ${failed} failed`);

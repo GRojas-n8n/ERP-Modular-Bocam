@@ -2504,6 +2504,68 @@ export async function handleSaldoPartidaCreadoEvent(event: BocamEvent): Promise<
   }));
 }
 
+// Sincroniza monto_comprometido cuando GT compromete el saldo de una partida
+// (POST /partidas/:concepto_id/comprometer). Usa DELIBERADAMENTE la misma clave
+// de idempotencia (referencia_modulo='compras', referencia_entidad='OrdenCompra')
+// que ya usa handleOrdenCompraCreadaEvent — así este evento y el flujo existente
+// de compras.oc_creada / POST comprometer-fondos son caminos intercambiables que
+// nunca duplican el compromiso, sin importar cuál llegue primero.
+export async function handlePartidaComprometidaEvent(event: BocamEvent): Promise<void> {
+  const { concepto_id, monto, referencia_id, referencia_codigo, tipo } = event.payload as {
+    concepto_id: string; monto: number; referencia_id: string; referencia_codigo?: string; tipo: string;
+  };
+
+  if (!concepto_id || !monto || !referencia_id) {
+    console.error(JSON.stringify({
+      action: 'finanzas.event.partida_comprometida.invalid_payload',
+      event_type: event.event_type,
+      correlation_id: event.context.correlation_id,
+    }));
+    return;
+  }
+
+  const tenantId = event.context.tenant_id;
+  const proyectoId = event.context.proyecto_id;
+
+  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
+    const existente = await prisma.movimientoPresupuestal.findFirst({
+      where: { referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id, tipo: TipoMovimiento.COMPROMISO },
+    });
+    if (existente) {
+      console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.idempotent', referencia_id }));
+      return;
+    }
+
+    const presupuesto = await prisma.presupuestoAsignado.findFirst({
+      where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id },
+    });
+    if (!presupuesto) {
+      console.warn(JSON.stringify({
+        action: 'finanzas.event.partida_comprometida.sin_presupuesto_sincronizado',
+        tenant_id: tenantId, proyecto_id: proyectoId, concepto_id, referencia_id,
+      }));
+      return;
+    }
+
+    const montoNum = Number(monto);
+    await prisma.movimientoPresupuestal.create({
+      data: {
+        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
+        tipo: TipoMovimiento.COMPROMISO, concepto: `Compromiso por ${tipo} ${referencia_codigo || referencia_id}`, monto: montoNum,
+        referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id, referencia_codigo: referencia_codigo || null,
+        usuario_id: event.context.user_id,
+        notas: 'Compromiso sincronizado desde evento gerencia_tecnica.partida_comprometida.',
+      },
+    });
+    await prisma.presupuestoAsignado.update({
+      where: { id_presupuesto: presupuesto.id_presupuesto },
+      data: { monto_comprometido: { increment: montoNum }, monto_disponible: { decrement: montoNum } },
+    });
+  });
+
+  console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.processed', concepto_id, referencia_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+}
+
 // ─── Presupuesto de Mano de Obra a nivel proyecto (nómina) ─────────────────────
 // Ver openspec/changes/unificar-presupuesto-a-partidas-gt, capacidad
 // presupuesto-mano-obra-proyecto. La nómina NUNCA debe bloquearse por falta de
@@ -2667,6 +2729,10 @@ export async function startServer() {
   await eventBus.subscribe('gerencia_tecnica.saldo_partida_creado', async (event: BocamEvent) => {
     console.log(`[Finanzas] 📥 EVENTO recibido: Saldo Partida Creado (sincronizando presupuesto por partida)`);
     await handleSaldoPartidaCreadoEvent(event);
+  });
+  await eventBus.subscribe('gerencia_tecnica.partida_comprometida', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Partida Comprometida (GT)`);
+    await handlePartidaComprometidaEvent(event);
   });
 
   // ─── SUSCRIPCIÓN: Nómina compromete/ejerce el presupuesto de Mano de Obra ──────

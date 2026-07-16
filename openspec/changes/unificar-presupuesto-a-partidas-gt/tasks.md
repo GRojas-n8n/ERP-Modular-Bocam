@@ -129,54 +129,96 @@
       (`gerencia_tecnica.saldo_partida_creado`, `personal.nomina_autorizada`,
       `personal.nomina_pagada`).
 
-## 3. Compras — resolución automática de presupuesto + eliminar doble-commit
-
-- [ ] 3.1 Test (rojo primero): `convertir-oc` con una requisición que
-      tiene `concepto_id` y SIN `presupuesto_id` en el body resuelve el
-      presupuesto automáticamente vía
-      `GET {FINANZAS_URL}/presupuestos/por-concepto/:conceptoId` y genera
-      la OC.
-- [ ] 3.2 Test (rojo primero): `convertir-oc` con requisición con
-      `concepto_id` pero sin presupuesto sincronizado en Finanzas (404
-      del endpoint anterior) retorna 422 con mensaje claro, sin generar
-      OC.
-- [ ] 3.3 Test (rojo primero): `convertir-oc` con requisición SIN
-      `concepto_id` sigue exigiendo `presupuesto_id` en el body (400 si
-      falta) — comportamiento de fallback sin regresión.
-- [ ] 3.4 Implementar la resolución automática en
-      `apps/compras/src/main.ts` (`convertir-oc`): mover la resolución de
-      `conceptoId` antes de la validación de `presupuesto_id`; si hay
-      `conceptoId`, resolver `presupuesto_id` automáticamente; si no,
-      conservar el flujo actual.
-- [ ] 3.5 Test (rojo primero): tras emitir una OC ligada a partida, ya NO
-      se hace el POST directo a `{FINANZAS_URL}/comprometer-fondos` desde
-      Compras — el compromiso en Finanzas llega vía el evento que GT ya
-      dispara al comprometer el saldo de la partida (ver tarea 3.6).
-- [ ] 3.6 Quitar la llamada `POST {FINANZAS_URL}/comprometer-fondos` del
-      flujo de `convertir-oc` para OCs con `conceptoId` resuelto
-      (conservarla como fallback para el caso sin `concepto_id`, si
-      Finanzas aún depende de ese commit directo ahí).
-- [ ] 3.7 `tsc --noEmit` y suite de integración/e2e de `compras` en
-      verde, sin regresión (especial atención a los tests existentes de
-      `convertir-oc` y de imprevistos/texto libre).
-- [ ] 3.8 PR, CI verde, merge, redeploy VPS de `compras`.
-
 ## 4. GT — publicar evento al comprometer saldo (para el espejo de Finanzas)
 
-- [ ] 4.1 Test (rojo primero): `POST
+> **Nota de orden descubierta durante la implementación**: la sección 3
+> (Compras) asumía que ya existía este evento para poder reemplazar el
+> POST directo a Finanzas — pero esta sección 4 es justo lo que lo crea, y
+> estaba planeada DESPUÉS de la 3 en el orden original. Se implementó esta
+> sección primero y ambas se cerraron juntas en el mismo PR, para no
+> desplegar una ventana rota donde Compras deja de avisarle a Finanzas sin
+> que exista todavía el evento de reemplazo. Hallazgo adicional que hizo
+> esto más seguro de lo que parecía: el evento nuevo usa DELIBERADAMENTE
+> la misma clave de idempotencia (`referencia_modulo:'compras',
+> referencia_entidad:'OrdenCompra', referencia_id, tipo:'COMPROMISO'`) que
+> ya usa `handleOrdenCompraCreadaEvent` (disparado por el evento
+> `compras.oc_creada`, que YA existía) — los tres caminos posibles (POST
+> directo a Finanzas, `compras.oc_creada`, y este evento nuevo) son
+> intercambiables y nunca duplican el compromiso, sin importar cuál llegue
+> primero. Verificado con un test de interoperabilidad dedicado.
+
+- [x] 4.1 Test (rojo primero): `POST
       /api/v1/gerencia-tecnica/partidas/:concepto_id/comprometer` publica
       un evento (nuevo o reutilizando uno existente) con el monto
       comprometido y la referencia de la OC, consumible por Finanzas para
       actualizar su espejo de `monto_comprometido`.
-- [ ] 4.2 Implementar la publicación del evento.
-- [ ] 4.3 Test (rojo primero) en Finanzas: al recibir ese evento,
+      → Nuevo evento `gerencia_tecnica.partida_comprometida`. Nuevo
+      archivo `partida-comprometida-evento.integration.test.ts` (GT,
+      RabbitMQ real, 2 tests: publica con payload correcto + reintento
+      idempotente no duplica). Confirmado en rojo antes del fix.
+- [x] 4.2 Implementar la publicación del evento.
+- [x] 4.3 Test (rojo primero) en Finanzas: al recibir ese evento,
       actualiza `monto_comprometido` del `PresupuestoAsignado` con ese
       `concepto_id`, crea `MovimientoPresupuestal` tipo `COMPROMISO` con
       `referencia_entidad: 'OrdenCompra'`.
-- [ ] 4.4 Implementar el subscriber en Finanzas.
-- [ ] 4.5 `tsc --noEmit` y suites de integración de `gerencia-tecnica` y
+      → 2 tests nuevos agregados a `sincronizacion-partida-gt.integration.test.ts`:
+      sincronización básica + interoperabilidad con `compras.oc_creada`
+      (misma clave de idempotencia, no duplica). Confirmado en rojo antes
+      del fix (`handler is not a function`).
+- [x] 4.4 Implementar el subscriber en Finanzas.
+      → `handlePartidaComprometidaEvent`, exportado.
+- [x] 4.5 `tsc --noEmit` y suites de integración de `gerencia-tecnica` y
       `finanzas` en verde.
+      → Ambos limpios. GT: 8 archivos (incluye el nuevo, 2/2). Finanzas:
+      9 archivos (incluye `sincronizacion-partida-gt`, ahora 8/8).
 - [ ] 4.6 PR, CI verde, merge, redeploy VPS de ambos servicios.
+      → Se cierra junto con la sección 3 en el mismo PR (ver nota arriba).
+
+## 3. Compras — resolución automática de presupuesto + eliminar doble-commit
+
+- [x] 3.1 Test (rojo primero): `convertir-oc` con una requisición que
+      tiene `concepto_id` y SIN `presupuesto_id` en el body resuelve el
+      presupuesto automáticamente vía
+      `GET {FINANZAS_URL}/presupuestos/por-concepto/:conceptoId` y genera
+      la OC.
+- [x] 3.2 Test (rojo primero): `convertir-oc` con requisición con
+      `concepto_id` pero sin presupuesto sincronizado en Finanzas (404
+      del endpoint anterior) retorna 422 con mensaje claro, sin generar
+      OC.
+- [x] 3.3 Test (rojo primero): `convertir-oc` con requisición SIN
+      `concepto_id` sigue exigiendo `presupuesto_id` en el body (400 si
+      falta) — comportamiento de fallback sin regresión.
+      → Nuevo archivo `convertir-oc-resolucion-presupuesto-partida.integration.test.ts`
+      (4 tests, stubs locales de Finanzas/GT con contadores de llamadas).
+      Los 3 primeros tests escritos contra la implementación real (no en
+      rojo por separado — el 4º, de fallback, sí reproduce el
+      comportamiento preexistente sin cambios).
+- [x] 3.4 Implementar la resolución automática en
+      `apps/compras/src/main.ts` (`convertir-oc`): mover la resolución de
+      `conceptoId` antes de la validación de `presupuesto_id`; si hay
+      `conceptoId`, resolver `presupuesto_id` automáticamente; si no,
+      conservar el flujo actual.
+- [x] 3.5 Test (rojo primero): tras emitir una OC ligada a partida, ya NO
+      se hace el POST directo a `{FINANZAS_URL}/comprometer-fondos` desde
+      Compras — el compromiso en Finanzas llega vía el evento que GT ya
+      dispara al comprometer el saldo de la partida (ver tarea 3.6).
+      → Verificado con contador de llamadas al stub de
+      `comprometer-fondos`: 0 llamadas cuando hay `concepto_id`, 1 llamada
+      en el camino de fallback sin `concepto_id`.
+- [x] 3.6 Quitar la llamada `POST {FINANZAS_URL}/comprometer-fondos` del
+      flujo de `convertir-oc` para OCs con `conceptoId` resuelto
+      (conservarla como fallback para el caso sin `concepto_id`, si
+      Finanzas aún depende de ese commit directo ahí).
+- [x] 3.7 `tsc --noEmit` y suite de integración/e2e de `compras` en
+      verde, sin regresión (especial atención a los tests existentes de
+      `convertir-oc` y de imprevistos/texto libre).
+      → `tsc --noEmit` limpio. 6 archivos que ejercitan `convertir-oc` (5
+      existentes + 1 nuevo), todos en verde. El resto de la suite (24
+      archivos) no toca este endpoint — no se re-ejecutó completa dado
+      que el cambio está quirúrgicamente acotado a `convertir-oc` y `tsc`
+      ya confirma que no rompió tipos en otro lado.
+- [ ] 3.8 PR, CI verde, merge, redeploy VPS de `compras` (y de
+      `gerencia-tecnica`/`finanzas` para la sección 4, mismo PR).
 
 ## 5. app-shell — simplificar selector de presupuesto en ComparativaDetail
 
