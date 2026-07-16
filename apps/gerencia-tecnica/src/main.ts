@@ -2122,6 +2122,19 @@ app.post(
         user_id: userId, trigger: tipo, referencia_id, referencia_codigo,
       });
 
+      // Notifica a Finanzas para que sincronice monto_comprometido en su espejo de
+      // presupuesto por partida (ver openspec/changes/unificar-presupuesto-a-partidas-gt).
+      // Best-effort: no bloquea el compromiso si el bus de eventos no está disponible.
+      await publishEvent({
+        event_type: 'gerencia_tecnica.partida_comprometida',
+        timestamp: new Date().toISOString(),
+        context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId || '' },
+        payload: {
+          concepto_id, monto: Number(monto), referencia_id, referencia_codigo: referencia_codigo || undefined, tipo,
+          monto_comprometido: nuevoComprometido, monto_disponible: nuevoDisponible,
+        },
+      });
+
       res.json(createApiResponse({ concepto_id, monto_disponible: nuevoDisponible, estado_tope: calcularEstadoTope(Number(saldo.monto_aprobado), nuevoDisponible) }, tenantId, proyectoId));
     } catch (error: any) {
       console.error('[GT] Error POST /partidas/:id/comprometer:', error.message);

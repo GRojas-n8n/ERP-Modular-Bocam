@@ -2673,15 +2673,14 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const { presupuesto_id } = req.body;
     const token = req.headers.authorization;
 
-    if (!presupuesto_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Es obligatorio proporcionar un presupuesto_id para validar la suficiencia financiera.'
-      });
-    }
+    // presupuesto_id ya NO es obligatorio en el body cuando la requisición tiene
+    // concepto_id (partida real) — se resuelve automáticamente más abajo, una vez
+    // conocido loteData.conceptoId (ver openspec/changes/unificar-presupuesto-a-partidas-gt,
+    // capacidad presupuesto-resolucion-oc). Sigue siendo obligatorio como fallback
+    // cuando no hay concepto_id.
+    let presupuesto_id: string | undefined = req.body.presupuesto_id;
 
     // ── 1.1–1.3: Cargar comparativa, lineas y cantidades reales de requisición ──
     type DetalleGanador = { proveedor_id: string; insumo_id: string | null; detalle_req_id: string | null; precio_ofertado: { toNumber(): number } };
@@ -2772,6 +2771,32 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         };
       }
     );
+
+    // Resolver presupuesto_id automáticamente por partida cuando la requisición
+    // tiene concepto_id — el frontend ya no lo envía en ese caso (ver
+    // openspec/changes/unificar-presupuesto-a-partidas-gt, presupuesto-resolucion-oc).
+    if (loteData.conceptoId) {
+      try {
+        const porConceptoResp = await axios.get(`${FINANZAS_URL}/presupuestos/por-concepto/${loteData.conceptoId}`, {
+          headers: buildForwardHeaders(req, { Authorization: token || '' }),
+        });
+        presupuesto_id = porConceptoResp.data?.data?.id_presupuesto;
+      } catch (_) {
+        // 404 u otro error — sin presupuesto sincronizado para esta partida
+      }
+      if (!presupuesto_id) {
+        return res.status(422).json({
+          success: false,
+          error: 'SIN_PRESUPUESTO_SINCRONIZADO',
+          message: 'Sin presupuesto sincronizado para esta partida — verifica que el presupuesto de obra esté aprobado en Gerencia Técnica.',
+        });
+      }
+    } else if (!presupuesto_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Es obligatorio proporcionar un presupuesto_id para validar la suficiencia financiera.'
+      });
+    }
 
     // 1.4: Verificación de suficiencia financiera sobre el total del lote
     try {
@@ -2871,42 +2896,58 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
         })
       );
 
-      // 1.6: Comprometer fondos individualmente — error no bloquea las demás OCs
+      // 1.6: Comprometer fondos — error no bloquea las demás OCs.
+      // Cuando la requisición tiene concepto_id (partida real), GT es la única
+      // fuente de verdad del compromiso (línea 1.7 abajo) y Finanzas sincroniza su
+      // espejo vía el evento gerencia_tecnica.partida_comprometida — ya NO se llama
+      // directo a Finanzas aquí (eliminaba el riesgo de dos POST independientes
+      // desincronizándose, ver openspec/changes/unificar-presupuesto-a-partidas-gt).
+      // Sin concepto_id (fallback legado), se conserva el commit directo a Finanzas.
       let ocEmitida = false;
-      try {
-        await axios.post(`${FINANZAS_URL}/comprometer-fondos`, {
-          presupuesto_id,
-          monto: oc.total.toNumber(),
-          oc_id: oc.id_orden,
-          oc_codigo: oc.codigo,
-          concepto: `Compromiso por Orden de Compra ${oc.codigo}`
-        }, { headers: buildForwardHeaders(req, { Authorization: token || '' }) });
-
+      if (loteData.conceptoId) {
         await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
           await prisma.ordenCompra.update({ where: { id_orden: oc.id_orden }, data: { estado: OC_STATUS.EMITIDA } });
           await prisma.cuadroComparativo.update({ where: { id_cuadro: loteData.comparativaId }, data: { estado: 'CERRADO' } });
         });
         ocEmitida = true;
-      } catch (finError: any) {
-        const errMsg = finError.response?.data?.error?.message || finError.message;
-        await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-          await prisma.ordenCompra.update({ where: { id_orden: oc.id_orden }, data: { estado: OC_STATUS.ERROR_FINANZAS } });
-          await prisma.alertaOcError.upsert({
-            where: { tenant_id_oc_id: { tenant_id: tenantId, oc_id: oc.id_orden } },
-            update: { error_message: errMsg, updated_at: new Date() },
-            create: { tenant_id: tenantId, proyecto_id: proyectoId, oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id: presupuesto_id ?? null, error_message: errMsg },
-          });
-        });
+      } else {
         try {
-          await eventBus.publish({ event_type: 'compras.oc_error_finanzas', timestamp: new Date().toISOString(), context: buildEventContext(req), payload: { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id: presupuesto_id ?? null, error_message: errMsg } });
-        } catch (_) { /* best-effort */ }
-        advertencias.push(`${oc.codigo} quedó en ERROR_FINANZAS: ${errMsg}`);
-        logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada', 'Alerta de OC en ERROR_FINANZAS persistida en BD', { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id });
+          await axios.post(`${FINANZAS_URL}/comprometer-fondos`, {
+            presupuesto_id,
+            monto: oc.total.toNumber(),
+            oc_id: oc.id_orden,
+            oc_codigo: oc.codigo,
+            concepto: `Compromiso por Orden de Compra ${oc.codigo}`
+          }, { headers: buildForwardHeaders(req, { Authorization: token || '' }) });
+
+          await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+            await prisma.ordenCompra.update({ where: { id_orden: oc.id_orden }, data: { estado: OC_STATUS.EMITIDA } });
+            await prisma.cuadroComparativo.update({ where: { id_cuadro: loteData.comparativaId }, data: { estado: 'CERRADO' } });
+          });
+          ocEmitida = true;
+        } catch (finError: any) {
+          const errMsg = finError.response?.data?.error?.message || finError.message;
+          await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+            await prisma.ordenCompra.update({ where: { id_orden: oc.id_orden }, data: { estado: OC_STATUS.ERROR_FINANZAS } });
+            await prisma.alertaOcError.upsert({
+              where: { tenant_id_oc_id: { tenant_id: tenantId, oc_id: oc.id_orden } },
+              update: { error_message: errMsg, updated_at: new Date() },
+              create: { tenant_id: tenantId, proyecto_id: proyectoId, oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id: presupuesto_id ?? null, error_message: errMsg },
+            });
+          });
+          try {
+            await eventBus.publish({ event_type: 'compras.oc_error_finanzas', timestamp: new Date().toISOString(), context: buildEventContext(req), payload: { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id: presupuesto_id ?? null, error_message: errMsg } });
+          } catch (_) { /* best-effort */ }
+          advertencias.push(`${oc.codigo} quedó en ERROR_FINANZAS: ${errMsg}`);
+          logInfo(req, 'compras', 'compras.oc_error_finanzas.alerta_creada', 'Alerta de OC en ERROR_FINANZAS persistida en BD', { oc_id: oc.id_orden, oc_codigo: oc.codigo, presupuesto_id });
+        }
       }
 
       if (ocEmitida) gruposEmitidos.push({ detalles: grupo.detalles.map((d: DetalleGanador) => ({ insumo_id: d.insumo_id, detalle_req_id: d.detalle_req_id })) });
 
-      // 1.7: Comprometer saldo en GT para el concepto/partida (fire-and-forget)
+      // 1.7: Comprometer saldo en GT para el concepto/partida (fire-and-forget) —
+      // esta llamada es la que ahora dispara la sincronización de Finanzas vía
+      // gerencia_tecnica.partida_comprometida.
       if (ocEmitida && loteData.conceptoId) {
         try {
           await axios.post(`${GT_URL}/partidas/${loteData.conceptoId}/comprometer`, {
