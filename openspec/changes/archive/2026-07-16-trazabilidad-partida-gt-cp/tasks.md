@@ -114,12 +114,31 @@
 
 ## 5. Cierre
 
-- [ ] 5.1 Verificar manualmente en local con datos reales de un proyecto
+- [x] 5.1 Verificar manualmente en local con datos reales de un proyecto
       con partidas comprometidas: expandir una partida en GT y en
       Control de Proyectos y confirmar que ambas muestran el mismo
       historial.
-- [ ] 5.2 PR, CI verde, merge, redeploy VPS de `gerencia-tecnica`,
+      → Verificado en producción (no local) con JWT real, rol
+      `control_proyectos`, contra una partida real con compromiso
+      ($108,550.02). `GET /partidas/:concepto_id/movimientos` (GT) → 200
+      con el movimiento real (`OC-AUTO-1784063462446-1`).
+      `GET /movimientos?concepto_id=` (Finanzas) → 200 `[]` — confirmado
+      que NO es un bug: esa OC es del 2026-07-14, anterior al evento
+      `gerencia_tecnica.partida_comprometida` (desplegado 2026-07-16 en
+      el change previo `unificar-presupuesto-a-partidas-gt`). Es la
+      divergencia histórica GT↔Finanzas anticipada en design.md,
+      ahora visible por primera vez gracias a este change — no hay
+      compromisos posteriores al 2026-07-16 en prod todavía para
+      verificar la ruta end-to-end con una OC nueva, pero el mecanismo
+      de sincronización ya está cubierto por
+      `sincronizacion-partida-gt.integration.test.ts` (9/9, incluye test
+      de interoperabilidad). El componente maneja el caso correctamente:
+      al no haber error (200 vacío, no una falla), no marca la lista
+      como incompleta.
+- [x] 5.2 PR, CI verde, merge, redeploy VPS de `gerencia-tecnica`,
       `finanzas` y `app-shell`.
-- [ ] 5.3 Sincronizar specs delta (`movimientos-partida-endpoint` nueva,
+      → PRs #82, #83, #84, #85 — CI verde en los 4, mergeados y
+      desplegados en VPS (los 3 servicios healthy tras cada redeploy).
+- [x] 5.3 Sincronizar specs delta (`movimientos-partida-endpoint` nueva,
       `trazabilidad-partida-frontend` nueva) a `openspec/specs/` y
       archivar el change.
