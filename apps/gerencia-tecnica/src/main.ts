@@ -822,7 +822,11 @@ app.patch(
 
       const presupuesto = await db.presupuestoBase.findUnique({
         where: { id },
-        include: { conceptos: true },
+        include: {
+          conceptos: {
+            include: { insumos: { select: { tipo_insumo: true, costo_unitario: true, cantidad: true } } },
+          },
+        },
       });
       if (!presupuesto) {
         return res.status(404).json(createApiError('NOT_FOUND', 'Presupuesto no encontrado.'));
@@ -843,9 +847,22 @@ app.patch(
       // Crear SaldoPartida por cada concepto (idempotente via upsert)
       const conceptos = (presupuesto as any).conceptos ?? [];
       if (conceptos.length > 0) {
+        const partidasParaEvento: Array<{
+          concepto_id: string; concepto_clave: string; concepto_desc: string;
+          monto_aprobado: number; categoria_predominante: string | null;
+        }> = [];
+
         await Promise.all(
           conceptos.map((c: any) => {
             const monto = Number(c.precio_unitario) * Number(c.cantidad);
+            const categoria = categoriaPredominante(c.insumos ?? []);
+            partidasParaEvento.push({
+              concepto_id: c.id,
+              concepto_clave: c.clave,
+              concepto_desc: c.descripcion,
+              monto_aprobado: monto,
+              categoria_predominante: categoria,
+            });
             return db.saldoPartida.upsert({
               where: {
                 uq_saldo_partida: {
@@ -854,7 +871,7 @@ app.patch(
                   concepto_id: c.id,
                 },
               },
-              update: { monto_aprobado: monto, monto_disponible: monto },
+              update: { monto_aprobado: monto, monto_disponible: monto, categoria_predominante: categoria },
               create: {
                 tenant_id:       tenantId,
                 proyecto_id:     proyectoId,
@@ -863,12 +880,23 @@ app.patch(
                 concepto_desc:   c.descripcion,
                 monto_aprobado:  monto,
                 monto_disponible: monto,
+                categoria_predominante: categoria,
                 estado_tope:     'LIBRE',
               },
             });
           })
         );
         console.log(`[GT] SaldoPartida: ${conceptos.length} partidas inicializadas para presupuesto ${id}`);
+
+        // Notificar a Finanzas para que sincronice su espejo de presupuesto por partida
+        // (ver openspec/changes/unificar-presupuesto-a-partidas-gt). Best-effort: no
+        // bloquea la aprobación si el bus de eventos no está disponible.
+        await publishEvent({
+          event_type: 'gerencia_tecnica.saldo_partida_creado',
+          timestamp: new Date().toISOString(),
+          context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId || '' },
+          payload: { partidas: partidasParaEvento },
+        });
       }
 
       // Si el proyecto nació de Ventas, avanzar el vínculo a CON_PRESUPUESTO
@@ -1657,6 +1685,21 @@ const REPORTES_URL = process.env.REPORTES_SERVICE_URL || 'http://reportes:3010';
 
 type TipoInsumoCP = 'MATERIAL' | 'MANO_DE_OBRA' | 'EQUIPO' | 'SUBCONTRATO' | 'INDIRECTO';
 
+// Categoría predominante de un concepto: el tipo de insumo con mayor costo acumulado
+// entre sus ConceptoInsumo (cantidad × costo_unitario). Compartida por el reporte de
+// control presupuestal y por la persistencia en SaldoPartida al aprobar el presupuesto
+// (ver openspec/changes/unificar-presupuesto-a-partidas-gt).
+function categoriaPredominante(insumos: Array<{ tipo_insumo: string; costo_unitario: any; cantidad: any }>): TipoInsumoCP | null {
+  const acum: Record<string, number> = {};
+  for (const ins of insumos) {
+    const tipo = ins.tipo_insumo as TipoInsumoCP;
+    acum[tipo] = (acum[tipo] || 0) + Number(ins.costo_unitario) * Number(ins.cantidad);
+  }
+  const entries = Object.entries(acum);
+  if (entries.length === 0) return null;
+  return entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] as TipoInsumoCP;
+}
+
 interface PartidaCP {
   concepto_id:           string;
   clave:                 string;
@@ -1771,18 +1814,6 @@ async function buildControlPresupuestal(
   } else {
     advertencias.push('Finanzas no disponible: montos pagados no incluidos');
   }
-
-  // 3. Calcular categoría predominante por concepto (mayor costo acumulado de sus insumos APU)
-  const categoriaPredominante = (insumos: Array<{ tipo_insumo: string; costo_unitario: any; cantidad: any }>): TipoInsumoCP | null => {
-    const acum: Record<string, number> = {};
-    for (const ins of insumos) {
-      const tipo = ins.tipo_insumo as TipoInsumoCP;
-      acum[tipo] = (acum[tipo] || 0) + Number(ins.costo_unitario) * Number(ins.cantidad);
-    }
-    const entries = Object.entries(acum);
-    if (entries.length === 0) return null;
-    return entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] as TipoInsumoCP;
-  };
 
   // 4. Armar partidas
   let partidas: PartidaCP[] = presupuestoData.conceptos.map((c) => {

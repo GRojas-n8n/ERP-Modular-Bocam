@@ -8187,6 +8187,7 @@ export namespace Prisma {
     concepto_id: string | null
     concepto_clave: string | null
     concepto_desc: string | null
+    categoria_predominante: string | null
     monto_aprobado: Decimal | null
     monto_comprometido: Decimal | null
     monto_ejercido: Decimal | null
@@ -8205,6 +8206,7 @@ export namespace Prisma {
     concepto_id: string | null
     concepto_clave: string | null
     concepto_desc: string | null
+    categoria_predominante: string | null
     monto_aprobado: Decimal | null
     monto_comprometido: Decimal | null
     monto_ejercido: Decimal | null
@@ -8223,6 +8225,7 @@ export namespace Prisma {
     concepto_id: number
     concepto_clave: number
     concepto_desc: number
+    categoria_predominante: number
     monto_aprobado: number
     monto_comprometido: number
     monto_ejercido: number
@@ -8259,6 +8262,7 @@ export namespace Prisma {
     concepto_id?: true
     concepto_clave?: true
     concepto_desc?: true
+    categoria_predominante?: true
     monto_aprobado?: true
     monto_comprometido?: true
     monto_ejercido?: true
@@ -8277,6 +8281,7 @@ export namespace Prisma {
     concepto_id?: true
     concepto_clave?: true
     concepto_desc?: true
+    categoria_predominante?: true
     monto_aprobado?: true
     monto_comprometido?: true
     monto_ejercido?: true
@@ -8295,6 +8300,7 @@ export namespace Prisma {
     concepto_id?: true
     concepto_clave?: true
     concepto_desc?: true
+    categoria_predominante?: true
     monto_aprobado?: true
     monto_comprometido?: true
     monto_ejercido?: true
@@ -8400,6 +8406,7 @@ export namespace Prisma {
     concepto_id: string
     concepto_clave: string
     concepto_desc: string
+    categoria_predominante: string | null
     monto_aprobado: Decimal
     monto_comprometido: Decimal
     monto_ejercido: Decimal
@@ -8437,6 +8444,7 @@ export namespace Prisma {
     concepto_id?: boolean
     concepto_clave?: boolean
     concepto_desc?: boolean
+    categoria_predominante?: boolean
     monto_aprobado?: boolean
     monto_comprometido?: boolean
     monto_ejercido?: boolean
@@ -8457,6 +8465,7 @@ export namespace Prisma {
     concepto_id?: boolean
     concepto_clave?: boolean
     concepto_desc?: boolean
+    categoria_predominante?: boolean
     monto_aprobado?: boolean
     monto_comprometido?: boolean
     monto_ejercido?: boolean
@@ -8475,6 +8484,7 @@ export namespace Prisma {
     concepto_id?: boolean
     concepto_clave?: boolean
     concepto_desc?: boolean
+    categoria_predominante?: boolean
     monto_aprobado?: boolean
     monto_comprometido?: boolean
     monto_ejercido?: boolean
@@ -8504,6 +8514,12 @@ export namespace Prisma {
       concepto_id: string
       concepto_clave: string
       concepto_desc: string
+      /**
+       * Tipo de insumo con mayor costo acumulado en el APU del concepto (MATERIAL, MANO_DE_OBRA,
+       * EQUIPO, SUBCONTRATO, INDIRECTO), o null si el concepto no tiene composición APU.
+       * Se usa para clasificar el presupuesto sincronizado en Finanzas por capítulo.
+       */
+      categoria_predominante: string | null
       monto_aprobado: Prisma.Decimal
       monto_comprometido: Prisma.Decimal
       monto_ejercido: Prisma.Decimal
@@ -8913,6 +8929,7 @@ export namespace Prisma {
     readonly concepto_id: FieldRef<"SaldoPartida", 'String'>
     readonly concepto_clave: FieldRef<"SaldoPartida", 'String'>
     readonly concepto_desc: FieldRef<"SaldoPartida", 'String'>
+    readonly categoria_predominante: FieldRef<"SaldoPartida", 'String'>
     readonly monto_aprobado: FieldRef<"SaldoPartida", 'Decimal'>
     readonly monto_comprometido: FieldRef<"SaldoPartida", 'Decimal'>
     readonly monto_ejercido: FieldRef<"SaldoPartida", 'Decimal'>
@@ -14513,6 +14530,7 @@ export namespace Prisma {
     concepto_id: 'concepto_id',
     concepto_clave: 'concepto_clave',
     concepto_desc: 'concepto_desc',
+    categoria_predominante: 'categoria_predominante',
     monto_aprobado: 'monto_aprobado',
     monto_comprometido: 'monto_comprometido',
     monto_ejercido: 'monto_ejercido',
@@ -15263,6 +15281,7 @@ export namespace Prisma {
     concepto_id?: UuidFilter<"SaldoPartida"> | string
     concepto_clave?: StringFilter<"SaldoPartida"> | string
     concepto_desc?: StringFilter<"SaldoPartida"> | string
+    categoria_predominante?: StringNullableFilter<"SaldoPartida"> | string | null
     monto_aprobado?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
@@ -15282,6 +15301,7 @@ export namespace Prisma {
     concepto_id?: SortOrder
     concepto_clave?: SortOrder
     concepto_desc?: SortOrder
+    categoria_predominante?: SortOrderInput | SortOrder
     monto_aprobado?: SortOrder
     monto_comprometido?: SortOrder
     monto_ejercido?: SortOrder
@@ -15305,6 +15325,7 @@ export namespace Prisma {
     concepto_id?: UuidFilter<"SaldoPartida"> | string
     concepto_clave?: StringFilter<"SaldoPartida"> | string
     concepto_desc?: StringFilter<"SaldoPartida"> | string
+    categoria_predominante?: StringNullableFilter<"SaldoPartida"> | string | null
     monto_aprobado?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
@@ -15324,6 +15345,7 @@ export namespace Prisma {
     concepto_id?: SortOrder
     concepto_clave?: SortOrder
     concepto_desc?: SortOrder
+    categoria_predominante?: SortOrderInput | SortOrder
     monto_aprobado?: SortOrder
     monto_comprometido?: SortOrder
     monto_ejercido?: SortOrder
@@ -15350,6 +15372,7 @@ export namespace Prisma {
     concepto_id?: UuidWithAggregatesFilter<"SaldoPartida"> | string
     concepto_clave?: StringWithAggregatesFilter<"SaldoPartida"> | string
     concepto_desc?: StringWithAggregatesFilter<"SaldoPartida"> | string
+    categoria_predominante?: StringNullableWithAggregatesFilter<"SaldoPartida"> | string | null
     monto_aprobado?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalWithAggregatesFilter<"SaldoPartida"> | Decimal | DecimalJsLike | number | string
@@ -16405,6 +16428,7 @@ export namespace Prisma {
     concepto_id: string
     concepto_clave: string
     concepto_desc: string
+    categoria_predominante?: string | null
     monto_aprobado?: Decimal | DecimalJsLike | number | string
     monto_comprometido?: Decimal | DecimalJsLike | number | string
     monto_ejercido?: Decimal | DecimalJsLike | number | string
@@ -16424,6 +16448,7 @@ export namespace Prisma {
     concepto_id: string
     concepto_clave: string
     concepto_desc: string
+    categoria_predominante?: string | null
     monto_aprobado?: Decimal | DecimalJsLike | number | string
     monto_comprometido?: Decimal | DecimalJsLike | number | string
     monto_ejercido?: Decimal | DecimalJsLike | number | string
@@ -16443,6 +16468,7 @@ export namespace Prisma {
     concepto_id?: StringFieldUpdateOperationsInput | string
     concepto_clave?: StringFieldUpdateOperationsInput | string
     concepto_desc?: StringFieldUpdateOperationsInput | string
+    categoria_predominante?: NullableStringFieldUpdateOperationsInput | string | null
     monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -16462,6 +16488,7 @@ export namespace Prisma {
     concepto_id?: StringFieldUpdateOperationsInput | string
     concepto_clave?: StringFieldUpdateOperationsInput | string
     concepto_desc?: StringFieldUpdateOperationsInput | string
+    categoria_predominante?: NullableStringFieldUpdateOperationsInput | string | null
     monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -16481,6 +16508,7 @@ export namespace Prisma {
     concepto_id: string
     concepto_clave: string
     concepto_desc: string
+    categoria_predominante?: string | null
     monto_aprobado?: Decimal | DecimalJsLike | number | string
     monto_comprometido?: Decimal | DecimalJsLike | number | string
     monto_ejercido?: Decimal | DecimalJsLike | number | string
@@ -16499,6 +16527,7 @@ export namespace Prisma {
     concepto_id?: StringFieldUpdateOperationsInput | string
     concepto_clave?: StringFieldUpdateOperationsInput | string
     concepto_desc?: StringFieldUpdateOperationsInput | string
+    categoria_predominante?: NullableStringFieldUpdateOperationsInput | string | null
     monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -16517,6 +16546,7 @@ export namespace Prisma {
     concepto_id?: StringFieldUpdateOperationsInput | string
     concepto_clave?: StringFieldUpdateOperationsInput | string
     concepto_desc?: StringFieldUpdateOperationsInput | string
+    categoria_predominante?: NullableStringFieldUpdateOperationsInput | string | null
     monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -17682,6 +17712,21 @@ export namespace Prisma {
     costo_unitario?: SortOrder
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type SaldoMovimientoListRelationFilter = {
     every?: SaldoMovimientoWhereInput
     some?: SaldoMovimientoWhereInput
@@ -17705,6 +17750,7 @@ export namespace Prisma {
     concepto_id?: SortOrder
     concepto_clave?: SortOrder
     concepto_desc?: SortOrder
+    categoria_predominante?: SortOrder
     monto_aprobado?: SortOrder
     monto_comprometido?: SortOrder
     monto_ejercido?: SortOrder
@@ -17731,6 +17777,7 @@ export namespace Prisma {
     concepto_id?: SortOrder
     concepto_clave?: SortOrder
     concepto_desc?: SortOrder
+    categoria_predominante?: SortOrder
     monto_aprobado?: SortOrder
     monto_comprometido?: SortOrder
     monto_ejercido?: SortOrder
@@ -17749,6 +17796,7 @@ export namespace Prisma {
     concepto_id?: SortOrder
     concepto_clave?: SortOrder
     concepto_desc?: SortOrder
+    categoria_predominante?: SortOrder
     monto_aprobado?: SortOrder
     monto_comprometido?: SortOrder
     monto_ejercido?: SortOrder
@@ -17768,7 +17816,7 @@ export namespace Prisma {
     monto_disponible?: SortOrder
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
     notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -17780,7 +17828,10 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type SaldoPartidaRelationFilter = {
@@ -17841,24 +17892,6 @@ export namespace Prisma {
   export type SaldoMovimientoSumOrderByAggregateInput = {
     delta?: SortOrder
     saldo_resultante?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type TransferenciaPartidaCountOrderByAggregateInput = {
@@ -19334,6 +19367,7 @@ export namespace Prisma {
     concepto_id: string
     concepto_clave: string
     concepto_desc: string
+    categoria_predominante?: string | null
     monto_aprobado?: Decimal | DecimalJsLike | number | string
     monto_comprometido?: Decimal | DecimalJsLike | number | string
     monto_ejercido?: Decimal | DecimalJsLike | number | string
@@ -19352,6 +19386,7 @@ export namespace Prisma {
     concepto_id: string
     concepto_clave: string
     concepto_desc: string
+    categoria_predominante?: string | null
     monto_aprobado?: Decimal | DecimalJsLike | number | string
     monto_comprometido?: Decimal | DecimalJsLike | number | string
     monto_ejercido?: Decimal | DecimalJsLike | number | string
@@ -19386,6 +19421,7 @@ export namespace Prisma {
     concepto_id?: StringFieldUpdateOperationsInput | string
     concepto_clave?: StringFieldUpdateOperationsInput | string
     concepto_desc?: StringFieldUpdateOperationsInput | string
+    categoria_predominante?: NullableStringFieldUpdateOperationsInput | string | null
     monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -19404,6 +19440,7 @@ export namespace Prisma {
     concepto_id?: StringFieldUpdateOperationsInput | string
     concepto_clave?: StringFieldUpdateOperationsInput | string
     concepto_desc?: StringFieldUpdateOperationsInput | string
+    categoria_predominante?: NullableStringFieldUpdateOperationsInput | string | null
     monto_aprobado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
