@@ -55,5 +55,10 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 PR contra `main`, CI verde, merge.
-- [ ] 4.2 Redeploy VPS de `finanzas` (build + `up -d`, sin migración).
+- [x] 4.1 PR contra `main`, CI verde, merge.
+      → PR #76 mergeado (squash `a4b28e7`). Primer intento de CI falló
+      (9 tests de otros servicios con el rol ficticio 'finance' — ver
+      3.4); segundo commit lo corrigió, CI verde.
+- [x] 4.2 Redeploy VPS de `finanzas` (build + `up -d`, sin migración).
+      → Hecho 2026-07-16: build limpio, contenedor recreado, healthy,
+      logs limpios (conectado a RabbitMQ, sin errores de arranque).
