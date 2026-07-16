@@ -135,6 +135,8 @@ exports.Prisma.PresupuestoAsignadoScalarFieldEnum = {
   moneda: 'moneda',
   capitulo: 'capitulo',
   estatus: 'estatus',
+  concepto_id: 'concepto_id',
+  concepto_clave: 'concepto_clave',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };

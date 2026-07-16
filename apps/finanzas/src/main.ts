@@ -189,6 +189,33 @@ app.get('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) => 
   }
 });
 
+// Resolver el presupuesto sincronizado de una partida real de GT — usado por
+// Compras para resolver presupuesto_id automáticamente en convertir-oc sin
+// selector manual (ver openspec/changes/unificar-presupuesto-a-partidas-gt).
+// Debe registrarse ANTES de /presupuestos/:id para no ser capturado por ese
+// parámetro genérico.
+app.get('/api/v1/finanzas/presupuestos/por-concepto/:conceptoId', async (req: Request, res: Response) => {
+  try {
+    const { conceptoId } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => prisma.presupuestoAsignado.findFirst({ where: { concepto_id: conceptoId, estatus: 'ACTIVO' } })
+    );
+
+    if (!data) {
+      res.status(404).json(createApiError('FIN_NOT_FOUND', 'Sin presupuesto sincronizado para esta partida.'));
+      return;
+    }
+
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    console.error('[Finanzas] Error resolviendo presupuesto por concepto:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al resolver presupuesto por partida.'));
+  }
+});
+
 // Obtener un presupuesto por ID con sus movimientos
 app.get('/api/v1/finanzas/presupuestos/:id', async (req: Request, res: Response) => {
   try {
@@ -242,6 +269,19 @@ app.post('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) =>
       res.status(400).json(createApiError(
         'FIN_MISSING_FIELDS',
         'Los campos codigo, descripcion y monto_autorizado son obligatorios.'
+      ));
+      return;
+    }
+
+    // Los presupuestos de partida (MATERIALES/SUBCONTRATOS/EQUIPOS/INDIRECTOS) se
+    // sincronizan automáticamente desde el presupuesto de obra aprobado en Gerencia
+    // Técnica — solo MANO_OBRA (bolsa a nivel proyecto para nómina) se crea a mano.
+    // Ver openspec/changes/unificar-presupuesto-a-partidas-gt.
+    const capituloSolicitado = capitulo || 'MATERIALES';
+    if (capituloSolicitado !== 'MANO_OBRA') {
+      res.status(422).json(createApiError(
+        'FIN_CAPITULO_SINCRONIZADO',
+        'Los presupuestos de MATERIALES, SUBCONTRATOS, EQUIPOS e INDIRECTOS se sincronizan automáticamente desde el presupuesto de obra aprobado en Gerencia Técnica — no se crean manualmente. Solo el presupuesto de MANO_OBRA (a nivel proyecto, para nómina) se crea aquí.'
       ));
       return;
     }
@@ -2388,6 +2428,181 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
   }
 }
 
+// ─── Sincronización de presupuesto por partida (Gerencia Técnica) ─────────────
+// Ver openspec/changes/unificar-presupuesto-a-partidas-gt. GT es la única fuente
+// de verdad para el saldo/gate de bloqueo por partida (SaldoPartida) — este
+// espejo en Finanzas solo sirve para programación de pagos y reportes propios.
+const CATEGORIA_A_CAPITULO: Record<string, string> = {
+  MATERIAL: 'MATERIALES',
+  MANO_DE_OBRA: 'MANO_OBRA',
+  EQUIPO: 'EQUIPOS',
+  SUBCONTRATO: 'SUBCONTRATOS',
+  INDIRECTO: 'INDIRECTOS',
+};
+
+export async function handleSaldoPartidaCreadoEvent(event: BocamEvent): Promise<void> {
+  const { partidas } = event.payload as {
+    partidas: Array<{
+      concepto_id: string;
+      concepto_clave: string;
+      concepto_desc: string;
+      monto_aprobado: number;
+      categoria_predominante: string | null;
+    }>;
+  };
+
+  if (!Array.isArray(partidas) || partidas.length === 0) {
+    console.error(JSON.stringify({
+      action: 'finanzas.event.saldo_partida_creado.invalid_payload',
+      event_type: event.event_type,
+      correlation_id: event.context.correlation_id,
+    }));
+    return;
+  }
+
+  const tenantId = event.context.tenant_id;
+  const proyectoId = event.context.proyecto_id;
+
+  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
+    for (const partida of partidas) {
+      const monto = Number(partida.monto_aprobado);
+      const capitulo = CATEGORIA_A_CAPITULO[partida.categoria_predominante || ''] || 'INDIRECTOS';
+
+      await prisma.presupuestoAsignado.upsert({
+        where: {
+          uq_presupuesto_concepto: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: partida.concepto_id },
+        },
+        update: {
+          monto_autorizado: monto,
+          monto_disponible: monto,
+          concepto_clave: partida.concepto_clave,
+          capitulo,
+        },
+        create: {
+          tenant_id: tenantId,
+          proyecto_id: proyectoId,
+          concepto_id: partida.concepto_id,
+          concepto_clave: partida.concepto_clave,
+          codigo: partida.concepto_clave,
+          descripcion: partida.concepto_desc,
+          monto_autorizado: monto,
+          monto_disponible: monto,
+          capitulo,
+          estatus: 'ACTIVO',
+        },
+      });
+    }
+  });
+
+  console.log(JSON.stringify({
+    action: 'finanzas.event.saldo_partida_creado.processed',
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: tenantId,
+    proyecto_id: proyectoId,
+    partidas_sincronizadas: partidas.length,
+  }));
+}
+
+// ─── Presupuesto de Mano de Obra a nivel proyecto (nómina) ─────────────────────
+// Ver openspec/changes/unificar-presupuesto-a-partidas-gt, capacidad
+// presupuesto-mano-obra-proyecto. La nómina NUNCA debe bloquearse por falta de
+// presupuesto — best-effort, solo alerta si no hay bolsa MANO_OBRA activa.
+async function resolvePresupuestoManoObra(tenantId: string, proyectoId: string, prisma: PrismaClient) {
+  return (prisma as any).presupuestoAsignado.findFirst({
+    where: { tenant_id: tenantId, proyecto_id: proyectoId, capitulo: 'MANO_OBRA', concepto_id: null, estatus: 'ACTIVO' },
+  });
+}
+
+export async function handleNominaAutorizadaEvent(event: BocamEvent): Promise<void> {
+  const { prenomina_id, codigo, total_neto } = event.payload as {
+    prenomina_id: string; codigo: string; total_neto: number;
+  };
+  const tenantId = event.context.tenant_id;
+  const proyectoId = event.context.proyecto_id;
+
+  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
+    const existente = await prisma.movimientoPresupuestal.findFirst({
+      where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.COMPROMISO },
+    });
+    if (existente) {
+      console.log(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.idempotent', prenomina_id }));
+      return;
+    }
+
+    const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
+    if (!presupuesto) {
+      console.warn(JSON.stringify({
+        action: 'finanzas.event.nomina_autorizada.sin_presupuesto_mano_obra',
+        tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id, codigo,
+        mensaje: 'No hay presupuesto MANO_OBRA activo para este proyecto — la nómina se autorizó igual, sin afectar ningún presupuesto.',
+      }));
+      return;
+    }
+
+    const monto = Number(total_neto);
+    await prisma.movimientoPresupuestal.create({
+      data: {
+        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
+        tipo: TipoMovimiento.COMPROMISO, concepto: `Nómina ${codigo}`, monto,
+        referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, referencia_codigo: codigo,
+        usuario_id: event.context.user_id,
+        notas: 'Compromiso automático desde evento personal.nomina_autorizada.',
+      },
+    });
+    await prisma.presupuestoAsignado.update({
+      where: { id_presupuesto: presupuesto.id_presupuesto },
+      data: { monto_comprometido: { increment: monto }, monto_disponible: { decrement: monto } },
+    });
+  });
+
+  console.log(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.processed', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+}
+
+export async function handleNominaPagadaEvent(event: BocamEvent): Promise<void> {
+  const { prenomina_id, codigo, total_neto } = event.payload as {
+    prenomina_id: string; codigo: string; total_neto: number;
+  };
+  const tenantId = event.context.tenant_id;
+  const proyectoId = event.context.proyecto_id;
+
+  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
+    const existente = await prisma.movimientoPresupuestal.findFirst({
+      where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.EJERCIDO },
+    });
+    if (existente) {
+      console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.idempotent', prenomina_id }));
+      return;
+    }
+
+    const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
+    if (!presupuesto) {
+      console.warn(JSON.stringify({
+        action: 'finanzas.event.nomina_pagada.sin_presupuesto_mano_obra',
+        tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id, codigo,
+      }));
+      return;
+    }
+
+    const monto = Number(total_neto);
+    await prisma.movimientoPresupuestal.create({
+      data: {
+        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
+        tipo: TipoMovimiento.EJERCIDO, concepto: `Pago nómina ${codigo}`, monto,
+        referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, referencia_codigo: codigo,
+        usuario_id: event.context.user_id,
+        notas: 'Ejercido automático desde evento personal.nomina_pagada.',
+      },
+    });
+    await prisma.presupuestoAsignado.update({
+      where: { id_presupuesto: presupuesto.id_presupuesto },
+      data: { monto_comprometido: { decrement: monto }, monto_ejercido: { increment: monto } },
+    });
+  });
+
+  console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.processed', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+}
+
 setupSentryExpressHandler(app);
 
 export async function startServer() {
@@ -2448,7 +2663,23 @@ export async function startServer() {
     await handleCentroCostosCreadoEvent(event);
   });
 
-  console.log('[Finanzas] 📡 Suscrito a: compras.oc_creada, compras.oc_cancelada, control_obra.estimacion_aprobada, control_obra.avance_fisico_validado, control_obra.avance_fisico_registrado, auth.centro_costos_creado');
+  // ─── SUSCRIPCIÓN: Sincronización de presupuesto por partida (Gerencia Técnica) ──
+  await eventBus.subscribe('gerencia_tecnica.saldo_partida_creado', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Saldo Partida Creado (sincronizando presupuesto por partida)`);
+    await handleSaldoPartidaCreadoEvent(event);
+  });
+
+  // ─── SUSCRIPCIÓN: Nómina compromete/ejerce el presupuesto de Mano de Obra ──────
+  await eventBus.subscribe('personal.nomina_autorizada', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Autorizada`);
+    await handleNominaAutorizadaEvent(event);
+  });
+  await eventBus.subscribe('personal.nomina_pagada', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Pagada`);
+    await handleNominaPagadaEvent(event);
+  });
+
+  console.log('[Finanzas] 📡 Suscrito a: compras.oc_creada, compras.oc_cancelada, control_obra.estimacion_aprobada, control_obra.avance_fisico_validado, control_obra.avance_fisico_registrado, auth.centro_costos_creado, gerencia_tecnica.saldo_partida_creado, personal.nomina_autorizada, personal.nomina_pagada');
 });
 }
 

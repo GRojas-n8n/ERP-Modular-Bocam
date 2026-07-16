@@ -39,6 +39,14 @@ model PresupuestoAsignado {
   capitulo String @default("MATERIALES") // MATERIALES, MANO_OBRA, SUBCONTRATOS, EQUIPOS, INDIRECTOS
   estatus  String @default("ACTIVO") // ACTIVO, CERRADO, SUSPENDIDO
 
+  // Partida real del contrato (Concepto de Gerencia Técnica) que este presupuesto
+  // sincroniza — UUID desnormalizado, sin FK cruzada (ver Requisicion.concepto_id,
+  // DetallePagoOC.concepto_id, mismo patrón). null = bolsa a nivel proyecto (hoy
+  // solo el capítulo MANO_OBRA, ver openspec/changes/unificar-presupuesto-a-partidas-gt).
+  // Cuando no es null, el presupuesto es de solo lectura — se sincroniza desde GT.
+  concepto_id    String? @db.Uuid
+  concepto_clave String? @db.VarChar(50)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -46,6 +54,7 @@ model PresupuestoAsignado {
   programa_pagos ProgramaPagos[]
 
   @@unique([tenant_id, proyecto_id, codigo])
+  @@unique([tenant_id, proyecto_id, concepto_id], name: "uq_presupuesto_concepto")
   @@index([tenant_id, proyecto_id])
   @@index([tenant_id, proyecto_id, capitulo])
   @@map("presupuestos_asignados")

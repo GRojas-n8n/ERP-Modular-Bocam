@@ -1499,6 +1499,8 @@ export namespace Prisma {
     moneda: string | null
     capitulo: string | null
     estatus: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -1516,6 +1518,8 @@ export namespace Prisma {
     moneda: string | null
     capitulo: string | null
     estatus: string | null
+    concepto_id: string | null
+    concepto_clave: string | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -1533,6 +1537,8 @@ export namespace Prisma {
     moneda: number
     capitulo: number
     estatus: number
+    concepto_id: number
+    concepto_clave: number
     created_at: number
     updated_at: number
     _all: number
@@ -1566,6 +1572,8 @@ export namespace Prisma {
     moneda?: true
     capitulo?: true
     estatus?: true
+    concepto_id?: true
+    concepto_clave?: true
     created_at?: true
     updated_at?: true
   }
@@ -1583,6 +1591,8 @@ export namespace Prisma {
     moneda?: true
     capitulo?: true
     estatus?: true
+    concepto_id?: true
+    concepto_clave?: true
     created_at?: true
     updated_at?: true
   }
@@ -1600,6 +1610,8 @@ export namespace Prisma {
     moneda?: true
     capitulo?: true
     estatus?: true
+    concepto_id?: true
+    concepto_clave?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -1704,6 +1716,8 @@ export namespace Prisma {
     moneda: string
     capitulo: string
     estatus: string
+    concepto_id: string | null
+    concepto_clave: string | null
     created_at: Date
     updated_at: Date
     _count: PresupuestoAsignadoCountAggregateOutputType | null
@@ -1740,6 +1754,8 @@ export namespace Prisma {
     moneda?: boolean
     capitulo?: boolean
     estatus?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
     created_at?: boolean
     updated_at?: boolean
     movimientos?: boolean | PresupuestoAsignado$movimientosArgs<ExtArgs>
@@ -1760,6 +1776,8 @@ export namespace Prisma {
     moneda?: boolean
     capitulo?: boolean
     estatus?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
     created_at?: boolean
     updated_at?: boolean
   }, ExtArgs["result"]["presupuestoAsignado"]>
@@ -1777,6 +1795,8 @@ export namespace Prisma {
     moneda?: boolean
     capitulo?: boolean
     estatus?: boolean
+    concepto_id?: boolean
+    concepto_clave?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
@@ -1807,6 +1827,8 @@ export namespace Prisma {
       moneda: string
       capitulo: string
       estatus: string
+      concepto_id: string | null
+      concepto_clave: string | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["presupuestoAsignado"]>
@@ -2216,6 +2238,8 @@ export namespace Prisma {
     readonly moneda: FieldRef<"PresupuestoAsignado", 'String'>
     readonly capitulo: FieldRef<"PresupuestoAsignado", 'String'>
     readonly estatus: FieldRef<"PresupuestoAsignado", 'String'>
+    readonly concepto_id: FieldRef<"PresupuestoAsignado", 'String'>
+    readonly concepto_clave: FieldRef<"PresupuestoAsignado", 'String'>
     readonly created_at: FieldRef<"PresupuestoAsignado", 'DateTime'>
     readonly updated_at: FieldRef<"PresupuestoAsignado", 'DateTime'>
   }
@@ -9020,6 +9044,8 @@ export namespace Prisma {
     moneda: 'moneda',
     capitulo: 'capitulo',
     estatus: 'estatus',
+    concepto_id: 'concepto_id',
+    concepto_clave: 'concepto_clave',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -9253,6 +9279,8 @@ export namespace Prisma {
     moneda?: StringFilter<"PresupuestoAsignado"> | string
     capitulo?: StringFilter<"PresupuestoAsignado"> | string
     estatus?: StringFilter<"PresupuestoAsignado"> | string
+    concepto_id?: UuidNullableFilter<"PresupuestoAsignado"> | string | null
+    concepto_clave?: StringNullableFilter<"PresupuestoAsignado"> | string | null
     created_at?: DateTimeFilter<"PresupuestoAsignado"> | Date | string
     updated_at?: DateTimeFilter<"PresupuestoAsignado"> | Date | string
     movimientos?: MovimientoPresupuestalListRelationFilter
@@ -9272,6 +9300,8 @@ export namespace Prisma {
     moneda?: SortOrder
     capitulo?: SortOrder
     estatus?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
+    concepto_clave?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     movimientos?: MovimientoPresupuestalOrderByRelationAggregateInput
@@ -9281,6 +9311,7 @@ export namespace Prisma {
   export type PresupuestoAsignadoWhereUniqueInput = Prisma.AtLeast<{
     id_presupuesto?: string
     tenant_id_proyecto_id_codigo?: PresupuestoAsignadoTenant_idProyecto_idCodigoCompoundUniqueInput
+    uq_presupuesto_concepto?: PresupuestoAsignadoUq_presupuesto_conceptoCompoundUniqueInput
     AND?: PresupuestoAsignadoWhereInput | PresupuestoAsignadoWhereInput[]
     OR?: PresupuestoAsignadoWhereInput[]
     NOT?: PresupuestoAsignadoWhereInput | PresupuestoAsignadoWhereInput[]
@@ -9295,11 +9326,13 @@ export namespace Prisma {
     moneda?: StringFilter<"PresupuestoAsignado"> | string
     capitulo?: StringFilter<"PresupuestoAsignado"> | string
     estatus?: StringFilter<"PresupuestoAsignado"> | string
+    concepto_id?: UuidNullableFilter<"PresupuestoAsignado"> | string | null
+    concepto_clave?: StringNullableFilter<"PresupuestoAsignado"> | string | null
     created_at?: DateTimeFilter<"PresupuestoAsignado"> | Date | string
     updated_at?: DateTimeFilter<"PresupuestoAsignado"> | Date | string
     movimientos?: MovimientoPresupuestalListRelationFilter
     programa_pagos?: ProgramaPagosListRelationFilter
-  }, "id_presupuesto" | "tenant_id_proyecto_id_codigo">
+  }, "id_presupuesto" | "tenant_id_proyecto_id_codigo" | "uq_presupuesto_concepto">
 
   export type PresupuestoAsignadoOrderByWithAggregationInput = {
     id_presupuesto?: SortOrder
@@ -9314,6 +9347,8 @@ export namespace Prisma {
     moneda?: SortOrder
     capitulo?: SortOrder
     estatus?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
+    concepto_clave?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: PresupuestoAsignadoCountOrderByAggregateInput
@@ -9339,6 +9374,8 @@ export namespace Prisma {
     moneda?: StringWithAggregatesFilter<"PresupuestoAsignado"> | string
     capitulo?: StringWithAggregatesFilter<"PresupuestoAsignado"> | string
     estatus?: StringWithAggregatesFilter<"PresupuestoAsignado"> | string
+    concepto_id?: UuidNullableWithAggregatesFilter<"PresupuestoAsignado"> | string | null
+    concepto_clave?: StringNullableWithAggregatesFilter<"PresupuestoAsignado"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"PresupuestoAsignado"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"PresupuestoAsignado"> | Date | string
   }
@@ -9945,6 +9982,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     movimientos?: MovimientoPresupuestalCreateNestedManyWithoutPresupuestoInput
@@ -9964,6 +10003,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     movimientos?: MovimientoPresupuestalUncheckedCreateNestedManyWithoutPresupuestoInput
@@ -9983,6 +10024,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     movimientos?: MovimientoPresupuestalUpdateManyWithoutPresupuestoNestedInput
@@ -10002,6 +10045,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     movimientos?: MovimientoPresupuestalUncheckedUpdateManyWithoutPresupuestoNestedInput
@@ -10021,6 +10066,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -10038,6 +10085,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10055,6 +10104,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10780,6 +10831,33 @@ export namespace Prisma {
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -10803,6 +10881,11 @@ export namespace Prisma {
     none?: ProgramaPagosWhereInput
   }
 
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
   export type MovimientoPresupuestalOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -10815,6 +10898,12 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     codigo: string
+  }
+
+  export type PresupuestoAsignadoUq_presupuesto_conceptoCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
   }
 
   export type PresupuestoAsignadoCountOrderByAggregateInput = {
@@ -10830,6 +10919,8 @@ export namespace Prisma {
     moneda?: SortOrder
     capitulo?: SortOrder
     estatus?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -10854,6 +10945,8 @@ export namespace Prisma {
     moneda?: SortOrder
     capitulo?: SortOrder
     estatus?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -10871,6 +10964,8 @@ export namespace Prisma {
     moneda?: SortOrder
     capitulo?: SortOrder
     estatus?: SortOrder
+    concepto_id?: SortOrder
+    concepto_clave?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -10931,6 +11026,39 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -10945,41 +11073,9 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
-  }
-
   export type PresupuestoAsignadoRelationFilter = {
     is?: PresupuestoAsignadoWhereInput
     isNot?: PresupuestoAsignadoWhereInput
-  }
-
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
   }
 
   export type MovimientoPresupuestalCountOrderByAggregateInput = {
@@ -11042,39 +11138,6 @@ export namespace Prisma {
 
   export type MovimientoPresupuestalSumOrderByAggregateInput = {
     monto?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -11480,6 +11543,10 @@ export namespace Prisma {
     divide?: Decimal | DecimalJsLike | number | string
   }
 
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
@@ -11544,10 +11611,6 @@ export namespace Prisma {
     create?: XOR<PresupuestoAsignadoCreateWithoutMovimientosInput, PresupuestoAsignadoUncheckedCreateWithoutMovimientosInput>
     connectOrCreate?: PresupuestoAsignadoCreateOrConnectWithoutMovimientosInput
     connect?: PresupuestoAsignadoWhereUniqueInput
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
   }
 
   export type PresupuestoAsignadoUpdateOneRequiredWithoutMovimientosNestedInput = {
@@ -11730,6 +11793,31 @@ export namespace Prisma {
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -11799,21 +11887,7 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
     notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -11821,21 +11895,21 @@ export namespace Prisma {
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
     gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type NestedUuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -11855,29 +11929,18 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
@@ -12111,6 +12174,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     programa_pagos?: ProgramaPagosCreateNestedManyWithoutPresupuestoInput
@@ -12129,6 +12194,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     programa_pagos?: ProgramaPagosUncheckedCreateNestedManyWithoutPresupuestoInput
@@ -12163,6 +12230,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     programa_pagos?: ProgramaPagosUpdateManyWithoutPresupuestoNestedInput
@@ -12181,6 +12250,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     programa_pagos?: ProgramaPagosUncheckedUpdateManyWithoutPresupuestoNestedInput
@@ -12199,6 +12270,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     movimientos?: MovimientoPresupuestalCreateNestedManyWithoutPresupuestoInput
@@ -12217,6 +12290,8 @@ export namespace Prisma {
     moneda?: string
     capitulo?: string
     estatus?: string
+    concepto_id?: string | null
+    concepto_clave?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     movimientos?: MovimientoPresupuestalUncheckedCreateNestedManyWithoutPresupuestoInput
@@ -12251,6 +12326,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     movimientos?: MovimientoPresupuestalUpdateManyWithoutPresupuestoNestedInput
@@ -12269,6 +12346,8 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     capitulo?: StringFieldUpdateOperationsInput | string
     estatus?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     movimientos?: MovimientoPresupuestalUncheckedUpdateManyWithoutPresupuestoNestedInput
