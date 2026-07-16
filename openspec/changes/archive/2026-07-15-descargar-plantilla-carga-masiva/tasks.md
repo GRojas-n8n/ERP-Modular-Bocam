@@ -70,5 +70,8 @@
 
 ## 7. Cierre
 
-- [ ] 7.1 PR contra `main`, CI verde, merge.
-- [ ] 7.2 Redeploy VPS de `app-shell` (build + `up -d`).
+- [x] 7.1 PR contra `main`, CI verde, merge.
+      → PR #70 mergeado (squash `ceefd85`).
+- [x] 7.2 Redeploy VPS de `app-shell` (build + `up -d`).
+      → Hecho 2026-07-15: build limpio, contenedor recreado, healthy, smoke
+      `https://iretum.com/` → HTTP 200.

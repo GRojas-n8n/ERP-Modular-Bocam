@@ -155,6 +155,12 @@
 
 ## 5. Cierre
 
-- [ ] 5.1 PR contra `main`, CI verde, merge.
-- [ ] 5.2 Redeploy VPS de `app-shell` (build + `up -d`), smoke visual en
+- [x] 5.1 PR contra `main`, CI verde, merge.
+      → PR #71 mergeado (squash `f62deb4`).
+- [x] 5.2 Redeploy VPS de `app-shell` (build + `up -d`), smoke visual en
       producción en al menos una vista con "Guardar" y una con "Subir PDF".
+      → Hecho 2026-07-15: build limpio, contenedor recreado, healthy, smoke
+      `https://iretum.com/` → HTTP 200. Verificado además que el CSS
+      compilado y servido en prod contiene la regla `!important` real
+      (`.\!bg-emerald-600{background-color:var(--color-emerald-600)!important}`),
+      confirmando que el fix está activo (no solo el build local).
