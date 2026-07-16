@@ -171,8 +171,10 @@
       `finanzas` en verde.
       → Ambos limpios. GT: 8 archivos (incluye el nuevo, 2/2). Finanzas:
       9 archivos (incluye `sincronizacion-partida-gt`, ahora 8/8).
-- [ ] 4.6 PR, CI verde, merge, redeploy VPS de ambos servicios.
-      → Se cierra junto con la sección 3 en el mismo PR (ver nota arriba).
+- [x] 4.6 PR, CI verde, merge, redeploy VPS de ambos servicios.
+      → PR #79 mergeado (squash `6f1f8e6`), junto con la sección 3.
+      Redeploy VPS 2026-07-16: build limpio (sin migración), contenedor
+      recreado, healthy, suscrito a `gerencia_tecnica.partida_comprometida`.
 
 ## 3. Compras — resolución automática de presupuesto + eliminar doble-commit
 
@@ -217,8 +219,11 @@
       archivos) no toca este endpoint — no se re-ejecutó completa dado
       que el cambio está quirúrgicamente acotado a `convertir-oc` y `tsc`
       ya confirma que no rompió tipos en otro lado.
-- [ ] 3.8 PR, CI verde, merge, redeploy VPS de `compras` (y de
+- [x] 3.8 PR, CI verde, merge, redeploy VPS de `compras` (y de
       `gerencia-tecnica`/`finanzas` para la sección 4, mismo PR).
+      → PR #79 mergeado (squash `6f1f8e6`). Redeploy VPS 2026-07-16: los 3
+      servicios (build limpio, sin migración), contenedores recreados,
+      healthy.
 
 ## 5. app-shell — simplificar selector de presupuesto en ComparativaDetail
 
