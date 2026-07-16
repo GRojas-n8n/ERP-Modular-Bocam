@@ -227,18 +227,31 @@
 
 ## 5. app-shell — simplificar selector de presupuesto en ComparativaDetail
 
-- [ ] 5.1 Test (RTL, rojo primero): con una requisición que tiene
+- [x] 5.1 Test (RTL, rojo primero): con una requisición que tiene
       `concepto_id`, el diálogo de "Autorizar" NO muestra ningún selector
       de presupuesto y el `POST convertir-oc` se llama sin
       `presupuesto_id`.
-- [ ] 5.2 Test (RTL, rojo primero): con una requisición sin
+- [x] 5.2 Test (RTL, rojo primero): con una requisición sin
       `concepto_id`, el comportamiento de selector manual se conserva sin
       regresión.
-- [ ] 5.3 Implementar en `apps/app-shell/src/components/ComparativaDetail.tsx`:
+      → Nuevo archivo `ComparativaDetail.resolucion-presupuesto-partida.test.tsx`
+      (2 tests). El primero confirmado en rojo antes del fix (el body
+      llevaba `presupuesto_id` del fallback en vez de omitirlo); el
+      segundo (fallback) ya pasaba — es el comportamiento preexistente sin
+      tocar, sirve como test de no-regresión.
+- [x] 5.3 Implementar en `apps/app-shell/src/components/ComparativaDetail.tsx`:
       condicionar el selector de presupuesto a la ausencia de
       `concepto_id` en la requisición.
-- [ ] 5.4 `npm run build` limpio en `app-shell`, suite de
+      → Nuevo prop `requisicionConceptoId?: string | null`; `handleAutorizar`
+      lo verifica primero y si existe llama `ejecutarConvertirOc()` sin
+      argumento (que ahora es opcional — el body del POST omite
+      `presupuesto_id` por completo, no lo manda `undefined`). Pasado
+      desde `ComprasView.tsx` como `req.concepto_id` (campo ya existente
+      en el tipo `Requisicion` del frontend).
+- [x] 5.4 `npm run build` limpio en `app-shell`, suite de
       `ComparativaDetail.*.test.tsx` en verde sin regresión.
+      → `tsc -b && vite build` limpio. 11 archivos, 28 tests, todos en
+      verde.
 - [ ] 5.5 PR, CI verde, merge, redeploy VPS de `app-shell`.
 
 ## 6. Migración de datos en producción

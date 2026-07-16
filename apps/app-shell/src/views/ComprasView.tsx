@@ -1684,6 +1684,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           return (
             <ComparativaDetail
               requisicionFolio={req.folio}
+              requisicionConceptoId={req.concepto_id}
               comparativa={comp}
               insumos={insumos}
               isDemo={isDemo}

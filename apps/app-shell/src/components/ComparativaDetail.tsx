@@ -307,6 +307,11 @@ export interface ProveedorCatalogoItem {
 
 interface Props {
   requisicionFolio: string;
+  /** concepto_id (partida real) de la requisición origen, si tiene una asignada.
+   *  Cuando existe, "Autorizar" resuelve el presupuesto automáticamente por
+   *  partida en el backend — no se muestra selector manual (ver
+   *  openspec/changes/unificar-presupuesto-a-partidas-gt). */
+  requisicionConceptoId?: string | null;
   comparativa: ComparativaLocal;
   insumos: Insumo[];
   isDemo: boolean;
@@ -322,7 +327,7 @@ interface Props {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export const ComparativaDetail: React.FC<Props> = ({
-  requisicionFolio, comparativa: comp, insumos, isDemo, onBack, onUpdate,
+  requisicionFolio, requisicionConceptoId, comparativa: comp, insumos, isDemo, onBack, onUpdate,
   onExportOcPdf, onExportComparativaPdf, proveedoresCatalogo = [],
   modo = 'compras',
 }) => {
@@ -1635,11 +1640,11 @@ export const ComparativaDetail: React.FC<Props> = ({
     }
   };
 
-  const ejecutarConvertirOc = async (presupuestoId: string) => {
+  const ejecutarConvertirOc = async (presupuestoId?: string) => {
     setAutorizando(true);
     setOcBloqueadas([]);
     try {
-      await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, { presupuesto_id: presupuestoId });
+      await api.post(`/api/v1/compras/comparativas/${comp.id}/convertir-oc`, presupuestoId ? { presupuesto_id: presupuestoId } : {});
       const freshResp = await api.get(`/api/v1/compras/comparativas/${comp.id}`);
       const freshData = freshResp.data.data ?? {};
       onUpdate({ ...comp, estado: 'AUTORIZADA', ordenes_compra: freshData.ordenes_compra ?? [] });
@@ -1681,6 +1686,13 @@ export const ComparativaDetail: React.FC<Props> = ({
       } finally {
         setAutorizando(false);
       }
+      return;
+    }
+    // Requisición con partida real (concepto_id): el backend resuelve el
+    // presupuesto automáticamente por partida — sin selector manual (ver
+    // openspec/changes/unificar-presupuesto-a-partidas-gt, presupuesto-resolucion-oc).
+    if (requisicionConceptoId) {
+      await ejecutarConvertirOc();
       return;
     }
     try {
