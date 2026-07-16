@@ -81,20 +81,36 @@
 
 ## 4. app-shell — nueva pestaña de solo lectura para Control de Proyectos
 
-- [ ] 4.1 Test (RTL, rojo primero): usuario con rol `control_proyectos`
+- [x] 4.1 Test (RTL, rojo primero): usuario con rol `control_proyectos`
       ve la pestaña "Presupuesto por Partida" en el módulo Control de
       Obra y puede expandir movimientos, sin ningún control de escritura
       visible.
-- [ ] 4.2 Agregar el subItem de navegación en
+      → `ControlObraView.presupuesto-partida.test.tsx`, confirmado rojo
+      (pestaña inexistente, caía al fallback "bitácoras") antes de
+      implementar.
+- [x] 4.2 Agregar el subItem de navegación en
       `apps/app-shell/src/components/Layout.tsx` (módulo `control-obra`,
       roles ya existentes `control_obra`/`control_proyectos`/`director`
       — el subItem visible solo para `control_proyectos` y `admin` si
       aplica, a definir según convención de `roles` por subItem ya usada
       en otros módulos).
-- [ ] 4.3 Montar el mismo componente `ControlPresupuestalTabla.tsx` en
+      → Se siguió la convención real del propio módulo `control-obra`:
+      ningún subItem existente restringe por rol más allá del módulo
+      (a diferencia de "Compras"), así que el nuevo subItem tampoco lo
+      hace — visible a los 3 roles del módulo. La restricción real de
+      "quién puede ver" ya vive en el guard de roles del endpoint GT
+      (sección 1), que sí exige explícitamente `control_proyectos`.
+- [x] 4.3 Montar el mismo componente `ControlPresupuestalTabla.tsx` en
       `ControlObraView.tsx` bajo esa pestaña, en modo lectura.
-- [ ] 4.4 `npm run build` limpio en `app-shell` y suite de tests en
+      → Reusa `GET /api/v1/gerencia-tecnica/reportes/control-presupuestal`
+      (mismo endpoint agregado que ya usa GT), consistente con el
+      precedente existente `loadCostosCO` que ya cruza a `gerencia-tecnica`
+      desde esta misma vista.
+- [x] 4.4 `npm run build` limpio en `app-shell` y suite de tests en
       verde.
+      → `tsc -b` limpio. `ControlObraView.presupuesto-partida.test.tsx`
+      2/2 verde. Suite completa de `app-shell`: 30/30 archivos, 86/86
+      tests verde (sin regresión).
 
 ## 5. Cierre
 
