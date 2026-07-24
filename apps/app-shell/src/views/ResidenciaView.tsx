@@ -345,6 +345,11 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   // ─ Requisiciones del Residente ─────────────────────────────────────────────
   const [reqsResidente, setReqsResidente] = useState<ReqResidente[]>([]);
   const [expandedReqIds, setExpandedReqIds] = useState<Set<string>>(new Set());
+  // Edición post-creación de especificación técnica (marca/modelo + detalle) —
+  // única fuente de verdad, ver capability especificacion-tecnica-fuente-unica
+  const [editingSpecItemId, setEditingSpecItemId] = useState<string | null>(null);
+  const [editingSpecDraft, setEditingSpecDraft] = useState<{ marca: string; detalle: string }>({ marca: '', detalle: '' });
+  const [savingSpecItemId, setSavingSpecItemId] = useState<string | null>(null);
   const [showReqPanel, setShowReqPanel] = useState(false);
   const [reqTipo, setReqTipo] = useState<'INSUMO' | 'APU' | 'IMPREVISTO'>('INSUMO');
   const [reqPrioridad, setReqPrioridad] = useState('MEDIA');
@@ -398,6 +403,42 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       if (next.has(reqId)) next.delete(reqId); else next.add(reqId);
       return next;
     });
+  };
+
+  const startEditingSpec = (item: ReqResidenteItem) => {
+    setEditingSpecItemId(item.id);
+    setEditingSpecDraft({
+      marca: item.especificacion_marca_modelo ?? '',
+      detalle: item.especificacion_detalle ?? '',
+    });
+  };
+
+  const cancelEditingSpec = () => {
+    setEditingSpecItemId(null);
+    setEditingSpecDraft({ marca: '', detalle: '' });
+  };
+
+  const saveEditingSpec = async (reqId: string, itemId: string) => {
+    setSavingSpecItemId(itemId);
+    try {
+      await api.put(
+        `/api/v1/compras/requisiciones/${reqId}/items/${itemId}/especificacion-simple`,
+        { especificacion_marca_modelo: editingSpecDraft.marca, especificacion_detalle: editingSpecDraft.detalle }
+      );
+      setReqsResidente(prev => prev.map(r => r.id !== reqId ? r : {
+        ...r,
+        items: r.items?.map(it => it.id !== itemId ? it : {
+          ...it,
+          especificacion_marca_modelo: editingSpecDraft.marca || null,
+          especificacion_detalle: editingSpecDraft.detalle || null,
+        }),
+      }));
+      cancelEditingSpec();
+    } catch (err) {
+      console.error('Error al guardar especificación', err);
+    } finally {
+      setSavingSpecItemId(null);
+    }
   };
 
   // ── Carga inicial ─────────────────────────────────────────────────────────
@@ -1660,16 +1701,66 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                                   ? (item.descripcion_libre || 'Descripción libre no capturada')
                                   : (insumo ? `[${insumo.clave}] ${insumo.descripcion}` : (item.insumo_id ? 'Insumo no encontrado en catálogo' : '—'));
                                 const unidad = item.es_imprevisto ? item.unidad_libre : insumo?.unidad_medida;
+                                const puedeEditarSpec = req.estado === 'PENDIENTE' || req.estado === 'APROBADA';
+                                const editandoEsteItem = editingSpecItemId === item.id;
                                 return (
                                   <div key={item.id} className="text-[10px] leading-snug">
                                     <div className="flex items-start justify-between gap-2">
                                       <span className="font-semibold text-foreground">{nombre}</span>
                                       <span className="shrink-0 font-mono text-muted-foreground">{item.cantidad} {unidad || ''}</span>
                                     </div>
-                                    {(item.especificacion_marca_modelo || item.especificacion_detalle) && (
-                                      <p className="text-muted-foreground">
-                                        {[item.especificacion_marca_modelo, item.especificacion_detalle].filter(Boolean).join(' — ')}
-                                      </p>
+                                    {editandoEsteItem ? (
+                                      <div className="mt-1 space-y-1">
+                                        <input
+                                          type="text"
+                                          placeholder="Marca / Modelo ref."
+                                          value={editingSpecDraft.marca}
+                                          maxLength={200}
+                                          onChange={e => setEditingSpecDraft(prev => ({ ...prev, marca: e.target.value }))}
+                                          className="w-full text-[10px] bg-background border border-border/40 rounded-lg px-2 py-1 focus:border-indigo-400 outline-none"
+                                        />
+                                        <textarea
+                                          placeholder="Detalle técnico"
+                                          value={editingSpecDraft.detalle}
+                                          onChange={e => setEditingSpecDraft(prev => ({ ...prev, detalle: e.target.value }))}
+                                          rows={2}
+                                          className="w-full text-[10px] bg-background border border-border/40 rounded-lg px-2 py-1 focus:border-indigo-400 outline-none resize-none"
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={cancelEditingSpec}
+                                            className="text-[9px] font-bold text-muted-foreground hover:text-foreground"
+                                          >
+                                            Cancelar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={savingSpecItemId === item.id}
+                                            onClick={() => saveEditingSpec(req.id, item.id)}
+                                            className="text-[9px] font-bold text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                          >
+                                            {savingSpecItemId === item.id ? 'Guardando…' : 'Guardar'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-start justify-between gap-2">
+                                        {(item.especificacion_marca_modelo || item.especificacion_detalle) ? (
+                                          <p className="text-muted-foreground">
+                                            {[item.especificacion_marca_modelo, item.especificacion_detalle].filter(Boolean).join(' — ')}
+                                          </p>
+                                        ) : <span />}
+                                        {puedeEditarSpec && (
+                                          <button
+                                            type="button"
+                                            onClick={() => startEditingSpec(item)}
+                                            className="shrink-0 text-[9px] font-bold text-indigo-600 hover:text-indigo-700"
+                                          >
+                                            Editar
+                                          </button>
+                                        )}
+                                      </div>
                                     )}
                                     {item.notas && <p className="italic text-muted-foreground">{item.notas}</p>}
                                   </div>

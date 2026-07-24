@@ -647,6 +647,63 @@ app.put(
   }
 );
 
+// PUT /requisiciones/:reqId/items/:itemId/especificacion-simple — corrección de
+// marca/modelo y detalle por el Residente después de crear la requisición.
+// Única fuente de verdad para el Cuadro Comparativo (ver capability
+// especificacion-tecnica-fuente-unica).
+app.put(
+  '/api/v1/compras/requisiciones/:reqId/items/:itemId/especificacion-simple',
+  requireRoles('resident', 'residencia', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { reqId, itemId } = req.params;
+      const { especificacion_marca_modelo, especificacion_detalle } = req.body as {
+        especificacion_marca_modelo?: string | null; especificacion_detalle?: string | null;
+      };
+
+      const data = await createTenantContext(
+        { tenantId, proyectoId, userId },
+        async (prisma) => {
+          const req_obj = await prisma.requisicion.findUnique({
+            where: { id_requisicion: reqId },
+            select: { estado: true, tenant_id: true },
+          });
+          if (!req_obj || req_obj.tenant_id !== tenantId) {
+            return { notFound: true };
+          }
+          if (!['PENDIENTE', 'APROBADA'].includes(req_obj.estado)) {
+            return { locked: true, estado: req_obj.estado };
+          }
+
+          const item = await prisma.requisicionItem.findFirst({
+            where: { id_item: itemId, requisicion_id: reqId, tenant_id: tenantId },
+          });
+          if (!item) return { notFound: true };
+
+          const actualizado = await prisma.requisicionItem.update({
+            where: { id_item: itemId },
+            data: {
+              especificacion_marca_modelo: especificacion_marca_modelo?.trim() || null,
+              especificacion_detalle: especificacion_detalle?.trim() || null,
+            },
+          });
+          return { item: actualizado };
+        }
+      );
+
+      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Requisición o partida no encontrada.' });
+      if ((data as any).locked) return res.status(400).json({ success: false, message: `La requisición en estado ${(data as any).estado} no puede editarse.` });
+
+      logInfo(req, 'compras', 'compras.requisicion.item.especificacion_simple.actualizada', 'Especificación simple actualizada', { req_id: reqId, item_id: itemId });
+      res.json({ success: true, data: (data as any).item });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.requisicion.item.especificacion_simple.error', 'Error al actualizar especificación simple', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
 // ── Solicitudes de Cotización ──────────────────────────────────────────────────
 
 app.post(
@@ -2544,6 +2601,9 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
               include: { proveedores: { select: { proveedor_id: true, estado: true, fecha_respuesta: true } } },
             })
           : null;
+        // Proveedores sin fila aquí nunca pasaron por la Solicitud de Cotización
+        // formal — el frontend los marca como "agregado sin invitación" (ver
+        // capability seleccion-proveedores-unificada).
         const estado_respuesta_proveedor: Record<string, { estado: string; fecha_respuesta: Date | null }> = {};
         for (const scp of solicitudCotizacion?.proveedores ?? []) {
           estado_respuesta_proveedor[scp.proveedor_id] = { estado: scp.estado, fecha_respuesta: scp.fecha_respuesta };
@@ -2641,6 +2701,16 @@ app.put('/api/v1/compras/comparativas/:id/lineas/:insumoId',
           });
           const esPorDetalleReq = existente ? !existente.insumo_id : false;
 
+          // Fuente única: solo aplica a renglones de catálogo (insumo_id) con
+          // RequisicionItem de origen — ahí la especificación se edita en la
+          // Requisición, no aquí. Los ítems de texto libre/imprevisto (identificados
+          // por detalle_req_id, sin insumo_id) conservan el flujo existente: Compras
+          // define marca/especificaciones directo en el cuadro (ver capability
+          // cotizar-items-texto-libre-comparativa). Ver especificacion-tecnica-fuente-unica.
+          if (!esPorDetalleReq && existente?.detalle_req_id) {
+            return { specLocked: true };
+          }
+
           const datosBase = {
             marca_modelo_ref:           marca_modelo_ref?.trim() ?? null,
             especificaciones_requeridas: especificaciones_requeridas?.trim() ?? null,
@@ -2660,8 +2730,9 @@ app.put('/api/v1/compras/comparativas/:id/lineas/:insumoId',
         },
       );
 
-      if ((data as any).notFound) return res.status(404).json({ success: false, message: 'Cuadro no encontrado.' });
-      if ((data as any).locked)    return res.status(403).json({ success: false, message: 'El cuadro no está en estado BORRADOR.' });
+      if ((data as any).notFound)   return res.status(404).json({ success: false, message: 'Cuadro no encontrado.' });
+      if ((data as any).locked)     return res.status(403).json({ success: false, message: 'El cuadro no está en estado BORRADOR.' });
+      if ((data as any).specLocked) return res.status(400).json({ success: false, message: 'La especificación técnica de este renglón proviene de la Requisición y se edita ahí.' });
       return res.json({ success: true, data: (data as any).linea });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
@@ -5485,7 +5556,8 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
             });
           }
 
-          // 4. Clonar líneas de especificación
+          // 4. Clonar líneas de especificación (incluye detalle_req_id para conservar
+          // la fuente única con el RequisicionItem — ver especificacion-tecnica-fuente-unica)
           if (cuadroOriginal.lineas.length > 0) {
             await prisma.comparativaLinea.createMany({
               data: cuadroOriginal.lineas.map(l => ({
@@ -5495,6 +5567,7 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
                 insumo_id: l.insumo_id,
                 marca_modelo_ref: l.marca_modelo_ref,
                 especificaciones_requeridas: l.especificaciones_requeridas,
+                detalle_req_id: l.detalle_req_id,
               })),
             });
           }

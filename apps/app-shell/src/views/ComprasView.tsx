@@ -1387,7 +1387,13 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   // ── Aprobación de requisición (Procurement / Admin / Superintendent) ─────────
-  const handleAprobar = async (reqId: string) => {
+  // Si el usuario también puede invitar a cotizar (procurement/admin), aprobar
+  // e invitar se encadenan en una sola acción — ver capability
+  // solicitud-cotizacion-proveedores (acción combinada aprobar+invitar).
+  const canInvitarCotizacion = roles.some(r => ['procurement', 'admin'].includes(r));
+
+  const handleAprobar = async (req: Requisicion) => {
+    const reqId = req.id;
     if (isDemo) {
       setRequisiciones(prev => prev.map(r => r.id === reqId ? { ...r, estado: 'APROBADA' } : r));
       notify({ type: 'success', title: 'Requisición aprobada', message: 'Procuración puede iniciar el cuadro comparativo.' });
@@ -1395,8 +1401,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
     try {
       setAprobando(reqId);
-      await api.patch(`/api/v1/compras/requisiciones/${reqId}/aprobar`);
+      const resp = await api.patch(`/api/v1/compras/requisiciones/${reqId}/aprobar`);
       await fetchData();
+      const aprobada = resp.data?.data?.estado === 'APROBADA';
+      if (aprobada && canInvitarCotizacion) {
+        notify({ type: 'success', title: 'Requisición aprobada', message: 'Abriendo invitación a cotizar…' });
+        await handleOpenSolicitudPanel({ ...req, estado: 'APROBADA' });
+        return;
+      }
       notify({ type: 'success', title: 'Requisición aprobada', message: 'Ya puedes iniciar el cuadro comparativo.' });
     } catch (err: any) {
       notify({ type: 'error', title: 'Error al aprobar', message: err.response?.data?.message || err.message });
@@ -1908,12 +1920,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         {/* Botón "Aprobar" para Procurement en requisiciones PENDIENTE/BORRADOR */}
                         {isProcurement && ['PENDIENTE', 'BORRADOR'].includes(req.estado) && (
                           <Button
-                            onClick={() => handleAprobar(req.id)}
+                            onClick={() => handleAprobar(req)}
                             disabled={aprobando === req.id}
                             className="w-full rounded-xl bg-emerald-600 text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-500 disabled:opacity-60"
                           >
                             <IconCheckCircle2 className="h-3.5 w-3.5" />
-                            {aprobando === req.id ? 'Aprobando…' : 'Aprobar Requisición'}
+                            {aprobando === req.id
+                              ? 'Aprobando…'
+                              : canInvitarCotizacion ? 'Aprobar e Invitar a Cotizar' : 'Aprobar Requisición'}
                           </Button>
                         )}
                         {/* Aviso de partida bloqueada — PENDIENTE_TRANSFERENCIA */}

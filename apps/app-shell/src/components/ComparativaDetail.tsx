@@ -405,9 +405,6 @@ export const ComparativaDetail: React.FC<Props> = ({
   const [fichasInsumo, setFichasInsumo] = useState<Record<string, FichaTecnica[]>>({});
   const [sideSheetFichasInsumoId, setSideSheetFichasInsumoId] = useState<string | null>(null);
   const [loadingFichas, setLoadingFichas] = useState(false);
-  const [uploadingFicha, setUploadingFicha] = useState(false);
-  const fichaFileRef = useRef<HTMLInputElement>(null);
-  const [fichaUploadInsumoId, setFichaUploadInsumoId] = useState<string | null>(null);
 
   // ── Detalles técnicos inline (BORRADOR) ──────────────────────────────────────
   const [detallesTecnicos, setDetallesTecnicos] = useState<Record<string, { marca: string; espec: string }>>({});
@@ -801,29 +798,6 @@ export const ComparativaDetail: React.FC<Props> = ({
     } catch (_) { /* silencioso — el usuario puede reintentar */ }
   };
 
-  // Upload de ficha técnica
-  const handleFichaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    const insumoId = fichaUploadInsumoId;
-    e.target.value = '';
-    if (!file || !insumoId) return;
-    setUploadingFicha(true);
-    try {
-      const fd = new FormData();
-      fd.append('archivo', file);
-      fd.append('nombre_doc', file.name);
-      await api.post(`/api/v1/gerencia-tecnica/insumos/${insumoId}/fichas`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      notify({ type: 'success', title: 'Ficha subida', message: file.name });
-      await fetchFichas(insumoId);
-    } catch (err: any) {
-      notify({ type: 'error', title: 'Error al subir ficha', message: err.response?.data?.message ?? err.message });
-    } finally {
-      setUploadingFicha(false);
-    }
-  };
-
   // Eliminar ficha técnica
   const handleFichaDelete = async (insumoId: string, fichaId: string) => {
     try {
@@ -950,7 +924,6 @@ export const ComparativaDetail: React.FC<Props> = ({
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleAddProveedorFromCatalog = (prov: ProveedorCatalogoItem) => {
-    if (comp.proveedores.length >= 3) return;
     if (comp.proveedores.some(p => p.id === prov.id)) {
       notify({ type: 'warning', title: 'Proveedor duplicado', message: 'Este proveedor ya está en el cuadro' });
       return;
@@ -2002,10 +1975,10 @@ export const ComparativaDetail: React.FC<Props> = ({
               <IconScale className="h-4 w-4 text-amber-500" />
               Proveedores en comparativa
               <span className="text-[10px] font-medium normal-case text-muted-foreground">
-                ({comp.proveedores.length} / 3)
+                ({comp.proveedores.length})
               </span>
             </CardTitle>
-            {comp.proveedores.length < 3 && !locked && (
+            {!locked && (
               <Button
                 onClick={() => setShowAddProv(!showAddProv)}
                 variant="outline"
@@ -2075,6 +2048,14 @@ export const ComparativaDetail: React.FC<Props> = ({
                     {prov.estado_respuesta && ESTADO_RESPUESTA_STYLE[prov.estado_respuesta] && (
                       <span className={cn('rounded-md border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest', ESTADO_RESPUESTA_STYLE[prov.estado_respuesta].badge)}>
                         {ESTADO_RESPUESTA_STYLE[prov.estado_respuesta].label}
+                      </span>
+                    )}
+                    {!prov.estado_respuesta && (
+                      <span
+                        title="Este proveedor no pasó por la Solicitud de Cotización formal"
+                        className="rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700"
+                      >
+                        Sin invitación
                       </span>
                     )}
                     {archivosProveedor[prov.id] && (
@@ -2161,26 +2142,32 @@ export const ComparativaDetail: React.FC<Props> = ({
                   const dt = detallesTecnicos[lineaDetalleKey(linea)] ?? { marca: '', espec: '' };
                   const fichas = linea.insumo_id ? fichasInsumo[linea.insumo_id] : undefined;
                   const nFichas = fichas?.length ?? null;
-                  const canUpload = isProcurement;
                   return (
                   <React.Fragment key={linea.id}>
                   <tr className="border-b border-border/20 hover:bg-muted/20 transition-colors">
                     <td className="px-5 py-3">
                       <div className="text-[10px] font-black text-emerald-700">{linea.insumo_clave}</div>
                       <div className="text-xs text-foreground max-w-[200px] truncate">{linea.insumo_descripcion}</div>
-                      {/* Specs de la req (modo residente) */}
-                      {isResidenteMode && (linea.especificacion_marca_modelo || linea.especificacion_detalle) && (
-                        <div className="mt-1.5 rounded border border-indigo-500/20 bg-indigo-500/5 px-2 py-1.5 space-y-0.5">
-                          {linea.especificacion_marca_modelo && (
-                            <div className="text-[9px] font-black text-indigo-700">Marca/Modelo: {linea.especificacion_marca_modelo}</div>
-                          )}
-                          {linea.especificacion_detalle && (
-                            <div className="text-[9px] text-muted-foreground leading-tight">{linea.especificacion_detalle}</div>
-                          )}
-                        </div>
-                      )}
-                      {/* Detalles técnicos — editable en BORRADOR, solo lectura después */}
-                      {!locked ? (
+                      {/* Especificación técnica: fuente única cuando la línea proviene de la
+                          Requisición (detalle_req_id) — solo lectura, se corrige en la
+                          Requisición. Ver capability especificacion-tecnica-fuente-unica. */}
+                      {/* Fuente única solo aplica a renglones de catálogo (insumo_id) con
+                          RequisicionItem de origen. Los ítems de texto libre/imprevisto
+                          (sin insumo_id) conservan la edición directa en el cuadro. */}
+                      {linea.insumo_id && linea.detalle_req_id ? (
+                        (linea.especificacion_marca_modelo || linea.especificacion_detalle) && (
+                          <div className="mt-1.5 rounded border border-indigo-500/20 bg-indigo-500/5 px-2 py-1.5 space-y-0.5">
+                            {linea.especificacion_marca_modelo && (
+                              <div className="text-[9px] font-black text-indigo-700">Marca/Modelo: {linea.especificacion_marca_modelo}</div>
+                            )}
+                            {linea.especificacion_detalle && (
+                              <div className="text-[9px] text-muted-foreground leading-tight">{linea.especificacion_detalle}</div>
+                            )}
+                            <div className="text-[8px] italic text-indigo-500/70">Definida en la Requisición</div>
+                          </div>
+                        )
+                      ) : !locked ? (
+                        // Línea legacy (sin RequisicionItem de origen) — se conserva editable.
                         <div className="mt-1.5 space-y-1">
                           <input
                             type="text"
@@ -2249,7 +2236,7 @@ export const ComparativaDetail: React.FC<Props> = ({
                               : 'text-muted-foreground/50 hover:text-indigo-500'
                           )}
                         >
-                          📎 {nFichas != null ? `${nFichas} ficha${nFichas !== 1 ? 's' : ''}` : canUpload ? '+ Subir ficha' : 'Sin fichas'}
+                          📎 {nFichas != null ? `${nFichas} ficha${nFichas !== 1 ? 's' : ''}` : 'Sin fichas'}
                         </button>
                       )}
                     </td>
@@ -3473,44 +3460,23 @@ export const ComparativaDetail: React.FC<Props> = ({
         </div>
       </SideSheet>
 
-      {/* ── Input oculto para upload de fichas técnicas ─────────────────────── */}
-      <input
-        ref={fichaFileRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-        className="hidden"
-        onChange={handleFichaUpload}
-      />
-
-      {/* ── SideSheet: Fichas Técnicas del Insumo ───────────────────────────── */}
+      {/* ── SideSheet: Fichas Técnicas del Insumo — solo consulta/descarga.
+          La carga es exclusiva del formulario de Nueva Requisición (Residencia),
+          ver capability ficha-tecnica-carga-unica. ─────────────────────────── */}
       <SideSheet
         isOpen={!!sideSheetFichasInsumoId}
         onClose={() => setSideSheetFichasInsumoId(null)}
         title="Fichas Técnicas"
-        description="Documentos de especificación enviados por proveedores para este insumo"
+        description="Documentos de especificación técnica del insumo, capturados por el Residente al crear la requisición"
         maxWidthClassName="max-w-lg"
       >
         <div className="flex flex-col gap-4 p-6">
-          {isProcurement && (
-            <button
-              onClick={() => {
-                setFichaUploadInsumoId(sideSheetFichasInsumoId);
-                fichaFileRef.current?.click();
-              }}
-              disabled={uploadingFicha}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-600 bg-emerald-500/10 py-3 text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
-            >
-              {uploadingFicha ? 'Subiendo...' : '📎 Subir ficha técnica'}
-            </button>
-          )}
-
           {loadingFichas ? (
             <div className="flex items-center justify-center py-8 text-[10px] text-muted-foreground">Cargando fichas...</div>
           ) : (fichasInsumo[sideSheetFichasInsumoId ?? ''] ?? []).length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <span className="text-2xl">📂</span>
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sin fichas técnicas</p>
-              {isProcurement && <p className="text-[10px] text-muted-foreground/60">Sube el primer documento con el botón de arriba</p>}
             </div>
           ) : (
             <div className="space-y-2">
