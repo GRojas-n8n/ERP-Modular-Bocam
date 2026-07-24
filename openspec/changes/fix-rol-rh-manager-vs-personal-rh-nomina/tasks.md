@@ -53,8 +53,6 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 PR contra `main`, CI verde, merge.
-- [ ] 4.2 Redeploy VPS de `personal` (build + `up -d`, sin migración).
-- [ ] 4.3 Verificación manual: confirmar que
-      `recursoshumanos@bocam.com.mx` puede autorizar y pagar una pre-nómina
-      real en producción tras el redeploy.
+- [x] 4.1 PR contra `main`, CI verde, merge. (PR #87, CI `backend-e2e` verde, squash-merge a `main` en `07059ef`)
+- [x] 4.2 Redeploy VPS de `personal` (build + `up -d`, sin migración). Contenedor `bocam-vps-personal` healthy; verificado en el contenedor real 19 ocurrencias de `personal_rh` y 0 de `rh_manager` en el bundle desplegado.
+- [ ] 4.3 **Pendiente** — requiere las credenciales reales de `recursoshumanos@bocam.com.mx` (no disponibles para el agente). Verificación manual: confirmar que puede autorizar y pagar una pre-nómina real en producción tras el redeploy.
