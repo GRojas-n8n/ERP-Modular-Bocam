@@ -321,7 +321,7 @@ export const VentasView: React.FC = () => {
                 Importar CSV/Excel
               </button>
               <button
-                onClick={() => descargarPlantillaXlsx('plantilla_clientes.xlsx', [
+                onClick={() => void descargarPlantillaXlsx('plantilla_clientes.xlsx', [
                   { header: 'RFC', ejemplo: 'ABC010101AB1' },
                   { header: 'Razón Social', ejemplo: 'Cliente de Ejemplo, S.A. de C.V.' },
                   { header: 'Email de contacto', ejemplo: 'contacto@clienteejemplo.com' },

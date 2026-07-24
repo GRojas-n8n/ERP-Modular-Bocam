@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import * as XLSX from 'xlsx';
+import { parseCsvOrExcelFileComoFilas } from '../lib/csvImport';
 import api from '../lib/api';
 import { useArrowKeyNav } from '../hooks/useArrowKeyNav';
 import { useTenant } from '../context/TenantContext';
@@ -651,30 +651,9 @@ function leerArchivoComoRawRows(
   onSuccess: (rows: (string | number)[][]) => void,
   onError: (msg: string) => void
 ): void {
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    try {
-      const data = evt.target?.result;
-      const ext  = file.name.split('.').pop()?.toLowerCase();
-      const wb   = ext === 'csv' || ext === 'txt'
-        ? XLSX.read(data as string, { type: 'string' })
-        : XLSX.read(data as ArrayBuffer, { type: 'array' });
-      const ws   = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<(string | number)[]>(ws, {
-        header: 1,
-        defval: '',
-        raw: false,
-      });
-      onSuccess(rows as (string | number)[][]);
-    } catch (e: any) {
-      onError(`Error al leer el archivo: ${e.message}`);
-    }
-  };
-  if (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')) {
-    reader.readAsText(file, 'UTF-8');
-  } else {
-    reader.readAsArrayBuffer(file);
-  }
+  parseCsvOrExcelFileComoFilas(file)
+    .then(rows => onSuccess(rows))
+    .catch((e: any) => onError(`Error al leer el archivo: ${e.message}`));
 }
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -1358,20 +1337,9 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     if (!file) return;
     setArchivoNombre(file.name);
     setParseError(null);
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = evt.target?.result;
-        const ext = file.name.split('.').pop()?.toLowerCase();
-        const wb  = (ext === 'csv' || ext === 'txt')
-          ? XLSX.read(data as string, { type: 'string' })
-          : XLSX.read(data as ArrayBuffer, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
 
-        const allRowsRaw: (string | number)[][] = XLSX.utils.sheet_to_json(ws, {
-          header: 1, defval: '', raw: false,
-        });
-
+    parseCsvOrExcelFileComoFilas(file)
+      .then(allRowsRaw => {
         let headerRowIndex = -1;
         for (let i = 0; i < Math.min(30, allRowsRaw.length); i++) {
           const fila = allRowsRaw[i];
@@ -1391,8 +1359,14 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           return;
         }
 
-        const rawRows: Record<string, string | number>[] = XLSX.utils.sheet_to_json(ws, {
-          defval: '', raw: false, range: headerRowIndex,
+        // Equivalente a sheet_to_json(ws, {defval:'', raw:false, range: headerRowIndex}):
+        // la fila en headerRowIndex se usa como encabezados, cada fila siguiente se
+        // convierte a objeto con esas llaves.
+        const encabezados = allRowsRaw[headerRowIndex];
+        const rawRows: Record<string, string>[] = allRowsRaw.slice(headerRowIndex + 1).map(fila => {
+          const obj: Record<string, string> = {};
+          encabezados.forEach((clave, i) => { obj[clave] = fila[i] ?? ''; });
+          return obj;
         });
 
         if (rawRows.length === 0) {
@@ -1423,15 +1397,8 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
         setPreview(conceptos);
         setPanelImport(true);
-      } catch (err: any) {
-        setParseError(`Error al leer el archivo: ${err.message}`);
-      }
-    };
-    if (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')) {
-      reader.readAsText(file, 'UTF-8');
-    } else {
-      reader.readAsArrayBuffer(file);
-    }
+      })
+      .catch((err: any) => setParseError(`Error al leer el archivo: ${err.message}`));
     e.target.value = '';
   };
 

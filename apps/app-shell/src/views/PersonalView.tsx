@@ -569,7 +569,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 Importar CSV/Excel
               </Button>
               <button
-                onClick={() => descargarPlantillaXlsx('plantilla_empleados.xlsx', [
+                onClick={() => void descargarPlantillaXlsx('plantilla_empleados.xlsx', [
                   { header: 'Nombre', ejemplo: 'Juan' },
                   { header: 'Apellido paterno', ejemplo: 'Pérez' },
                   { header: 'Apellido materno', ejemplo: 'García' },

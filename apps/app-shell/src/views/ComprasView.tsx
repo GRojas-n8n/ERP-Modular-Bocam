@@ -1548,7 +1548,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   Importar CSV/Excel
                 </Button>
                 <button
-                  onClick={() => descargarPlantillaXlsx('plantilla_proveedores.xlsx', [
+                  onClick={() => void descargarPlantillaXlsx('plantilla_proveedores.xlsx', [
                     { header: 'RFC', ejemplo: 'ABC010101AB1' },
                     { header: 'Razón Social', ejemplo: 'Proveedor de Ejemplo, S.A. de C.V.' },
                     { header: 'Email de contacto', ejemplo: 'contacto@proveedorejemplo.com' },
