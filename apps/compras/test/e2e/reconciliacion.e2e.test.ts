@@ -22,7 +22,7 @@ async function cleanupTenantData(tenantId: string) {
   await prisma.proveedor.deleteMany({ where: { tenant_id: tenantId } });
 }
 
-async function seedOrdenCompra(estado: 'ERROR_FINANZAS' | 'CANCELACION_PENDIENTE') {
+async function seedOrdenCompra(estado: 'ERROR_FINANZAS' | 'CANCELACION_PENDIENTE', codigoOverride?: string) {
   const tenantId = randomUUID();
   const proyectoId = randomUUID();
   const userId = randomUUID();
@@ -44,7 +44,7 @@ async function seedOrdenCompra(estado: 'ERROR_FINANZAS' | 'CANCELACION_PENDIENTE
       tenant_id: tenantId,
       proyecto_id: proyectoId,
       proveedor_id: proveedor.id_proveedor,
-      codigo: `OC-E2E-${Date.now()}`,
+      codigo: codigoOverride ?? `OC-E2E-${Date.now()}`,
       estado,
       subtotal: '1000.00',
       iva: '160.00',
@@ -167,6 +167,12 @@ async function setup() {
   });
   finanzasStub.post('/api/v1/finanzas/comprometer-fondos', (req, res) => {
     financeCalls.push({ method: 'POST', path: req.path, body: req.body });
+    // Marcador usado por testErrorFinanzasReconciliationReintentoFallido para
+    // simular que Finanzas sigue rechazando el presupuesto en el reintento.
+    if (typeof req.body?.oc_codigo === 'string' && req.body.oc_codigo.includes('FORZAR-ERROR')) {
+      res.status(500).json({ success: false, error: { message: 'Presupuesto insuficiente — simulado (reintento fallido)' } });
+      return;
+    }
     res.json({ success: true, data: { status: 'COMPROMETIDO' } });
   });
   finanzasStub.post('/api/v1/finanzas/liberar-fondos', (req, res) => {
@@ -238,6 +244,131 @@ async function testErrorFinanzasReconciliation() {
     assert.equal(financeCalls.length, 1);
     console.log('ok - compras reconciliacion EMITIDA -> idempotent');
   } finally {
+    await cleanupTenantData(seeded.tenantId);
+  }
+}
+
+// ── Tarea 5.1-5.3 (fix-alertas-compras-procesos-atorados): la reconciliación
+// exitosa debe apagar la AlertaOcError asociada, y no fallar si no existe una.
+
+async function testErrorFinanzasReconciliationResuelveAlerta() {
+  financeCalls = [];
+  const seeded = await seedOrdenCompra('ERROR_FINANZAS');
+
+  try {
+    await prisma.alertaOcError.create({
+      data: {
+        tenant_id: seeded.tenantId,
+        proyecto_id: seeded.proyectoId,
+        oc_id: seeded.ocId,
+        oc_codigo: 'OC-ALERTA-TEST',
+        error_message: 'Presupuesto insuficiente — simulado',
+        resuelta: false,
+      },
+    });
+
+    const token = signTenantToken({
+      userId: seeded.userId,
+      tenantId: seeded.tenantId,
+      proyectoId: seeded.proyectoId,
+      roles: ['admin'],
+    });
+
+    const response = await fetch(
+      `${comprasBaseUrl}/api/v1/compras/ordenes-compra/${seeded.ocId}/reconciliar-finanzas`,
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.data.estado, 'EMITIDA');
+
+    const alerta = await prisma.alertaOcError.findFirst({
+      where: { tenant_id: seeded.tenantId, oc_id: seeded.ocId },
+    });
+    assert.ok(alerta, 'La alerta debe seguir existiendo (no se borra, se marca resuelta)');
+    assert.equal(alerta.resuelta, true, 'La reconciliación exitosa debe marcar resuelta=true');
+
+    console.log('ok - compras reconciliacion exitosa marca AlertaOcError.resuelta=true');
+  } finally {
+    await prisma.alertaOcError.deleteMany({ where: { tenant_id: seeded.tenantId } });
+    await cleanupTenantData(seeded.tenantId);
+  }
+}
+
+async function testErrorFinanzasReconciliationSinAlertaPrevia() {
+  financeCalls = [];
+  const seeded = await seedOrdenCompra('ERROR_FINANZAS');
+
+  try {
+    // Deliberadamente NO se crea AlertaOcError — la OC pudo caer en
+    // ERROR_FINANZAS por una vía que no la generó.
+    const token = signTenantToken({
+      userId: seeded.userId,
+      tenantId: seeded.tenantId,
+      proyectoId: seeded.proyectoId,
+      roles: ['admin'],
+    });
+
+    const response = await fetch(
+      `${comprasBaseUrl}/api/v1/compras/ordenes-compra/${seeded.ocId}/reconciliar-finanzas`,
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    assert.equal(response.status, 200, 'No debe fallar aunque no exista una AlertaOcError para actualizar');
+    const payload = await response.json();
+    assert.equal(payload.data.estado, 'EMITIDA');
+
+    console.log('ok - compras reconciliacion exitosa sin AlertaOcError previa no falla');
+  } finally {
+    await cleanupTenantData(seeded.tenantId);
+  }
+}
+
+async function testErrorFinanzasReconciliationReintentoFallido() {
+  financeCalls = [];
+  const seeded = await seedOrdenCompra('ERROR_FINANZAS', `OC-FORZAR-ERROR-${Date.now()}`);
+
+  try {
+    await prisma.alertaOcError.create({
+      data: {
+        tenant_id: seeded.tenantId,
+        proyecto_id: seeded.proyectoId,
+        oc_id: seeded.ocId,
+        oc_codigo: 'OC-ALERTA-REINTENTO-FALLIDO',
+        error_message: 'Presupuesto insuficiente — simulado',
+        resuelta: false,
+      },
+    });
+
+    const token = signTenantToken({
+      userId: seeded.userId,
+      tenantId: seeded.tenantId,
+      proyectoId: seeded.proyectoId,
+      roles: ['admin'],
+    });
+
+    const response = await fetch(
+      `${comprasBaseUrl}/api/v1/compras/ordenes-compra/${seeded.ocId}/reconciliar-finanzas`,
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    assert.equal(response.status, 502, 'El reintento fallido debe retornar el error explícito, no silenciarlo');
+    const payload = await response.json();
+    assert.equal(payload.success, false);
+    assert.ok(payload.message, 'El mensaje de error debe estar presente');
+
+    const persisted = await prisma.ordenCompra.findUnique({ where: { id_orden: seeded.ocId } });
+    assert.equal(persisted?.estado, 'ERROR_FINANZAS', 'La OC debe permanecer en ERROR_FINANZAS');
+
+    const alerta = await prisma.alertaOcError.findFirst({
+      where: { tenant_id: seeded.tenantId, oc_id: seeded.ocId },
+    });
+    assert.equal(alerta?.resuelta, false, 'La alerta NO debe marcarse resuelta si el reintento falla');
+
+    console.log('ok - compras reconciliacion con reintento fallido retorna error explícito y no toca la alerta');
+  } finally {
+    await prisma.alertaOcError.deleteMany({ where: { tenant_id: seeded.tenantId } });
     await cleanupTenantData(seeded.tenantId);
   }
 }
@@ -383,6 +514,9 @@ async function main() {
     await testComparativaToOcFlow();
     await testOcCancelFlow();
     await testErrorFinanzasReconciliation();
+    await testErrorFinanzasReconciliationResuelveAlerta();
+    await testErrorFinanzasReconciliationSinAlertaPrevia();
+    await testErrorFinanzasReconciliationReintentoFallido();
     await testCancelacionPendienteReconciliation();
   } finally {
     await stopHttpApp(comprasServer);

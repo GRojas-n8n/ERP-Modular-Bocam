@@ -211,6 +211,15 @@ const OC_STATUS = {
   CANCELADA: 'CANCELADA',
 } as const;
 
+// Ver openspec/changes/fix-alertas-compras-procesos-atorados. Umbral de antigüedad
+// para detectar Requisiciones/CuadrosComparativos iniciados por el Residente que
+// quedaron atorados sin que nadie avance el siguiente paso.
+const DIAS_ALERTA_PROCESO_ATORADO = 5;
+
+// Estados de CuadroComparativo que representan un cierre real del proceso — cualquier
+// otro estado cuenta como "no terminal" para la alerta de cuadro_atorado.
+const CUADRO_ESTADOS_TERMINALES = new Set(['APROBADO_GT', 'RECHAZADO_GT', 'CERRADO', 'SUPERSEDIDO']);
+
 // Calcula el nuevo estado de la OC basado en acumulados de recepciones.
 // Retorna 'PARCIALMENTE_RECIBIDA' si alguna línea no está completa,
 // 'RECIBIDA' si todas las líneas superan o igualan su cantidad pedida.
@@ -4115,12 +4124,15 @@ app.get('/api/v1/compras/dashboard',
       const { tenantId, proyectoId, userId } = req.securityContext;
       const now = new Date();
 
+      const umbralAtorado = new Date(now.getTime() - DIAS_ALERTA_PROCESO_ATORADO * 24 * 60 * 60 * 1000);
+
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
         const [
           totalReq, pendienteAprobacion, listaParaCotizar,
           cotizando, pendienteGt,
           ocsEmitidas, ocsPendientesRecibir,
           solicitudesVencidas, actividadReciente,
+          ocsError, requisicionesAprobadasViejas, cuadrosExistentes, cuadrosAtorados,
         ] = await Promise.all([
           prisma.requisicion.count(),
           prisma.requisicion.count({ where: { estado: 'PENDIENTE' } }),
@@ -4142,18 +4154,76 @@ app.get('/api/v1/compras/dashboard',
             take: 5,
             select: { id_requisicion: true, codigo: true, observaciones: true, estado: true, fecha_solicitud: true },
           }),
+          // Filtro explícito de tenant_id/proyecto_id (no depender solo de RLS —
+          // ver memoria hallazgo-rls-bypass-bocam-admin, mismo patrón ya usado en
+          // el resto del archivo, ej. reportes/ocs-por-concepto).
+          prisma.alertaOcError.findMany({
+            where: { resuelta: false, tenant_id: tenantId, proyecto_id: proyectoId },
+            orderBy: { created_at: 'desc' },
+            select: { oc_id: true, oc_codigo: true, error_message: true, created_at: true },
+          }),
+          prisma.requisicion.findMany({
+            where: { estado: 'APROBADA', fecha_solicitud: { lt: umbralAtorado }, tenant_id: tenantId, proyecto_id: proyectoId },
+            select: { id_requisicion: true, codigo: true, fecha_solicitud: true },
+          }),
+          // Todos los cuadros existentes (cualquier estado) sólo para saber qué
+          // requisiciones ya tienen uno — no se filtra por estado aquí.
+          prisma.cuadroComparativo.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId },
+            select: { requisicion_id: true },
+          }),
+          prisma.cuadroComparativo.findMany({
+            where: {
+              estado: { notIn: Array.from(CUADRO_ESTADOS_TERMINALES) },
+              fecha_creacion: { lt: umbralAtorado },
+              tenant_id: tenantId,
+              proyecto_id: proyectoId,
+            },
+            select: { id_cuadro: true, codigo: true, estado: true, fecha_creacion: true },
+          }),
         ]);
 
-        const alertas = solicitudesVencidas.map((s) => {
-          const msVencida = now.getTime() - s.fecha_limite.getTime();
-          const diasVencida = Math.floor(msVencida / (1000 * 60 * 60 * 24));
-          return {
-            tipo: 'cotizacion_vencida',
-            req_id: s.requisicion_id,
-            folio: s.id_solicitud,
-            dias_vencida: diasVencida,
-          };
-        });
+        const diasDesde = (fecha: Date) => Math.floor((now.getTime() - fecha.getTime()) / (1000 * 60 * 60 * 24));
+
+        const alertasCotizacionVencida = solicitudesVencidas.map((s) => ({
+          tipo: 'cotizacion_vencida',
+          req_id: s.requisicion_id,
+          folio: s.id_solicitud,
+          dias_vencida: diasDesde(s.fecha_limite),
+        }));
+
+        const alertasOcError = ocsError.map((a) => ({
+          tipo: 'oc_error_finanzas',
+          oc_id: a.oc_id,
+          oc_codigo: a.oc_codigo,
+          error_message: a.error_message,
+          dias_vencida: diasDesde(a.created_at),
+        }));
+
+        const requisicionIdsConCuadro = new Set(cuadrosExistentes.map((c) => c.requisicion_id));
+        const alertasRequisicionSinCuadro = requisicionesAprobadasViejas
+          .filter((r) => !requisicionIdsConCuadro.has(r.id_requisicion))
+          .map((r) => ({
+            tipo: 'requisicion_sin_cuadro',
+            req_id: r.id_requisicion,
+            folio: r.codigo,
+            dias_vencida: diasDesde(r.fecha_solicitud),
+          }));
+
+        const alertasCuadroAtorado = cuadrosAtorados.map((c) => ({
+          tipo: 'cuadro_atorado',
+          cuadro_id: c.id_cuadro,
+          folio: c.codigo,
+          estado: c.estado,
+          dias_vencida: diasDesde(c.fecha_creacion),
+        }));
+
+        const alertas = [
+          ...alertasCotizacionVencida,
+          ...alertasOcError,
+          ...alertasRequisicionSinCuadro,
+          ...alertasCuadroAtorado,
+        ];
 
         return {
           kpis: {
@@ -4519,10 +4589,20 @@ app.post('/api/v1/compras/ordenes-compra/:id/reconciliar-finanzas', requireRoles
 
       const updated = await createTenantContext(
         { tenantId, proyectoId, userId },
-        async (prisma) => prisma.ordenCompra.update({
-          where: { id_orden: id },
-          data: { estado: OC_STATUS.EMITIDA },
-        })
+        async (prisma) => {
+          const oc = await prisma.ordenCompra.update({
+            where: { id_orden: id },
+            data: { estado: OC_STATUS.EMITIDA },
+          });
+          // Ver openspec/changes/fix-alertas-compras-procesos-atorados: apaga la
+          // alerta del dashboard si esta OC tenía una — updateMany no falla si no
+          // existe fila (la OC pudo caer en ERROR_FINANZAS por una vía sin alerta).
+          await prisma.alertaOcError.updateMany({
+            where: { tenant_id: tenantId, oc_id: id },
+            data: { resuelta: true },
+          });
+          return oc;
+        }
       );
 
       const response = buildTerminalHttpResponse({

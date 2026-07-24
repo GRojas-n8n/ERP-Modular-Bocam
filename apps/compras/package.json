@@ -12,6 +12,7 @@
     "test:e2e:reconciliacion": "node -r ts-node/register/transpile-only test/e2e/reconciliacion.e2e.test.ts",
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
     "test:integration:oc-error-alert": "node -r ts-node/register/transpile-only test/integration/oc-error-alert.integration.test.ts",
+    "test:integration:dashboard-alertas-atorados": "node -r ts-node/register/transpile-only test/integration/dashboard-alertas-procesos-atorados.integration.test.ts",
     "test:integration:oc-enviar-correo": "node -r ts-node/register/transpile-only test/integration/orden-compra-enviar-correo.integration.test.ts",
     "test:integration:estado-respuesta-proveedor": "node -r ts-node/register/transpile-only test/integration/estado-respuesta-proveedor-comparativo.integration.test.ts",
     "test:integration:fecha-entrega-partida": "node -r ts-node/register/transpile-only test/integration/fecha-entrega-estimada-por-partida.integration.test.ts",
