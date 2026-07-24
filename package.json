@@ -48,6 +48,10 @@
     "js-yaml": "^4.2.0",
     "@babel/core": "^7.29.6",
     "@opentelemetry/core": "^2.8.0",
+    "postcss": "^8.5.12",
+    "fast-uri": "^3.1.4",
+    "body-parser": "^1.20.6",
+    "@hono/node-server": "^2.0.5",
     "typescript-eslint": {
       "@typescript-eslint/typescript-estree": {
         "minimatch": {
