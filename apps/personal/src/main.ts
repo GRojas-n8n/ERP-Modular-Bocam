@@ -677,14 +677,14 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
   }
 });
 
-// Autorizar pre-nómina (RBAC: admin)
+// Autorizar pre-nómina (RBAC: admin | personal_rh)
 app.patch('/api/v1/personal/prenominas/:id/autorizar', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
 
-    if (!roles.includes('admin') && !roles.includes('rh_manager')) {
-      res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o rh_manager pueden autorizar pre-nóminas.'));
+    if (!roles.includes('admin') && !roles.includes('personal_rh')) {
+      res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o personal_rh pueden autorizar pre-nóminas.'));
       return;
     }
 
@@ -728,13 +728,13 @@ app.patch('/api/v1/personal/prenominas/:id/autorizar', async (req: Request, res:
   }
 });
 
-// Marcar pre-nómina como PAGADA (RBAC: admin | rh_manager)
+// Marcar pre-nómina como PAGADA (RBAC: admin | personal_rh)
 app.patch('/api/v1/personal/prenominas/:id/pagar', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
-    if (!roles.includes('admin') && !roles.includes('rh_manager')) {
-      res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o rh_manager pueden marcar una nómina como pagada.'));
+    if (!roles.includes('admin') && !roles.includes('personal_rh')) {
+      res.status(403).json(createApiError('PER_FORBIDDEN', 'Solo admin o personal_rh pueden marcar una nómina como pagada.'));
       return;
     }
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
