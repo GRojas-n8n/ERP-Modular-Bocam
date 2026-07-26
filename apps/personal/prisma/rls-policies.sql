@@ -14,6 +14,15 @@ ALTER TABLE config_deducciones_empleados ENABLE ROW LEVEL SECURITY;
 ALTER TABLE nominas_complementarias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE nominas_complementarias_detalle ENABLE ROW LEVEL SECURITY;
 
+-- Tablas agregadas 2026-07-26 por expediente-asignacion-periodicidad-personal
+-- y credenciales-asistencia-qr-segura — nunca recibieron política (ver
+-- openspec/changes/fix-rls-personal-tablas-nuevas).
+ALTER TABLE asignaciones_residente ENABLE ROW LEVEL SECURITY;
+ALTER TABLE config_asistencia_proyecto ENABLE ROW LEVEL SECURITY;
+ALTER TABLE config_nomina_proyecto ENABLE ROW LEVEL SECURITY;
+ALTER TABLE credenciales_empleado ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documentos_empleado ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE empleados FORCE ROW LEVEL SECURITY;
 ALTER TABLE cuadrillas FORCE ROW LEVEL SECURITY;
 ALTER TABLE asignaciones_frente FORCE ROW LEVEL SECURITY;
@@ -23,6 +32,11 @@ ALTER TABLE registros_asistencia FORCE ROW LEVEL SECURITY;
 ALTER TABLE config_deducciones_empleados FORCE ROW LEVEL SECURITY;
 ALTER TABLE nominas_complementarias FORCE ROW LEVEL SECURITY;
 ALTER TABLE nominas_complementarias_detalle FORCE ROW LEVEL SECURITY;
+ALTER TABLE asignaciones_residente FORCE ROW LEVEL SECURITY;
+ALTER TABLE config_asistencia_proyecto FORCE ROW LEVEL SECURITY;
+ALTER TABLE config_nomina_proyecto FORCE ROW LEVEL SECURITY;
+ALTER TABLE credenciales_empleado FORCE ROW LEVEL SECURITY;
+ALTER TABLE documentos_empleado FORCE ROW LEVEL SECURITY;
 
 -- NOTA: cada tabla con tenant_id + proyecto_id usa UNA sola política que combina
 -- ambas condiciones con AND (USING + WITH CHECK). Postgres combina políticas
@@ -145,3 +159,56 @@ CREATE POLICY isolation_nominas_complementarias_detalle ON nominas_complementari
         AND nc.proyecto_id::text = current_setting('app.current_proyecto_id', true)
     )
   );
+
+-- =============================================================================
+-- Tablas agregadas 2026-07-26 (expediente-asignacion-periodicidad-personal +
+-- credenciales-asistencia-qr-segura) — ver
+-- openspec/changes/fix-rls-personal-tablas-nuevas para el detalle del gap y
+-- la verificación empírica que confirmó la fuga antes de este fix.
+-- =============================================================================
+
+-- Config de Asistencia por Proyecto / geofencing (tenant + proyecto)
+DROP POLICY IF EXISTS isolation_config_asistencia_proyecto ON config_asistencia_proyecto;
+CREATE POLICY isolation_config_asistencia_proyecto ON config_asistencia_proyecto
+  USING (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  )
+  WITH CHECK (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  );
+
+-- Config de Nómina por Proyecto / periodicidad de pago (tenant + proyecto)
+DROP POLICY IF EXISTS isolation_config_nomina_proyecto ON config_nomina_proyecto;
+CREATE POLICY isolation_config_nomina_proyecto ON config_nomina_proyecto
+  USING (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  )
+  WITH CHECK (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  );
+
+-- Asignación de Empleado a Residente(s) (solo tenant — el empleado se
+-- comparte entre proyectos, mismo criterio que empleados)
+DROP POLICY IF EXISTS isolation_asignaciones_residente ON asignaciones_residente;
+CREATE POLICY isolation_asignaciones_residente ON asignaciones_residente
+  USING (tenant_id::text = current_setting('app.current_tenant_id', true))
+  WITH CHECK (tenant_id::text = current_setting('app.current_tenant_id', true));
+
+-- Credencial de Empleado / token QR (solo tenant — mismo criterio que
+-- empleados; la credencial no está scoped a un proyecto)
+DROP POLICY IF EXISTS isolation_credenciales_empleado ON credenciales_empleado;
+CREATE POLICY isolation_credenciales_empleado ON credenciales_empleado
+  USING (tenant_id::text = current_setting('app.current_tenant_id', true))
+  WITH CHECK (tenant_id::text = current_setting('app.current_tenant_id', true));
+
+-- Documento de Expediente del Empleado (solo tenant — mismo criterio que
+-- empleados; contiene datos personales sensibles: INE, comprobante de
+-- domicilio, contratos)
+DROP POLICY IF EXISTS isolation_documentos_empleado ON documentos_empleado;
+CREATE POLICY isolation_documentos_empleado ON documentos_empleado
+  USING (tenant_id::text = current_setting('app.current_tenant_id', true))
+  WITH CHECK (tenant_id::text = current_setting('app.current_tenant_id', true));
