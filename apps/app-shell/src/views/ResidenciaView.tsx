@@ -15,6 +15,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  ConfirmCriticalActionDialog,
   EmptyStatePanel,
   FormField,
   Input,
@@ -29,10 +30,10 @@ import {
   TableRow,
   Textarea,
   cn,
+  getProjectColor,
 } from '@bocam/ui-core';
 import {
   IconAlertCircle,
-  IconCheckCircle2,
   IconClipboardCheck,
   IconClock,
   IconQrCode,
@@ -283,9 +284,11 @@ const Modal: React.FC<{ open: boolean; onClose: () => void; title: string; child
 // ── Componente principal ─────────────────────────────────────────────────────
 
 export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant } = useTenant();
+  const { tenant, user, currentProjectId } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
 
   const activeTab: TabId = (activeSubView as TabId) || 'estimaciones';
   const [loading, setLoading] = useState(true);
@@ -1639,33 +1642,26 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* MODAL — Confirmación aprobación                                 */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <Modal open={!!confirmAprobar} onClose={() => setConfirmAprobar(null)} title="Confirmar Aprobación">
+      <ConfirmCriticalActionDialog
+        open={!!confirmAprobar}
+        title={`¿Aprobar la prenómina ${confirmAprobar?.codigo ?? ''}?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Confirmar aprobación"
+        onConfirm={handleAprobarNomina}
+        onCancel={() => setConfirmAprobar(null)}
+      >
         {confirmAprobar && (
-          <div className="flex flex-col gap-4">
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 text-sm">
-              <p className="font-semibold text-foreground">¿Aprobar la prenómina <span className="font-mono">{confirmAprobar.codigo}</span>?</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {confirmAprobar.total_empleados} empleados · {fmt$(confirmAprobar.total_neto)} neto
-              </p>
-              <p className="mt-2 text-xs text-amber-600 font-medium">
-                Esta acción notificará al departamento de Personal para procesar el pago.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setConfirmAprobar(null)}>
-                Cancelar
-              </Button>
-              <Button
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={handleAprobarNomina}
-              >
-                <IconCheckCircle2 className="mr-1.5 h-4 w-4" />
-                Confirmar aprobación
-              </Button>
-            </div>
+          <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 text-sm">
+            <p className="text-xs text-muted-foreground">
+              {confirmAprobar.total_empleados} empleados · {fmt$(confirmAprobar.total_neto)} neto
+            </p>
+            <p className="mt-2 text-xs text-amber-600 font-medium">
+              Esta acción notificará al departamento de Personal para procesar el pago.
+            </p>
           </div>
         )}
-      </Modal>
+      </ConfirmCriticalActionDialog>
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* TAB: REQUISICIONES                                               */}

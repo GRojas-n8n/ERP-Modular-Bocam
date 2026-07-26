@@ -363,6 +363,88 @@ export function SideSheet({
   );
 }
 
+export interface ConfirmCriticalActionDialogProps {
+  open: boolean;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  projectName: string;
+  projectColorDot?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmDisabled?: boolean;
+  variant?: 'default' | 'destructive';
+  children?: React.ReactNode;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+/**
+ * Diálogo compartido para acciones críticas/irreversibles (aprobar OC,
+ * firmar evaluación, autorizar/pagar nómina) que siempre muestra el nombre
+ * del proyecto activo, para que el usuario no actúe sobre el proyecto
+ * equivocado cuando tiene varios proyectos abiertos. Ver openspec change
+ * selector-proyecto-confirmacion-critica.
+ */
+export function ConfirmCriticalActionDialog({
+  open,
+  title,
+  description,
+  projectName,
+  projectColorDot,
+  confirmLabel = 'Confirmar',
+  cancelLabel = 'Cancelar',
+  confirmDisabled = false,
+  variant = 'default',
+  children,
+  onConfirm,
+  onCancel,
+}: ConfirmCriticalActionDialogProps) {
+  React.useEffect(() => {
+    if (!open) return undefined;
+    const onEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [open, onCancel]);
+
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative w-full max-w-md rounded-2xl border border-border/40 bg-card p-6 shadow-2xl">
+        <div className="mb-3 flex items-center gap-2">
+          {projectColorDot ? <span className={cn('h-2.5 w-2.5 shrink-0 rounded-full', projectColorDot)} /> : null}
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Proyecto activo: {projectName}
+          </span>
+        </div>
+
+        <h2 className="text-base font-black text-foreground">{title}</h2>
+        {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
+        {children ? <div className="mt-3">{children}</div> : null}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            variant={variant === 'destructive' ? 'destructive' : 'primary'}
+            disabled={confirmDisabled}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TableContainer({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn('overflow-x-auto', className)} {...props} />;
 }

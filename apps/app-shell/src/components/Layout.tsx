@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, SectionBadge, cn } from '@bocam/ui-core';
+import { Button, SectionBadge, cn, getProjectColor } from '@bocam/ui-core';
 import {
   IconDashboard,
   IconBriefcase,
@@ -247,6 +247,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
   const handleLogout   = () => { setIsMobileNavOpen(false); logout(); };
   const projects       = user?.projects || [];
   const currentProject = projects.find(p => p.id === currentProjectId) || projects[0];
+  const currentProjectColor = getProjectColor(currentProject?.id);
   const userInitial    = user?.name?.charAt(0)?.toUpperCase() || 'U';
 
   // ─── Sidebar ─────────────────────────────────────────────────────────────
@@ -520,8 +521,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 font-bold truncate max-w-[180px] transition-all hover:opacity-80 bg-primary/10 text-foreground"
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-md border-l-4 px-2 py-1 font-bold truncate max-w-[180px] transition-all hover:opacity-80 text-foreground',
+                    currentProjectColor.border,
+                    currentProjectColor.bgSoft
+                  )}
                 >
+                  <span className={cn('h-2 w-2 shrink-0 rounded-full', currentProjectColor.dot)} />
                   <span className="truncate">{currentProject?.code || 'Sin Proyecto'}</span>
                   {projects.length > 1 && (
                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
@@ -546,23 +552,30 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                     </div>
                     {projects.map(project => {
                       const active = project.id === (currentProjectId || projects[0]?.id);
+                      const color = getProjectColor(project.id);
                       return (
                         <button
                           key={project.id}
                           type="button"
                           onClick={() => { setCurrentProjectId(project.id); setIsProjectDropdownOpen(false); }}
-                          className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+                          className={cn(
+                            'flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/60',
+                            active && color.bgSoft
+                          )}
                         >
-                          <div className="min-w-0">
-                            <p className={`text-xs font-bold truncate ${active ? 'text-primary' : 'text-foreground'}`}>
-                              {project.name}
-                            </p>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                              {project.code}
-                            </p>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className={cn('h-2 w-2 shrink-0 rounded-full', color.dot)} />
+                            <div className="min-w-0">
+                              <p className={cn('text-xs font-bold truncate', active ? color.text : 'text-foreground')}>
+                                {project.name}
+                              </p>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                {project.code}
+                              </p>
+                            </div>
                           </div>
                           {active && (
-                            <div className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                            <div className={cn('h-2 w-2 shrink-0 rounded-full', color.dot)} />
                           )}
                         </button>
                       );

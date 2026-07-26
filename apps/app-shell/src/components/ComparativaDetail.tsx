@@ -9,11 +9,13 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  ConfirmCriticalActionDialog,
   Input,
   SectionBadge,
   SideSheet,
   Textarea,
   cn,
+  getProjectColor,
 } from '@bocam/ui-core';
 import {
   IconArrowLeft,
@@ -331,9 +333,11 @@ export const ComparativaDetail: React.FC<Props> = ({
   onExportOcPdf, onExportComparativaPdf, proveedoresCatalogo = [],
   modo = 'compras',
 }) => {
-  const { user } = useTenant();
+  const { user, currentProjectId } = useTenant();
   const { notify } = useNotification();
   const roles: string[] = user?.role ?? [];
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
 
   // ── Local state ─────────────────────────────────────────────────────────────
   const [showAddProv, setShowAddProv] = useState(false);
@@ -3105,65 +3109,56 @@ export const ComparativaDetail: React.FC<Props> = ({
       )}
 
       {/* ── Modal: Firma (no-dismissible) ─────────────────────────────────────── */}
-      {showFirmaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl bg-card shadow-2xl overflow-hidden">
-            <div className="bg-red-600 px-6 py-4">
-              <h2 className="text-sm font-black uppercase tracking-tight text-white">🔒 Firmar Evaluación Técnica</h2>
-              <p className="text-[10px] text-red-100/80 mt-0.5">Esta acción es irreversible</p>
-            </div>
-            <div className="px-6 py-5 space-y-4">
-              {/* Resumen */}
-              <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 space-y-2">
-                <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Cuadro</span><span className="font-black">{comp.codigo ?? comp.id.slice(0, 8)}</span></div>
-                <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Total renglones</span><span className="font-black">{comp.lineas.length}</span></div>
-                <div className="flex gap-3 text-[10px]">
-                  <span className="rounded bg-green-500/10 px-2 py-0.5 text-green-700 font-black">C: {comp.lineas.filter(l => l.evaluacion_tecnica === 'C').length}</span>
-                  <span className="rounded bg-red-500/10 px-2 py-0.5 text-red-700 font-black">NC: {comp.lineas.filter(l => l.evaluacion_tecnica === 'NC').length}</span>
-                  <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-700 font-black">DA: {comp.lineas.filter(l => l.evaluacion_tecnica === 'DA').length}</span>
-                </div>
-              </div>
-              {/* Veredicto resumido */}
-              {veredicto.trim() && (
-                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">Veredicto a firmar</p>
-                  <p className="text-[11px] text-foreground leading-relaxed">{veredicto.trim()}</p>
-                  {provSugeridos.length > 0 && (
-                    <p className="text-[10px] text-indigo-600 font-bold">
-                      Proveedor(es) sugerido(s): {provSugeridos.map(id => comp.proveedores.find(p => p.id === id)?.nombre ?? id).join(', ')}
-                    </p>
-                  )}
-                </div>
-              )}
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-                <p className="text-[11px] text-red-700 font-bold">⚠️ Al firmar, este cuadro quedará bloqueado permanentemente. Solo el administrador podrá desbloquearlo. ¿Confirmas?</p>
-              </div>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={firmaConfirmado}
-                  onChange={e => setFirmaConfirmado(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-border accent-red-600"
-                />
-                <span className="text-[11px] text-foreground leading-tight">Confirmo que revisé personalmente cada renglón de esta requisición y acepto responsabilidad técnica por esta evaluación.</span>
-              </label>
-              {firmaError && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2 text-[11px] text-red-700">{firmaError}</div>
-              )}
-            </div>
-            <div className="border-t border-border/40 px-6 py-4 flex justify-end gap-3">
-              <Button onClick={() => { setShowFirmaModal(false); setFirmaError(null); }} variant="outline" className="rounded-xl" disabled={firmando}>Cancelar</Button>
-              <Button
-                onClick={handleFirmar}
-                disabled={!firmaConfirmado || firmando}
-                className="rounded-xl bg-red-600 px-6 font-black text-white hover:bg-red-500 disabled:opacity-40"
-              >
-                {firmando ? 'Firmando...' : '🔒 Firmar y Bloquear'}
-              </Button>
-            </div>
+      <ConfirmCriticalActionDialog
+        open={showFirmaModal}
+        title="🔒 Firmar Evaluación Técnica"
+        description="Esta acción es irreversible"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        variant="destructive"
+        confirmLabel={firmando ? 'Firmando...' : '🔒 Firmar y Bloquear'}
+        confirmDisabled={!firmaConfirmado || firmando}
+        onConfirm={handleFirmar}
+        onCancel={() => { setShowFirmaModal(false); setFirmaError(null); }}
+      >
+        {/* Resumen */}
+        <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 space-y-2">
+          <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Cuadro</span><span className="font-black">{comp.codigo ?? comp.id.slice(0, 8)}</span></div>
+          <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Total renglones</span><span className="font-black">{comp.lineas.length}</span></div>
+          <div className="flex gap-3 text-[10px]">
+            <span className="rounded bg-green-500/10 px-2 py-0.5 text-green-700 font-black">C: {comp.lineas.filter(l => l.evaluacion_tecnica === 'C').length}</span>
+            <span className="rounded bg-red-500/10 px-2 py-0.5 text-red-700 font-black">NC: {comp.lineas.filter(l => l.evaluacion_tecnica === 'NC').length}</span>
+            <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-700 font-black">DA: {comp.lineas.filter(l => l.evaluacion_tecnica === 'DA').length}</span>
           </div>
         </div>
-      )}
+        {/* Veredicto resumido */}
+        {veredicto.trim() && (
+          <div className="mt-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 space-y-1">
+            <p className="text-[9px] font-black uppercase tracking-widest text-indigo-700">Veredicto a firmar</p>
+            <p className="text-[11px] text-foreground leading-relaxed">{veredicto.trim()}</p>
+            {provSugeridos.length > 0 && (
+              <p className="text-[10px] text-indigo-600 font-bold">
+                Proveedor(es) sugerido(s): {provSugeridos.map(id => comp.proveedores.find(p => p.id === id)?.nombre ?? id).join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+        <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+          <p className="text-[11px] text-red-700 font-bold">⚠️ Al firmar, este cuadro quedará bloqueado permanentemente. Solo el administrador podrá desbloquearlo. ¿Confirmas?</p>
+        </div>
+        <label className="mt-3 flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={firmaConfirmado}
+            onChange={e => setFirmaConfirmado(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-red-600"
+          />
+          <span className="text-[11px] text-foreground leading-tight">Confirmo que revisé personalmente cada renglón de esta requisición y acepto responsabilidad técnica por esta evaluación.</span>
+        </label>
+        {firmaError && (
+          <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2 text-[11px] text-red-700">{firmaError}</div>
+        )}
+      </ConfirmCriticalActionDialog>
 
       {/* ── Modal: Confirmar nueva revisión ───────────────────────────────────── */}
       {showRevisionConfirm && (

@@ -13,6 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ConfirmCriticalActionDialog,
   FormField,
   Input,
   Select,
@@ -26,6 +27,7 @@ import {
   TableRow,
   Textarea,
   cn,
+  getProjectColor,
 } from '@bocam/ui-core';
 import {
   IconAlertCircle,
@@ -282,6 +284,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const { tenant, user, currentProjectId } = useTenant();
   const isDemo = tenant?.id === 'iretum-demo';
   const { notify } = useNotification();
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const [confirmAprobarReq, setConfirmAprobarReq] = useState<Requisicion | null>(null);
 
   // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
   const roles: string[] = user?.role ?? [];
@@ -1920,7 +1924,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         {/* Botón "Aprobar" para Procurement en requisiciones PENDIENTE/BORRADOR */}
                         {isProcurement && ['PENDIENTE', 'BORRADOR'].includes(req.estado) && (
                           <Button
-                            onClick={() => handleAprobar(req)}
+                            onClick={() => setConfirmAprobarReq(req)}
                             disabled={aprobando === req.id}
                             className="w-full rounded-xl bg-emerald-600 text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-500 disabled:opacity-60"
                           >
@@ -4180,6 +4184,25 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </div>
         </div>
       </SlidePanel>
+
+      <ConfirmCriticalActionDialog
+        open={confirmAprobarReq !== null}
+        title={`¿Aprobar la requisición ${confirmAprobarReq?.folio ?? ''}?`}
+        description={
+          canInvitarCotizacion
+            ? 'Al aprobar se abrirá la invitación a cotizar con proveedores.'
+            : 'Procuración podrá iniciar el cuadro comparativo para esta requisición.'
+        }
+        projectName={currentProjectName}
+        projectColorDot={getProjectColor(currentProjectId).dot}
+        confirmLabel="Aprobar"
+        onConfirm={() => {
+          const req = confirmAprobarReq;
+          setConfirmAprobarReq(null);
+          if (req) handleAprobar(req);
+        }}
+        onCancel={() => setConfirmAprobarReq(null)}
+      />
     </div>
   );
 };
