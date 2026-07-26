@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import jsQR from 'jsqr';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
@@ -247,39 +248,6 @@ const fmt$ = (n: number) =>
 const fmtDate = (d: string) =>
   new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 
-// ── QR Visual (SVG decorativo) ────────────────────────────────────────────────
-
-const QrVisual: React.FC<{ seed: string }> = ({ seed }) => {
-  // Patrón determinista basado en el seed
-  const hash = seed.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7);
-  const cells = Array.from({ length: 49 }, (_, i) => {
-    // Esquinas fijas (finder patterns)
-    const row = Math.floor(i / 7), col = i % 7;
-    const corner = (row < 2 && col < 2) || (row < 2 && col > 4) || (row > 4 && col < 2);
-    return corner ? true : Boolean((hash >> (i % 17)) & 1) !== Boolean(i % 3 === 0);
-  });
-
-  return (
-    <svg viewBox="0 0 70 70" className="w-48 h-48" xmlns="http://www.w3.org/2000/svg">
-      <rect width="70" height="70" fill="white" rx="4" />
-      {/* Finder patterns */}
-      {[[2, 2], [44, 2], [2, 44]].map(([x, y], idx) => (
-        <g key={idx}>
-          <rect x={x} y={y} width="22" height="22" rx="2" fill="currentColor" className="text-foreground" />
-          <rect x={x + 4} y={y + 4} width="14" height="14" rx="1" fill="white" />
-          <rect x={x + 7} y={y + 7} width="8" height="8" rx="1" fill="currentColor" className="text-foreground" />
-        </g>
-      ))}
-      {/* Data cells */}
-      {cells.map((on, i) => {
-        const row = Math.floor(i / 7) + 0, col = i % 7;
-        const x = col * 10 + 2, y = row * 10 + 2;
-        return on ? <rect key={i} x={x} y={y} width="8" height="8" rx="1" fill="currentColor" className="text-foreground" /> : null;
-      })}
-    </svg>
-  );
-};
-
 // ── Modal genérico ────────────────────────────────────────────────────────────
 
 const Modal: React.FC<{ open: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({
@@ -338,9 +306,17 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [cuadrillaFiltro, setCuadrillaFiltro] = useState('all');
   const [cuadrillas, setCuadrillas] = useState<CuadrillaReal[]>([]);
   const [qrModal, setQrModal] = useState<{ id: string; nombre: string } | null>(null);
-  const [qrTab, setQrTab] = useState<'qr' | 'manual'>('qr');
   const [bulkChecks, setBulkChecks] = useState<BulkCheck[]>([]);
   const [guardandoBulk, setGuardandoBulk] = useState(false);
+
+  // ─ Escaneo real de credencial (cámara) ──────────────────────────────────────
+  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [scanResult, setScanResult] = useState<{ ok: boolean; mensaje: string } | null>(null);
+  const [scanBusy, setScanBusy] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scanCanvasRef = useRef<HTMLCanvasElement>(null);
+  const scanStreamRef = useRef<MediaStream | null>(null);
+  const scanLoopRef = useRef<number | null>(null);
 
   // ─ Requisiciones del Residente ─────────────────────────────────────────────
   const [reqsResidente, setReqsResidente] = useState<ReqResidente[]>([]);
@@ -969,9 +945,92 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
         hora_salida: m.hora_salida_programada ?? '',
       }));
     setBulkChecks(checks);
-    setQrTab('manual');
     setQrModal({ id: cuadrilla.id_cuadrilla, nombre: cuadrilla.nombre });
   };
+
+  // ── Escaneo real de credencial (cámara) ──────────────────────────────────────
+  const detenerCamara = () => {
+    if (scanLoopRef.current) { cancelAnimationFrame(scanLoopRef.current); scanLoopRef.current = null; }
+    if (scanStreamRef.current) { scanStreamRef.current.getTracks().forEach(t => t.stop()); scanStreamRef.current = null; }
+  };
+
+  const handleCerrarScanner = () => {
+    detenerCamara();
+    setScanModalOpen(false);
+    setScanResult(null);
+  };
+
+  const obtenerUbicacion = (): Promise<{ lat: number; lng: number } | null> =>
+    new Promise(resolve => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(null),
+        { timeout: 4000 }
+      );
+    });
+
+  const procesarTokenEscaneado = async (token: string) => {
+    detenerCamara();
+    setScanBusy(true);
+    try {
+      const ubicacion = await obtenerUbicacion();
+      const r = await api.post('/api/v1/personal/asistencia/escanear', {
+        token, lat: ubicacion?.lat, lng: ubicacion?.lng,
+      });
+      const registro = (r.data as any)?.data;
+      const esSalida = !!registro?.hora_salida;
+      setScanResult({ ok: true, mensaje: esSalida ? 'Salida registrada' : 'Entrada registrada' });
+    } catch (e: any) {
+      setScanResult({ ok: false, mensaje: e.response?.data?.error?.message || 'No se pudo registrar la asistencia' });
+    } finally {
+      setScanBusy(false);
+    }
+  };
+
+  const iniciarCamara = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      scanStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      const tick = () => {
+        const video = videoRef.current;
+        const canvas = scanCanvasRef.current;
+        if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code?.data?.startsWith('BOCAM:CRED:')) {
+              void procesarTokenEscaneado(code.data.slice('BOCAM:CRED:'.length));
+              return;
+            }
+          }
+        }
+        scanLoopRef.current = requestAnimationFrame(tick);
+      };
+      scanLoopRef.current = requestAnimationFrame(tick);
+    } catch {
+      setScanResult({ ok: false, mensaje: 'No se pudo acceder a la cámara. Revisa los permisos del navegador.' });
+    }
+  };
+
+  const reiniciarScanner = () => {
+    setScanResult(null);
+    void iniciarCamara();
+  };
+
+  useEffect(() => {
+    if (scanModalOpen) void iniciarCamara();
+    return () => detenerCamara();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanModalOpen]);
 
   const handleGuardarBulk = async () => {
     if (!qrModal || bulkChecks.length === 0) return;
@@ -1367,21 +1426,16 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                 </Select>
               </FormField>
               <div className="flex flex-wrap gap-2">
-                {(isDemo ? DEMO_CUADRILLAS : cuadrillas)
-                  .filter(c => cuadrillaFiltro === 'all' || c.id_cuadrilla === cuadrillaFiltro)
-                  .map(c => (
-                    <Button
-                      key={c.id_cuadrilla}
-                      size="sm"
-                      variant="outline"
-                      onClick={() => { setQrTab('qr'); setQrModal({ id: c.id_cuadrilla, nombre: c.nombre }); }}
-                      className="text-[10px] gap-1"
-                    >
-                      <IconQrCode className="h-3 w-3" />
-                      QR {(c as any).codigo}
-                    </Button>
-                  ))
-                }
+                {!isDemo && (
+                  <Button
+                    size="sm"
+                    onClick={() => setScanModalOpen(true)}
+                    className="text-[10px] gap-1 bg-indigo-600 text-white hover:bg-indigo-500"
+                  >
+                    <IconQrCode className="h-3 w-3" />
+                    Escanear credencial
+                  </Button>
+                )}
                 {!isDemo && cuadrillas
                   .filter(c => cuadrillaFiltro === 'all' || c.id_cuadrilla === cuadrillaFiltro)
                   .map(c => (
@@ -2486,60 +2540,11 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       </SlidePanel>
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/* MODAL — QR de asistencia                                        */}
+      {/* MODAL — Registro manual de asistencia de cuadrilla                */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      <Modal open={!!qrModal} onClose={() => { setQrModal(null); setQrTab('qr'); }} title="Asistencia de Cuadrilla">
+      <Modal open={!!qrModal} onClose={() => setQrModal(null)} title="Asistencia de Cuadrilla">
         {qrModal && (
           <div className="flex flex-col gap-4">
-            {/* Tabs QR / Manual */}
-            <div className="flex rounded-xl border border-border/40 overflow-hidden">
-              {(['qr', 'manual'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setQrTab(tab)}
-                  className={cn(
-                    'flex-1 py-2 text-[11px] font-black uppercase tracking-widest transition-colors',
-                    qrTab === tab
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-muted-foreground hover:bg-muted/40'
-                  )}
-                >
-                  {tab === 'qr' ? 'Código QR' : 'Registro Manual'}
-                </button>
-              ))}
-            </div>
-
-            {qrTab === 'qr' ? (
-              <>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="rounded-2xl border-2 border-border bg-white p-4 shadow-inner">
-                    <QrVisual seed={qrModal.id + fechaFiltro} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-foreground">{qrModal.nombre}</p>
-                    <p className="text-xs text-muted-foreground">{fmtDate(fechaFiltro)}</p>
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      Los trabajadores escanean este código al ingresar para registrar su asistencia automáticamente.
-                    </p>
-                  </div>
-                  <div className="flex gap-2 w-full">
-                    <Button variant="outline" className="flex-1 text-xs" onClick={() => {
-                      notify({ type: 'info', title: 'QR enviado a impresora', message: `${qrModal.nombre} · ${fmtDate(fechaFiltro)}` });
-                      setQrModal(null);
-                    }}>
-                      Imprimir QR
-                    </Button>
-                    <Button className="flex-1 text-xs" onClick={() => {
-                      notify({ type: 'success', title: 'QR compartido', message: `Enlace de asistencia enviado a ${qrModal.nombre}` });
-                      setQrModal(null);
-                    }}>
-                      Compartir enlace
-                    </Button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
                 <div className="text-center pb-1">
                   <p className="text-xs font-bold text-foreground">{qrModal.nombre} — {fmtDate(fechaFiltro)}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Marca la asistencia de cada integrante y guarda</p>
@@ -2628,10 +2633,38 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                     {guardandoBulk ? 'Guardando…' : 'Guardar asistencia'}
                   </Button>
                 </div>
-              </>
-            )}
           </div>
         )}
+      </Modal>
+
+      {/* MODAL — Escaneo de credencial (cámara real)                       */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <Modal open={scanModalOpen} onClose={handleCerrarScanner} title="Escanear Credencial">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-full overflow-hidden rounded-2xl border-2 border-border bg-black">
+            <video ref={videoRef} className="w-full aspect-square object-cover" muted playsInline />
+            <canvas ref={scanCanvasRef} className="hidden" />
+            {scanBusy && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                <p className="text-xs font-bold uppercase tracking-widest text-white">Procesando…</p>
+              </div>
+            )}
+          </div>
+
+          {scanResult ? (
+            <div className={cn(
+              'w-full rounded-xl border px-4 py-3 text-center',
+              scanResult.ok ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700' : 'border-red-500/30 bg-red-500/10 text-red-700'
+            )}>
+              <p className="text-sm font-bold">{scanResult.mensaje}</p>
+              <Button className="mt-3 text-xs" onClick={reiniciarScanner}>Escanear otro</Button>
+            </div>
+          ) : (
+            <p className="text-center text-[11px] text-muted-foreground">
+              Apunta la cámara al código QR de la credencial del empleado. Se registra automáticamente entrada o salida.
+            </p>
+          )}
+        </div>
       </Modal>
     </div>
   );

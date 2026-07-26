@@ -42,6 +42,22 @@ export enum EstadoPreNomina {
   PAGADA = 'PAGADA',
 }
 
+export const TIPOS_DOCUMENTO_EMPLEADO = [
+  'INE',
+  'COMPROBANTE_DOMICILIO',
+  'CURSO_CAPACITACION',
+  'CONTRATO',
+  'FOTO_CREDENCIAL',
+  'OTRO',
+] as const;
+
+export const ASISTENCIA_COOLDOWN_MINUTOS = Number(process.env.ASISTENCIA_COOLDOWN_MINUTOS ?? 2);
+export const CREDENCIAL_QR_PREFIJO = 'BOCAM:CRED:';
+
+export const MAX_FILE_SIZE_EXPEDIENTE = 50 * 1024 * 1024; // 50 MB
+export const EXTENSIONES_PERMITIDAS_EXPEDIENTE = ['.pdf', '.jpg', '.jpeg', '.png', '.docx'];
+export const DIAS_VENCIMIENTO_DEFAULT = 30;
+
 export function createApiResponse<T>(data: T, tenantId?: string, proyectoId?: string): ApiResponse<T> {
   return {
     success: true, data,

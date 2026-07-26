@@ -1,10 +1,21 @@
 import express, { Request, Response } from 'express';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import multer from 'multer';
 import { createTenantContext } from './db';
-import { createApiResponse, createApiError, EstadoPreNomina } from './types';
+import {
+  createApiResponse, createApiError, EstadoPreNomina,
+  TIPOS_DOCUMENTO_EMPLEADO, MAX_FILE_SIZE_EXPEDIENTE, EXTENSIONES_PERMITIDAS_EXPEDIENTE,
+  DIAS_VENCIMIENTO_DEFAULT, ASISTENCIA_COOLDOWN_MINUTOS,
+} from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { createEventBus } from '../../../packages/event-bus/src';
-import { calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcularHorasTrabajadas, calcularHorasDesglose, calcularMontoHEPorSemana } from './tablas-fiscales';
+import {
+  calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcularHorasTrabajadas,
+  calcularHorasDesglose, calcularMontoHEPorSemana, esPeriodoTipoValido, PERIODOS_TIPO_VALIDOS,
+} from './tablas-fiscales';
 
 /**
  * ---------------------------------------------------------------------------
@@ -35,6 +46,30 @@ app.use(createAuthMiddleware({
   excludePaths: ['/health'],
 }));
 app.use(requireProjectAccess());
+
+// ── Expediente digital: almacenamiento en volumen propio (mismo patrón que Calidad) ──
+const UPLOAD_DIR = process.env.PERSONAL_UPLOAD_DIR || '/tmp/personal-uploads';
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const uploadExpediente = multer({
+  dest: path.join(UPLOAD_DIR, '_tmp'),
+  limits: { fileSize: MAX_FILE_SIZE_EXPEDIENTE },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!EXTENSIONES_PERMITIDAS_EXPEDIENTE.includes(ext)) {
+      return cb(new Error(`Tipo de archivo no permitido: ${ext}`));
+    }
+    cb(null, true);
+  },
+});
+
+function rutaArchivoExpediente(tenantId: string, empleadoId: string, documentoId: string, ext: string): string {
+  return path.join(tenantId, empleadoId, `${documentoId}${ext}`);
+}
+
+function rutaAbsolutaExpediente(ruta: string): string {
+  return path.join(UPLOAD_DIR, ruta);
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // EMPLEADOS
@@ -443,6 +478,69 @@ app.post('/api/v1/personal/asignaciones', async (req: Request, res: Response) =>
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONFIGURACIÓN DE NÓMINA POR PROYECTO (periodicidad de pago)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/personal/config-nomina', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.configNominaProyecto.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
+    });
+    const result = data ?? { proyecto_id: proyectoId, periodicidad_pago: 'SEMANAL', configurado_por: null, updated_at: null };
+    res.json(createApiResponse(result, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.put('/api/v1/personal/config-nomina', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { periodicidad_pago } = req.body;
+
+    if (!periodicidad_pago || !esPeriodoTipoValido(periodicidad_pago)) {
+      return res.status(400).json(createApiError('PER_VALIDATION', `periodicidad_pago debe ser uno de: ${PERIODOS_TIPO_VALIDOS.join(', ')}`));
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.configNominaProyecto.upsert({
+        where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: proyectoId } },
+        create: { tenant_id: tenantId, proyecto_id: proyectoId, periodicidad_pago, configurado_por: userId },
+        update: { periodicidad_pago, configurado_por: userId },
+      });
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Empleados elegibles de un proyecto: unión de AsignacionFrente ACTIVA en ese
+// proyecto y empleados cuya Cuadrilla pertenece a ese proyecto (fallback para
+// quienes no tienen frente explícito). Empleado NO tiene proyecto_id propio.
+async function obtenerEmpleadoIdsDelProyecto(prisma: any, tenantId: string, proyectoId: string): Promise<Set<string>> {
+  const [porFrente, cuadrillasDelProyecto] = await Promise.all([
+    prisma.asignacionFrente.findMany({
+      where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'ACTIVA' },
+      select: { empleado_id: true },
+    }),
+    prisma.cuadrilla.findMany({
+      where: { tenant_id: tenantId, proyecto_id: proyectoId },
+      select: { id_cuadrilla: true },
+    }),
+  ]);
+  const cuadrillaIds = cuadrillasDelProyecto.map((c: any) => c.id_cuadrilla);
+  const porCuadrilla = cuadrillaIds.length > 0
+    ? await prisma.empleado.findMany({ where: { tenant_id: tenantId, cuadrilla_id: { in: cuadrillaIds } }, select: { id_empleado: true } })
+    : [];
+  const ids = new Set<string>();
+  porFrente.forEach((a: any) => ids.add(a.empleado_id));
+  porCuadrilla.forEach((e: any) => ids.add(e.id_empleado));
+  return ids;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PRE-NÓMINA
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -489,7 +587,9 @@ app.get('/api/v1/personal/prenominas/:id', async (req: Request, res: Response) =
 app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const { periodo_inicio, periodo_fin, periodo_tipo } = req.body;
+    const { periodo_inicio, periodo_fin } = req.body;
+    // periodo_tipo ya NO se lee del body (contrato anterior) — la periodicidad
+    // se toma de ConfigNominaProyecto, configurada por RH a nivel proyecto.
 
     if (!periodo_inicio || !periodo_fin) {
       res.status(400).json(createApiError('PER_MISSING_FIELDS', 'periodo_inicio y periodo_fin son obligatorios.'));
@@ -497,7 +597,13 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
     }
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      const empleados = await prisma.empleado.findMany({ where: { estado: 'ACTIVO' } });
+      const configProyecto = await prisma.configNominaProyecto.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
+      const periodo_tipo = configProyecto?.periodicidad_pago ?? 'SEMANAL';
+
+      const empleadoIds = await obtenerEmpleadoIdsDelProyecto(prisma, tenantId, proyectoId);
+      const empleados = empleadoIds.size > 0
+        ? await prisma.empleado.findMany({ where: { id_empleado: { in: Array.from(empleadoIds) }, estado: 'ACTIVO' } })
+        : [];
       if (empleados.length === 0) throw new Error('No hay empleados activos en este proyecto.');
 
       const inicio = new Date(periodo_inicio);
@@ -505,7 +611,8 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
       const diasPeriodo = Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
       const count  = await prisma.preNomina.count();
-      const codigo = `NOM-${new Date().getFullYear()}-${periodo_tipo === 'QUINCENAL' ? 'Q' : 'S'}${String(count + 1).padStart(2, '0')}`;
+      const prefijoPeriodo = periodo_tipo === 'QUINCENAL' ? 'Q' : periodo_tipo === 'MENSUAL' ? 'M' : 'S';
+      const codigo = `NOM-${new Date().getFullYear()}-${prefijoPeriodo}${String(count + 1).padStart(2, '0')}`;
 
       let totalPercepciones = 0;
       let totalDeducciones  = 0;
@@ -614,8 +721,8 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
         }
         let dedISR = 0;
         if (aplicaISR) {
-          const isrBruto = calcularISR(baseISR, periodo_tipo || 'SEMANAL');
-          const subsidio = calcularSubsidio(percepciones, periodo_tipo || 'SEMANAL');
+          const isrBruto = calcularISR(baseISR, periodo_tipo);
+          const subsidio = calcularSubsidio(percepciones, periodo_tipo);
           dedISR = Math.max(0, parseFloat((isrBruto - subsidio).toFixed(2)));
         }
 
@@ -652,7 +759,7 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
       const prenomina = await prisma.preNomina.create({
         data: {
           tenant_id: tenantId, proyecto_id: proyectoId,
-          codigo, periodo_tipo: periodo_tipo || 'SEMANAL',
+          codigo, periodo_tipo,
           periodo_inicio: inicio, periodo_fin: fin,
           total_percepciones: parseFloat(totalPercepciones.toFixed(2)),
           total_deducciones:  parseFloat(totalDeducciones.toFixed(2)),
@@ -798,6 +905,12 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
         _count: true,
       });
 
+      const limiteVencimiento = new Date(hoy.getTime() + DIAS_VENCIMIENTO_DEFAULT * 24 * 60 * 60 * 1000);
+      const [documentosVencidos, documentosPorVencer] = await Promise.all([
+        prisma.documentoEmpleado.count({ where: { tenant_id: tenantId, fecha_vigencia: { not: null, lt: hoy } } }),
+        prisma.documentoEmpleado.count({ where: { tenant_id: tenantId, fecha_vigencia: { not: null, gte: hoy, lte: limiteVencimiento } } }),
+      ]);
+
       const ausenciasHoy = Math.max(0, empleadosActivos - asistenciaHoy);
       const alertas: Array<{ tipo: string; mensaje: string; severidad: string }> = [];
       if (ausenciasHoy > 0) {
@@ -805,6 +918,14 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
       }
       if (ultimaPrenomina?.estado === 'PENDIENTE') {
         alertas.push({ tipo: 'PRENOMINA_PENDIENTE', mensaje: `Pre-nómina ${ultimaPrenomina.codigo} pendiente de autorización`, severidad: 'advertencia' });
+      }
+      const totalVencimientos = documentosVencidos + documentosPorVencer;
+      if (totalVencimientos > 0) {
+        alertas.push({
+          tipo: 'DOCUMENTO_POR_VENCER',
+          mensaje: `${totalVencimientos} documento(s) de expediente vencido(s) o por vencer`,
+          severidad: documentosVencidos > 0 ? 'critica' : 'advertencia',
+        });
       }
 
       return {
@@ -835,6 +956,100 @@ app.get('/api/v1/personal/dashboard', async (req: Request, res: Response) => {
 // ASISTENCIA
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// Motor de doble-scan compartido: JORNADA_COMPLETA (upsert de estado) y
+// POR_HORAS (sin registro/forzar ENTRADA → entrada; con entrada sin salida →
+// salida; con ambas → idempotente). Usado por el registro manual y por el
+// endpoint de escaneo seguro (credenciales-asistencia-qr-segura).
+async function aplicarDobleScan(prisma: any, params: {
+  tenantId: string; proyectoId: string; userId: string; empleadoId: string; fecha: string;
+  cuadrillaId?: string | null; estado?: string; tipoRegistro?: string; horasExtra?: number;
+  horaEntrada?: string; horaSalida?: string; tipoScan?: string;
+}) {
+  const { tenantId, proyectoId, userId, empleadoId, fecha, cuadrillaId, estado, tipoRegistro, horasExtra, horaEntrada, horaSalida } = params;
+  const scan = params.tipoScan ?? 'AUTO';
+  const ahora = new Date();
+
+  const emp = await prisma.empleado.findFirst({
+    where: { id_empleado: empleadoId, tenant_id: tenantId },
+    select: { modo_asistencia: true, horas_jornada: true },
+  });
+  const esPorHoras = emp?.modo_asistencia === 'POR_HORAS';
+
+  if (!esPorHoras) {
+    // ── JORNADA_COMPLETA: upsert estado ─────────────────────────────────────
+    const ESTADOS_VALIDOS = ['PRESENTE', 'AUSENTE', 'INCAPACIDAD', 'JUSTIFICADA', 'FALTA'];
+    const estadoFinal = estado ?? 'PRESENTE';
+    if (!ESTADOS_VALIDOS.includes(estadoFinal)) {
+      throw new Error(`Estado inválido: ${estadoFinal}`);
+    }
+    return prisma.registroAsistencia.upsert({
+      where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: empleadoId, fecha: new Date(fecha) } },
+      create: {
+        tenant_id: tenantId, proyecto_id: proyectoId, empleado_id: empleadoId,
+        cuadrilla_id: cuadrillaId ?? null,
+        fecha: new Date(fecha), estado: estadoFinal,
+        tipo_registro: tipoRegistro ?? 'MANUAL',
+        horas_extra: horasExtra ?? 0,
+        registrado_por: userId, ultimo_scan_en: ahora,
+      },
+      update: {
+        estado: estadoFinal,
+        horas_extra: horasExtra ?? 0,
+        tipo_registro: tipoRegistro ?? 'MANUAL',
+        registrado_por: userId, ultimo_scan_en: ahora,
+      },
+    });
+  }
+
+  // ── POR_HORAS: lógica de doble-scan ────────────────────────────────────────
+  const horaActual = ahora.toTimeString().slice(0, 5); // HH:MM
+  const existente  = await prisma.registroAsistencia.findUnique({
+    where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: empleadoId, fecha: new Date(fecha) } },
+  });
+
+  if (!existente || scan === 'ENTRADA') {
+    // Primer scan o forzar entrada
+    const hE = horaEntrada ?? horaActual;
+    return prisma.registroAsistencia.upsert({
+      where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: empleadoId, fecha: new Date(fecha) } },
+      create: {
+        tenant_id: tenantId, proyecto_id: proyectoId, empleado_id: empleadoId,
+        cuadrilla_id: cuadrillaId ?? null,
+        fecha: new Date(fecha), estado: 'PRESENTE',
+        tipo_registro: tipoRegistro ?? (scan === 'AUTO' ? 'QR' : 'MANUAL'),
+        horas_extra: 0, registrado_por: userId,
+        hora_entrada: hE, origen_horas: 'REAL', ultimo_scan_en: ahora,
+      },
+      update: { hora_entrada: hE, registrado_por: userId, ultimo_scan_en: ahora },
+    });
+  }
+
+  if ((existente as any).hora_entrada && !(existente as any).hora_salida && scan !== 'ENTRADA') {
+    // Segundo scan → registrar salida y calcular horas
+    if (scan === 'SALIDA' && !horaSalida && !horaActual) {
+      throw new Error('hora_salida es obligatoria para tipo_scan SALIDA.');
+    }
+    const hS = horaSalida ?? horaActual;
+    const hE = String((existente as any).hora_entrada);
+    const horasJornada = Number((emp as any)?.horas_jornada ?? 8);
+    const trabajadas = calcularHorasTrabajadas(hE, hS);
+    const { horas_normales, horas_extra_dia } = calcularHorasDesglose(trabajadas, horasJornada);
+    return prisma.registroAsistencia.update({
+      where: { id_registro: existente.id_registro },
+      data: {
+        hora_salida: hS, horas_trabajadas: trabajadas,
+        horas_normales, horas_extra_dia,
+        origen_horas: 'REAL', registrado_por: userId,
+        tipo_registro: tipoRegistro ?? (scan === 'AUTO' ? 'QR' : 'MANUAL'),
+        ultimo_scan_en: ahora,
+      },
+    });
+  }
+
+  // Ya tiene entrada y salida — idempotente (no actualiza ultimo_scan_en)
+  return existente;
+}
+
 // POST /asistencia/registro — soporta JORNADA_COMPLETA y POR_HORAS con doble-scan
 app.post('/api/v1/personal/asistencia/registro', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
@@ -844,87 +1059,13 @@ app.post('/api/v1/personal/asistencia/registro', requireRoles('residencia', 'con
     if (!empleado_id || !fecha) {
       return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'empleado_id y fecha son obligatorios.'));
     }
-    const scan = tipo_scan ?? 'AUTO';
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      const emp = await prisma.empleado.findFirst({
-        where: { id_empleado: empleado_id, tenant_id: tenantId },
-        select: { modo_asistencia: true, horas_jornada: true },
+      return aplicarDobleScan(prisma, {
+        tenantId, proyectoId, userId, empleadoId: empleado_id, fecha,
+        cuadrillaId: cuadrilla_id, estado, tipoRegistro: tipo_registro, horasExtra: horas_extra,
+        horaEntrada: hora_entrada, horaSalida: hora_salida, tipoScan: tipo_scan,
       });
-      const esPorHoras = emp?.modo_asistencia === 'POR_HORAS';
-
-      if (!esPorHoras) {
-        // ── JORNADA_COMPLETA: upsert estado (comportamiento original) ──────────
-        const ESTADOS_VALIDOS = ['PRESENTE', 'AUSENTE', 'INCAPACIDAD', 'JUSTIFICADA', 'FALTA'];
-        const estadoFinal = estado ?? 'PRESENTE';
-        if (!ESTADOS_VALIDOS.includes(estadoFinal)) {
-          throw new Error(`Estado inválido: ${estadoFinal}`);
-        }
-        return prisma.registroAsistencia.upsert({
-          where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
-          create: {
-            tenant_id: tenantId, proyecto_id: proyectoId, empleado_id,
-            cuadrilla_id: cuadrilla_id ?? null,
-            fecha: new Date(fecha), estado: estadoFinal,
-            tipo_registro: tipo_registro ?? 'MANUAL',
-            horas_extra: horas_extra ?? 0,
-            registrado_por: userId,
-          },
-          update: {
-            estado: estadoFinal,
-            horas_extra: horas_extra ?? 0,
-            tipo_registro: tipo_registro ?? 'MANUAL',
-            registrado_por: userId,
-          },
-        });
-      }
-
-      // ── POR_HORAS: lógica de doble-scan ──────────────────────────────────────
-      const horaActual = new Date().toTimeString().slice(0, 5); // HH:MM
-      const existente  = await prisma.registroAsistencia.findUnique({
-        where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
-      });
-
-      if (!existente || scan === 'ENTRADA') {
-        // Primer scan o forzar entrada
-        const hE = hora_entrada ?? horaActual;
-        return prisma.registroAsistencia.upsert({
-          where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id, fecha: new Date(fecha) } },
-          create: {
-            tenant_id: tenantId, proyecto_id: proyectoId, empleado_id,
-            cuadrilla_id: cuadrilla_id ?? null,
-            fecha: new Date(fecha), estado: 'PRESENTE',
-            tipo_registro: tipo_registro ?? (scan === 'AUTO' ? 'QR' : 'MANUAL'),
-            horas_extra: 0, registrado_por: userId,
-            hora_entrada: hE, origen_horas: 'REAL',
-          },
-          update: { hora_entrada: hE, registrado_por: userId },
-        });
-      }
-
-      if ((existente as any).hora_entrada && !(existente as any).hora_salida && scan !== 'ENTRADA') {
-        // Segundo scan → registrar salida y calcular horas
-        if (scan === 'SALIDA' && !hora_salida && !horaActual) {
-          throw new Error('hora_salida es obligatoria para tipo_scan SALIDA.');
-        }
-        const hS = hora_salida ?? horaActual;
-        const hE = String((existente as any).hora_entrada);
-        const horasJornada = Number((emp as any).horas_jornada ?? 8);
-        const trabajadas = calcularHorasTrabajadas(hE, hS);
-        const { horas_normales, horas_extra_dia } = calcularHorasDesglose(trabajadas, horasJornada);
-        return prisma.registroAsistencia.update({
-          where: { id_registro: existente.id_registro },
-          data: {
-            hora_salida: hS, horas_trabajadas: trabajadas,
-            horas_normales, horas_extra_dia,
-            origen_horas: 'REAL', registrado_por: userId,
-            tipo_registro: tipo_registro ?? (scan === 'AUTO' ? 'QR' : 'MANUAL'),
-          },
-        });
-      }
-
-      // Ya tiene entrada y salida — idempotente
-      return existente;
     });
 
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
@@ -1159,6 +1300,122 @@ app.get('/api/v1/personal/asistencia/resumen', requireRoles('personal_rh', 'admi
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONFIGURACIÓN DE ASISTENCIA POR PROYECTO (geofencing opcional)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.get('/api/v1/personal/config-asistencia', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.configAsistenciaProyecto.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
+    });
+    res.json(createApiResponse(data ?? null, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.put('/api/v1/personal/config-asistencia', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { lat, lng, radio_metros } = req.body;
+    if (lat === undefined || lng === undefined) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'lat y lng son obligatorios.'));
+    }
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.configAsistenciaProyecto.upsert({
+        where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: proyectoId } },
+        create: { tenant_id: tenantId, proyecto_id: proyectoId, lat, lng, radio_metros: radio_metros ?? 300, configurado_por: userId },
+        update: { lat, lng, radio_metros: radio_metros ?? 300, configurado_por: userId },
+      });
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000; // radio de la Tierra en metros
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ESCANEO SEGURO DE CREDENCIAL (asistencia por QR)
+// El QR solo identifica al empleado — NUNCA autentica por sí solo. La
+// autorización real vive en la sesión JWT de quien escanea (mismos roles
+// que el registro manual de asistencia). Ver design.md de
+// credenciales-asistencia-qr-segura para el detalle de cada candado.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.post('/api/v1/personal/asistencia/escanear', requireRoles('residencia', 'control_obra', 'personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { token, lat, lng } = req.body;
+    if (!token) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'token es obligatorio.'));
+    }
+
+    const resultado = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      // 1) Resolver token → empleado
+      const credencial = await prisma.credencialEmpleado.findFirst({ where: { tenant_id: tenantId, token } });
+      if (!credencial) return { status: 404, error: 'Credencial no encontrada.' };
+      if (!credencial.activa) return { status: 410, error: 'Credencial revocada, contacte a RH.' };
+
+      // 2) El empleado debe pertenecer al proyecto activo
+      const empleadoIds = await obtenerEmpleadoIdsDelProyecto(prisma, tenantId, proyectoId);
+      if (!empleadoIds.has(credencial.empleado_id)) {
+        return { status: 403, error: 'Este empleado no está asignado al proyecto activo.' };
+      }
+
+      // 3) Cooldown anti-rescaneo
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const registroHoy = await prisma.registroAsistencia.findUnique({
+        where: { tenant_id_empleado_id_fecha: { tenant_id: tenantId, empleado_id: credencial.empleado_id, fecha: hoy } },
+      });
+      const cooldownMs = ASISTENCIA_COOLDOWN_MINUTOS * 60 * 1000;
+      if ((registroHoy as any)?.ultimo_scan_en) {
+        const restanteMs = cooldownMs - (Date.now() - new Date((registroHoy as any).ultimo_scan_en).getTime());
+        if (restanteMs > 0) {
+          return { status: 429, error: `Espera ${Math.ceil(restanteMs / 1000)}s antes de volver a escanear a este empleado.` };
+        }
+      }
+
+      // 4) Geofencing opcional
+      const configGeo = await prisma.configAsistenciaProyecto.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
+      if (configGeo) {
+        if (lat === undefined || lng === undefined) {
+          return { status: 400, error: 'Este proyecto requiere ubicación del dispositivo. Activa el permiso de ubicación.' };
+        }
+        const distancia = distanciaMetros(Number(lat), Number(lng), Number(configGeo.lat), Number(configGeo.lng));
+        if (distancia > configGeo.radio_metros) {
+          return { status: 403, error: `Fuera del rango permitido del proyecto (${Math.round(distancia)}m, máximo ${configGeo.radio_metros}m).` };
+        }
+      }
+
+      // 5) Doble-scan real
+      const fecha = hoy.toISOString().slice(0, 10);
+      const registro = await aplicarDobleScan(prisma, {
+        tenantId, proyectoId, userId, empleadoId: credencial.empleado_id, fecha,
+        tipoRegistro: 'QR', tipoScan: 'AUTO',
+      });
+      return { status: 201, registro };
+    });
+
+    if ((resultado as any).error) {
+      return res.status((resultado as any).status).json(createApiError('PER_SCAN_ERROR', (resultado as any).error));
+    }
+    res.status(201).json(createApiResponse((resultado as any).registro, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CONFIGURACIÓN DE DEDUCCIONES POR EMPLEADO
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1205,6 +1462,399 @@ app.put('/api/v1/personal/empleados/:id/config-deducciones', requireRoles('perso
         },
       });
     });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// EXPEDIENTE DIGITAL DEL EMPLEADO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.post('/api/v1/personal/empleados/:id/documentos',
+  requireRoles('personal_rh', 'admin'),
+  uploadExpediente.single('archivo'),
+  async (req: Request, res: Response) => {
+    const tmpFile = req.file?.path;
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id } = req.params;
+      const { tipo_documento, fecha_vigencia } = req.body;
+
+      if (!tipo_documento || !TIPOS_DOCUMENTO_EMPLEADO.includes(tipo_documento)) {
+        if (tmpFile) fs.unlinkSync(tmpFile);
+        return res.status(400).json(createApiError('PER_VALIDATION', `tipo_documento debe ser uno de: ${TIPOS_DOCUMENTO_EMPLEADO.join(', ')}`));
+      }
+      if (!req.file) {
+        return res.status(400).json(createApiError('PER_VALIDATION', 'El archivo es obligatorio.'));
+      }
+
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
+        if (!emp) return { notFound: true };
+
+        const documento = await prisma.documentoEmpleado.create({
+          data: {
+            tenant_id: tenantId, empleado_id: id,
+            tipo_documento,
+            nombre_archivo: req.file!.originalname,
+            ruta_archivo: '',
+            mime_type: req.file!.mimetype,
+            tamano_bytes: req.file!.size,
+            fecha_vigencia: fecha_vigencia ? new Date(fecha_vigencia) : null,
+            subido_por: userId,
+          },
+        });
+
+        const ext = path.extname(req.file!.originalname).toLowerCase();
+        const ruta = rutaArchivoExpediente(tenantId, id, documento.id_documento, ext);
+        const destino = rutaAbsolutaExpediente(ruta);
+        fs.mkdirSync(path.dirname(destino), { recursive: true });
+        fs.renameSync(req.file!.path, destino);
+
+        return { documento: await prisma.documentoEmpleado.update({ where: { id_documento: documento.id_documento }, data: { ruta_archivo: ruta } }) };
+      });
+
+      if ((data as any).notFound) {
+        if (tmpFile) { try { fs.unlinkSync(tmpFile); } catch (_) { /* ok */ } }
+        return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
+      }
+
+      console.log(`[Personal] ✅ Documento ${tipo_documento} subido para empleado ${id}`);
+      res.status(201).json(createApiResponse((data as any).documento, tenantId, proyectoId));
+    } catch (error: any) {
+      if (tmpFile) { try { fs.unlinkSync(tmpFile); } catch (_) { /* ok */ } }
+      res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+    }
+  }
+);
+
+app.get('/api/v1/personal/empleados/:id/documentos', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.documentoEmpleado.findMany({
+        where: { tenant_id: tenantId, empleado_id: id },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.get('/api/v1/personal/empleados/:id/documentos/:documentoId/archivo',
+  requireRoles('personal_rh', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id, documentoId } = req.params;
+
+      const documento = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        return prisma.documentoEmpleado.findFirst({ where: { id_documento: documentoId, tenant_id: tenantId, empleado_id: id } });
+      });
+      if (!documento) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Documento no encontrado.'));
+
+      const rutaAbsoluta = rutaAbsolutaExpediente(documento.ruta_archivo);
+      if (!fs.existsSync(rutaAbsoluta)) {
+        return res.status(500).json(createApiError('PER_FILE_MISSING', 'El archivo no está disponible en el servidor.'));
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${documento.nombre_archivo}"`);
+      res.setHeader('Content-Type', documento.mime_type);
+      res.sendFile(rutaAbsoluta);
+    } catch (error: any) {
+      res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+    }
+  }
+);
+
+app.delete('/api/v1/personal/empleados/:id/documentos/:documentoId', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id, documentoId } = req.params;
+
+    const resultado = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const documento = await prisma.documentoEmpleado.findFirst({ where: { id_documento: documentoId, tenant_id: tenantId, empleado_id: id } });
+      if (!documento) return { notFound: true };
+
+      const rutaAbsoluta = rutaAbsolutaExpediente(documento.ruta_archivo);
+      try { fs.unlinkSync(rutaAbsoluta); } catch (_) { /* ignorar si ya no existe */ }
+
+      await prisma.documentoEmpleado.delete({ where: { id_documento: documentoId } });
+      return { deleted: true };
+    });
+
+    if ((resultado as any).notFound) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Documento no encontrado.'));
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// GET /documentos/por-vencer — panel de RH: documentos vencidos o por vencer
+app.get('/api/v1/personal/documentos/por-vencer', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const dias = req.query.dias ? Number(req.query.dias) : DIAS_VENCIMIENTO_DEFAULT;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const hoy = new Date();
+      const limite = new Date(hoy.getTime() + dias * 24 * 60 * 60 * 1000);
+
+      const documentos = await prisma.documentoEmpleado.findMany({
+        where: { tenant_id: tenantId, fecha_vigencia: { not: null, lte: limite } },
+        include: { empleado: { select: { nombre: true, apellido_paterno: true, numero_empleado: true } } },
+        orderBy: { fecha_vigencia: 'asc' },
+      });
+
+      return documentos.map((d: any) => {
+        const diasRestantes = Math.ceil((new Date(d.fecha_vigencia).getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+        return {
+          id_documento: d.id_documento,
+          empleado_id: d.empleado_id,
+          empleado_nombre: `${d.empleado.nombre} ${d.empleado.apellido_paterno}`,
+          numero_empleado: d.empleado.numero_empleado,
+          tipo_documento: d.tipo_documento,
+          fecha_vigencia: d.fecha_vigencia,
+          dias_restantes: diasRestantes,
+          estado: diasRestantes < 0 ? 'VENCIDO' : 'POR_VENCER',
+        };
+      });
+    });
+
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ASIGNACIÓN A RESIDENTE(S)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.post('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const { residente_id } = req.body;
+
+    if (!residente_id) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'residente_id es obligatorio.'));
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
+      if (!emp) return { notFound: true };
+
+      const asignacion = await prisma.asignacionResidente.create({
+        data: { tenant_id: tenantId, empleado_id: id, residente_id, asignado_por: userId },
+      });
+      return { asignacion };
+    });
+
+    if ((data as any).notFound) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
+    console.log(`[Personal] ✅ Residente ${residente_id} asignado a empleado ${id}`);
+    res.status(201).json(createApiResponse((data as any).asignacion, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.delete('/api/v1/personal/empleados/:id/residentes/:asignacionId', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id, asignacionId } = req.params;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const asignacion = await prisma.asignacionResidente.findFirst({
+        where: { id_asignacion: asignacionId, tenant_id: tenantId, empleado_id: id },
+      });
+      if (!asignacion) return null;
+      return prisma.asignacionResidente.update({
+        where: { id_asignacion: asignacionId },
+        data: { fecha_fin: new Date() },
+      });
+    });
+
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Asignación no encontrada.'));
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.get('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const incluirHistorico = req.query.incluirHistorico === 'true';
+
+    const asignaciones = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.asignacionResidente.findMany({
+        where: { tenant_id: tenantId, empleado_id: id, ...(incluirHistorico ? {} : { fecha_fin: null }) },
+        orderBy: { fecha_inicio: 'desc' },
+      });
+    });
+
+    const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth:3003';
+    let parcial = false;
+    const conNombre = await Promise.all(asignaciones.map(async (a) => {
+      try {
+        const r = await fetch(`${authServiceUrl}/api/v1/auth/usuarios/${a.residente_id}`, {
+          headers: { Authorization: req.headers.authorization || '' },
+        });
+        if (!r.ok) throw new Error('auth respondió no-ok');
+        const body: any = await r.json();
+        return { ...a, residente_nombre: body?.data?.name ?? null };
+      } catch {
+        parcial = true;
+        return { ...a, residente_nombre: null };
+      }
+    }));
+
+    res.json(createApiResponse({ asignaciones: conNombre, parcial }, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.get('/api/v1/personal/mis-empleados', requireRoles('residencia'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const asignaciones = await prisma.asignacionResidente.findMany({
+        where: { tenant_id: tenantId, residente_id: userId, fecha_fin: null },
+        select: { empleado_id: true },
+      });
+      const empleadoIds = asignaciones.map(a => a.empleado_id);
+      if (empleadoIds.length === 0) return [];
+      return prisma.empleado.findMany({ where: { id_empleado: { in: empleadoIds }, tenant_id: tenantId } });
+    });
+
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CREDENCIAL DE EMPLEADO (token opaco revocable, impreso como QR)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function generarTokenCredencial(): string {
+  return crypto.randomBytes(32).toString('base64url'); // ~43 chars, URL-safe, no derivable del id_empleado
+}
+
+app.post('/api/v1/personal/empleados/:id/credencial', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
+      if (!emp) return { notFound: true };
+
+      const anterior = await prisma.credencialEmpleado.findFirst({ where: { tenant_id: tenantId, empleado_id: id, activa: true } });
+      if (anterior) {
+        await prisma.credencialEmpleado.update({
+          where: { id_credencial: anterior.id_credencial },
+          data: { activa: false, revocada_en: new Date(), revocada_por: userId, motivo_revocacion: 'Reemitida' },
+        });
+      }
+
+      const nueva = await prisma.credencialEmpleado.create({
+        data: { tenant_id: tenantId, empleado_id: id, token: generarTokenCredencial(), emitida_por: userId },
+      });
+      return { credencial: nueva };
+    });
+
+    if ((data as any).notFound) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
+    console.log(`[Personal] ✅ Credencial emitida para empleado ${id}`);
+    res.status(201).json(createApiResponse((data as any).credencial, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.get('/api/v1/personal/empleados/:id/credencial', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.credencialEmpleado.findFirst({ where: { tenant_id: tenantId, empleado_id: id, activa: true } });
+    });
+    res.json(createApiResponse(data ?? null, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+app.delete('/api/v1/personal/empleados/:id/credencial', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const activa = await prisma.credencialEmpleado.findFirst({ where: { tenant_id: tenantId, empleado_id: id, activa: true } });
+      if (!activa) return null;
+      return prisma.credencialEmpleado.update({
+        where: { id_credencial: activa.id_credencial },
+        data: { activa: false, revocada_en: new Date(), revocada_por: userId, motivo_revocacion: 'Revocada manualmente (perdida/robada)' },
+      });
+    });
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Este empleado no tiene una credencial activa.'));
+    console.log(`[Personal] ⚠️ Credencial revocada para empleado ${id}`);
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Datos listos para imprimir uno, varios o todos los empleados elegibles del
+// proyecto activo — emite credencial automáticamente a quien no tenga una.
+app.post('/api/v1/personal/empleados/credenciales/imprimir-lote', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { empleado_ids } = req.body as { empleado_ids?: string[] };
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const elegiblesDelProyecto = await obtenerEmpleadoIdsDelProyecto(prisma, tenantId, proyectoId);
+      const idsSolicitados = Array.isArray(empleado_ids) && empleado_ids.length > 0
+        ? empleado_ids.filter(id => elegiblesDelProyecto.has(id))
+        : Array.from(elegiblesDelProyecto);
+
+      const empleados = await prisma.empleado.findMany({ where: { id_empleado: { in: idsSolicitados }, tenant_id: tenantId, estado: 'ACTIVO' } });
+
+      const resultado: any[] = [];
+      for (const emp of empleados) {
+        let credencial = await prisma.credencialEmpleado.findFirst({ where: { tenant_id: tenantId, empleado_id: emp.id_empleado, activa: true } });
+        if (!credencial) {
+          credencial = await prisma.credencialEmpleado.create({
+            data: { tenant_id: tenantId, empleado_id: emp.id_empleado, token: generarTokenCredencial(), emitida_por: userId },
+          });
+        }
+        const foto = await prisma.documentoEmpleado.findFirst({
+          where: { tenant_id: tenantId, empleado_id: emp.id_empleado, tipo_documento: 'FOTO_CREDENCIAL' },
+          orderBy: { created_at: 'desc' },
+        });
+        resultado.push({
+          empleado: {
+            id_empleado: emp.id_empleado, numero_empleado: emp.numero_empleado,
+            nombre: emp.nombre, apellido_paterno: emp.apellido_paterno, puesto: emp.puesto, categoria: emp.categoria,
+            contacto_emergencia: emp.contacto_emergencia ?? null,
+          },
+          token: credencial.token,
+          emitida_en: credencial.emitida_en,
+          foto_documento_id: foto?.id_documento ?? null,
+        });
+      }
+      return resultado;
+    });
+
     res.json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
@@ -1392,6 +2042,17 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'personal', version: '1.0.0', timestamp: new Date().toISOString() });
 });
 
+// Manejo de errores de multer (expediente digital): tipo/tamaño inválido
+app.use((err: any, _req: Request, res: Response, next: any) => {
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json(createApiError('PER_VALIDATION', 'El archivo supera el límite de 50 MB.'));
+  }
+  if (err?.message?.startsWith('Tipo de archivo no permitido')) {
+    return res.status(400).json(createApiError('PER_VALIDATION', err.message));
+  }
+  next(err);
+});
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ARRANQUE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1444,6 +2105,24 @@ async function startServer() {
     console.log(`   PATCH /api/v1/personal/prenominas/:id/autorizar`);
     console.log(`   PATCH /api/v1/personal/prenominas/:id/pagar`);
     console.log(`   GET   /api/v1/personal/dashboard`);
+    console.log(`   GET   /api/v1/personal/config-nomina`);
+    console.log(`   PUT   /api/v1/personal/config-nomina`);
+    console.log(`   POST  /api/v1/personal/empleados/:id/documentos`);
+    console.log(`   GET   /api/v1/personal/empleados/:id/documentos`);
+    console.log(`   GET   /api/v1/personal/empleados/:id/documentos/:documentoId/archivo`);
+    console.log(`   DELETE /api/v1/personal/empleados/:id/documentos/:documentoId`);
+    console.log(`   GET   /api/v1/personal/documentos/por-vencer`);
+    console.log(`   POST  /api/v1/personal/empleados/:id/residentes`);
+    console.log(`   DELETE /api/v1/personal/empleados/:id/residentes/:asignacionId`);
+    console.log(`   GET   /api/v1/personal/empleados/:id/residentes`);
+    console.log(`   GET   /api/v1/personal/mis-empleados`);
+    console.log(`   GET   /api/v1/personal/config-asistencia`);
+    console.log(`   PUT   /api/v1/personal/config-asistencia`);
+    console.log(`   POST  /api/v1/personal/asistencia/escanear`);
+    console.log(`   POST  /api/v1/personal/empleados/:id/credencial`);
+    console.log(`   GET   /api/v1/personal/empleados/:id/credencial`);
+    console.log(`   DELETE /api/v1/personal/empleados/:id/credencial`);
+    console.log(`   POST  /api/v1/personal/empleados/credenciales/imprimir-lote`);
     console.log(`   GET   /health`);
   });
 }

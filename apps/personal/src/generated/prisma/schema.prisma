@@ -66,10 +66,13 @@ model Empleado {
   horas_jornada           Decimal @default(8) @db.Decimal(4, 2) // Duración jornada normal
 
   // Relaciones
-  cuadrilla_id String?            @db.Uuid
-  cuadrilla    Cuadrilla?         @relation(fields: [cuadrilla_id], references: [id_cuadrilla])
-  asignaciones AsignacionFrente[]
-  prenominas   PreNominaDetalle[]
+  cuadrilla_id          String?               @db.Uuid
+  cuadrilla             Cuadrilla?            @relation(fields: [cuadrilla_id], references: [id_cuadrilla])
+  asignaciones          AsignacionFrente[]
+  prenominas            PreNominaDetalle[]
+  documentos            DocumentoEmpleado[]
+  asignacionesResidente AsignacionResidente[]
+  credenciales          CredencialEmpleado[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -225,12 +228,13 @@ model RegistroAsistencia {
   registrado_por String   @db.Uuid
 
   // Campos de jornada POR_HORAS
-  hora_entrada     String?  @db.VarChar(5) // HH:MM — primer scan / manual
-  hora_salida      String?  @db.VarChar(5) // HH:MM — segundo scan / manual
-  horas_trabajadas Decimal? @db.Decimal(4, 2) // calculado: salida − entrada
-  horas_normales   Decimal? @db.Decimal(4, 2) // min(horas_trabajadas, jornada)
-  horas_extra_dia  Decimal? @db.Decimal(4, 2) // max(0, trabajadas − jornada)
-  origen_horas     String   @default("REAL") // REAL | ESTIMADO
+  hora_entrada     String?   @db.VarChar(5) // HH:MM — primer scan / manual
+  hora_salida      String?   @db.VarChar(5) // HH:MM — segundo scan / manual
+  horas_trabajadas Decimal?  @db.Decimal(4, 2) // calculado: salida − entrada
+  horas_normales   Decimal?  @db.Decimal(4, 2) // min(horas_trabajadas, jornada)
+  horas_extra_dia  Decimal?  @db.Decimal(4, 2) // max(0, trabajadas − jornada)
+  origen_horas     String    @default("REAL") // REAL | ESTIMADO
+  ultimo_scan_en   DateTime? // marca de tiempo exacta del último escaneo (cooldown anti-rescaneo)
 
   created_at DateTime @default(now())
 
@@ -302,4 +306,118 @@ model NominaComplementariaDetalle {
 
   @@index([tenant_id, complemento_id])
   @@map("nominas_complementarias_detalle")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 8: Config Nómina por Proyecto
+// Periodicidad de pago (SEMANAL/QUINCENAL/MENSUAL) configurada por RH a
+// nivel proyecto. Los empleados asignados al proyecto la heredan
+// automáticamente — no existe periodicidad por empleado.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model ConfigNominaProyecto {
+  id_config         String   @id @default(uuid()) @db.Uuid
+  tenant_id         String   @db.Uuid
+  proyecto_id       String   @db.Uuid
+  periodicidad_pago String   @default("SEMANAL") // SEMANAL | QUINCENAL | MENSUAL
+  configurado_por   String   @db.Uuid
+  updated_at        DateTime @updatedAt
+
+  @@unique([tenant_id, proyecto_id])
+  @@map("config_nomina_proyecto")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 9: Documento de Expediente del Empleado
+// INE, comprobante de domicilio, constancias de curso/capacitación, etc.
+// Almacenamiento en volumen propio (no depende de Calidad).
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model DocumentoEmpleado {
+  id_documento   String    @id @default(uuid()) @db.Uuid
+  tenant_id      String    @db.Uuid
+  empleado_id    String    @db.Uuid
+  tipo_documento String // INE | COMPROBANTE_DOMICILIO | CURSO_CAPACITACION | CONTRATO | OTRO
+  nombre_archivo String    @db.VarChar(255)
+  ruta_archivo   String    @db.VarChar(500)
+  mime_type      String    @db.VarChar(100)
+  tamano_bytes   Int
+  fecha_vigencia DateTime? @db.Date
+  subido_por     String    @db.Uuid
+  created_at     DateTime  @default(now())
+
+  empleado Empleado @relation(fields: [empleado_id], references: [id_empleado])
+
+  @@index([tenant_id, empleado_id])
+  @@index([tenant_id, fecha_vigencia])
+  @@map("documentos_empleado")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 10: Asignación de Empleado a Residente(s)
+// Relación N:N con historial simple (fecha_fin nula = vigente). residente_id
+// es una referencia opaca a un usuario de `auth` (sin JOIN cruzado).
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model AsignacionResidente {
+  id_asignacion String    @id @default(uuid()) @db.Uuid
+  tenant_id     String    @db.Uuid
+  empleado_id   String    @db.Uuid
+  residente_id  String    @db.Uuid
+  fecha_inicio  DateTime  @default(now())
+  fecha_fin     DateTime?
+  asignado_por  String    @db.Uuid
+
+  empleado Empleado @relation(fields: [empleado_id], references: [id_empleado])
+
+  @@index([tenant_id, empleado_id])
+  @@index([tenant_id, residente_id])
+  @@map("asignaciones_residente")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 11: Credencial de Empleado
+// Token opaco y revocable impreso como QR en la credencial física. Cada fila
+// es un evento de emisión — revocar = activa=false, reemitir = fila nueva.
+// El token NUNCA autentica por sí solo: la autorización real vive en la
+// sesión JWT de quien escanea (ver asistencia-qr-segura).
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model CredencialEmpleado {
+  id_credencial     String    @id @default(uuid()) @db.Uuid
+  tenant_id         String    @db.Uuid
+  empleado_id       String    @db.Uuid
+  token             String    @db.VarChar(64)
+  activa            Boolean   @default(true)
+  emitida_en        DateTime  @default(now())
+  emitida_por       String    @db.Uuid
+  revocada_en       DateTime?
+  revocada_por      String?   @db.Uuid
+  motivo_revocacion String?   @db.VarChar(200)
+
+  empleado Empleado @relation(fields: [empleado_id], references: [id_empleado])
+
+  @@unique([tenant_id, token])
+  @@index([tenant_id, empleado_id])
+  @@map("credenciales_empleado")
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENTIDAD 12: Config de Asistencia por Proyecto (geofencing opcional)
+// Sin entidad Proyecto propia (mismo patrón que ConfigNominaProyecto). Si no
+// existe fila para un proyecto, el escaneo no valida ubicación.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model ConfigAsistenciaProyecto {
+  id_config       String   @id @default(uuid()) @db.Uuid
+  tenant_id       String   @db.Uuid
+  proyecto_id     String   @db.Uuid
+  lat             Decimal  @db.Decimal(9, 6)
+  lng             Decimal  @db.Decimal(9, 6)
+  radio_metros    Int      @default(300)
+  configurado_por String   @db.Uuid
+  updated_at      DateTime @updatedAt
+
+  @@unique([tenant_id, proyecto_id])
+  @@map("config_asistencia_proyecto")
 }

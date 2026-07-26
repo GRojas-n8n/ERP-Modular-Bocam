@@ -265,7 +265,10 @@ services:
       PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
+      PERSONAL_UPLOAD_DIR: /data/personal/uploads
       SENTRY_DSN: ${SENTRY_DSN:-}
+    volumes:
+      - vps_personal_uploads:/data/personal/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -619,6 +622,7 @@ volumes:
   vps_caddy_data:
   vps_caddy_config:
   vps_calidad_uploads:
+  vps_personal_uploads:
   vps_fichas_uploads:
   vps_docs_proveedores:
   vps_cotizaciones_uploads:

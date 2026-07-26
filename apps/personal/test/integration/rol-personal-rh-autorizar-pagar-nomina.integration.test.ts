@@ -42,6 +42,7 @@ async function teardown() {
 async function cleanupTenant(tenantId: string) {
   await prisma.preNominaDetalle.deleteMany({ where: { tenant_id: tenantId } });
   await prisma.preNomina.deleteMany({ where: { tenant_id: tenantId } });
+  await prisma.asignacionFrente.deleteMany({ where: { tenant_id: tenantId } });
   await prisma.empleado.deleteMany({ where: { tenant_id: tenantId } });
 }
 
@@ -54,7 +55,7 @@ async function patch(path: string, token: string) {
 
 async function crearEmpleadoYCalcularPrenomina(tenantId: string, proyectoId: string, userId: string) {
   const sufijo = Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000);
-  await prisma.empleado.create({
+  const empleado = await prisma.empleado.create({
     data: {
       tenant_id: tenantId,
       numero_empleado: `EMP-${sufijo}`,
@@ -65,6 +66,16 @@ async function crearEmpleadoYCalcularPrenomina(tenantId: string, proyectoId: str
       fecha_ingreso: new Date('2026-01-01'),
       salario_diario: 300,
       estado: 'ACTIVO',
+    },
+  });
+  // calcular ahora filtra por proyecto real (fix de scoping de
+  // expediente-asignacion-periodicidad-personal) — el empleado necesita una
+  // AsignacionFrente ACTIVA en el proyecto para ser elegible.
+  await prisma.asignacionFrente.create({
+    data: {
+      tenant_id: tenantId, proyecto_id: proyectoId,
+      empleado_id: empleado.id_empleado, frente_trabajo: 'Frente Test',
+      fecha_inicio: new Date('2026-01-01'), horas_diarias: 8, estado: 'ACTIVA',
     },
   });
 

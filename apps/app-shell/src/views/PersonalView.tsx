@@ -34,6 +34,8 @@ import {
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
+import QRCode from 'qrcode';
+import { construirHojaCredenciales } from '../lib/credencialesPrint';
 
 /**
  * ---------------------------------------------------------------------------
@@ -117,6 +119,46 @@ interface ConfigDeducciones {
   infonavit_num: string | null;
   infonavit_monto: number | null;
 }
+
+interface DocumentoEmpleado {
+  id_documento: string;
+  tipo_documento: string;
+  nombre_archivo: string;
+  fecha_vigencia: string | null;
+  created_at: string;
+}
+
+interface AsignacionResidente {
+  id_asignacion: string;
+  residente_id: string;
+  residente_nombre?: string | null;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+}
+
+interface DocumentoPorVencer {
+  id_documento: string;
+  empleado_id: string;
+  empleado_nombre: string;
+  numero_empleado: string;
+  tipo_documento: string;
+  fecha_vigencia: string;
+  dias_restantes: number;
+  estado: 'VENCIDO' | 'POR_VENCER';
+}
+
+interface ImprimirLoteItem {
+  empleado: {
+    id_empleado: string; numero_empleado: string; nombre: string; apellido_paterno: string;
+    puesto: string; categoria: string; contacto_emergencia: string | null;
+  };
+  token: string;
+  emitida_en: string;
+  foto_documento_id: string | null;
+}
+
+const TIPOS_DOCUMENTO_EMPLEADO = ['INE', 'COMPROBANTE_DOMICILIO', 'CURSO_CAPACITACION', 'CONTRATO', 'FOTO_CREDENCIAL', 'OTRO'] as const;
+const PERIODICIDADES_PAGO = ['SEMANAL', 'QUINCENAL', 'MENSUAL'] as const;
 
 interface PaseAcceso {
   id: string;
@@ -222,7 +264,7 @@ function construirPreviewImportEmpleados(rows: Record<string, string>[]): Emplea
 }
 
 export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { tenant, user } = useTenant();
+  const { tenant, user, currentProjectId } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
   const activeTab: TabId = (activeSubView as TabId) || 'empleados';
@@ -247,6 +289,31 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [savingConfig, setSavingConfig] = useState(false);
   const [jornadaPanel, setJornadaPanel] = useState<{ empleado: Empleado; config: ConfigJornada } | null>(null);
   const [savingJornada, setSavingJornada] = useState(false);
+
+  // ── Expediente digital + Residente(s) asignado(s) (dentro del panel de config) ──
+  const [expediente, setExpediente] = useState<DocumentoEmpleado[]>([]);
+  const [residentes, setResidentes] = useState<AsignacionResidente[]>([]);
+  const [subiendoDocumento, setSubiendoDocumento] = useState(false);
+  const [nuevoDocTipo, setNuevoDocTipo] = useState<string>('INE');
+  const [nuevoDocVigencia, setNuevoDocVigencia] = useState('');
+  const fileExpedienteRef = useRef<HTMLInputElement>(null);
+  const [nuevoResidenteId, setNuevoResidenteId] = useState('');
+  const [asignandoResidente, setAsignandoResidente] = useState(false);
+
+  // ── Periodicidad de pago del proyecto activo (config-nomina) ────────────────
+  const [periodicidadProyecto, setPeriodicidadProyecto] = useState<string>('SEMANAL');
+  const [guardandoPeriodicidad, setGuardandoPeriodicidad] = useState(false);
+
+  // ── Panel de vencimientos de expediente ──────────────────────────────────────
+  const [documentosPorVencer, setDocumentosPorVencer] = useState<DocumentoPorVencer[]>([]);
+
+  // ── Credencial del empleado abierto en el panel de configuración ────────────
+  const [credencial, setCredencial] = useState<{ token: string; activa: boolean } | null>(null);
+  const [generandoCredencial, setGenerandoCredencial] = useState(false);
+
+  // ── Selección e impresión de credenciales en lote ───────────────────────────
+  const [seleccionCredenciales, setSeleccionCredenciales] = useState<Set<string>>(new Set());
+  const [generandoImpresion, setGenerandoImpresion] = useState(false);
 
   // ── Importación masiva de Empleados ───────────────────────────────────────
   const fileImportEmpleadosRef = useRef<HTMLInputElement>(null);
@@ -323,12 +390,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       try {
         setLoading(true);
         if (tenant?.id === 'iretum-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); setPases(DEMO_PASES); return; }
-        const [empRes, cuaRes, pnRes, pasesRes, dashRes] = await Promise.allSettled([
+        const [empRes, cuaRes, pnRes, pasesRes, dashRes, configNominaRes, porVencerRes] = await Promise.allSettled([
           api.get('/api/v1/personal/empleados'),
           api.get('/api/v1/personal/cuadrillas'),
           api.get('/api/v1/personal/prenominas'),
           api.get('/api/v1/personal/pases-acceso'),
           api.get('/api/v1/personal/dashboard'),
+          api.get('/api/v1/personal/config-nomina'),
+          api.get('/api/v1/personal/documentos/por-vencer'),
         ]);
 
         if (empRes.status === 'fulfilled') setEmpleados(empRes.value.data?.data || []);
@@ -336,6 +405,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         if (pnRes.status === 'fulfilled') setPrenominas(pnRes.value.data?.data || []);
         if (pasesRes.status === 'fulfilled') setPases(pasesRes.value.data?.data || []);
         if (dashRes.status === 'fulfilled' && dashRes.value?.data?.data) setDashData(dashRes.value.data.data);
+        if (configNominaRes.status === 'fulfilled') setPeriodicidadProyecto(configNominaRes.value.data?.data?.periodicidad_pago || 'SEMANAL');
+        if (porVencerRes.status === 'fulfilled') setDocumentosPorVencer(porVencerRes.value.data?.data || []);
       } catch {
         setError('Error al conectar con el modulo de Personal.');
       } finally {
@@ -440,6 +511,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           infonavit_monto: raw.infonavit_monto != null ? Number(raw.infonavit_monto) : null,
         },
       });
+      await Promise.all([cargarExpediente(empleado.id_empleado), cargarResidentes(empleado.id_empleado), cargarCredencial(empleado.id_empleado)]);
     } catch { /* silencioso */ }
   };
 
@@ -449,8 +521,215 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     try {
       await api.put(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/config-deducciones`, configPanel.config);
       setConfigPanel(null);
+      setExpediente([]);
+      setResidentes([]);
+      setCredencial(null);
     } catch { /* silencioso */ } finally {
       setSavingConfig(false);
+    }
+  };
+
+  // ── Credencial de empleado ────────────────────────────────────────────────
+  const cargarCredencial = async (empleadoId: string) => {
+    try {
+      const r = await api.get(`/api/v1/personal/empleados/${empleadoId}/credencial`);
+      setCredencial((r.data as any)?.data ?? null);
+    } catch { setCredencial(null); }
+  };
+
+  const handleGenerarCredencial = async () => {
+    if (!configPanel) return;
+    setGenerandoCredencial(true);
+    try {
+      const r = await api.post(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/credencial`, {});
+      setCredencial((r.data as any)?.data ?? null);
+      notify({ type: 'success', title: 'Credencial generada' });
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al generar la credencial' });
+    } finally {
+      setGenerandoCredencial(false);
+    }
+  };
+
+  const handleRevocarCredencial = async () => {
+    if (!configPanel) return;
+    setGenerandoCredencial(true);
+    try {
+      await api.delete(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/credencial`);
+      setCredencial(null);
+      notify({ type: 'success', title: 'Credencial revocada' });
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al revocar la credencial' });
+    } finally {
+      setGenerandoCredencial(false);
+    }
+  };
+
+  // ── Selección e impresión de credenciales en lote ───────────────────────────
+  const toggleSeleccionCredencial = (id: string) => {
+    setSeleccionCredenciales(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSeleccionarTodos = () => {
+    setSeleccionCredenciales(prev =>
+      prev.size === empleados.length ? new Set() : new Set(empleados.map(e => e.id_empleado))
+    );
+  };
+
+  const fetchDataUrl = async (url: string): Promise<string> => {
+    const r = await api.get(url, { responseType: 'blob' });
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(r.data as Blob);
+    });
+  };
+
+  const handleImprimirSeleccionados = async () => {
+    if (seleccionCredenciales.size === 0) return;
+    setGenerandoImpresion(true);
+    try {
+      const r = await api.post('/api/v1/personal/empleados/credenciales/imprimir-lote', {
+        empleado_ids: Array.from(seleccionCredenciales),
+      });
+      const items: ImprimirLoteItem[] = (r.data as any)?.data ?? [];
+
+      const credenciales = await Promise.all(items.map(async (it) => {
+        const qrDataUrl = await QRCode.toDataURL(`BOCAM:CRED:${it.token}`, { margin: 1, width: 240 });
+        const fotoDataUrl = it.foto_documento_id
+          ? await fetchDataUrl(`/api/v1/personal/empleados/${it.empleado.id_empleado}/documentos/${it.foto_documento_id}/archivo`).catch(() => null)
+          : null;
+        const vigenciaInicio = it.emitida_en;
+        const vigenciaFin = new Date(it.emitida_en);
+        vigenciaFin.setFullYear(vigenciaFin.getFullYear() + 1);
+        return {
+          numeroEmpleado: it.empleado.numero_empleado,
+          nombre: `${it.empleado.nombre} ${it.empleado.apellido_paterno}`,
+          puesto: it.empleado.puesto,
+          categoria: it.empleado.categoria,
+          contactoEmergencia: it.empleado.contacto_emergencia,
+          vigenciaInicio,
+          vigenciaFin: vigenciaFin.toISOString(),
+          qrDataUrl,
+          fotoDataUrl,
+        };
+      }));
+
+      const nombreProyecto = user?.projects?.find(p => p.id === currentProjectId)?.name || 'Proyecto activo';
+      const html = construirHojaCredenciales(
+        credenciales,
+        tenant?.name || 'Bocam',
+        tenant?.primaryColor || '#163a5c',
+        nombreProyecto,
+      );
+      const ventana = window.open('', '_blank');
+      if (ventana) {
+        ventana.document.write(html);
+        ventana.document.close();
+      }
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al generar la hoja de credenciales' });
+    } finally {
+      setGenerandoImpresion(false);
+    }
+  };
+
+  // ── Expediente digital ────────────────────────────────────────────────────
+  const cargarExpediente = async (empleadoId: string) => {
+    try {
+      const r = await api.get(`/api/v1/personal/empleados/${empleadoId}/documentos`);
+      setExpediente((r.data as any)?.data ?? []);
+    } catch { setExpediente([]); }
+  };
+
+  const handleSubirDocumento = async () => {
+    const file = fileExpedienteRef.current?.files?.[0];
+    if (!configPanel || !file) return;
+    setSubiendoDocumento(true);
+    try {
+      const fd = new FormData();
+      fd.append('tipo_documento', nuevoDocTipo);
+      if (nuevoDocVigencia) fd.append('fecha_vigencia', nuevoDocVigencia);
+      fd.append('archivo', file);
+      await api.post(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/documentos`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (fileExpedienteRef.current) fileExpedienteRef.current.value = '';
+      setNuevoDocVigencia('');
+      await cargarExpediente(configPanel.empleado.id_empleado);
+      notify({ type: 'success', title: 'Documento subido al expediente' });
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al subir el documento' });
+    } finally {
+      setSubiendoDocumento(false);
+    }
+  };
+
+  const handleEliminarDocumento = async (documentoId: string) => {
+    if (!configPanel) return;
+    try {
+      await api.delete(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/documentos/${documentoId}`);
+      await cargarExpediente(configPanel.empleado.id_empleado);
+    } catch { /* silencioso */ }
+  };
+
+  const handleDescargarDocumento = async (doc: DocumentoEmpleado) => {
+    if (!configPanel) return;
+    try {
+      const r = await api.get(
+        `/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/documentos/${doc.id_documento}/archivo`,
+        { responseType: 'blob' }
+      );
+      triggerDownload(r.data as Blob, doc.nombre_archivo);
+    } catch { /* silencioso */ }
+  };
+
+  // ── Residente(s) asignado(s) ─────────────────────────────────────────────────
+  const cargarResidentes = async (empleadoId: string) => {
+    try {
+      const r = await api.get(`/api/v1/personal/empleados/${empleadoId}/residentes`);
+      setResidentes((r.data as any)?.data?.asignaciones ?? []);
+    } catch { setResidentes([]); }
+  };
+
+  const handleAsignarResidente = async () => {
+    if (!configPanel || !nuevoResidenteId.trim()) return;
+    setAsignandoResidente(true);
+    try {
+      await api.post(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/residentes`, { residente_id: nuevoResidenteId.trim() });
+      setNuevoResidenteId('');
+      await cargarResidentes(configPanel.empleado.id_empleado);
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al asignar residente' });
+    } finally {
+      setAsignandoResidente(false);
+    }
+  };
+
+  const handleDesasignarResidente = async (asignacionId: string) => {
+    if (!configPanel) return;
+    try {
+      await api.delete(`/api/v1/personal/empleados/${configPanel.empleado.id_empleado}/residentes/${asignacionId}`);
+      await cargarResidentes(configPanel.empleado.id_empleado);
+    } catch { /* silencioso */ }
+  };
+
+  // ── Periodicidad de pago del proyecto ────────────────────────────────────────
+  const handleGuardarPeriodicidad = async (valor: string) => {
+    setGuardandoPeriodicidad(true);
+    try {
+      await api.put('/api/v1/personal/config-nomina', { periodicidad_pago: valor });
+      setPeriodicidadProyecto(valor);
+      notify({ type: 'success', title: `Periodicidad de pago del proyecto: ${valor}` });
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al guardar la periodicidad' });
+    } finally {
+      setGuardandoPeriodicidad(false);
     }
   };
 
@@ -631,6 +910,65 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         </div>
       )}
 
+      {/* ── Panel: Vencimientos de expediente (INE, cursos/capacitaciones) ── */}
+      {puedeImportarEmpleados && documentosPorVencer.length > 0 && (
+        <Card className="rounded-2xl border-border/30">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <IconAlertCircle className={`h-4 w-4 ${documentosPorVencer.some(d => d.estado === 'VENCIDO') ? 'text-red-500' : 'text-amber-500'}`} />
+              <p className="text-xs font-black uppercase tracking-widest text-foreground">
+                Vencimientos de expediente ({documentosPorVencer.length})
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              {documentosPorVencer.map(d => (
+                <div key={d.id_documento} className="flex items-center justify-between rounded-xl border border-border/30 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-foreground">{d.empleado_nombre} · {d.tipo_documento}</p>
+                    <p className="text-[10px] text-muted-foreground">Vence {new Date(d.fecha_vigencia).toLocaleDateString('es-MX')}</p>
+                  </div>
+                  <SectionBadge className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] shrink-0',
+                    d.estado === 'VENCIDO' ? 'border-red-500/20 bg-red-500/10 text-red-600' : 'border-amber-500/20 bg-amber-500/10 text-amber-600'
+                  )}>
+                    {d.estado === 'VENCIDO' ? `Vencido hace ${Math.abs(d.dias_restantes)} días` : `Vence en ${d.dias_restantes} días`}
+                  </SectionBadge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Periodicidad de pago del proyecto ── */}
+      {puedeImportarEmpleados && (
+        <Card className="rounded-2xl border-border/30">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-foreground">Periodicidad de pago del proyecto</p>
+              <p className="text-[10px] text-muted-foreground">Los empleados asignados a este proyecto heredan esta periodicidad al calcular su nómina.</p>
+            </div>
+            <div className="flex gap-2">
+              {PERIODICIDADES_PAGO.map(p => (
+                <button
+                  key={p}
+                  disabled={guardandoPeriodicidad}
+                  onClick={() => void handleGuardarPeriodicidad(p)}
+                  className={cn(
+                    'rounded-xl border px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50',
+                    periodicidadProyecto === p
+                      ? 'border-violet-600 bg-violet-600 text-white'
+                      : 'border-border/40 bg-card text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       {/* ── Dashboard KPIs ───────────────────────────────────────────────────── */}
       {dashData && (
@@ -711,6 +1049,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 <Table className="min-w-[840px]">
                   <TableHeader>
                     <tr>
+                      <TableHead className="w-8">
+                        <input
+                          type="checkbox"
+                          checked={empleados.length > 0 && seleccionCredenciales.size === empleados.length}
+                          onChange={toggleSeleccionarTodos}
+                          title="Seleccionar todos (para imprimir credenciales)"
+                        />
+                      </TableHead>
                       <TableHead>Empleado</TableHead>
                       <TableHead>Puesto</TableHead>
                       <TableHead>Categoria</TableHead>
@@ -723,6 +1069,13 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   <TableBody>
                     {empleados.map((empleado) => (
                       <TableRow key={empleado.id_empleado} className="group">
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={seleccionCredenciales.has(empleado.id_empleado)}
+                            onChange={() => toggleSeleccionCredencial(empleado.id_empleado)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10 text-xs font-black text-violet-600">
@@ -785,10 +1138,22 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 <TableFooterBar>
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                     {empleados.length} empleados registrados
+                    {seleccionCredenciales.size > 0 ? ` · ${seleccionCredenciales.size} seleccionados` : ''}
                   </span>
-                  <SectionBadge className="rounded-full bg-violet-500/10 px-3 py-1 text-[10px] text-violet-600">
-                    Nomina diaria: {formatCurrency(nominaDiaria)}
-                  </SectionBadge>
+                  <div className="flex items-center gap-2">
+                    {seleccionCredenciales.size > 0 && (
+                      <Button
+                        disabled={generandoImpresion}
+                        onClick={() => void handleImprimirSeleccionados()}
+                        className="rounded-xl bg-indigo-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
+                      >
+                        {generandoImpresion ? 'Generando…' : `Imprimir credenciales (${seleccionCredenciales.size})`}
+                      </Button>
+                    )}
+                    <SectionBadge className="rounded-full bg-violet-500/10 px-3 py-1 text-[10px] text-violet-600">
+                      Nomina diaria: {formatCurrency(nominaDiaria)}
+                    </SectionBadge>
+                  </div>
                 </TableFooterBar>
               ) : null}
             </Card>
@@ -1355,6 +1720,139 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 )}
               </div>
             </div>
+
+            {/* ── Expediente ── */}
+            <div className="space-y-3 border-t border-border/40 pt-5">
+              <p className="text-xs font-black uppercase tracking-widest text-foreground">Expediente</p>
+              <p className="text-[10px] text-muted-foreground">INE, comprobante de domicilio, cursos/capacitaciones (DC-3), etc.</p>
+
+              <div className="space-y-1.5">
+                {expediente.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground">Sin documentos en el expediente.</p>
+                )}
+                {expediente.map(doc => (
+                  <div key={doc.id_documento} className="flex items-center justify-between rounded-xl border border-border/40 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-foreground">{doc.tipo_documento}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {doc.nombre_archivo}{doc.fecha_vigencia ? ` · vence ${new Date(doc.fecha_vigencia).toLocaleDateString('es-MX')}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button onClick={() => void handleDescargarDocumento(doc)} className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:underline">
+                        Descargar
+                      </button>
+                      <button onClick={() => void handleEliminarDocumento(doc.id_documento)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:underline">
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2 rounded-xl border border-dashed border-border/40 p-3">
+                <div className="flex gap-2">
+                  <select
+                    value={nuevoDocTipo}
+                    onChange={e => setNuevoDocTipo(e.target.value)}
+                    className="flex-1 rounded-lg border border-border/40 px-2 py-1.5 text-xs"
+                  >
+                    {TIPOS_DOCUMENTO_EMPLEADO.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input
+                    type="date"
+                    value={nuevoDocVigencia}
+                    onChange={e => setNuevoDocVigencia(e.target.value)}
+                    className="rounded-lg border border-border/40 px-2 py-1.5 text-xs"
+                    title="Fecha de vigencia (opcional)"
+                  />
+                </div>
+                <input ref={fileExpedienteRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.docx" className="w-full text-xs" />
+                <SubmitButton
+                  label={subiendoDocumento ? 'Subiendo…' : 'Subir documento'}
+                  loading={subiendoDocumento}
+                  color="indigo"
+                  onClick={handleSubirDocumento}
+                />
+              </div>
+            </div>
+
+            {/* ── Residente(s) asignado(s) ── */}
+            <div className="space-y-3 border-t border-border/40 pt-5">
+              <p className="text-xs font-black uppercase tracking-widest text-foreground">Residente(s) asignado(s)</p>
+              <p className="text-[10px] text-muted-foreground">Un empleado puede tener más de un residente responsable vigente.</p>
+
+              <div className="space-y-1.5">
+                {residentes.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground">Sin residentes asignados.</p>
+                )}
+                {residentes.map(a => (
+                  <div key={a.id_asignacion} className="flex items-center justify-between rounded-xl border border-border/40 px-3 py-2">
+                    <p className="truncate text-xs font-bold text-foreground">{a.residente_nombre ?? a.residente_id}</p>
+                    <button onClick={() => void handleDesasignarResidente(a.id_asignacion)} className="shrink-0 text-[10px] font-black uppercase tracking-widest text-red-500 hover:underline">
+                      Desasignar
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={nuevoResidenteId}
+                  onChange={e => setNuevoResidenteId(e.target.value)}
+                  placeholder="ID del usuario Residente"
+                  className="flex-1 rounded-lg border border-border/40 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <Button
+                  disabled={asignandoResidente || !nuevoResidenteId.trim()}
+                  onClick={() => void handleAsignarResidente()}
+                  className="rounded-lg bg-indigo-600 px-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  Asignar
+                </Button>
+              </div>
+            </div>
+
+            {/* ── Credencial ── */}
+            <div className="space-y-3 border-t border-border/40 pt-5">
+              <p className="text-xs font-black uppercase tracking-widest text-foreground">Credencial</p>
+              {credencial ? (
+                <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-700">Credencial activa</p>
+                    <p className="text-[10px] font-mono text-muted-foreground">{credencial.token.slice(0, 12)}…</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      disabled={generandoCredencial}
+                      onClick={() => void handleGenerarCredencial()}
+                      className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:underline disabled:opacity-50"
+                    >
+                      Regenerar
+                    </button>
+                    <button
+                      disabled={generandoCredencial}
+                      onClick={() => void handleRevocarCredencial()}
+                      className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:underline disabled:opacity-50"
+                    >
+                      Revocar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between rounded-xl border border-border/40 px-3 py-2">
+                  <p className="text-[10px] text-muted-foreground">Sin credencial emitida.</p>
+                  <SubmitButton
+                    label={generandoCredencial ? 'Generando…' : 'Generar credencial'}
+                    loading={generandoCredencial}
+                    color="indigo"
+                    onClick={handleGenerarCredencial}
+                  />
+                </div>
+              )}
+            </div>
+
             <SubmitButton
               label={savingConfig ? 'Guardando…' : 'Guardar configuración'}
               loading={savingConfig}

@@ -247,6 +247,7 @@ exports.Prisma.RegistroAsistenciaScalarFieldEnum = {
   horas_normales: 'horas_normales',
   horas_extra_dia: 'horas_extra_dia',
   origen_horas: 'origen_horas',
+  ultimo_scan_en: 'ultimo_scan_en',
   created_at: 'created_at'
 };
 
@@ -290,6 +291,63 @@ exports.Prisma.NominaComplementariaDetalleScalarFieldEnum = {
   monto_complemento: 'monto_complemento'
 };
 
+exports.Prisma.ConfigNominaProyectoScalarFieldEnum = {
+  id_config: 'id_config',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  periodicidad_pago: 'periodicidad_pago',
+  configurado_por: 'configurado_por',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.DocumentoEmpleadoScalarFieldEnum = {
+  id_documento: 'id_documento',
+  tenant_id: 'tenant_id',
+  empleado_id: 'empleado_id',
+  tipo_documento: 'tipo_documento',
+  nombre_archivo: 'nombre_archivo',
+  ruta_archivo: 'ruta_archivo',
+  mime_type: 'mime_type',
+  tamano_bytes: 'tamano_bytes',
+  fecha_vigencia: 'fecha_vigencia',
+  subido_por: 'subido_por',
+  created_at: 'created_at'
+};
+
+exports.Prisma.AsignacionResidenteScalarFieldEnum = {
+  id_asignacion: 'id_asignacion',
+  tenant_id: 'tenant_id',
+  empleado_id: 'empleado_id',
+  residente_id: 'residente_id',
+  fecha_inicio: 'fecha_inicio',
+  fecha_fin: 'fecha_fin',
+  asignado_por: 'asignado_por'
+};
+
+exports.Prisma.CredencialEmpleadoScalarFieldEnum = {
+  id_credencial: 'id_credencial',
+  tenant_id: 'tenant_id',
+  empleado_id: 'empleado_id',
+  token: 'token',
+  activa: 'activa',
+  emitida_en: 'emitida_en',
+  emitida_por: 'emitida_por',
+  revocada_en: 'revocada_en',
+  revocada_por: 'revocada_por',
+  motivo_revocacion: 'motivo_revocacion'
+};
+
+exports.Prisma.ConfigAsistenciaProyectoScalarFieldEnum = {
+  id_config: 'id_config',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  lat: 'lat',
+  lng: 'lng',
+  radio_metros: 'radio_metros',
+  configurado_por: 'configurado_por',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -315,7 +373,12 @@ exports.Prisma.ModelName = {
   RegistroAsistencia: 'RegistroAsistencia',
   ConfigDeduccionEmpleado: 'ConfigDeduccionEmpleado',
   NominaComplementaria: 'NominaComplementaria',
-  NominaComplementariaDetalle: 'NominaComplementariaDetalle'
+  NominaComplementariaDetalle: 'NominaComplementariaDetalle',
+  ConfigNominaProyecto: 'ConfigNominaProyecto',
+  DocumentoEmpleado: 'DocumentoEmpleado',
+  AsignacionResidente: 'AsignacionResidente',
+  CredencialEmpleado: 'CredencialEmpleado',
+  ConfigAsistenciaProyecto: 'ConfigAsistenciaProyecto'
 };
 
 /**
