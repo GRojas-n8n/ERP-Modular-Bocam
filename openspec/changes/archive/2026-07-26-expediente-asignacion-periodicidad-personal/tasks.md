@@ -68,7 +68,7 @@
 
 - [x] 9.1 Correr suite de tests nuevos contra Postgres real — 30/30 casos en verde (ver 3.8); no se midió cobertura numérica (no hay `nyc`/`jest --coverage` configurado para este estilo de test basado en `ts-node`), pero todo endpoint y función nueva tiene al menos un test que lo ejercita
 - [ ] 9.2 Verificación manual local en navegador: alta de empleado → subir documentos → asignar residente(s) → configurar periodicidad → tomar asistencia → calcular nómina fiscal y complementaria — **pendiente: requiere levantar el stack completo (RabbitMQ/Redis/frontend) y navegador, fuera de alcance de esta sesión**
-- [ ] 9.3 Confirmar que la migración de `ConfigNominaProyecto` corrió correctamente en el entorno de destino antes del primer cálculo post-deploy — **pendiente: acción de despliegue (VPS)**
+- [x] 9.3 Confirmar que la migración de `ConfigNominaProyecto` corrió correctamente en el entorno de destino antes del primer cálculo post-deploy — desplegado en VPS 2026-07-26: `prisma db push` aplicado sobre `bocam_personal` (mismo patrón sin `_prisma_migrations` que el resto del entorno), tablas nuevas confirmadas vía `\dt`, contenedor `bocam-vps-personal` healthy
 - [ ] 9.4 Verificar en navegador que un usuario `residente` solo ve en `/mis-empleados` a los empleados que RH le asignó explícitamente — cubierto por test de integración (6.4/6.5); verificación visual en navegador real pendiente
 - [ ] 9.5 Verificación manual del panel "Vencimientos" en navegador real — cubierto por test de integración (7.1/7.3); verificación visual en navegador real pendiente
 

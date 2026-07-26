@@ -23,6 +23,11 @@ Response 200:
       "empleado": "Juan Pérez",
       "dias": 2,
       "mensaje": "2 días de ausencia injustificada"
+    },
+    {
+      "tipo": "DOCUMENTO_POR_VENCER",
+      "mensaje": "5 documento(s) por vencer/vencidos",
+      "severidad": "critica"
     }
   ],
   "distribucion_jornada": [
@@ -41,3 +46,4 @@ Response 200:
 - `incidencias_pendientes`: incidencias con estado `PENDIENTE` o `EN_REVISION`
 - `nomina_proximo_corte`: fecha del próximo corte de nómina configurado en el sistema
 - Alerta `AUSENCIA_INJUSTIFICADA`: empleados con ≥ 2 días ausencia injustificada consecutivos
+- Alerta `DOCUMENTO_POR_VENCER`: entrada agregada cuando existen documentos del expediente (ver capability `expediente-empleado`) vencidos o por vencer dentro de 30 días; `severidad = "critica"` si hay al menos un documento vencido, `severidad = "advertencia"` si solo hay documentos por vencer (ninguno vencido); se omite del array si no hay documentos vencidos ni por vencer

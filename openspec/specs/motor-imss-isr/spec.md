@@ -19,12 +19,15 @@
   3. Cesantía y Vejez: `sbc × dias × 0.01125`
 - `deduccion_imss = sum(tres conceptos)`, redondeado a 2 decimales.
 
-## CA-4 — Cálculo ISR con tablas SAT 2025
-- Usa la tabla correspondiente al `periodo_tipo` (SEMANAL o QUINCENAL).
+## CA-4 — Cálculo ISR con tablas SAT
+- Usa la tabla correspondiente al `periodo_tipo` de la `PreNomina`: `SEMANAL`, `QUINCENAL` o `MENSUAL`.
 - `base_isr = total_percepciones - 50% del monto de horas_extra` (parte exenta LFT art. 93).
-- `isr_bruto = cuota_fija + (base_isr - limite_inferior) × tasa_marginal` del tramo.
-- `subsidio = valor de tabla SUBSIDIO_SEMANAL_2025` según percepciones totales.
+- `isr_bruto = cuota_fija + (base_isr - limite_inferior) × tasa_marginal` del tramo correspondiente a la tabla de la periodicidad usada.
+- `subsidio` se obtiene de la tabla de subsidio correspondiente a esa misma periodicidad (`SUBSIDIO_SEMANAL`, `SUBSIDIO_QUINCENAL` o `SUBSIDIO_MENSUAL`), según percepciones totales.
 - `deduccion_isr = MAX(0, isr_bruto - subsidio)`, redondeado a 2 decimales.
+- SEMANAL y QUINCENAL: comportamiento previo sin cambios.
+- MENSUAL (nuevo): usa la tabla ISR mensual y el subsidio mensual vigentes, calculando `dias` del período por mes calendario (no por factor aproximado).
+- Si la `PreNomina` trae un `periodo_tipo` fuera de `SEMANAL`/`QUINCENAL`/`MENSUAL` → el sistema responde `400` indicando periodicidad no soportada, sin generar detalles con montos incorrectos.
 
 ## CA-5 — Horas extra LFT
 - Primeras 9 horas extra acumuladas en la semana: monto = horas × (salario_diario / 8) × 2.0
