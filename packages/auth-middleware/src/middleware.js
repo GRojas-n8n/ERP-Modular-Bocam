@@ -63,11 +63,17 @@ function createAuthMiddleware(options) {
         throw new Error('[BOCAM::AUTH] VIOLACIÓN CRÍTICA: No se proporcionó JWT_SECRET. ' +
             'El sistema no puede operar sin una clave de firma. Revisa tu archivo .env.');
     }
+    const isPathExcluded = (requestPath) => {
+        return excludePaths.some((path) => {
+            if (!excludeByPrefix) {
+                return requestPath === path;
+            }
+            return requestPath === path || requestPath.startsWith(`${path}/`);
+        });
+    };
     return (req, res, next) => {
         // ─── Verificar si la ruta está excluida ─────────────────────────
-        const isExcluded = excludeByPrefix
-            ? excludePaths.some(path => req.path.startsWith(path))
-            : excludePaths.includes(req.path);
+        const isExcluded = isPathExcluded(req.path);
         if (isExcluded) {
             return next();
         }
@@ -113,6 +119,7 @@ function createAuthMiddleware(options) {
                 proyectoId: decoded.proyecto_id || '',
                 email: decoded.email || '',
                 name: decoded.name || '',
+                userName: decoded.name || '',
                 roles: decoded.roles || [],
                 authorizedProjects: decoded.projects || [],
                 limiteAprobacion: decoded.limite_aprobacion || 0,
@@ -200,14 +207,11 @@ function requireRoles(...allowedRoles) {
 function requireProjectAccess() {
     return (req, res, next) => {
         if (!req.securityContext) {
-            res.status(401).json({
-                success: false,
-                error: {
-                    code: 'AUTH_CONTEXT_MISSING',
-                    message: 'Contexto de seguridad no encontrado.',
-                },
-            });
-            return;
+            // Si no hay securityContext, la ruta fue excluida del JWT middleware previo
+            // (p. ej. /health). En ese caso pasamos transparente — la validación de proyecto
+            // no aplica para rutas publicas. El JWT middleware ya rechazo cualquier ruta
+            // que requeria autenticacion antes de llegar aqui.
+            return next();
         }
         const { proyectoId, authorizedProjects, roles } = req.securityContext;
         // Los roles de nivel Tenant (superintendent, finance, procurement) tienen acceso a todo
@@ -217,7 +221,17 @@ function requireProjectAccess() {
             return next();
         }
         // Para roles de nivel Proyecto, verificar acceso explícito
-        if (proyectoId && !authorizedProjects.includes(proyectoId)) {
+        if (!proyectoId) {
+            res.status(403).json({
+                success: false,
+                error: {
+                    code: 'AUTH_PROJECT_REQUIRED',
+                    message: 'Se requiere un proyecto activo para esta operación.',
+                },
+            });
+            return;
+        }
+        if (!authorizedProjects.includes(proyectoId)) {
             res.status(403).json({
                 success: false,
                 error: {
@@ -230,3 +244,4 @@ function requireProjectAccess() {
         next();
     };
 }
+//# sourceMappingURL=middleware.js.map

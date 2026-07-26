@@ -74,3 +74,4 @@ export declare function requireRoles(...allowedRoles: string[]): (req: Request, 
  * la información de la obra a la que fue asignado".
  */
 export declare function requireProjectAccess(): (req: Request, res: Response, next: NextFunction) => void;
+//# sourceMappingURL=middleware.d.ts.map
