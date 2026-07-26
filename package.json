@@ -52,13 +52,7 @@
     "fast-uri": "^3.1.4",
     "body-parser": "^1.20.6",
     "@hono/node-server": "^2.0.5",
-    "typescript-eslint": {
-      "@typescript-eslint/typescript-estree": {
-        "minimatch": {
-          "brace-expansion": "^5.0.7"
-        }
-      }
-    },
+    "brace-expansion": "^5.0.8",
     "uuid": "^14.0.1"
   }
 }
