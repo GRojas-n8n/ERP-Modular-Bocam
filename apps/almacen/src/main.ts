@@ -144,6 +144,14 @@ app.patch('/api/v1/almacen/inventario/:id',
       const { stock_minimo, ubicacion } = req.body;
 
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const existing = await prisma.itemInventario.findFirst({
+          where: { id, tenant_id: tenantId, proyecto_id: proyectoId },
+        });
+        if (!existing) {
+          const err = new Error('Ítem de inventario no encontrado.') as any;
+          err.status = 404;
+          throw err;
+        }
         return prisma.itemInventario.update({
           where: { id },
           data: {
@@ -154,7 +162,7 @@ app.patch('/api/v1/almacen/inventario/:id',
       });
       res.json({ success: true, data: { ...data, stock_actual: Number(data.stock_actual), stock_minimo: Number(data.stock_minimo) } });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status((error as any).status ?? 500).json({ success: false, message: error.message });
     }
   }
 );
