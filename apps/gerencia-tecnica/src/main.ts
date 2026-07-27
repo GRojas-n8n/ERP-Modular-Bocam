@@ -2755,7 +2755,7 @@ export async function handleOcCanceladaParaProyeccion(event: any): Promise<void>
 
   try {
     await (prisma as any).compraProyectada.updateMany({
-      where: { oc_id },
+      where: { oc_id, tenant_id: event.context.tenant_id },
       data:  { estado: 'CANCELADA' },
     });
     console.log(JSON.stringify({ action: 'gt.compra_proyectada.cancelada', oc_id }));

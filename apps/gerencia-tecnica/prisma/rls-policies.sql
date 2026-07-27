@@ -109,3 +109,100 @@ COMMENT ON POLICY rls_presupuestos_tenant ON presupuestos_base IS
     'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_conceptos_tenant ON conceptos IS
     'Aislamiento Multi-Tenant + Multi-Proyecto (hereda de presupuesto). Módulo: Gerencia Técnica.';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 5. TABLAS AGREGADAS DESPUÉS DE 2026-07-11 SIN RLS (fix-rls-gerencia-tecnica-
+-- tablas-sin-cobertura, 2026-07-26). A diferencia de las 3 tablas de arriba,
+-- estas políticas usan AND estricto (sin el fallback "OR ... IS NULL") — el
+-- código actual siempre pasa proyecto_id a createTenantContext(), así que el
+-- fallback no aplica y no debe replicarse aquí.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─── CATEGORÍAS DE GASTO (tenant + proyecto) ────────────────────────────────
+ALTER TABLE categorias_gasto ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categorias_gasto FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_categorias_gasto_context ON categorias_gasto;
+CREATE POLICY rls_categorias_gasto_context ON categorias_gasto
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id())
+    WITH CHECK (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id());
+
+-- ─── CONFIGURACIÓN DE COSTOS POR PROYECTO (tenant + proyecto) ───────────────
+ALTER TABLE proyecto_costos_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE proyecto_costos_config FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_proyecto_costos_config_context ON proyecto_costos_config;
+CREATE POLICY rls_proyecto_costos_config_context ON proyecto_costos_config
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id())
+    WITH CHECK (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id());
+
+-- ─── COMPOSICIÓN APU CONCEPTO×INSUMO (tenant + proyecto) ────────────────────
+ALTER TABLE concepto_insumos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE concepto_insumos FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_concepto_insumos_context ON concepto_insumos;
+CREATE POLICY rls_concepto_insumos_context ON concepto_insumos
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id())
+    WITH CHECK (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id());
+
+-- ─── SALDO POR PARTIDA (tenant + proyecto) ──────────────────────────────────
+ALTER TABLE saldo_partidas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saldo_partidas FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_saldo_partidas_context ON saldo_partidas;
+CREATE POLICY rls_saldo_partidas_context ON saldo_partidas
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id())
+    WITH CHECK (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id());
+
+-- ─── PROYECCIÓN DE COMPRAS (tenant + proyecto) ──────────────────────────────
+ALTER TABLE compras_proyectadas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compras_proyectadas FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_compras_proyectadas_context ON compras_proyectadas;
+CREATE POLICY rls_compras_proyectadas_context ON compras_proyectadas
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id())
+    WITH CHECK (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id());
+
+-- ─── FICHAS TÉCNICAS DE INSUMO (solo tenant — cuelga de insumos, compartido
+-- entre proyectos; no tiene columna proyecto_id propia) ─────────────────────
+ALTER TABLE fichas_tecnicas_insumo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fichas_tecnicas_insumo FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_fichas_tecnicas_insumo_tenant ON fichas_tecnicas_insumo;
+CREATE POLICY rls_fichas_tecnicas_insumo_tenant ON fichas_tecnicas_insumo
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
+
+-- ─── AUDIT TRAIL DE SALDO (solo tenant — no tiene columna proyecto_id
+-- propia, cuelga de SaldoPartida vía saldo_partida_id) ───────────────────────
+ALTER TABLE saldo_movimientos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saldo_movimientos FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_saldo_movimientos_tenant ON saldo_movimientos;
+CREATE POLICY rls_saldo_movimientos_tenant ON saldo_movimientos
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
+
+-- ─── TRANSFERENCIAS ENTRE PARTIDAS (solo tenant — tiene proyecto_origen_id Y
+-- proyecto_destino_id, una transferencia legítimamente cruza 2 proyectos del
+-- mismo tenant, no tiene un único proyecto_id propio que filtrar) ───────────
+ALTER TABLE transferencia_partidas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transferencia_partidas FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_transferencia_partidas_tenant ON transferencia_partidas;
+CREATE POLICY rls_transferencia_partidas_tenant ON transferencia_partidas
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
+
+-- ─── VÍNCULO PROYECTO↔COTIZACIÓN DE VENTAS (solo tenant — SÍ tiene columna
+-- proyecto_id, pero el código la trata como catálogo tenant-wide: GET
+-- /trazabilidad/vinculos-obra lista todos los proyectos vinculados del
+-- tenant sin acotar al proyecto "actual" de la sesión; una política
+-- tenant+proyecto rompería ese listado) ──────────────────────────────────────
+ALTER TABLE proyectos_obra_vinculados ENABLE ROW LEVEL SECURITY;
+ALTER TABLE proyectos_obra_vinculados FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_proyectos_obra_vinculados_tenant ON proyectos_obra_vinculados;
+CREATE POLICY rls_proyectos_obra_vinculados_tenant ON proyectos_obra_vinculados
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
