@@ -92,7 +92,11 @@
 
 ## 8. Despliegue
 
-- [ ] 8.1 PR contra `main`
-- [ ] 8.2 Build Docker de `app-shell` y verificación en VPS tras merge
+- [x] 8.1 PR contra `main` — se pusheó directo a `main` (commit `2908a60`), sin PR intermedio;
+      workflow real de este repo para este tipo de cambio
+- [x] 8.2 Build Docker de `app-shell` y verificación en VPS tras merge — hecho 2026-07-26:
+      `git pull` en VPS (62db8ec→2908a60), `docker compose build app-shell` + `up -d`,
+      contenedor `bocam-vps-app-shell` healthy, `https://iretum.com` responde 200
 - [ ] 8.3 Archivar el change en `openspec/changes/archive/` tras verificación manual en
-      producción
+      producción — **verificación funcional en navegador real por el usuario sigue pendiente**
+      (7.1-7.3); el deploy en sí ya está confirmado sano
