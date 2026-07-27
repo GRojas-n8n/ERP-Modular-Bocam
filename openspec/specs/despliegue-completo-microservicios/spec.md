@@ -79,6 +79,10 @@ agregue una tabla tenant-scoped, no solo mantenerse al día de su primera versi�
   asumir que una política existente ya provee aislamiento solo porque aparece en
   `pg_policies`
 
+#### Scenario: Tabla catálogo global sin tenant_id dentro de un servicio tenant-scoped
+- **WHEN** un microservicio con `rls-policies.sql` tiene una tabla sin columna `tenant_id` (ej. un catálogo compartido entre todos los tenants, como el plan de cuentas contable)
+- **THEN** esa tabla NO SHALL recibir `ENABLE ROW LEVEL SECURITY` — hacerlo sin una política equivale, bajo `FORCE ROW LEVEL SECURITY`, a un deny-all que rompe cualquier `JOIN`/`include` contra ella — y la exclusión SHALL documentarse explícitamente con un comentario en el `rls-policies.sql` del servicio, para que una auditoría posterior no la confunda con drift sin resolver
+
 ### Requirement: El código de aplicación no SHALL depender exclusivamente de RLS para el aislamiento en operaciones de alto riesgo
 El código de aplicación SHALL verificar explícitamente que la fila resuelta por clave primaria pertenece al `tenant_id` (y `proyecto_id` cuando aplique) de la sesión antes de leerla completa o modificarla — ya sea incluyendo esas columnas en el `where` de la consulta, o verificando el resultado después de un `findFirst`/`findUnique` por PK antes de actuar sobre él. RLS SHALL seguir aplicándose como capa adicional, pero SHALL NOT ser la única capa de aislamiento para estas operaciones.
 
@@ -96,6 +100,10 @@ El código de aplicación SHALL verificar explícitamente que la fila resuelta p
 - **THEN** una fuga cross-tenant NO SHALL depender de que RLS esté correctamente
   configurado en todo momento — el aislamiento se mantiene aunque RLS se
   deshabilite accidentalmente en el futuro
+
+#### Scenario: Endpoint de escritura que devuelve la fila completa mutada
+- **WHEN** un endpoint de escritura (`update`/`upsert`) por PK sin verificación de tenant devuelve en la respuesta la fila completa recién modificada
+- **THEN** SHALL tratarse como una vulnerabilidad de lectura Y escritura combinadas en una sola petición — el atacante no solo corrompe datos de otro tenant, también los exfiltra en la misma respuesta; bajo RLS sin el chequeo de código explícito, ese endpoint SHALL responder `404` explícito ante un recurso ajeno, no un `500` derivado de un error interno de la capa de datos (ej. `P2025` de Prisma)
 
 ### Requirement: Una tabla con columna proyecto_id no SHALL asumirse tenant+proyecto sin verificar cómo el código la consulta
 Al decidir el alcance de una política RLS para una tabla tenant-scoped, la presencia de una columna `proyecto_id` en el schema no SHALL bastar por sí sola para elegir una política combinada `tenant_id AND proyecto_id` — SHALL verificarse primero si el código de aplicación realmente acota sus consultas al "proyecto actual" de la sesión, o si trata la tabla como un catálogo tenant-wide (listando/escribiendo filas de múltiples `proyecto_id` dentro del mismo tenant sin acotar a uno solo). En el segundo caso, la política SHALL ser solo `tenant_id`, aunque la columna `proyecto_id` exista como dato informativo de cada fila.
@@ -121,3 +129,14 @@ hardcodeado en el código fuente.
   dentro del contenedor consumidor apunta a sí mismo) y toda llamada a esa
   integración falla con error de conexión — esto SHALL detectarse como brecha y
   corregirse configurando la variable con el nombre de contenedor correcto
+
+### Requirement: Un middleware de autorización de proyecto no SHALL considerarse aislamiento de datos por proyecto
+Un middleware que verifica que el usuario tiene acceso al `proyecto_id` de su sesión (ej. `requireProjectAccess()`) SHALL tratarse únicamente como control de acceso a la ruta solicitada, no como aislamiento de datos entre proyectos. Si el código de un endpoint no filtra explícitamente por `proyecto_id` en sus consultas, y no existe una política RLS combinada `tenant_id AND proyecto_id` sobre la tabla consultada, el servicio SHALL considerarse sin aislamiento entre proyectos del mismo tenant, incluso si el middleware de autorización está presente y funcionando correctamente.
+
+#### Scenario: Middleware verifica acceso al proyecto pero la consulta no lo filtra
+- **WHEN** un endpoint pasa por un middleware que confirma que el usuario tiene acceso al `proyecto_id` de su sesión, pero la consulta a la base de datos solo filtra por `tenant_id` y no existe política RLS combinada
+- **THEN** un usuario legítimamente autorizado en el proyecto A puede leer o modificar registros del proyecto B del mismo tenant pasando el UUID de B en la ruta — esto SHALL tratarse como una brecha de aislamiento activa, no como defensa en profundidad faltante únicamente
+
+#### Scenario: Filtro explícito o política RLS combinada presente
+- **WHEN** un endpoint filtra explícitamente por `tenant_id` y `proyecto_id` en la consulta, o existe una política RLS combinada sobre la tabla
+- **THEN** el aislamiento entre proyectos del mismo tenant SHALL sostenerse independientemente de qué UUID de proyecto se pase en la ruta
