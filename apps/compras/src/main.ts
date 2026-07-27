@@ -1704,7 +1704,7 @@ app.get('/api/v1/compras/ordenes-compra/:id/recepciones',
       const data = await createTenantContext(
         { tenantId, proyectoId, userId },
         async (prisma) => prisma.recepcionOC.findMany({
-          where: { orden_id: id },
+          where: { orden_id: id, tenant_id: tenantId },
           include: { items: true },
           orderBy: { fecha_recepcion: 'desc' },
         })
@@ -2531,7 +2531,7 @@ app.get('/api/v1/compras/comparativas/:id', async (req: Request, res: Response) 
             where: { cuadro_id: id, tenant_id: tenantId },
           }),
         ]);
-        if (!cuadro) return null;
+        if (!cuadro || cuadro.tenant_id !== tenantId) return null;
 
         // Aclaraciones count map
         const aclaracionesCountMap = new Map<string, number>();
@@ -2767,7 +2767,7 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
           include: { detalles: { where: { es_ganador: true, aprobacion_gt: { in: ['C', 'DA', 'APROBADO'] } } } }
         });
 
-        if (!comparativa) throw new Error('Cuadro comparativo no encontrado.');
+        if (!comparativa || comparativa.tenant_id !== tenantId) throw new Error('Cuadro comparativo no encontrado.');
         if (comparativa.estado !== 'APROBADO_GT') {
           throw new Error(`APROBACION_GT_REQUERIDA: La OC solo puede generarse de un cuadro aprobado por Gerencia Técnica. Estado actual: ${comparativa.estado}`);
         }
@@ -3296,7 +3296,7 @@ app.put('/api/v1/compras/comparativas/:id/cotizaciones',
         async (prisma) => {
           // Verificar que el cuadro existe
           const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id } });
-          if (!cuadro) throw new Error('Cuadro comparativo no encontrado.');
+          if (!cuadro || cuadro.tenant_id !== tenantId) throw new Error('Cuadro comparativo no encontrado.');
           if (cuadro.estado === 'FIRMADO_BLOQUEADO') throw new Error('COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.');
           if (cuadro.estado !== 'BORRADOR') throw new Error(`El cuadro está en estado ${cuadro.estado} y no puede modificarse.`);
 
@@ -3375,7 +3375,7 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-evaluacion',
             include: { detalles: true },
           });
 
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.' });
@@ -3461,7 +3461,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar',
             include: { detalles: true, lineas: true },
           });
 
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadro.estado === 'LOCKED' || cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: Este cuadro está firmado y no puede modificarse.' });
@@ -3617,7 +3617,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar-especificaciones',
         { tenantId, proyectoId, userId },
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id }, include: { lineas: true } });
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadro.estado === 'LOCKED' || cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_LOCKED: Este cuadro está firmado y no puede modificarse.' });
@@ -3728,7 +3728,7 @@ app.patch('/api/v1/compras/comparativas/:id/enviar-gt',
             include: { detalles: true },
           });
 
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           const ESTADOS_ENVIABLES = new Set(['EVALUADO_TECNICAMENTE', 'LOCKED', 'FIRMADO_BLOQUEADO']);
           if (!ESTADOS_ENVIABLES.has(cuadro.estado)) {
@@ -3808,7 +3808,7 @@ app.patch('/api/v1/compras/comparativas/:id/evaluar-gt',
             include: { detalles: true },
           });
 
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadro.estado !== 'EN_APROBACION_GT') {
             return res.status(400).json({
@@ -3890,7 +3890,7 @@ app.patch('/api/v1/compras/comparativas/:id/revisar-gt',
             include: { detalles: true },
           });
 
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadro.estado !== 'EN_APROBACION_GT') {
             return res.status(400).json({
@@ -5283,7 +5283,7 @@ app.put('/api/v1/compras/comparativas/:id/seleccion',
         { tenantId, proyectoId, userId },
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id } });
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
           if (cuadro.estado === 'LOCKED' || cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: No se puede modificar un cuadro firmado.' });
           }
@@ -5353,7 +5353,7 @@ app.post('/api/v1/compras/comparativas/:id/firmar',
             include: { detalles: true },
           });
 
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(400).json({ success: false, message: 'El cuadro ya está firmado y bloqueado.' });
@@ -5495,7 +5495,7 @@ app.post('/api/v1/compras/comparativas/:id/nueva-revision',
             },
           });
 
-          if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadroOriginal || cuadroOriginal.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           if (cuadroOriginal.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado. Solo el administrador puede desbloquearlo.' });
@@ -5621,9 +5621,9 @@ app.post('/api/v1/compras/comparativas/:id/aclaraciones',
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            select: { estado: true },
+            select: { estado: true, tenant_id: true },
           });
-          if (!cuadro) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadro || cuadro.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
 
           const ESTADOS_BLOQUEADOS = new Set(['LOCKED', 'FIRMADO_BLOQUEADO', 'SUPERSEDIDO', 'CERRADO']);
           if (ESTADOS_BLOQUEADOS.has(cuadro.estado)) {
@@ -5678,9 +5678,9 @@ app.get('/api/v1/compras/comparativas/:id/aclaraciones',
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            select: { id_cuadro: true },
+            select: { id_cuadro: true, tenant_id: true },
           });
-          if (!cuadro) return null;
+          if (!cuadro || cuadro.tenant_id !== tenantId) return null;
 
           return prisma.aclaracionComparativa.findMany({
             where: { cuadro_id: id, tenant_id: tenantId },
@@ -5721,8 +5721,11 @@ app.patch('/api/v1/compras/comparativas/:id/aclaraciones/:aid',
             return res.status(404).json({ success: false, message: 'Aclaración no encontrada.' });
           }
 
-          const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id }, select: { estado: true } });
-          if (cuadro?.estado === 'FIRMADO_BLOQUEADO') {
+          const cuadro = await prisma.cuadroComparativo.findUnique({ where: { id_cuadro: id }, select: { estado: true, tenant_id: true } });
+          if (!cuadro || cuadro.tenant_id !== tenantId) {
+            return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          }
+          if (cuadro.estado === 'FIRMADO_BLOQUEADO') {
             return res.status(403).json({ success: false, message: 'COMPARATIVA_FIRMADO_BLOQUEADO: El cuadro está firmado y bloqueado.' });
           }
 
@@ -5837,7 +5840,7 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
             where: { id_cuadro: id },
             include: { detalles: true, lineas: true, evaluaciones_especificacion: true },
           });
-          if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadroOriginal || cuadroOriginal.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
           if (cuadroOriginal.estado !== 'EN_EVALUACION_TECNICA') {
             return res.status(400).json({ success: false, message: `El cuadro debe estar en EN_EVALUACION_TECNICA. Estado actual: ${cuadroOriginal.estado}` });
           }
@@ -5853,6 +5856,12 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas',
           const hayPreguntaEnRenglones = evaluacionesRenglon.some(e => e.evaluacion_tecnica === '?');
           if (!hayPreguntaEnEspecificaciones && !hayPreguntaEnRenglones) {
             return res.status(400).json({ success: false, message: 'Debe haber al menos una característica o renglón con "?" para crear una revisión con preguntas.' });
+          }
+
+          const detalleIdsDelCuadro = new Set(cuadroOriginal.detalles.map(d => d.id_detalle));
+          const renglonAjeno = evaluacionesRenglon.find(ev => !detalleIdsDelCuadro.has(ev.detalle_id));
+          if (renglonAjeno) {
+            return res.status(400).json({ success: false, message: `Renglón ${renglonAjeno.detalle_id} no pertenece a este cuadro comparativo.` });
           }
 
           // 1. Guardar evaluaciones de renglón legacy en el cuadro original (si las hay)
@@ -6006,7 +6015,7 @@ app.post('/api/v1/compras/comparativas/:id/revision-con-preguntas-gt',
             where: { id_cuadro: id },
             include: { detalles: true, lineas: true, evaluaciones_especificacion: true },
           });
-          if (!cuadroOriginal) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
+          if (!cuadroOriginal || cuadroOriginal.tenant_id !== tenantId) return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
           if (cuadroOriginal.estado !== 'EN_APROBACION_GT') {
             return res.status(400).json({ success: false, message: `El cuadro debe estar en EN_APROBACION_GT. Estado actual: ${cuadroOriginal.estado}` });
           }
@@ -6164,7 +6173,7 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas-gt',
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            select: { estado: true, revision_padre_id: true, tenant_id: true },
+            select: { estado: true, revision_padre_id: true, tenant_id: true, detalles: { select: { id_detalle: true } } },
           });
           if (!cuadro || cuadro.tenant_id !== tenantId) {
             return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
@@ -6174,6 +6183,12 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas-gt',
           }
           if (!cuadro.revision_padre_id) {
             return res.status(400).json({ success: false, message: 'Este cuadro no es una revisión — no tiene preguntas de Gerencia Técnica.' });
+          }
+
+          const detalleIdsDelCuadroGT = new Set(cuadro.detalles.map(d => d.id_detalle));
+          const renglonAjenoGT = respuestasRenglon.find(r => !detalleIdsDelCuadroGT.has(r.detalle_id));
+          if (renglonAjenoGT) {
+            return res.status(400).json({ success: false, message: `Renglón ${renglonAjenoGT.detalle_id} no pertenece a este cuadro comparativo.` });
           }
 
           await Promise.all(respuestasRenglon.map(r =>
@@ -6223,7 +6238,7 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas',
         async (prisma) => {
           const cuadro = await prisma.cuadroComparativo.findUnique({
             where: { id_cuadro: id },
-            select: { estado: true, revision_padre_id: true, tenant_id: true },
+            select: { estado: true, revision_padre_id: true, tenant_id: true, detalles: { select: { id_detalle: true } } },
           });
           if (!cuadro || cuadro.tenant_id !== tenantId) {
             return res.status(404).json({ success: false, message: 'Cuadro comparativo no encontrado.' });
@@ -6233,6 +6248,12 @@ app.put('/api/v1/compras/comparativas/:id/responder-preguntas',
           }
           if (!cuadro.revision_padre_id) {
             return res.status(400).json({ success: false, message: 'Este cuadro no es una revisión — no tiene preguntas del Residente.' });
+          }
+
+          const detalleIdsDelCuadroResp = new Set(cuadro.detalles.map(d => d.id_detalle));
+          const renglonAjenoResp = respuestasRenglon.find(r => !detalleIdsDelCuadroResp.has(r.detalle_id));
+          if (renglonAjenoResp) {
+            return res.status(400).json({ success: false, message: `Renglón ${renglonAjenoResp.detalle_id} no pertenece a este cuadro comparativo.` });
           }
 
           await Promise.all(respuestasRenglon.map(r =>
