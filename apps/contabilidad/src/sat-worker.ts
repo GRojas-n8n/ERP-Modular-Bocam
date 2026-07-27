@@ -6,6 +6,7 @@ import type {
   SatValidationCallbackRequest,
   SolicitudValidacionSatPayload,
 } from './types';
+import { getSatCallbackSecret } from './sat-callback-auth';
 
 const EVENT_EXCHANGE = process.env.RABBITMQ_EXCHANGE_NAME || 'bocam.events';
 const MAIN_EVENT = 'contabilidad.cfdi_sat_validacion_solicitada';
@@ -36,10 +37,6 @@ function getWorkerMaxAttempts() {
 
 function buildSatDispatchId() {
   return `sat-${randomUUID()}`;
-}
-
-function getSatCallbackSecret() {
-  return process.env.SAT_CALLBACK_SHARED_SECRET || process.env.SAT_ADAPTER_API_KEY || '';
 }
 
 function getContabilidadBaseUrl() {

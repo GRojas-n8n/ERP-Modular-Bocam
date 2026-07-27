@@ -282,6 +282,7 @@ async function runScenario(
         proyecto_id: satRequestEvent!.context.proyecto_id,
         user_id: satRequestEvent!.context.user_id,
         id_conciliacion: satRequestEvent!.payload.id_conciliacion,
+        dispatch_id: satRequestEvent!.payload.dispatch_id,
         estatus_sat: status,
         fecha_validacion_sat: new Date('2026-03-19T10:00:00.000Z').toISOString(),
         fecha_cancelacion_sat: status === 'CANCELADO'

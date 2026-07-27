@@ -43,6 +43,7 @@ import {
   createApiResponse,
 } from './types';
 import { buildMovimientosForPoliza, persistMovimientos, TipoPoliza } from './mapper';
+import { getSatCallbackSecret, safeSecretEquals, requireSatCallbackSecret } from './sat-callback-auth';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import {
@@ -153,10 +154,6 @@ function mapSatStatusToCfdiStatus(estatusSat: 'VIGENTE' | 'CANCELADO') {
   return estatusSat === 'VIGENTE' ? 'SAT_VIGENTE' : 'SAT_CANCELADO';
 }
 
-function getSatCallbackSecret() {
-  return process.env.SAT_CALLBACK_SHARED_SECRET || process.env.SAT_ADAPTER_API_KEY || '';
-}
-
 function getSatMaxAttempts() {
   const parsed = Number(process.env.SAT_WORKER_MAX_ATTEMPTS || '3');
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
@@ -164,6 +161,29 @@ function getSatMaxAttempts() {
 
 function buildSatDispatchId() {
   return `sat-${randomUUID()}`;
+}
+
+/**
+ * Verifica que un dispatch_id recibido en un callback SAT sea el mismo que
+ * esta API generó y guardó en la fila ANTES de despachar (main.ts, dentro de
+ * markSatValidationRequested) — o el de la última rotación ya completada
+ * (sat_last_completed_dispatch_id, para reintentos/entregas duplicadas
+ * legítimas). Sin este chequeo, el secreto compartido por sí solo bastaba
+ * para declarar cualquier tenant_id/id_conciliacion en el body y forjar un
+ * callback válido — ver design.md de fix-auth-callbacks-sat-contabilidad.
+ */
+function assertDispatchOwnership(
+  conciliacion: { sat_dispatch_id: string | null; sat_last_completed_dispatch_id: string | null },
+  dispatchId: string | undefined
+): void {
+  if (!dispatchId) {
+    throw new Error('SAT_DISPATCH_MISMATCH');
+  }
+  const owned = [conciliacion.sat_dispatch_id, conciliacion.sat_last_completed_dispatch_id]
+    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+  if (!owned.some((value) => safeSecretEquals(dispatchId, value))) {
+    throw new Error('SAT_DISPATCH_MISMATCH');
+  }
 }
 
 async function loadSatValidationRequestByConciliacionId(prisma: any, tenantId: string, conciliacionId: string): Promise<SolicitudValidacionSatPayload> {
@@ -323,6 +343,8 @@ async function registerSatFailure(
     throw new Error('SAT_RECONCILIATION_NOT_FOUND');
   }
 
+  assertDispatchOwnership(conciliacion, failure.dispatch_id);
+
   return await prisma.conciliacionFiscal.update({
     where: {
       id_conciliacion: conciliacion.id_conciliacion,
@@ -354,6 +376,14 @@ async function applySatValidationResult(
     estatus_sat: 'VIGENTE' | 'CANCELADO';
     fecha_validacion_sat?: string;
     fecha_cancelacion_sat?: string;
+    // Presente SIEMPRE que el llamador sea el callback externo de SAT (ese
+    // endpoint valida su presencia en el body antes de llegar aquí — ver
+    // POST .../integraciones/sat/callback). Ausente cuando el llamador es
+    // POST .../conciliaciones-fiscales/:id/validar-sat, la ruta MANUAL
+    // protegida por JWT + requireRoles('admin','finance'), que no pasa por
+    // el flujo de dispatch/worker y por lo tanto no tiene dispatch_id que
+    // verificar — su propio tenant_id/proyecto_id ya vienen de la sesión
+    // autenticada, no de un body sin JWT.
     dispatch_id?: string;
     fuente?: string;
     mensaje_sat?: string;
@@ -371,6 +401,10 @@ async function applySatValidationResult(
 
       if (!conciliacion) {
         throw new Error('SAT_RECONCILIATION_NOT_FOUND');
+      }
+
+      if (result.dispatch_id !== undefined) {
+        assertDispatchOwnership(conciliacion, result.dispatch_id);
       }
 
       if (!conciliacion.uuid_fiscal) {
@@ -1645,6 +1679,12 @@ app.use(createObservabilityMiddleware('contabilidad'));
 const PORT = process.env.PORT || 3008;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 initSentry(process.env.SENTRY_DSN || '', 'contabilidad');
+// Rutas exentas de JWT/requireProjectAccess porque su llamador legítimo es el
+// worker de contabilidad (sat-worker.ts), no una sesión de usuario. A cambio,
+// SHALL exigir requireSatCallbackSecret — este mismo arreglo se reusa para
+// eximir Y para exigir el secreto, de modo que sea estructuralmente
+// imposible agregar una ruta exenta de JWT que quede sin la verificación del
+// secreto compartido (ver fix-auth-callbacks-sat-contabilidad).
 const INTEGRATION_CALLBACK_PATHS = [
   '/api/v1/contabilidad/integraciones/sat/claim-dispatch',
   '/api/v1/contabilidad/integraciones/sat/callback',
@@ -1657,8 +1697,7 @@ app.use(createAuthMiddleware({
 }));
 app.use((req: Request, res: Response, next) => {
   if (INTEGRATION_CALLBACK_PATHS.includes(req.path)) {
-    next();
-    return;
+    return requireSatCallbackSecret(req, res, next);
   }
 
   return requireProjectAccess()(req, res, next);
@@ -2508,18 +2547,6 @@ app.post(
   async (req: Request, res: Response) => {
     const correlationId = getCorrelationId(req);
     try {
-      const callbackSecret = getSatCallbackSecret();
-      if (!callbackSecret) {
-        res.status(503).json(createApiError('CONT_SAT_CALLBACK_NOT_CONFIGURED', 'No hay secreto configurado para callback SAT.', undefined, correlationId));
-        return;
-      }
-
-      const providedSecret = req.header('x-bocam-secret');
-      if (!providedSecret || providedSecret !== callbackSecret) {
-        res.status(401).json(createApiError('CONT_SAT_CALLBACK_UNAUTHORIZED', 'Callback SAT no autorizado.', undefined, correlationId));
-        return;
-      }
-
       const payload = req.body as SatClaimDispatchRequest;
       if (
         !payload?.tenant_id ||
@@ -2555,7 +2582,10 @@ app.post(
         claimed: data.claimed,
         reason: data.reason,
         id_conciliacion: data.conciliacion.id_conciliacion,
-        sat_dispatch_id: data.conciliacion.sat_dispatch_id,
+        // NO incluir sat_dispatch_id aquí: es el token que autoriza los
+        // callbacks de éxito/falla (ver assertDispatchOwnership) — regalarlo
+        // en esta respuesta anulaba esa protección. Ver
+        // fix-auth-callbacks-sat-contabilidad.
         sat_processing_started_at: data.conciliacion.sat_processing_started_at,
       }, payload.tenant_id, payload.proyecto_id, correlationId));
     } catch (error: any) {
@@ -2577,30 +2607,19 @@ app.post(
   async (req: Request, res: Response) => {
     const correlationId = getCorrelationId(req);
     try {
-      const callbackSecret = getSatCallbackSecret();
-      if (!callbackSecret) {
-        res.status(503).json(createApiError('CONT_SAT_CALLBACK_NOT_CONFIGURED', 'No hay secreto configurado para callback SAT.', undefined, correlationId));
-        return;
-      }
-
-      const providedSecret = req.header('x-bocam-secret');
-      if (!providedSecret || providedSecret !== callbackSecret) {
-        res.status(401).json(createApiError('CONT_SAT_CALLBACK_UNAUTHORIZED', 'Callback SAT no autorizado.', undefined, correlationId));
-        return;
-      }
-
       const payload = req.body as SatValidationCallbackRequest;
       if (
         !payload?.tenant_id ||
         !payload?.proyecto_id ||
         !payload?.user_id ||
         !payload?.id_conciliacion ||
+        !payload?.dispatch_id ||
         !payload?.estatus_sat ||
         !['VIGENTE', 'CANCELADO'].includes(payload.estatus_sat)
       ) {
         res.status(400).json(createApiError(
           'CONT_SAT_CALLBACK_INVALID_PAYLOAD',
-          'El callback SAT requiere tenant_id, proyecto_id, user_id, id_conciliacion y estatus_sat valido.',
+          'El callback SAT requiere tenant_id, proyecto_id, user_id, id_conciliacion, dispatch_id y estatus_sat valido.',
           undefined,
           correlationId
         ));
@@ -2668,7 +2687,18 @@ app.post(
         idempotente: data.idempotente,
       }, payload.tenant_id, payload.proyecto_id, correlationId));
     } catch (error: any) {
-      if (error.message === 'SAT_RECONCILIATION_NOT_FOUND') {
+      if (error.message === 'SAT_RECONCILIATION_NOT_FOUND' || error.message === 'SAT_DISPATCH_MISMATCH') {
+        // Mismo código/mensaje que "no encontrada" en ambos casos, a propósito:
+        // distinguirlos le confirmaría a quien tenga el secreto comprometido
+        // que su tenant_id/id_conciliacion eran correctos y solo falló el
+        // dispatch_id, reduciendo el espacio de búsqueda del ataque.
+        if (error.message === 'SAT_DISPATCH_MISMATCH') {
+          logWarn(req, 'contabilidad', 'contabilidad.cfdi.sat_callback_dispatch_mismatch',
+            'Callback SAT rechazado: dispatch_id no corresponde a la conciliacion', {
+              tenant_id: (req.body as any)?.tenant_id,
+              id_conciliacion: (req.body as any)?.id_conciliacion,
+            });
+        }
         res.status(404).json(createApiError('CONT_SAT_NOT_FOUND', 'Conciliacion fiscal no encontrada.', undefined, correlationId));
         return;
       }
@@ -2696,31 +2726,20 @@ app.post(
   async (req: Request, res: Response) => {
     const correlationId = getCorrelationId(req);
     try {
-      const callbackSecret = getSatCallbackSecret();
-      if (!callbackSecret) {
-        res.status(503).json(createApiError('CONT_SAT_CALLBACK_NOT_CONFIGURED', 'No hay secreto configurado para callback SAT.', undefined, correlationId));
-        return;
-      }
-
-      const providedSecret = req.header('x-bocam-secret');
-      if (!providedSecret || providedSecret !== callbackSecret) {
-        res.status(401).json(createApiError('CONT_SAT_CALLBACK_UNAUTHORIZED', 'Callback SAT no autorizado.', undefined, correlationId));
-        return;
-      }
-
       const payload = req.body as SatFailureCallbackRequest;
       if (
         !payload?.tenant_id ||
         !payload?.proyecto_id ||
         !payload?.user_id ||
         !payload?.id_conciliacion ||
+        !payload?.dispatch_id ||
         typeof payload?.attempt !== 'number' ||
         typeof payload?.max_attempts !== 'number' ||
         !payload?.error_message
       ) {
         res.status(400).json(createApiError(
           'CONT_SAT_FAILURE_CALLBACK_INVALID_PAYLOAD',
-          'El callback de fallo SAT requiere tenant_id, proyecto_id, user_id, id_conciliacion, attempt, max_attempts y error_message.',
+          'El callback de fallo SAT requiere tenant_id, proyecto_id, user_id, id_conciliacion, dispatch_id, attempt, max_attempts y error_message.',
           undefined,
           correlationId
         ));
@@ -2766,7 +2785,16 @@ app.post(
         sat_last_error: conciliacion.sat_last_error,
       }, payload.tenant_id, payload.proyecto_id, correlationId));
     } catch (error: any) {
-      if (error.message === 'SAT_RECONCILIATION_NOT_FOUND') {
+      if (error.message === 'SAT_RECONCILIATION_NOT_FOUND' || error.message === 'SAT_DISPATCH_MISMATCH') {
+        // Mismo código/mensaje que "no encontrada" en ambos casos — ver la
+        // nota equivalente en el callback de éxito.
+        if (error.message === 'SAT_DISPATCH_MISMATCH') {
+          logWarn(req, 'contabilidad', 'contabilidad.cfdi.sat_failure_callback_dispatch_mismatch',
+            'Callback de fallo SAT rechazado: dispatch_id no corresponde a la conciliacion', {
+              tenant_id: (req.body as any)?.tenant_id,
+              id_conciliacion: (req.body as any)?.id_conciliacion,
+            });
+        }
         res.status(404).json(createApiError('CONT_SAT_NOT_FOUND', 'Conciliacion fiscal no encontrada.', undefined, correlationId));
         return;
       }

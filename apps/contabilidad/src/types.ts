@@ -175,7 +175,7 @@ export interface SatValidationCallbackRequest {
   tenant_id: string;
   proyecto_id: string;
   user_id: string;
-  dispatch_id?: string;
+  dispatch_id: string;
   id_conciliacion: string;
   estatus_sat: 'VIGENTE' | 'CANCELADO';
   fecha_validacion_sat?: string;
