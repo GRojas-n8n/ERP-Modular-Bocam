@@ -107,7 +107,9 @@ async function persistMovimientosIfEligible(
   await createTenantContext(
     { tenantId: context.tenant_id, proyectoId: context.proyecto_id, userId: context.user_id },
     async (prisma) => {
-      const ya = await prisma.movimientoPoliza.count({ where: { asiento_id: asientoId } });
+      const ya = await prisma.movimientoPoliza.count({
+        where: { tenant_id: context.tenant_id, proyecto_id: context.proyecto_id, asiento_id: asientoId },
+      });
       if (ya > 0) return;
       await persistMovimientos(prisma, asientoId, defs, {
         tenant_id: context.tenant_id,
@@ -641,6 +643,7 @@ type BankReconciliationPrevalidationResult = {
 async function resolveBankReconciliationTarget(
   prisma: any,
   tenantId: string,
+  proyectoId: string,
   input: { asientoId?: string; referenciaBancaria?: string }
 ) {
   let asiento;
@@ -649,6 +652,7 @@ async function resolveBankReconciliationTarget(
     asiento = await prisma.asientoContable.findFirst({
       where: {
         tenant_id: tenantId,
+        proyecto_id: proyectoId,
         id_asiento: input.asientoId,
       },
     });
@@ -656,6 +660,7 @@ async function resolveBankReconciliationTarget(
     const conciliacionBancaria = await prisma.conciliacionBancaria.findFirst({
       where: {
         tenant_id: tenantId,
+        proyecto_id: proyectoId,
         referencia_bancaria: input.referenciaBancaria,
       },
       orderBy: {
@@ -667,6 +672,7 @@ async function resolveBankReconciliationTarget(
       asiento = await prisma.asientoContable.findFirst({
         where: {
           tenant_id: tenantId,
+          proyecto_id: proyectoId,
           id_asiento: conciliacionBancaria.asiento_id,
         },
       });
@@ -680,6 +686,7 @@ async function resolveBankReconciliationTarget(
   const conciliacionExistente = await prisma.conciliacionBancaria.findFirst({
     where: {
       tenant_id: tenantId,
+      proyecto_id: proyectoId,
       asiento_id: asiento.id_asiento,
     },
   });
@@ -697,9 +704,10 @@ async function resolveBankReconciliationTarget(
 async function prevalidateBankReconciliation(
   prisma: any,
   tenantId: string,
+  proyectoId: string,
   input: BankReconciliationInput
 ): Promise<BankReconciliationPrevalidationResult> {
-  const { asiento, conciliacionExistente } = await resolveBankReconciliationTarget(prisma, tenantId, {
+  const { asiento, conciliacionExistente } = await resolveBankReconciliationTarget(prisma, tenantId, proyectoId, {
     asientoId: input.asientoId,
     referenciaBancaria: input.referenciaBancaria,
   });
@@ -743,11 +751,12 @@ async function prevalidateBankReconciliation(
 async function reconcileBankMovement(
   prisma: any,
   tenantId: string,
+  proyectoId: string,
   userId: string,
   input: BankReconciliationInput
 ) {
   return await applyIdempotentMutation({
-    load: async () => await prevalidateBankReconciliation(prisma, tenantId, input),
+    load: async () => await prevalidateBankReconciliation(prisma, tenantId, proyectoId, input),
     idempotentResult: async (loaded) => {
       if (!loaded.idempotente) {
         return null;
@@ -1675,6 +1684,7 @@ app.get(
         { tenantId, proyectoId, userId },
         async (prisma) => {
           return await prisma.asientoContable.findMany({
+            where: { tenant_id: tenantId, proyecto_id: proyectoId },
             orderBy: {
               created_at: 'desc',
             },
@@ -1988,6 +1998,7 @@ app.post(
           const asiento = await prisma.asientoContable.findFirst({
             where: {
               tenant_id: tenantId,
+              proyecto_id: proyectoId,
               id_asiento: asientoId,
             },
           });
@@ -2008,6 +2019,7 @@ app.post(
           const conciliacionExistente = await prisma.conciliacionFiscal.findFirst({
             where: {
               tenant_id: tenantId,
+              proyecto_id: proyectoId,
               asiento_id: asientoId,
             },
           });
@@ -2163,6 +2175,7 @@ app.get(
           const conciliaciones = await prisma.conciliacionFiscal.findMany({
             where: {
               tenant_id: tenantId,
+              proyecto_id: proyectoId,
               estatus_sat: 'VALIDACION_EN_PROCESO',
               OR: [
                 { sat_requested_at: { lte: thresholdDate } },
@@ -2179,6 +2192,7 @@ app.get(
             const asiento = await prisma.asientoContable.findFirst({
               where: {
                 tenant_id: tenantId,
+                proyecto_id: proyectoId,
                 id_asiento: conciliacion.asiento_id,
               },
             });
@@ -2796,7 +2810,7 @@ app.post(
 
       const data = await createTenantContext(
         { tenantId, proyectoId, userId },
-        async (prisma) => reconcileBankMovement(prisma, tenantId, userId, {
+        async (prisma) => reconcileBankMovement(prisma, tenantId, proyectoId, userId, {
           asientoId,
           referenciaBancaria: referencia_bancaria,
           banco,
@@ -3012,7 +3026,7 @@ app.post(
 
             for (const item of executionItems) {
               try {
-                await prevalidateBankReconciliation(prisma, tenantId, {
+                await prevalidateBankReconciliation(prisma, tenantId, proyectoId, {
                   asientoId: item.id_asiento,
                   referenciaBancaria: item.referencia_bancaria,
                   banco: item.banco,
@@ -3046,7 +3060,7 @@ app.post(
             const itemLabel = String(item.referencia_lote || item.referencia_bancaria || item.id_asiento || 'item');
 
             try {
-              const result = await reconcileBankMovement(prisma, tenantId, userId, {
+              const result = await reconcileBankMovement(prisma, tenantId, proyectoId, userId, {
                 asientoId: item.id_asiento as string | undefined,
                 referenciaBancaria: item.referencia_bancaria as string | undefined,
                 banco: item.banco as string | undefined,
@@ -3211,7 +3225,7 @@ app.post(
             }
 
             try {
-              const result = await reconcileBankMovement(prisma, tenantId, userId, {
+              const result = await reconcileBankMovement(prisma, tenantId, proyectoId, userId, {
                 asientoId: item.id_asiento,
                 referenciaBancaria: item.referencia_bancaria,
                 banco: item.banco,
