@@ -31,7 +31,10 @@ tráfico real. Cuando ese microservicio tiene políticas RLS declaradas, el rol 
 Postgres que usa su `DATABASE_URL` en producción SHALL ser no-superusuario y SHALL
 tener `rolbypassrls=false` — un rol superusuario o con `BYPASSRLS` vuelve inertes
 las políticas RLS sin importar que estén correctamente declaradas y con
-`FORCE ROW LEVEL SECURITY`.
+`FORCE ROW LEVEL SECURITY`. Este requisito SHALL cubrir también cualquier tabla con
+`tenant_id` agregada DESPUÉS del despliegue inicial del microservicio (ej. por una
+feature nueva) — el `rls-policies.sql` del servicio SHALL extenderse cada vez que se
+agregue una tabla tenant-scoped, no solo mantenerse al día de su primera versión.
 
 #### Scenario: Variable de entorno de base de datos vacía
 - **WHEN** la variable `<SERVICIO>_DATABASE_URL` de un microservicio está vacía o no
@@ -58,6 +61,41 @@ las políticas RLS sin importar que estén correctamente declaradas y con
   dueño de las tablas sobre las que aplican esas políticas
 - **THEN** las políticas RLS declaradas SHALL aplicar realmente sobre toda
   consulta hecha por ese microservicio en tiempo de ejecución
+
+#### Scenario: Tabla nueva agregada por una feature posterior al despliegue inicial
+- **WHEN** una feature nueva agrega un modelo Prisma con `tenant_id` (y opcionalmente
+  `proyecto_id`) a un microservicio que ya tiene `rls-policies.sql`
+- **THEN** esa tabla SHALL recibir su propia política antes de considerarse la feature
+  lista para producción; una tabla con `tenant_id` y `relrowsecurity=false` en
+  producción SHALL tratarse como brecha de seguridad, no como pendiente de higiene
+
+#### Scenario: Política RLS huérfana con patrón distinto al estándar del proyecto
+- **WHEN** se encuentra en producción una política (`pg_policy`) sobre una tabla
+  tenant-scoped que no está declarada en el `rls-policies.sql` versionado del
+  servicio, o que usa un patrón de función distinto al estándar del proyecto
+  (`current_setting('app.current_tenant_id', true)`)
+- **THEN** SHALL tratarse como configuración fuera de control de versiones —
+  eliminarse (`DROP POLICY`) y reemplazarse por la política estándar versionada, sin
+  asumir que una política existente ya provee aislamiento solo porque aparece en
+  `pg_policies`
+
+### Requirement: El código de aplicación no SHALL depender exclusivamente de RLS para el aislamiento en operaciones de alto riesgo
+El código de aplicación SHALL verificar explícitamente que la fila resuelta por clave primaria pertenece al `tenant_id` (y `proyecto_id` cuando aplique) de la sesión antes de leerla completa o modificarla — ya sea incluyendo esas columnas en el `where` de la consulta, o verificando el resultado después de un `findFirst`/`findUnique` por PK antes de actuar sobre él. RLS SHALL seguir aplicándose como capa adicional, pero SHALL NOT ser la única capa de aislamiento para estas operaciones.
+
+#### Scenario: Operación por PK sin verificación de tenant en el código
+- **WHEN** un endpoint resuelve un recurso por su clave primaria (ej.
+  `findUnique({ where: { id_cuadro } })`) sin incluir `tenant_id` en el `where` ni
+  verificar el resultado después
+- **THEN** SHALL tratarse como una vulnerabilidad de aislamiento cross-tenant activa
+  si RLS no está aplicado en esa tabla, independientemente de si RLS "debería" estar
+  cubriendo el caso
+
+#### Scenario: Operación por PK con verificación explícita
+- **WHEN** un endpoint resuelve un recurso por PK y verifica que `tenant_id` (y
+  `proyecto_id` cuando aplique) coincide con la sesión antes de actuar sobre él
+- **THEN** una fuga cross-tenant NO SHALL depender de que RLS esté correctamente
+  configurado en todo momento — el aislamiento se mantiene aunque RLS se
+  deshabilite accidentalmente en el futuro
 
 ### Requirement: Las integraciones backend-to-backend SHALL usar URLs de contenedor, no localhost
 Cuando un microservicio llama a otro vía HTTP interno (ej. `compras` → GT para
