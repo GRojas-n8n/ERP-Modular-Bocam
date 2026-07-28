@@ -1,4 +1,14 @@
-## MODIFIED Requirements
+## ADDED Requirements
+
+<!--
+Esta capability existía en openspec/changes/archive/selector-proyecto-confirmacion-critica
+pero no llegó a openspec/specs/ al archivar ese change (ver design.md D5/proposal.md de
+este change) — se restaura aquí como ADDED, no MODIFIED, porque el spec principal no existe
+actualmente. El contenido de los primeros 2 requirements es el mismo ya aprobado
+originalmente; el primero se extiende con las 3 acciones nuevas (revocar credencial,
+eliminar categoría de gasto, cancelar OC).
+-->
+
 
 ### Requirement: Las acciones críticas/irreversibles SHALL requerir confirmación explícita con el nombre del proyecto activo
 El sistema SHALL mostrar un diálogo de confirmación, con el nombre del proyecto activo incluido

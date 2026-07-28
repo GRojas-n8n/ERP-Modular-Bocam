@@ -1,10 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: El chat del Asistente IA SHALL mostrar en tiempo real qué módulo se está consultando
-Mientras se resuelve un turno de `POST /api/v1/asistente/chat` que invoca una o más tools,
-el sistema SHALL transmitir al cliente, antes de que el turno termine, el nombre del módulo
-del ERP correspondiente a cada tool que se está invocando, y el frontend SHALL mostrar ese
-nombre en la interfaz en vez de un mensaje de carga genérico y fijo.
+Mientras se resuelve un turno de `POST /api/v1/asistente/chat` que invoca una o más tools, el sistema SHALL transmitir al cliente, antes de que el turno termine, el nombre del módulo del ERP correspondiente a cada tool que se está invocando, y el frontend SHALL mostrar ese nombre en la interfaz en vez de un mensaje de carga genérico y fijo.
 
 #### Scenario: El asistente consulta un módulo durante el turno
 - **WHEN** un usuario envía una pregunta que requiere que Claude invoque la tool de Compras
@@ -22,10 +19,7 @@ nombre en la interfaz en vez de un mensaje de carga genérico y fijo.
 - **THEN** el chat muestra un estado de carga genérico (sin nombre de módulo), sin error
 
 ### Requirement: El resultado final del turno SHALL ser idéntico al comportamiento sin streaming
-El cambio a streaming SHALL ser puramente de progreso intermedio — el payload final
-(`conversacion_id`, `respuesta`, `parcial`, `servicios_fallidos`), el timeout de 45 segundos,
-el manejo de `stop_reason === 'refusal'`, y el registro de auditoría SHALL comportarse
-exactamente igual que antes del streaming.
+El cambio a streaming SHALL ser puramente de progreso intermedio — el payload final (`conversacion_id`, `respuesta`, `parcial`, `servicios_fallidos`), el timeout de 45 segundos, el manejo de `stop_reason === 'refusal'`, y el registro de auditoría SHALL comportarse exactamente igual que antes del streaming.
 
 #### Scenario: El turno completa exitosamente
 - **WHEN** un turno de chat se resuelve sin timeout ni refusal

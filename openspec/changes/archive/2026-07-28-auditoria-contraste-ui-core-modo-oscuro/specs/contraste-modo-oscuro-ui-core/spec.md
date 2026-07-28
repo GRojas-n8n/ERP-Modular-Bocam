@@ -1,11 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: `cn()` de ui-core SHALL resolver conflictos de clases Tailwind por especificidad semántica
-La función `cn()` exportada por `packages/ui-core/src/primitives.tsx` SHALL combinar
-clases usando una utilidad de merge consciente de Tailwind (equivalente a
-`tailwind-merge`), de forma que cuando dos clases de un mismo grupo de utilidades
-(color de fondo, color de texto, borde, etc.) están presentes, la última en el orden de
-los argumentos gane, sin depender del orden de declaración del CSS generado.
+La función `cn()` exportada por `packages/ui-core/src/primitives.tsx` SHALL combinar clases usando una utilidad de merge consciente de Tailwind (equivalente a `tailwind-merge`), de forma que cuando dos clases de un mismo grupo de utilidades (color de fondo, color de texto, borde, etc.) están presentes, la última en el orden de los argumentos gane, sin depender del orden de declaración del CSS generado.
 
 #### Scenario: Una className de color pasada por props sobreescribe la clase base del componente
 - **WHEN** un consumidor de un componente de `ui-core` (ej. `Button`) pasa una
@@ -20,11 +16,7 @@ los argumentos gane, sin depender del orden de declaración del CSS generado.
 - **THEN** la clase pasada por props se agrega sin eliminar ninguna clase base
 
 ### Requirement: Todo componente exportado por ui-core SHALL mantener contraste legible en tema claro y oscuro
-Ningún componente exportado por `packages/ui-core/src/primitives.tsx` o
-`packages/ui-core/src/dashboard/index.tsx` SHALL usar un color de texto o fondo
-hardcodeado que no responda al tema activo (ej. `text-slate-900` fijo) cuando el
-proyecto ya tiene tokens de tema (`text-foreground`, `bg-card`, `text-muted-foreground`,
-etc.) disponibles para ese propósito.
+Ningún componente exportado por `packages/ui-core/src/primitives.tsx` o `packages/ui-core/src/dashboard/index.tsx` SHALL usar un color de texto o fondo hardcodeado que no responda al tema activo (ej. `text-slate-900` fijo) cuando el proyecto ya tiene tokens de tema (`text-foreground`, `bg-card`, `text-muted-foreground`, etc.) disponibles para ese propósito.
 
 #### Scenario: El título de SideSheet es legible en modo oscuro
 - **WHEN** un usuario con el tema oscuro activo abre cualquier `SideSheet`
