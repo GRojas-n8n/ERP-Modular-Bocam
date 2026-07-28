@@ -31,7 +31,7 @@ import {
   IconUsers,
   IconWallet,
 } from '../components/Icons';
-import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { FormField, Input, Select, SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 import QRCode from 'qrcode';
@@ -195,6 +195,31 @@ const DEMO_PASES: PaseAcceso[] = [
 
 type TabId = 'empleados' | 'cuadrillas' | 'prenomina' | 'pases';
 
+// ─── Alta individual de Empleado ───────────────────────────────────────────
+// Mismos campos que POST /empleados en apps/personal/src/main.ts:100.
+interface NuevoEmpleadoForm {
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  rfc: string;
+  curp: string;
+  nss: string;
+  puesto: string;
+  categoria: string;
+  tipo_contrato: string;
+  fecha_ingreso: string;
+  salario_diario: string;
+  telefono: string;
+  email: string;
+  contacto_emergencia: string;
+}
+
+const NUEVO_EMPLEADO_FORM_VACIO: NuevoEmpleadoForm = {
+  nombre: '', apellido_paterno: '', apellido_materno: '', rfc: '', curp: '', nss: '',
+  puesto: '', categoria: 'OBRERO', tipo_contrato: 'PLANTA', fecha_ingreso: '',
+  salario_diario: '', telefono: '', email: '', contacto_emergencia: '',
+};
+
 // ─── Importación masiva de Empleados (CSV/Excel) ──────────────────────────────
 // Mismas reglas que POST /empleados en apps/personal/src/main.ts:74.
 interface EmpleadoImportRow {
@@ -315,6 +340,12 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [seleccionCredenciales, setSeleccionCredenciales] = useState<Set<string>>(new Set());
   const [generandoImpresion, setGenerandoImpresion] = useState(false);
 
+  // ── Alta individual de Empleado ───────────────────────────────────────────
+  const [panelNuevoEmpleado, setPanelNuevoEmpleado] = useState(false);
+  const [nuevoEmpleadoForm, setNuevoEmpleadoForm] = useState<NuevoEmpleadoForm>(NUEVO_EMPLEADO_FORM_VACIO);
+  const [guardandoNuevoEmpleado, setGuardandoNuevoEmpleado] = useState(false);
+  const [errorNuevoEmpleado, setErrorNuevoEmpleado] = useState<string | null>(null);
+
   // ── Importación masiva de Empleados ───────────────────────────────────────
   const fileImportEmpleadosRef = useRef<HTMLInputElement>(null);
   const [panelImportarEmpleados, setPanelImportarEmpleados] = useState(false);
@@ -323,6 +354,53 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [parseImportEmpleadosError, setParseImportEmpleadosError] = useState<string | null>(null);
   const [importandoEmpleados, setImportandoEmpleados] = useState(false);
   const [resultadoImportEmpleados, setResultadoImportEmpleados] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
+
+  const handleAbrirNuevoEmpleado = () => {
+    setNuevoEmpleadoForm(NUEVO_EMPLEADO_FORM_VACIO);
+    setErrorNuevoEmpleado(null);
+    setPanelNuevoEmpleado(true);
+  };
+
+  const handleCerrarNuevoEmpleado = () => {
+    setPanelNuevoEmpleado(false);
+    setErrorNuevoEmpleado(null);
+  };
+
+  const handleGuardarNuevoEmpleado = async () => {
+    const { nombre, apellido_paterno, rfc, puesto, salario_diario } = nuevoEmpleadoForm;
+    if (!nombre || !apellido_paterno || !rfc || !puesto || !salario_diario) {
+      setErrorNuevoEmpleado('Nombre, apellido paterno, RFC, puesto y salario diario son obligatorios.');
+      return;
+    }
+
+    setGuardandoNuevoEmpleado(true);
+    setErrorNuevoEmpleado(null);
+    try {
+      const {
+        apellido_materno, curp, nss, categoria, tipo_contrato,
+        fecha_ingreso, telefono, email, contacto_emergencia,
+      } = nuevoEmpleadoForm;
+      const r = await api.post('/api/v1/personal/empleados', {
+        nombre, apellido_paterno, rfc, puesto, salario_diario,
+        ...(apellido_materno ? { apellido_materno } : {}),
+        ...(curp ? { curp } : {}),
+        ...(nss ? { nss } : {}),
+        ...(categoria ? { categoria } : {}),
+        ...(tipo_contrato ? { tipo_contrato } : {}),
+        ...(fecha_ingreso ? { fecha_ingreso } : {}),
+        ...(telefono ? { telefono } : {}),
+        ...(email ? { email } : {}),
+        ...(contacto_emergencia ? { contacto_emergencia } : {}),
+      });
+      setEmpleados(prev => [...prev, r.data.data]);
+      notify({ type: 'success', title: `Empleado ${r.data.data.numero_empleado} creado.` });
+      setPanelNuevoEmpleado(false);
+    } catch (err: any) {
+      setErrorNuevoEmpleado(err.response?.data?.error?.message || 'Error al crear el empleado.');
+    } finally {
+      setGuardandoNuevoEmpleado(false);
+    }
+  };
 
   const handleImportEmpleadosFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -870,7 +948,10 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
               </button>
             </>
           )}
-          <Button className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500">
+          <Button
+            className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500"
+            onClick={() => { if (activeTab === 'empleados') handleAbrirNuevoEmpleado(); }}
+          >
             <IconPlus className="h-4 w-4" />
             {activeTab === 'empleados'
               ? 'Nuevo Empleado'
@@ -1388,6 +1469,87 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           )}
         </>
       )}
+      {/* ── Alta individual de Empleado ──────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={panelNuevoEmpleado}
+        onClose={handleCerrarNuevoEmpleado}
+        title="Nuevo Empleado"
+        subtitle="Alta individual"
+        accentColor="emerald"
+      >
+        <div className="space-y-6 pb-28">
+          {errorNuevoEmpleado && (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+              <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive">{errorNuevoEmpleado}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Nombre" required>
+              <Input value={nuevoEmpleadoForm.nombre} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, nombre: e.target.value })} />
+            </FormField>
+            <FormField label="Apellido paterno" required>
+              <Input value={nuevoEmpleadoForm.apellido_paterno} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, apellido_paterno: e.target.value })} />
+            </FormField>
+            <FormField label="Apellido materno">
+              <Input value={nuevoEmpleadoForm.apellido_materno} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, apellido_materno: e.target.value })} />
+            </FormField>
+            <FormField label="RFC" required>
+              <Input value={nuevoEmpleadoForm.rfc} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, rfc: e.target.value.toUpperCase() })} />
+            </FormField>
+            <FormField label="CURP">
+              <Input value={nuevoEmpleadoForm.curp} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, curp: e.target.value.toUpperCase() })} />
+            </FormField>
+            <FormField label="NSS">
+              <Input value={nuevoEmpleadoForm.nss} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, nss: e.target.value })} />
+            </FormField>
+            <FormField label="Puesto" required>
+              <Input value={nuevoEmpleadoForm.puesto} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, puesto: e.target.value })} />
+            </FormField>
+            <FormField label="Salario diario (MXN)" required>
+              <Input type="number" min="0" step="0.01" value={nuevoEmpleadoForm.salario_diario} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, salario_diario: e.target.value })} />
+            </FormField>
+            <FormField label="Categoría">
+              <Select value={nuevoEmpleadoForm.categoria} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, categoria: e.target.value })}>
+                <option value="OBRERO">OBRERO</option>
+                <option value="TECNICO">TECNICO</option>
+                <option value="ADMINISTRATIVO">ADMINISTRATIVO</option>
+                <option value="SUPERVISOR">SUPERVISOR</option>
+              </Select>
+            </FormField>
+            <FormField label="Tipo de contrato">
+              <Select value={nuevoEmpleadoForm.tipo_contrato} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, tipo_contrato: e.target.value })}>
+                <option value="PLANTA">PLANTA</option>
+                <option value="EVENTUAL">EVENTUAL</option>
+                <option value="SUBCONTRATO">SUBCONTRATO</option>
+              </Select>
+            </FormField>
+            <FormField label="Fecha de ingreso">
+              <Input type="date" value={nuevoEmpleadoForm.fecha_ingreso} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, fecha_ingreso: e.target.value })} />
+            </FormField>
+            <FormField label="Teléfono">
+              <Input value={nuevoEmpleadoForm.telefono} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, telefono: e.target.value })} />
+            </FormField>
+            <FormField label="Email">
+              <Input type="email" value={nuevoEmpleadoForm.email} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, email: e.target.value })} />
+            </FormField>
+            <FormField label="Contacto de emergencia">
+              <Input value={nuevoEmpleadoForm.contacto_emergencia} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia: e.target.value })} />
+            </FormField>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40">
+          <SubmitButton
+            label={guardandoNuevoEmpleado ? 'Guardando…' : 'Guardar empleado'}
+            loading={guardandoNuevoEmpleado}
+            color="emerald"
+            onClick={handleGuardarNuevoEmpleado}
+          />
+        </div>
+      </SlidePanel>
+
       {/* ── Importación masiva de Empleados (CSV/Excel) ─────────────────────── */}
       <SlidePanel
         isOpen={panelImportarEmpleados}
