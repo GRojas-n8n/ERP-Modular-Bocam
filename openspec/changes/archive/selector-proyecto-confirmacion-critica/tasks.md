@@ -14,11 +14,13 @@
       como texto
 - [x] 2.2 Aplicar el mismo color como acento en el ítem activo del dropdown de selección de
       proyecto (líneas ~547-569), además del punto indicador (`bg-primary`) ya existente
-- [ ] 2.3 Verificar visualmente en navegador (tema claro y oscuro) con los 3 proyectos demo —
-      **bloqueado en esta sesión**: el dev server local no levanta (falta `react-refresh` en
-      `package-lock.json`, problema de entorno preexistente y ajeno a este change). Cubierto en
-      su lugar con test de React Testing Library (`Layout.selector-color-proyecto.test.tsx`);
-      la verificación visual real queda pendiente para la sección 7 (QA gate manual del usuario)
+- [x] 2.3 Verificar visualmente en navegador (tema claro y oscuro) con los 3 proyectos demo —
+      **desbloqueado 2026-07-27**: se reparó el entorno local (faltaba `react-refresh` físicamente
+      instalado pese a estar en `package-lock.json`; ver nota en sección 7). Verificado en Chrome
+      real contra `localhost:3000` con seed `admin@alfa.bocam.com`: el botón selector muestra
+      color propio por proyecto (verde para Planta Guadalajara Norte, morado para Planta
+      Guadalajara — SERSSINSA) como fondo/borde, no solo texto; el ítem activo del dropdown se
+      resalta con el mismo color; confirmado legible en tema claro y oscuro
 
 ## 3. Componente compartido de confirmación crítica
 
@@ -76,17 +78,35 @@
 
 ## 7. Verificación manual (QA gate)
 
-- [ ] 7.1 Levantar `app-shell` local, iniciar sesión con un usuario con 2+ proyectos asignados
-      (ver `production-test-users.md` en memoria, o modo demo) — **pendiente para el usuario**:
-      el dev server local no levantó en esta sesión (falta `react-refresh` en
-      `package-lock.json`, entorno preexistente ajeno a este change)
-- [ ] 7.2 Confirmar visualmente que el indicador de proyecto activo es reconocible sin leer texto
-      y que el color no cambia al navegar entre vistas — cubierto por test automatizado
-      (`Layout.selector-color-proyecto.test.tsx`); falta la confirmación visual humana real
-- [ ] 7.3 Ejecutar las 3 acciones críticas (aprobar OC, firmar evaluación, autorizar/pagar
+- [x] 7.1 Levantar `app-shell` local, iniciar sesión con un usuario con 2+ proyectos asignados
+      (ver `production-test-users.md` en memoria, o modo demo) — **resuelto 2026-07-27**: el
+      lockfile raíz se regeneró (`rm package-lock.json && npm install`) pero seguía sin instalar
+      físicamente `react-refresh`; se instaló explícito (`npm install react-refresh@^0.17.0` en
+      `apps/app-shell`, quedó hospedado en `node_modules/react-refresh` raíz). Backends locales
+      (`auth`, `compras`, `finanzas`, `gerencia-tecnica`, `personal`) levantados individualmente
+      en background (el patrón documentado en `patron-verificacion-e2e-local-2026-07-14` de un
+      proceso por servicio se confirma necesario — `npm run dev --workspace=A --workspace=B` se
+      cuelga en el primero). Docker Desktop estaba apagado, se inició y `bocam-postgres`/
+      `rabbitmq`/`redis` ya traían datos sembrados (`admin@alfa.bocam.com` / `Admin.2026`, 2
+      proyectos). Login real confirmado en Chrome
+- [x] 7.2 Confirmar visualmente que el indicador de proyecto activo es reconocible sin leer texto
+      y que el color no cambia al navegar entre vistas — confirmado en Chrome real: color
+      distinto y consistente por proyecto en header y dropdown, tema claro y oscuro
+- [~] 7.3 Ejecutar las 3 acciones críticas (aprobar OC, firmar evaluación, autorizar/pagar
       nómina) y confirmar que el diálogo muestra el nombre correcto del proyecto activo en cada
-      caso, y que cancelar no ejecuta la acción — cubierto por tests automatizados en las
-      secciones 4, 5 y 6; falta la confirmación visual humana real en navegador
+      caso, y que cancelar no ejecuta la acción — **Compras verificado completo en Chrome real**:
+      aprobar `REQ-2026-T1-001` abre `ConfirmCriticalActionDialog` con "PROYECTO ACTIVO: PLANTA
+      DE TRATAMIENTO GUADALAJARA NORTE", Cancelar cierra sin cambiar el estado (sigue "Pendiente
+      de aprobación"). Firmar evaluación técnica y autorizar/pagar nómina **no se pudieron
+      disparar visualmente**: no había cuadros comparativos ni prenóminas pendientes en el seed
+      local, y un intento de sembrar una prenómina de prueba (fila temporal en
+      `personal.pre_nominas`, borrada de inmediato) expuso un crash **preexistente y fuera de
+      alcance** en el modal "Detalle de Prenómina" de `ResidenciaView.tsx` (línea ~1602/1615:
+      `nominaDetalle.total_bruto`/`nominaDetalle.cuadrillas` no existen en la respuesta real del
+      backend — mismo hallazgo ya documentado en `hallazgo-nomina-tab-residencia-desconectada-backend`,
+      no relacionado con el diálogo de confirmación). El propio `ConfirmCriticalActionDialog` de
+      ambos flujos no se vio con ojos humanos; la confianza restante se apoya en que es el mismo
+      componente ya verificado en Compras + los tests automatizados de las secciones 5 y 6
 - [x] 7.4 Confirmar que `tsc -b` (no solo `--noEmit`, ver gap de CI documentado) pasa limpio en
       `app-shell` antes de abrir PR — verificado, sin errores
 
@@ -97,6 +117,9 @@
 - [x] 8.2 Build Docker de `app-shell` y verificación en VPS tras merge — hecho 2026-07-26:
       `git pull` en VPS (62db8ec→2908a60), `docker compose build app-shell` + `up -d`,
       contenedor `bocam-vps-app-shell` healthy, `https://iretum.com` responde 200
-- [ ] 8.3 Archivar el change en `openspec/changes/archive/` tras verificación manual en
-      producción — **verificación funcional en navegador real por el usuario sigue pendiente**
-      (7.1-7.3); el deploy en sí ya está confirmado sano
+- [x] 8.3 Archivar el change en `openspec/changes/archive/` — decisión confirmada con el usuario
+      2026-07-27: verificación visual local en Chrome real cubre el indicador de color (2.3/7.2)
+      y el flujo de mayor riesgo (Compras, 7.3), suficiente junto con el deploy ya confirmado sano
+      en VPS (commit 2908a60); Cuadro Comparativo y Nómina quedan sin confirmación visual directa
+      del diálogo (ver nota en 7.3) pero respaldados por tests automatizados + mismo componente
+      compartido ya verificado

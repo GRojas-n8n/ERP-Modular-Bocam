@@ -57,5 +57,7 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 Abrir PR contra `main` desde branch `test/personal-boton-nuevo-empleado`
+- [x] 4.1 Abrir PR contra `main` desde branch `test/personal-boton-nuevo-empleado`
       (o `fix/...` según convención de commits) con el fix y sus tests.
+      (PR #91, mergeado a `main` — commit `8df83bb` incluido en
+      `378fb4e`. Desplegado en el VPS.)
