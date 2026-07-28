@@ -522,13 +522,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-md border-l-4 px-2 py-1 font-bold truncate max-w-[180px] transition-all hover:opacity-80 text-foreground',
+                    'flex items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-[180px] sm:max-w-[260px] transition-all hover:opacity-80 text-foreground',
                     currentProjectColor.border,
                     currentProjectColor.bgSoft
                   )}
                 >
                   <span className={cn('h-2 w-2 shrink-0 rounded-full', currentProjectColor.dot)} />
-                  <span className="truncate">{currentProject?.code || 'Sin Proyecto'}</span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="w-full truncate text-xs font-bold">{currentProject?.name || 'Sin Proyecto'}</span>
+                    {currentProject?.code && (
+                      <span className="w-full truncate text-[9px] font-black uppercase tracking-widest opacity-70">
+                        {currentProject.code}
+                      </span>
+                    )}
+                  </span>
                   {projects.length > 1 && (
                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
                       fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
