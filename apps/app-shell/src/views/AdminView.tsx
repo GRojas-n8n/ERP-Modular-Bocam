@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api, { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
-import { cn } from '@bocam/ui-core';
+import { useNotification } from '../context/NotificationContext';
+import { ConfirmCriticalActionDialog, cn, getProjectColor } from '@bocam/ui-core';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -565,7 +566,10 @@ interface CategoriaAdmin {
 }
 
 export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
-  const { refreshUser, currentProjectId } = useTenant();
+  const { refreshUser, currentProjectId, user } = useTenant();
+  const { notify } = useNotification();
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
   const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias') || 'usuarios';
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -586,6 +590,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [savingCat, setSavingCat] = useState(false);
   const [confirmActivar, setConfirmActivar] = useState(false);
   const [activandoProyecto, setActivandoProyecto] = useState(false);
+  const [confirmEliminarCategoria, setConfirmEliminarCategoria] = useState<CategoriaAdmin | null>(null);
 
   const loadCategorias = useCallback(async () => {
     if (!currentProjectId) return;
@@ -626,8 +631,12 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
     try {
       await api.delete(`/api/v1/gerencia-tecnica/categorias-gasto/${id}`);
       await loadCategorias();
-    } catch { /* silencioso */ }
-    finally { setSavingCat(false); }
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al eliminar la categoría de gasto' });
+    } finally {
+      setSavingCat(false);
+      setConfirmEliminarCategoria(null);
+    }
   };
 
   const handleActivarProyecto = async () => {
@@ -809,7 +818,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                         </button>
                         {!cat.es_predefinida && (
                           <button
-                            onClick={() => handleEliminarCategoria(cat.id_categoria)}
+                            onClick={() => setConfirmEliminarCategoria(cat)}
                             disabled={proyectoCostosEstado !== 'CONFIGURACION' || cat.insumos_count > 0 || savingCat}
                             className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-500/10 disabled:opacity-30 disabled:cursor-not-allowed"
                           >
@@ -897,6 +906,18 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
           </div>
         </div>
       )}
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmEliminarCategoria}
+        title={`¿Eliminar la categoría "${confirmEliminarCategoria?.nombre ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Eliminar categoría"
+        variant="destructive"
+        confirmDisabled={savingCat}
+        onConfirm={() => confirmEliminarCategoria && handleEliminarCategoria(confirmEliminarCategoria.id_categoria)}
+        onCancel={() => setConfirmEliminarCategoria(null)}
+      />
 
       {showUserModal && (
         <UserModal user={editingUser} proyectos={proyectos}

@@ -90,36 +90,47 @@ interface ClienteImportRow {
 
 // Validación cliente-side equivalente a la del backend (1.4) — solo para la
 // vista previa; el backend re-valida y es la fuente de verdad del resultado.
-function construirPreviewImportClientes(rows: Record<string, string>[]): ClienteImportRow[] {
+// Se separa en dos pasos (ver openspec/changes/feedback-en-vivo-carga-masiva)
+// para poder validar cada fila conforme se lee, en vez de esperar a tener el
+// archivo completo: `validarFilaCliente` no depende de ver las demás filas;
+// `marcarDuplicadosRfc` es la única regla que sí requiere el archivo completo
+// (un RFC solo se sabe "duplicado" al ver la segunda ocurrencia), así que se
+// aplica en una segunda pasada ligera al terminar de leer el archivo.
+function validarFilaCliente(row: Record<string, string>): ClienteImportRow {
+  const rfc_tax_id = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
+  const razon_social = leerColumnaCsv(row, 'razon_social', 'nombre');
+  const email_contacto = leerColumnaCsv(row, 'email_contacto', 'email');
+  const telefono = leerColumnaCsv(row, 'telefono');
+  const codigo_cliente = leerColumnaCsv(row, 'codigo_cliente', 'codigo');
+
+  const errores: string[] = [];
+  if (!rfc_tax_id) errores.push('sin rfc_tax_id');
+  if (!razon_social) errores.push('sin razon_social');
+  if (codigo_cliente && (!CODIGO_CLIENTE_PATTERN.test(codigo_cliente) || Number(codigo_cliente) > CODIGO_CLIENTE_MAX)) {
+    errores.push('codigo_cliente inválido');
+  }
+
+  return {
+    rfc_tax_id, razon_social, email_contacto, telefono, codigo_cliente,
+    _valido: errores.length === 0,
+    _error: errores.length ? errores.join(', ') : undefined,
+  };
+}
+
+function marcarDuplicadosRfc(filas: ClienteImportRow[]): ClienteImportRow[] {
   const ocurrenciasPorRfc = new Map<string, number>();
-  rows.forEach(row => {
-    const rfc = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
-    if (!rfc) return;
-    ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
+  filas.forEach(f => {
+    if (!f.rfc_tax_id) return;
+    ocurrenciasPorRfc.set(f.rfc_tax_id, (ocurrenciasPorRfc.get(f.rfc_tax_id) || 0) + 1);
   });
 
-  return rows.map(row => {
-    const rfc_tax_id = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
-    const razon_social = leerColumnaCsv(row, 'razon_social', 'nombre');
-    const email_contacto = leerColumnaCsv(row, 'email_contacto', 'email');
-    const telefono = leerColumnaCsv(row, 'telefono');
-    const codigo_cliente = leerColumnaCsv(row, 'codigo_cliente', 'codigo');
-
-    const errores: string[] = [];
-    if (!rfc_tax_id) errores.push('sin rfc_tax_id');
-    if (!razon_social) errores.push('sin razon_social');
-    if (codigo_cliente && (!CODIGO_CLIENTE_PATTERN.test(codigo_cliente) || Number(codigo_cliente) > CODIGO_CLIENTE_MAX)) {
-      errores.push('codigo_cliente inválido');
-    }
-    if (rfc_tax_id && (ocurrenciasPorRfc.get(rfc_tax_id) || 0) > 1) {
+  return filas.map(f => {
+    if (f.rfc_tax_id && (ocurrenciasPorRfc.get(f.rfc_tax_id) || 0) > 1) {
+      const errores = f._error ? f._error.split(', ') : [];
       errores.push('RFC duplicado en el archivo');
+      return { ...f, _valido: false, _error: errores.join(', ') };
     }
-
-    return {
-      rfc_tax_id, razon_social, email_contacto, telefono, codigo_cliente,
-      _valido: errores.length === 0,
-      _error: errores.length ? errores.join(', ') : undefined,
-    };
+    return f;
   });
 }
 
@@ -163,6 +174,7 @@ export const VentasView: React.FC = () => {
   const [panelImportar, setPanelImportar] = useState(false);
   const [archivoImportNombre, setArchivoImportNombre] = useState('');
   const [filasImport, setFilasImport] = useState<ClienteImportRow[]>([]);
+  const [procesandoImport, setProcesandoImport] = useState(false);
   const [parseImportError, setParseImportError] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
   const [resultadoImport, setResultadoImport] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
@@ -218,13 +230,26 @@ export const VentasView: React.FC = () => {
     setParseImportError(null);
     setResultadoImport(null);
     setPanelImportar(true);
+    setFilasImport([]);
+    setProcesandoImport(true);
 
     try {
-      const rows = await parseCsvOrExcelFile(file);
-      setFilasImport(construirPreviewImportClientes(rows));
+      const filasAcumuladas: ClienteImportRow[] = [];
+      let contador = 0;
+      // Actualizar el estado cada 25 filas (no en cada una) — con archivos de
+      // miles de filas, re-renderizar la tabla en cada fila individual puede
+      // volver la pestaña no responsiva (ver design.md Risks).
+      await parseCsvOrExcelFile(file, (row) => {
+        filasAcumuladas.push(validarFilaCliente(row));
+        contador++;
+        if (contador % 25 === 0) setFilasImport([...filasAcumuladas]);
+      });
+      setFilasImport(marcarDuplicadosRfc(filasAcumuladas));
     } catch (err: any) {
       setParseImportError(err.message || 'Error al leer el archivo.');
       setFilasImport([]);
+    } finally {
+      setProcesandoImport(false);
     }
   };
 
@@ -583,6 +608,16 @@ export const VentasView: React.FC = () => {
             </>
           ) : (
             <>
+              {procesandoImport && (
+                <div className="rounded-xl bg-sky-500/10 border border-sky-500/20 p-3 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse shrink-0" />
+                  <p className="text-xs font-bold text-sky-700">
+                    Procesando fila {filasImport.length}… {filasImport.filter(f => !f._valido).length} error
+                    {filasImport.filter(f => !f._valido).length === 1 ? '' : 'es'} encontrado
+                    {filasImport.filter(f => !f._valido).length === 1 ? '' : 's'} hasta el momento
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
                   <p className="text-2xl font-black text-emerald-600">{filasImport.filter(f => f._valido).length}</p>
@@ -645,10 +680,14 @@ export const VentasView: React.FC = () => {
               </button>
               <button
                 onClick={handleConfirmarImport}
-                disabled={importando || filasImport.length === 0}
+                disabled={importando || procesandoImport || filasImport.length === 0}
                 className="px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
               >
-                {importando ? 'Importando...' : `Importar ${filasImport.length} registro${filasImport.length === 1 ? '' : 's'}`}
+                {importando
+                  ? 'Importando...'
+                  : procesandoImport
+                    ? 'Leyendo archivo…'
+                    : `Importar ${filasImport.length} registro${filasImport.length === 1 ? '' : 's'}`}
               </button>
             </>
           )}

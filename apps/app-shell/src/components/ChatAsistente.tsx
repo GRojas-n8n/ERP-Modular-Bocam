@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTenant } from '../context/TenantContext';
-import { asistenteApi } from '../lib/api';
+import { getAccessToken } from '../lib/api';
 import { IconMessageCircle, IconSend, IconX, IconAlertCircle } from './Icons';
 
 /**
@@ -11,9 +11,13 @@ import { IconMessageCircle, IconSend, IconX, IconAlertCircle } from './Icons';
  * Ver openspec/changes/asistente-ia-agente-conversacional. El historial vive
  * únicamente en el estado de este componente (useState) — se pierde al
  * recargar la página, igual que el TTL de 30 min de la sesión en Redis del
- * backend. No hay indicador de "consultando [servicio X]" en tiempo real
- * porque /chat responde en un solo request/response (sin streaming); en su
- * lugar se muestra un estado de carga descriptivo, no un spinner genérico.
+ * backend.
+ *
+ * Ver openspec/changes/streaming-progreso-asistente-ia: /chat responde como
+ * stream SSE (frames `tool_start`/`final`/`error`), consumido con fetch()
+ * nativo (no axios/EventSource — EventSource no puede mandar el header
+ * Authorization: Bearer que este endpoint requiere) para mostrar en tiempo
+ * real qué módulo del ERP se está consultando.
  * ---------------------------------------------------------------------------
  */
 
@@ -36,6 +40,7 @@ export const ChatAsistente: React.FC = () => {
   const [input, setInput] = useState('');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [moduloConsultando, setModuloConsultando] = useState<string | null>(null);
   const conversacionIdRef = useRef<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
 
@@ -55,25 +60,71 @@ export const ChatAsistente: React.FC = () => {
     setInput('');
     setCargando(true);
     setError(null);
+    setModuloConsultando(null);
 
     try {
-      const res = await asistenteApi.enviarMensajeChat(texto, conversacionIdRef.current);
-      const data = res.data?.data;
-      conversacionIdRef.current = data?.conversacion_id ?? conversacionIdRef.current;
+      const token = getAccessToken();
+      const baseURL = import.meta.env.VITE_API_URL || '';
+      const resp = await fetch(`${baseURL}/api/v1/asistente/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          mensaje: texto,
+          ...(conversacionIdRef.current ? { conversacion_id: conversacionIdRef.current } : {}),
+        }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        throw new Error('No se pudo obtener respuesta del asistente. Intenta de nuevo.');
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let final: { conversacion_id?: string; respuesta?: string; parcial?: boolean; servicios_fallidos?: string[] } | null = null;
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf('\n\n')) !== -1) {
+          const frame = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 2);
+          if (!frame.startsWith('data: ')) continue;
+          const evento = JSON.parse(frame.slice('data: '.length));
+          if (evento.type === 'tool_start') {
+            setModuloConsultando(evento.modulo);
+          } else if (evento.type === 'final') {
+            final = evento;
+          } else if (evento.type === 'error') {
+            throw new Error(evento.message || 'No se pudo obtener respuesta del asistente. Intenta de nuevo.');
+          }
+        }
+      }
+
+      if (!final) {
+        throw new Error('El asistente no devolvió ninguna respuesta.');
+      }
+
+      conversacionIdRef.current = final.conversacion_id ?? conversacionIdRef.current;
       setMensajes((prev) => [
         ...prev,
         {
           rol: 'asistente',
-          texto: data?.respuesta ?? '',
-          parcial: data?.parcial ?? false,
-          serviciosFallidos: data?.servicios_fallidos ?? [],
+          texto: final!.respuesta ?? '',
+          parcial: final!.parcial ?? false,
+          serviciosFallidos: final!.servicios_fallidos ?? [],
         },
       ]);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'No se pudo obtener respuesta del asistente. Intenta de nuevo.';
-      setError(msg);
+      setError(err?.message || 'No se pudo obtener respuesta del asistente. Intenta de nuevo.');
     } finally {
       setCargando(false);
+      setModuloConsultando(null);
     }
   };
 
@@ -139,7 +190,7 @@ export const ChatAsistente: React.FC = () => {
               <div className="flex justify-start">
                 <div className="max-w-[85%] rounded-xl px-3 py-2 text-xs text-muted-foreground bg-muted/40 flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  Analizando tu pregunta y consultando los módulos necesarios del ERP…
+                  {moduloConsultando ? `Consultando ${moduloConsultando}…` : 'Analizando tu pregunta…'}
                 </div>
               </div>
             )}

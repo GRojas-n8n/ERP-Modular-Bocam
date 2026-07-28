@@ -65,7 +65,7 @@ export function MetricCard({
         <div className="mt-0.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
           {label}
         </div>
-        {description ? <p className="mt-3 text-[11px] font-medium text-slate-400">{description}</p> : null}
+        {description ? <p className="mt-3 text-[11px] font-medium text-muted-foreground">{description}</p> : null}
         <div
           className={cn(
             'absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100',

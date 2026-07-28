@@ -25,19 +25,52 @@ async function fakeService(port: number, path: string, data: unknown): Promise<S
   });
 }
 
+// Ver openspec/changes/streaming-progreso-asistente-ia — /chat ahora responde
+// como stream SSE (frames `tool_start`/`final`/`error`) en vez de un único
+// JSON. Estos helpers leen el stream y devuelven el frame `final` con los
+// mismos campos (`conversacion_id`, `respuesta`, `parcial`,
+// `servicios_fallidos`) que antes vivían bajo `json.data`.
+async function leerEventosSSE(resp: Response): Promise<Array<Record<string, any>>> {
+  const reader = resp.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  const eventos: Array<Record<string, any>> = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx: number;
+    while ((idx = buffer.indexOf('\n\n')) !== -1) {
+      const frame = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      if (frame.startsWith('data: ')) {
+        eventos.push(JSON.parse(frame.slice('data: '.length)));
+      }
+    }
+  }
+  return eventos;
+}
+
+async function leerRespuestaFinal(resp: Response): Promise<Record<string, any>> {
+  const eventos = await leerEventosSSE(resp);
+  const final = eventos.find((e) => e.type === 'final' || e.type === 'error');
+  if (!final) throw new Error('No se recibió ningún frame final/error del stream SSE');
+  if (final.type === 'error') throw new Error(`Frame de error del stream: ${final.message}`);
+  return final;
+}
+
 async function testCombinarDosServicios(baseUrl: string, token: string): Promise<void> {
   const resp = await fetch(`${baseUrl}/api/v1/asistente/chat`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({ mensaje: '¿cómo va el avance físico y el presupuesto ejercido de la obra?' }),
   });
-  const json = await resp.json();
+  const data = await leerRespuestaFinal(resp);
 
   assert.equal(resp.status, 200);
-  assert.equal(json.success, true);
-  assert.equal(json.data.parcial, false);
-  assert.match(json.data.respuesta, /6[0-9]%|62/); // avance_pct: 62
-  assert.match(json.data.respuesta, /3,?200,?000|3\.2/i); // monto_ejercido
+  assert.equal(data.parcial, false);
+  assert.match(data.respuesta, /6[0-9]%|62/); // avance_pct: 62
+  assert.match(data.respuesta, /3,?200,?000|3\.2/i); // monto_ejercido
 
   console.log('ok - 8.1 pregunta combinando 2 servicios responde con datos consolidados de ambos');
 }
@@ -48,12 +81,12 @@ async function testFueraDeDominio(baseUrl: string, token: string): Promise<void>
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({ mensaje: '¿cuál es la capital de Francia?' }),
   });
-  const json = await resp.json();
+  const data = await leerRespuestaFinal(resp);
 
   assert.equal(resp.status, 200);
-  assert.equal(json.data.parcial, false);
-  assert.deepEqual(json.data.servicios_fallidos, []);
-  assert.match(json.data.respuesta.toLowerCase(), /erp|operativ/);
+  assert.equal(data.parcial, false);
+  assert.deepEqual(data.servicios_fallidos, []);
+  assert.match(data.respuesta.toLowerCase(), /erp|operativ/);
 
   console.log('ok - 8.2 pregunta fuera de dominio responde sin invocar tools');
 }
@@ -64,7 +97,7 @@ async function testContextoEntreTurnos(baseUrl: string, token: string): Promise<
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({ mensaje: '¿cuál es el presupuesto ejercido de la obra?' }),
   });
-  const json1 = await resp1.json();
+  const data1 = await leerRespuestaFinal(resp1);
   assert.equal(resp1.status, 200);
 
   const resp2 = await fetch(`${baseUrl}/api/v1/asistente/chat`, {
@@ -72,14 +105,14 @@ async function testContextoEntreTurnos(baseUrl: string, token: string): Promise<
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
       mensaje: '¿y a cuánto asciende el presupuesto total autorizado?',
-      conversacion_id: json1.data.conversacion_id,
+      conversacion_id: data1.conversacion_id,
     }),
   });
-  const json2 = await resp2.json();
+  const data2 = await leerRespuestaFinal(resp2);
 
   assert.equal(resp2.status, 200);
-  assert.equal(json2.data.conversacion_id, json1.data.conversacion_id);
-  assert.match(json2.data.respuesta, /5,?000,?000|5\.0? ?m/i); // presupuesto_autorizado
+  assert.equal(data2.conversacion_id, data1.conversacion_id);
+  assert.match(data2.respuesta, /5,?000,?000|5\.0? ?m/i); // presupuesto_autorizado
 
   console.log('ok - 8.3 segundo mensaje usa el contexto del primero en la misma conversacion_id');
 }
@@ -97,7 +130,7 @@ async function testAislamientoMultiTenant(baseUrl: string): Promise<void> {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenTenantA}` },
     body: JSON.stringify({ mensaje: 'Recuerda esta palabra clave para más adelante: MURCIELAGO47' }),
   });
-  const jsonA = await respA.json();
+  const dataA = await leerRespuestaFinal(respA);
   assert.equal(respA.status, 200);
 
   const respB = await fetch(`${baseUrl}/api/v1/asistente/chat`, {
@@ -105,14 +138,14 @@ async function testAislamientoMultiTenant(baseUrl: string): Promise<void> {
     headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenTenantB}` },
     body: JSON.stringify({
       mensaje: '¿cuál era la palabra clave que te pedí recordar hace un momento?',
-      conversacion_id: jsonA.data.conversacion_id, // mismo conversacion_id, tenant distinto
+      conversacion_id: dataA.conversacion_id, // mismo conversacion_id, tenant distinto
     }),
   });
-  const jsonB = await respB.json();
+  const dataB = await leerRespuestaFinal(respB);
 
   assert.equal(respB.status, 200);
   assert.ok(
-    !jsonB.data.respuesta.includes('MURCIELAGO47'),
+    !dataB.respuesta.includes('MURCIELAGO47'),
     'El tenant B no debe poder continuar ni leer el historial del tenant A aunque reutilice su conversacion_id',
   );
 
@@ -161,6 +194,7 @@ async function testAuditoriaAntesDeResponder(baseUrl: string, token: string): Pr
       body: JSON.stringify({ mensaje: '¿cuál es el avance físico de la obra?' }),
     });
     assert.equal(resp.status, 200);
+    await leerEventosSSE(resp); // drenar el stream para que el turno termine antes de revisar logs
   } finally {
     console.log = originalLog;
   }

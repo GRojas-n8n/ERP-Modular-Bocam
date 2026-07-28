@@ -263,16 +263,10 @@ export const asistenteApi = {
   },
   getResumenEjecutivo: () => api.get('/api/v1/asistente/resumen-ejecutivo'),
   getAlertasPredictivas: () => api.get('/api/v1/asistente/alertas-predictivas'),
-  // Timeout explícito por encima del timeout total del turno en el backend
-  // (45s, ver openspec/changes/asistente-ia-agente-conversacional) — el
-  // timeout global de `api` (10s) cortaría prematuramente un turno que
-  // encadena varias tools.
-  enviarMensajeChat: (mensaje: string, conversacionId?: string | null) =>
-    api.post(
-      '/api/v1/asistente/chat',
-      { mensaje, ...(conversacionId ? { conversacion_id: conversacionId } : {}) },
-      { timeout: 50000 },
-    ),
+  // POST /api/v1/asistente/chat ya no vive aquí: responde como stream SSE (ver
+  // openspec/changes/streaming-progreso-asistente-ia), que axios no puede leer
+  // incrementalmente — se consume con fetch() nativo directamente desde
+  // ChatAsistente.tsx.
 };
 
 // ── Ventas ───────────────────────────────────────────────────────────────────

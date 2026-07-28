@@ -1,26 +1,9 @@
 import * as React from 'react';
-
-function toClassName(value: unknown): string {
-  if (!value) {
-    return '';
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(toClassName).filter(Boolean).join(' ');
-  }
-
-  if (typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>)
-      .filter(([, enabled]) => Boolean(enabled))
-      .map(([key]) => key)
-      .join(' ');
-  }
-
-  return String(value);
-}
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...values: unknown[]): string {
-  return values.map(toClassName).filter(Boolean).join(' ');
+  return twMerge(clsx(...(values as ClassValue[])));
 }
 
 type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'destructive';
@@ -325,7 +308,7 @@ export function SideSheet({
           >
             <div>
               {title ? (
-                <h2 className="text-xl font-black uppercase tracking-tighter text-slate-900">
+                <h2 className="text-xl font-black uppercase tracking-tighter text-foreground">
                   {title}
                 </h2>
               ) : null}

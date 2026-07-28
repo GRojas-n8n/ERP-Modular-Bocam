@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { requireRoles } from '../../../../packages/auth-middleware/src';
 import { logError, logInfo } from '../../../../packages/observability/src';
 import { SYSTEM_CHAT } from '../prompts';
-import { crearToolsChat } from '../tools';
+import { crearToolsChat, MODULO_VISIBLE_POR_TOOL } from '../tools';
 import { getConversacion, guardarTurno, crearConversacionId } from '../session-store';
 import { extraerInvocacionesTools, construirParcial } from '../chat-turno';
 import type { MensajeConversacion } from '../types';
@@ -20,6 +20,13 @@ function buildClient(): Anthropic {
     apiKey: process.env.ANTHROPIC_API_KEY!,
     timeout: Number(process.env.ANTHROPIC_TIMEOUT_MS ?? 60000),
   });
+}
+
+// Ver openspec/changes/streaming-progreso-asistente-ia — escribe un frame SSE
+// propio (no el evento crudo del SDK) para que el frontend no dependa del
+// formato interno de streaming de Anthropic.
+function writeEvent(res: Response, payload: Record<string, unknown>): void {
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
 // Migration Plan (design.md): desplegar restringido a 'admin' primero, validar
@@ -40,6 +47,14 @@ router.post(
 
     const tenantId = req.securityContext!.tenantId;
     const conversacionId = conversacionIdEntrante || crearConversacionId();
+
+    // A partir de aquí la respuesta es un stream SSE — cualquier error posterior
+    // se comunica como un frame `error`, no como un cambio de status HTTP (los
+    // headers ya se enviaron).
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
 
     const controller = new AbortController();
     const timeoutHandle = setTimeout(() => controller.abort(), TURNO_TIMEOUT_MS);
@@ -68,11 +83,21 @@ router.post(
           tools,
           betas: ['server-side-fallback-2026-06-01'],
           fallbacks: [{ model: 'claude-opus-4-8' }],
+          stream: true,
         },
         { signal: controller.signal },
       );
 
-      const finalMessage = await runner.runUntilDone();
+      for await (const stream of runner) {
+        for await (const event of stream) {
+          if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
+            const modulo = MODULO_VISIBLE_POR_TOOL[event.content_block.name] ?? event.content_block.name;
+            writeEvent(res, { type: 'tool_start', modulo });
+          }
+        }
+      }
+
+      const finalMessage = await runner.done();
       clearTimeout(timeoutHandle);
 
       // D6/3.7: un stop_reason "refusal" no debe leerse como texto normal —
@@ -81,15 +106,14 @@ router.post(
         logInfo(req, 'asistente', 'asistente.chat.refusal', 'Claude rechazó responder al mensaje', {
           conversacion_id: conversacionId,
         });
-        return res.json({
-          success: true,
-          data: {
-            conversacion_id: conversacionId,
-            respuesta: 'No puedo responder a esa solicitud.',
-            parcial: false,
-            servicios_fallidos: [],
-          },
+        writeEvent(res, {
+          type: 'final',
+          conversacion_id: conversacionId,
+          respuesta: 'No puedo responder a esa solicitud.',
+          parcial: false,
+          servicios_fallidos: [],
         });
+        return res.end();
       }
 
       const mensajesFinales = runner.params.messages as MensajeConversacion[];
@@ -122,10 +146,14 @@ router.post(
         });
       }
 
-      return res.json({
-        success: true,
-        data: { conversacion_id: conversacionId, respuesta, parcial, servicios_fallidos },
+      writeEvent(res, {
+        type: 'final',
+        conversacion_id: conversacionId,
+        respuesta,
+        parcial,
+        servicios_fallidos,
       });
+      return res.end();
     } catch (error: unknown) {
       clearTimeout(timeoutHandle);
       const msg = error instanceof Error ? error.message : String(error);
@@ -135,10 +163,11 @@ router.post(
         conversacion_id: conversacionId,
         error_message: msg,
       });
-      return res.status(isTimeout ? 503 : 500).json({
-        success: false,
+      writeEvent(res, {
+        type: 'error',
         message: isTimeout ? 'El asistente no respondió a tiempo. Intenta de nuevo.' : msg,
       });
+      return res.end();
     }
   },
 );

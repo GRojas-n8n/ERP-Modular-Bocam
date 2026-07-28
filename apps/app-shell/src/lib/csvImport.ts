@@ -54,7 +54,16 @@ function celdaATexto(valor: ExcelJS.CellValue): string {
   return String(valor);
 }
 
-function hojaAObjetos(ws: ExcelJS.Worksheet): Record<string, string>[] {
+// Cada cuántas filas se cede el control al event loop mientras se procesa un
+// .xlsx con `onFila` (ver openspec/changes/feedback-en-vivo-carga-masiva
+// design.md D2) — permite que React pinte el progreso conforme se validan
+// lotes de filas, sin bloquear la UI durante todo el archivo.
+const LOTE_CESION_XLSX = 25;
+
+async function hojaAObjetos(
+  ws: ExcelJS.Worksheet,
+  onFila?: (fila: Record<string, string>, indice: number) => void,
+): Promise<Record<string, string>[]> {
   const encabezados: string[] = [];
   ws.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumero) => {
     encabezados[colNumero] = celdaATexto(cell.value);
@@ -72,7 +81,14 @@ function hojaAObjetos(ws: ExcelJS.Worksheet): Record<string, string>[] {
       if (valor !== '') tieneValor = true;
       obj[clave] = valor;
     }
-    if (tieneValor) filas.push(obj);
+    if (tieneValor) {
+      const indice = filas.length;
+      filas.push(obj);
+      onFila?.(obj, indice);
+      if (onFila && indice % LOTE_CESION_XLSX === LOTE_CESION_XLSX - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
   }
   return filas;
 }
@@ -113,22 +129,44 @@ function leerArchivoComoArrayBuffer(file: File): Promise<ArrayBuffer> {
   });
 }
 
-async function parseCsvTexto(texto: string): Promise<Record<string, string>[]> {
+/**
+ * Parsea CSV fila por fila con `step` (streaming real de Papa Parse) en vez
+ * de `complete` (modo batch) — cada fila se entrega a `onFila` apenas se
+ * parsea. Recibe el `File` directamente (no un string ya leído): Papa Parse
+ * lee archivos File/Blob en chunks vía FileReader y cede el control al
+ * event loop entre chunks, así que `step` se dispara en turnos reales del
+ * event loop y React puede pintar el progreso conforme llega — a
+ * diferencia de parsear un string ya materializado en memoria, donde
+ * `step` corre de un tirón sin ceder el control aunque exista el callback.
+ * Ver openspec/changes/feedback-en-vivo-carga-masiva design.md.
+ */
+async function parseCsvArchivo(
+  file: File,
+  onFila?: (fila: Record<string, string>, indice: number) => void,
+): Promise<Record<string, string>[]> {
   return new Promise((resolve, reject) => {
-    Papa.parse<Record<string, string>>(texto, {
+    const filas: Record<string, string>[] = [];
+    let encabezados: string[] = [];
+    Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (resultado) => {
-        const encabezados = resultado.meta.fields ?? [];
-        const filas = resultado.data.map(fila => {
-          const obj: Record<string, string> = {};
-          for (const encabezado of encabezados) {
-            obj[encabezado] = fila[encabezado] ?? '';
-          }
-          return obj;
-        });
-        resolve(filas);
+      // Sin esto, Papa Parse lee un archivo pequeño/mediano completo en un
+      // solo chunk de FileReader y `step` corre de un tirón igual que con un
+      // string — un chunk chico fuerza lecturas incrementales reales incluso
+      // para los archivos de cientos/pocos miles de filas típicos de este
+      // proyecto (ver openspec/changes/feedback-en-vivo-carga-masiva).
+      chunkSize: 64 * 1024,
+      step: (resultado) => {
+        if (encabezados.length === 0) encabezados = resultado.meta.fields ?? [];
+        const obj: Record<string, string> = {};
+        for (const encabezado of encabezados) {
+          obj[encabezado] = resultado.data[encabezado] ?? '';
+        }
+        const indice = filas.length;
+        filas.push(obj);
+        onFila?.(obj, indice);
       },
+      complete: () => resolve(filas),
       error: (error: Error) => reject(error),
     });
   });
@@ -140,17 +178,26 @@ async function parseCsvTexto(texto: string): Promise<Record<string, string>[]> {
  * leer presupuestos OPUS). Reutilizable por cualquier import masivo
  * (Clientes, Proveedores, Empleados) — no asume un shape de columnas fijo.
  */
-export async function parseCsvOrExcelFile(file: File): Promise<Record<string, string>[]> {
+/**
+ * `onFila`, si se pasa, se invoca conforme cada fila se procesa — en CSV es
+ * streaming real (Papa Parse `step`); en XLSX la lectura del buffer sigue
+ * siendo de una sola pasada (limitación de `exceljs` en navegador, ver
+ * design.md), pero la construcción del arreglo de filas cede el control al
+ * event loop cada 25 filas para que la UI pueda pintar el progreso.
+ */
+export async function parseCsvOrExcelFile(
+  file: File,
+  onFila?: (fila: Record<string, string>, indice: number) => void,
+): Promise<Record<string, string>[]> {
   const ext = file.name.split('.').pop()?.toLowerCase();
   if (ext === 'csv' || ext === 'txt') {
-    const texto = await leerArchivoComoTexto(file);
-    return parseCsvTexto(texto);
+    return parseCsvArchivo(file, onFila);
   }
   const buffer = await leerArchivoComoArrayBuffer(file);
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buffer);
   const ws = wb.worksheets[0];
-  return hojaAObjetos(ws);
+  return hojaAObjetos(ws, onFila);
 }
 
 /**

@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   CardContent,
+  ConfirmCriticalActionDialog,
   EmptyStatePanel,
   SectionBadge,
   Table,
@@ -18,6 +19,7 @@ import {
   TableHeader,
   TableRow,
   cn,
+  getProjectColor,
 } from '@bocam/ui-core';
 import {
   IconAlertCircle,
@@ -242,49 +244,58 @@ interface EmpleadoImportRow {
 
 // Validación cliente-side equivalente a la del backend — solo para la vista
 // previa; el backend re-valida y es la fuente de verdad del resultado.
-function construirPreviewImportEmpleados(rows: Record<string, string>[]): EmpleadoImportRow[] {
+// Separado en dos pasos (ver openspec/changes/feedback-en-vivo-carga-masiva)
+// para poder validar cada fila conforme se lee; "RFC duplicado" es la única
+// regla que depende de ver el archivo completo, así que se aplica en una
+// segunda pasada ligera al terminar de leer.
+function validarFilaEmpleado(row: Record<string, string>): EmpleadoImportRow {
+  const nombre = leerColumnaCsv(row, 'nombre');
+  const apellido_paterno = leerColumnaCsv(row, 'apellido_paterno');
+  const apellido_materno = leerColumnaCsv(row, 'apellido_materno');
+  const rfc = leerColumnaCsv(row, 'rfc');
+  const curp = leerColumnaCsv(row, 'curp');
+  const nss = leerColumnaCsv(row, 'nss');
+  const puesto = leerColumnaCsv(row, 'puesto');
+  const categoria = leerColumnaCsv(row, 'categoria');
+  const tipo_contrato = leerColumnaCsv(row, 'tipo_contrato');
+  const fecha_ingreso = leerColumnaCsv(row, 'fecha_ingreso');
+  const salario_diario = leerColumnaCsv(row, 'salario_diario');
+  const telefono = leerColumnaCsv(row, 'telefono');
+  const email = leerColumnaCsv(row, 'email');
+
+  const errores: string[] = [];
+  if (!nombre) errores.push('sin nombre');
+  if (!apellido_paterno) errores.push('sin apellido_paterno');
+  if (!rfc) errores.push('sin rfc');
+  if (!puesto) errores.push('sin puesto');
+  if (!salario_diario) {
+    errores.push('sin salario_diario');
+  } else if (Number.isNaN(Number(salario_diario))) {
+    errores.push('salario_diario no numérico');
+  }
+
+  return {
+    nombre, apellido_paterno, apellido_materno, rfc, curp, nss, puesto,
+    categoria, tipo_contrato, fecha_ingreso, salario_diario, telefono, email,
+    _valido: errores.length === 0,
+    _error: errores.length ? errores.join(', ') : undefined,
+  };
+}
+
+function marcarDuplicadosRfcEmpleados(filas: EmpleadoImportRow[]): EmpleadoImportRow[] {
   const ocurrenciasPorRfc = new Map<string, number>();
-  rows.forEach(row => {
-    const rfc = leerColumnaCsv(row, 'rfc');
-    if (!rfc) return;
-    ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
+  filas.forEach(f => {
+    if (!f.rfc) return;
+    ocurrenciasPorRfc.set(f.rfc, (ocurrenciasPorRfc.get(f.rfc) || 0) + 1);
   });
 
-  return rows.map(row => {
-    const nombre = leerColumnaCsv(row, 'nombre');
-    const apellido_paterno = leerColumnaCsv(row, 'apellido_paterno');
-    const apellido_materno = leerColumnaCsv(row, 'apellido_materno');
-    const rfc = leerColumnaCsv(row, 'rfc');
-    const curp = leerColumnaCsv(row, 'curp');
-    const nss = leerColumnaCsv(row, 'nss');
-    const puesto = leerColumnaCsv(row, 'puesto');
-    const categoria = leerColumnaCsv(row, 'categoria');
-    const tipo_contrato = leerColumnaCsv(row, 'tipo_contrato');
-    const fecha_ingreso = leerColumnaCsv(row, 'fecha_ingreso');
-    const salario_diario = leerColumnaCsv(row, 'salario_diario');
-    const telefono = leerColumnaCsv(row, 'telefono');
-    const email = leerColumnaCsv(row, 'email');
-
-    const errores: string[] = [];
-    if (!nombre) errores.push('sin nombre');
-    if (!apellido_paterno) errores.push('sin apellido_paterno');
-    if (!rfc) errores.push('sin rfc');
-    if (!puesto) errores.push('sin puesto');
-    if (!salario_diario) {
-      errores.push('sin salario_diario');
-    } else if (Number.isNaN(Number(salario_diario))) {
-      errores.push('salario_diario no numérico');
-    }
-    if (rfc && (ocurrenciasPorRfc.get(rfc) || 0) > 1) {
+  return filas.map(f => {
+    if (f.rfc && (ocurrenciasPorRfc.get(f.rfc) || 0) > 1) {
+      const errores = f._error ? f._error.split(', ') : [];
       errores.push('RFC duplicado en el archivo');
+      return { ...f, _valido: false, _error: errores.join(', ') };
     }
-
-    return {
-      nombre, apellido_paterno, apellido_materno, rfc, curp, nss, puesto,
-      categoria, tipo_contrato, fecha_ingreso, salario_diario, telefono, email,
-      _valido: errores.length === 0,
-      _error: errores.length ? errores.join(', ') : undefined,
-    };
+    return f;
   });
 }
 
@@ -292,6 +303,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const { tenant, user, currentProjectId } = useTenant();
   const { notify } = useNotification();
   const isDemo = tenant?.id === 'iretum-demo';
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
   const activeTab: TabId = (activeSubView as TabId) || 'empleados';
   // Mismos roles que POST /empleados/importar-lote (apps/personal/src/main.ts).
   const puedeImportarEmpleados = (user?.role ?? []).some(r => ['personal_rh', 'admin'].includes(r));
@@ -335,6 +348,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   // ── Credencial del empleado abierto en el panel de configuración ────────────
   const [credencial, setCredencial] = useState<{ token: string; activa: boolean } | null>(null);
   const [generandoCredencial, setGenerandoCredencial] = useState(false);
+  const [confirmRevocarCredencial, setConfirmRevocarCredencial] = useState(false);
 
   // ── Selección e impresión de credenciales en lote ───────────────────────────
   const [seleccionCredenciales, setSeleccionCredenciales] = useState<Set<string>>(new Set());
@@ -351,6 +365,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [panelImportarEmpleados, setPanelImportarEmpleados] = useState(false);
   const [archivoImportEmpleadosNombre, setArchivoImportEmpleadosNombre] = useState('');
   const [filasImportEmpleados, setFilasImportEmpleados] = useState<EmpleadoImportRow[]>([]);
+  const [procesandoImportEmpleados, setProcesandoImportEmpleados] = useState(false);
   const [parseImportEmpleadosError, setParseImportEmpleadosError] = useState<string | null>(null);
   const [importandoEmpleados, setImportandoEmpleados] = useState(false);
   const [resultadoImportEmpleados, setResultadoImportEmpleados] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
@@ -411,13 +426,26 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     setParseImportEmpleadosError(null);
     setResultadoImportEmpleados(null);
     setPanelImportarEmpleados(true);
+    setFilasImportEmpleados([]);
+    setProcesandoImportEmpleados(true);
 
     try {
-      const rows = await parseCsvOrExcelFile(file);
-      setFilasImportEmpleados(construirPreviewImportEmpleados(rows));
+      const filasAcumuladas: EmpleadoImportRow[] = [];
+      let contador = 0;
+      // Actualizar el estado cada 25 filas (no en cada una) — con archivos de
+      // miles de filas, re-renderizar la tabla en cada fila individual puede
+      // volver la pestaña no responsiva (ver design.md Risks).
+      await parseCsvOrExcelFile(file, (row) => {
+        filasAcumuladas.push(validarFilaEmpleado(row));
+        contador++;
+        if (contador % 25 === 0) setFilasImportEmpleados([...filasAcumuladas]);
+      });
+      setFilasImportEmpleados(marcarDuplicadosRfcEmpleados(filasAcumuladas));
     } catch (err: any) {
       setParseImportEmpleadosError(err.message || 'Error al leer el archivo.');
       setFilasImportEmpleados([]);
+    } finally {
+      setProcesandoImportEmpleados(false);
     }
   };
 
@@ -640,6 +668,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al revocar la credencial' });
     } finally {
       setGenerandoCredencial(false);
+      setConfirmRevocarCredencial(false);
     }
   };
 
@@ -1603,6 +1632,16 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             </>
           ) : (
             <>
+              {procesandoImportEmpleados && (
+                <div className="rounded-xl bg-sky-500/10 border border-sky-500/20 p-3 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse shrink-0" />
+                  <p className="text-xs font-bold text-sky-700">
+                    Procesando fila {filasImportEmpleados.length}… {filasImportEmpleados.filter(f => !f._valido).length} error
+                    {filasImportEmpleados.filter(f => !f._valido).length === 1 ? '' : 'es'} encontrado
+                    {filasImportEmpleados.filter(f => !f._valido).length === 1 ? '' : 's'} hasta el momento
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
                   <p className="text-2xl font-black text-emerald-600">{filasImportEmpleados.filter(f => f._valido).length}</p>
@@ -1665,10 +1704,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
               </button>
               <button
                 onClick={handleConfirmarImportEmpleados}
-                disabled={importandoEmpleados || filasImportEmpleados.length === 0}
+                disabled={importandoEmpleados || procesandoImportEmpleados || filasImportEmpleados.length === 0}
                 className="px-6 py-3 bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-violet-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
               >
-                {importandoEmpleados ? 'Importando...' : `Importar ${filasImportEmpleados.length} registro${filasImportEmpleados.length === 1 ? '' : 's'}`}
+                {importandoEmpleados
+                  ? 'Importando...'
+                  : procesandoImportEmpleados
+                    ? 'Leyendo archivo…'
+                    : `Importar ${filasImportEmpleados.length} registro${filasImportEmpleados.length === 1 ? '' : 's'}`}
               </button>
             </>
           )}
@@ -1995,7 +2038,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                     </button>
                     <button
                       disabled={generandoCredencial}
-                      onClick={() => void handleRevocarCredencial()}
+                      onClick={() => setConfirmRevocarCredencial(true)}
                       className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:underline disabled:opacity-50"
                     >
                       Revocar
@@ -2024,6 +2067,22 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           </div>
         )}
       </SlidePanel>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* MODAL — Confirmación revocar credencial                          */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <ConfirmCriticalActionDialog
+        open={confirmRevocarCredencial}
+        title={`¿Revocar la credencial de ${configPanel?.empleado.nombre ?? 'este empleado'}?`}
+        description="El empleado perderá acceso QR de inmediato."
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Revocar credencial"
+        variant="destructive"
+        confirmDisabled={generandoCredencial}
+        onConfirm={() => void handleRevocarCredencial()}
+        onCancel={() => setConfirmRevocarCredencial(false)}
+      />
 
       {/* ── Modal Detalle de Pre-Nómina ─────────────────────────────────────── */}
       {nominaDetalle && (

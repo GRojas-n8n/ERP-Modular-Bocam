@@ -217,38 +217,48 @@ interface ProveedorImportRow {
 
 // Validación cliente-side equivalente a la del backend — solo para la vista
 // previa; el backend re-valida y es la fuente de verdad del resultado.
-function construirPreviewImportProveedores(rows: Record<string, string>[]): ProveedorImportRow[] {
+// Separado en dos pasos (ver openspec/changes/feedback-en-vivo-carga-masiva)
+// para poder validar cada fila conforme se lee; "RFC duplicado" es la única
+// regla que depende de ver el archivo completo, así que se aplica en una
+// segunda pasada ligera al terminar de leer.
+function validarFilaProveedor(row: Record<string, string>): ProveedorImportRow {
+  const rfc_tax_id = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
+  const razon_social = leerColumnaCsv(row, 'razon_social', 'nombre');
+  const email_contacto = leerColumnaCsv(row, 'email_contacto', 'email');
+  const telefono = leerColumnaCsv(row, 'telefono');
+  const tipo_proveedor = leerColumnaCsv(row, 'tipo_proveedor');
+  const calificacion_desempeno = leerColumnaCsv(row, 'calificacion_desempeno', 'calificacion');
+
+  const errores: string[] = [];
+  if (!rfc_tax_id) errores.push('sin rfc_tax_id');
+  if (!razon_social) errores.push('sin razon_social');
+  if (calificacion_desempeno) {
+    const cal = Number(calificacion_desempeno);
+    if (Number.isNaN(cal) || cal < 0 || cal > 5) errores.push('calificacion_desempeno inválida');
+  }
+
+  return {
+    rfc_tax_id, razon_social, email_contacto, telefono, tipo_proveedor, calificacion_desempeno,
+    _valido: errores.length === 0,
+    _error: errores.length ? errores.join(', ') : undefined,
+  };
+}
+
+function marcarDuplicadosRfcProveedores(filas: ProveedorImportRow[]): ProveedorImportRow[] {
   const ocurrenciasPorRfc = new Map<string, number>();
-  rows.forEach(row => {
-    const rfc = leerColumnaCsv(row, 'rfc_tax_id', 'rfc').toUpperCase();
+  filas.forEach(f => {
+    const rfc = f.rfc_tax_id.toUpperCase();
     if (!rfc) return;
     ocurrenciasPorRfc.set(rfc, (ocurrenciasPorRfc.get(rfc) || 0) + 1);
   });
 
-  return rows.map(row => {
-    const rfc_tax_id = leerColumnaCsv(row, 'rfc_tax_id', 'rfc');
-    const razon_social = leerColumnaCsv(row, 'razon_social', 'nombre');
-    const email_contacto = leerColumnaCsv(row, 'email_contacto', 'email');
-    const telefono = leerColumnaCsv(row, 'telefono');
-    const tipo_proveedor = leerColumnaCsv(row, 'tipo_proveedor');
-    const calificacion_desempeno = leerColumnaCsv(row, 'calificacion_desempeno', 'calificacion');
-
-    const errores: string[] = [];
-    if (!rfc_tax_id) errores.push('sin rfc_tax_id');
-    if (!razon_social) errores.push('sin razon_social');
-    if (calificacion_desempeno) {
-      const cal = Number(calificacion_desempeno);
-      if (Number.isNaN(cal) || cal < 0 || cal > 5) errores.push('calificacion_desempeno inválida');
-    }
-    if (rfc_tax_id && (ocurrenciasPorRfc.get(rfc_tax_id.toUpperCase()) || 0) > 1) {
+  return filas.map(f => {
+    if (f.rfc_tax_id && (ocurrenciasPorRfc.get(f.rfc_tax_id.toUpperCase()) || 0) > 1) {
+      const errores = f._error ? f._error.split(', ') : [];
       errores.push('RFC duplicado en el archivo');
+      return { ...f, _valido: false, _error: errores.join(', ') };
     }
-
-    return {
-      rfc_tax_id, razon_social, email_contacto, telefono, tipo_proveedor, calificacion_desempeno,
-      _valido: errores.length === 0,
-      _error: errores.length ? errores.join(', ') : undefined,
-    };
+    return f;
   });
 }
 
@@ -299,6 +309,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [panelImportarProveedores, setPanelImportarProveedores] = useState(false);
   const [archivoImportProveedoresNombre, setArchivoImportProveedoresNombre] = useState('');
   const [filasImportProveedores, setFilasImportProveedores] = useState<ProveedorImportRow[]>([]);
+  const [procesandoImportProveedores, setProcesandoImportProveedores] = useState(false);
   const [parseImportProveedoresError, setParseImportProveedoresError] = useState<string | null>(null);
   const [importandoProveedores, setImportandoProveedores] = useState(false);
   const [resultadoImportProveedores, setResultadoImportProveedores] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
@@ -354,6 +365,27 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [loadingOc, setLoadingOc] = useState(false);
   const [ocSeleccionadas, setOcSeleccionadas] = useState<Set<string>>(new Set());
   const [enviandoOc, setEnviandoOc] = useState(false);
+  const [confirmCancelarOc, setConfirmCancelarOc] = useState<OrdenCompraListItem | null>(null);
+  const [cancelandoOc, setCancelandoOc] = useState(false);
+
+  // Estados en los que el backend ya rechaza la cancelación
+  // (apps/compras/src/main.ts:4356-4366) — el botón no se muestra en esos casos.
+  const ESTADOS_OC_NO_CANCELABLES = new Set(['CANCELADA', 'RECIBIDA', 'COBRADA', 'CANCELACION_PENDIENTE']);
+
+  const handleCancelarOC = async () => {
+    if (!confirmCancelarOc) return;
+    setCancelandoOc(true);
+    try {
+      await comprasApi.cancelarOC(confirmCancelarOc.id_orden, {});
+      notify({ type: 'success', title: `Orden de Compra ${confirmCancelarOc.codigo} cancelada` });
+      await loadOrdenesCompra();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || e.response?.data?.message || 'No se pudo cancelar la Orden de Compra' });
+    } finally {
+      setCancelandoOc(false);
+      setConfirmCancelarOc(null);
+    }
+  };
 
   // ── Herramientas de Administrador — purga de datos de prueba (admin-only) ──
   const isAdminRole = roles.includes('admin');
@@ -681,13 +713,26 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     setParseImportProveedoresError(null);
     setResultadoImportProveedores(null);
     setPanelImportarProveedores(true);
+    setFilasImportProveedores([]);
+    setProcesandoImportProveedores(true);
 
     try {
-      const rows = await parseCsvOrExcelFile(file);
-      setFilasImportProveedores(construirPreviewImportProveedores(rows));
+      const filasAcumuladas: ProveedorImportRow[] = [];
+      let contador = 0;
+      // Actualizar el estado cada 25 filas (no en cada una) — con archivos de
+      // miles de filas, re-renderizar la tabla en cada fila individual puede
+      // volver la pestaña no responsiva (ver design.md Risks).
+      await parseCsvOrExcelFile(file, (row) => {
+        filasAcumuladas.push(validarFilaProveedor(row));
+        contador++;
+        if (contador % 25 === 0) setFilasImportProveedores([...filasAcumuladas]);
+      });
+      setFilasImportProveedores(marcarDuplicadosRfcProveedores(filasAcumuladas));
     } catch (err: any) {
       setParseImportProveedoresError(err.message || 'Error al leer el archivo.');
       setFilasImportProveedores([]);
+    } finally {
+      setProcesandoImportProveedores(false);
     }
   };
 
@@ -2478,6 +2523,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Estado</th>
                         <th className="px-3 py-2 text-right font-black uppercase tracking-widest text-muted-foreground">Total</th>
                         <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Envío</th>
+                        <th className="px-3 py-2 font-black uppercase tracking-widest text-muted-foreground">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2505,6 +2551,16 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                               </span>
                             ) : (
                               <span className="text-[11px] text-muted-foreground">No enviada</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2">
+                            {!ESTADOS_OC_NO_CANCELABLES.has(oc.estado) && (
+                              <button
+                                onClick={() => setConfirmCancelarOc(oc)}
+                                className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] font-black text-red-600 hover:bg-red-500/10"
+                              >
+                                Cancelar OC
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -3833,6 +3889,16 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             </>
           ) : (
             <>
+              {procesandoImportProveedores && (
+                <div className="rounded-xl bg-sky-500/10 border border-sky-500/20 p-3 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse shrink-0" />
+                  <p className="text-xs font-bold text-sky-700">
+                    Procesando fila {filasImportProveedores.length}… {filasImportProveedores.filter(f => !f._valido).length} error
+                    {filasImportProveedores.filter(f => !f._valido).length === 1 ? '' : 'es'} encontrado
+                    {filasImportProveedores.filter(f => !f._valido).length === 1 ? '' : 's'} hasta el momento
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
                   <p className="text-2xl font-black text-emerald-600">{filasImportProveedores.filter(f => f._valido).length}</p>
@@ -3895,10 +3961,14 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </button>
               <button
                 onClick={handleConfirmarImportProveedores}
-                disabled={importandoProveedores || filasImportProveedores.length === 0}
+                disabled={importandoProveedores || procesandoImportProveedores || filasImportProveedores.length === 0}
                 className="px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
               >
-                {importandoProveedores ? 'Importando...' : `Importar ${filasImportProveedores.length} registro${filasImportProveedores.length === 1 ? '' : 's'}`}
+                {importandoProveedores
+                  ? 'Importando...'
+                  : procesandoImportProveedores
+                    ? 'Leyendo archivo…'
+                    : `Importar ${filasImportProveedores.length} registro${filasImportProveedores.length === 1 ? '' : 's'}`}
               </button>
             </>
           )}
@@ -4202,6 +4272,19 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           if (req) handleAprobar(req);
         }}
         onCancel={() => setConfirmAprobarReq(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={confirmCancelarOc !== null}
+        title={`¿Cancelar la Orden de Compra ${confirmCancelarOc?.codigo ?? ''}?`}
+        description="Esta acción notificará la cancelación y no se puede deshacer."
+        projectName={currentProjectName}
+        projectColorDot={getProjectColor(currentProjectId).dot}
+        confirmLabel="Cancelar OC"
+        variant="destructive"
+        confirmDisabled={cancelandoOc}
+        onConfirm={() => void handleCancelarOC()}
+        onCancel={() => setConfirmCancelarOc(null)}
       />
     </div>
   );

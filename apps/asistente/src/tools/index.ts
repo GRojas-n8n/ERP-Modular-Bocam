@@ -30,3 +30,18 @@ export function crearToolsChat(req: Request, registroTiemposMs: Map<string, numb
     crearToolGerenciaTecnica(req, registroTiemposMs),
   ];
 }
+
+/**
+ * Mapeo nombre-de-tool → nombre-de-módulo-visible, usado por /chat (streaming
+ * SSE) para reportar en tiempo real qué módulo del ERP se está consultando.
+ * Ver openspec/changes/streaming-progreso-asistente-ia.
+ */
+export const MODULO_VISIBLE_POR_TOOL: Record<string, string> = {
+  consultar_compras: 'Compras',
+  consultar_finanzas: 'Finanzas',
+  consultar_control_obra: 'Control de Obra',
+  consultar_personal: 'Personal',
+  consultar_seguridad: 'Seguridad',
+  consultar_calidad: 'Calidad',
+  consultar_gerencia_tecnica: 'Gerencia Técnica',
+};
