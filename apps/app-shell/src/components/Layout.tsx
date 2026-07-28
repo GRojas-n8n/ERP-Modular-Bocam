@@ -522,16 +522,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
                   className={cn(
-                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full lg:max-w-[480px] transition-all hover:opacity-80 text-foreground',
+                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full transition-all hover:opacity-80 text-foreground',
                     currentProjectColor.border,
                     currentProjectColor.bgSoft
                   )}
                 >
                   <span className={cn('h-2 w-2 shrink-0 rounded-full', currentProjectColor.dot)} />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="w-full truncate text-xs font-bold">{currentProject?.name || 'Sin Proyecto'}</span>
+                  <span className="flex min-w-0 flex-1 flex-col items-center">
+                    <span className="w-full truncate text-center text-xs font-bold">{currentProject?.name || 'Sin Proyecto'}</span>
                     {currentProject?.code && (
-                      <span className="w-full truncate text-[9px] font-black uppercase tracking-widest opacity-70">
+                      <span className="w-full truncate text-center text-[9px] font-black uppercase tracking-widest opacity-70">
                         {currentProject.code}
                       </span>
                     )}
