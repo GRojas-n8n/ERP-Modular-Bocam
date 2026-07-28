@@ -122,6 +122,14 @@
     letter-spacing: -0.02em;
   }
 
+  /* El popup nativo de <option> no siempre hereda color-scheme del
+     documento (queda claro aunque el <select> ya se vea oscuro) —
+     se fuerza el color de cada fila explícitamente. */
+  [data-theme="dark"] option {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+  }
+
   .tabular-nums, .font-mono, code, pre, td, th {
     font-family: 'JetBrains Mono', monospace;
   }
