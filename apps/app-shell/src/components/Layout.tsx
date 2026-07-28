@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, SectionBadge, cn, getProjectColor } from '@bocam/ui-core';
+import { Button, cn, getProjectColor } from '@bocam/ui-core';
 import {
   IconDashboard,
   IconBriefcase,
@@ -501,7 +501,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
           }}>
 
           {/* Izquierda: hamburger + breadcrumb */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex flex-1 items-center gap-2 min-w-0">
             <button
               type="button"
               aria-label="Abrir navegacion"
@@ -511,18 +511,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
               <IconMenu className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground min-w-0">
+            <div className="flex flex-1 items-center gap-1.5 text-xs font-semibold text-muted-foreground min-w-0">
               <IconBriefcase className="h-3.5 w-3.5 shrink-0 opacity-50" />
               <span className="hidden sm:inline opacity-60 shrink-0">Proyectos</span>
               <IconChevronRight className="h-3 w-3 opacity-30 shrink-0" />
 
               {/* ── Selector de proyecto ── */}
-              <div className="relative min-w-0">
+              <div className="relative min-w-0 flex-1">
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-[180px] sm:max-w-[260px] transition-all hover:opacity-80 text-foreground',
+                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full lg:max-w-[480px] transition-all hover:opacity-80 text-foreground',
                     currentProjectColor.border,
                     currentProjectColor.bgSoft
                   )}
@@ -593,13 +593,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
             </div>
           </div>
 
-          {/* Derecha: badge + toggle tema + settings */}
+          {/* Derecha: toggle tema + settings */}
           <div className="flex items-center gap-2 shrink-0">
-            <SectionBadge className="hidden border-green-500/20 bg-green-500/10 text-green-600 md:inline-flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-              Sistema sincronizado
-            </SectionBadge>
-
             {/* Toggle tema */}
             <button
               type="button"
