@@ -1721,7 +1721,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
               <select
                 value={jornadaPanel.config.tipo_jornada}
                 onChange={e => setJornadaPanel(prev => prev ? { ...prev, config: { ...prev.config, tipo_jornada: e.target.value as ConfigJornada['tipo_jornada'] } } : prev)}
-                className="w-full rounded-xl border border-border/40 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="w-full rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-sm text-foreground appearance-none focus:outline-none focus:ring-1 focus:ring-violet-500"
               >
                 <option value="DIURNA">Diurna (06:00–20:00)</option>
                 <option value="NOCTURNA">Nocturna (20:00–06:00)</option>
@@ -1917,7 +1917,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   <select
                     value={nuevoDocTipo}
                     onChange={e => setNuevoDocTipo(e.target.value)}
-                    className="flex-1 rounded-lg border border-border/40 px-2 py-1.5 text-xs"
+                    className="flex-1 rounded-lg border border-border/40 bg-muted/30 px-2 py-1.5 text-xs text-foreground appearance-none"
                   >
                     {TIPOS_DOCUMENTO_EMPLEADO.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
