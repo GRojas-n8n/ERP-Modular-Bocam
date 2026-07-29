@@ -12,6 +12,6 @@
 
 ## 3. Cierre
 
-- [ ] 3.1 Mergear el change a `main`.
-- [ ] 3.2 Actualizar la memoria `gap-ci-no-valida-build-app-shell.md` marcando el gap como resuelto, referenciando este change.
-- [ ] 3.3 Archivar el change en OpenSpec (`openspec/changes/archive/`).
+- [x] 3.1 Mergear el change a `main` — PR #96 (squash-merge, commit 4a01e9e).
+- [x] 3.2 Actualizar la memoria `gap-ci-no-valida-build-app-shell.md` marcando el gap como resuelto, referenciando este change.
+- [x] 3.3 Archivar el change en OpenSpec (`openspec/changes/archive/`).
