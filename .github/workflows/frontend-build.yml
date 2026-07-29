@@ -1,0 +1,46 @@
+# ============================================================
+# frontend-build.yml — BocamOS ERP
+# Corre en cada PR que toca app-shell/ui-core y ejecuta el mismo
+# comando que usa docker/Dockerfile.app-shell en producción
+# (`tsc -b && vite build`, vía `npm run build -w app-shell`).
+#
+# Por qué existe: backend-e2e.yml (el único CI que corría en PRs)
+# nunca compilaba app-shell. El PR #52 pasó ese CI en verde y aun
+# así rompió `docker compose build app-shell` en el VPS con errores
+# de TypeScript que solo `tsc -b` (no `tsc --noEmit` suelto) detecta
+# — ver openspec/changes/archive/ci-app-shell-tsc-build y la memoria
+# gap-ci-no-valida-build-app-shell.md.
+# ============================================================
+
+name: Frontend Build (app-shell)
+
+on:
+  pull_request:
+    paths:
+      - "apps/app-shell/**"
+      - "packages/ui-core/**"
+      - "docker/Dockerfile.app-shell"
+
+jobs:
+  build:
+    name: tsc -b + vite build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Mismo script que ejecuta docker/Dockerfile.app-shell en producción
+      # (tsc -b && vite build) — si esto pasa, el build de Docker no debería
+      # fallar por TypeScript.
+      - name: Build app-shell (tsc -b && vite build)
+        run: npm run build -w app-shell
