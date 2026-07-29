@@ -13,7 +13,8 @@
     "preview:fresh": "npm run build:clean && npm run preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config=playwright.smoke.config.ts"
   },
   "dependencies": {
     "@bocam/ui-core": "0.0.1",

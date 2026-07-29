@@ -224,3 +224,14 @@ jobs:
           echo "Rama: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
           echo "=================================="
+
+  # ── 5. Smoke test de Playwright (login + dashboard) ───────
+  # Un cambio de backend (ej. auth) puede romper el login sin que
+  # el frontend haya cambiado — los healthchecks de arriba solo
+  # confirman que los contenedores arrancaron, no que el flujo
+  # real funciona. No revierte el deploy si falla.
+  smoke-test:
+    name: Smoke Test Playwright
+    needs: deploy
+    uses: ./.github/workflows/smoke-test-playwright.yml
+    secrets: inherit

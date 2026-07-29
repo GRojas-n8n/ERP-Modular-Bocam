@@ -1,0 +1,79 @@
+# ============================================================
+# smoke-test-playwright.yml — BocamOS ERP
+# Workflow reusable (workflow_call): smoke test de Playwright
+# contra producción real (login + carga de dashboard), invocado
+# como job final tanto por deploy-vps.yml (frontend) como por
+# deploy-vps-backend.yml (backend) — ambos deploys terminan
+# afectando la misma app real y el mismo dominio.
+#
+# No reemplaza el smoke test HTTP (curl) existente en deploy-vps.yml,
+# lo complementa: curl solo prueba que el servidor responde 200,
+# esto prueba que el login y el dashboard post-login realmente
+# funcionan (JS hidratado, backend de auth respondiendo).
+#
+# No hace rollback si falla — el deploy ya se aplicó cuando este
+# job corre. Un fallo aquí es una señal para intervención manual.
+#
+# Spec: openspec/changes/ci-playwright-smoke-post-deploy/
+#
+# SECRETS requeridos (del caller, vía `secrets: inherit`):
+#   SMOKE_TEST_EMAIL, SMOKE_TEST_PASSWORD → credenciales de un
+#   usuario real de producción (ver tasks.md, grupo 4 — elegido y
+#   configurado a mano por el usuario, no por este workflow).
+# ============================================================
+
+name: Smoke Test Playwright (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      base_url:
+        description: "URL de producción contra la que corre el smoke test"
+        required: false
+        type: string
+        default: "https://iretum.com"
+    secrets:
+      SMOKE_TEST_EMAIL:
+        required: true
+      SMOKE_TEST_PASSWORD:
+        required: true
+
+jobs:
+  smoke-test:
+    name: Login + dashboard (Playwright)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Instalar navegador de Playwright (Chromium)
+        working-directory: apps/app-shell
+        run: npx playwright install --with-deps chromium
+
+      - name: Correr smoke test contra producción
+        working-directory: apps/app-shell
+        env:
+          SMOKE_BASE_URL: ${{ inputs.base_url }}
+          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+        run: npm run test:smoke
+
+      - name: Subir reporte de Playwright (si falló)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report-playwright
+          path: |
+            apps/app-shell/smoke-report/
+            apps/app-shell/test-results/
+          retention-days: 7

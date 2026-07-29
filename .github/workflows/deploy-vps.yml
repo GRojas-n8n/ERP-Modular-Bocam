@@ -124,3 +124,14 @@ jobs:
           echo "Rama: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
           echo "=================================="
+
+  # ── 8. Smoke test de Playwright (login + dashboard) ───────
+  # Corre despues del curl de arriba: el curl solo prueba que el
+  # servidor responde 200, esto prueba que el login y el dashboard
+  # post-login realmente funcionan. No revierte el deploy si falla
+  # (ya se aplico) — es una senal para intervencion manual.
+  smoke-test:
+    name: Smoke Test Playwright
+    needs: deploy
+    uses: ./.github/workflows/smoke-test-playwright.yml
+    secrets: inherit
