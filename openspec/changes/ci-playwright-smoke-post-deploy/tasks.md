@@ -26,13 +26,13 @@
 
 ## 5. Verificación
 
-- [ ] 5.1 Correr el smoke test localmente contra `https://iretum.com` con `SMOKE_BASE_URL`/`SMOKE_TEST_EMAIL`/`SMOKE_TEST_PASSWORD` en el entorno local (no en archivos versionados) y confirmar que pasa en verde.
+- [x] 5.1 Correr el smoke test localmente contra `https://iretum.com` con `SMOKE_BASE_URL`/`SMOKE_TEST_EMAIL`/`SMOKE_TEST_PASSWORD` en el entorno local (no en archivos versionados) y confirmar que pasa en verde. Verificado de forma más fuerte que "local": corrió dentro de GitHub Actions contra producción real (ver 5.3) y pasó en verde — no fue necesario un run local aparte.
 - [x] 5.2 Simular un fallo (ej. selector inexistente o `SMOKE_BASE_URL` inválida) y confirmar que el workflow se reporta en rojo con un mensaje útil; revertir la simulación. Verificado localmente: `SMOKE_BASE_URL=https://example.com` produce timeout explícito en `#login-email-input`, exit code distinto de cero, trace + screenshot generados. Pendiente confirmar el mismo comportamiento corriendo dentro de GitHub Actions (se hace junto con 5.3/5.4).
-- [ ] 5.3 Provocar un deploy real (push trivial a `apps/app-shell/**`) y confirmar en GitHub Actions que el job de smoke test corre después del deploy y pasa en verde.
-- [ ] 5.4 Provocar un deploy real de backend (push trivial a un `apps/<servicio>/**`) y confirmar que el mismo smoke test corre tras `deploy-vps-backend.yml`.
+- [x] 5.3 Provocar un deploy real (push trivial a `apps/app-shell/**`) y confirmar en GitHub Actions que el job de smoke test corre después del deploy y pasa en verde. El push del propio change (que modifica `deploy-vps.yml`) ya disparó el workflow real — run [30417796682](https://github.com/GRojas-n8n/ERP-Modular-Bocam/actions/runs/30417796682): tras un fallo transitorio de SSH (no relacionado, ver nota abajo) y su re-run, `Build + Deploy (Docker)` y `Smoke Test Playwright` pasaron en verde (55s), con login real de `calidad@bocam.com.mx` contra `https://iretum.com`.
+- [x] 5.4 Provocar un deploy real de backend (push trivial a un `apps/<servicio>/**`) y confirmar que el mismo smoke test corre tras `deploy-vps-backend.yml`. Decisión del usuario: no ejecutar — el job es el mismo workflow reusable (`uses: ./.github/workflows/smoke-test-playwright.yml` + `secrets: inherit`) ya validado en verde desde `deploy-vps.yml` (5.3); forzar un rebuild real de un microservicio de producción solo para esto no aporta una señal nueva.
 
 ## 6. Cierre
 
-- [ ] 6.1 Mergear el change a `main`.
+- [x] 6.1 Mergear el change a `main`. Commits `3c0d82a` y `1d04c14` empujados directamente a `main` (sin PR, mismo patrón que `f56393d` — deploy backend automation).
 - [ ] 6.2 Guardar en memoria el resultado (workflow verificado con deploy real o no) siguiendo el mismo patrón que `fix-cicd-backend-deploy-automatizado-2026-07-29`.
 - [ ] 6.3 Archivar el change en OpenSpec.
