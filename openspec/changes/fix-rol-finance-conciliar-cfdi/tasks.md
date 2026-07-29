@@ -20,5 +20,5 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 Verificar manualmente (o documentar que no fue posible) que un usuario real de Finanzas en producción puede usar conciliar-cfdi y al menos un reporte tras el despliegue. **Bloqueada**: requiere PR mergeado + redeploy del VPS; no aplicable todavía (el fix solo existe en el working tree local).
+- [x] 4.1 El deploy automático inicialmente falló (P3005, gap de baseline de Prisma no relacionado — ver `fix-deploy-vps-baseline-prisma-sin-migraciones`, ya resuelto). Tras aplicar ese fix, se verificó directamente en el contenedor `bocam-vps-contabilidad` corriendo en producción: `grep -c "'finance'"` = 0, `grep -c "'finanzas'"` = 18 en el código desplegado. **No se pudo completar** la verificación end-to-end con login real de un usuario de Finanzas (sin credenciales de producción disponibles en la sesión) — documentado como pendiente para verificación manual del usuario dueño del producto.
 - [x] 4.2 Actualizar la memoria de la sesión: marcar el bug gemelo de `fix-rol-finance-vs-finanzas-2026-07-16.md` como resuelto para `apps/contabilidad`, dejando explícito que `apps/compras` y `apps/asistente` siguen pendientes (fuera de alcance de este change).

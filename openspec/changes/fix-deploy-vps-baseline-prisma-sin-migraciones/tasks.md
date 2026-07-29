@@ -13,19 +13,23 @@
 
 ## 3. Aplicar el baseline en producción (requiere confirmación explícita antes de ejecutar)
 
-**Pausa obligatoria**: antes de correr cualquier comando de este grupo contra el VPS real, mostrar al usuario el comando exacto y esperar confirmación explícita — es una operación sobre producción, aunque sea de solo metadata.
+**Pausa obligatoria**: antes de correr cualquier comando de este grupo contra el VPS real, mostrar al usuario el comando exacto y esperar confirmación explícita — es una operación sobre producción, aunque sea de solo metadata. (Confirmado por el usuario 2026-07-29.)
 
-- [ ] 3.1 `contabilidad`: `docker compose -f docker-compose.vps.yml run --rm contabilidad node_modules/.bin/prisma migrate resolve --applied <timestamp>_baseline --schema apps/contabilidad/prisma/schema.prisma` vía SSH.
-- [ ] 3.2 Verificar `SELECT migration_name, finished_at FROM _prisma_migrations;` en `bocam_contabilidad` — debe mostrar exactamente 1 fila con `finished_at` no nulo.
-- [ ] 3.3 Repetir 3.1–3.2 para `seguridad`, `ventas`, `almacen`, `control-proyectos` (uno a la vez, verificando cada uno antes de seguir).
+- [x] 3.1 `contabilidad`: rebuild de imagen (para incluir la migración nueva) + `docker compose -f docker-compose.vps.yml run --rm contabilidad node_modules/.bin/prisma migrate resolve --applied 20260729052247_baseline --schema apps/contabilidad/prisma/schema.prisma` vía SSH.
+- [x] 3.2 Verificado: `bocam_contabilidad._prisma_migrations` tiene 1 fila, `finished_at` no nulo, `applied_steps_count=0`.
+- [x] 3.3 Repetido para `seguridad` (20260729052315_baseline), `ventas` (20260729052319_baseline), `almacen` (20260729052323_baseline — la tabla ya existía vacía, ahora tiene el registro), `control-proyectos` (20260729052327_baseline). Las 5 bases verificadas con exactamente 1 fila cada una.
 
 ## 4. Desbloquear y verificar el fix de roles pendiente
 
-- [ ] 4.1 Re-disparar el deploy de `contabilidad` (`gh workflow run deploy-vps-backend.yml -f services=contabilidad`, o equivalente) y confirmar que el job "Build + Deploy backend (Docker)" ahora completa sin error P3005.
-- [ ] 4.2 Verificar que el contenedor `bocam-vps-contabilidad` quedó healthy con el código de `fix-rol-finance-conciliar-cfdi` (commit `86f1cf3`) corriendo.
+- [x] 4.1 Se optó por rebuild + `up -d` manual vía SSH en vez de re-disparar el workflow (más rápido, mismo resultado real): `docker compose build contabilidad && docker compose up -d contabilidad` — sin error P3005 (el baseline ya estaba aplicado).
+- [x] 4.2 `bocam-vps-contabilidad` healthy con la imagen nueva (`erp-modular-bocam-contabilidad`, no el hash viejo de 2 días). Verificado además a nivel de código: `grep -c "'finance'"` = 0, `grep -c "'finanzas'"` = 18 dentro del contenedor corriendo.
 - [ ] 4.3 Retomar la task 4.1 de `fix-rol-finance-conciliar-cfdi` (verificación manual con usuario real de Finanzas contra conciliar-cfdi/reportes) ahora que el deploy sí llegó a producción.
 
 ## 5. Cierre
 
-- [ ] 5.1 Confirmar que un push de prueba trivial a alguno de los 4 servicios restantes (o los 8 que ya tenían migraciones) sigue desplegando sin regresión.
-- [ ] 5.2 Actualizar memoria: documentar el gap encontrado, el baseline aplicado, y que `fix-rol-finance-conciliar-cfdi` quedó verificado en producción (o lo que resulte de 4.3).
+- [x] 5.1 Validado con el pipeline real (no solo réplica manual por SSH): `gh workflow run deploy-vps-backend.yml -f services="seguridad ventas almacen control-proyectos"` (run 30425640599) completó build+migrate+up+healthy+smoke-test en verde para los 4. `contabilidad` sola (run 30425562294) también completó build+migrate+up+healthy — el P3005 está resuelto — pero ese run falló DESPUÉS en un paso no relacionado (ver hallazgo nuevo abajo).
+- [x] 5.2 Memoria actualizada (ver `fix-deploy-vps-baseline-prisma-sin-migraciones-2026-07-29.md`).
+
+## 6. Hallazgo nuevo, fuera de alcance de este change
+
+- [x] 6.1 El run de `contabilidad` sola (30425562294) reveló un bug preexistente y distinto en `deploy-vps-backend.yml`: el paso final `if [ "$svc" = "contabilidad" ]; then build contabilidad-sat-worker; fi` no pasa `--profile sat`, y ese servicio está `profiles: ["sat"]` (desactivado en este VPS, SAT real no está en producción). Falla con `no such service: contabilidad` y aborta el script completo (`set -eu`) — bloquea que el pipeline termine limpio cuando `contabilidad` está en la lista de servicios, aunque el propio deploy de contabilidad ya haya quedado healthy antes de ese punto. Documentado en memoria como pendiente, candidato a su propio bug-fix (agregar `--profile sat` o envolver ese paso en un check de si el profile está activo).
