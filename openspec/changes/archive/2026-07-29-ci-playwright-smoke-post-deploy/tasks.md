@@ -34,5 +34,5 @@
 ## 6. Cierre
 
 - [x] 6.1 Mergear el change a `main`. Commits `3c0d82a` y `1d04c14` empujados directamente a `main` (sin PR, mismo patrón que `f56393d` — deploy backend automation).
-- [ ] 6.2 Guardar en memoria el resultado (workflow verificado con deploy real o no) siguiendo el mismo patrón que `fix-cicd-backend-deploy-automatizado-2026-07-29`.
-- [ ] 6.3 Archivar el change en OpenSpec.
+- [x] 6.2 Guardar en memoria el resultado (workflow verificado con deploy real o no) siguiendo el mismo patrón que `fix-cicd-backend-deploy-automatizado-2026-07-29`. Memoria creada: `fix-ci-playwright-smoke-post-deploy-2026-07-29.md`, incluye hallazgo colateral de SSH intermitente al VPS.
+- [x] 6.3 Archivar el change en OpenSpec.
