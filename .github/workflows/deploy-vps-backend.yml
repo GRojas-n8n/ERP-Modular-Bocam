@@ -1,0 +1,226 @@
+# ============================================================
+# deploy-vps-backend.yml — BocamOS ERP
+# Dispara en cada push a main que toque un microservicio backend
+# (o un package compartido de backend / Dockerfile / compose).
+#
+# No existía ningún deploy automatizado para el backend: los 13
+# microservicios se desplegaban a mano por SSH, uno por uno
+# (build -> prisma migrate deploy -> up -d -> verificar healthy),
+# ver docs de memoria "redeploy-vps-*". Este workflow automatiza
+# exactamente ese mismo procedimiento manual, sin saltarse ningún
+# paso de seguridad (sigue siendo servicio por servicio, y se
+# detiene en el primero que falle en vez de seguir con el resto).
+#
+# Detecta qué microservicios cambiaron (diff de archivos) y solo
+# reconstruye esos — reconstruir los 13 en cada push sería lento e
+# innecesario. Un cambio en un package compartido de backend o en
+# el Dockerfile/compose reconstruye TODOS los servicios por
+# seguridad (no es trivial saber qué servicio usa qué symbol de un
+# package compartido).
+#
+# El VPS es quien construye la imagen (igual que en
+# deploy-vps.yml), no el runner de GitHub Actions.
+#
+# SECRETS requeridos (los mismos que deploy-vps.yml):
+#   VPS_SSH_KEY, VPS_HOST, VPS_USER
+# ============================================================
+
+name: Deploy Backend al VPS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/auth/**"
+      - "apps/gerencia-tecnica/**"
+      - "apps/finanzas/**"
+      - "apps/compras/**"
+      - "apps/personal/**"
+      - "apps/seguridad/**"
+      - "apps/ventas/**"
+      - "apps/contabilidad/**"
+      - "apps/calidad/**"
+      - "apps/reportes/**"
+      - "apps/asistente/**"
+      - "apps/almacen/**"
+      - "apps/control-proyectos/**"
+      - "packages/auth-middleware/**"
+      - "packages/event-bus/**"
+      - "packages/observability/**"
+      - "packages/tenant-idempotency/**"
+      - "docker/Dockerfile.backend"
+      - "docker/Dockerfile.reportes"
+      - "docker/Dockerfile.asistente"
+      - "docker/backend-entrypoint.sh"
+      - "docker-compose.vps.yml"
+      - ".github/workflows/deploy-vps-backend.yml"
+
+  # Permite disparar manualmente. "services" acepta una lista separada
+  # por espacios (ej. "compras finanzas"), "all" para los 13, o vacío
+  # para detectar por diff del último commit (igual que un push).
+  workflow_dispatch:
+    inputs:
+      services:
+        description: "Servicios a desplegar (espacio-separados, 'all', o vacio = detectar por diff)"
+        required: false
+        type: string
+
+# Mismo grupo que deploy-vps.yml (frontend): ambos hacen `git pull` sobre
+# el mismo checkout del VPS, y correrlos en paralelo podria pisarse el
+# working directory. Se serializan entre si.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+env:
+  VPS_REPO_PATH: /root/ERP-Modular-Bocam
+  ALL_SERVICES: "auth gerencia-tecnica finanzas compras personal seguridad ventas contabilidad calidad reportes asistente almacen control-proyectos"
+
+jobs:
+  detect:
+    name: Detectar microservicios afectados
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.services }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determinar servicios a desplegar
+        id: detect
+        run: |
+          INPUT_SERVICES="${{ github.event.inputs.services }}"
+
+          if [ -n "$INPUT_SERVICES" ]; then
+            if [ "$INPUT_SERVICES" = "all" ]; then
+              echo "services=${ALL_SERVICES}" >> "$GITHUB_OUTPUT"
+            else
+              echo "services=$INPUT_SERVICES" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE="HEAD~1"
+          fi
+
+          CHANGED=$(git diff --name-only "$BEFORE" "$AFTER")
+          echo "Archivos cambiados entre $BEFORE y $AFTER:"
+          echo "$CHANGED"
+
+          if echo "$CHANGED" | grep -qE '^packages/(auth-middleware|event-bus|observability|tenant-idempotency)/|^docker/Dockerfile\.(backend|reportes|asistente)$|^docker/backend-entrypoint\.sh$|^docker-compose\.vps\.yml$'; then
+            SERVICES="$ALL_SERVICES"
+          else
+            SERVICES=""
+            for svc in $ALL_SERVICES; do
+              if echo "$CHANGED" | grep -q "^apps/$svc/"; then
+                SERVICES="$SERVICES $svc"
+              fi
+            done
+            SERVICES="$(echo "$SERVICES" | xargs)"
+          fi
+
+          echo "Servicios a desplegar: $SERVICES"
+          echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Build + Deploy backend (Docker)
+    needs: detect
+    if: needs.detect.outputs.services != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Configurar SSH ──────────────────────────────────
+      - name: Configurar llave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 2. Actualizar el repo en el VPS ─────────────────────
+      # Fast-forward only, igual que deploy-vps.yml: si hay cambios
+      # locales sin commitear en el VPS, falla en vez de descartarlos.
+      - name: Git pull en el VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
+
+      # ── 3. Build + migrate + up -d, un servicio a la vez ────
+      # Replica el procedimiento manual documentado: build -> (si el
+      # servicio tiene prisma/schema.prisma) prisma migrate deploy ->
+      # up -d -> esperar healthy antes de pasar al siguiente. Si un
+      # servicio queda unhealthy, se detiene ahi (no sigue con el
+      # resto) para no arriesgar servicios sanos.
+      - name: Desplegar servicios afectados
+        env:
+          SERVICES: ${{ needs.detect.outputs.services }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && SERVICES='$SERVICES' bash -s" <<'SCRIPT'
+          set -eu
+          COMPOSE="docker compose -f docker-compose.vps.yml"
+
+          wait_healthy() {
+            container="$1"
+            for i in $(seq 1 30); do
+              STATUS=$(docker inspect -f '{{.State.Health.Status}}' "$container" 2>/dev/null || echo "starting")
+              echo "intento $i: $container -> $STATUS"
+              if [ "$STATUS" = "healthy" ]; then return 0; fi
+              if [ "$STATUS" = "unhealthy" ]; then
+                echo "ERROR: $container unhealthy"
+                docker logs --tail 80 "$container"
+                return 1
+              fi
+              sleep 2
+            done
+            echo "ERROR: timeout esperando healthy en $container"
+            docker logs --tail 80 "$container"
+            return 1
+          }
+
+          for svc in $SERVICES; do
+            echo "=================================================="
+            echo "-> $svc"
+            echo "=================================================="
+
+            $COMPOSE build "$svc"
+
+            if [ -f "apps/$svc/prisma/schema.prisma" ]; then
+              echo "-- prisma migrate deploy ($svc) --"
+              $COMPOSE run --rm "$svc" \
+                node_modules/.bin/prisma migrate deploy --schema "apps/$svc/prisma/schema.prisma"
+            fi
+
+            $COMPOSE up -d "$svc"
+            wait_healthy "bocam-vps-$svc"
+
+            # contabilidad-sat-worker comparte imagen con contabilidad
+            # pero es un servicio de compose aparte (no se reconstruye solo).
+            if [ "$svc" = "contabilidad" ]; then
+              echo "-- contabilidad-sat-worker (mismo build) --"
+              $COMPOSE build contabilidad-sat-worker
+              $COMPOSE up -d contabilidad-sat-worker
+            fi
+          done
+
+          echo "Todos los servicios desplegados quedaron healthy."
+          SCRIPT
+
+      # ── 4. Notificación de resultado ───────────────────────
+      - name: Resumen del deploy
+        if: always()
+        run: |
+          echo "=================================="
+          echo "Deploy backend completado"
+          echo "Servicios: ${{ needs.detect.outputs.services }}"
+          echo "Rama: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "=================================="

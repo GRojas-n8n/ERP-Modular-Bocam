@@ -38,8 +38,10 @@ on:
 
 # Evita que dos pushes casi simultaneos corran el deploy en paralelo
 # sobre el mismo VPS — el segundo espera a que termine el primero.
+# Mismo grupo que deploy-vps-backend.yml: ambos hacen `git pull` sobre
+# el mismo checkout del VPS y se serializan entre si.
 concurrency:
-  group: deploy-vps-app-shell
+  group: deploy-vps
   cancel-in-progress: false
 
 env:
