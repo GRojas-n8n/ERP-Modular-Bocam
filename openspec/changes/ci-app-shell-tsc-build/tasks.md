@@ -8,7 +8,7 @@
 
 - [x] 2.1 Introducir un error de tipos deliberado en `apps/app-shell/src/` y confirmar que `npm run build -w app-shell` (el comando exacto del workflow) falla con código distinto de cero — verificado localmente (`error TS2322`, `npm error code 2`, `vite build` no llega a correr por el `&&`). Revertido sin dejar rastro en el working tree.
 - [x] 2.2 Confirmar que el mismo comando pasa en verde sin el error — verificado localmente (`✓ built in ...`) antes y después del probe.
-- [ ] 2.3 Confirmar en GitHub Actions (con un PR real) que el workflow no se dispara para PRs que no tocan `apps/app-shell`, `packages/ui-core` ni el Dockerfile — pendiente hasta abrir el PR de este change, no verificable localmente.
+- [x] 2.3 Confirmado en GitHub Actions con el PR #96 (que solo toca `openspec/` y `.github/workflows/frontend-build.yml`, ninguno de los paths vigilados): el check `Frontend Build (app-shell)` no aparece en `gh pr checks`, solo corre `backend-e2e` (pasó en verde, 2m28s).
 
 ## 3. Cierre
 
