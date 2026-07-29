@@ -21,13 +21,13 @@
 ## 4. Aprovisionamiento de credenciales (manual, fuera del código)
 
 - [x] 4.1 Elegir, junto con el usuario, cuál de los usuarios reales documentados en memoria `production-test-users` se usa para el smoke test (recomendación: evitar el rol `admin`). Decidido: `calidad@bocam.com.mx` (rol `calidad`).
-- [ ] 4.2 Confirmar que ese usuario puede loguearse y ver un dashboard hoy en `https://iretum.com` (verificación manual, una vez).
-- [ ] 4.3 Configurar `SMOKE_TEST_EMAIL` y `SMOKE_TEST_PASSWORD` como secrets del repositorio en GitHub (Settings → Secrets → Actions) — a cargo del usuario, no se commitea ni se pega en el chat.
+- [x] 4.2 Confirmar que ese usuario puede loguearse y ver un dashboard hoy en `https://iretum.com` (verificación manual, una vez). Confirmado por el usuario: login exitoso con la contraseña nueva.
+- [x] 4.3 Configurar `SMOKE_TEST_EMAIL` y `SMOKE_TEST_PASSWORD` como secrets del repositorio en GitHub (Settings → Secrets → Actions) — a cargo del usuario, no se commitea ni se pega en el chat. Verificado vía `gh secret list`: ambos secrets existen en el repo (2026-07-29).
 
 ## 5. Verificación
 
 - [ ] 5.1 Correr el smoke test localmente contra `https://iretum.com` con `SMOKE_BASE_URL`/`SMOKE_TEST_EMAIL`/`SMOKE_TEST_PASSWORD` en el entorno local (no en archivos versionados) y confirmar que pasa en verde.
-- [ ] 5.2 Simular un fallo (ej. selector inexistente o `SMOKE_BASE_URL` inválida) y confirmar que el workflow se reporta en rojo con un mensaje útil; revertir la simulación.
+- [x] 5.2 Simular un fallo (ej. selector inexistente o `SMOKE_BASE_URL` inválida) y confirmar que el workflow se reporta en rojo con un mensaje útil; revertir la simulación. Verificado localmente: `SMOKE_BASE_URL=https://example.com` produce timeout explícito en `#login-email-input`, exit code distinto de cero, trace + screenshot generados. Pendiente confirmar el mismo comportamiento corriendo dentro de GitHub Actions (se hace junto con 5.3/5.4).
 - [ ] 5.3 Provocar un deploy real (push trivial a `apps/app-shell/**`) y confirmar en GitHub Actions que el job de smoke test corre después del deploy y pasa en verde.
 - [ ] 5.4 Provocar un deploy real de backend (push trivial a un `apps/<servicio>/**`) y confirmar que el mismo smoke test corre tras `deploy-vps-backend.yml`.
 
