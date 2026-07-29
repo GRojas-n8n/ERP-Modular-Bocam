@@ -20,7 +20,8 @@
     "prisma:push": "prisma db push",
     "test:integration:compras-oc": "node -r ts-node/register/transpile-only test/integration/compras.oc-creada.integration.test.ts",
     "test:integration:finanzas-pago": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-registrado.integration.test.ts",
-    "test:integration:finanzas-transferencia": "node -r ts-node/register/transpile-only test/integration/finanzas.transferencia.integration.test.ts"
+    "test:integration:finanzas-transferencia": "node -r ts-node/register/transpile-only test/integration/finanzas.transferencia.integration.test.ts",
+    "test:integration:rbac-rol-finanzas": "node -r ts-node/register/transpile-only test/integration/rbac-rol-finanzas.integration.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

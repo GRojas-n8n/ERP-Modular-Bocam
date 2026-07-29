@@ -3,7 +3,7 @@
  * Spec: openspec/changes/fix-rls-contabilidad-tablas-sin-cobertura/
  *
  * `GET /api/v1/contabilidad/asientos` hacía `findMany()` SIN ningún `where` —
- * cualquier usuario autenticado con rol admin/finance/superintendent de
+ * cualquier usuario autenticado con rol admin/finanzas/superintendent de
  * CUALQUIER tenant leía el libro contable completo de TODOS los tenants, sin
  * necesitar conocer ningún ID. Este test reproduce el escenario contra el
  * endpoint HTTP real y confirma que ahora solo devuelve los asientos del
@@ -81,7 +81,7 @@ async function testGetAsientosSoloDevuelveTenantYProyectoPropio() {
   await crearAsiento(tenantB, proyectoB, 'POL-B-OTRO-TENANT');
 
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: tenantA, proyectoId: proyectoA, roles: ['finance'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: tenantA, proyectoId: proyectoA, roles: ['finanzas'] });
     const r = await get('/api/v1/contabilidad/asientos', token);
 
     assert.equal(r.status, 200);

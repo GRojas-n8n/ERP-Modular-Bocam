@@ -380,7 +380,7 @@ async function applySatValidationResult(
     // endpoint valida su presencia en el body antes de llegar aquí — ver
     // POST .../integraciones/sat/callback). Ausente cuando el llamador es
     // POST .../conciliaciones-fiscales/:id/validar-sat, la ruta MANUAL
-    // protegida por JWT + requireRoles('admin','finance'), que no pasa por
+    // protegida por JWT + requireRoles('admin','finanzas'), que no pasa por
     // el flujo de dispatch/worker y por lo tanto no tiene dispatch_id que
     // verificar — su propio tenant_id/proyecto_id ya vienen de la sesión
     // autenticada, no de un body sin JWT.
@@ -1713,7 +1713,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 app.get(
   '/api/v1/contabilidad/asientos',
-  requireRoles('admin', 'finance', 'superintendent'),
+  requireRoles('admin', 'finanzas', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1747,7 +1747,7 @@ app.get(
 // ── Catálogo de cuentas ────────────────────────────────────────────────────────
 app.get(
   '/api/v1/contabilidad/cuentas',
-  requireRoles('admin', 'finance', 'superintendent'),
+  requireRoles('admin', 'finanzas', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1768,7 +1768,7 @@ app.get(
 // ── Movimientos por asiento ────────────────────────────────────────────────────
 app.get(
   '/api/v1/contabilidad/asientos/:id/movimientos',
-  requireRoles('admin', 'finance', 'superintendent'),
+  requireRoles('admin', 'finanzas', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1791,7 +1791,7 @@ app.get(
 // ── Dashboard contabilidad ─────────────────────────────────────────────────────
 app.get(
   '/api/v1/contabilidad/dashboard',
-  requireRoles('admin', 'finance', 'superintendent'),
+  requireRoles('admin', 'finanzas', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1835,7 +1835,7 @@ app.get(
 // ── Reportes contables ─────────────────────────────────────────────────────────
 app.get(
   '/api/v1/contabilidad/reportes/balanza-comprobacion',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1873,7 +1873,7 @@ app.get(
 
 app.get(
   '/api/v1/contabilidad/reportes/estado-resultados',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1911,7 +1911,7 @@ app.get(
 
 app.get(
   '/api/v1/contabilidad/reportes/balance-general',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1953,7 +1953,7 @@ app.get(
 
 app.get(
   '/api/v1/contabilidad/reportes/libro-diario',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1994,7 +1994,7 @@ app.get(
 
 app.post(
   '/api/v1/contabilidad/asientos/:id/conciliar-cfdi',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2199,7 +2199,7 @@ app.post(
 
 app.get(
   '/api/v1/contabilidad/conciliaciones-fiscales/monitoreo/sat-pendientes',
-  requireRoles('admin', 'finance', 'superintendent'),
+  requireRoles('admin', 'finanzas', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2285,7 +2285,7 @@ app.get(
 
 app.post(
   '/api/v1/contabilidad/conciliaciones-fiscales/:id/reintentar-sat',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2356,7 +2356,7 @@ app.post(
 
 app.post(
   '/api/v1/contabilidad/conciliaciones-fiscales/:id/validar-sat',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2462,7 +2462,7 @@ app.post(
 
 app.post(
   '/api/v1/contabilidad/conciliaciones-fiscales/:id/validar-sat-externo',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2809,7 +2809,7 @@ app.post(
 
 app.post(
   '/api/v1/contabilidad/asientos/:id/conciliar-banco',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2937,7 +2937,7 @@ app.post(
 
 app.post(
   '/api/v1/contabilidad/conciliaciones-bancarias/archivo/validar',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId } = req.securityContext;
@@ -3002,7 +3002,7 @@ app.post(
 
 app.post(
   '/api/v1/contabilidad/conciliaciones-bancarias/archivo/ejecutar',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -3213,7 +3213,7 @@ app.post(
 
 app.post(
   '/api/v1/contabilidad/conciliaciones-bancarias/lote',
-  requireRoles('admin', 'finance'),
+  requireRoles('admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;

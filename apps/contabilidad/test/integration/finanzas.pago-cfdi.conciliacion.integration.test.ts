@@ -153,14 +153,11 @@ async function main() {
     contabilidadBaseUrl = contabilidadStarted.baseUrl;
     await delay(500);
 
-    // 'finanzas' habilita los endpoints de finanzas (pagar); 'finance' sigue siendo
-    // lo que exige el gate de contabilidad en conciliar-cfdi (bug propio, no
-    // corregido en este change — ver fix-rol-finance-vs-finanzas-en-finanzas).
     const token = signTenantToken({
       userId: seeded.userId,
       tenantId: seeded.tenantId,
       proyectoId: seeded.proyectoId,
-      roles: ['finanzas', 'finance'],
+      roles: ['finanzas'],
       projects: [seeded.proyectoId],
       limiteAprobacion: 999999999,
     });

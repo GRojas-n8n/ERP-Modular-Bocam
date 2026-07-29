@@ -51,7 +51,7 @@ async function testBalanzaComprobacion() {
   const tenantId = randomUUID();
   const proyId   = randomUUID();
   const userId   = randomUUID();
-  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finance'] });
+  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finanzas'] });
 
   try {
     await handleEstimacionAprobadaEvent({
@@ -77,7 +77,7 @@ async function testEstadoResultados() {
   const tenantId = randomUUID();
   const proyId   = randomUUID();
   const userId   = randomUUID();
-  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finance'] });
+  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finanzas'] });
 
   try {
     const res = await api('GET', `/api/v1/contabilidad/reportes/estado-resultados`, token);
@@ -93,7 +93,7 @@ async function testBalanceGeneral() {
   const tenantId = randomUUID();
   const proyId   = randomUUID();
   const userId   = randomUUID();
-  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finance'] });
+  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finanzas'] });
 
   try {
     const res = await api('GET', `/api/v1/contabilidad/reportes/balance-general`, token);
@@ -110,7 +110,7 @@ async function testCuentas() {
   const tenantId = randomUUID();
   const proyId   = randomUUID();
   const userId   = randomUUID();
-  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finance'] });
+  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finanzas'] });
 
   try {
     const res = await api('GET', `/api/v1/contabilidad/cuentas`, token);

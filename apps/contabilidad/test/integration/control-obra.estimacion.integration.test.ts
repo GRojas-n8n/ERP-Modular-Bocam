@@ -52,7 +52,7 @@ async function testEstimacionCreaAsientoYMovimientos() {
   const tenantId = randomUUID();
   const proyId   = randomUUID();
   const userId   = randomUUID();
-  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finance'] });
+  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finanzas'] });
 
   try {
     const estimacionId = randomUUID();
@@ -118,7 +118,7 @@ async function testEndpointMovimientos() {
   const tenantId = randomUUID();
   const proyId   = randomUUID();
   const userId   = randomUUID();
-  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finance'] });
+  const token    = signTenantToken({ userId, tenantId, proyectoId: proyId, roles: ['finanzas'] });
 
   try {
     const estimacionId = randomUUID();
