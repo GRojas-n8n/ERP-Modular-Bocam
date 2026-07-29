@@ -1,7 +1,17 @@
 # ============================================================
 # deploy-vps.yml — BocamOS ERP
 # Dispara en cada push a main que toque el app-shell.
-# Flujo: build frontend → SCP al VPS → reload nginx
+# Flujo real (Docker, no bare-metal): SSH al VPS -> git pull ->
+# docker compose build app-shell -> docker compose up -d app-shell.
+# El VPS es quien construye la imagen (Dockerfile.app-shell), no el
+# runner de GitHub Actions — evita necesitar un registro de imagenes.
+#
+# Reemplaza el flujo anterior (build local + scp a
+# /var/www/bocam-erp/dist/ + `systemctl reload nginx`), que fallaba
+# siempre: ese nginx bare-metal ya no existe en el VPS desde que
+# app-shell se movio a un contenedor Docker (ver
+# docs/arquitectura/overview-saas-vps.md — docker-compose.vps.yml es
+# la unica fuente operativa del stack).
 #
 # SECRETS requeridos en GitHub (Settings → Secrets → Actions):
 #   VPS_SSH_KEY   → contenido de la llave privada ed25519
@@ -18,53 +28,33 @@ on:
     paths:
       - "apps/app-shell/**"
       - "packages/ui-core/**"
+      - "docker/Dockerfile.app-shell"
+      - "docker/nginx.qnap.conf"
+      - "docker-compose.vps.yml"
       - ".github/workflows/deploy-vps.yml"
 
   # Permite disparar manualmente desde la UI de GitHub Actions
   workflow_dispatch:
 
+# Evita que dos pushes casi simultaneos corran el deploy en paralelo
+# sobre el mismo VPS — el segundo espera a que termine el primero.
+concurrency:
+  group: deploy-vps-app-shell
+  cancel-in-progress: false
+
+env:
+  # Ruta del repo ya clonado en el VPS (ver redeploy-vps-*: procedimiento
+  # manual ya usado en esta ruta). No es secreta, es una convencion fija
+  # de este VPS.
+  VPS_REPO_PATH: /root/ERP-Modular-Bocam
+
 jobs:
-  build-and-deploy:
-    name: Build + Deploy
+  deploy:
+    name: Build + Deploy (Docker)
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout ────────────────────────────────────────
-      - name: Checkout repositorio
-        uses: actions/checkout@v4
-
-      # ── 2. Node.js ─────────────────────────────────────────
-      - name: Configurar Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: package-lock.json
-
-      # ── 3. Instalar dependencias ───────────────────────────
-      # El monorepo usa workspaces: una sola instalacion en la raiz
-      # cubre todos los paquetes incluyendo app-shell
-      - name: Instalar dependencias (monorepo)
-        run: npm ci
-        working-directory: .
-
-      # ── 4. Build de produccion ─────────────────────────────
-      - name: Build Vite produccion
-        run: npm run build
-        working-directory: apps/app-shell
-        env:
-          NODE_ENV: production
-          VITE_API_URL: ""
-
-      # ── 5. Verificar artefacto ─────────────────────────────
-      - name: Verificar dist/
-        run: |
-          echo "Archivos generados:"
-          ls -lh apps/app-shell/dist/assets/
-          echo "Tamano total:"
-          du -sh apps/app-shell/dist/
-
-      # ── 6. Configurar SSH ──────────────────────────────────
+      # ── 1. Configurar SSH ──────────────────────────────────
       - name: Configurar llave SSH
         run: |
           mkdir -p ~/.ssh
@@ -72,49 +62,63 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      # ── 7. Crear directorio remoto ─────────────────────────
-      - name: Preparar directorio en VPS
+      # ── 2. Actualizar el repo en el VPS ─────────────────────
+      # Fast-forward only: si el VPS tuviera cambios locales sin
+      # commitear que generen conflicto, esto falla en vez de
+      # descartarlos en silencio (no se usa `reset --hard`).
+      - name: Git pull en el VPS
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "mkdir -p /var/www/bocam-erp/dist && \
-             chown -R www-data:www-data /var/www/bocam-erp && \
-             chmod -R 755 /var/www/bocam-erp"
+            "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
 
-      # ── 8. Subir dist al VPS ──────────────────────────────
-      - name: Deploy dist/ via SCP
-        run: |
-          scp -i ~/.ssh/deploy_key \
-              -o StrictHostKeyChecking=no \
-              -r apps/app-shell/dist/. \
-              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bocam-erp/dist/
-
-      # ── 9. Recargar nginx ──────────────────────────────────
-      - name: Recargar nginx
+      # ── 3. Build de la imagen Docker EN el VPS ─────────────
+      - name: docker compose build app-shell
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "nginx -t && systemctl reload nginx && systemctl is-active nginx"
+            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml build app-shell"
 
-      # ── 10. Smoke test ─────────────────────────────────────
+      # ── 4. Recrear el contenedor con la imagen nueva ───────
+      - name: docker compose up -d app-shell
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml up -d app-shell"
+
+      # ── 5. Esperar healthcheck del contenedor ──────────────
+      - name: Verificar healthcheck del contenedor
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'for i in $(seq 1 30); do
+               STATUS=$(docker inspect -f "{{.State.Health.Status}}" bocam-vps-app-shell 2>/dev/null || echo "starting")
+               echo "intento $i: $STATUS"
+               if [ "$STATUS" = "healthy" ]; then exit 0; fi
+               if [ "$STATUS" = "unhealthy" ]; then echo "ERROR: contenedor unhealthy"; docker logs --tail 50 bocam-vps-app-shell; exit 1; fi
+               sleep 2
+             done
+             echo "ERROR: timeout esperando healthy"; docker logs --tail 50 bocam-vps-app-shell; exit 1'
+
+      # ── 6. Smoke test HTTP contra el dominio real ──────────
       - name: Smoke test HTTP
         run: |
           sleep 3
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.VPS_HOST }})
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L https://iretum.com)
           echo "HTTP Status: $STATUS"
           if [ "$STATUS" != "200" ]; then
             echo "ERROR: El servidor respondio $STATUS"
             exit 1
           fi
-          echo "OK: Frontend accesible en http://${{ secrets.VPS_HOST }}"
+          echo "OK: Frontend accesible en https://iretum.com"
 
-      # ── 11. Notificacion de resultado ─────────────────────
+      # ── 7. Notificacion de resultado ───────────────────────
       - name: Resumen del deploy
         if: always()
         run: |
           echo "=================================="
           echo "Deploy completado"
-          echo "URL: http://${{ secrets.VPS_HOST }}"
+          echo "URL: https://iretum.com"
           echo "Rama: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
           echo "=================================="
