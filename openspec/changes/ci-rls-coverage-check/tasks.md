@@ -15,7 +15,7 @@
 - [x] 3.1 Correr el script localmente contra el estado actual del repo — debe pasar en verde (0 gaps), dado que los 5 incidentes históricos ya están cerrados. Verificado: "Cobertura RLS completa en los 11 microservicios revisados".
 - [x] 3.2 Simular un gap: agregar temporalmente un modelo de prueba (`__CiProbeSinRls`, tabla `__ci_probe_sin_rls`) con `tenant_id` sin política en `apps/ventas/prisma/schema.prisma`, confirmar que el script lo detecta y sale con código 1, revertir el cambio.
 - [x] 3.3 Simular el caso "ENABLE sin política": agregar solo el `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` de la tabla de prueba sin `CREATE POLICY`, confirmar que el mensaje distingue este caso ("tiene ENABLE ROW LEVEL SECURITY pero ninguna CREATE POLICY") del de "sin ENABLE en absoluto".
-- [ ] 3.4 Abrir PR, confirmar que el nuevo job aparece y pasa en GitHub Actions.
+- [x] 3.4 Abrir PR, confirmar que el nuevo job aparece y pasa en GitHub Actions — PR #97, check "Cobertura RLS (estática)" pasó en 9s, en paralelo a `backend-e2e` (2m32s).
 
 ## 4. Cierre
 
