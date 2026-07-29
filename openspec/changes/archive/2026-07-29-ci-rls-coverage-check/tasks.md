@@ -19,6 +19,6 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 Mergear el change a `main`.
-- [ ] 4.2 Actualizar memoria (nueva o extendiendo una `hallazgo-rls-drift-*` existente) señalando que el chequeo automatizado ya existe.
-- [ ] 4.3 Archivar el change en OpenSpec.
+- [x] 4.1 Mergear el change a `main` — PR #97 (squash-merge, commit d1a3d5d).
+- [x] 4.2 Actualizar memoria extendiendo `hallazgo-rls-drift-almacen-contabilidad-2026-07-27.md` señalando que el chequeo automatizado ya existe.
+- [x] 4.3 Archivar el change en OpenSpec.
