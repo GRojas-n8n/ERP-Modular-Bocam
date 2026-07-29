@@ -8,6 +8,22 @@ on:
   pull_request:
 
 jobs:
+  # ── Cobertura RLS ──────────────────────────────────────────────────────────
+  # Chequeo estático, independiente de Postgres/RabbitMQ: falla si algún
+  # modelo Prisma con tenant_id no tiene ENABLE ROW LEVEL SECURITY + al menos
+  # una CREATE POLICY en el rls-policies.sql de su microservicio. Ver
+  # openspec/changes/archive/ci-rls-coverage-check y el requisito en
+  # openspec/specs/despliegue-completo-microservicios/spec.md.
+  rls-coverage:
+    name: Cobertura RLS (estática)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Chequear cobertura RLS
+        run: node scripts/ci/check-rls-coverage.js
+
   backend-e2e:
     runs-on: ubuntu-latest
 
