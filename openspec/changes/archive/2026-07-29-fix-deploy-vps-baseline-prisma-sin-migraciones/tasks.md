@@ -9,7 +9,7 @@
 
 - [x] 2.1 Para cada uno de los 5 servicios (`contabilidad` primero), correr `prisma migrate diff --from-empty --to-schema-datamodel apps/<svc>/prisma/schema.prisma --script --output apps/<svc>/prisma/migrations/<timestamp>_baseline/migration.sql`.
 - [x] 2.2 Revisar cada `migration.sql` generado: confirmar que crea exactamente las tablas/columnas ya verificadas en el paso 1, nada más y nada menos. (Coinciden exactamente: contabilidad 5 tablas, seguridad 6, ventas 3, almacen 2, control-proyectos 7)
-- [ ] 2.3 Commitear las 5 carpetas `migrations/<timestamp>_baseline/` (sin PR de código de aplicación, solo migraciones).
+- [x] 2.3 Commitear las 5 carpetas `migrations/<timestamp>_baseline/` (sin PR de código de aplicación, solo migraciones). (commit `20195d3`, pusheado)
 
 ## 3. Aplicar el baseline en producción (requiere confirmación explícita antes de ejecutar)
 
