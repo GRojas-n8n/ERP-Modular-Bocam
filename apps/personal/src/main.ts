@@ -519,10 +519,18 @@ app.put('/api/v1/personal/config-nomina', requireRoles('personal_rh', 'admin'), 
 // Empleados elegibles de un proyecto: unión de AsignacionFrente ACTIVA en ese
 // proyecto y empleados cuya Cuadrilla pertenece a ese proyecto (fallback para
 // quienes no tienen frente explícito). Empleado NO tiene proyecto_id propio.
-async function obtenerEmpleadoIdsDelProyecto(prisma: any, tenantId: string, proyectoId: string): Promise<Set<string>> {
+//
+// `fechaReferencia` (default: ahora) excluye AsignacionFrente cuya fecha_fin
+// ya venció antes de esa fecha — nada en el código actualiza `estado` tras
+// crear la asignación, así que sin este filtro una asignación terminada
+// hace elegible al empleado para siempre (ver specs/features/02-...md, 2.2).
+async function obtenerEmpleadoIdsDelProyecto(prisma: any, tenantId: string, proyectoId: string, fechaReferencia: Date = new Date()): Promise<Set<string>> {
   const [porFrente, cuadrillasDelProyecto] = await Promise.all([
     prisma.asignacionFrente.findMany({
-      where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'ACTIVA' },
+      where: {
+        tenant_id: tenantId, proyecto_id: proyectoId, estado: 'ACTIVA',
+        OR: [{ fecha_fin: null }, { fecha_fin: { gte: fechaReferencia } }],
+      },
       select: { empleado_id: true },
     }),
     prisma.cuadrilla.findMany({
@@ -600,7 +608,7 @@ app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Respo
       const configProyecto = await prisma.configNominaProyecto.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
       const periodo_tipo = configProyecto?.periodicidad_pago ?? 'SEMANAL';
 
-      const empleadoIds = await obtenerEmpleadoIdsDelProyecto(prisma, tenantId, proyectoId);
+      const empleadoIds = await obtenerEmpleadoIdsDelProyecto(prisma, tenantId, proyectoId, new Date(periodo_inicio));
       const empleados = empleadoIds.size > 0
         ? await prisma.empleado.findMany({ where: { id_empleado: { in: Array.from(empleadoIds) }, estado: 'ACTIVO' } })
         : [];
