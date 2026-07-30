@@ -4,10 +4,29 @@
 > `apps/app-shell/src/views/ResidenciaView.tsx`. Ubicación: `specs/features/`
 > según `specs/README.md` — feature sobre legacy, no módulo nuevo.
 
-> **Estado: propuesto, sin implementar.** Este spec documenta el diseño
-> discutido y su verificación contra el código real (`apps/personal/src/main.ts`,
-> `apps/personal/prisma/schema.prisma`). No confirmar completado hasta que
-> exista código + tests en verde + migración aplicada.
+> **Estado (2026-07-29): implementado.** Commits `63c271c` (fix 2.2) y
+> `4a88063` (resto del spec). Las 3 piezas de backend (2.1, préstamo,
+> `/mis-empleados/resumen`) siguieron TDD estricto — test en rojo antes de
+> cada endpoint — y el tab "Mi Equipo" tiene su propio test de frontend.
+> `tsc -b`/`tsc --noEmit` limpios en ambos apps. Sweep completo de
+> integración de `apps/personal` corrido en verde, salvo dos fallas
+> preexistentes sin relación (`expediente-empleado` descarga 500,
+> `rls-personal-tablas-nuevas` — RLS no aplicado en Postgres local, ver
+> `[[gotcha-rls-nunca-aplicado-en-postgres-local-docker]]`).
+>
+> **Pendiente antes de dar por cerrado el feature en producción:**
+> - Migración de schema (`es_principal`, `es_prestamo`) no aplicada contra
+>   ninguna base real — solo verificada vía `prisma db push` en Postgres
+>   local de Docker. Falta generar la migración formal de Prisma y
+>   aplicarla en el próximo deploy.
+> - Sin verificación manual en navegador del tab "Mi Equipo" (solo test
+>   automatizado con mocks).
+> - No se creó branch/PR — el trabajo se commiteó directo a `main` en dos
+>   commits separados (fix + feature), sin QA gate de 3 approvals ni PR
+>   contra `main` (desviación del flujo de `CLAUDE.md`).
+> - `specs/features/03-retirar-cuadrillas-formales.md` queda desbloqueado
+>   (su prerequisito, sección 5 de este spec, ya está implementado) pero
+>   sigue sin empezar.
 
 ## 1. Contexto
 
