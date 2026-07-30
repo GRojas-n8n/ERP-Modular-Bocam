@@ -178,6 +178,73 @@ async function testResidenteSinAsignacionesNoVeNada() {
   }
 }
 
+// ── Test: es_principal (spec 02, 2.1) — no cierra, solo desmarca ───────────
+
+async function testEsPrincipalDesmarcaAnteriorSinCerrar() {
+  const tenantId = randomUUID();
+  const proyectoId = randomUUID();
+  const userId = randomUUID();
+  const residente1 = randomUUID();
+  const residente2 = randomUUID();
+  try {
+    const emp = await crearEmpleado(tenantId);
+    const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
+
+    const r1 = await post(`/api/v1/personal/empleados/${emp.id_empleado}/residentes`, tokenRh, { residente_id: residente1 });
+    assert.equal(r1.status, 201);
+    const a1 = (await r1.json()) as any;
+    assert.equal(a1.data.es_principal, true, 'la primera asignación es principal por default');
+
+    const r2 = await post(`/api/v1/personal/empleados/${emp.id_empleado}/residentes`, tokenRh, { residente_id: residente2 });
+    assert.equal(r2.status, 201);
+    const a2 = (await r2.json()) as any;
+    assert.equal(a2.data.es_principal, true, 'la nueva asignación es principal por default');
+
+    const rList = await get(`/api/v1/personal/empleados/${emp.id_empleado}/residentes`, tokenRh);
+    const body = (await rList.json()) as any;
+    assert.equal(body.data.asignaciones.length, 2, 'ambas asignaciones deben seguir vigentes (no se cierran)');
+
+    const anterior = body.data.asignaciones.find((a: any) => a.id_asignacion === a1.data.id_asignacion);
+    const nueva = body.data.asignaciones.find((a: any) => a.id_asignacion === a2.data.id_asignacion);
+    assert.equal(anterior.fecha_fin, null, 'la asignación anterior NO debe cerrarse');
+    assert.equal(anterior.es_principal, false, 'la asignación anterior debe quedar desmarcada como principal');
+    assert.equal(nueva.es_principal, true, 'la asignación nueva debe ser la principal');
+
+    console.log('ok - es_principal desmarca la asignación anterior sin cerrarla (personal compartido intacto)');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
+async function testEsPrincipalFalseNoDesmarcaAnterior() {
+  const tenantId = randomUUID();
+  const proyectoId = randomUUID();
+  const userId = randomUUID();
+  const residente1 = randomUUID();
+  const residente2 = randomUUID();
+  try {
+    const emp = await crearEmpleado(tenantId);
+    const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
+
+    const r1 = await post(`/api/v1/personal/empleados/${emp.id_empleado}/residentes`, tokenRh, { residente_id: residente1 });
+    const a1 = (await r1.json()) as any;
+
+    const r2 = await post(`/api/v1/personal/empleados/${emp.id_empleado}/residentes`, tokenRh, { residente_id: residente2, es_principal: false });
+    assert.equal(r2.status, 201);
+    const a2 = (await r2.json()) as any;
+    assert.equal(a2.data.es_principal, false);
+
+    const rList = await get(`/api/v1/personal/empleados/${emp.id_empleado}/residentes`, tokenRh);
+    const body = (await rList.json()) as any;
+    const anterior = body.data.asignaciones.find((a: any) => a.id_asignacion === a1.data.id_asignacion);
+    assert.equal(anterior.es_principal, true, 'con es_principal:false explícito, la asignación anterior conserva su estado de principal');
+
+    console.log('ok - es_principal:false no desmarca ninguna asignación existente');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
 async function main() {
   await setup();
   try {
@@ -185,6 +252,8 @@ async function main() {
     await testDesasignarConservaHistorial();
     await testMisEmpleadosAislamiento();
     await testResidenteSinAsignacionesNoVeNada();
+    await testEsPrincipalDesmarcaAnteriorSinCerrar();
+    await testEsPrincipalFalseNoDesmarcaAnterior();
   } finally {
     await teardown();
   }

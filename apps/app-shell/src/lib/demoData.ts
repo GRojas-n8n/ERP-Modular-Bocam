@@ -439,3 +439,26 @@ export const DEMO_ASISTENCIA = [
   { id: 'a-007', fecha: '2024-05-21', cuadrilla_id: 'cua-003', cuadrilla_nombre: 'Cuadrilla Acabados',      empleado_nombre: 'Guillermo Morales',  puesto: 'Oficial Carpintero',    hora_entrada: '07:08', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'QR'     },
   { id: 'a-008', fecha: '2024-05-21', cuadrilla_id: 'cua-003', cuadrilla_nombre: 'Cuadrilla Acabados',      empleado_nombre: 'Arturo Vega',        puesto: 'Residente de Obra',     hora_entrada: '08:01', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'MANUAL' },
 ];
+
+// Vista "Mi equipo" — ver specs/features/02-asignacion-empleados-residente-prestamos.md (sección 5).
+export const DEMO_MI_EQUIPO_RESIDENCIA = [
+  {
+    categoria: 'OBRERO', total: 3,
+    empleados: [
+      { id_empleado: 'emp-101', nombre: 'Ricardo Salazar', numero_empleado: 'EMP-101', compartido: false, proyecto_actual_id: null },
+      { id_empleado: 'emp-103', nombre: 'Gustavo Reyes',   numero_empleado: 'EMP-103', compartido: false, proyecto_actual_id: null },
+      { id_empleado: 'emp-105', nombre: 'Ismael Torres',   numero_empleado: 'EMP-105', compartido: true,  proyecto_actual_id: 'proy-torre-norte' },
+    ],
+  },
+  {
+    categoria: 'TECNICO', total: 1,
+    empleados: [
+      { id_empleado: 'emp-102', nombre: 'Beatriz Nuño', numero_empleado: 'EMP-102', compartido: false, proyecto_actual_id: null },
+    ],
+  },
+  {
+    categoria: 'ADMINISTRATIVO', total: 1,
+    empleados: [
+      { id_empleado: 'emp-104', nombre: 'Laura Cantú', numero_empleado: 'EMP-104', compartido: false, proyecto_actual_id: null },
+    ],
+  },

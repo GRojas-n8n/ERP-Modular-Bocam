@@ -4621,6 +4621,7 @@ export namespace Prisma {
     fecha_fin: Date | null
     horas_diarias: Decimal | null
     estado: string | null
+    es_prestamo: boolean | null
     created_at: Date | null
   }
 
@@ -4636,6 +4637,7 @@ export namespace Prisma {
     fecha_fin: Date | null
     horas_diarias: Decimal | null
     estado: string | null
+    es_prestamo: boolean | null
     created_at: Date | null
   }
 
@@ -4651,6 +4653,7 @@ export namespace Prisma {
     fecha_fin: number
     horas_diarias: number
     estado: number
+    es_prestamo: number
     created_at: number
     _all: number
   }
@@ -4676,6 +4679,7 @@ export namespace Prisma {
     fecha_fin?: true
     horas_diarias?: true
     estado?: true
+    es_prestamo?: true
     created_at?: true
   }
 
@@ -4691,6 +4695,7 @@ export namespace Prisma {
     fecha_fin?: true
     horas_diarias?: true
     estado?: true
+    es_prestamo?: true
     created_at?: true
   }
 
@@ -4706,6 +4711,7 @@ export namespace Prisma {
     fecha_fin?: true
     horas_diarias?: true
     estado?: true
+    es_prestamo?: true
     created_at?: true
     _all?: true
   }
@@ -4808,6 +4814,7 @@ export namespace Prisma {
     fecha_fin: Date | null
     horas_diarias: Decimal
     estado: string
+    es_prestamo: boolean
     created_at: Date
     _count: AsignacionFrenteCountAggregateOutputType | null
     _avg: AsignacionFrenteAvgAggregateOutputType | null
@@ -4842,6 +4849,7 @@ export namespace Prisma {
     fecha_fin?: boolean
     horas_diarias?: boolean
     estado?: boolean
+    es_prestamo?: boolean
     created_at?: boolean
     empleado?: boolean | EmpleadoDefaultArgs<ExtArgs>
     cuadrilla?: boolean | AsignacionFrente$cuadrillaArgs<ExtArgs>
@@ -4859,6 +4867,7 @@ export namespace Prisma {
     fecha_fin?: boolean
     horas_diarias?: boolean
     estado?: boolean
+    es_prestamo?: boolean
     created_at?: boolean
     empleado?: boolean | EmpleadoDefaultArgs<ExtArgs>
     cuadrilla?: boolean | AsignacionFrente$cuadrillaArgs<ExtArgs>
@@ -4876,6 +4885,7 @@ export namespace Prisma {
     fecha_fin?: boolean
     horas_diarias?: boolean
     estado?: boolean
+    es_prestamo?: boolean
     created_at?: boolean
   }
 
@@ -4906,6 +4916,7 @@ export namespace Prisma {
       fecha_fin: Date | null
       horas_diarias: Prisma.Decimal
       estado: string
+      es_prestamo: boolean
       created_at: Date
     }, ExtArgs["result"]["asignacionFrente"]>
     composites: {}
@@ -5313,6 +5324,7 @@ export namespace Prisma {
     readonly fecha_fin: FieldRef<"AsignacionFrente", 'DateTime'>
     readonly horas_diarias: FieldRef<"AsignacionFrente", 'Decimal'>
     readonly estado: FieldRef<"AsignacionFrente", 'String'>
+    readonly es_prestamo: FieldRef<"AsignacionFrente", 'Boolean'>
     readonly created_at: FieldRef<"AsignacionFrente", 'DateTime'>
   }
     
@@ -14136,6 +14148,7 @@ export namespace Prisma {
     fecha_inicio: Date | null
     fecha_fin: Date | null
     asignado_por: string | null
+    es_principal: boolean | null
   }
 
   export type AsignacionResidenteMaxAggregateOutputType = {
@@ -14146,6 +14159,7 @@ export namespace Prisma {
     fecha_inicio: Date | null
     fecha_fin: Date | null
     asignado_por: string | null
+    es_principal: boolean | null
   }
 
   export type AsignacionResidenteCountAggregateOutputType = {
@@ -14156,6 +14170,7 @@ export namespace Prisma {
     fecha_inicio: number
     fecha_fin: number
     asignado_por: number
+    es_principal: number
     _all: number
   }
 
@@ -14168,6 +14183,7 @@ export namespace Prisma {
     fecha_inicio?: true
     fecha_fin?: true
     asignado_por?: true
+    es_principal?: true
   }
 
   export type AsignacionResidenteMaxAggregateInputType = {
@@ -14178,6 +14194,7 @@ export namespace Prisma {
     fecha_inicio?: true
     fecha_fin?: true
     asignado_por?: true
+    es_principal?: true
   }
 
   export type AsignacionResidenteCountAggregateInputType = {
@@ -14188,6 +14205,7 @@ export namespace Prisma {
     fecha_inicio?: true
     fecha_fin?: true
     asignado_por?: true
+    es_principal?: true
     _all?: true
   }
 
@@ -14271,6 +14289,7 @@ export namespace Prisma {
     fecha_inicio: Date
     fecha_fin: Date | null
     asignado_por: string
+    es_principal: boolean
     _count: AsignacionResidenteCountAggregateOutputType | null
     _min: AsignacionResidenteMinAggregateOutputType | null
     _max: AsignacionResidenteMaxAggregateOutputType | null
@@ -14298,6 +14317,7 @@ export namespace Prisma {
     fecha_inicio?: boolean
     fecha_fin?: boolean
     asignado_por?: boolean
+    es_principal?: boolean
     empleado?: boolean | EmpleadoDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["asignacionResidente"]>
 
@@ -14309,6 +14329,7 @@ export namespace Prisma {
     fecha_inicio?: boolean
     fecha_fin?: boolean
     asignado_por?: boolean
+    es_principal?: boolean
     empleado?: boolean | EmpleadoDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["asignacionResidente"]>
 
@@ -14320,6 +14341,7 @@ export namespace Prisma {
     fecha_inicio?: boolean
     fecha_fin?: boolean
     asignado_por?: boolean
+    es_principal?: boolean
   }
 
   export type AsignacionResidenteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14342,6 +14364,7 @@ export namespace Prisma {
       fecha_inicio: Date
       fecha_fin: Date | null
       asignado_por: string
+      es_principal: boolean
     }, ExtArgs["result"]["asignacionResidente"]>
     composites: {}
   }
@@ -14743,6 +14766,7 @@ export namespace Prisma {
     readonly fecha_inicio: FieldRef<"AsignacionResidente", 'DateTime'>
     readonly fecha_fin: FieldRef<"AsignacionResidente", 'DateTime'>
     readonly asignado_por: FieldRef<"AsignacionResidente", 'String'>
+    readonly es_principal: FieldRef<"AsignacionResidente", 'Boolean'>
   }
     
 
@@ -17103,6 +17127,7 @@ export namespace Prisma {
     fecha_fin: 'fecha_fin',
     horas_diarias: 'horas_diarias',
     estado: 'estado',
+    es_prestamo: 'es_prestamo',
     created_at: 'created_at'
   };
 
@@ -17270,7 +17295,8 @@ export namespace Prisma {
     residente_id: 'residente_id',
     fecha_inicio: 'fecha_inicio',
     fecha_fin: 'fecha_fin',
-    asignado_por: 'asignado_por'
+    asignado_por: 'asignado_por',
+    es_principal: 'es_principal'
   };
 
   export type AsignacionResidenteScalarFieldEnum = (typeof AsignacionResidenteScalarFieldEnum)[keyof typeof AsignacionResidenteScalarFieldEnum]
@@ -17378,6 +17404,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -17388,13 +17421,6 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -17718,6 +17744,7 @@ export namespace Prisma {
     fecha_fin?: DateTimeNullableFilter<"AsignacionFrente"> | Date | string | null
     horas_diarias?: DecimalFilter<"AsignacionFrente"> | Decimal | DecimalJsLike | number | string
     estado?: StringFilter<"AsignacionFrente"> | string
+    es_prestamo?: BoolFilter<"AsignacionFrente"> | boolean
     created_at?: DateTimeFilter<"AsignacionFrente"> | Date | string
     empleado?: XOR<EmpleadoRelationFilter, EmpleadoWhereInput>
     cuadrilla?: XOR<CuadrillaNullableRelationFilter, CuadrillaWhereInput> | null
@@ -17735,6 +17762,7 @@ export namespace Prisma {
     fecha_fin?: SortOrderInput | SortOrder
     horas_diarias?: SortOrder
     estado?: SortOrder
+    es_prestamo?: SortOrder
     created_at?: SortOrder
     empleado?: EmpleadoOrderByWithRelationInput
     cuadrilla?: CuadrillaOrderByWithRelationInput
@@ -17755,6 +17783,7 @@ export namespace Prisma {
     fecha_fin?: DateTimeNullableFilter<"AsignacionFrente"> | Date | string | null
     horas_diarias?: DecimalFilter<"AsignacionFrente"> | Decimal | DecimalJsLike | number | string
     estado?: StringFilter<"AsignacionFrente"> | string
+    es_prestamo?: BoolFilter<"AsignacionFrente"> | boolean
     created_at?: DateTimeFilter<"AsignacionFrente"> | Date | string
     empleado?: XOR<EmpleadoRelationFilter, EmpleadoWhereInput>
     cuadrilla?: XOR<CuadrillaNullableRelationFilter, CuadrillaWhereInput> | null
@@ -17772,6 +17801,7 @@ export namespace Prisma {
     fecha_fin?: SortOrderInput | SortOrder
     horas_diarias?: SortOrder
     estado?: SortOrder
+    es_prestamo?: SortOrder
     created_at?: SortOrder
     _count?: AsignacionFrenteCountOrderByAggregateInput
     _avg?: AsignacionFrenteAvgOrderByAggregateInput
@@ -17795,6 +17825,7 @@ export namespace Prisma {
     fecha_fin?: DateTimeNullableWithAggregatesFilter<"AsignacionFrente"> | Date | string | null
     horas_diarias?: DecimalWithAggregatesFilter<"AsignacionFrente"> | Decimal | DecimalJsLike | number | string
     estado?: StringWithAggregatesFilter<"AsignacionFrente"> | string
+    es_prestamo?: BoolWithAggregatesFilter<"AsignacionFrente"> | boolean
     created_at?: DateTimeWithAggregatesFilter<"AsignacionFrente"> | Date | string
   }
 
@@ -18591,6 +18622,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFilter<"AsignacionResidente"> | Date | string
     fecha_fin?: DateTimeNullableFilter<"AsignacionResidente"> | Date | string | null
     asignado_por?: UuidFilter<"AsignacionResidente"> | string
+    es_principal?: BoolFilter<"AsignacionResidente"> | boolean
     empleado?: XOR<EmpleadoRelationFilter, EmpleadoWhereInput>
   }
 
@@ -18602,6 +18634,7 @@ export namespace Prisma {
     fecha_inicio?: SortOrder
     fecha_fin?: SortOrderInput | SortOrder
     asignado_por?: SortOrder
+    es_principal?: SortOrder
     empleado?: EmpleadoOrderByWithRelationInput
   }
 
@@ -18616,6 +18649,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFilter<"AsignacionResidente"> | Date | string
     fecha_fin?: DateTimeNullableFilter<"AsignacionResidente"> | Date | string | null
     asignado_por?: UuidFilter<"AsignacionResidente"> | string
+    es_principal?: BoolFilter<"AsignacionResidente"> | boolean
     empleado?: XOR<EmpleadoRelationFilter, EmpleadoWhereInput>
   }, "id_asignacion">
 
@@ -18627,6 +18661,7 @@ export namespace Prisma {
     fecha_inicio?: SortOrder
     fecha_fin?: SortOrderInput | SortOrder
     asignado_por?: SortOrder
+    es_principal?: SortOrder
     _count?: AsignacionResidenteCountOrderByAggregateInput
     _max?: AsignacionResidenteMaxOrderByAggregateInput
     _min?: AsignacionResidenteMinOrderByAggregateInput
@@ -18643,6 +18678,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeWithAggregatesFilter<"AsignacionResidente"> | Date | string
     fecha_fin?: DateTimeNullableWithAggregatesFilter<"AsignacionResidente"> | Date | string | null
     asignado_por?: UuidWithAggregatesFilter<"AsignacionResidente"> | string
+    es_principal?: BoolWithAggregatesFilter<"AsignacionResidente"> | boolean
   }
 
   export type CredencialEmpleadoWhereInput = {
@@ -19162,6 +19198,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
     empleado: EmpleadoCreateNestedOneWithoutAsignacionesInput
     cuadrilla?: CuadrillaCreateNestedOneWithoutAsignacionesInput
@@ -19179,6 +19216,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
   }
 
@@ -19192,6 +19230,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     empleado?: EmpleadoUpdateOneRequiredWithoutAsignacionesNestedInput
     cuadrilla?: CuadrillaUpdateOneWithoutAsignacionesNestedInput
@@ -19209,6 +19248,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -19224,6 +19264,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
   }
 
@@ -19237,6 +19278,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -19252,6 +19294,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -20176,6 +20219,7 @@ export namespace Prisma {
     fecha_inicio?: Date | string
     fecha_fin?: Date | string | null
     asignado_por: string
+    es_principal?: boolean
     empleado: EmpleadoCreateNestedOneWithoutAsignacionesResidenteInput
   }
 
@@ -20187,6 +20231,7 @@ export namespace Prisma {
     fecha_inicio?: Date | string
     fecha_fin?: Date | string | null
     asignado_por: string
+    es_principal?: boolean
   }
 
   export type AsignacionResidenteUpdateInput = {
@@ -20196,6 +20241,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
     empleado?: EmpleadoUpdateOneRequiredWithoutAsignacionesResidenteNestedInput
   }
 
@@ -20207,6 +20253,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type AsignacionResidenteCreateManyInput = {
@@ -20217,6 +20264,7 @@ export namespace Prisma {
     fecha_inicio?: Date | string
     fecha_fin?: Date | string | null
     asignado_por: string
+    es_principal?: boolean
   }
 
   export type AsignacionResidenteUpdateManyMutationInput = {
@@ -20226,6 +20274,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type AsignacionResidenteUncheckedUpdateManyInput = {
@@ -20236,6 +20285,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type CredencialEmpleadoCreateInput = {
@@ -20870,6 +20920,11 @@ export namespace Prisma {
     updated_at?: SortOrder
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type EmpleadoRelationFilter = {
     is?: EmpleadoWhereInput
     isNot?: EmpleadoWhereInput
@@ -20887,6 +20942,7 @@ export namespace Prisma {
     fecha_fin?: SortOrder
     horas_diarias?: SortOrder
     estado?: SortOrder
+    es_prestamo?: SortOrder
     created_at?: SortOrder
   }
 
@@ -20906,6 +20962,7 @@ export namespace Prisma {
     fecha_fin?: SortOrder
     horas_diarias?: SortOrder
     estado?: SortOrder
+    es_prestamo?: SortOrder
     created_at?: SortOrder
   }
 
@@ -20921,11 +20978,20 @@ export namespace Prisma {
     fecha_fin?: SortOrder
     horas_diarias?: SortOrder
     estado?: SortOrder
+    es_prestamo?: SortOrder
     created_at?: SortOrder
   }
 
   export type AsignacionFrenteSumOrderByAggregateInput = {
     horas_diarias?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -20937,11 +21003,6 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type PreNominaTenant_idCodigoCompoundUniqueInput = {
@@ -21043,14 +21104,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type PreNominaRelationFilter = {
@@ -21509,6 +21562,7 @@ export namespace Prisma {
     fecha_inicio?: SortOrder
     fecha_fin?: SortOrder
     asignado_por?: SortOrder
+    es_principal?: SortOrder
   }
 
   export type AsignacionResidenteMaxOrderByAggregateInput = {
@@ -21519,6 +21573,7 @@ export namespace Prisma {
     fecha_inicio?: SortOrder
     fecha_fin?: SortOrder
     asignado_por?: SortOrder
+    es_principal?: SortOrder
   }
 
   export type AsignacionResidenteMinOrderByAggregateInput = {
@@ -21529,6 +21584,7 @@ export namespace Prisma {
     fecha_inicio?: SortOrder
     fecha_fin?: SortOrder
     asignado_por?: SortOrder
+    es_principal?: SortOrder
   }
 
   export type CredencialEmpleadoTenant_idTokenCompoundUniqueInput = {
@@ -21979,6 +22035,10 @@ export namespace Prisma {
     connect?: CuadrillaWhereUniqueInput
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type EmpleadoUpdateOneRequiredWithoutAsignacionesNestedInput = {
     create?: XOR<EmpleadoCreateWithoutAsignacionesInput, EmpleadoUncheckedCreateWithoutAsignacionesInput>
     connectOrCreate?: EmpleadoCreateOrConnectWithoutAsignacionesInput
@@ -22017,10 +22077,6 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type PreNominaDetalleUpdateManyWithoutPrenominaNestedInput = {
@@ -22420,6 +22476,14 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -22445,14 +22509,6 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type CuadrillaCreateWithoutMiembrosInput = {
@@ -22500,6 +22556,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
     cuadrilla?: CuadrillaCreateNestedOneWithoutAsignacionesInput
   }
@@ -22515,6 +22572,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
   }
 
@@ -22627,6 +22685,7 @@ export namespace Prisma {
     fecha_inicio?: Date | string
     fecha_fin?: Date | string | null
     asignado_por: string
+    es_principal?: boolean
   }
 
   export type AsignacionResidenteUncheckedCreateWithoutEmpleadoInput = {
@@ -22636,6 +22695,7 @@ export namespace Prisma {
     fecha_inicio?: Date | string
     fecha_fin?: Date | string | null
     asignado_por: string
+    es_principal?: boolean
   }
 
   export type AsignacionResidenteCreateOrConnectWithoutEmpleadoInput = {
@@ -22754,6 +22814,7 @@ export namespace Prisma {
     fecha_fin?: DateTimeNullableFilter<"AsignacionFrente"> | Date | string | null
     horas_diarias?: DecimalFilter<"AsignacionFrente"> | Decimal | DecimalJsLike | number | string
     estado?: StringFilter<"AsignacionFrente"> | string
+    es_prestamo?: BoolFilter<"AsignacionFrente"> | boolean
     created_at?: DateTimeFilter<"AsignacionFrente"> | Date | string
   }
 
@@ -22860,6 +22921,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFilter<"AsignacionResidente"> | Date | string
     fecha_fin?: DateTimeNullableFilter<"AsignacionResidente"> | Date | string | null
     asignado_por?: UuidFilter<"AsignacionResidente"> | string
+    es_principal?: BoolFilter<"AsignacionResidente"> | boolean
   }
 
   export type CredencialEmpleadoUpsertWithWhereUniqueWithoutEmpleadoInput = {
@@ -22988,6 +23050,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
     empleado: EmpleadoCreateNestedOneWithoutAsignacionesInput
   }
@@ -23003,6 +23066,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
   }
 
@@ -24310,6 +24374,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
   }
 
@@ -24356,6 +24421,7 @@ export namespace Prisma {
     fecha_inicio?: Date | string
     fecha_fin?: Date | string | null
     asignado_por: string
+    es_principal?: boolean
   }
 
   export type CredencialEmpleadoCreateManyEmpleadoInput = {
@@ -24380,6 +24446,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     cuadrilla?: CuadrillaUpdateOneWithoutAsignacionesNestedInput
   }
@@ -24395,6 +24462,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24409,6 +24477,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24527,6 +24596,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type AsignacionResidenteUncheckedUpdateWithoutEmpleadoInput = {
@@ -24536,6 +24606,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type AsignacionResidenteUncheckedUpdateManyWithoutEmpleadoInput = {
@@ -24545,6 +24616,7 @@ export namespace Prisma {
     fecha_inicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     asignado_por?: StringFieldUpdateOperationsInput | string
+    es_principal?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type CredencialEmpleadoUpdateWithoutEmpleadoInput = {
@@ -24626,6 +24698,7 @@ export namespace Prisma {
     fecha_fin?: Date | string | null
     horas_diarias?: Decimal | DecimalJsLike | number | string
     estado?: string
+    es_prestamo?: boolean
     created_at?: Date | string
   }
 
@@ -24745,6 +24818,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     empleado?: EmpleadoUpdateOneRequiredWithoutAsignacionesNestedInput
   }
@@ -24760,6 +24834,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24774,6 +24849,7 @@ export namespace Prisma {
     fecha_fin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     horas_diarias?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
+    es_prestamo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

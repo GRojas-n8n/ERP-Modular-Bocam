@@ -147,6 +147,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     subItems: [
       { id: 'estimaciones',  label: 'Estimaciones',    icon: IconFileText },
       { id: 'nomina',        label: 'Nómina Cuadrilla', icon: IconUsers },
+      { id: 'equipo',        label: 'Mi Equipo',       icon: IconUsers },
       { id: 'asistencia',    label: 'Asistencia QR',   icon: IconQrCode },
       { id: 'requisiciones', label: 'Requisiciones',   icon: IconShoppingCart },
     ],

@@ -129,6 +129,10 @@ model AsignacionFrente {
   fecha_fin        DateTime? @db.Date
   horas_diarias    Decimal  @db.Decimal(4, 2) @default(8)
   estado           String   @default("ACTIVA")      // ACTIVA, COMPLETADA, CANCELADA
+  // true = préstamo temporal a este proyecto (spec 02, sección 3), no
+  // asignación estructural — distingue en listados/UI sin cambiar la
+  // elegibilidad de nómina (obtenerEmpleadoIdsDelProyecto no filtra por esto).
+  es_prestamo      Boolean  @default(false)
 
   empleado         Empleado  @relation(fields: [empleado_id], references: [id_empleado])
   cuadrilla        Cuadrilla? @relation(fields: [cuadrilla_id], references: [id_cuadrilla])
@@ -367,6 +371,11 @@ model AsignacionResidente {
   fecha_inicio   DateTime  @default(now())
   fecha_fin      DateTime?
   asignado_por   String    @db.Uuid
+  // Un empleado puede tener varias asignaciones vigentes a la vez (personal
+  // compartido, ver spec 02) — es_principal marca cuál es el residente "a
+  // cargo por default" sin cerrar ni afectar a las demás. No es exclusividad,
+  // es solo una etiqueta sobre asignaciones que siguen todas vigentes.
+  es_principal   Boolean   @default(true)
 
   empleado       Empleado  @relation(fields: [empleado_id], references: [id_empleado])
 

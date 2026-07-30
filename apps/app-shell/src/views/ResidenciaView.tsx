@@ -8,6 +8,7 @@ import {
   DEMO_PRENOMINAS_RESIDENCIA,
   DEMO_ASISTENCIA,
   DEMO_CUADRILLAS,
+  DEMO_MI_EQUIPO_RESIDENCIA,
 } from '../lib/demoData';
 import {
   Button,
@@ -57,7 +58,7 @@ import { TableScrollShadow } from '../components/TableScrollShadow';
 type EstimacionEstado = 'BORRADOR' | 'EN_REVISION' | 'AUTORIZADA' | 'PAGADA';
 type NominaEstado = 'PENDIENTE' | 'EN_PROCESO' | 'APROBADA' | 'PAGADA';
 type AsistenciaEstado = 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADA' | 'INCAPACIDAD';
-type TabId = 'estimaciones' | 'nomina' | 'asistencia' | 'requisiciones';
+type TabId = 'estimaciones' | 'nomina' | 'equipo' | 'asistencia' | 'requisiciones';
 
 // ── Tipos Requisiciones del Residente ─────────────────────────────────────────
 
@@ -177,6 +178,19 @@ interface Prenomina {
   total_empleados: number;
   estado: NominaEstado;
   cuadrillas: CuadrillaNomina[];
+}
+
+interface EquipoEmpleado {
+  id_empleado: string;
+  nombre: string;
+  numero_empleado: string;
+  compartido: boolean;
+  proyecto_actual_id: string | null;
+}
+interface EquipoCategoria {
+  categoria: string;
+  total: number;
+  empleados: EquipoEmpleado[];
 }
 
 interface RegistroAsistencia {
@@ -303,6 +317,10 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [nominaDetalle, setNominaDetalle] = useState<Prenomina | null>(null);
   const [confirmAprobar, setConfirmAprobar] = useState<Prenomina | null>(null);
 
+  // ─ Mi equipo
+  const [equipoPorCategoria, setEquipoPorCategoria] = useState<EquipoCategoria[]>([]);
+  const [loadingEquipo, setLoadingEquipo] = useState(false);
+
   // ─ Asistencia
   const [asistencia, setAsistencia] = useState<RegistroAsistencia[]>([]);
   const [fechaFiltro, setFechaFiltro] = useState(new Date().toISOString().slice(0, 10));
@@ -426,6 +444,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       setEstimaciones(DEMO_ESTIMACIONES_RESIDENCIA as Estimacion[]);
       setPrenominas(DEMO_PRENOMINAS_RESIDENCIA as Prenomina[]);
       setAsistencia(DEMO_ASISTENCIA as RegistroAsistencia[]);
+      setEquipoPorCategoria(DEMO_MI_EQUIPO_RESIDENCIA as EquipoCategoria[]);
       setLoading(false);
       return;
     }
@@ -463,6 +482,16 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       } catch { /* silencioso */ }
     };
     void fetchAsistencia();
+  }, [activeTab, isDemo]);
+
+  // ── Carga de "Mi equipo" cuando se activa el tab ────────────────────────
+  useEffect(() => {
+    if (activeTab !== 'equipo' || isDemo) return;
+    setLoadingEquipo(true);
+    api.get('/api/v1/personal/mis-empleados/resumen')
+      .then(r => setEquipoPorCategoria((r.data as any)?.data?.por_categoria ?? []))
+      .catch(() => { /* silencioso */ })
+      .finally(() => setLoadingEquipo(false));
   }, [activeTab, isDemo]);
 
   // ── Carga de requisiciones, conceptos e insumos (cuando se activa el tab) ─
@@ -1402,6 +1431,48 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
             </TableContainer>
           </CardContent>
         </Card>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* TAB: MI EQUIPO                                                  */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {activeTab === 'equipo' && (
+        <div className="flex flex-col gap-4">
+          {equipoPorCategoria.length === 0 ? (
+            <EmptyStatePanel
+              title={loadingEquipo ? 'Cargando equipo…' : 'Sin personal asignado'}
+              description={loadingEquipo ? undefined : 'Todavía no tienes empleados asignados como residente principal.'}
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {equipoPorCategoria.map(cat => (
+                <Card key={cat.categoria}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between text-xs font-bold uppercase tracking-widest">
+                      <span>{cat.categoria}</span>
+                      <span className="text-lg font-black text-foreground">{cat.total}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-2 pt-0">
+                    {cat.empleados.map(emp => (
+                      <div key={emp.id_empleado} className="flex items-center justify-between gap-2 rounded-xl border border-border/60 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-foreground">{emp.nombre}</p>
+                          <p className="text-[10px] text-muted-foreground">{emp.numero_empleado}</p>
+                        </div>
+                        {emp.compartido && (
+                          <span className="whitespace-nowrap rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                            Compartido
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ════════════════════════════════════════════════════════════════ */}

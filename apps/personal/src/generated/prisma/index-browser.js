@@ -181,6 +181,7 @@ exports.Prisma.AsignacionFrenteScalarFieldEnum = {
   fecha_fin: 'fecha_fin',
   horas_diarias: 'horas_diarias',
   estado: 'estado',
+  es_prestamo: 'es_prestamo',
   created_at: 'created_at'
 };
 
@@ -321,7 +322,8 @@ exports.Prisma.AsignacionResidenteScalarFieldEnum = {
   residente_id: 'residente_id',
   fecha_inicio: 'fecha_inicio',
   fecha_fin: 'fecha_fin',
-  asignado_por: 'asignado_por'
+  asignado_por: 'asignado_por',
+  es_principal: 'es_principal'
 };
 
 exports.Prisma.CredencialEmpleadoScalarFieldEnum = {

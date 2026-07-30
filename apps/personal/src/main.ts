@@ -1648,7 +1648,8 @@ app.post('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh'
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { id } = req.params;
-    const { residente_id } = req.body;
+    const { residente_id, es_principal } = req.body;
+    const esPrincipal = es_principal !== false; // default true
 
     if (!residente_id) {
       return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'residente_id es obligatorio.'));
@@ -1658,8 +1659,18 @@ app.post('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh'
       const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
       if (!emp) return { notFound: true };
 
+      // Varias asignaciones vigentes al mismo empleado siguen permitidas
+      // (personal compartido) — solo se desmarca cuál es la "principal",
+      // sin cerrar (fecha_fin) ninguna otra. Ver spec 02, 2.1.
+      if (esPrincipal) {
+        await prisma.asignacionResidente.updateMany({
+          where: { tenant_id: tenantId, empleado_id: id, fecha_fin: null, es_principal: true },
+          data: { es_principal: false },
+        });
+      }
+
       const asignacion = await prisma.asignacionResidente.create({
-        data: { tenant_id: tenantId, empleado_id: id, residente_id, asignado_por: userId },
+        data: { tenant_id: tenantId, empleado_id: id, residente_id, asignado_por: userId, es_principal: esPrincipal },
       });
       return { asignacion };
     });
@@ -1667,6 +1678,92 @@ app.post('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh'
     if ((data as any).notFound) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
     console.log(`[Personal] ✅ Residente ${residente_id} asignado a empleado ${id}`);
     res.status(201).json(createApiResponse((data as any).asignacion, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PRÉSTAMO DE EMPLEADO A OTRO PROYECTO (spec 02, sección 3)
+// El "proyecto de origen" es el proyecto activo de la sesión de quien crea
+// el préstamo (req.securityContext.proyectoId) — quien presta a alguien
+// opera desde el proyecto que lo está prestando.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.post('/api/v1/personal/empleados/:id/prestamo', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId: proyectoOrigenId, userId } = req.securityContext;
+    const { id } = req.params;
+    const { proyecto_destino_id, frente_trabajo, fecha_inicio, fecha_fin, turno, horas_diarias } = req.body;
+
+    if (!proyecto_destino_id || !frente_trabajo || !fecha_inicio) {
+      return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'proyecto_destino_id, frente_trabajo y fecha_inicio son obligatorios.'));
+    }
+
+    const inicioNuevo = new Date(fecha_inicio);
+    const finNuevo = fecha_fin ? new Date(fecha_fin) : null;
+
+    const data = await createTenantContext({ tenantId, proyectoId: proyectoOrigenId, userId }, async (prisma) => {
+      const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
+      if (!emp) return { notFound: true } as const;
+
+      // Empleado miembro de una Cuadrilla estructural activa en el proyecto
+      // de origen: la pertenencia a Cuadrilla lo hace elegible ahí
+      // independientemente de AsignacionFrente — no se puede prestar sin
+      // que primero salga de la cuadrilla (spec 02, sección 7).
+      if (emp.cuadrilla_id) {
+        const cuadrilla = await prisma.cuadrilla.findFirst({ where: { id_cuadrilla: emp.cuadrilla_id, tenant_id: tenantId } });
+        if (cuadrilla && cuadrilla.proyecto_id === proyectoOrigenId && cuadrilla.estado === 'ACTIVA') {
+          return { cuadrillaActiva: true } as const;
+        }
+      }
+
+      const solapadas = await prisma.asignacionFrente.findMany({
+        where: {
+          tenant_id: tenantId, empleado_id: id, estado: 'ACTIVA',
+          proyecto_id: { not: proyecto_destino_id },
+          fecha_inicio: { lte: finNuevo ?? new Date('9999-12-31') },
+          OR: [{ fecha_fin: null }, { fecha_fin: { gte: inicioNuevo } }],
+        },
+      });
+
+      // Dos préstamos solapados al mismo empleado son ambiguos (¿cuál manda
+      // la asistencia real?) — se rechaza. Una asignación ESTRUCTURAL
+      // solapada (es_prestamo: false) se trunca automáticamente, es
+      // justamente lo que un préstamo hace.
+      if (solapadas.some(a => a.es_prestamo)) {
+        return { solapePrestamo: true } as const;
+      }
+
+      const diaAntes = new Date(inicioNuevo);
+      diaAntes.setDate(diaAntes.getDate() - 1);
+      for (const previa of solapadas) {
+        if (previa.fecha_fin === null || previa.fecha_fin > diaAntes) {
+          await prisma.asignacionFrente.update({ where: { id_asignacion: previa.id_asignacion }, data: { fecha_fin: diaAntes } });
+        }
+      }
+
+      const asignacion = await prisma.asignacionFrente.create({
+        data: {
+          tenant_id: tenantId, proyecto_id: proyecto_destino_id,
+          empleado_id: id, frente_trabajo, turno: turno || 'DIURNO',
+          fecha_inicio: inicioNuevo, fecha_fin: finNuevo,
+          horas_diarias: horas_diarias || 8, estado: 'ACTIVA', es_prestamo: true,
+        },
+      });
+      return { asignacion, truncadas: solapadas.length } as const;
+    });
+
+    if ((data as any).notFound) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
+    if ((data as any).cuadrillaActiva) {
+      return res.status(409).json(createApiError('PER_CUADRILLA_ACTIVA', 'El empleado pertenece a una Cuadrilla activa en el proyecto de origen; debe salir de ella antes de prestarlo.'));
+    }
+    if ((data as any).solapePrestamo) {
+      return res.status(409).json(createApiError('PER_PRESTAMO_SOLAPADO', 'Ya existe un préstamo vigente de este empleado que se solapa con estas fechas.'));
+    }
+
+    console.log(`[Personal] ✅ Empleado ${id} prestado a proyecto ${proyecto_destino_id} (${(data as any).truncadas} asignación(es) de origen truncada(s))`);
+    res.status(201).json(createApiResponse({ asignacion: (data as any).asignacion }, tenantId, proyectoOrigenId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
   }
@@ -1745,6 +1842,53 @@ app.get('/api/v1/personal/mis-empleados', requireRoles('residencia'), async (req
     });
 
     res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Vista "Mi equipo" (spec 02, sección 5): empleados a cargo del residente
+// autenticado, agrupados por categoría, marcando quién está "compartido"
+// (trabajando hoy en un proyecto distinto al de la sesión del residente).
+app.get('/api/v1/personal/mis-empleados/resumen', requireRoles('residencia'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const porCategoria = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const asignaciones = await prisma.asignacionResidente.findMany({
+        where: { tenant_id: tenantId, residente_id: userId, fecha_fin: null },
+        select: { empleado_id: true },
+      });
+      const empleadoIds = asignaciones.map(a => a.empleado_id);
+      if (empleadoIds.length === 0) return [];
+
+      const [empleados, asignacionesFrente] = await Promise.all([
+        prisma.empleado.findMany({ where: { id_empleado: { in: empleadoIds }, tenant_id: tenantId } }),
+        prisma.asignacionFrente.findMany({ where: { tenant_id: tenantId, empleado_id: { in: empleadoIds }, estado: 'ACTIVA' } }),
+      ]);
+      const proyectoActualPorEmpleado = new Map<string, string>();
+      for (const a of asignacionesFrente) proyectoActualPorEmpleado.set(a.empleado_id, a.proyecto_id);
+
+      const grupos = new Map<string, any[]>();
+      for (const emp of empleados) {
+        const proyectoActual = proyectoActualPorEmpleado.get(emp.id_empleado) ?? null;
+        const compartido = proyectoActual !== null && proyectoActual !== proyectoId;
+        const lista = grupos.get(emp.categoria) ?? [];
+        lista.push({
+          id_empleado: emp.id_empleado,
+          nombre: `${emp.nombre} ${emp.apellido_paterno}`,
+          numero_empleado: emp.numero_empleado,
+          compartido,
+          proyecto_actual_id: compartido ? proyectoActual : null,
+        });
+        grupos.set(emp.categoria, lista);
+      }
+      return Array.from(grupos.entries()).map(([categoria, empleadosCat]) => ({
+        categoria, total: empleadosCat.length, empleados: empleadosCat,
+      }));
+    });
+
+    res.json(createApiResponse({ por_categoria: porCategoria }, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
   }
