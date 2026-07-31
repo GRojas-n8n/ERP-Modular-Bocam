@@ -194,18 +194,43 @@
 
 ## 8. Verificación integral
 
-- [ ] 8.1 Suite completa de `apps/auth/test`, `apps/personal/test` y
+- [x] 8.1 Suite completa de `apps/auth/test`, `apps/personal/test` y
       `npx vitest run` en `apps/app-shell` — todo en verde (o solo con
       las fallas preexistentes ya documentadas, sin nuevas).
-- [ ] 8.2 Verificación manual en navegador (real, con los 3 servicios
+      **Resultado:** `auth` 4/4 archivos en verde; `personal` 14
+      archivos, solo los 2 fallos preexistentes ya documentados
+      (`expediente-empleado` descarga, `rls-personal-tablas-nuevas`,
+      ninguno causado por este change); `app-shell` 48 archivos/142
+      tests en verde, `tsc -b` limpio.
+- [x] 8.2 Verificación manual en navegador (real, con los 3 servicios
       levantados): sesión `personal_rh`/`admin` — crear cuadrilla,
       calcular pre-nómina, asignar residente por nombre, crear
       asignación a frente de trabajo, confirmar que el empleado
       recién asignado a frente aparece en `obtenerEmpleadoIdsDelProyecto`
       (p. ej. sale elegible en un cálculo de pre-nómina de prueba).
-- [ ] 8.3 Verificación manual con rol sin permiso: los endpoints nuevos
+      **Resultado:** cada sub-flujo ya se había verificado por separado
+      en su propio grupo (4: selector de residente con datos reales;
+      6: alta real de cuadrilla CUA-02; 7: panel de cálculo). Para el
+      chequeo integral de elegibilidad se abrió el panel de "Juan Perez"
+      (EMP-014, ACTIVO) y se le creó una `AsignacionFrente` real
+      ("Frente Verificacion Integral 8.2") vía la sección nueva del
+      grupo 5 (confirmado en Postgres real). Acto seguido,
+      `POST /prenominas/calcular` (periodo 2026-07-31 a 2026-08-06)
+      generó `NOM-2026-S01` con `1 empleados` ($2,360.89 neto) — Juan
+      Perez salió elegible por su nueva asignación de frente, sin haber
+      pasado por Cuadrillas. De paso se descartó una falsa alarma: un
+      cálculo anterior sobre una asignación creada contra un empleado
+      leftover de una sesión de verificación previa (`EMP-013`, dado de
+      baja) respondió correctamente "No hay empleados activos en este
+      proyecto" — confirma que el filtro `estado: 'ACTIVO'` funciona,
+      no es un bug.
+- [x] 8.3 Verificación manual con rol sin permiso: los endpoints nuevos
       (`/auth/usuarios`, `/personal/residentes-disponibles`) responden
       403.
+      **Resultado:** login real de `residente@alfa.bocam.com` (rol
+      `residencia`), token real vía `POST /auth/login`. Ambos endpoints
+      responden 403 con ese token: `GET /api/v1/auth/usuarios?rol=residencia`
+      y `GET /api/v1/personal/residentes-disponibles`.
 
 ## 9. Cierre
 
