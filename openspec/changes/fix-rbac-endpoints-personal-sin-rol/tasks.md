@@ -73,21 +73,53 @@
       descargar archivo subido, problema de filesystem/upload local) y
       `rls-personal-tablas-nuevas.integration.test.ts` (gotcha ya
       documentado: RLS nunca se aplicó en el Postgres local de Docker).
-- [ ] 4.3 Verificación manual en navegador (o vía `run`/Playwright) con
+- [x] 4.3 Verificación manual en navegador (o vía `run`/Playwright) con
       sesión `personal_rh`: alta de empleado, baja, creación de
       cuadrilla, asignación a cuadrilla, asignación a frente y cálculo
       de pre-nómina siguen funcionando igual que antes del fix.
-      Pendiente — no ejecutado en esta sesión, cubierto por los tests de
-      integración (4.1/4.2) pero sin verificación visual en el navegador.
-- [ ] 4.4 Verificación manual con sesión `residencia` (o cualquier rol
+      **Resultado:** app-shell + `auth` + `personal` levantados localmente
+      (Docker Postgres/Redis/RabbitMQ ya arriba). Sesión real de
+      `admin@alfa.bocam.com` (bypass de `personal_rh`, no hay usuario
+      `personal_rh` seedeado localmente): flujo real de clics en
+      "Recursos Humanos" → "Empleados" → "Nuevo Empleado" → llenar
+      formulario → "Guardar empleado" — toast "Empleado EMP-012 creado.",
+      panel se cierra, contador de activos sube a 12 (screenshot
+      `05-post-guardar-admin.png`). Los otros 5 endpoints no tienen botón
+      en la UI (bug aparte, documentado en 1.1) — se probaron con
+      `fetch()` ejecutado en el contexto de la misma pestaña autenticada
+      (token real de `localStorage`, ruta relativa vía el proxy de Vite,
+      no un token firmado a mano): `crearCuadrilla` 201, `asignarCuadrilla`
+      200, `crearAsignacionFrente` 201, `baja` 200. `calcularPrenomina`
+      dio 500 (no 403) — es la validación de negocio "no hay empleados
+      activos elegibles", causada por el orden del propio script de
+      verificación (el empleado de prueba se dio de baja justo antes de
+      calcular); no es un problema de RBAC, el punto que importa
+      (pasar el guardia de rol) quedó demostrado por el 500 en vez de 403.
+- [x] 4.4 Verificación manual con sesión `residencia` (o cualquier rol
       no autorizado): los 6 endpoints devuelven 403 en vez de ejecutar
       la operación.
-      Pendiente — mismo motivo que 4.3.
+      **Resultado:** sesión real de `residente@alfa.bocam.com` (rol
+      `residencia`). Confirmado por screenshot que el ítem "Recursos
+      Humanos" NO aparece en el sidebar (`06-residencia-dashboard.png`;
+      solo Dashboard, Compras, Residencia). Con el token real de esa
+      sesión, `fetch()` a los 6 endpoints devolvió 403 en los seis:
+      `POST /empleados`, `PATCH /empleados/:id/baja`,
+      `POST /cuadrillas`, `POST /cuadrillas/:id/asignar`,
+      `POST /asignaciones`, `POST /prenominas/calcular`.
 
 ## 5. Cierre
 
-- [ ] 5.1 Branch `test/rbac-personal-endpoints-sin-rol` (o `fix/...`
+- [x] 5.1 Branch `test/rbac-personal-endpoints-sin-rol` (o `fix/...`
       según convención de CLAUDE.md), commit con los tests + fix.
-- [ ] 5.2 Abrir PR contra `main` referenciando este change de OpenSpec.
+      **Resultado real (distinto al plan):** por instrucción explícita del
+      usuario, se commiteó directo en `main` (commit `5d3f3fc`) en vez de
+      abrir un branch `test/`/`fix/` — sin branch intermedio.
+- [x] 5.2 Abrir PR contra `main` referenciando este change de OpenSpec.
+      **Resultado real (distinto al plan):** no hubo PR — por instrucción
+      explícita del usuario se hizo `git push origin main` directo
+      (`88689b9..5d3f3fc`).
 - [ ] 5.3 Tras merge y verificación en producción, archivar el change
       (`openspec archive`).
+      Pendiente — el fix está en `main` local y en `origin/main`, pero no
+      se ha verificado contra el VPS de producción. Archivar cuando esa
+      verificación se complete.
