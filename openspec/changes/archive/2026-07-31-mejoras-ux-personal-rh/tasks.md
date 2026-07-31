@@ -234,7 +234,12 @@
 
 ## 9. Cierre
 
-- [ ] 9.1 Commit(s) — confirmar con el usuario alcance y mensaje antes de
+- [x] 9.1 Commit(s) — confirmar con el usuario alcance y mensaje antes de
       commitear.
-- [ ] 9.2 Push — solo si el usuario lo pide explícitamente.
-- [ ] 9.3 Archivar el change cuando el usuario confirme que está listo.
+      **Resultado:** 6 commits (uno por grupo 1-3 combinado, 4, 5, 6, 7,
+      8), todos revisados por el usuario en puntos de control explícitos
+      a lo largo de la sesión.
+- [x] 9.2 Push — solo si el usuario lo pide explícitamente.
+      **Resultado:** usuario pidió explícitamente "pushear y archivar";
+      `git push origin main` (`a956e0e..7667110`).
+- [x] 9.3 Archivar el change cuando el usuario confirme que está listo.
