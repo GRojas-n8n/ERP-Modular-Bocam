@@ -868,6 +868,27 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
   }
 });
 
+// ─── GET /api/v1/auth/usuarios ────────────────────────────────────────────────
+app.get('/api/v1/auth/usuarios', requireRoles('personal_rh', 'admin') as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.securityContext;
+    const rol = req.query.rol as string | undefined;
+    if (!rol) {
+      res.status(400).json({ success: false, error: { code: 'AUTH_MISSING_ROL', message: 'El query param rol es obligatorio.' } });
+      return;
+    }
+    const users = await createTenantContext({ tenantId }, async (prisma) =>
+      prisma.user.findMany({
+        where: { tenant_id: tenantId, activo: true, rol_global: { has: rol } },
+        orderBy: { nombre: 'asc' },
+      })
+    );
+    res.json({ success: true, data: users.map(u => ({ id: u.id_usuario, nombre: u.nombre, email: u.email })) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { code: 'AUTH_ERROR', message: String(err) } });
+  }
+});
+
 // ─── GET /api/v1/auth/admin/proyectos ────────────────────────────────────────
 app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {

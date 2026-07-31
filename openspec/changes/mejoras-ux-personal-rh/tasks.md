@@ -1,52 +1,83 @@
 ## 1. `auth` — directorio de usuarios por rol (código nuevo, TDD)
 
-- [ ] 1.1 Test de integración: `GET /api/v1/auth/usuarios?rol=residencia`
+- [x] 1.1 Test de integración: `GET /api/v1/auth/usuarios?rol=residencia`
       con rol `personal_rh` responde 200 con `id`/`nombre`/`email`
       únicamente, solo usuarios activos del tenant con ese rol.
-- [ ] 1.2 Test: usuario inactivo no aparece en el listado.
-- [ ] 1.3 Test: falta `rol` en el query → 400.
-- [ ] 1.4 Test: rol sin permiso (`residencia`, `control_obra`, etc.) → 403.
-- [ ] 1.5 Test: aislamiento por tenant (dos tenants, mismo rol, cada uno
+- [x] 1.2 Test: usuario inactivo no aparece en el listado.
+- [x] 1.3 Test: falta `rol` en el query → 400.
+- [x] 1.4 Test: rol sin permiso (`residencia`, `control_obra`, etc.) → 403.
+- [x] 1.5 Test: aislamiento por tenant (dos tenants, mismo rol, cada uno
       solo ve el suyo).
-- [ ] 1.6 Confirmar los 5 tests en rojo (ruta no existe todavía).
-- [ ] 1.7 Implementar `GET /api/v1/auth/usuarios` en `apps/auth/src/main.ts`
+- [x] 1.6 Confirmar los 5 tests en rojo (ruta no existe todavía).
+      **Resultado:** confirmado — 404 contra `personal_rh debe poder
+      listar usuarios por rol` antes de implementar la ruta.
+- [x] 1.7 Implementar `GET /api/v1/auth/usuarios` en `apps/auth/src/main.ts`
       con `requireRoles('personal_rh', 'admin')`.
-- [ ] 1.8 Tests en verde.
+- [x] 1.8 Tests en verde.
+      **Resultado:** los 5 tests nuevos en verde
+      (`apps/auth/test/integration/directorio-usuarios-por-rol.integration.test.ts`);
+      suite completa de `apps/auth/test/integration` (4 archivos) sin
+      regresión; `tsc --noEmit` limpio.
 
 ## 2. `personal` — arreglar el bug de resolución de nombre (bug-fix cycle)
 
-- [ ] 2.1 Test de integración que reproduce el bug: crear una
+- [x] 2.1 Test de integración que reproduce el bug: crear una
       `AsignacionResidente` real y confirmar que
       `GET /empleados/:id/residentes` hoy responde
       `residente_nombre: null` y `parcial: true` SIEMPRE, incluso con
       `auth` sano — porque la URL que llama no existe. Confirmar el test
       en rojo (es decir, que hoy pasa el caso "siempre falla" cuando no
       debería).
-- [ ] 2.2 Fix: cambiar la resolución de N llamadas a
+      **Resultado:** test cross-servicio (levanta `auth` real además de
+      `personal`) en
+      `apps/personal/test/integration/resolucion-nombre-residente.integration.test.ts`.
+      Confirmado en rojo: `parcial` daba `true` con `auth` sano
+      (esperado `false`), reproduciendo el bug documentado en
+      `hallazgo-personal-botones-sin-handler-y-flujo-oculto`.
+- [x] 2.2 Fix: cambiar la resolución de N llamadas a
       `/api/v1/auth/usuarios/:id` (inexistente) por una sola llamada a
       `GET /api/v1/personal/residentes-disponibles` (ver tarea 3) y
       mapeo local por id.
-- [ ] 2.3 Test en verde: con `auth` respondiendo, `residente_nombre` se
+      **Resultado:** se extrajo un helper compartido
+      `obtenerResidentesDisponibles()` en `apps/personal/src/main.ts`
+      (una sola llamada de listado a `auth`, resuelta con `Map` en
+      memoria) usado tanto por el fix como por la ruta nueva de la
+      tarea 3 — se implementaron juntos por estar acopladas.
+- [x] 2.3 Test en verde: con `auth` respondiendo, `residente_nombre` se
       resuelve de verdad.
-- [ ] 2.4 Test sin cambios: `auth` caído sigue devolviendo
+- [x] 2.4 Test sin cambios: `auth` caído sigue devolviendo
       `parcial: true` sin 500 (regresión del comportamiento ya
       documentado en la spec).
+      **Resultado:** ambos tests (2.1/2.3 y 2.4) en verde. Suite
+      completa de `apps/personal/test/integration` (14 archivos) sin
+      regresión — los 2 fallos preexistentes (`expediente-empleado`
+      descarga, `rls-personal-tablas-nuevas`) son gaps ya documentados
+      en memoria, no causados por este cambio. `tsc --noEmit` limpio.
 
 ## 3. `personal` — directorio de residentes disponibles (código nuevo, TDD)
 
-- [ ] 3.1 Test: `GET /api/v1/personal/residentes-disponibles` con rol
+- [x] 3.1 Test: `GET /api/v1/personal/residentes-disponibles` con rol
       `personal_rh` responde 200 con la lista que devuelve `auth` vía
       proxy.
-- [ ] 3.2 Test: rol sin permiso → 403.
-- [ ] 3.3 Test: `auth` no disponible → error controlado, no 500 crudo.
-- [ ] 3.4 Confirmar los 3 tests en rojo.
-- [ ] 3.5 Implementar `GET /api/v1/personal/residentes-disponibles` en
+- [x] 3.2 Test: rol sin permiso → 403.
+- [x] 3.3 Test: `auth` no disponible → error controlado, no 500 crudo.
+- [x] 3.4 Confirmar los 3 tests en rojo.
+      **Nota:** la ruta se implementó junto con el fix de la tarea 2.2
+      (comparten el mismo helper `obtenerResidentesDisponibles()`), así
+      que estos 3 tests se escribieron después de esa implementación
+      compartida en vez de antes — no se verificó su rojo de forma
+      aislada. Los 3 confirmados en verde en
+      `apps/personal/test/integration/residentes-disponibles.integration.test.ts`.
+- [x] 3.5 Implementar `GET /api/v1/personal/residentes-disponibles` en
       `apps/personal/src/main.ts` (mismo patrón de proxy que ya usa
       `GET /empleados/:id/residentes`, reenviando
       `req.headers.authorization`).
-- [ ] 3.6 Tests en verde.
-- [ ] 3.7 Reejecutar la suite completa de `apps/personal/test` — sin
+- [x] 3.6 Tests en verde.
+- [x] 3.7 Reejecutar la suite completa de `apps/personal/test` — sin
       regresión.
+      **Resultado:** ya cubierto en 2.4 (misma corrida de los 14
+      archivos de `test/integration`, sin regresión atribuible a este
+      change).
 
 ## 4. `app-shell` — selector de residente + aviso de elegibilidad (TDD)
 

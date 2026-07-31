@@ -1695,6 +1695,34 @@ app.get('/api/v1/personal/documentos/por-vencer', requireRoles('personal_rh', 'a
 // ASIGNACIÓN A RESIDENTE(S)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+interface ResidenteDisponible {
+  id: string;
+  nombre: string;
+  email: string;
+}
+
+// Una sola llamada de listado a `auth` (en vez de N llamadas por id a una
+// ruta que no existe). Reenvía el Authorization del usuario original, mismo
+// patrón backend-a-backend ya usado en el resto de este archivo.
+async function obtenerResidentesDisponibles(authorizationHeader: string): Promise<ResidenteDisponible[]> {
+  const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth:3003';
+  const r = await fetch(`${authServiceUrl}/api/v1/auth/usuarios?rol=residencia`, {
+    headers: { Authorization: authorizationHeader || '' },
+  });
+  if (!r.ok) throw new Error('auth respondió no-ok');
+  const body: any = await r.json();
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
+app.get('/api/v1/personal/residentes-disponibles', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const residentes = await obtenerResidentesDisponibles(req.headers.authorization || '');
+    res.json(createApiResponse(residentes, req.securityContext.tenantId, req.securityContext.proyectoId));
+  } catch {
+    res.status(502).json(createApiError('PER_AUTH_NO_DISPONIBLE', 'No se pudo obtener el directorio de residentes.'));
+  }
+});
+
 app.post('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1856,20 +1884,17 @@ app.get('/api/v1/personal/empleados/:id/residentes', requireRoles('personal_rh',
       });
     });
 
-    const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth:3003';
     let parcial = false;
-    const conNombre = await Promise.all(asignaciones.map(async (a) => {
-      try {
-        const r = await fetch(`${authServiceUrl}/api/v1/auth/usuarios/${a.residente_id}`, {
-          headers: { Authorization: req.headers.authorization || '' },
-        });
-        if (!r.ok) throw new Error('auth respondió no-ok');
-        const body: any = await r.json();
-        return { ...a, residente_nombre: body?.data?.name ?? null };
-      } catch {
-        parcial = true;
-        return { ...a, residente_nombre: null };
-      }
+    let residentesPorId = new Map<string, ResidenteDisponible>();
+    try {
+      const residentes = await obtenerResidentesDisponibles(req.headers.authorization || '');
+      residentesPorId = new Map(residentes.map((r) => [r.id, r]));
+    } catch {
+      parcial = true;
+    }
+    const conNombre = asignaciones.map((a) => ({
+      ...a,
+      residente_nombre: residentesPorId.get(a.residente_id)?.nombre ?? null,
     }));
 
     res.json(createApiResponse({ asignaciones: conNombre, parcial }, tenantId, proyectoId));
