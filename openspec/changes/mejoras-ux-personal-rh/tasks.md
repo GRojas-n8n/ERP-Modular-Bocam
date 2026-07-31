@@ -81,19 +81,32 @@
 
 ## 4. `app-shell` — selector de residente + aviso de elegibilidad (TDD)
 
-- [ ] 4.1 Test de componente: la sección "Residente(s) asignado(s)"
+- [x] 4.1 Test de componente: la sección "Residente(s) asignado(s)"
       muestra una nota aclaratoria visible siempre (con y sin residentes
       asignados).
-- [ ] 4.2 Test: el campo de texto libre se reemplaza por un `<select>`
+- [x] 4.2 Test: el campo de texto libre se reemplaza por un `<select>`
       poblado con `GET /api/v1/personal/residentes-disponibles`
       (nombre visible, value=id).
-- [ ] 4.3 Test: si el directorio falla, el selector se deshabilita con
+- [x] 4.3 Test: si el directorio falla, el selector se deshabilita con
       mensaje, el resto del panel sigue operando.
-- [ ] 4.4 Test: asignar un residente elegido en el selector llama
+- [x] 4.4 Test: asignar un residente elegido en el selector llama
       `POST /empleados/:id/residentes` con el id correcto.
-- [ ] 4.5 Confirmar tests en rojo.
-- [ ] 4.6 Implementar en `PersonalView.tsx`.
-- [ ] 4.7 Tests en verde.
+- [x] 4.5 Confirmar tests en rojo.
+      **Resultado:** confirmado — los 4 tests nuevos fallaron contra el
+      código anterior (nota ausente, `<select>` inexistente, sin manejo
+      de error del directorio).
+- [x] 4.6 Implementar en `PersonalView.tsx`.
+      **Resultado:** nuevo estado `residentesDisponibles`/
+      `residentesDisponiblesError`, `cargarResidentesDisponibles()`
+      llamado junto con `cargarResidentes`/`cargarExpediente`/
+      `cargarCredencial` al abrir el panel; el input de texto libre se
+      reemplazó por un `<select>` (deshabilitado + mensaje si el
+      directorio falla) y se agregó la nota de elegibilidad de proyecto.
+- [x] 4.7 Tests en verde.
+      **Resultado:** los 4 tests nuevos en
+      `apps/app-shell/src/views/PersonalView.selector-residente.test.tsx`
+      en verde; suite completa de `app-shell` (45 archivos, 127 tests)
+      sin regresión; `tsc -b` limpio.
 
 ## 5. `app-shell` — sección "Asignación a Frente de Trabajo" (TDD)
 

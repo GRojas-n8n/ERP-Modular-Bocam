@@ -337,6 +337,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const fileExpedienteRef = useRef<HTMLInputElement>(null);
   const [nuevoResidenteId, setNuevoResidenteId] = useState('');
   const [asignandoResidente, setAsignandoResidente] = useState(false);
+  const [residentesDisponibles, setResidentesDisponibles] = useState<{ id: string; nombre: string; email: string }[] | null>(null);
+  const [residentesDisponiblesError, setResidentesDisponiblesError] = useState(false);
 
   // ── Periodicidad de pago del proyecto activo (config-nomina) ────────────────
   const [periodicidadProyecto, setPeriodicidadProyecto] = useState<string>('SEMANAL');
@@ -617,7 +619,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           infonavit_monto: raw.infonavit_monto != null ? Number(raw.infonavit_monto) : null,
         },
       });
-      await Promise.all([cargarExpediente(empleado.id_empleado), cargarResidentes(empleado.id_empleado), cargarCredencial(empleado.id_empleado)]);
+      await Promise.all([cargarExpediente(empleado.id_empleado), cargarResidentes(empleado.id_empleado), cargarCredencial(empleado.id_empleado), cargarResidentesDisponibles()]);
     } catch { /* silencioso */ }
   };
 
@@ -629,6 +631,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       setConfigPanel(null);
       setExpediente([]);
       setResidentes([]);
+      setResidentesDisponibles(null);
+      setResidentesDisponiblesError(false);
       setCredencial(null);
     } catch { /* silencioso */ } finally {
       setSavingConfig(false);
@@ -812,6 +816,17 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       const r = await api.get(`/api/v1/personal/empleados/${empleadoId}/residentes`);
       setResidentes((r.data as any)?.data?.asignaciones ?? []);
     } catch { setResidentes([]); }
+  };
+
+  const cargarResidentesDisponibles = async () => {
+    try {
+      const r = await api.get('/api/v1/personal/residentes-disponibles');
+      setResidentesDisponibles((r.data as any)?.data ?? []);
+      setResidentesDisponiblesError(false);
+    } catch {
+      setResidentesDisponibles(null);
+      setResidentesDisponiblesError(true);
+    }
   };
 
   const handleAsignarResidente = async () => {
@@ -1996,6 +2011,9 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             <div className="space-y-3 border-t border-border/40 pt-5">
               <p className="text-xs font-black uppercase tracking-widest text-foreground">Residente(s) asignado(s)</p>
               <p className="text-[10px] text-muted-foreground">Un empleado puede tener más de un residente responsable vigente.</p>
+              <p className="text-[10px] text-amber-600">
+                Asignar un residente no hace elegible al empleado para asistencia/nómina de un proyecto — para eso se requiere una Asignación a Frente de Trabajo (o pertenencia a una Cuadrilla).
+              </p>
 
               <div className="space-y-1.5">
                 {residentes.length === 0 && (
@@ -2011,21 +2029,33 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 ))}
               </div>
 
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={nuevoResidenteId}
-                  onChange={e => setNuevoResidenteId(e.target.value)}
-                  placeholder="ID del usuario Residente"
-                  className="flex-1 rounded-lg border border-border/40 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                />
-                <Button
-                  disabled={asignandoResidente || !nuevoResidenteId.trim()}
-                  onClick={() => void handleAsignarResidente()}
-                  className="rounded-lg bg-indigo-600 px-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
-                >
-                  Asignar
-                </Button>
+              <div className="space-y-1">
+                <div className="flex gap-2">
+                  <label htmlFor="select-residente-a-asignar" className="sr-only">Residente a asignar</label>
+                  <select
+                    id="select-residente-a-asignar"
+                    aria-label="Residente a asignar"
+                    value={nuevoResidenteId}
+                    onChange={e => setNuevoResidenteId(e.target.value)}
+                    disabled={residentesDisponiblesError || !residentesDisponibles}
+                    className="flex-1 rounded-lg border border-border/40 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                  >
+                    <option value="">Selecciona un residente…</option>
+                    {(residentesDisponibles ?? []).map(r => (
+                      <option key={r.id} value={r.id}>{r.nombre}</option>
+                    ))}
+                  </select>
+                  <Button
+                    disabled={asignandoResidente || !nuevoResidenteId.trim()}
+                    onClick={() => void handleAsignarResidente()}
+                    className="rounded-lg bg-indigo-600 px-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
+                  >
+                    Asignar
+                  </Button>
+                </div>
+                {residentesDisponiblesError && (
+                  <p className="text-[10px] text-red-500">Directorio de residentes no disponible. El resto del panel sigue funcionando.</p>
+                )}
               </div>
             </div>
 
