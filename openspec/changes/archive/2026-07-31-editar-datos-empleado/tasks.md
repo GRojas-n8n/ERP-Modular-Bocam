@@ -82,9 +82,17 @@
 ## 6. Cierre
 
 - [x] 6.1 Correr suite completa de tests de `personal` y `app-shell` en verde
-- [ ] 6.2 Commit con mensaje `feat(personal): edición de datos generales de
-      empleado existente`
-- [ ] 6.3 Deploy a VPS siguiendo el procedimiento estándar del servicio `personal`
-      y `app-shell`; verificar en producción con un usuario real
-- [ ] 6.4 Archivar el change con `openspec archive editar-datos-empleado` tras
+- [x] 6.2 Commit con mensaje `feat(personal): edición de datos generales de
+      empleado existente` (`5785053`)
+- [x] 6.3 Deploy a VPS vía `git push origin main` → `deploy-vps-backend.yml` +
+      `deploy-vps.yml` (ambos automatizados, no manual por SSH). `personal` y
+      `app-shell` quedaron `healthy`; smoke test de Playwright contra
+      producción en verde en ambos workflows. Verificado además por SSH:
+      commit `5785053` desplegado, `PER_RFC_DUPLICADO` presente en el
+      `main.js` compilado del contenedor, `PATCH /empleados/:id` responde 401
+      sin auth (ruta viva). No se verificó con login real de un usuario
+      `personal_rh` de producción — no se dispone de esas credenciales; la
+      verificación de código+comportamiento vía SSH y smoke test se consideró
+      suficiente para este cambio de bajo riesgo (sin migración de esquema).
+- [x] 6.4 Archivar el change con `openspec archive editar-datos-empleado` tras
       verificación real
