@@ -243,3 +243,21 @@
       **Resultado:** usuario pidió explícitamente "pushear y archivar";
       `git push origin main` (`a956e0e..7667110`).
 - [x] 9.3 Archivar el change cuando el usuario confirme que está listo.
+
+**Addendum — deploy a producción (2026-07-31, post-archivado):** el push
+disparó `deploy-vps.yml` (frontend, éxito) y `deploy-vps-backend.yml`
+(backend, falló — no por el timeout de ssh-keyscan de hoy, sino por un
+gap de baseline de Prisma nunca visto antes en `auth`: P3005, 3
+migraciones sin historial —`auth_hardening`, `centro_costos_alta_formal`,
+`sesion_jwt_inactividad`— pese a que sus tablas/columnas ya existían en
+producción). Verificado contra la BD real (`master_audit_logs`,
+`proyectos.empresa_grupo`, `refresh_tokens.sesion_iniciada_en` ya
+existían) antes de bautizar el baseline con `prisma migrate resolve
+--applied` (sin tocar esquema, todas las migraciones son `IF NOT
+EXISTS`/idempotentes). Redeploy manual de `auth`+`personal` vía SSH,
+ambos `healthy`; confirmado en el contenedor real que
+`GET /api/v1/auth/usuarios` y `GET /api/v1/personal/residentes-disponibles`
+están en el código desplegado. Memoria nueva:
+`fix-deploy-vps-baseline-prisma-auth-2026-07-31` (gap distinto al de
+2026-07-29 — ese cerró 5 servicios, `auth` no estaba entre ellos porque
+en ese momento no tenía migraciones con este problema).
