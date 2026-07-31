@@ -552,7 +552,7 @@ async function obtenerEmpleadoIdsDelProyecto(prisma: any, tenantId: string, proy
 // PRE-NÓMINA
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-app.get('/api/v1/personal/prenominas', async (req: Request, res: Response) => {
+app.get('/api/v1/personal/prenominas', requireRoles('personal_rh', 'admin', 'residencia'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
@@ -568,7 +568,7 @@ app.get('/api/v1/personal/prenominas', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/v1/personal/prenominas/:id', async (req: Request, res: Response) => {
+app.get('/api/v1/personal/prenominas/:id', requireRoles('personal_rh', 'admin', 'residencia'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -581,6 +581,43 @@ app.get('/api/v1/personal/prenominas/:id', async (req: Request, res: Response) =
             include: { empleado: { select: { nombre: true, apellido_paterno: true, numero_empleado: true, puesto: true } } },
           },
         },
+      });
+    });
+
+    if (!data) { res.status(404).json(createApiError('PER_NOT_FOUND', 'Pre-nómina no encontrada.')); return; }
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Marcar pre-nómina como revisada por Residencia — prerequisito de
+// /autorizar (con bypass admin). NO autoriza el pago. Ver
+// specs/features/01-revision-nomina-residencia.md (D2).
+app.patch('/api/v1/personal/prenominas/:id/marcar-revisado', requireRoles('residencia', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const includeDetalles = {
+      detalles: {
+        include: { empleado: { select: { nombre: true, apellido_paterno: true, numero_empleado: true, puesto: true } } },
+      },
+    } as const;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const pn = await prisma.preNomina.findUnique({ where: { id_prenomina: id }, include: includeDetalles });
+      if (!pn) return null;
+      if (pn.revisado_por_residencia) return pn; // idempotente: ya revisada, no-op
+
+      return prisma.preNomina.update({
+        where: { id_prenomina: id },
+        data: {
+          revisado_por_residencia: true,
+          revisado_at: new Date(),
+          revisado_por_usuario_id: userId,
+        },
+        include: includeDetalles,
       });
     });
 
@@ -807,6 +844,14 @@ app.patch('/api/v1/personal/prenominas/:id/autorizar', async (req: Request, res:
       const pn = await prisma.preNomina.findUnique({ where: { id_prenomina: id } });
       if (!pn) throw new Error('Pre-nómina no encontrada.');
       if (pn.estado !== EstadoPreNomina.CALCULADA) throw new Error(`Solo se puede autorizar una pre-nómina CALCULADA. Estado actual: ${pn.estado}`);
+      // Prerequisito: Residencia debe haber revisado la pre-nómina antes de
+      // que RH la autorice — admin tiene bypass auditado (queda registrado
+      // en el propio `revisado_por_residencia` de la pre-nómina, que sigue
+      // en false si se autorizó vía bypass). Ver
+      // specs/features/01-revision-nomina-residencia.md (D2).
+      if (!pn.revisado_por_residencia && !roles.includes('admin')) {
+        return { revisionPendiente: true } as const;
+      }
 
       return await prisma.preNomina.update({
         where: { id_prenomina: id },
@@ -818,26 +863,32 @@ app.patch('/api/v1/personal/prenominas/:id/autorizar', async (req: Request, res:
       });
     });
 
+    if ((data as any).revisionPendiente) {
+      res.status(409).json(createApiError('PER_REVISION_PENDIENTE', 'La pre-nómina debe ser revisada por Residencia antes de autorizarse.'));
+      return;
+    }
+    const pnAutorizada = data as Exclude<typeof data, { revisionPendiente: true }>;
+
     void eventBus.publish({
       event_type: 'personal.nomina_autorizada',
       timestamp: new Date().toISOString(),
       context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId },
       payload: {
-        prenomina_id:          data.id_prenomina,
-        codigo:                data.codigo,
-        periodo_tipo:          data.periodo_tipo,
-        periodo_inicio:        data.periodo_inicio.toISOString(),
-        periodo_fin:           data.periodo_fin.toISOString(),
-        total_percepciones:    Number(data.total_percepciones),
-        total_deducciones:     Number(data.total_deducciones),
-        total_neto:            Number(data.total_neto),
-        total_empleados:       Number(data.total_empleados),
+        prenomina_id:          pnAutorizada.id_prenomina,
+        codigo:                pnAutorizada.codigo,
+        periodo_tipo:          pnAutorizada.periodo_tipo,
+        periodo_inicio:        pnAutorizada.periodo_inicio.toISOString(),
+        periodo_fin:           pnAutorizada.periodo_fin.toISOString(),
+        total_percepciones:    Number(pnAutorizada.total_percepciones),
+        total_deducciones:     Number(pnAutorizada.total_deducciones),
+        total_neto:            Number(pnAutorizada.total_neto),
+        total_empleados:       Number(pnAutorizada.total_empleados),
         autorizado_por_id:     userId,
         autorizado_por_nombre: userId,
       },
     }).catch((err: any) => console.error('[Personal] eventBus.publish error (nomina_autorizada):', err.message));
-    console.log(`[Personal] ✅ Pre-nómina ${data.codigo} AUTORIZADA`);
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    console.log(`[Personal] ✅ Pre-nómina ${pnAutorizada.codigo} AUTORIZADA`);
+    res.json(createApiResponse(pnAutorizada, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
   }
@@ -2021,7 +2072,7 @@ app.post('/api/v1/personal/empleados/credenciales/imprimir-lote', requireRoles('
 // COMPLEMENTO SALARIAL
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-app.get('/api/v1/personal/complementos', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+app.get('/api/v1/personal/complementos', requireRoles('personal_rh', 'admin', 'residencia'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
@@ -2103,12 +2154,14 @@ app.post('/api/v1/personal/complementos/calcular', requireRoles('personal_rh', '
 
 app.patch('/api/v1/personal/complementos/:id/autorizar', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
-    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { tenantId, proyectoId, userId, roles } = req.securityContext;
     const { id } = req.params;
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       const comp = await prisma.nominaComplementaria.findFirst({ where: { id_complemento: id, tenant_id: tenantId } });
       if (!comp) return null;
       if (comp.estado !== 'BORRADOR') return { estadoInvalido: true, estado: comp.estado };
+      // Mismo prerequisito que /prenominas/:id/autorizar — ver D2.
+      if (!comp.revisado_por_residencia && !roles.includes('admin')) return { revisionPendiente: true };
       return prisma.nominaComplementaria.update({
         where: { id_complemento: id },
         data: { estado: 'AUTORIZADA', autorizado_por: userId },
@@ -2116,6 +2169,30 @@ app.patch('/api/v1/personal/complementos/:id/autorizar', requireRoles('personal_
     });
     if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Complemento no encontrado.'));
     if ((data as any).estadoInvalido) return res.status(409).json(createApiError('PER_INVALID_STATE', `Solo se puede autorizar en BORRADOR. Estado actual: ${(data as any).estado}`));
+    if ((data as any).revisionPendiente) return res.status(409).json(createApiError('PER_REVISION_PENDIENTE', 'El complemento salarial debe ser revisado por Residencia antes de autorizarse.'));
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Marcar complemento salarial como revisado por Residencia — prerequisito de
+// /autorizar (con bypass admin). NO autoriza el pago. Ver
+// specs/features/01-revision-nomina-residencia.md (D2).
+app.patch('/api/v1/personal/complementos/:id/marcar-revisado', requireRoles('residencia', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { id } = req.params;
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const comp = await prisma.nominaComplementaria.findFirst({ where: { id_complemento: id, tenant_id: tenantId } });
+      if (!comp) return null;
+      if (comp.revisado_por_residencia) return comp; // idempotente: ya revisado, no-op
+      return prisma.nominaComplementaria.update({
+        where: { id_complemento: id },
+        data: { revisado_por_residencia: true, revisado_at: new Date(), revisado_por_usuario_id: userId },
+      });
+    });
+    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Complemento no encontrado.'));
     res.json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
@@ -2258,6 +2335,7 @@ async function startServer() {
     console.log(`   GET   /api/v1/personal/prenominas`);
     console.log(`   GET   /api/v1/personal/prenominas/:id`);
     console.log(`   POST  /api/v1/personal/prenominas/calcular`);
+    console.log(`   PATCH /api/v1/personal/prenominas/:id/marcar-revisado`);
     console.log(`   PATCH /api/v1/personal/prenominas/:id/autorizar`);
     console.log(`   PATCH /api/v1/personal/prenominas/:id/pagar`);
     console.log(`   GET   /api/v1/personal/dashboard`);

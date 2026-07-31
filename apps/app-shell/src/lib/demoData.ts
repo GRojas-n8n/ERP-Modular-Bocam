@@ -353,42 +353,88 @@ export const DEMO_ESTIMACIONES_RESIDENCIA = [
   { id: 'est-r-005', codigo: 'EST-TCN-005', numero: 5, periodo_inicio: '2024-05-16', periodo_fin: '2024-05-31', frente: 'Frente A — Impermeabilización', descripcion: 'Impermeabilización azotea y cisternas',        conceptos: 5,  subtotal: 342000, iva:  54720, total_neto:  396720, estado: 'BORRADOR',    fecha_autorizacion: null, autorizador: null },
 ];
 
+// Forma alineada al contrato real de apps/personal (PreNomina/PreNominaDetalle
+// en apps/personal/prisma/schema.prisma) — antes esta demo tenía su propia
+// forma (id/total_bruto/cuadrillas) que no coincidía con el backend y que
+// ResidenciaView.tsx terminó copiando, causando un crash con datos reales.
+// Ver specs/features/01-revision-nomina-residencia.md (2.1).
 export const DEMO_PRENOMINAS_RESIDENCIA = [
   {
-    id: 'pnr-001', codigo: 'NOM-2024-07', periodo_tipo: 'QUINCENAL',
+    id_prenomina: 'pnr-001', codigo: 'NOM-2024-07', periodo_tipo: 'QUINCENAL',
     periodo_inicio: '2024-04-01', periodo_fin: '2024-04-15',
-    total_bruto: 198500, total_deducciones: 11000, total_neto: 187500,
-    total_empleados: 38, estado: 'PAGADA',
-    cuadrillas: [
-      { nombre: 'Cuadrilla Estructura A',  empleados: 12, total: 79200 },
-      { nombre: 'Cuadrilla Instalaciones', empleados:  8, total: 52400 },
-      { nombre: 'Cuadrilla Acabados',      empleados: 10, total: 41800 },
-      { nombre: 'Administrativos',          empleados:  8, total: 25100 },
+    total_percepciones: 198500, total_deducciones: 11000, total_neto: 187500,
+    total_empleados: 4, estado: 'PAGADA',
+    revisado_por_residencia: true, revisado_at: '2024-04-16T10:00:00Z',
+    detalles: [
+      { id_detalle: 'pnrd-001-1', empleado_id: 'emp-101', total_percepciones: 79200, total_deducciones: 4200, neto_a_pagar: 75000, empleado: { nombre: 'Ricardo', apellido_paterno: 'Salazar', numero_empleado: 'EMP-101', puesto: 'Cabo de cuadrilla' } },
+      { id_detalle: 'pnrd-001-2', empleado_id: 'emp-102', total_percepciones: 52400, total_deducciones: 2800, neto_a_pagar: 49600, empleado: { nombre: 'Beatriz', apellido_paterno: 'Nuño',    numero_empleado: 'EMP-102', puesto: 'Electricista' } },
+      { id_detalle: 'pnrd-001-3', empleado_id: 'emp-103', total_percepciones: 41800, total_deducciones: 2300, neto_a_pagar: 39500, empleado: { nombre: 'Gustavo', apellido_paterno: 'Reyes',   numero_empleado: 'EMP-103', puesto: 'Acabados' } },
+      { id_detalle: 'pnrd-001-4', empleado_id: 'emp-104', total_percepciones: 25100, total_deducciones: 1700, neto_a_pagar: 23400, empleado: { nombre: 'Laura',   apellido_paterno: 'Cantú',   numero_empleado: 'EMP-104', puesto: 'Administrativo' } },
     ],
   },
   {
-    id: 'pnr-002', codigo: 'NOM-2024-08', periodo_tipo: 'QUINCENAL',
+    id_prenomina: 'pnr-002', codigo: 'NOM-2024-08', periodo_tipo: 'QUINCENAL',
     periodo_inicio: '2024-04-16', periodo_fin: '2024-04-30',
-    total_bruto: 202800, total_deducciones: 11600, total_neto: 191200,
-    total_empleados: 40, estado: 'EN_PROCESO',
-    cuadrillas: [
-      { nombre: 'Cuadrilla Estructura A',  empleados: 13, total: 83200 },
-      { nombre: 'Cuadrilla Instalaciones', empleados:  8, total: 53400 },
-      { nombre: 'Cuadrilla Acabados',      empleados: 11, total: 42100 },
-      { nombre: 'Subcontrato Cancelería',  empleados:  2, total:  6900 },
-      { nombre: 'Administrativos',          empleados:  6, total: 16200 },
+    total_percepciones: 202800, total_deducciones: 11600, total_neto: 191200,
+    total_empleados: 3, estado: 'AUTORIZADA',
+    revisado_por_residencia: true, revisado_at: '2024-05-01T09:30:00Z',
+    detalles: [
+      { id_detalle: 'pnrd-002-1', empleado_id: 'emp-101', total_percepciones: 83200, total_deducciones: 4400, neto_a_pagar: 78800, empleado: { nombre: 'Ricardo', apellido_paterno: 'Salazar', numero_empleado: 'EMP-101', puesto: 'Cabo de cuadrilla' } },
+      { id_detalle: 'pnrd-002-2', empleado_id: 'emp-102', total_percepciones: 53400, total_deducciones: 2900, neto_a_pagar: 50500, empleado: { nombre: 'Beatriz', apellido_paterno: 'Nuño',    numero_empleado: 'EMP-102', puesto: 'Electricista' } },
+      { id_detalle: 'pnrd-002-3', empleado_id: 'emp-103', total_percepciones: 42100, total_deducciones: 2400, neto_a_pagar: 39700, empleado: { nombre: 'Gustavo', apellido_paterno: 'Reyes',   numero_empleado: 'EMP-103', puesto: 'Acabados' } },
     ],
   },
   {
-    id: 'pnr-003', codigo: 'NOM-2024-09', periodo_tipo: 'QUINCENAL',
+    id_prenomina: 'pnr-003', codigo: 'NOM-2024-09', periodo_tipo: 'QUINCENAL',
     periodo_inicio: '2024-05-01', periodo_fin: '2024-05-15',
-    total_bruto: 195600, total_deducciones: 10400, total_neto: 185200,
-    total_empleados: 37, estado: 'PENDIENTE',
-    cuadrillas: [
-      { nombre: 'Cuadrilla Estructura A',  empleados: 11, total: 77400 },
-      { nombre: 'Cuadrilla Instalaciones', empleados:  8, total: 52200 },
-      { nombre: 'Cuadrilla Acabados',      empleados: 10, total: 41400 },
-      { nombre: 'Administrativos',          empleados:  8, total: 24600 },
+    total_percepciones: 195600, total_deducciones: 10400, total_neto: 185200,
+    total_empleados: 3, estado: 'CALCULADA',
+    revisado_por_residencia: false, revisado_at: null,
+    detalles: [
+      { id_detalle: 'pnrd-003-1', empleado_id: 'emp-101', total_percepciones: 77400, total_deducciones: 4100, neto_a_pagar: 73300, empleado: { nombre: 'Ricardo', apellido_paterno: 'Salazar', numero_empleado: 'EMP-101', puesto: 'Cabo de cuadrilla' } },
+      { id_detalle: 'pnrd-003-2', empleado_id: 'emp-102', total_percepciones: 52200, total_deducciones: 2700, neto_a_pagar: 49500, empleado: { nombre: 'Beatriz', apellido_paterno: 'Nuño',    numero_empleado: 'EMP-102', puesto: 'Electricista' } },
+      { id_detalle: 'pnrd-003-3', empleado_id: 'emp-103', total_percepciones: 41400, total_deducciones: 2200, neto_a_pagar: 39200, empleado: { nombre: 'Gustavo', apellido_paterno: 'Reyes',   numero_empleado: 'EMP-103', puesto: 'Acabados' } },
+    ],
+  },
+];
+
+// Nómina complementaria (Complemento Salarial) — ver
+// specs/features/01-revision-nomina-residencia.md (feature nuevo).
+export const DEMO_COMPLEMENTOS_RESIDENCIA = [
+  {
+    id_complemento: 'comp-001', codigo: 'CS-2024-Q07', periodo_tipo: 'QUINCENAL',
+    periodo_inicio: '2024-04-01', periodo_fin: '2024-04-15',
+    total_complemento: 9200, estado: 'AUTORIZADA',
+    revisado_por_residencia: true, revisado_at: '2024-04-16T10:15:00Z',
+  },
+  {
+    id_complemento: 'comp-002', codigo: 'CS-2024-Q09', periodo_tipo: 'QUINCENAL',
+    periodo_inicio: '2024-05-01', periodo_fin: '2024-05-15',
+    total_complemento: 8700, estado: 'BORRADOR',
+    revisado_por_residencia: false, revisado_at: null,
+  },
+];
+
+// Vista "Mi equipo" — ver specs/features/02-asignacion-empleados-residente-prestamos.md (sección 5).
+export const DEMO_MI_EQUIPO_RESIDENCIA = [
+  {
+    categoria: 'OBRERO', total: 3,
+    empleados: [
+      { id_empleado: 'emp-101', nombre: 'Ricardo Salazar', numero_empleado: 'EMP-101', compartido: false, proyecto_actual_id: null },
+      { id_empleado: 'emp-103', nombre: 'Gustavo Reyes',   numero_empleado: 'EMP-103', compartido: false, proyecto_actual_id: null },
+      { id_empleado: 'emp-105', nombre: 'Ismael Torres',   numero_empleado: 'EMP-105', compartido: true,  proyecto_actual_id: 'proy-torre-norte' },
+    ],
+  },
+  {
+    categoria: 'TECNICO', total: 1,
+    empleados: [
+      { id_empleado: 'emp-102', nombre: 'Beatriz Nuño', numero_empleado: 'EMP-102', compartido: false, proyecto_actual_id: null },
+    ],
+  },
+  {
+    categoria: 'ADMINISTRATIVO', total: 1,
+    empleados: [
+      { id_empleado: 'emp-104', nombre: 'Laura Cantú', numero_empleado: 'EMP-104', compartido: false, proyecto_actual_id: null },
     ],
   },
 ];
@@ -439,26 +485,3 @@ export const DEMO_ASISTENCIA = [
   { id: 'a-007', fecha: '2024-05-21', cuadrilla_id: 'cua-003', cuadrilla_nombre: 'Cuadrilla Acabados',      empleado_nombre: 'Guillermo Morales',  puesto: 'Oficial Carpintero',    hora_entrada: '07:08', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'QR'     },
   { id: 'a-008', fecha: '2024-05-21', cuadrilla_id: 'cua-003', cuadrilla_nombre: 'Cuadrilla Acabados',      empleado_nombre: 'Arturo Vega',        puesto: 'Residente de Obra',     hora_entrada: '08:01', hora_salida: null,    estado: 'PRESENTE',    tipo_registro: 'MANUAL' },
 ];
-
-// Vista "Mi equipo" — ver specs/features/02-asignacion-empleados-residente-prestamos.md (sección 5).
-export const DEMO_MI_EQUIPO_RESIDENCIA = [
-  {
-    categoria: 'OBRERO', total: 3,
-    empleados: [
-      { id_empleado: 'emp-101', nombre: 'Ricardo Salazar', numero_empleado: 'EMP-101', compartido: false, proyecto_actual_id: null },
-      { id_empleado: 'emp-103', nombre: 'Gustavo Reyes',   numero_empleado: 'EMP-103', compartido: false, proyecto_actual_id: null },
-      { id_empleado: 'emp-105', nombre: 'Ismael Torres',   numero_empleado: 'EMP-105', compartido: true,  proyecto_actual_id: 'proy-torre-norte' },
-    ],
-  },
-  {
-    categoria: 'TECNICO', total: 1,
-    empleados: [
-      { id_empleado: 'emp-102', nombre: 'Beatriz Nuño', numero_empleado: 'EMP-102', compartido: false, proyecto_actual_id: null },
-    ],
-  },
-  {
-    categoria: 'ADMINISTRATIVO', total: 1,
-    empleados: [
-      { id_empleado: 'emp-104', nombre: 'Laura Cantú', numero_empleado: 'EMP-104', compartido: false, proyecto_actual_id: null },
-    ],
-  },

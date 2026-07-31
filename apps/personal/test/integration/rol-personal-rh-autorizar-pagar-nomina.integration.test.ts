@@ -105,12 +105,22 @@ async function testPersonalRhAutorizaPreNomina() {
     const idPrenomina = await crearEmpleadoYCalcularPrenomina(tenantId, proyectoId, userId);
     const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
 
+    // Desde specs/features/01-revision-nomina-residencia.md (D2), /autorizar
+    // exige que Residencia haya revisado primero — se satisface el
+    // prerequisito directo vía Prisma porque este test cubre el rol
+    // personal_rh en /autorizar, no el endpoint /marcar-revisado (que tiene
+    // su propio test dedicado).
+    await prisma.preNomina.update({
+      where: { id_prenomina: idPrenomina },
+      data: { revisado_por_residencia: true, revisado_at: new Date(), revisado_por_usuario_id: userId },
+    });
+
     const r = await patch(`/api/v1/personal/prenominas/${idPrenomina}/autorizar`, tokenRh);
     assert.equal(r.status, 200, 'personal_rh debe poder autorizar (no 403)');
     const body = (await r.json()) as any;
     assert.equal(body.data.estado, 'AUTORIZADA', 'la pre-nómina debe transicionar a AUTORIZADA');
 
-    console.log('ok - usuario con rol personal_rh autoriza una pre-nómina CALCULADA');
+    console.log('ok - usuario con rol personal_rh autoriza una pre-nómina CALCULADA (ya revisada por Residencia)');
   } finally {
     await cleanupTenant(tenantId);
   }

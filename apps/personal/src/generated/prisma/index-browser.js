@@ -203,6 +203,9 @@ exports.Prisma.PreNominaScalarFieldEnum = {
   autorizado_por: 'autorizado_por',
   fecha_autorizacion: 'fecha_autorizacion',
   notas: 'notas',
+  revisado_por_residencia: 'revisado_por_residencia',
+  revisado_at: 'revisado_at',
+  revisado_por_usuario_id: 'revisado_por_usuario_id',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };
@@ -277,6 +280,9 @@ exports.Prisma.NominaComplementariaScalarFieldEnum = {
   estado: 'estado',
   elaborado_por: 'elaborado_por',
   autorizado_por: 'autorizado_por',
+  revisado_por_residencia: 'revisado_por_residencia',
+  revisado_at: 'revisado_at',
+  revisado_por_usuario_id: 'revisado_por_usuario_id',
   created_at: 'created_at'
 };
 

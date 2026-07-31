@@ -4,11 +4,14 @@ import { ResidenciaView } from './ResidenciaView';
 
 /**
  * Ver openspec/changes/selector-proyecto-confirmacion-critica. El botón
- * "Aprobar" de prenómina en ResidenciaView ya tenía su propio modal de
- * confirmación (sin mencionar el proyecto activo); se migró a
- * ConfirmCriticalActionDialog para mostrar el proyecto activo, sin tocar el
- * hecho de que hoy solo actualiza estado local (bug de conexión al backend
- * ya registrado por separado, fuera de alcance de este change).
+ * de prenómina en ResidenciaView ya tenía su propio modal de confirmación
+ * (sin mencionar el proyecto activo); se migró a ConfirmCriticalActionDialog
+ * para mostrar el proyecto activo.
+ *
+ * Renombrado de "Aprobar" a "Marcar revisado" y conectado al backend real —
+ * ver specs/features/01-revision-nomina-residencia.md (2.2, D2). El botón
+ * ya NO autoriza el pago (eso sigue siendo exclusivo de personal_rh/admin,
+ * separación de funciones); solo marca `revisado_por_residencia`.
  */
 
 vi.mock('../context/TenantContext', () => ({
@@ -28,26 +31,26 @@ vi.mock('../context/NotificationContext', () => ({
   useNotification: () => ({ notify: vi.fn() }),
 }));
 
-describe('ResidenciaView — confirmación crítica al aprobar prenómina', () => {
-  it('el diálogo de confirmación muestra el proyecto activo antes de aprobar', async () => {
+describe('ResidenciaView — confirmación crítica al marcar prenómina como revisada', () => {
+  it('el diálogo de confirmación muestra el proyecto activo antes de marcar revisado', async () => {
     render(<ResidenciaView activeSubView="nomina" />);
 
-    const botonesAprobar = await screen.findAllByRole('button', { name: 'Aprobar' });
+    const botonesAprobar = await screen.findAllByRole('button', { name: 'Marcar revisado' });
     fireEvent.click(botonesAprobar[0]);
 
     expect(screen.getByText(/Torre Corporativa Norte/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Confirmar aprobación' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmar revisión' })).toBeInTheDocument();
   });
 
-  it('cancelar no marca la prenómina como aprobada', async () => {
+  it('cancelar no marca la prenómina como revisada', async () => {
     render(<ResidenciaView activeSubView="nomina" />);
 
-    const botonesAprobar = await screen.findAllByRole('button', { name: 'Aprobar' });
+    const botonesAprobar = await screen.findAllByRole('button', { name: 'Marcar revisado' });
     const totalAntes = botonesAprobar.length;
     fireEvent.click(botonesAprobar[0]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
-    expect(screen.getAllByRole('button', { name: 'Aprobar' }).length).toBe(totalAntes);
+    expect(screen.getAllByRole('button', { name: 'Marcar revisado' }).length).toBe(totalAntes);
   });
 });

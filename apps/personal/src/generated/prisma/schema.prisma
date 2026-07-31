@@ -170,6 +170,12 @@ model PreNomina {
   fecha_autorizacion DateTime?
   notas              String?   @db.Text
 
+  // Revisión de Residencia — prerequisito de /autorizar (con bypass admin).
+  // Ver specs/features/01-revision-nomina-residencia.md (D2).
+  revisado_por_residencia Boolean   @default(false)
+  revisado_at             DateTime?
+  revisado_por_usuario_id String?   @db.Uuid
+
   detalles PreNominaDetalle[]
 
   created_at DateTime @default(now())
@@ -287,6 +293,11 @@ model NominaComplementaria {
   estado            String   @default("BORRADOR") // BORRADOR | AUTORIZADA
   elaborado_por     String   @db.Uuid
   autorizado_por    String?  @db.Uuid
+
+  // Revisión de Residencia — mismo patrón que PreNomina (D2).
+  revisado_por_residencia Boolean   @default(false)
+  revisado_at             DateTime?
+  revisado_por_usuario_id String?   @db.Uuid
 
   created_at DateTime                      @default(now())
   detalles   NominaComplementariaDetalle[]

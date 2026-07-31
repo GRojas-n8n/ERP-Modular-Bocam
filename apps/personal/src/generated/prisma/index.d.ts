@@ -5717,6 +5717,9 @@ export namespace Prisma {
     autorizado_por: string | null
     fecha_autorizacion: Date | null
     notas: string | null
+    revisado_por_residencia: boolean | null
+    revisado_at: Date | null
+    revisado_por_usuario_id: string | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -5739,6 +5742,9 @@ export namespace Prisma {
     autorizado_por: string | null
     fecha_autorizacion: Date | null
     notas: string | null
+    revisado_por_residencia: boolean | null
+    revisado_at: Date | null
+    revisado_por_usuario_id: string | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -5761,6 +5767,9 @@ export namespace Prisma {
     autorizado_por: number
     fecha_autorizacion: number
     notas: number
+    revisado_por_residencia: number
+    revisado_at: number
+    revisado_por_usuario_id: number
     created_at: number
     updated_at: number
     _all: number
@@ -5799,6 +5808,9 @@ export namespace Prisma {
     autorizado_por?: true
     fecha_autorizacion?: true
     notas?: true
+    revisado_por_residencia?: true
+    revisado_at?: true
+    revisado_por_usuario_id?: true
     created_at?: true
     updated_at?: true
   }
@@ -5821,6 +5833,9 @@ export namespace Prisma {
     autorizado_por?: true
     fecha_autorizacion?: true
     notas?: true
+    revisado_por_residencia?: true
+    revisado_at?: true
+    revisado_por_usuario_id?: true
     created_at?: true
     updated_at?: true
   }
@@ -5843,6 +5858,9 @@ export namespace Prisma {
     autorizado_por?: true
     fecha_autorizacion?: true
     notas?: true
+    revisado_por_residencia?: true
+    revisado_at?: true
+    revisado_por_usuario_id?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -5952,6 +5970,9 @@ export namespace Prisma {
     autorizado_por: string | null
     fecha_autorizacion: Date | null
     notas: string | null
+    revisado_por_residencia: boolean
+    revisado_at: Date | null
+    revisado_por_usuario_id: string | null
     created_at: Date
     updated_at: Date
     _count: PreNominaCountAggregateOutputType | null
@@ -5993,6 +6014,9 @@ export namespace Prisma {
     autorizado_por?: boolean
     fecha_autorizacion?: boolean
     notas?: boolean
+    revisado_por_residencia?: boolean
+    revisado_at?: boolean
+    revisado_por_usuario_id?: boolean
     created_at?: boolean
     updated_at?: boolean
     detalles?: boolean | PreNomina$detallesArgs<ExtArgs>
@@ -6017,6 +6041,9 @@ export namespace Prisma {
     autorizado_por?: boolean
     fecha_autorizacion?: boolean
     notas?: boolean
+    revisado_por_residencia?: boolean
+    revisado_at?: boolean
+    revisado_por_usuario_id?: boolean
     created_at?: boolean
     updated_at?: boolean
   }, ExtArgs["result"]["preNomina"]>
@@ -6039,6 +6066,9 @@ export namespace Prisma {
     autorizado_por?: boolean
     fecha_autorizacion?: boolean
     notas?: boolean
+    revisado_por_residencia?: boolean
+    revisado_at?: boolean
+    revisado_por_usuario_id?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
@@ -6072,6 +6102,9 @@ export namespace Prisma {
       autorizado_por: string | null
       fecha_autorizacion: Date | null
       notas: string | null
+      revisado_por_residencia: boolean
+      revisado_at: Date | null
+      revisado_por_usuario_id: string | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["preNomina"]>
@@ -6485,6 +6518,9 @@ export namespace Prisma {
     readonly autorizado_por: FieldRef<"PreNomina", 'String'>
     readonly fecha_autorizacion: FieldRef<"PreNomina", 'DateTime'>
     readonly notas: FieldRef<"PreNomina", 'String'>
+    readonly revisado_por_residencia: FieldRef<"PreNomina", 'Boolean'>
+    readonly revisado_at: FieldRef<"PreNomina", 'DateTime'>
+    readonly revisado_por_usuario_id: FieldRef<"PreNomina", 'String'>
     readonly created_at: FieldRef<"PreNomina", 'DateTime'>
     readonly updated_at: FieldRef<"PreNomina", 'DateTime'>
   }
@@ -10125,6 +10161,9 @@ export namespace Prisma {
     estado: string | null
     elaborado_por: string | null
     autorizado_por: string | null
+    revisado_por_residencia: boolean | null
+    revisado_at: Date | null
+    revisado_por_usuario_id: string | null
     created_at: Date | null
   }
 
@@ -10141,6 +10180,9 @@ export namespace Prisma {
     estado: string | null
     elaborado_por: string | null
     autorizado_por: string | null
+    revisado_por_residencia: boolean | null
+    revisado_at: Date | null
+    revisado_por_usuario_id: string | null
     created_at: Date | null
   }
 
@@ -10157,6 +10199,9 @@ export namespace Prisma {
     estado: number
     elaborado_por: number
     autorizado_por: number
+    revisado_por_residencia: number
+    revisado_at: number
+    revisado_por_usuario_id: number
     created_at: number
     _all: number
   }
@@ -10183,6 +10228,9 @@ export namespace Prisma {
     estado?: true
     elaborado_por?: true
     autorizado_por?: true
+    revisado_por_residencia?: true
+    revisado_at?: true
+    revisado_por_usuario_id?: true
     created_at?: true
   }
 
@@ -10199,6 +10247,9 @@ export namespace Prisma {
     estado?: true
     elaborado_por?: true
     autorizado_por?: true
+    revisado_por_residencia?: true
+    revisado_at?: true
+    revisado_por_usuario_id?: true
     created_at?: true
   }
 
@@ -10215,6 +10266,9 @@ export namespace Prisma {
     estado?: true
     elaborado_por?: true
     autorizado_por?: true
+    revisado_por_residencia?: true
+    revisado_at?: true
+    revisado_por_usuario_id?: true
     created_at?: true
     _all?: true
   }
@@ -10318,6 +10372,9 @@ export namespace Prisma {
     estado: string
     elaborado_por: string
     autorizado_por: string | null
+    revisado_por_residencia: boolean
+    revisado_at: Date | null
+    revisado_por_usuario_id: string | null
     created_at: Date
     _count: NominaComplementariaCountAggregateOutputType | null
     _avg: NominaComplementariaAvgAggregateOutputType | null
@@ -10353,6 +10410,9 @@ export namespace Prisma {
     estado?: boolean
     elaborado_por?: boolean
     autorizado_por?: boolean
+    revisado_por_residencia?: boolean
+    revisado_at?: boolean
+    revisado_por_usuario_id?: boolean
     created_at?: boolean
     detalles?: boolean | NominaComplementaria$detallesArgs<ExtArgs>
     _count?: boolean | NominaComplementariaCountOutputTypeDefaultArgs<ExtArgs>
@@ -10371,6 +10431,9 @@ export namespace Prisma {
     estado?: boolean
     elaborado_por?: boolean
     autorizado_por?: boolean
+    revisado_por_residencia?: boolean
+    revisado_at?: boolean
+    revisado_por_usuario_id?: boolean
     created_at?: boolean
   }, ExtArgs["result"]["nominaComplementaria"]>
 
@@ -10387,6 +10450,9 @@ export namespace Prisma {
     estado?: boolean
     elaborado_por?: boolean
     autorizado_por?: boolean
+    revisado_por_residencia?: boolean
+    revisado_at?: boolean
+    revisado_por_usuario_id?: boolean
     created_at?: boolean
   }
 
@@ -10414,6 +10480,9 @@ export namespace Prisma {
       estado: string
       elaborado_por: string
       autorizado_por: string | null
+      revisado_por_residencia: boolean
+      revisado_at: Date | null
+      revisado_por_usuario_id: string | null
       created_at: Date
     }, ExtArgs["result"]["nominaComplementaria"]>
     composites: {}
@@ -10821,6 +10890,9 @@ export namespace Prisma {
     readonly estado: FieldRef<"NominaComplementaria", 'String'>
     readonly elaborado_por: FieldRef<"NominaComplementaria", 'String'>
     readonly autorizado_por: FieldRef<"NominaComplementaria", 'String'>
+    readonly revisado_por_residencia: FieldRef<"NominaComplementaria", 'Boolean'>
+    readonly revisado_at: FieldRef<"NominaComplementaria", 'DateTime'>
+    readonly revisado_por_usuario_id: FieldRef<"NominaComplementaria", 'String'>
     readonly created_at: FieldRef<"NominaComplementaria", 'DateTime'>
   }
     
@@ -17152,6 +17224,9 @@ export namespace Prisma {
     autorizado_por: 'autorizado_por',
     fecha_autorizacion: 'fecha_autorizacion',
     notas: 'notas',
+    revisado_por_residencia: 'revisado_por_residencia',
+    revisado_at: 'revisado_at',
+    revisado_por_usuario_id: 'revisado_por_usuario_id',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -17238,6 +17313,9 @@ export namespace Prisma {
     estado: 'estado',
     elaborado_por: 'elaborado_por',
     autorizado_por: 'autorizado_por',
+    revisado_por_residencia: 'revisado_por_residencia',
+    revisado_at: 'revisado_at',
+    revisado_por_usuario_id: 'revisado_por_usuario_id',
     created_at: 'created_at'
   };
 
@@ -17850,6 +17928,9 @@ export namespace Prisma {
     autorizado_por?: UuidNullableFilter<"PreNomina"> | string | null
     fecha_autorizacion?: DateTimeNullableFilter<"PreNomina"> | Date | string | null
     notas?: StringNullableFilter<"PreNomina"> | string | null
+    revisado_por_residencia?: BoolFilter<"PreNomina"> | boolean
+    revisado_at?: DateTimeNullableFilter<"PreNomina"> | Date | string | null
+    revisado_por_usuario_id?: UuidNullableFilter<"PreNomina"> | string | null
     created_at?: DateTimeFilter<"PreNomina"> | Date | string
     updated_at?: DateTimeFilter<"PreNomina"> | Date | string
     detalles?: PreNominaDetalleListRelationFilter
@@ -17873,6 +17954,9 @@ export namespace Prisma {
     autorizado_por?: SortOrderInput | SortOrder
     fecha_autorizacion?: SortOrderInput | SortOrder
     notas?: SortOrderInput | SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrderInput | SortOrder
+    revisado_por_usuario_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     detalles?: PreNominaDetalleOrderByRelationAggregateInput
@@ -17900,6 +17984,9 @@ export namespace Prisma {
     autorizado_por?: UuidNullableFilter<"PreNomina"> | string | null
     fecha_autorizacion?: DateTimeNullableFilter<"PreNomina"> | Date | string | null
     notas?: StringNullableFilter<"PreNomina"> | string | null
+    revisado_por_residencia?: BoolFilter<"PreNomina"> | boolean
+    revisado_at?: DateTimeNullableFilter<"PreNomina"> | Date | string | null
+    revisado_por_usuario_id?: UuidNullableFilter<"PreNomina"> | string | null
     created_at?: DateTimeFilter<"PreNomina"> | Date | string
     updated_at?: DateTimeFilter<"PreNomina"> | Date | string
     detalles?: PreNominaDetalleListRelationFilter
@@ -17923,6 +18010,9 @@ export namespace Prisma {
     autorizado_por?: SortOrderInput | SortOrder
     fecha_autorizacion?: SortOrderInput | SortOrder
     notas?: SortOrderInput | SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrderInput | SortOrder
+    revisado_por_usuario_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: PreNominaCountOrderByAggregateInput
@@ -17953,6 +18043,9 @@ export namespace Prisma {
     autorizado_por?: UuidNullableWithAggregatesFilter<"PreNomina"> | string | null
     fecha_autorizacion?: DateTimeNullableWithAggregatesFilter<"PreNomina"> | Date | string | null
     notas?: StringNullableWithAggregatesFilter<"PreNomina"> | string | null
+    revisado_por_residencia?: BoolWithAggregatesFilter<"PreNomina"> | boolean
+    revisado_at?: DateTimeNullableWithAggregatesFilter<"PreNomina"> | Date | string | null
+    revisado_por_usuario_id?: UuidNullableWithAggregatesFilter<"PreNomina"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"PreNomina"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"PreNomina"> | Date | string
   }
@@ -18308,6 +18401,9 @@ export namespace Prisma {
     estado?: StringFilter<"NominaComplementaria"> | string
     elaborado_por?: UuidFilter<"NominaComplementaria"> | string
     autorizado_por?: UuidNullableFilter<"NominaComplementaria"> | string | null
+    revisado_por_residencia?: BoolFilter<"NominaComplementaria"> | boolean
+    revisado_at?: DateTimeNullableFilter<"NominaComplementaria"> | Date | string | null
+    revisado_por_usuario_id?: UuidNullableFilter<"NominaComplementaria"> | string | null
     created_at?: DateTimeFilter<"NominaComplementaria"> | Date | string
     detalles?: NominaComplementariaDetalleListRelationFilter
   }
@@ -18325,6 +18421,9 @@ export namespace Prisma {
     estado?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrderInput | SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrderInput | SortOrder
+    revisado_por_usuario_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     detalles?: NominaComplementariaDetalleOrderByRelationAggregateInput
   }
@@ -18345,6 +18444,9 @@ export namespace Prisma {
     estado?: StringFilter<"NominaComplementaria"> | string
     elaborado_por?: UuidFilter<"NominaComplementaria"> | string
     autorizado_por?: UuidNullableFilter<"NominaComplementaria"> | string | null
+    revisado_por_residencia?: BoolFilter<"NominaComplementaria"> | boolean
+    revisado_at?: DateTimeNullableFilter<"NominaComplementaria"> | Date | string | null
+    revisado_por_usuario_id?: UuidNullableFilter<"NominaComplementaria"> | string | null
     created_at?: DateTimeFilter<"NominaComplementaria"> | Date | string
     detalles?: NominaComplementariaDetalleListRelationFilter
   }, "id_complemento">
@@ -18362,6 +18464,9 @@ export namespace Prisma {
     estado?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrderInput | SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrderInput | SortOrder
+    revisado_por_usuario_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     _count?: NominaComplementariaCountOrderByAggregateInput
     _avg?: NominaComplementariaAvgOrderByAggregateInput
@@ -18386,6 +18491,9 @@ export namespace Prisma {
     estado?: StringWithAggregatesFilter<"NominaComplementaria"> | string
     elaborado_por?: UuidWithAggregatesFilter<"NominaComplementaria"> | string
     autorizado_por?: UuidNullableWithAggregatesFilter<"NominaComplementaria"> | string | null
+    revisado_por_residencia?: BoolWithAggregatesFilter<"NominaComplementaria"> | boolean
+    revisado_at?: DateTimeNullableWithAggregatesFilter<"NominaComplementaria"> | Date | string | null
+    revisado_por_usuario_id?: UuidNullableWithAggregatesFilter<"NominaComplementaria"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"NominaComplementaria"> | Date | string
   }
 
@@ -19316,6 +19424,9 @@ export namespace Prisma {
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
     notas?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     detalles?: PreNominaDetalleCreateNestedManyWithoutPrenominaInput
@@ -19339,6 +19450,9 @@ export namespace Prisma {
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
     notas?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     detalles?: PreNominaDetalleUncheckedCreateNestedManyWithoutPrenominaInput
@@ -19362,6 +19476,9 @@ export namespace Prisma {
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     detalles?: PreNominaDetalleUpdateManyWithoutPrenominaNestedInput
@@ -19385,6 +19502,9 @@ export namespace Prisma {
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     detalles?: PreNominaDetalleUncheckedUpdateManyWithoutPrenominaNestedInput
@@ -19408,6 +19528,9 @@ export namespace Prisma {
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
     notas?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -19430,6 +19553,9 @@ export namespace Prisma {
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -19452,6 +19578,9 @@ export namespace Prisma {
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -19866,6 +19995,9 @@ export namespace Prisma {
     estado?: string
     elaborado_por: string
     autorizado_por?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     detalles?: NominaComplementariaDetalleCreateNestedManyWithoutComplementoInput
   }
@@ -19883,6 +20015,9 @@ export namespace Prisma {
     estado?: string
     elaborado_por: string
     autorizado_por?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     detalles?: NominaComplementariaDetalleUncheckedCreateNestedManyWithoutComplementoInput
   }
@@ -19900,6 +20035,9 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     detalles?: NominaComplementariaDetalleUpdateManyWithoutComplementoNestedInput
   }
@@ -19917,6 +20055,9 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     detalles?: NominaComplementariaDetalleUncheckedUpdateManyWithoutComplementoNestedInput
   }
@@ -19934,6 +20075,9 @@ export namespace Prisma {
     estado?: string
     elaborado_por: string
     autorizado_por?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
   }
 
@@ -19950,6 +20094,9 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -19966,6 +20113,9 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -21028,6 +21178,9 @@ export namespace Prisma {
     autorizado_por?: SortOrder
     fecha_autorizacion?: SortOrder
     notas?: SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrder
+    revisado_por_usuario_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -21057,6 +21210,9 @@ export namespace Prisma {
     autorizado_por?: SortOrder
     fecha_autorizacion?: SortOrder
     notas?: SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrder
+    revisado_por_usuario_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -21079,6 +21235,9 @@ export namespace Prisma {
     autorizado_por?: SortOrder
     fecha_autorizacion?: SortOrder
     notas?: SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrder
+    revisado_por_usuario_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -21372,6 +21531,9 @@ export namespace Prisma {
     estado?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrder
+    revisado_por_usuario_id?: SortOrder
     created_at?: SortOrder
   }
 
@@ -21392,6 +21554,9 @@ export namespace Prisma {
     estado?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrder
+    revisado_por_usuario_id?: SortOrder
     created_at?: SortOrder
   }
 
@@ -21408,6 +21573,9 @@ export namespace Prisma {
     estado?: SortOrder
     elaborado_por?: SortOrder
     autorizado_por?: SortOrder
+    revisado_por_residencia?: SortOrder
+    revisado_at?: SortOrder
+    revisado_por_usuario_id?: SortOrder
     created_at?: SortOrder
   }
 
@@ -23478,6 +23646,9 @@ export namespace Prisma {
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
     notas?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -23500,6 +23671,9 @@ export namespace Prisma {
     autorizado_por?: string | null
     fecha_autorizacion?: Date | string | null
     notas?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -23617,6 +23791,9 @@ export namespace Prisma {
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -23639,6 +23816,9 @@ export namespace Prisma {
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_autorizacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -23804,6 +23984,9 @@ export namespace Prisma {
     estado?: string
     elaborado_por: string
     autorizado_por?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
   }
 
@@ -23820,6 +24003,9 @@ export namespace Prisma {
     estado?: string
     elaborado_por: string
     autorizado_por?: string | null
+    revisado_por_residencia?: boolean
+    revisado_at?: Date | string | null
+    revisado_por_usuario_id?: string | null
     created_at?: Date | string
   }
 
@@ -23852,6 +24038,9 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -23868,6 +24057,9 @@ export namespace Prisma {
     estado?: StringFieldUpdateOperationsInput | string
     elaborado_por?: StringFieldUpdateOperationsInput | string
     autorizado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    revisado_por_residencia?: BoolFieldUpdateOperationsInput | boolean
+    revisado_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    revisado_por_usuario_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
