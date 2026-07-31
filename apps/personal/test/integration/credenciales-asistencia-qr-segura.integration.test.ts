@@ -411,10 +411,58 @@ async function testImprimirLoteEmiteCredencialFaltante() {
     const r = await post('/api/v1/personal/empleados/credenciales/imprimir-lote', tokenRh, { empleado_ids: [emp1.id_empleado, emp2.id_empleado] });
     assert.equal(r.status, 200);
     const body = (await r.json()) as any;
-    assert.equal(body.data.length, 2, 'debe incluir a ambos empleados en el lote');
-    assert.ok(body.data.every((d: any) => d.token), 'ambos deben tener token, incluido el que no tenía credencial previa');
+    assert.equal(body.data.credenciales.length, 2, 'debe incluir a ambos empleados en el lote');
+    assert.ok(body.data.credenciales.every((d: any) => d.token), 'ambos deben tener token, incluido el que no tenía credencial previa');
+    assert.equal(body.data.excluidos.length, 0, 'ninguno debe quedar excluido, ambos están asignados al proyecto');
 
     console.log('ok - imprimir-lote emite credencial automáticamente al empleado que no tenía una');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
+async function testImprimirLoteExcluyeEmpleadoFueraDeProyecto() {
+  const tenantId = randomUUID();
+  const proyectoId = randomUUID();
+  const userId = randomUUID();
+  try {
+    const empFuera = await crearEmpleado(tenantId);
+    // empFuera nunca se asigna a ningún AsignacionFrente/Cuadrilla del proyecto.
+    const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
+
+    const r = await post('/api/v1/personal/empleados/credenciales/imprimir-lote', tokenRh, { empleado_ids: [empFuera.id_empleado] });
+    assert.equal(r.status, 200);
+    const body = (await r.json()) as any;
+    assert.equal(body.data.credenciales.length, 0, 'no debe generar ninguna credencial para un empleado fuera del proyecto activo');
+    assert.deepEqual(body.data.excluidos, [empFuera.id_empleado], 'debe reportar el id excluido para que el frontend pueda avisar');
+
+    console.log('ok - imprimir-lote reporta excluidos cuando ningún seleccionado pertenece al proyecto activo');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
+async function testImprimirLoteExclusionParcial() {
+  const tenantId = randomUUID();
+  const proyectoId = randomUUID();
+  const userId = randomUUID();
+  try {
+    const empDentro = await crearEmpleado(tenantId);
+    const empFuera = await crearEmpleado(tenantId);
+    await asignarAFrente(tenantId, proyectoId, empDentro.id_empleado);
+    // empFuera nunca se asigna al proyecto activo.
+    const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
+
+    const r = await post('/api/v1/personal/empleados/credenciales/imprimir-lote', tokenRh, {
+      empleado_ids: [empDentro.id_empleado, empFuera.id_empleado],
+    });
+    assert.equal(r.status, 200);
+    const body = (await r.json()) as any;
+    assert.equal(body.data.credenciales.length, 1, 'solo el empleado elegible debe recibir credencial');
+    assert.equal(body.data.credenciales[0].empleado.id_empleado, empDentro.id_empleado);
+    assert.deepEqual(body.data.excluidos, [empFuera.id_empleado], 'el empleado fuera del proyecto debe reportarse como excluido');
+
+    console.log('ok - imprimir-lote genera la hoja solo con los elegibles y reporta los excluidos por separado');
   } finally {
     await cleanupTenant(tenantId);
   }
@@ -436,6 +484,8 @@ async function main() {
     await testGeofencingDentroYFueraDelRadio();
     await testFotoCredencialEnExpediente();
     await testImprimirLoteEmiteCredencialFaltante();
+    await testImprimirLoteExcluyeEmpleadoFueraDeProyecto();
+    await testImprimirLoteExclusionParcial();
   } finally {
     await teardown();
   }

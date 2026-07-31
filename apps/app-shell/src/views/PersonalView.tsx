@@ -704,7 +704,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       const r = await api.post('/api/v1/personal/empleados/credenciales/imprimir-lote', {
         empleado_ids: Array.from(seleccionCredenciales),
       });
-      const items: ImprimirLoteItem[] = (r.data as any)?.data ?? [];
+      const respuesta = (r.data as any)?.data ?? { credenciales: [], excluidos: [] };
+      const items: ImprimirLoteItem[] = respuesta.credenciales ?? [];
+      const excluidos: string[] = respuesta.excluidos ?? [];
+
+      if (items.length === 0) {
+        notify({ type: 'error', title: 'Ningún empleado seleccionado pertenece al proyecto activo' });
+        return;
+      }
 
       const credenciales = await Promise.all(items.map(async (it) => {
         const qrDataUrl = await QRCode.toDataURL(`BOCAM:CRED:${it.token}`, { margin: 1, width: 240 });
@@ -738,6 +745,9 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       if (ventana) {
         ventana.document.write(html);
         ventana.document.close();
+      }
+      if (excluidos.length > 0) {
+        notify({ type: 'error', title: `${excluidos.length} empleado(s) excluido(s) por no pertenecer al proyecto activo` });
       }
     } catch (e: any) {
       notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al generar la hoja de credenciales' });

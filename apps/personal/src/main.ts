@@ -1975,9 +1975,13 @@ app.post('/api/v1/personal/empleados/credenciales/imprimir-lote', requireRoles('
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       const elegiblesDelProyecto = await obtenerEmpleadoIdsDelProyecto(prisma, tenantId, proyectoId);
-      const idsSolicitados = Array.isArray(empleado_ids) && empleado_ids.length > 0
-        ? empleado_ids.filter(id => elegiblesDelProyecto.has(id))
+      const seleccionExplicita = Array.isArray(empleado_ids) && empleado_ids.length > 0;
+      const idsSolicitados = seleccionExplicita
+        ? empleado_ids!.filter(id => elegiblesDelProyecto.has(id))
         : Array.from(elegiblesDelProyecto);
+      const excluidos = seleccionExplicita
+        ? empleado_ids!.filter(id => !elegiblesDelProyecto.has(id))
+        : [];
 
       const empleados = await prisma.empleado.findMany({ where: { id_empleado: { in: idsSolicitados }, tenant_id: tenantId, estado: 'ACTIVO' } });
 
@@ -2004,7 +2008,7 @@ app.post('/api/v1/personal/empleados/credenciales/imprimir-lote', requireRoles('
           foto_documento_id: foto?.id_documento ?? null,
         });
       }
-      return resultado;
+      return { credenciales: resultado, excluidos };
     });
 
     res.json(createApiResponse(data, tenantId, proyectoId));
