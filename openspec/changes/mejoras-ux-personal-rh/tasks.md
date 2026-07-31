@@ -137,20 +137,32 @@
 
 ## 6. `app-shell` — panel "Nueva Cuadrilla" (TDD)
 
-- [ ] 6.1 Test: clic en el botón (con `activeTab==='cuadrillas'`) abre
+- [x] 6.1 Test: clic en el botón (con `activeTab==='cuadrillas'`) abre
       el panel.
-- [ ] 6.2 Test: validación de campos obligatorios (`nombre`,
+- [x] 6.2 Test: validación de campos obligatorios (`nombre`,
       `especialidad`).
-- [ ] 6.3 Test: alta exitosa cierra el panel y refresca la lista de
+- [x] 6.3 Test: alta exitosa cierra el panel y refresca la lista de
       cuadrillas.
-- [ ] 6.4 Test: error del backend mantiene el panel abierto con el
+- [x] 6.4 Test: error del backend mantiene el panel abierto con el
       mensaje.
-- [ ] 6.5 Test: estado vacío de Cuadrillas muestra el CTA y abre el
+- [x] 6.5 Test: estado vacío de Cuadrillas muestra el CTA y abre el
       mismo panel.
-- [ ] 6.6 Confirmar tests en rojo.
-- [ ] 6.7 Implementar el panel + wiring del botón + `action` en
+- [x] 6.6 Confirmar tests en rojo.
+      **Resultado:** confirmado — los 5 tests fallaron contra el código
+      anterior (el botón del header no tenía efecto en la pestaña
+      Cuadrillas, sin panel).
+- [x] 6.7 Implementar el panel + wiring del botón + `action` en
       `EmptyStatePanel`.
-- [ ] 6.8 Tests en verde.
+      **Nota:** `FormField`/`Input` de `ui-core` no asocian `<label>`
+      con el input vía `htmlFor`/`id` (mismo gotcha ya documentado en
+      `PersonalView.nuevo-empleado.test.tsx`) — los tests ubican el
+      input dentro del panel por su etiqueta en vez de
+      `getByLabelText`.
+- [x] 6.8 Tests en verde.
+      **Resultado:** los 5 tests nuevos en
+      `apps/app-shell/src/views/PersonalView.nueva-cuadrilla.test.tsx`
+      en verde; suite completa de `app-shell` (47 archivos, 137 tests)
+      sin regresión; `tsc -b` limpio.
 
 ## 7. `app-shell` — panel "Calcular Nómina" (TDD)
 

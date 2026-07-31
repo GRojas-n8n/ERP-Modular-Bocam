@@ -374,6 +374,12 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   // ── Alta individual de Empleado ───────────────────────────────────────────
   const [panelNuevoEmpleado, setPanelNuevoEmpleado] = useState(false);
   const [nuevoEmpleadoForm, setNuevoEmpleadoForm] = useState<NuevoEmpleadoForm>(NUEVO_EMPLEADO_FORM_VACIO);
+
+  // ── Alta de Cuadrilla ──────────────────────────────────────────────────────
+  const [panelNuevaCuadrilla, setPanelNuevaCuadrilla] = useState(false);
+  const [nuevaCuadrillaForm, setNuevaCuadrillaForm] = useState({ nombre: '', especialidad: '', capataz_nombre: '' });
+  const [guardandoNuevaCuadrilla, setGuardandoNuevaCuadrilla] = useState(false);
+  const [errorNuevaCuadrilla, setErrorNuevaCuadrilla] = useState<string | null>(null);
   const [guardandoNuevoEmpleado, setGuardandoNuevoEmpleado] = useState(false);
   const [errorNuevoEmpleado, setErrorNuevoEmpleado] = useState<string | null>(null);
 
@@ -431,6 +437,40 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       setErrorNuevoEmpleado(err.response?.data?.error?.message || 'Error al crear el empleado.');
     } finally {
       setGuardandoNuevoEmpleado(false);
+    }
+  };
+
+  const handleAbrirNuevaCuadrilla = () => {
+    setNuevaCuadrillaForm({ nombre: '', especialidad: '', capataz_nombre: '' });
+    setErrorNuevaCuadrilla(null);
+    setPanelNuevaCuadrilla(true);
+  };
+
+  const handleCerrarNuevaCuadrilla = () => {
+    setPanelNuevaCuadrilla(false);
+    setErrorNuevaCuadrilla(null);
+  };
+
+  const handleGuardarNuevaCuadrilla = async () => {
+    const { nombre, especialidad, capataz_nombre } = nuevaCuadrillaForm;
+    if (!nombre.trim() || !especialidad.trim()) {
+      notify({ type: 'error', title: 'Nombre y especialidad son obligatorios.' });
+      return;
+    }
+    setGuardandoNuevaCuadrilla(true);
+    setErrorNuevaCuadrilla(null);
+    try {
+      const r = await api.post('/api/v1/personal/cuadrillas', {
+        nombre: nombre.trim(), especialidad: especialidad.trim(),
+        ...(capataz_nombre.trim() ? { capataz_nombre: capataz_nombre.trim() } : {}),
+      });
+      setCuadrillas(prev => [...prev, r.data.data]);
+      notify({ type: 'success', title: `Cuadrilla ${r.data.data.codigo} creada.` });
+      setPanelNuevaCuadrilla(false);
+    } catch (err: any) {
+      setErrorNuevaCuadrilla(err.response?.data?.error?.message || 'Error al crear la cuadrilla.');
+    } finally {
+      setGuardandoNuevaCuadrilla(false);
     }
   };
 
@@ -1054,7 +1094,10 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           )}
           <Button
             className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500"
-            onClick={() => { if (activeTab === 'empleados') handleAbrirNuevoEmpleado(); }}
+            onClick={() => {
+              if (activeTab === 'empleados') handleAbrirNuevoEmpleado();
+              else if (activeTab === 'cuadrillas') handleAbrirNuevaCuadrilla();
+            }}
           >
             <IconPlus className="h-4 w-4" />
             {activeTab === 'empleados'
@@ -1351,6 +1394,15 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   <EmptyStatePanel
                     icon={<IconUsers className="h-12 w-12 text-muted-foreground/20" />}
                     title="Sin cuadrillas registradas"
+                    action={
+                      <Button
+                        onClick={handleAbrirNuevaCuadrilla}
+                        className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500"
+                      >
+                        <IconPlus className="h-4 w-4" />
+                        Nueva Cuadrilla
+                      </Button>
+                    }
                   />
                 </div>
               ) : (
@@ -1650,6 +1702,44 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             loading={guardandoNuevoEmpleado}
             color="emerald"
             onClick={handleGuardarNuevoEmpleado}
+          />
+        </div>
+      </SlidePanel>
+
+      {/* ── Alta de Cuadrilla ─────────────────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={panelNuevaCuadrilla}
+        onClose={handleCerrarNuevaCuadrilla}
+        title="Nueva Cuadrilla"
+        subtitle="Alta de cuadrilla"
+        accentColor="violet"
+      >
+        <div className="space-y-6 pb-28">
+          {errorNuevaCuadrilla && (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+              <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive">{errorNuevaCuadrilla}</p>
+            </div>
+          )}
+          <div className="grid gap-4">
+            <FormField label="Nombre" required>
+              <Input value={nuevaCuadrillaForm.nombre} onChange={e => setNuevaCuadrillaForm({ ...nuevaCuadrillaForm, nombre: e.target.value })} />
+            </FormField>
+            <FormField label="Especialidad" required>
+              <Input value={nuevaCuadrillaForm.especialidad} onChange={e => setNuevaCuadrillaForm({ ...nuevaCuadrillaForm, especialidad: e.target.value })} />
+            </FormField>
+            <FormField label="Capataz">
+              <Input value={nuevaCuadrillaForm.capataz_nombre} onChange={e => setNuevaCuadrillaForm({ ...nuevaCuadrillaForm, capataz_nombre: e.target.value })} />
+            </FormField>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40">
+          <SubmitButton
+            label={guardandoNuevaCuadrilla ? 'Guardando…' : 'Guardar Cuadrilla'}
+            loading={guardandoNuevaCuadrilla}
+            color="violet"
+            onClick={handleGuardarNuevaCuadrilla}
           />
         </div>
       </SlidePanel>
