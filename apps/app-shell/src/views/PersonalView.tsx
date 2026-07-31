@@ -380,6 +380,12 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [nuevaCuadrillaForm, setNuevaCuadrillaForm] = useState({ nombre: '', especialidad: '', capataz_nombre: '' });
   const [guardandoNuevaCuadrilla, setGuardandoNuevaCuadrilla] = useState(false);
   const [errorNuevaCuadrilla, setErrorNuevaCuadrilla] = useState<string | null>(null);
+
+  // ── Calcular Pre-Nómina ────────────────────────────────────────────────────
+  const [panelCalcularNomina, setPanelCalcularNomina] = useState(false);
+  const [calcularNominaForm, setCalcularNominaForm] = useState({ periodo_inicio: '', periodo_fin: '' });
+  const [calculandoNomina, setCalculandoNomina] = useState(false);
+  const [errorCalcularNomina, setErrorCalcularNomina] = useState<string | null>(null);
   const [guardandoNuevoEmpleado, setGuardandoNuevoEmpleado] = useState(false);
   const [errorNuevoEmpleado, setErrorNuevoEmpleado] = useState<string | null>(null);
 
@@ -471,6 +477,37 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       setErrorNuevaCuadrilla(err.response?.data?.error?.message || 'Error al crear la cuadrilla.');
     } finally {
       setGuardandoNuevaCuadrilla(false);
+    }
+  };
+
+  const handleAbrirCalcularNomina = () => {
+    setCalcularNominaForm({ periodo_inicio: '', periodo_fin: '' });
+    setErrorCalcularNomina(null);
+    setPanelCalcularNomina(true);
+  };
+
+  const handleCerrarCalcularNomina = () => {
+    setPanelCalcularNomina(false);
+    setErrorCalcularNomina(null);
+  };
+
+  const handleCalcularNomina = async () => {
+    const { periodo_inicio, periodo_fin } = calcularNominaForm;
+    if (!periodo_inicio || !periodo_fin) {
+      notify({ type: 'error', title: 'Periodo de inicio y periodo de fin son obligatorios.' });
+      return;
+    }
+    setCalculandoNomina(true);
+    setErrorCalcularNomina(null);
+    try {
+      const r = await api.post('/api/v1/personal/prenominas/calcular', { periodo_inicio, periodo_fin });
+      setPrenominas(prev => [...prev, r.data.data]);
+      notify({ type: 'success', title: `Pre-nómina ${r.data.data.codigo} calculada.` });
+      setPanelCalcularNomina(false);
+    } catch (err: any) {
+      setErrorCalcularNomina(err.response?.data?.error?.message || 'Error al calcular la pre-nómina.');
+    } finally {
+      setCalculandoNomina(false);
     }
   };
 
@@ -1097,6 +1134,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             onClick={() => {
               if (activeTab === 'empleados') handleAbrirNuevoEmpleado();
               else if (activeTab === 'cuadrillas') handleAbrirNuevaCuadrilla();
+              else if (activeTab === 'prenomina') handleAbrirCalcularNomina();
             }}
           >
             <IconPlus className="h-4 w-4" />
@@ -1556,6 +1594,15 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   icon={<IconWallet className="h-12 w-12 text-muted-foreground/20" />}
                   title="Sin pre-nominas"
                   description='Usa el boton "Calcular Nomina" para generar la primera.'
+                  action={
+                    <Button
+                      onClick={handleAbrirCalcularNomina}
+                      className="rounded-2xl bg-violet-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20 hover:bg-violet-500"
+                    >
+                      <IconPlus className="h-4 w-4" />
+                      Calcular Nomina
+                    </Button>
+                  }
                 />
               ) : (
                 prenominas.map((prenomina) => (
@@ -1740,6 +1787,41 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             loading={guardandoNuevaCuadrilla}
             color="violet"
             onClick={handleGuardarNuevaCuadrilla}
+          />
+        </div>
+      </SlidePanel>
+
+      {/* ── Calcular Pre-Nómina ───────────────────────────────────────────────── */}
+      <SlidePanel
+        isOpen={panelCalcularNomina}
+        onClose={handleCerrarCalcularNomina}
+        title="Calcular Nomina"
+        subtitle="Nueva pre-nómina"
+        accentColor="violet"
+      >
+        <div className="space-y-6 pb-28">
+          {errorCalcularNomina && (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+              <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive">{errorCalcularNomina}</p>
+            </div>
+          )}
+          <div className="grid gap-4">
+            <FormField label="Periodo de inicio" required>
+              <Input type="date" value={calcularNominaForm.periodo_inicio} onChange={e => setCalcularNominaForm({ ...calcularNominaForm, periodo_inicio: e.target.value })} />
+            </FormField>
+            <FormField label="Periodo de fin" required>
+              <Input type="date" value={calcularNominaForm.periodo_fin} onChange={e => setCalcularNominaForm({ ...calcularNominaForm, periodo_fin: e.target.value })} />
+            </FormField>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40">
+          <SubmitButton
+            label={calculandoNomina ? 'Calculando…' : 'Calcular'}
+            loading={calculandoNomina}
+            color="violet"
+            onClick={handleCalcularNomina}
           />
         </div>
       </SlidePanel>

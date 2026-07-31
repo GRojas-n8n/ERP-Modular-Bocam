@@ -166,20 +166,31 @@
 
 ## 7. `app-shell` — panel "Calcular Nómina" (TDD)
 
-- [ ] 7.1 Test: clic en el botón (con `activeTab==='prenomina'`) abre el
+- [x] 7.1 Test: clic en el botón (con `activeTab==='prenomina'`) abre el
       panel.
-- [ ] 7.2 Test: validación de campos obligatorios (`periodo_inicio`,
+- [x] 7.2 Test: validación de campos obligatorios (`periodo_inicio`,
       `periodo_fin`); confirma que NO se envía `periodo_tipo`.
-- [ ] 7.3 Test: cálculo exitoso cierra el panel y refresca la lista de
+- [x] 7.3 Test: cálculo exitoso cierra el panel y refresca la lista de
       pre-nóminas.
-- [ ] 7.4 Test: error del backend mantiene el panel abierto con el
+- [x] 7.4 Test: error del backend mantiene el panel abierto con el
       mensaje.
-- [ ] 7.5 Test: estado vacío de Pre-Nómina muestra el CTA y abre el
+- [x] 7.5 Test: estado vacío de Pre-Nómina muestra el CTA y abre el
       mismo panel.
-- [ ] 7.6 Confirmar tests en rojo.
-- [ ] 7.7 Implementar el panel + wiring del botón + `action` en
+- [x] 7.6 Confirmar tests en rojo.
+      **Resultado:** confirmado — los 5 tests fallaron contra el código
+      anterior (el botón del header no tenía efecto en la pestaña
+      Pre-Nómina, sin panel).
+- [x] 7.7 Implementar el panel + wiring del botón + `action` en
       `EmptyStatePanel`.
-- [ ] 7.8 Tests en verde.
+      **Resultado:** el formulario solo pide `periodo_inicio`/
+      `periodo_fin` — confirmado en el test 7.2 que el body de
+      `POST /prenominas/calcular` es exactamente
+      `{ periodo_inicio, periodo_fin }`, sin `periodo_tipo`.
+- [x] 7.8 Tests en verde.
+      **Resultado:** los 5 tests nuevos en
+      `apps/app-shell/src/views/PersonalView.calcular-nomina.test.tsx`
+      en verde; suite completa de `app-shell` (48 archivos, 142 tests)
+      sin regresión; `tsc -b` limpio.
 
 ## 8. Verificación integral
 
