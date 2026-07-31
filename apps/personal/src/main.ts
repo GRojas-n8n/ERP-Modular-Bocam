@@ -97,7 +97,7 @@ app.get('/api/v1/personal/empleados', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/v1/personal/empleados', async (req: Request, res: Response) => {
+app.post('/api/v1/personal/empleados', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
@@ -322,7 +322,7 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
   }
 });
 
-app.patch('/api/v1/personal/empleados/:id/baja', async (req: Request, res: Response) => {
+app.patch('/api/v1/personal/empleados/:id/baja', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -363,7 +363,7 @@ app.get('/api/v1/personal/cuadrillas', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/v1/personal/cuadrillas', async (req: Request, res: Response) => {
+app.post('/api/v1/personal/cuadrillas', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { nombre, especialidad, capataz_id, capataz_nombre } = req.body;
@@ -395,7 +395,7 @@ app.post('/api/v1/personal/cuadrillas', async (req: Request, res: Response) => {
 });
 
 // Asignar empleados a cuadrilla
-app.post('/api/v1/personal/cuadrillas/:id/asignar', async (req: Request, res: Response) => {
+app.post('/api/v1/personal/cuadrillas/:id/asignar', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -446,7 +446,7 @@ app.get('/api/v1/personal/asignaciones', async (req: Request, res: Response) => 
   }
 });
 
-app.post('/api/v1/personal/asignaciones', async (req: Request, res: Response) => {
+app.post('/api/v1/personal/asignaciones', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { empleado_id, cuadrilla_id, frente_trabajo, turno, fecha_inicio, fecha_fin, horas_diarias } = req.body;
@@ -629,7 +629,7 @@ app.patch('/api/v1/personal/prenominas/:id/marcar-revisado', requireRoles('resid
 });
 
 // Calcular pre-nómina automática para empleados activos del proyecto
-app.post('/api/v1/personal/prenominas/calcular', async (req: Request, res: Response) => {
+app.post('/api/v1/personal/prenominas/calcular', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { periodo_inicio, periodo_fin } = req.body;
