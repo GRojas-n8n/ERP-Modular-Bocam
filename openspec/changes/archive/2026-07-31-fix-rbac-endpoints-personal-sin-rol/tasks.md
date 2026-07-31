@@ -118,8 +118,23 @@
       **Resultado real (distinto al plan):** no hubo PR — por instrucción
       explícita del usuario se hizo `git push origin main` directo
       (`88689b9..5d3f3fc`).
-- [ ] 5.3 Tras merge y verificación en producción, archivar el change
+- [x] 5.3 Tras merge y verificación en producción, archivar el change
       (`openspec archive`).
-      Pendiente — el fix está en `main` local y en `origin/main`, pero no
-      se ha verificado contra el VPS de producción. Archivar cuando esa
-      verificación se complete.
+      **Resultado:** el deploy automático (`deploy-vps-backend.yml`) falló
+      3 veces seguidas en el paso "Configurar llave SSH" (timeout de
+      `ssh-keyscan`, mismo patrón intermitente ya documentado en
+      `fix-ci-playwright-smoke-post-deploy-2026-07-29`). Se hizo el
+      redeploy manual de `personal` por SSH (`docker compose build
+      personal && up -d personal`, sin migración pendiente — confirmado
+      con `prisma migrate status`). Contenedor `bocam-vps-personal`
+      recreado 2026-07-31T14:46:06Z, healthy, en el commit `a956e0e`
+      (incluye `5d3f3fc`). Verificado dentro del contenedor real
+      (`docker exec ... grep requireRoles dist/apps/personal/src/main.js`)
+      que los 6 endpoints tienen `requireRoles('personal_rh', 'admin')`
+      en el código efectivamente desplegado, no solo en el checkout de
+      git. Smoke test negativo contra `https://iretum.com`: los 6
+      endpoints responden 401 sin token (autenticación corre antes que
+      el guard de rol, comportamiento esperado). Verificación positiva
+      con roles reales (`personal_rh`/`admin` pasan, `residencia` recibe
+      403) ya se había hecho en navegador local con datos reales (tarea
+      4.3/4.4) — el código es idéntico, solo cambió el entorno.

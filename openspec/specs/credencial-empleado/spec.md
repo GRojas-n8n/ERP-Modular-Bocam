@@ -1,5 +1,8 @@
-## ADDED Requirements
+# credencial-empleado Specification
 
+## Purpose
+TBD - created by archiving change fix-imprimir-lote-credenciales-sin-aviso. Update Purpose after archive.
+## Requirements
 ### Requirement: RH emite una credencial con token opaco para un empleado
 El sistema SHALL permitir a un usuario con rol `personal_rh` o `admin` generar una credencial para un empleado — `POST /api/v1/personal/empleados/:id/credencial` —, creando un registro `CredencialEmpleado` con un `token` aleatorio de al menos 32 bytes (base62), único por tenant, y `activa = true`. El token SHALL NOT ser derivable del `id_empleado` ni de ningún otro identificador expuesto por la API.
 
@@ -37,11 +40,19 @@ El sistema SHALL aceptar `tipo_documento = FOTO_CREDENCIAL` en `POST /api/v1/per
 - **THEN** el sistema usa un marcador con las iniciales del empleado en vez de fallar la generación del lote
 
 ### Requirement: Impresión en lote de una, varias o todas las credenciales de un proyecto
-El sistema SHALL permitir a RH seleccionar uno, varios, o todos los empleados elegibles de un proyecto (mismo criterio de `obtenerEmpleadoIdsDelProyecto` usado en `calcular`) y generar una hoja imprimible (frente y reverso) con sus credenciales, incluyendo QR real codificado como `BOCAM:CRED:{token}` — generando una credencial nueva automáticamente para cualquier empleado seleccionado que aún no tenga una `activa`.
+El sistema SHALL permitir a RH seleccionar uno, varios, o todos los empleados elegibles de un proyecto (mismo criterio de `obtenerEmpleadoIdsDelProyecto` usado en `calcular`) y generar una hoja imprimible (frente y reverso) con sus credenciales, incluyendo QR real codificado como `BOCAM:CRED:{token}` — generando una credencial nueva automáticamente para cualquier empleado seleccionado que aún no tenga una `activa`. Si alguno de los empleados seleccionados no es elegible del proyecto activo, el sistema SHALL informar explícitamente al usuario cuáles/cuántos quedaron excluidos, sin generar una hoja de impresión vacía o incompleta en silencio.
 
 #### Scenario: Imprimir credenciales de todo un proyecto
 - **WHEN** RH selecciona "todos" en el selector de impresión para el proyecto activo
 - **THEN** el sistema genera la hoja con una credencial por cada empleado elegible del proyecto, emitiendo credencial nueva a quien no tenía
+
+#### Scenario: Ningún empleado seleccionado es elegible del proyecto activo
+- **WHEN** RH selecciona uno o más empleados para imprimir y ninguno de ellos está asignado (vía `AsignacionFrente` o `Cuadrilla`) al proyecto activo
+- **THEN** el sistema NO abre ninguna hoja de impresión y notifica al usuario que ningún empleado seleccionado pertenece al proyecto activo
+
+#### Scenario: Exclusión parcial de empleados no elegibles
+- **WHEN** RH selecciona varios empleados y solo algunos están asignados al proyecto activo
+- **THEN** el sistema genera la hoja de impresión únicamente con los empleados elegibles y notifica al usuario cuántos fueron excluidos por no pertenecer al proyecto activo
 
 ### Requirement: Aislamiento de `credenciales_empleado` reforzado por RLS
 La tabla `credenciales_empleado` SHALL tener Row-Level Security habilitado y forzado con una única política que exija `tenant_id` coincidente con `current_setting('app.current_tenant_id')` en `USING` y `WITH CHECK` (solo `tenant_id` — la credencial, igual que el empleado, no está scoped a un proyecto). Esto SHALL actuar como defensa en profundidad además del filtro explícito por `tenant_id` que ya existe en el código de `apps/personal/src/main.ts`.
@@ -53,3 +64,4 @@ La tabla `credenciales_empleado` SHALL tener Row-Level Security habilitado y for
 #### Scenario: Emisión de credencial no puede escribir en otro tenant
 - **WHEN** una transacción con `app.current_tenant_id = T1` intenta crear una fila de `credenciales_empleado` con `tenant_id = T2`
 - **THEN** la operación es rechazada por `WITH CHECK`, en vez de insertar silenciosamente una credencial cross-tenant
+

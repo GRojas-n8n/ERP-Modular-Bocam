@@ -22,3 +22,15 @@
 - [x] 4.2 Correr los tests de frontend nuevos (1.3, 1.4) en verde.
 - [x] 4.3 Correr `tsc -b` de `app-shell` y `tsc --noEmit` de `personal` limpios.
 - [x] 4.4 QA manual en navegador local: seleccionar un empleado no elegible del proyecto activo y confirmar que aparece el `notify` de error en vez de una hoja en blanco. Confirmado con Playwright real (2026-07-29): al seleccionar a "Juan Qa Pérez Qa" (sin asignación de proyecto) y click "Imprimir credenciales", apareció el texto "proyecto activo" del notify y NO se generaron errores nuevos de consola; no se disparó ninguna descarga/ventana de impresión en blanco.
+
+## 5. Cierre
+
+- [x] 5.1 Commit directo en `main` (`be43572`, 2026-07-30), sin branch/PR
+      intermedio — mismo patrón que `fix-rbac-endpoints-personal-sin-rol`.
+- [x] 5.2 Verificar en producción y archivar. **Resultado:** el commit
+      `be43572` ya estaba incluido en el deploy exitoso de `personal`
+      del 2026-07-31T02:43 (build desde HEAD de `main`, que ya lo
+      contenía). Confirmado 2026-07-31 dentro del contenedor real
+      (`bocam-vps-personal`, tras el rebuild de la tarea de verificación
+      del RBAC fix) que `dist/apps/personal/src/main.js` línea ~1902
+      calcula `excluidos` y lo devuelve junto con `credenciales`.
