@@ -138,6 +138,16 @@ interface AsignacionResidente {
   fecha_fin: string | null;
 }
 
+interface AsignacionFrente {
+  id_asignacion: string;
+  empleado_id: string;
+  frente_trabajo: string;
+  turno: string;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  estado: string;
+}
+
 interface DocumentoPorVencer {
   id_documento: string;
   empleado_id: string;
@@ -339,6 +349,11 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [asignandoResidente, setAsignandoResidente] = useState(false);
   const [residentesDisponibles, setResidentesDisponibles] = useState<{ id: string; nombre: string; email: string }[] | null>(null);
   const [residentesDisponiblesError, setResidentesDisponiblesError] = useState(false);
+
+  // ── Asignación a Frente de Trabajo (dentro del panel de config) ─────────────
+  const [asignacionesFrente, setAsignacionesFrente] = useState<AsignacionFrente[]>([]);
+  const [nuevaAsignacionFrente, setNuevaAsignacionFrente] = useState({ frente_trabajo: '', turno: 'DIURNO', fecha_inicio: '', fecha_fin: '', cuadrilla_id: '' });
+  const [creandoAsignacionFrente, setCreandoAsignacionFrente] = useState(false);
 
   // ── Periodicidad de pago del proyecto activo (config-nomina) ────────────────
   const [periodicidadProyecto, setPeriodicidadProyecto] = useState<string>('SEMANAL');
@@ -619,7 +634,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           infonavit_monto: raw.infonavit_monto != null ? Number(raw.infonavit_monto) : null,
         },
       });
-      await Promise.all([cargarExpediente(empleado.id_empleado), cargarResidentes(empleado.id_empleado), cargarCredencial(empleado.id_empleado), cargarResidentesDisponibles()]);
+      await Promise.all([cargarExpediente(empleado.id_empleado), cargarResidentes(empleado.id_empleado), cargarCredencial(empleado.id_empleado), cargarResidentesDisponibles(), cargarAsignacionesFrente(empleado.id_empleado)]);
     } catch { /* silencioso */ }
   };
 
@@ -633,6 +648,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       setResidentes([]);
       setResidentesDisponibles(null);
       setResidentesDisponiblesError(false);
+      setAsignacionesFrente([]);
       setCredencial(null);
     } catch { /* silencioso */ } finally {
       setSavingConfig(false);
@@ -826,6 +842,40 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     } catch {
       setResidentesDisponibles(null);
       setResidentesDisponiblesError(true);
+    }
+  };
+
+  // ── Asignación a Frente de Trabajo ───────────────────────────────────────────
+  const cargarAsignacionesFrente = async (empleadoId: string) => {
+    try {
+      const r = await api.get('/api/v1/personal/asignaciones');
+      const todas: AsignacionFrente[] = (r.data as any)?.data ?? [];
+      setAsignacionesFrente(todas.filter(a => a.empleado_id === empleadoId && a.estado === 'ACTIVA'));
+    } catch { setAsignacionesFrente([]); }
+  };
+
+  const handleCrearAsignacionFrente = async () => {
+    if (!configPanel) return;
+    if (!nuevaAsignacionFrente.frente_trabajo.trim()) {
+      notify({ type: 'error', title: 'El frente de trabajo es obligatorio.' });
+      return;
+    }
+    setCreandoAsignacionFrente(true);
+    try {
+      await api.post('/api/v1/personal/asignaciones', {
+        empleado_id: configPanel.empleado.id_empleado,
+        frente_trabajo: nuevaAsignacionFrente.frente_trabajo.trim(),
+        turno: nuevaAsignacionFrente.turno,
+        fecha_inicio: nuevaAsignacionFrente.fecha_inicio || undefined,
+        fecha_fin: nuevaAsignacionFrente.fecha_fin || undefined,
+        cuadrilla_id: nuevaAsignacionFrente.cuadrilla_id || undefined,
+      });
+      setNuevaAsignacionFrente({ frente_trabajo: '', turno: 'DIURNO', fecha_inicio: '', fecha_fin: '', cuadrilla_id: '' });
+      await cargarAsignacionesFrente(configPanel.empleado.id_empleado);
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al crear la asignación a frente de trabajo' });
+    } finally {
+      setCreandoAsignacionFrente(false);
     }
   };
 
@@ -2056,6 +2106,69 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 {residentesDisponiblesError && (
                   <p className="text-[10px] text-red-500">Directorio de residentes no disponible. El resto del panel sigue funcionando.</p>
                 )}
+              </div>
+            </div>
+
+            {/* ── Asignación a Frente de Trabajo ── */}
+            <div className="space-y-3 border-t border-border/40 pt-5">
+              <p className="text-xs font-black uppercase tracking-widest text-foreground">Asignación a Frente de Trabajo</p>
+
+              <div className="space-y-1.5">
+                {asignacionesFrente.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground">Este empleado no tiene asignación a ningún frente de trabajo.</p>
+                )}
+                {asignacionesFrente.map(a => (
+                  <div key={a.id_asignacion} className="rounded-xl border border-border/40 px-3 py-2">
+                    <p className="truncate text-xs font-bold text-foreground">{a.frente_trabajo}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {a.turno} · desde {a.fecha_inicio.slice(0, 10)}{a.fecha_fin ? ` hasta ${a.fecha_fin.slice(0, 10)}` : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <div>
+                  <label htmlFor="input-frente-trabajo" className="sr-only">Frente de trabajo</label>
+                  <input
+                    id="input-frente-trabajo"
+                    type="text"
+                    value={nuevaAsignacionFrente.frente_trabajo}
+                    onChange={e => setNuevaAsignacionFrente({ ...nuevaAsignacionFrente, frente_trabajo: e.target.value })}
+                    placeholder="Frente de trabajo (ej. Frente 1 — Cimentación)"
+                    className="w-full rounded-lg border border-border/40 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    aria-label="Turno"
+                    value={nuevaAsignacionFrente.turno}
+                    onChange={e => setNuevaAsignacionFrente({ ...nuevaAsignacionFrente, turno: e.target.value })}
+                    className="rounded-lg border border-border/40 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    <option value="DIURNO">Diurno</option>
+                    <option value="NOCTURNO">Nocturno</option>
+                    <option value="MIXTO">Mixto</option>
+                  </select>
+                  <select
+                    aria-label="Cuadrilla (opcional)"
+                    value={nuevaAsignacionFrente.cuadrilla_id}
+                    onChange={e => setNuevaAsignacionFrente({ ...nuevaAsignacionFrente, cuadrilla_id: e.target.value })}
+                    className="flex-1 rounded-lg border border-border/40 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    <option value="">Sin cuadrilla</option>
+                    {cuadrillas.map(c => (
+                      <option key={c.id_cuadrilla} value={c.id_cuadrilla}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  disabled={creandoAsignacionFrente}
+                  onClick={() => void handleCrearAsignacionFrente()}
+                  className="w-full rounded-lg bg-indigo-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  Crear asignación
+                </Button>
               </div>
             </div>
 

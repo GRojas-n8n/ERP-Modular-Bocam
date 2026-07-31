@@ -110,18 +110,30 @@
 
 ## 5. `app-shell` — sección "Asignación a Frente de Trabajo" (TDD)
 
-- [ ] 5.1 Test: la sección lista las `AsignacionFrente` activas del
+- [x] 5.1 Test: la sección lista las `AsignacionFrente` activas del
       empleado (filtradas client-side de `GET /asignaciones`).
-- [ ] 5.2 Test: estado vacío cuando el empleado no tiene asignaciones.
-- [ ] 5.3 Test: formulario exige `frente_trabajo`; sin él no envía la
+- [x] 5.2 Test: estado vacío cuando el empleado no tiene asignaciones.
+- [x] 5.3 Test: formulario exige `frente_trabajo`; sin él no envía la
       petición.
-- [ ] 5.4 Test: alta exitosa refresca la lista mostrada.
-- [ ] 5.5 Test: error del backend se muestra sin limpiar el formulario.
-- [ ] 5.6 Confirmar tests en rojo.
-- [ ] 5.7 Implementar la sección en `PersonalView.tsx` (junto a
+- [x] 5.4 Test: alta exitosa refresca la lista mostrada.
+- [x] 5.5 Test: error del backend se muestra sin limpiar el formulario.
+- [x] 5.6 Confirmar tests en rojo.
+      **Resultado:** confirmado — los 5 tests fallaron contra el código
+      anterior (la sección no existía).
+- [x] 5.7 Implementar la sección en `PersonalView.tsx` (junto a
       Residente(s) asignado(s)), incluyendo el `<select>` opcional de
       `cuadrilla_id` poblado desde `GET /cuadrillas`.
-- [ ] 5.8 Tests en verde.
+      **Resultado:** reutiliza el estado `cuadrillas` ya cargado al
+      montar la vista (mismo `GET /api/v1/personal/cuadrillas`), sin
+      fetch adicional. Nuevo estado `asignacionesFrente` +
+      `cargarAsignacionesFrente()` (filtra client-side por
+      `empleado_id` y `estado === 'ACTIVA'`), llamado junto con el
+      resto de las cargas al abrir el panel.
+- [x] 5.8 Tests en verde.
+      **Resultado:** los 5 tests nuevos en
+      `apps/app-shell/src/views/PersonalView.frente-trabajo.test.tsx`
+      en verde; suite completa de `app-shell` (46 archivos, 132 tests)
+      sin regresión; `tsc -b` limpio.
 
 ## 6. `app-shell` — panel "Nueva Cuadrilla" (TDD)
 
