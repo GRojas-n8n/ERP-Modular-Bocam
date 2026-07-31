@@ -290,9 +290,18 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
+      nombre, apellido_paterno, apellido_materno, rfc, curp, nss,
+      puesto, salario_diario, telefono, email, contacto_emergencia,
       modo_asistencia, tipo_jornada,
       hora_entrada_programada, hora_salida_programada, horas_jornada,
     } = req.body;
+
+    const camposObligatorios: Record<string, unknown> = { nombre, apellido_paterno, rfc, puesto, salario_diario };
+    for (const campo of Object.keys(camposObligatorios)) {
+      if (campo in req.body && !camposObligatorios[campo]) {
+        return res.status(400).json(createApiError('PER_MISSING_FIELDS', 'nombre, apellido_paterno, rfc, puesto y salario_diario son obligatorios.'));
+      }
+    }
 
     if (modo_asistencia === 'POR_HORAS' && (!hora_entrada_programada || !hora_salida_programada)) {
       return res.status(400).json(createApiError('PER_VALIDATION', 'hora_entrada_programada y hora_salida_programada son obligatorios en modo POR_HORAS.'));
@@ -301,12 +310,31 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
       return res.status(400).json(createApiError('PER_VALIDATION', 'horas_jornada debe estar entre 1 y 24.'));
     }
 
-    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+    const resultado = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
-      if (!emp) return null;
-      return prisma.empleado.update({
+      if (!emp) return { status: 'not_found' } as const;
+
+      if (rfc !== undefined && rfc !== emp.rfc) {
+        const duplicado = await prisma.empleado.findFirst({
+          where: { tenant_id: tenantId, rfc, NOT: { id_empleado: id } },
+        });
+        if (duplicado) return { status: 'rfc_duplicado' } as const;
+      }
+
+      const data = await prisma.empleado.update({
         where: { id_empleado: id },
         data: {
+          ...(nombre                   !== undefined ? { nombre }                   : {}),
+          ...(apellido_paterno         !== undefined ? { apellido_paterno }         : {}),
+          ...(apellido_materno         !== undefined ? { apellido_materno }         : {}),
+          ...(rfc                      !== undefined ? { rfc }                      : {}),
+          ...(curp                     !== undefined ? { curp }                     : {}),
+          ...(nss                      !== undefined ? { nss }                      : {}),
+          ...(puesto                   !== undefined ? { puesto }                   : {}),
+          ...(salario_diario           !== undefined ? { salario_diario: Number(salario_diario) } : {}),
+          ...(telefono                 !== undefined ? { telefono }                 : {}),
+          ...(email                    !== undefined ? { email }                    : {}),
+          ...(contacto_emergencia      !== undefined ? { contacto_emergencia }      : {}),
           ...(modo_asistencia          !== undefined ? { modo_asistencia }          : {}),
           ...(tipo_jornada             !== undefined ? { tipo_jornada }             : {}),
           ...(hora_entrada_programada  !== undefined ? { hora_entrada_programada }  : {}),
@@ -314,9 +342,12 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
           ...(horas_jornada            !== undefined ? { horas_jornada: Number(horas_jornada) } : {}),
         },
       });
+      return { status: 'ok', data } as const;
     });
-    if (!data) return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
-    res.json(createApiResponse(data, tenantId, proyectoId));
+
+    if (resultado.status === 'not_found') return res.status(404).json(createApiError('PER_NOT_FOUND', 'Empleado no encontrado.'));
+    if (resultado.status === 'rfc_duplicado') return res.status(400).json(createApiError('PER_RFC_DUPLICADO', 'Ya existe un empleado con ese RFC en este tenant.'));
+    res.json(createApiResponse(resultado.data, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
   }

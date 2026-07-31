@@ -51,10 +51,17 @@ interface Empleado {
   numero_empleado: string;
   nombre: string;
   apellido_paterno: string;
+  apellido_materno?: string | null;
+  rfc?: string;
+  curp?: string | null;
+  nss?: string | null;
   puesto: string;
   categoria: string;
   estado: string;
   salario_diario: number;
+  telefono?: string | null;
+  email?: string | null;
+  contacto_emergencia?: string | null;
   certificaciones?: string;
   cuadrilla?: { nombre: string; codigo: string } | null;
   modo_asistencia?: string;
@@ -232,6 +239,24 @@ const NUEVO_EMPLEADO_FORM_VACIO: NuevoEmpleadoForm = {
   salario_diario: '', telefono: '', email: '', contacto_emergencia: '',
 };
 
+// ─── Edición de datos generales de un Empleado existente ──────────────────
+// Mismos campos que acepta PATCH /empleados/:id en apps/personal/src/main.ts:288
+// (subconjunto de NuevoEmpleadoForm: sin categoria/tipo_contrato/fecha_ingreso,
+// que el PATCH no persiste — ver design.md de editar-datos-empleado).
+interface EditarEmpleadoForm {
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  rfc: string;
+  curp: string;
+  nss: string;
+  puesto: string;
+  salario_diario: string;
+  telefono: string;
+  email: string;
+  contacto_emergencia: string;
+}
+
 // ─── Importación masiva de Empleados (CSV/Excel) ──────────────────────────────
 // Mismas reglas que POST /empleados en apps/personal/src/main.ts:74.
 interface EmpleadoImportRow {
@@ -375,6 +400,12 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [panelNuevoEmpleado, setPanelNuevoEmpleado] = useState(false);
   const [nuevoEmpleadoForm, setNuevoEmpleadoForm] = useState<NuevoEmpleadoForm>(NUEVO_EMPLEADO_FORM_VACIO);
 
+  // ── Edición de datos generales de un Empleado existente ──────────────────
+  const [editarEmpleadoPanel, setEditarEmpleadoPanel] = useState<{ empleado: Empleado } | null>(null);
+  const [editarEmpleadoForm, setEditarEmpleadoForm] = useState<EditarEmpleadoForm | null>(null);
+  const [guardandoEditarEmpleado, setGuardandoEditarEmpleado] = useState(false);
+  const [errorEditarEmpleado, setErrorEditarEmpleado] = useState<string | null>(null);
+
   // ── Alta de Cuadrilla ──────────────────────────────────────────────────────
   const [panelNuevaCuadrilla, setPanelNuevaCuadrilla] = useState(false);
   const [nuevaCuadrillaForm, setNuevaCuadrillaForm] = useState({ nombre: '', especialidad: '', capataz_nombre: '' });
@@ -443,6 +474,53 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       setErrorNuevoEmpleado(err.response?.data?.error?.message || 'Error al crear el empleado.');
     } finally {
       setGuardandoNuevoEmpleado(false);
+    }
+  };
+
+  const handleAbrirEditarEmpleado = (empleado: Empleado) => {
+    setEditarEmpleadoForm({
+      nombre: empleado.nombre,
+      apellido_paterno: empleado.apellido_paterno,
+      apellido_materno: empleado.apellido_materno ?? '',
+      rfc: empleado.rfc ?? '',
+      curp: empleado.curp ?? '',
+      nss: empleado.nss ?? '',
+      puesto: empleado.puesto,
+      salario_diario: String(empleado.salario_diario ?? ''),
+      telefono: empleado.telefono ?? '',
+      email: empleado.email ?? '',
+      contacto_emergencia: empleado.contacto_emergencia ?? '',
+    });
+    setErrorEditarEmpleado(null);
+    setEditarEmpleadoPanel({ empleado });
+  };
+
+  const handleCerrarEditarEmpleado = () => {
+    setEditarEmpleadoPanel(null);
+    setEditarEmpleadoForm(null);
+    setErrorEditarEmpleado(null);
+  };
+
+  const handleGuardarEditarEmpleado = async () => {
+    if (!editarEmpleadoPanel || !editarEmpleadoForm) return;
+    const { nombre, apellido_paterno, rfc, puesto, salario_diario } = editarEmpleadoForm;
+    if (!nombre || !apellido_paterno || !rfc || !puesto || !salario_diario) {
+      setErrorEditarEmpleado('Nombre, apellido paterno, RFC, puesto y salario diario son obligatorios.');
+      return;
+    }
+
+    setGuardandoEditarEmpleado(true);
+    setErrorEditarEmpleado(null);
+    try {
+      const empleadoId = editarEmpleadoPanel.empleado.id_empleado;
+      const r = await api.patch(`/api/v1/personal/empleados/${empleadoId}`, editarEmpleadoForm);
+      setEmpleados(prev => prev.map(e => (e.id_empleado === empleadoId ? { ...e, ...r.data.data } : e)));
+      notify({ type: 'success', title: 'Empleado actualizado.' });
+      handleCerrarEditarEmpleado();
+    } catch (err: any) {
+      setErrorEditarEmpleado(err.response?.data?.error?.message || 'Error al actualizar el empleado.');
+    } finally {
+      setGuardandoEditarEmpleado(false);
     }
   };
 
@@ -1380,6 +1458,13 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                         <TableCell className="text-center">
                           <div className="flex flex-col gap-0.5 items-center">
                             <button
+                              onClick={() => handleAbrirEditarEmpleado(empleado)}
+                              className="text-[9px] font-black uppercase tracking-widest text-sky-500 hover:text-sky-700 hover:underline"
+                              title="Editar datos del empleado"
+                            >
+                              Editar
+                            </button>
+                            <button
                               onClick={() => handleAbrirConfigJornada(empleado)}
                               className="text-[9px] font-black uppercase tracking-widest text-violet-500 hover:text-violet-700 hover:underline"
                               title="Configurar jornada laboral"
@@ -1751,6 +1836,73 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             onClick={handleGuardarNuevoEmpleado}
           />
         </div>
+      </SlidePanel>
+
+      {/* ── Editar datos generales de un Empleado existente ──────────────────── */}
+      <SlidePanel
+        isOpen={!!editarEmpleadoPanel}
+        onClose={handleCerrarEditarEmpleado}
+        title="Editar Empleado"
+        subtitle={editarEmpleadoPanel?.empleado.numero_empleado}
+        accentColor="sky"
+      >
+        {editarEmpleadoForm && (
+          <>
+            <div className="space-y-6 pb-28">
+              {errorEditarEmpleado && (
+                <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 flex gap-3">
+                  <IconAlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-destructive">{errorEditarEmpleado}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Nombre" required>
+                  <Input value={editarEmpleadoForm.nombre} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, nombre: e.target.value })} />
+                </FormField>
+                <FormField label="Apellido paterno" required>
+                  <Input value={editarEmpleadoForm.apellido_paterno} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, apellido_paterno: e.target.value })} />
+                </FormField>
+                <FormField label="Apellido materno">
+                  <Input value={editarEmpleadoForm.apellido_materno} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, apellido_materno: e.target.value })} />
+                </FormField>
+                <FormField label="RFC" required>
+                  <Input value={editarEmpleadoForm.rfc} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, rfc: e.target.value.toUpperCase() })} />
+                </FormField>
+                <FormField label="CURP">
+                  <Input value={editarEmpleadoForm.curp} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, curp: e.target.value.toUpperCase() })} />
+                </FormField>
+                <FormField label="NSS">
+                  <Input value={editarEmpleadoForm.nss} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, nss: e.target.value })} />
+                </FormField>
+                <FormField label="Puesto" required>
+                  <Input value={editarEmpleadoForm.puesto} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, puesto: e.target.value })} />
+                </FormField>
+                <FormField label="Salario diario (MXN)" required>
+                  <Input type="number" min="0" step="0.01" value={editarEmpleadoForm.salario_diario} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, salario_diario: e.target.value })} />
+                </FormField>
+                <FormField label="Teléfono">
+                  <Input value={editarEmpleadoForm.telefono} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, telefono: e.target.value })} />
+                </FormField>
+                <FormField label="Email">
+                  <Input type="email" value={editarEmpleadoForm.email} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, email: e.target.value })} />
+                </FormField>
+                <FormField label="Contacto de emergencia">
+                  <Input value={editarEmpleadoForm.contacto_emergencia} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia: e.target.value })} />
+                </FormField>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-card/95 backdrop-blur border-t border-border/40">
+              <SubmitButton
+                label={guardandoEditarEmpleado ? 'Guardando…' : 'Guardar cambios'}
+                loading={guardandoEditarEmpleado}
+                color="sky"
+                onClick={handleGuardarEditarEmpleado}
+              />
+            </div>
+          </>
+        )}
       </SlidePanel>
 
       {/* ── Alta de Cuadrilla ─────────────────────────────────────────────────── */}
