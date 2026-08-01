@@ -9,7 +9,8 @@ un botón "Editar" junto a los botones existentes "Jornada" y "Deducciones". Al
 hacer clic, el sistema SHALL abrir un panel (`SlidePanel`) con un formulario
 precargado con los datos actuales del empleado: `nombre`, `apellido_paterno`,
 `apellido_materno`, `rfc`, `curp`, `nss`, `puesto`, `salario_diario`, `telefono`,
-`email`, `contacto_emergencia`.
+`email`, `contacto_emergencia_nombre`, `contacto_emergencia_telefono`,
+`contacto_emergencia_parentesco`.
 
 #### Scenario: Clic en "Editar" abre el panel con los datos actuales
 - **WHEN** el usuario está en la pestaña Empleados y hace clic en "Editar" sobre
