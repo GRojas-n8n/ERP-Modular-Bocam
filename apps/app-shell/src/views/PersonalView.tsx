@@ -61,7 +61,9 @@ interface Empleado {
   salario_diario: number;
   telefono?: string | null;
   email?: string | null;
-  contacto_emergencia?: string | null;
+  contacto_emergencia_nombre?: string | null;
+  contacto_emergencia_telefono?: string | null;
+  contacto_emergencia_parentesco?: string | null;
   certificaciones?: string;
   cuadrilla?: { nombre: string; codigo: string } | null;
   modo_asistencia?: string;
@@ -169,7 +171,8 @@ interface DocumentoPorVencer {
 interface ImprimirLoteItem {
   empleado: {
     id_empleado: string; numero_empleado: string; nombre: string; apellido_paterno: string;
-    puesto: string; categoria: string; contacto_emergencia: string | null;
+    puesto: string; categoria: string;
+    contacto_emergencia_nombre: string | null; contacto_emergencia_telefono: string | null;
   };
   token: string;
   emitida_en: string;
@@ -230,13 +233,16 @@ interface NuevoEmpleadoForm {
   salario_diario: string;
   telefono: string;
   email: string;
-  contacto_emergencia: string;
+  contacto_emergencia_nombre: string;
+  contacto_emergencia_telefono: string;
+  contacto_emergencia_parentesco: string;
 }
 
 const NUEVO_EMPLEADO_FORM_VACIO: NuevoEmpleadoForm = {
   nombre: '', apellido_paterno: '', apellido_materno: '', rfc: '', curp: '', nss: '',
   puesto: '', categoria: 'OBRERO', tipo_contrato: 'PLANTA', fecha_ingreso: '',
-  salario_diario: '', telefono: '', email: '', contacto_emergencia: '',
+  salario_diario: '', telefono: '', email: '',
+  contacto_emergencia_nombre: '', contacto_emergencia_telefono: '', contacto_emergencia_parentesco: '',
 };
 
 // ─── Edición de datos generales de un Empleado existente ──────────────────
@@ -254,7 +260,9 @@ interface EditarEmpleadoForm {
   salario_diario: string;
   telefono: string;
   email: string;
-  contacto_emergencia: string;
+  contacto_emergencia_nombre: string;
+  contacto_emergencia_telefono: string;
+  contacto_emergencia_parentesco: string;
 }
 
 // ─── Importación masiva de Empleados (CSV/Excel) ──────────────────────────────
@@ -453,7 +461,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     try {
       const {
         apellido_materno, curp, nss, categoria, tipo_contrato,
-        fecha_ingreso, telefono, email, contacto_emergencia,
+        fecha_ingreso, telefono, email,
+        contacto_emergencia_nombre, contacto_emergencia_telefono, contacto_emergencia_parentesco,
       } = nuevoEmpleadoForm;
       const r = await api.post('/api/v1/personal/empleados', {
         nombre, apellido_paterno, rfc, puesto, salario_diario,
@@ -465,7 +474,9 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         ...(fecha_ingreso ? { fecha_ingreso } : {}),
         ...(telefono ? { telefono } : {}),
         ...(email ? { email } : {}),
-        ...(contacto_emergencia ? { contacto_emergencia } : {}),
+        ...(contacto_emergencia_nombre ? { contacto_emergencia_nombre } : {}),
+        ...(contacto_emergencia_telefono ? { contacto_emergencia_telefono } : {}),
+        ...(contacto_emergencia_parentesco ? { contacto_emergencia_parentesco } : {}),
       });
       setEmpleados(prev => [...prev, r.data.data]);
       notify({ type: 'success', title: `Empleado ${r.data.data.numero_empleado} creado.` });
@@ -489,7 +500,9 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       salario_diario: String(empleado.salario_diario ?? ''),
       telefono: empleado.telefono ?? '',
       email: empleado.email ?? '',
-      contacto_emergencia: empleado.contacto_emergencia ?? '',
+      contacto_emergencia_nombre: empleado.contacto_emergencia_nombre ?? '',
+      contacto_emergencia_telefono: empleado.contacto_emergencia_telefono ?? '',
+      contacto_emergencia_parentesco: empleado.contacto_emergencia_parentesco ?? '',
     });
     setErrorEditarEmpleado(null);
     setEditarEmpleadoPanel({ empleado });
@@ -901,7 +914,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           nombre: `${it.empleado.nombre} ${it.empleado.apellido_paterno}`,
           puesto: it.empleado.puesto,
           categoria: it.empleado.categoria,
-          contactoEmergencia: it.empleado.contacto_emergencia,
+          contactoEmergenciaNombre: it.empleado.contacto_emergencia_nombre,
+          contactoEmergenciaTelefono: it.empleado.contacto_emergencia_telefono,
           vigenciaInicio,
           vigenciaFin: vigenciaFin.toISOString(),
           qrDataUrl,
@@ -1822,8 +1836,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
             <FormField label="Email">
               <Input type="email" value={nuevoEmpleadoForm.email} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, email: e.target.value })} />
             </FormField>
-            <FormField label="Contacto de emergencia">
-              <Input value={nuevoEmpleadoForm.contacto_emergencia} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia: e.target.value })} />
+            <FormField label="Contacto de emergencia (nombre)">
+              <Input value={nuevoEmpleadoForm.contacto_emergencia_nombre} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_nombre: e.target.value })} />
+            </FormField>
+            <FormField label="Contacto de emergencia (teléfono)">
+              <Input value={nuevoEmpleadoForm.contacto_emergencia_telefono} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_telefono: e.target.value })} />
+            </FormField>
+            <FormField label="Contacto de emergencia (parentesco)">
+              <Input value={nuevoEmpleadoForm.contacto_emergencia_parentesco} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_parentesco: e.target.value })} />
             </FormField>
           </div>
         </div>
@@ -1887,8 +1907,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                 <FormField label="Email">
                   <Input type="email" value={editarEmpleadoForm.email} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, email: e.target.value })} />
                 </FormField>
-                <FormField label="Contacto de emergencia">
-                  <Input value={editarEmpleadoForm.contacto_emergencia} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia: e.target.value })} />
+                <FormField label="Contacto de emergencia (nombre)">
+                  <Input value={editarEmpleadoForm.contacto_emergencia_nombre} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_nombre: e.target.value })} />
+                </FormField>
+                <FormField label="Contacto de emergencia (teléfono)">
+                  <Input value={editarEmpleadoForm.contacto_emergencia_telefono} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_telefono: e.target.value })} />
+                </FormField>
+                <FormField label="Contacto de emergencia (parentesco)">
+                  <Input value={editarEmpleadoForm.contacto_emergencia_parentesco} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_parentesco: e.target.value })} />
                 </FormField>
               </div>
             </div>

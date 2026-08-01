@@ -2176,6 +2176,9 @@ export namespace Prisma {
     telefono: string | null
     email: string | null
     contacto_emergencia: string | null
+    contacto_emergencia_nombre: string | null
+    contacto_emergencia_telefono: string | null
+    contacto_emergencia_parentesco: string | null
     certificaciones: string | null
     estado: string | null
     modo_asistencia: string | null
@@ -2209,6 +2212,9 @@ export namespace Prisma {
     telefono: string | null
     email: string | null
     contacto_emergencia: string | null
+    contacto_emergencia_nombre: string | null
+    contacto_emergencia_telefono: string | null
+    contacto_emergencia_parentesco: string | null
     certificaciones: string | null
     estado: string | null
     modo_asistencia: string | null
@@ -2242,6 +2248,9 @@ export namespace Prisma {
     telefono: number
     email: number
     contacto_emergencia: number
+    contacto_emergencia_nombre: number
+    contacto_emergencia_telefono: number
+    contacto_emergencia_parentesco: number
     certificaciones: number
     estado: number
     modo_asistencia: number
@@ -2291,6 +2300,9 @@ export namespace Prisma {
     telefono?: true
     email?: true
     contacto_emergencia?: true
+    contacto_emergencia_nombre?: true
+    contacto_emergencia_telefono?: true
+    contacto_emergencia_parentesco?: true
     certificaciones?: true
     estado?: true
     modo_asistencia?: true
@@ -2324,6 +2336,9 @@ export namespace Prisma {
     telefono?: true
     email?: true
     contacto_emergencia?: true
+    contacto_emergencia_nombre?: true
+    contacto_emergencia_telefono?: true
+    contacto_emergencia_parentesco?: true
     certificaciones?: true
     estado?: true
     modo_asistencia?: true
@@ -2357,6 +2372,9 @@ export namespace Prisma {
     telefono?: true
     email?: true
     contacto_emergencia?: true
+    contacto_emergencia_nombre?: true
+    contacto_emergencia_telefono?: true
+    contacto_emergencia_parentesco?: true
     certificaciones?: true
     estado?: true
     modo_asistencia?: true
@@ -2477,6 +2495,9 @@ export namespace Prisma {
     telefono: string | null
     email: string | null
     contacto_emergencia: string | null
+    contacto_emergencia_nombre: string | null
+    contacto_emergencia_telefono: string | null
+    contacto_emergencia_parentesco: string | null
     certificaciones: string | null
     estado: string
     modo_asistencia: string
@@ -2529,6 +2550,9 @@ export namespace Prisma {
     telefono?: boolean
     email?: boolean
     contacto_emergencia?: boolean
+    contacto_emergencia_nombre?: boolean
+    contacto_emergencia_telefono?: boolean
+    contacto_emergencia_parentesco?: boolean
     certificaciones?: boolean
     estado?: boolean
     modo_asistencia?: boolean
@@ -2569,6 +2593,9 @@ export namespace Prisma {
     telefono?: boolean
     email?: boolean
     contacto_emergencia?: boolean
+    contacto_emergencia_nombre?: boolean
+    contacto_emergencia_telefono?: boolean
+    contacto_emergencia_parentesco?: boolean
     certificaciones?: boolean
     estado?: boolean
     modo_asistencia?: boolean
@@ -2603,6 +2630,9 @@ export namespace Prisma {
     telefono?: boolean
     email?: boolean
     contacto_emergencia?: boolean
+    contacto_emergencia_nombre?: boolean
+    contacto_emergencia_telefono?: boolean
+    contacto_emergencia_parentesco?: boolean
     certificaciones?: boolean
     estado?: boolean
     modo_asistencia?: boolean
@@ -2659,6 +2689,9 @@ export namespace Prisma {
       telefono: string | null
       email: string | null
       contacto_emergencia: string | null
+      contacto_emergencia_nombre: string | null
+      contacto_emergencia_telefono: string | null
+      contacto_emergencia_parentesco: string | null
       certificaciones: string | null
       estado: string
       modo_asistencia: string
@@ -3088,6 +3121,9 @@ export namespace Prisma {
     readonly telefono: FieldRef<"Empleado", 'String'>
     readonly email: FieldRef<"Empleado", 'String'>
     readonly contacto_emergencia: FieldRef<"Empleado", 'String'>
+    readonly contacto_emergencia_nombre: FieldRef<"Empleado", 'String'>
+    readonly contacto_emergencia_telefono: FieldRef<"Empleado", 'String'>
+    readonly contacto_emergencia_parentesco: FieldRef<"Empleado", 'String'>
     readonly certificaciones: FieldRef<"Empleado", 'String'>
     readonly estado: FieldRef<"Empleado", 'String'>
     readonly modo_asistencia: FieldRef<"Empleado", 'String'>
@@ -17155,6 +17191,9 @@ export namespace Prisma {
     telefono: 'telefono',
     email: 'email',
     contacto_emergencia: 'contacto_emergencia',
+    contacto_emergencia_nombre: 'contacto_emergencia_nombre',
+    contacto_emergencia_telefono: 'contacto_emergencia_telefono',
+    contacto_emergencia_parentesco: 'contacto_emergencia_parentesco',
     certificaciones: 'certificaciones',
     estado: 'estado',
     modo_asistencia: 'modo_asistencia',
@@ -17543,6 +17582,9 @@ export namespace Prisma {
     telefono?: StringNullableFilter<"Empleado"> | string | null
     email?: StringNullableFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_nombre?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_telefono?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_parentesco?: StringNullableFilter<"Empleado"> | string | null
     certificaciones?: StringNullableFilter<"Empleado"> | string | null
     estado?: StringFilter<"Empleado"> | string
     modo_asistencia?: StringFilter<"Empleado"> | string
@@ -17582,6 +17624,9 @@ export namespace Prisma {
     telefono?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     contacto_emergencia?: SortOrderInput | SortOrder
+    contacto_emergencia_nombre?: SortOrderInput | SortOrder
+    contacto_emergencia_telefono?: SortOrderInput | SortOrder
+    contacto_emergencia_parentesco?: SortOrderInput | SortOrder
     certificaciones?: SortOrderInput | SortOrder
     estado?: SortOrder
     modo_asistencia?: SortOrder
@@ -17626,6 +17671,9 @@ export namespace Prisma {
     telefono?: StringNullableFilter<"Empleado"> | string | null
     email?: StringNullableFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_nombre?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_telefono?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_parentesco?: StringNullableFilter<"Empleado"> | string | null
     certificaciones?: StringNullableFilter<"Empleado"> | string | null
     estado?: StringFilter<"Empleado"> | string
     modo_asistencia?: StringFilter<"Empleado"> | string
@@ -17665,6 +17713,9 @@ export namespace Prisma {
     telefono?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     contacto_emergencia?: SortOrderInput | SortOrder
+    contacto_emergencia_nombre?: SortOrderInput | SortOrder
+    contacto_emergencia_telefono?: SortOrderInput | SortOrder
+    contacto_emergencia_parentesco?: SortOrderInput | SortOrder
     certificaciones?: SortOrderInput | SortOrder
     estado?: SortOrder
     modo_asistencia?: SortOrder
@@ -17706,6 +17757,9 @@ export namespace Prisma {
     telefono?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     email?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
+    contacto_emergencia_nombre?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
+    contacto_emergencia_telefono?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
+    contacto_emergencia_parentesco?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     certificaciones?: StringNullableWithAggregatesFilter<"Empleado"> | string | null
     estado?: StringWithAggregatesFilter<"Empleado"> | string
     modo_asistencia?: StringWithAggregatesFilter<"Empleado"> | string
@@ -18961,6 +19015,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -18999,6 +19056,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -19037,6 +19097,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -19075,6 +19138,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -19113,6 +19179,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -19146,6 +19215,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -19178,6 +19250,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -20794,6 +20869,9 @@ export namespace Prisma {
     telefono?: SortOrder
     email?: SortOrder
     contacto_emergencia?: SortOrder
+    contacto_emergencia_nombre?: SortOrder
+    contacto_emergencia_telefono?: SortOrder
+    contacto_emergencia_parentesco?: SortOrder
     certificaciones?: SortOrder
     estado?: SortOrder
     modo_asistencia?: SortOrder
@@ -20834,6 +20912,9 @@ export namespace Prisma {
     telefono?: SortOrder
     email?: SortOrder
     contacto_emergencia?: SortOrder
+    contacto_emergencia_nombre?: SortOrder
+    contacto_emergencia_telefono?: SortOrder
+    contacto_emergencia_parentesco?: SortOrder
     certificaciones?: SortOrder
     estado?: SortOrder
     modo_asistencia?: SortOrder
@@ -20867,6 +20948,9 @@ export namespace Prisma {
     telefono?: SortOrder
     email?: SortOrder
     contacto_emergencia?: SortOrder
+    contacto_emergencia_nombre?: SortOrder
+    contacto_emergencia_telefono?: SortOrder
+    contacto_emergencia_parentesco?: SortOrder
     certificaciones?: SortOrder
     estado?: SortOrder
     modo_asistencia?: SortOrder
@@ -23145,6 +23229,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -23182,6 +23269,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -23288,6 +23378,9 @@ export namespace Prisma {
     telefono?: StringNullableFilter<"Empleado"> | string | null
     email?: StringNullableFilter<"Empleado"> | string | null
     contacto_emergencia?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_nombre?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_telefono?: StringNullableFilter<"Empleado"> | string | null
+    contacto_emergencia_parentesco?: StringNullableFilter<"Empleado"> | string | null
     certificaciones?: StringNullableFilter<"Empleado"> | string | null
     estado?: StringFilter<"Empleado"> | string
     modo_asistencia?: StringFilter<"Empleado"> | string
@@ -23337,6 +23430,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -23374,6 +23470,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -23462,6 +23561,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -23499,6 +23601,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -23704,6 +23809,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -23741,6 +23849,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -23855,6 +23966,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -23892,6 +24006,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24084,6 +24201,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24121,6 +24241,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24174,6 +24297,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24211,6 +24337,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24248,6 +24377,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24285,6 +24417,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24338,6 +24473,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24375,6 +24513,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24412,6 +24553,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24449,6 +24593,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24502,6 +24649,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24539,6 +24689,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24868,6 +25021,9 @@ export namespace Prisma {
     telefono?: string | null
     email?: string | null
     contacto_emergencia?: string | null
+    contacto_emergencia_nombre?: string | null
+    contacto_emergencia_telefono?: string | null
+    contacto_emergencia_parentesco?: string | null
     certificaciones?: string | null
     estado?: string
     modo_asistencia?: string
@@ -24915,6 +25071,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24952,6 +25111,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string
@@ -24989,6 +25151,9 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     contacto_emergencia?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    contacto_emergencia_parentesco?: NullableStringFieldUpdateOperationsInput | string | null
     certificaciones?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     modo_asistencia?: StringFieldUpdateOperationsInput | string

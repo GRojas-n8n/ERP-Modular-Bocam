@@ -36,7 +36,9 @@ const empleadoMock = {
   salario_diario: 320,
   telefono: '5511112222',
   email: 'ana@example.com',
-  contacto_emergencia: 'Juan García 5533334444',
+  contacto_emergencia_nombre: 'Juan García',
+  contacto_emergencia_telefono: '5533334444',
+  contacto_emergencia_parentesco: 'Esposo',
 };
 
 const dashboardMock = {
@@ -101,6 +103,9 @@ describe('PersonalView — botón "Editar" empleado', () => {
     expect(inputByLabel(/^Nombre$/i).value).toBe('Ana');
     expect(inputByLabel(/^RFC$/i).value).toBe('GALA800101AB1');
     expect(inputByLabel(/^Puesto$/i).value).toBe('Albañil');
+    expect(inputByLabel(/Contacto de emergencia \(nombre\)/i).value).toBe('Juan García');
+    expect(inputByLabel(/Contacto de emergencia \(teléfono\)/i).value).toBe('5533334444');
+    expect(inputByLabel(/Contacto de emergencia \(parentesco\)/i).value).toBe('Esposo');
   });
 
   it('valida los campos obligatorios antes de llamar al backend', async () => {
@@ -127,6 +132,21 @@ describe('PersonalView — botón "Editar" empleado', () => {
     await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
     await waitFor(() => expect(screen.queryByRole('button', { name: /Guardar cambios/i })).not.toBeInTheDocument());
     expect(await screen.findByText('Capataz')).toBeInTheDocument();
+  });
+
+  it('edita solo el teléfono del contacto de emergencia y lo envía en el PATCH', async () => {
+    patchEmpleadoResult = 'ok';
+    const api = (await import('../lib/api')).default;
+    render(<PersonalView activeSubView="empleados" />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /^Editar$/i }));
+    fireEvent.change(inputByLabel(/Contacto de emergencia \(teléfono\)/i), { target: { value: '5590001111' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios/i }));
+
+    await waitFor(() => expect(api.patch).toHaveBeenCalledWith(
+      `/api/v1/personal/empleados/${empleadoMock.id_empleado}`,
+      expect.objectContaining({ contacto_emergencia_telefono: '5590001111' }),
+    ));
   });
 
   it('si el backend rechaza por RFC duplicado, mantiene el panel abierto con el error', async () => {

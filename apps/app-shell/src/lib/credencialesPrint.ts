@@ -12,7 +12,8 @@ export interface CredencialImprimible {
   nombre: string;
   puesto: string;
   categoria: string;
-  contactoEmergencia: string | null;
+  contactoEmergenciaNombre: string | null;
+  contactoEmergenciaTelefono: string | null;
   vigenciaInicio: string; // ISO
   vigenciaFin: string;    // ISO
   qrDataUrl: string;
@@ -71,7 +72,9 @@ export function construirHojaCredenciales(
     </div>
   `).join('');
 
-  const reversos = items.map((c, i) => `
+  const reversos = items.map((c, i) => {
+    const contacto = [c.contactoEmergenciaNombre, c.contactoEmergenciaTelefono].filter(Boolean).join(' — ');
+    return `
     <div class="card back">
       <span class="idx">${i + 1}</span>
       <div class="back-top">
@@ -81,7 +84,7 @@ export function construirHojaCredenciales(
       <div class="back-body">
         <div>
           <div class="label">Contacto de emergencia</div>
-          <div class="contact">${c.contactoEmergencia ? esc(c.contactoEmergencia) : 'No registrado'}</div>
+          <div class="contact">${contacto ? esc(contacto) : 'No registrado'}</div>
         </div>
         <p class="hse-note">Uso obligatorio de casco, botas y chaleco reflejante dentro del sitio. Esta credencial es personal e intransferible; repórtala de inmediato a RH si se pierde.</p>
         <div class="back-footer">
@@ -90,7 +93,8 @@ export function construirHojaCredenciales(
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   return `<!doctype html>
 <html lang="es">

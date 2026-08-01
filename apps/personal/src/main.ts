@@ -103,7 +103,9 @@ app.post('/api/v1/personal/empleados', requireRoles('personal_rh', 'admin'), asy
     const {
       nombre, apellido_paterno, apellido_materno, rfc, curp, nss,
       puesto, categoria, tipo_contrato, fecha_ingreso, salario_diario,
-      telefono, email, contacto_emergencia, certificaciones,
+      telefono, email,
+      contacto_emergencia_nombre, contacto_emergencia_telefono, contacto_emergencia_parentesco,
+      certificaciones,
     } = req.body;
 
     if (!nombre || !apellido_paterno || !rfc || !puesto || !salario_diario) {
@@ -129,7 +131,8 @@ app.post('/api/v1/personal/empleados', requireRoles('personal_rh', 'admin'), asy
           tipo_contrato: tipo_contrato || 'PLANTA',
           fecha_ingreso: new Date(fecha_ingreso || new Date()),
           salario_diario: Number(salario_diario),
-          telefono, email, contacto_emergencia,
+          telefono, email,
+          contacto_emergencia_nombre, contacto_emergencia_telefono, contacto_emergencia_parentesco,
           certificaciones: certificaciones ? JSON.stringify(certificaciones) : null,
           estado: 'ACTIVO',
         },
@@ -291,7 +294,8 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
       nombre, apellido_paterno, apellido_materno, rfc, curp, nss,
-      puesto, salario_diario, telefono, email, contacto_emergencia,
+      puesto, salario_diario, telefono, email,
+      contacto_emergencia_nombre, contacto_emergencia_telefono, contacto_emergencia_parentesco,
       modo_asistencia, tipo_jornada,
       hora_entrada_programada, hora_salida_programada, horas_jornada,
     } = req.body;
@@ -334,7 +338,9 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
           ...(salario_diario           !== undefined ? { salario_diario: Number(salario_diario) } : {}),
           ...(telefono                 !== undefined ? { telefono }                 : {}),
           ...(email                    !== undefined ? { email }                    : {}),
-          ...(contacto_emergencia      !== undefined ? { contacto_emergencia }      : {}),
+          ...(contacto_emergencia_nombre      !== undefined ? { contacto_emergencia_nombre }      : {}),
+          ...(contacto_emergencia_telefono    !== undefined ? { contacto_emergencia_telefono }    : {}),
+          ...(contacto_emergencia_parentesco  !== undefined ? { contacto_emergencia_parentesco }  : {}),
           ...(modo_asistencia          !== undefined ? { modo_asistencia }          : {}),
           ...(tipo_jornada             !== undefined ? { tipo_jornada }             : {}),
           ...(hora_entrada_programada  !== undefined ? { hora_entrada_programada }  : {}),
@@ -2108,7 +2114,8 @@ app.post('/api/v1/personal/empleados/credenciales/imprimir-lote', requireRoles('
           empleado: {
             id_empleado: emp.id_empleado, numero_empleado: emp.numero_empleado,
             nombre: emp.nombre, apellido_paterno: emp.apellido_paterno, puesto: emp.puesto, categoria: emp.categoria,
-            contacto_emergencia: emp.contacto_emergencia ?? null,
+            contacto_emergencia_nombre: emp.contacto_emergencia_nombre ?? null,
+            contacto_emergencia_telefono: emp.contacto_emergencia_telefono ?? null,
           },
           token: credencial.token,
           emitida_en: credencial.emitida_en,

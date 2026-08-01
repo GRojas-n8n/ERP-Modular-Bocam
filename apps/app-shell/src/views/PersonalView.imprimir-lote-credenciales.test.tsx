@@ -98,7 +98,11 @@ describe('PersonalView — imprimir credenciales en lote', () => {
   it('si hay exclusión parcial, abre la hoja con los elegibles y además avisa cuántos quedaron fuera', async () => {
     imprimirLoteResult = {
       credenciales: [{
-        empleado: { id_empleado: 'emp-1', numero_empleado: 'EMP-001', nombre: 'Juan', apellido_paterno: 'Pérez', puesto: 'Fierrero', categoria: 'OBRERO', contacto_emergencia: null },
+        empleado: {
+          id_empleado: 'emp-1', numero_empleado: 'EMP-001', nombre: 'Juan', apellido_paterno: 'Pérez',
+          puesto: 'Fierrero', categoria: 'OBRERO',
+          contacto_emergencia_nombre: null, contacto_emergencia_telefono: null,
+        },
         token: 'tok-abc', emitida_en: new Date().toISOString(), foto_documento_id: null,
       }],
       excluidos: ['emp-2'],
@@ -113,6 +117,37 @@ describe('PersonalView — imprimir credenciales en lote', () => {
     expect(fakeWindow.document.write).toHaveBeenCalled();
     await waitFor(() => expect(notify).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', title: expect.stringMatching(/1 empleado\(s\) excluido/i) }),
+    ));
+
+    openSpy.mockRestore();
+  });
+
+  it('propaga nombre y teléfono del contacto de emergencia a construirHojaCredenciales', async () => {
+    const { construirHojaCredenciales } = await import('../lib/credencialesPrint');
+    imprimirLoteResult = {
+      credenciales: [{
+        empleado: {
+          id_empleado: 'emp-1', numero_empleado: 'EMP-001', nombre: 'Juan', apellido_paterno: 'Pérez',
+          puesto: 'Fierrero', categoria: 'OBRERO',
+          contacto_emergencia_nombre: 'María Pérez', contacto_emergencia_telefono: '5551234567',
+        },
+        token: 'tok-abc', emitida_en: new Date().toISOString(), foto_documento_id: null,
+      }],
+      excluidos: [],
+    };
+    notify.mockClear();
+    vi.mocked(construirHojaCredenciales).mockClear();
+    const fakeWindow = { document: { write: vi.fn(), close: vi.fn() } };
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(fakeWindow as any);
+
+    await seleccionarPrimerEmpleadoYClickImprimir();
+
+    await waitFor(() => expect(construirHojaCredenciales).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({
+        contactoEmergenciaNombre: 'María Pérez',
+        contactoEmergenciaTelefono: '5551234567',
+      })]),
+      expect.anything(), expect.anything(), expect.anything(),
     ));
 
     openSpy.mockRestore();

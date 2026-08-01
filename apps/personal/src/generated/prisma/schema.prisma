@@ -48,9 +48,12 @@ model Empleado {
   salario_acordado  Decimal?  @db.Decimal(10, 2) // Salario real total acordado (para Complemento Salarial)
 
   // Contacto
-  telefono            String? @db.VarChar(20)
-  email               String? @db.VarChar(100)
-  contacto_emergencia String? @db.VarChar(200)
+  telefono                       String? @db.VarChar(20)
+  email                          String? @db.VarChar(100)
+  contacto_emergencia            String? @db.VarChar(200) // Legacy: texto libre, ya no se lee/escribe desde la app (ver contacto_emergencia_nombre)
+  contacto_emergencia_nombre     String? @db.VarChar(200)
+  contacto_emergencia_telefono   String? @db.VarChar(30)
+  contacto_emergencia_parentesco String? @db.VarChar(50)
 
   // Certificaciones HSE
   certificaciones String? @db.Text // JSON: ["DC3-Alturas", "STyPS-01"]
