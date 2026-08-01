@@ -40,6 +40,64 @@ function esc(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
 }
 
+export interface QRImprimible {
+  numeroEmpleado: string;
+  nombre: string;
+  qrDataUrl: string;
+}
+
+/**
+ * Hoja de solo QR (sin foto, sin reverso, sin contacto de emergencia):
+ * alternativa compacta a construirHojaCredenciales para repartir/pegar QR en
+ * lote. Ver openspec/changes/descarga-qr-empleados-filtrada.
+ */
+export function construirHojaSoloQR(
+  items: QRImprimible[],
+  tenantNombre: string,
+  tenantColor: string,
+): string {
+  const tarjetas = items.map((it, i) => `
+    <div class="qr-card">
+      <span class="idx">${i + 1}</span>
+      <img class="qr-img" src="${it.qrDataUrl}" alt="QR" />
+      <p class="qr-name">${esc(it.nombre)}</p>
+      <p class="qr-num mono">${esc(it.numeroEmpleado)}</p>
+    </div>
+  `).join('');
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>QR de empleados</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eeece3; font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace; }
+  .toolbar { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #ddd; padding: 10px 16px; display: flex; gap: 10px; }
+  .toolbar button { font: inherit; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  .toolbar button.primary { background: ${tenantColor}; color: #fff; border-color: ${tenantColor}; }
+  @media print { .toolbar { display: none; } body { background: #fff; } .page { box-shadow: none !important; margin: 0 !important; } .page { break-after: page; } }
+
+  .page { width: 216mm; min-height: 279mm; margin: 20px auto; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); padding: 12.5mm 15mm; }
+  .grid { display: grid; grid-template-columns: repeat(4, 42mm); grid-auto-rows: 50mm; gap: 5mm 4mm; justify-content: center; }
+  .qr-card { position: relative; width: 42mm; height: 50mm; border: 0.6pt dashed #cabfa8; border-radius: 2.6mm; background: #f5f2ea; color: #1b1e20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6mm; padding: 3mm; }
+  .idx { position: absolute; top: 1.6mm; left: 1.6mm; width: 4.2mm; height: 4.2mm; border-radius: 50%; background: rgba(0,0,0,.28); color: #fff; font-family: ui-monospace, monospace; font-size: 6.4px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .qr-img { width: 26mm; height: 26mm; }
+  .qr-name { margin: 0; font-size: 7.5px; font-weight: 800; text-align: center; line-height: 1.2; }
+  .qr-num { margin: 0; font-size: 6.5px; color: #5b5f5e; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="primary" onclick="window.print()">Imprimir</button>
+    <span style="align-self:center;font-size:11px;color:#666;">${esc(tenantNombre)} — solo QR, para recortar y repartir</span>
+  </div>
+  <div class="page"><div class="grid">${tarjetas}</div></div>
+</body>
+</html>`;
+}
+
 export function construirHojaCredenciales(
   items: CredencialImprimible[],
   tenantNombre: string,

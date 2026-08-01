@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { PersonalView } from './PersonalView';
 import api from '../lib/api';
 
@@ -96,8 +96,8 @@ describe('PersonalView — selector de residente + aviso de elegibilidad', () =>
     expect(screen.queryByPlaceholderText(/ID del usuario Residente/i)).not.toBeInTheDocument();
     const select = await screen.findByLabelText(/residente a asignar/i);
     expect(select.tagName).toBe('SELECT');
-    expect(await screen.findByRole('option', { name: 'Residente Uno' })).toBeInTheDocument();
-    expect(await screen.findByRole('option', { name: 'Residente Dos' })).toBeInTheDocument();
+    expect(await within(select).findByRole('option', { name: 'Residente Uno' })).toBeInTheDocument();
+    expect(await within(select).findByRole('option', { name: 'Residente Dos' })).toBeInTheDocument();
   });
 
   it('4.3 si el directorio falla, el selector se deshabilita con mensaje y el resto del panel sigue operando', async () => {

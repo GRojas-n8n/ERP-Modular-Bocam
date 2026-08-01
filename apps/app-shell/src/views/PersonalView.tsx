@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
@@ -28,16 +28,18 @@ import {
   IconClock,
   IconDownload,
   IconPlus,
+  IconSearch,
   IconShieldCheck,
   IconUpload,
   IconUsers,
   IconWallet,
+  IconX,
 } from '../components/Icons';
 import { FormField, Input, Select, SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 import QRCode from 'qrcode';
-import { construirHojaCredenciales } from '../lib/credencialesPrint';
+import { construirHojaCredenciales, construirHojaSoloQR } from '../lib/credencialesPrint';
 
 /**
  * ---------------------------------------------------------------------------
@@ -66,6 +68,8 @@ interface Empleado {
   contacto_emergencia_parentesco?: string | null;
   certificaciones?: string;
   cuadrilla?: { nombre: string; codigo: string } | null;
+  asignaciones?: { frente_trabajo: string }[];
+  asignacionesResidente?: { residente_id: string }[];
   modo_asistencia?: string;
   tipo_jornada?: string;
   hora_entrada_programada?: string | null;
@@ -403,6 +407,14 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   // ── Selección e impresión de credenciales en lote ───────────────────────────
   const [seleccionCredenciales, setSeleccionCredenciales] = useState<Set<string>>(new Set());
   const [generandoImpresion, setGenerandoImpresion] = useState(false);
+  const [generandoDescargaQR, setGenerandoDescargaQR] = useState(false);
+
+  // ── Filtros previos a la selección (credenciales / descarga de QR) ──────────
+  const [filtroTextoEmpleado, setFiltroTextoEmpleado] = useState('');
+  const [filtroCategoriaEmpleado, setFiltroCategoriaEmpleado] = useState('');
+  const [filtroCuadrillaEmpleado, setFiltroCuadrillaEmpleado] = useState('');
+  const [filtroFrenteEmpleado, setFiltroFrenteEmpleado] = useState('');
+  const [filtroResidenteEmpleado, setFiltroResidenteEmpleado] = useState('');
 
   // ── Alta individual de Empleado ───────────────────────────────────────────
   const [panelNuevoEmpleado, setPanelNuevoEmpleado] = useState(false);
@@ -681,7 +693,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       try {
         setLoading(true);
         if (tenant?.id === 'iretum-demo') { setEmpleados(DEMO_EMPLEADOS as Empleado[]); setCuadrillas(DEMO_CUADRILLAS as Cuadrilla[]); setPrenominas(DEMO_PRENOMINAS as PreNomina[]); setPases(DEMO_PASES); return; }
-        const [empRes, cuaRes, pnRes, pasesRes, dashRes, configNominaRes, porVencerRes] = await Promise.allSettled([
+        const [empRes, cuaRes, pnRes, pasesRes, dashRes, configNominaRes, porVencerRes, residentesRes] = await Promise.allSettled([
           api.get('/api/v1/personal/empleados'),
           api.get('/api/v1/personal/cuadrillas'),
           api.get('/api/v1/personal/prenominas'),
@@ -689,6 +701,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           api.get('/api/v1/personal/dashboard'),
           api.get('/api/v1/personal/config-nomina'),
           api.get('/api/v1/personal/documentos/por-vencer'),
+          api.get('/api/v1/personal/residentes-disponibles'),
         ]);
 
         if (empRes.status === 'fulfilled') setEmpleados(empRes.value.data?.data || []);
@@ -698,6 +711,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         if (dashRes.status === 'fulfilled' && dashRes.value?.data?.data) setDashData(dashRes.value.data.data);
         if (configNominaRes.status === 'fulfilled') setPeriodicidadProyecto(configNominaRes.value.data?.data?.periodicidad_pago || 'SEMANAL');
         if (porVencerRes.status === 'fulfilled') setDocumentosPorVencer(porVencerRes.value.data?.data || []);
+        if (residentesRes.status === 'fulfilled') setResidentesDisponibles(residentesRes.value.data?.data || []);
       } catch {
         setError('Error al conectar con el modulo de Personal.');
       } finally {
@@ -860,6 +874,38 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     }
   };
 
+  // ── Filtros previos a la selección (credenciales / descarga de QR) ──────────
+  const frentesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    empleados.forEach(e => (e.asignaciones ?? []).forEach(a => set.add(a.frente_trabajo)));
+    return Array.from(set).sort();
+  }, [empleados]);
+
+  const empleadosFiltrados = useMemo(() => {
+    const texto = filtroTextoEmpleado.trim().toLowerCase();
+    return empleados.filter(e => {
+      if (filtroCategoriaEmpleado && e.categoria !== filtroCategoriaEmpleado) return false;
+      if (filtroCuadrillaEmpleado && e.cuadrilla?.codigo !== filtroCuadrillaEmpleado) return false;
+      if (filtroFrenteEmpleado && !(e.asignaciones ?? []).some(a => a.frente_trabajo === filtroFrenteEmpleado)) return false;
+      if (filtroResidenteEmpleado && !(e.asignacionesResidente ?? []).some(a => a.residente_id === filtroResidenteEmpleado)) return false;
+      if (texto) {
+        const nombreCompleto = `${e.nombre} ${e.apellido_paterno} ${e.apellido_materno ?? ''}`.toLowerCase();
+        if (!nombreCompleto.includes(texto) && !e.numero_empleado.toLowerCase().includes(texto)) return false;
+      }
+      return true;
+    });
+  }, [empleados, filtroTextoEmpleado, filtroCategoriaEmpleado, filtroCuadrillaEmpleado, filtroFrenteEmpleado, filtroResidenteEmpleado]);
+
+  const hayFiltrosActivos = !!(filtroTextoEmpleado || filtroCategoriaEmpleado || filtroCuadrillaEmpleado || filtroFrenteEmpleado || filtroResidenteEmpleado);
+
+  const handleLimpiarFiltrosEmpleados = () => {
+    setFiltroTextoEmpleado('');
+    setFiltroCategoriaEmpleado('');
+    setFiltroCuadrillaEmpleado('');
+    setFiltroFrenteEmpleado('');
+    setFiltroResidenteEmpleado('');
+  };
+
   // ── Selección e impresión de credenciales en lote ───────────────────────────
   const toggleSeleccionCredencial = (id: string) => {
     setSeleccionCredenciales(prev => {
@@ -870,9 +916,13 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   };
 
   const toggleSeleccionarTodos = () => {
-    setSeleccionCredenciales(prev =>
-      prev.size === empleados.length ? new Set() : new Set(empleados.map(e => e.id_empleado))
-    );
+    const idsVisibles = empleadosFiltrados.map(e => e.id_empleado);
+    const todosSeleccionados = idsVisibles.length > 0 && idsVisibles.every(id => seleccionCredenciales.has(id));
+    setSeleccionCredenciales(prev => {
+      const next = new Set(prev);
+      idsVisibles.forEach(id => (todosSeleccionados ? next.delete(id) : next.add(id)));
+      return next;
+    });
   };
 
   const fetchDataUrl = async (url: string): Promise<string> => {
@@ -942,6 +992,44 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
       notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al generar la hoja de credenciales' });
     } finally {
       setGenerandoImpresion(false);
+    }
+  };
+
+  const handleDescargarQR = async () => {
+    if (seleccionCredenciales.size === 0) return;
+    setGenerandoDescargaQR(true);
+    try {
+      const r = await api.post('/api/v1/personal/empleados/credenciales/imprimir-lote', {
+        empleado_ids: Array.from(seleccionCredenciales),
+      });
+      const respuesta = (r.data as any)?.data ?? { credenciales: [], excluidos: [] };
+      const items: ImprimirLoteItem[] = respuesta.credenciales ?? [];
+      const excluidos: string[] = respuesta.excluidos ?? [];
+
+      if (items.length === 0) {
+        notify({ type: 'error', title: 'Ningún empleado seleccionado pertenece al proyecto activo' });
+        return;
+      }
+
+      const qrs = await Promise.all(items.map(async (it) => ({
+        numeroEmpleado: it.empleado.numero_empleado,
+        nombre: `${it.empleado.nombre} ${it.empleado.apellido_paterno}`,
+        qrDataUrl: await QRCode.toDataURL(`BOCAM:CRED:${it.token}`, { margin: 1, width: 240 }),
+      })));
+
+      const html = construirHojaSoloQR(qrs, tenant?.name || 'Bocam', tenant?.primaryColor || '#163a5c');
+      const ventana = window.open('', '_blank');
+      if (ventana) {
+        ventana.document.write(html);
+        ventana.document.close();
+      }
+      if (excluidos.length > 0) {
+        notify({ type: 'error', title: `${excluidos.length} empleado(s) excluido(s) por no pertenecer al proyecto activo` });
+      }
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al generar la hoja de QR' });
+    } finally {
+      setGenerandoDescargaQR(false);
     }
   };
 
@@ -1403,6 +1491,73 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         <>
           {activeTab === 'empleados' && (
             <Card className="overflow-hidden rounded-3xl border-border/40 shadow-xl">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border/30 p-4">
+                <div className="relative max-w-[220px] flex-1">
+                  <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    aria-label="Buscar por nombre o número de empleado"
+                    placeholder="Buscar por nombre o número"
+                    value={filtroTextoEmpleado}
+                    onChange={e => setFiltroTextoEmpleado(e.target.value)}
+                    className="w-full rounded-xl border border-border/40 bg-muted/30 pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+                  />
+                </div>
+                <select
+                  aria-label="Filtrar por categoría"
+                  value={filtroCategoriaEmpleado}
+                  onChange={e => setFiltroCategoriaEmpleado(e.target.value)}
+                  className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+                >
+                  <option value="">Todas las categorías</option>
+                  <option value="OBRERO">Obrero</option>
+                  <option value="TECNICO">Técnico</option>
+                  <option value="SUPERVISOR">Supervisor</option>
+                  <option value="ADMINISTRATIVO">Administrativo</option>
+                </select>
+                <select
+                  aria-label="Filtrar por cuadrilla"
+                  value={filtroCuadrillaEmpleado}
+                  onChange={e => setFiltroCuadrillaEmpleado(e.target.value)}
+                  className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+                >
+                  <option value="">Todas las cuadrillas</option>
+                  {cuadrillas.map(c => (
+                    <option key={c.id_cuadrilla} value={c.codigo}>{c.nombre}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Filtrar por frente"
+                  value={filtroFrenteEmpleado}
+                  onChange={e => setFiltroFrenteEmpleado(e.target.value)}
+                  className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+                >
+                  <option value="">Todos los frentes</option>
+                  {frentesDisponibles.map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Filtrar por residente"
+                  value={filtroResidenteEmpleado}
+                  onChange={e => setFiltroResidenteEmpleado(e.target.value)}
+                  className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+                >
+                  <option value="">Todos los residentes</option>
+                  {(residentesDisponibles ?? []).map(r => (
+                    <option key={r.id} value={r.id}>{r.nombre}</option>
+                  ))}
+                </select>
+                {hayFiltrosActivos && (
+                  <button
+                    type="button"
+                    onClick={handleLimpiarFiltrosEmpleados}
+                    className="flex items-center gap-1 rounded-xl border border-border/30 px-3 py-2 text-[10px] text-muted-foreground hover:bg-muted/40"
+                  >
+                    <IconX className="h-3 w-3" /> Limpiar filtros
+                  </button>
+                )}
+              </div>
               <TableContainer>
                 <Table className="min-w-[840px]">
                   <TableHeader>
@@ -1410,9 +1565,9 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                       <TableHead className="w-8">
                         <input
                           type="checkbox"
-                          checked={empleados.length > 0 && seleccionCredenciales.size === empleados.length}
+                          checked={empleadosFiltrados.length > 0 && empleadosFiltrados.every(e => seleccionCredenciales.has(e.id_empleado))}
                           onChange={toggleSeleccionarTodos}
-                          title="Seleccionar todos (para imprimir credenciales)"
+                          title="Seleccionar todos (para imprimir credenciales o descargar QR)"
                         />
                       </TableHead>
                       <TableHead>Empleado</TableHead>
@@ -1425,7 +1580,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                     </tr>
                   </TableHeader>
                   <TableBody>
-                    {empleados.map((empleado) => (
+                    {empleadosFiltrados.map((empleado) => (
                       <TableRow key={empleado.id_empleado} className="group">
                         <TableCell>
                           <input
@@ -1502,18 +1657,28 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
               {empleados.length > 0 ? (
                 <TableFooterBar>
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    {empleados.length} empleados registrados
+                    {empleadosFiltrados.length} de {empleados.length} empleados
                     {seleccionCredenciales.size > 0 ? ` · ${seleccionCredenciales.size} seleccionados` : ''}
                   </span>
                   <div className="flex items-center gap-2">
                     {seleccionCredenciales.size > 0 && (
-                      <Button
-                        disabled={generandoImpresion}
-                        onClick={() => void handleImprimirSeleccionados()}
-                        className="rounded-xl bg-indigo-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
-                      >
-                        {generandoImpresion ? 'Generando…' : `Imprimir credenciales (${seleccionCredenciales.size})`}
-                      </Button>
+                      <>
+                        <Button
+                          disabled={generandoDescargaQR}
+                          onClick={() => void handleDescargarQR()}
+                          className="rounded-xl bg-violet-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-violet-500 disabled:opacity-50"
+                          title="Descarga solo el QR, nombre y número (sin foto ni reverso)"
+                        >
+                          {generandoDescargaQR ? 'Generando…' : `Descargar QR (${seleccionCredenciales.size})`}
+                        </Button>
+                        <Button
+                          disabled={generandoImpresion}
+                          onClick={() => void handleImprimirSeleccionados()}
+                          className="rounded-xl bg-indigo-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 disabled:opacity-50"
+                        >
+                          {generandoImpresion ? 'Generando…' : `Imprimir credenciales (${seleccionCredenciales.size})`}
+                        </Button>
+                      </>
                     )}
                     <SectionBadge className="rounded-full bg-violet-500/10 px-3 py-1 text-[10px] text-violet-600">
                       Nomina diaria: {formatCurrency(nominaDiaria)}
