@@ -60,11 +60,17 @@
 
 ## 6. Despliegue a producción
 
-- [ ] 6.1 Aplicar la migración en el VPS (`prisma migrate deploy` en
+- [x] 6.1 Aplicar la migración en el VPS (`prisma migrate deploy` en
       `personal`) y confirmar contra la BD real que los valores legacy se
       copiaron correctamente antes de redesplegar el backend
-- [ ] 6.2 Redesplegar `personal` y `app-shell`
-- [ ] 6.3 Verificar en producción: alta, edición, y precarga del nombre
-      migrado para un empleado real con `contacto_emergencia` histórico
-- [ ] 6.4 Archivar el change (`openspec archive`) tras verificación en
+      (verificado: 0 empleados reales tenían `contacto_emergencia` legacy
+      poblado, no había nada que migrar; columnas nuevas presentes en el
+      esquema real)
+- [x] 6.2 Redesplegar `personal` y `app-shell` (vía CI/CD automatizado,
+      ambos healthy y con smoke test de Playwright en verde)
+- [x] 6.3 Verificar en producción (esquema real + servicio healthy + CI
+      smoke tests en verde; sin prueba de alta/edición en vivo para no
+      crear datos de prueba en la BD real de la empresa — decisión del
+      usuario)
+- [x] 6.4 Archivar el change (`openspec archive`) tras verificación en
       producción
