@@ -24,4 +24,4 @@
 ## 4. Cierre
 
 - [x] 4.1 Ejecutar la suite completa de tests de `apps/app-shell` (o al menos los archivos de `PersonalView` y `credencialesPrint`) y confirmar que no hay regresiones.
-- [ ] 4.2 Actualizar `openspec/specs/credencial-empleado/spec.md` (vía `openspec archive`) una vez verificado en producción.
+- [x] 4.2 Actualizar `openspec/specs/credencial-empleado/spec.md` (vía `openspec archive`) una vez verificado en producción.
