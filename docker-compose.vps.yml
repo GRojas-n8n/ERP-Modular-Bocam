@@ -562,6 +562,14 @@ services:
       CONTROL_PROYECTOS_DATABASE_URL: ${CONTROL_PROYECTOS_DATABASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Comunicación B2B dentro de la red de Docker — por nombre de servicio,
+      # no localhost (control-proyectos:GT_URL faltaba por completo antes de
+      # este change; POST /avances lo necesita para resolver el concepto
+      # contra el catálogo real, a diferencia de las demás llamadas B2B de
+      # este servicio, que son fail-soft y nunca hicieron notar el hueco).
+      GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
+      COMPRAS_URL: http://compras:3002/api/v1/compras
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
     depends_on:
       postgres:
         condition: service_healthy
