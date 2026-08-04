@@ -603,39 +603,85 @@ controlObraRouter.get('/avances', async (req: Request, res: Response) => {
   }
 });
 
-controlObraRouter.post('/avances', async (req: Request, res: Response) => {
+// Resuelve un concepto del catálogo real de gerencia-tecnica por su id,
+// consultando el presupuesto activo del proyecto (B2B). No hay endpoint
+// GET /conceptos/:id en gerencia-tecnica hoy — presupuesto/activo ya trae
+// todos los conceptos del proyecto en una sola llamada (ver design.md,
+// change fix-estimaciones-residente-desconectado).
+async function resolverConceptoDelCatalogo(
+  authHeader: string | undefined,
+  conceptoId: string
+): Promise<{ clave: string; descripcion: string; unidad_medida: string; precio_unitario: number; cantidad: number } | null> {
+  const resp = await axios.get(`${GT_URL}/presupuesto/activo`, {
+    headers: authHeader ? { Authorization: authHeader } : {},
+    timeout: 5000,
+  });
+  const conceptos: any[] = resp.data?.data?.conceptos ?? [];
+  const concepto = conceptos.find((c) => c.id === conceptoId);
+  if (!concepto) return null;
+  return {
+    clave: concepto.clave,
+    descripcion: concepto.descripcion,
+    unidad_medida: concepto.unidad_medida,
+    precio_unitario: Number(concepto.precio_unitario),
+    cantidad: Number(concepto.cantidad),
+  };
+}
+
+controlObraRouter.post('/avances', requireRoles('residencia', 'control_proyectos', 'control_obra', 'director', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId, userName } = req.securityContext;
-    const {
-      concepto_presupuesto, descripcion_concepto, cantidad_presupuestada,
-      cantidad_anterior, cantidad_periodo, unidad, precio_unitario,
-      periodo_inicio, periodo_fin,
-    } = req.body;
+    const { concepto_id, cantidad_periodo, periodo_inicio, periodo_fin } = req.body;
 
-    if (!concepto_presupuesto || !cantidad_periodo || !precio_unitario) {
-      res.status(400).json(createApiError('CO_MISSING_FIELDS', 'concepto_presupuesto, cantidad_periodo y precio_unitario son obligatorios.'));
+    if (!concepto_id || !cantidad_periodo) {
+      res.status(400).json(createApiError('CO_MISSING_FIELDS', 'concepto_id y cantidad_periodo son obligatorios.'));
       return;
     }
 
-    const cantAnterior = Number(cantidad_anterior || 0);
+    // precio_unitario, cantidad_presupuestada, clave, descripción y unidad se
+    // resuelven SIEMPRE del catálogo de gerencia-tecnica — cualquier valor
+    // que el cliente los envíe se ignora, para que el dato sea confiable
+    // para KPIs (decisión de negocio, ver design.md Decision 5).
+    let concepto: Awaited<ReturnType<typeof resolverConceptoDelCatalogo>>;
+    try {
+      concepto = await resolverConceptoDelCatalogo(req.headers.authorization, concepto_id);
+    } catch (gtError: any) {
+      res.status(502).json(createApiError('CO_CATALOGO_NO_DISPONIBLE', 'No se pudo validar el concepto contra el catálogo de gerencia-tecnica. Intenta de nuevo.'));
+      return;
+    }
+    if (!concepto) {
+      res.status(400).json(createApiError('CO_CONCEPTO_NO_ENCONTRADO', 'El concepto no existe en el presupuesto activo del proyecto.'));
+      return;
+    }
+
     const cantPeriodo = Number(cantidad_periodo);
-    const cantAcumulada = cantAnterior + cantPeriodo;
-    const pu = Number(precio_unitario);
-    const cantPresupuestada = Number(cantidad_presupuestada || cantAcumulada);
-    const porcentaje = cantPresupuestada > 0 ? (cantAcumulada / cantPresupuestada) * 100 : 0;
+    const pu = concepto.precio_unitario;
+    const cantPresupuestada = concepto.cantidad;
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-      return await prisma.avanceFisico.create({
+      // cantidad_anterior se deriva sumando cantidad_periodo de los avances
+      // previos no RECHAZADO del mismo concepto_id — no se acepta del
+      // cliente, para que el acumulado sea confiable (design.md Decision 7).
+      const previos = await prisma.avanceFisico.findMany({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id, estado: { not: EstadoAvance.RECHAZADO } },
+        select: { cantidad_periodo: true },
+      });
+      const cantAnterior = previos.reduce((sum, a) => sum + Number(a.cantidad_periodo), 0);
+      const cantAcumulada = cantAnterior + cantPeriodo;
+      const porcentaje = cantPresupuestada > 0 ? (cantAcumulada / cantPresupuestada) * 100 : 0;
+
+      return prisma.avanceFisico.create({
         data: {
           tenant_id: tenantId,
           proyecto_id: proyectoId,
-          concepto_presupuesto,
-          descripcion_concepto: descripcion_concepto || concepto_presupuesto,
+          concepto_id,
+          concepto_presupuesto: concepto!.clave,
+          descripcion_concepto: concepto!.descripcion,
           cantidad_presupuestada: cantPresupuestada,
           cantidad_anterior: cantAnterior,
           cantidad_periodo: cantPeriodo,
           cantidad_acumulada: cantAcumulada,
-          unidad: unidad || 'pza',
+          unidad: concepto!.unidad_medida,
           precio_unitario: pu,
           importe_periodo: cantPeriodo * pu,
           importe_acumulado: cantAcumulada * pu,
@@ -649,13 +695,13 @@ controlObraRouter.post('/avances', async (req: Request, res: Response) => {
       });
     });
 
-    console.log(`[CP] ✅ Avance registrado: ${concepto_presupuesto} → ${porcentaje.toFixed(1)}%`);
+    console.log(`[CP] ✅ Avance registrado: ${concepto.clave} → ${Number(data.porcentaje_avance).toFixed(1)}%`);
 
     await eventBus.publish({
       event_type: ControlObraEvents.AVANCE_FISICO_REGISTRADO,
       timestamp: new Date().toISOString(),
       context: buildEventContext(req),
-      payload: { avance_id: data.id_avance, concepto: concepto_presupuesto, porcentaje: porcentaje.toFixed(1), importe: cantPeriodo * pu },
+      payload: { avance_id: data.id_avance, concepto: concepto.clave, porcentaje: Number(data.porcentaje_avance).toFixed(1), importe: Number(data.importe_periodo) },
     });
 
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
@@ -692,15 +738,26 @@ controlObraRouter.patch('/avances/:id/validar', async (req: Request, res: Respon
 
       // Recálculo EVM directo (Decisión 4 de design.md) — antes era un
       // subscribe interno a control_obra.avance_fisico_validado.
-      await recalcularEVMPorAvanceValidado(
-        prisma,
-        tenantId,
-        proyectoId,
-        updated.concepto_presupuesto,
-        Number(updated.porcentaje_avance),
-        Number(updated.importe_acumulado),
-        Number(updated.importe_acumulado),
-      );
+      //
+      // Antes de esta spec (fix-estimaciones-residente-desconectado) aquí
+      // se pasaba updated.concepto_presupuesto (la CLAVE del concepto, ej.
+      // "CIM-001") a un parámetro que Prisma castea contra la columna UUID
+      // ProgramacionObra.concepto_id — en cualquier dato real (no un UUID
+      // disfrazado de clave, como usaban los tests viejos) esto fallaba en
+      // silencio (recalcularEVMPorAvanceValidado atrapa el error y solo
+      // hace console.error). Ahora AvanceFisico.concepto_id sí es el UUID
+      // real del catálogo — se usa ese, que es el campo correcto.
+      if (updated.concepto_id) {
+        await recalcularEVMPorAvanceValidado(
+          prisma,
+          tenantId,
+          proyectoId,
+          updated.concepto_id,
+          Number(updated.porcentaje_avance),
+          Number(updated.importe_acumulado),
+          Number(updated.importe_acumulado),
+        );
+      }
 
       return updated;
     });
@@ -782,7 +839,7 @@ controlObraRouter.get('/estimaciones/:id', async (req: Request, res: Response) =
   }
 });
 
-controlObraRouter.post('/estimaciones', async (req: Request, res: Response) => {
+controlObraRouter.post('/estimaciones', requireRoles('residencia', 'control_proyectos', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId, userName } = req.securityContext;
     const { avance_ids, periodo_inicio, periodo_fin, notas } = req.body;

@@ -33,6 +33,7 @@ import {
   IconPlus,
   IconRefreshCw,
   IconSearch,
+  IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { ControlPresupuestalTabla, type PartidaCP } from '../components/ControlPresupuestalTabla';
@@ -52,6 +53,7 @@ interface Bitacora {
 
 interface AvanceFisico {
   id_avance: string;
+  concepto_id?: string | null;
   concepto_presupuesto: string;
   descripcion_concepto: string;
   cantidad_periodo: number;
@@ -60,6 +62,15 @@ interface AvanceFisico {
   porcentaje_avance: number;
   importe_periodo: number;
   estado: string;
+}
+
+interface ConceptoCatalogo {
+  id: string;
+  clave: string;
+  descripcion: string;
+  unidad_medida: string;
+  precio_unitario?: number;
+  cantidad_presupuestada?: number;
 }
 
 interface Estimacion {
@@ -260,11 +271,13 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     fecha: new Date().toISOString().split('T')[0],
   });
   const [avForm, setAvForm] = useState({
-    concepto_presupuesto: '', descripcion_concepto: '', cantidad_presupuestada: '',
-    cantidad_anterior: '0', cantidad_periodo: '', unidad: 'pza', precio_unitario: '',
+    cantidad_periodo: '',
     periodo_inicio: new Date().toISOString().split('T')[0],
     periodo_fin: new Date().toISOString().split('T')[0],
   });
+  const [conceptosAvance, setConceptosAvance] = useState<ConceptoCatalogo[]>([]);
+  const [avanceConceptoId, setAvanceConceptoId] = useState<string | null>(null);
+  const [avanceConceptoSearch, setAvanceConceptoSearch] = useState('');
 
   // ── Estado: configuración ────────────────────────────────────────────────────
   const [insumosClasif, setInsumosClasif] = useState<InsumoClasif[]>([]);
@@ -394,6 +407,25 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     } catch { /* silencioso */ } finally { setLoadingConfig(false); }
   };
 
+  // Catálogo de conceptos del presupuesto activo — usado por el selector de
+  // concepto del formulario "Registrar Avance" (ver
+  // openspec/changes/fix-estimaciones-residente-desconectado).
+  const loadCatalogoConceptos = async () => {
+    if (isDemo) return;
+    try {
+      const res = await api.get('/api/v1/gerencia-tecnica/presupuesto/activo');
+      const conceptosRaw: any[] = res.data?.data?.conceptos ?? [];
+      setConceptosAvance(conceptosRaw.map((c: any) => ({
+        id: c.id,
+        clave: c.clave,
+        descripcion: c.descripcion,
+        unidad_medida: c.unidad_medida,
+        precio_unitario: c.precio_unitario != null ? Number(c.precio_unitario) : undefined,
+        cantidad_presupuestada: c.cantidad != null ? Number(c.cantidad) : undefined,
+      })));
+    } catch { /* silencioso */ }
+  };
+
   const loadCostosCO = async () => {
     if (!currentProjectId) return;
     setLoadingCostos(true);
@@ -455,6 +487,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     if (activeTab === 'curva-s')      void fetchCurvaS();
     if (activeTab === 'configuracion' && canConfig && !isDemo) void loadConfiguracion();
     if (activeTab === 'costos' && !isDemo) void loadCostosCO();
+    if (activeTab === 'avances' && !isDemo) void loadCatalogoConceptos();
     if (activeTab === 'presupuesto-partida' && !isDemo) void loadPresupuestoPartida();
   }, [activeTab, currentProjectId]);
 
@@ -525,25 +558,30 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     } finally { setFormLoading(false); }
   };
 
+  const resetAvanceForm = () => {
+    setShowAvanceForm(false);
+    setAvanceConceptoId(null);
+    setAvanceConceptoSearch('');
+    setAvForm({
+      cantidad_periodo: '',
+      periodo_inicio: new Date().toISOString().split('T')[0],
+      periodo_fin: new Date().toISOString().split('T')[0],
+    });
+  };
+
   const handleSubmitAvance = async () => {
-    if (!avForm.concepto_presupuesto || !avForm.cantidad_periodo || !avForm.precio_unitario) return;
+    if (!avanceConceptoId || !avForm.cantidad_periodo) return;
     try {
       setFormLoading(true);
-      await api.post('/api/v1/control-proyectos/avances', {
-        ...avForm,
-        cantidad_presupuestada: Number(avForm.cantidad_presupuestada) || 0,
-        cantidad_anterior: Number(avForm.cantidad_anterior) || 0,
+      const res = await api.post('/api/v1/control-proyectos/avances', {
+        concepto_id: avanceConceptoId,
         cantidad_periodo: Number(avForm.cantidad_periodo),
-        precio_unitario: Number(avForm.precio_unitario),
+        periodo_inicio: avForm.periodo_inicio,
+        periodo_fin: avForm.periodo_fin,
       });
-      setShowAvanceForm(false);
-      setAvForm({
-        concepto_presupuesto: '', descripcion_concepto: '', cantidad_presupuestada: '',
-        cantidad_anterior: '0', cantidad_periodo: '', unidad: 'pza', precio_unitario: '',
-        periodo_inicio: new Date().toISOString().split('T')[0],
-        periodo_fin: new Date().toISOString().split('T')[0],
-      });
-      await fetchData();
+      const nuevo = res.data?.data;
+      if (nuevo) setAvances(prev => [...prev, nuevo]);
+      resetAvanceForm();
     } catch (err: any) {
       alert(`Error: ${err.response?.data?.error?.message || err.message}`);
     } finally { setFormLoading(false); }
@@ -597,11 +635,23 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     );
   };
 
-  const previewImporte = Number(avForm.cantidad_periodo || 0) * Number(avForm.precio_unitario || 0);
-  const previewAcumulado = Number(avForm.cantidad_anterior || 0) + Number(avForm.cantidad_periodo || 0);
+  // Vista previa: precio/cantidad presupuestada vienen del catálogo (no de
+  // campos manuales); cantidad_anterior se estima igual que el backend —
+  // suma de cantidad_periodo de avances previos no RECHAZADO del mismo
+  // concepto_id — para que la vista previa no prometa un acumulado distinto
+  // al que realmente calculará el servidor.
+  const conceptoAvanceSeleccionado = conceptosAvance.find(c => c.id === avanceConceptoId) ?? null;
+  const previewCantidadAnterior = avanceConceptoId
+    ? avances
+        .filter(a => a.concepto_id === avanceConceptoId && a.estado !== 'RECHAZADO')
+        .reduce((s, a) => s + Number(a.cantidad_periodo || 0), 0)
+    : 0;
+  const previewPrecioUnitario = conceptoAvanceSeleccionado?.precio_unitario ?? 0;
+  const previewImporte = Number(avForm.cantidad_periodo || 0) * previewPrecioUnitario;
+  const previewAcumulado = previewCantidadAnterior + Number(avForm.cantidad_periodo || 0);
   const previewPorcentaje =
-    avForm.cantidad_presupuestada && Number(avForm.cantidad_presupuestada) > 0
-      ? ((previewAcumulado / Number(avForm.cantidad_presupuestada)) * 100).toFixed(1)
+    conceptoAvanceSeleccionado?.cantidad_presupuestada && conceptoAvanceSeleccionado.cantidad_presupuestada > 0
+      ? ((previewAcumulado / conceptoAvanceSeleccionado.cantidad_presupuestada) * 100).toFixed(1)
       : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -656,15 +706,17 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
             </Card>
             <Card className="rounded-2xl border-border/30 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Avance Financiero</p>
-              <p className="mt-1 text-3xl font-black text-foreground">{dashData.avance_general.financiero_pct.toFixed(1)}%</p>
+              <p className="mt-1 text-3xl font-black text-foreground">
+                {dashData.avance_general.financiero_pct != null ? `${dashData.avance_general.financiero_pct.toFixed(1)}%` : '—'}
+              </p>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(dashData.avance_general.financiero_pct, 100)}%` }} />
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(dashData.avance_general.financiero_pct ?? 0, 100)}%` }} />
               </div>
             </Card>
-            <Card className={`rounded-2xl border p-4 ${dashData.avance_general.delta_pct < -5 ? 'border-red-500/20 bg-red-500/5' : dashData.avance_general.delta_pct > 5 ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-border/30'}`}>
+            <Card className={`rounded-2xl border p-4 ${(dashData.avance_general.delta_pct ?? 0) < -5 ? 'border-red-500/20 bg-red-500/5' : (dashData.avance_general.delta_pct ?? 0) > 5 ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-border/30'}`}>
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Delta Físico-Fin.</p>
-              <p className={`mt-1 text-3xl font-black ${dashData.avance_general.delta_pct < -5 ? 'text-red-600' : dashData.avance_general.delta_pct > 5 ? 'text-emerald-600' : 'text-foreground'}`}>
-                {dashData.avance_general.delta_pct >= 0 ? '+' : ''}{dashData.avance_general.delta_pct.toFixed(1)}%
+              <p className={`mt-1 text-3xl font-black ${(dashData.avance_general.delta_pct ?? 0) < -5 ? 'text-red-600' : (dashData.avance_general.delta_pct ?? 0) > 5 ? 'text-emerald-600' : 'text-foreground'}`}>
+                {dashData.avance_general.delta_pct != null ? `${dashData.avance_general.delta_pct >= 0 ? '+' : ''}${dashData.avance_general.delta_pct.toFixed(1)}%` : '—'}
               </p>
             </Card>
             <Card className={`rounded-2xl border p-4 ${dashData.estimaciones_pendientes > 0 ? 'border-amber-500/20 bg-amber-500/5' : 'border-border/30'}`}>
@@ -1411,42 +1463,80 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
         </div>
       </SlidePanel>
 
-      <SlidePanel isOpen={showAvanceForm} onClose={() => setShowAvanceForm(false)} title="Registrar Avance Físico" subtitle="Captura de avance por concepto del presupuesto base" accentColor="sky">
+      <SlidePanel isOpen={showAvanceForm} onClose={resetAvanceForm} title="Registrar Avance Físico" subtitle="Captura de avance por concepto del presupuesto base" accentColor="sky">
         <div className="space-y-5">
-          <FormField label="Concepto del presupuesto" required hint="Clave del concepto en el presupuesto base">
-            <Input placeholder="Ej: CIM-001" value={avForm.concepto_presupuesto} onChange={e => setAvForm({ ...avForm, concepto_presupuesto: e.target.value })} />
-          </FormField>
-          <FormField label="Descripción del concepto">
-            <Input placeholder="Ej: Excavación para zapatas aisladas" value={avForm.descripcion_concepto} onChange={e => setAvForm({ ...avForm, descripcion_concepto: e.target.value })} />
-          </FormField>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Cant. presupuestada">
-              <Input type="number" placeholder="100" value={avForm.cantidad_presupuestada} onChange={e => setAvForm({ ...avForm, cantidad_presupuestada: e.target.value })} />
-            </FormField>
-            <FormField label="Cant. anterior">
-              <Input type="number" placeholder="0" value={avForm.cantidad_anterior} onChange={e => setAvForm({ ...avForm, cantidad_anterior: e.target.value })} />
-            </FormField>
+          {(() => {
+            const filtrados = avanceConceptoSearch.trim()
+              ? conceptosAvance.filter(c => `${c.clave} ${c.descripcion}`.toLowerCase().includes(avanceConceptoSearch.toLowerCase()))
+              : conceptosAvance;
+            return (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Concepto del presupuesto <span className="text-red-500">*</span>
+                </p>
+                {conceptoAvanceSeleccionado ? (
+                  <div className="flex items-center justify-between rounded-xl border border-sky-500/40 bg-sky-500/5 px-3 py-2">
+                    <div>
+                      <p className="text-[10px] font-mono text-sky-600 uppercase tracking-wider">{conceptoAvanceSeleccionado.clave}</p>
+                      <p className="text-xs font-bold text-foreground/80">{conceptoAvanceSeleccionado.descripcion}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Precio unitario: {conceptoAvanceSeleccionado.precio_unitario != null ? formatCurrency(conceptoAvanceSeleccionado.precio_unitario) : '—'} · Presupuestado: {conceptoAvanceSeleccionado.cantidad_presupuestada ?? '—'} {conceptoAvanceSeleccionado.unidad_medida}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => setAvanceConceptoId(null)}
+                      className="ml-2 text-muted-foreground hover:text-red-500">
+                      <IconX className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="relative">
+                      <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Buscar concepto por clave o descripción..."
+                        value={avanceConceptoSearch}
+                        onChange={e => setAvanceConceptoSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border/60 rounded-lg focus:border-sky-400 outline-none"
+                      />
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                      {filtrados.length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground py-2 text-center">
+                          {conceptosAvance.length === 0 ? 'Sin catálogo de obra — importa en Gerencia Técnica' : 'Sin coincidencias'}
+                        </p>
+                      ) : filtrados.map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setAvanceConceptoId(c.id); setAvanceConceptoSearch(''); }}
+                          className="w-full flex items-center gap-3 rounded-lg border border-border/30 px-3 py-2 text-left hover:border-sky-400/40 hover:bg-sky-500/5 transition-all"
+                        >
+                          <span className="text-[10px] font-mono text-sky-600 shrink-0">{c.clave}</span>
+                          <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <div className="space-y-1.5">
+            <label htmlFor="co-avance-cantidad-periodo" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Cant. periodo <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="co-avance-cantidad-periodo"
+              type="number"
+              placeholder="25"
+              value={avForm.cantidad_periodo}
+              onChange={e => setAvForm({ ...avForm, cantidad_periodo: e.target.value })}
+            />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <FormField label="Cant. periodo" required>
-              <Input type="number" placeholder="25" value={avForm.cantidad_periodo} onChange={e => setAvForm({ ...avForm, cantidad_periodo: e.target.value })} />
-            </FormField>
-            <FormField label="Unidad">
-              <Select value={avForm.unidad} onChange={e => setAvForm({ ...avForm, unidad: e.target.value })}>
-                <option value="pza">pza</option>
-                <option value="m2">m2</option>
-                <option value="m3">m3</option>
-                <option value="ml">ml</option>
-                <option value="kg">kg</option>
-                <option value="ton">ton</option>
-                <option value="lote">lote</option>
-              </Select>
-            </FormField>
-            <FormField label="P.U." required hint="Precio unitario">
-              <Input type="number" placeholder="1500" value={avForm.precio_unitario} onChange={e => setAvForm({ ...avForm, precio_unitario: e.target.value })} />
-            </FormField>
-          </div>
-          {avForm.cantidad_periodo && avForm.precio_unitario ? (
+
+          {avForm.cantidad_periodo && conceptoAvanceSeleccionado ? (
             <Card className="border-sky-500/20 bg-sky-500/5 shadow-none">
               <CardHeader className="pb-3"><CardTitle className="text-xs font-black uppercase tracking-widest text-sky-600">Vista previa</CardTitle></CardHeader>
               <CardContent className="space-y-2">
@@ -1456,7 +1546,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                 </div>
                 <div className="flex justify-between text-sm font-medium text-foreground/80">
                   <span>Avance acumulado</span>
-                  <span className="font-mono font-bold">{previewAcumulado} {avForm.unidad}</span>
+                  <span className="font-mono font-bold">{previewAcumulado} {conceptoAvanceSeleccionado.unidad_medida}</span>
                 </div>
                 {previewPorcentaje && (
                   <div className="flex justify-between text-sm font-medium text-foreground/80">
@@ -1476,7 +1566,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
             </FormField>
           </div>
           <div className="border-t border-border/40 pt-4">
-            <SubmitButton label="Registrar Avance" loading={formLoading} color="sky" onClick={handleSubmitAvance} />
+            <SubmitButton label="Guardar Avance" loading={formLoading} color="sky" onClick={handleSubmitAvance} />
           </div>
         </div>
       </SlidePanel>

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import express from 'express';
+import jwt from 'jsonwebtoken';
 import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
@@ -10,15 +12,34 @@ import { createTenantContext } from '../../src/db';
 // (adaptados aparte en reconciliacion.e2e.test.ts / finanzas.pago-registrado),
 // y el recálculo EVM directo (Decisión 4 de design.md — reemplaza el
 // subscribe interno a control_obra.avance_fisico_validado).
+//
+// POST /avances ahora resuelve concepto_id/precio/cantidad contra el
+// catálogo de gerencia-tecnica (ver change fix-estimaciones-residente-
+// desconectado) — un stub local sustituye a GT_URL para esta prueba.
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'bocam-e2e-secret';
 
 const prisma = new PrismaClient();
 
 let server: Server | undefined;
+let gtServer: Server | undefined;
 let baseUrl = '';
+const gtCatalogoPorTenant = new Map<string, Array<{ id: string; clave: string; descripcion: string; unidad_medida: string; precio_unitario: number; cantidad: number }>>();
 
 async function setup() {
+  const gtStub = express();
+  gtStub.get('/api/v1/gerencia-tecnica/presupuesto/activo', (req, res) => {
+    const auth = req.headers.authorization;
+    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
+    const decoded = token ? (jwt.verify(token, process.env.JWT_SECRET as string) as any) : undefined;
+    const conceptos = decoded ? gtCatalogoPorTenant.get(decoded.tenant_id) : undefined;
+    if (!conceptos) { res.status(500).json({ success: false }); return; }
+    res.json({ success: true, data: { id: 'presupuesto-stub', version: 1, conceptos } });
+  });
+  const gtStarted = await startHttpApp(gtStub);
+  gtServer = gtStarted.server;
+  process.env.GT_URL = `${gtStarted.baseUrl}/api/v1/gerencia-tecnica`;
+
   const mod = await import('../../src/main');
   const started = await startHttpApp(mod.app);
   server = started.server;
@@ -81,8 +102,17 @@ async function testAvanceValidarRecalculaEVM() {
   const tenantId = randomUUID();
   const proyectoId = randomUUID();
   const userId = randomUUID();
+  // ProgramacionObra hace match por concepto_clave (string) contra
+  // AvanceFisico.concepto_presupuesto — reutilizamos el mismo string como
+  // clave, igual que antes; conceptoId (GT) es ahora el UUID real del
+  // catálogo, distinto del concepto_id/concepto_clave de ProgramacionObra.
+  const conceptoClave = `CIM-${randomUUID()}`;
   const conceptoId = randomUUID();
   const token = signTenantToken({ userId, tenantId, proyectoId, roles: ['residencia', 'superintendent'] });
+
+  gtCatalogoPorTenant.set(tenantId, [
+    { id: conceptoId, clave: conceptoClave, descripcion: 'Cimentación', unidad_medida: 'm3', precio_unitario: 2000, cantidad: 100 },
+  ]);
 
   // Programación previa (necesaria para que recalcularEVMPorAvanceValidado tenga qué actualizar)
   await createTenantContext({ tenantId, proyectoId, userId }, async (tx) => {
@@ -91,7 +121,7 @@ async function testAvanceValidarRecalculaEVM() {
         tenant_id: tenantId,
         proyecto_id: proyectoId,
         concepto_id: conceptoId,
-        concepto_clave: conceptoId,
+        concepto_clave: conceptoClave,
         descripcion: 'Cimentación',
         fecha_inicio_plan: new Date('2026-03-01'),
         fecha_fin_plan: new Date('2026-04-01'),
@@ -107,11 +137,10 @@ async function testAvanceValidarRecalculaEVM() {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        concepto_presupuesto: conceptoId,
-        descripcion_concepto: 'Cimentación',
+        concepto_id: conceptoId,
         cantidad_periodo: 50,
-        precio_unitario: 2000,
-        unidad: 'm3',
+        periodo_inicio: '2026-03-01',
+        periodo_fin: '2026-03-15',
       }),
     });
     assert.equal(createResponse.status, 201);
@@ -139,6 +168,7 @@ async function testAvanceValidarRecalculaEVM() {
     console.log('ok - avance validado recalcula EVM (ProgramacionObra) de forma directa, sin pasar por RabbitMQ');
   } finally {
     await cleanupTenantData(tenantId, proyectoId);
+    gtCatalogoPorTenant.delete(tenantId);
   }
 }
 
@@ -297,6 +327,7 @@ async function main() {
     await testSalidaObraEventUsaColumnasReales();
   } finally {
     await stopHttpApp(server);
+    await stopHttpApp(gtServer);
     await prisma.$disconnect();
   }
 }

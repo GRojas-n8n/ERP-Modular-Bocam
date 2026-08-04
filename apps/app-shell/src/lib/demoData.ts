@@ -345,12 +345,25 @@ export const DEMO_FACTURAS = [
 
 // ─── RESIDENCIA DE OBRA ───────────────────────────────────────────────────────
 
+// Forma alineada al contrato real de apps/control-proyectos (modelo
+// Estimacion en apps/control-proyectos/prisma/schema.prisma) — antes esta
+// demo tenía su propia forma (frente/descripcion/conceptos como número/
+// autorizador) que no coincidía con ningún endpoint real, igual que pasaba
+// con DEMO_PRENOMINAS_RESIDENCIA antes de corregirse. Ver openspec/changes/
+// fix-estimaciones-residente-desconectado.
 export const DEMO_ESTIMACIONES_RESIDENCIA = [
-  { id: 'est-r-001', codigo: 'EST-TCN-001', numero: 1, periodo_inicio: '2024-02-01', periodo_fin: '2024-02-29', frente: 'Frente A — Cimentación', descripcion: 'Excavación y plantilla, zapatas y muro de cimentación', conceptos: 8, subtotal: 625000, iva: 100000, total_neto: 725000, estado: 'PAGADA',     fecha_autorizacion: '2024-03-15', autorizador: 'Ing. Juan Pérez Garza' },
-  { id: 'est-r-002', codigo: 'EST-TCN-002', numero: 2, periodo_inicio: '2024-03-01', periodo_fin: '2024-03-31', frente: 'Frente A — Estructura',   descripcion: 'Colado de columnas y losas niveles 1-5',          conceptos: 12, subtotal: 780000, iva: 124800, total_neto: 904800, estado: 'PAGADA',     fecha_autorizacion: '2024-04-10', autorizador: 'Ing. Juan Pérez Garza' },
-  { id: 'est-r-003', codigo: 'EST-TCN-003', numero: 3, periodo_inicio: '2024-04-01', periodo_fin: '2024-04-30', frente: 'Frente B — Instalaciones', descripcion: 'Instalaciones hidráulicas y eléctricas niveles 1-8', conceptos: 15, subtotal: 875000, iva: 140000, total_neto: 1015000, estado: 'AUTORIZADA', fecha_autorizacion: '2024-05-02', autorizador: 'Ing. Juan Pérez Garza' },
-  { id: 'est-r-004', codigo: 'EST-TCN-004', numero: 4, periodo_inicio: '2024-05-01', periodo_fin: '2024-05-15', frente: 'Frente C — Acabados',      descripcion: 'Acabados nivel 7-10, cancelería fachada norte',   conceptos: 9,  subtotal: 975640, iva: 156102, total_neto: 1131742, estado: 'EN_REVISION', fecha_autorizacion: null, autorizador: null },
-  { id: 'est-r-005', codigo: 'EST-TCN-005', numero: 5, periodo_inicio: '2024-05-16', periodo_fin: '2024-05-31', frente: 'Frente A — Impermeabilización', descripcion: 'Impermeabilización azotea y cisternas',        conceptos: 5,  subtotal: 342000, iva:  54720, total_neto:  396720, estado: 'BORRADOR',    fecha_autorizacion: null, autorizador: null },
+  { id_estimacion: 'est-r-001', numero_estimacion: 1, codigo: 'EST-2024-001', periodo_inicio: '2024-02-01', periodo_fin: '2024-02-29', subtotal: 625000, iva: 100000, total_neto: 725000, estado: 'FACTURADA', notas: 'Cimentación — excavación, plantilla, zapatas y muro' },
+  { id_estimacion: 'est-r-002', numero_estimacion: 2, codigo: 'EST-2024-002', periodo_inicio: '2024-03-01', periodo_fin: '2024-03-31', subtotal: 780000, iva: 124800, total_neto: 904800, estado: 'FACTURADA', notas: 'Estructura — colado de columnas y losas niveles 1-5' },
+  { id_estimacion: 'est-r-003', numero_estimacion: 3, codigo: 'EST-2024-003', periodo_inicio: '2024-04-01', periodo_fin: '2024-04-30', subtotal: 875000, iva: 140000, total_neto: 1015000, estado: 'APROBADA_FINANCIERA', notas: 'Instalaciones hidráulicas y eléctricas niveles 1-8' },
+  { id_estimacion: 'est-r-004', numero_estimacion: 4, codigo: 'EST-2024-004', periodo_inicio: '2024-05-01', periodo_fin: '2024-05-15', subtotal: 975640, iva: 156102, total_neto: 1131742, estado: 'EN_REVISION', notas: 'Acabados nivel 7-10, cancelería fachada norte' },
+  { id_estimacion: 'est-r-005', numero_estimacion: 5, codigo: 'EST-2024-005', periodo_inicio: '2024-05-16', periodo_fin: '2024-05-31', subtotal: 342000, iva: 54720, total_neto: 396720, estado: 'BORRADOR', notas: 'Impermeabilización azotea y cisternas' },
+];
+
+// Avances físicos que respaldan las estimaciones demo — misma forma real de
+// AvanceFisico (apps/control-proyectos/prisma/schema.prisma).
+export const DEMO_AVANCES_RESIDENCIA = [
+  { id_avance: 'av-r-001', concepto_id: 'concepto-demo-1', concepto_presupuesto: 'IMP-001', descripcion_concepto: 'Impermeabilización azotea', cantidad_presupuestada: 400, cantidad_anterior: 220, cantidad_periodo: 60, cantidad_acumulada: 280, unidad: 'M2', precio_unitario: 855, importe_periodo: 51300, importe_acumulado: 239400, porcentaje_avance: 70, periodo_inicio: '2024-05-16', periodo_fin: '2024-05-31', estado: 'VALIDADO', estimacion_id: null },
+  { id_avance: 'av-r-002', concepto_id: 'concepto-demo-2', concepto_presupuesto: 'ACB-014', descripcion_concepto: 'Cancelería fachada norte', cantidad_presupuestada: 120, cantidad_anterior: 80, cantidad_periodo: 20, cantidad_acumulada: 100, unidad: 'M2', precio_unitario: 3200, importe_periodo: 64000, importe_acumulado: 320000, porcentaje_avance: 83, periodo_inicio: '2024-06-01', periodo_fin: '2024-06-15', estado: 'PENDIENTE', estimacion_id: null },
 ];
 
 // Forma alineada al contrato real de apps/personal (PreNomina/PreNominaDetalle

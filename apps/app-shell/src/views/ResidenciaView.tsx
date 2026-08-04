@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsQR from 'jsqr';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import {
   DEMO_ESTIMACIONES_RESIDENCIA,
+  DEMO_AVANCES_RESIDENCIA,
   DEMO_PRENOMINAS_RESIDENCIA,
   DEMO_COMPLEMENTOS_RESIDENCIA,
   DEMO_ASISTENCIA,
@@ -56,7 +57,15 @@ import { TableScrollShadow } from '../components/TableScrollShadow';
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
-type EstimacionEstado = 'BORRADOR' | 'EN_REVISION' | 'AUTORIZADA' | 'PAGADA';
+type EstimacionEstado =
+  | 'BORRADOR'
+  | 'EN_REVISION'
+  | 'PENDIENTE_CONFIRMACION_FINANZAS'
+  | 'APROBADA_TECNICA'
+  | 'APROBADA_FINANCIERA'
+  | 'ERROR_FINANZAS'
+  | 'RECHAZADA'
+  | 'FACTURADA';
 type NominaEstado = 'BORRADOR' | 'CALCULADA' | 'AUTORIZADA' | 'PAGADA';
 type AsistenciaEstado = 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADA' | 'INCAPACIDAD';
 type TabId = 'estimaciones' | 'nomina' | 'equipo' | 'asistencia' | 'requisiciones';
@@ -94,6 +103,8 @@ interface ConceptoSimple {
   clave: string;
   descripcion: string;
   unidad_medida: string;
+  precio_unitario?: number;
+  cantidad_presupuestada?: number;
 }
 
 interface MaterialTakeoff {
@@ -149,21 +160,43 @@ const REQ_ESTADO_BADGE: Record<string, { cls: string; label: string }> = {
   RECHAZADA: { cls: 'bg-red-500/10 text-red-600',        label: 'Rechazada' },
 };
 
+// Forma real del modelo Estimacion de control-proyectos (no la forma
+// fantasía anterior con frente/descripcion/conceptos-como-número/
+// autorizador, que no correspondía a ningún endpoint — ver openspec/changes/
+// fix-estimaciones-residente-desconectado).
 interface Estimacion {
-  id: string;
+  id_estimacion: string;
+  numero_estimacion: number;
   codigo: string;
-  numero: number;
   periodo_inicio: string;
   periodo_fin: string;
-  frente: string;
-  descripcion: string;
-  conceptos: number;
   subtotal: number;
   iva: number;
   total_neto: number;
   estado: EstimacionEstado;
-  fecha_autorizacion: string | null;
-  autorizador: string | null;
+  notas: string | null;
+  avances?: Array<{ id_avance: string; concepto_presupuesto: string; importe_periodo: number; porcentaje_avance: number }>;
+}
+
+// Forma real del modelo AvanceFisico de control-proyectos.
+interface AvanceFisico {
+  id_avance: string;
+  concepto_id: string | null;
+  concepto_presupuesto: string;
+  descripcion_concepto: string;
+  cantidad_presupuestada: number;
+  cantidad_anterior: number;
+  cantidad_periodo: number;
+  cantidad_acumulada: number;
+  unidad: string;
+  precio_unitario: number;
+  importe_periodo: number;
+  importe_acumulado: number;
+  porcentaje_avance: number;
+  periodo_inicio: string;
+  periodo_fin: string;
+  estado: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO';
+  estimacion_id: string | null;
 }
 
 interface PrenominaDetalleEmpleado {
@@ -258,10 +291,20 @@ interface BulkCheck {
 // ── Badges de estado ─────────────────────────────────────────────────────────
 
 const EST_BADGE: Record<EstimacionEstado, { cls: string; label: string }> = {
-  BORRADOR:    { cls: 'bg-zinc-500/10 text-zinc-500',   label: 'Borrador'    },
-  EN_REVISION: { cls: 'bg-amber-500/10 text-amber-600', label: 'En revisión' },
-  AUTORIZADA:  { cls: 'bg-emerald-500/10 text-emerald-600', label: 'Autorizada' },
-  PAGADA:      { cls: 'bg-sky-500/10 text-sky-600',     label: 'Pagada'      },
+  BORRADOR:                          { cls: 'bg-zinc-500/10 text-zinc-500',       label: 'Borrador'            },
+  EN_REVISION:                       { cls: 'bg-amber-500/10 text-amber-600',     label: 'En revisión'         },
+  PENDIENTE_CONFIRMACION_FINANZAS:   { cls: 'bg-amber-500/10 text-amber-600',     label: 'Pend. Finanzas'      },
+  APROBADA_TECNICA:                  { cls: 'bg-indigo-500/10 text-indigo-600',   label: 'Aprobada Técnica'    },
+  APROBADA_FINANCIERA:               { cls: 'bg-emerald-500/10 text-emerald-600', label: 'Aprobada Financiera' },
+  ERROR_FINANZAS:                    { cls: 'bg-red-500/10 text-red-600',         label: 'Error Finanzas'      },
+  RECHAZADA:                         { cls: 'bg-red-500/10 text-red-600',         label: 'Rechazada'           },
+  FACTURADA:                         { cls: 'bg-sky-500/10 text-sky-600',         label: 'Facturada'           },
+};
+
+const AVANCE_BADGE: Record<AvanceFisico['estado'], { cls: string; label: string }> = {
+  PENDIENTE: { cls: 'bg-amber-500/10 text-amber-600',     label: 'Pendiente' },
+  VALIDADO:  { cls: 'bg-emerald-500/10 text-emerald-600', label: 'Validado'  },
+  RECHAZADO: { cls: 'bg-red-500/10 text-red-600',         label: 'Rechazado' },
 };
 
 const NOM_BADGE: Record<NominaEstado, { cls: string; label: string }> = {
@@ -332,8 +375,19 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
 
   // ─ Estimaciones
   const [estimaciones, setEstimaciones] = useState<Estimacion[]>([]);
-  const [showEstForm, setShowEstForm] = useState(false);
-  const [estForm, setEstForm] = useState({ frente: '', periodo_inicio: '', periodo_fin: '', descripcion: '' });
+  const [avances, setAvances] = useState<AvanceFisico[]>([]);
+  const [loadingEstimaciones, setLoadingEstimaciones] = useState(false);
+  const [errorEstimaciones, setErrorEstimaciones] = useState(false);
+  const [showAvanceForm, setShowAvanceForm] = useState(false);
+  const [avanceConceptoId, setAvanceConceptoId] = useState<string | null>(null);
+  const [avanceConceptoSearch, setAvanceConceptoSearch] = useState('');
+  const [avanceCantidadPeriodo, setAvanceCantidadPeriodo] = useState('');
+  const [avancePeriodoInicio, setAvancePeriodoInicio] = useState('');
+  const [avancePeriodoFin, setAvancePeriodoFin] = useState('');
+  const [registrandoAvance, setRegistrandoAvance] = useState(false);
+  const [avanceFormError, setAvanceFormError] = useState<string | null>(null);
+  const [selectedAvanceIds, setSelectedAvanceIds] = useState<Set<string>>(new Set());
+  const [creandoEstimacion, setCreandoEstimacion] = useState(false);
 
   // ─ Nómina
   const [prenominas, setPrenominas] = useState<Prenomina[]>([]);
@@ -469,6 +523,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   useEffect(() => {
     if (isDemo) {
       setEstimaciones(DEMO_ESTIMACIONES_RESIDENCIA as Estimacion[]);
+      setAvances(DEMO_AVANCES_RESIDENCIA as AvanceFisico[]);
       setPrenominas(DEMO_PRENOMINAS_RESIDENCIA as Prenomina[]);
       setComplementos(DEMO_COMPLEMENTOS_RESIDENCIA as Complemento[]);
       setAsistencia(DEMO_ASISTENCIA as RegistroAsistencia[]);
@@ -483,7 +538,6 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           api.get('/api/v1/personal/complementos'),
           api.get('/api/v1/control-proyectos/dashboard/residente'),
         ]);
-        setEstimaciones([]);
         if (nomRes.status === 'fulfilled') {
           setPrenominas((nomRes.value.data as any)?.data ?? []);
         }
@@ -497,6 +551,47 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     };
     void fetchData();
   }, [isDemo]);
+
+  // ── Carga de estimaciones + avances + catálogo de conceptos cuando se
+  // activa el tab ──────────────────────────────────────────────────────────
+  const fetchEstimacionesTab = useCallback(async () => {
+    setLoadingEstimaciones(true);
+    setErrorEstimaciones(false);
+    try {
+      const [estRes, avRes, presRes] = await Promise.allSettled([
+        api.get('/api/v1/control-proyectos/estimaciones'),
+        api.get('/api/v1/control-proyectos/avances'),
+        api.get('/api/v1/gerencia-tecnica/presupuesto/activo'),
+      ]);
+      if (estRes.status === 'fulfilled') {
+        setEstimaciones((estRes.value.data as any)?.data ?? []);
+      }
+      if (avRes.status === 'fulfilled') {
+        setAvances((avRes.value.data as any)?.data ?? []);
+      }
+      if (estRes.status === 'rejected' && avRes.status === 'rejected') {
+        setErrorEstimaciones(true);
+      }
+      if (presRes.status === 'fulfilled') {
+        const conceptosRaw: any[] = (presRes.value.data as any)?.data?.conceptos ?? [];
+        setConceptos(conceptosRaw.map((c: any) => ({
+          id: c.id,
+          clave: c.clave,
+          descripcion: c.descripcion,
+          unidad_medida: c.unidad_medida,
+          precio_unitario: c.precio_unitario != null ? Number(c.precio_unitario) : undefined,
+          cantidad_presupuestada: c.cantidad != null ? Number(c.cantidad) : undefined,
+        })));
+      }
+    } finally {
+      setLoadingEstimaciones(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'estimaciones' || isDemo) return;
+    void fetchEstimacionesTab();
+  }, [activeTab, isDemo, fetchEstimacionesTab]);
 
   // ── Carga de asistencia + cuadrillas cuando se activa el tab ────────────
   useEffect(() => {
@@ -653,9 +748,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   // ── KPI helpers ───────────────────────────────────────────────────────────
   const kpiEstimaciones = {
     total: estimaciones.length,
-    autorizado: estimaciones.filter(e => e.estado === 'AUTORIZADA' || e.estado === 'PAGADA').reduce((s, e) => s + e.total_neto, 0),
-    enRevision: estimaciones.filter(e => e.estado === 'EN_REVISION').length,
-    pagado: estimaciones.filter(e => e.estado === 'PAGADA').reduce((s, e) => s + e.total_neto, 0),
+    autorizado: estimaciones.filter(e => e.estado === 'APROBADA_FINANCIERA' || e.estado === 'FACTURADA').reduce((s, e) => s + e.total_neto, 0),
+    enRevision: estimaciones.filter(e => e.estado === 'EN_REVISION' || e.estado === 'PENDIENTE_CONFIRMACION_FINANZAS').length,
+    pagado: estimaciones.filter(e => e.estado === 'FACTURADA').reduce((s, e) => s + e.total_neto, 0),
   };
 
   const kpiNomina = {
@@ -674,37 +769,121 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   };
 
   // ── Acciones ──────────────────────────────────────────────────────────────
-  const handleSubmitEstimacion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!estForm.frente || !estForm.periodo_inicio || !estForm.periodo_fin) return;
+  const resetAvanceForm = () => {
+    setShowAvanceForm(false);
+    setAvanceConceptoId(null);
+    setAvanceConceptoSearch('');
+    setAvanceCantidadPeriodo('');
+    setAvancePeriodoInicio('');
+    setAvancePeriodoFin('');
+    setAvanceFormError(null);
+  };
+
+  const handleRegistrarAvance = async () => {
+    const concepto = conceptos.find(c => c.id === avanceConceptoId);
+    if (!concepto || !avanceCantidadPeriodo) return;
+    const cantPeriodo = parseFloat(avanceCantidadPeriodo) || 0;
+
     if (isDemo) {
-      const n = estimaciones.length + 1;
-      const nueva: Estimacion = {
-        id: `est-r-new-${Date.now()}`,
-        codigo: `EST-TCN-00${n}`,
-        numero: n,
-        periodo_inicio: estForm.periodo_inicio,
-        periodo_fin: estForm.periodo_fin,
-        frente: estForm.frente,
-        descripcion: estForm.descripcion,
-        conceptos: 0,
-        subtotal: 0, iva: 0, total_neto: 0,
-        estado: 'BORRADOR',
-        fecha_autorizacion: null,
-        autorizador: null,
+      const cantAnterior = avances
+        .filter(a => a.concepto_id === concepto.id && a.estado !== 'RECHAZADO')
+        .reduce((s, a) => s + a.cantidad_periodo, 0);
+      const cantAcumulada = cantAnterior + cantPeriodo;
+      const pu = concepto.precio_unitario ?? 0;
+      const cantPresupuestada = concepto.cantidad_presupuestada ?? cantAcumulada;
+      const nuevo: AvanceFisico = {
+        id_avance: `av-demo-${Date.now()}`,
+        concepto_id: concepto.id,
+        concepto_presupuesto: concepto.clave,
+        descripcion_concepto: concepto.descripcion,
+        cantidad_presupuestada: cantPresupuestada,
+        cantidad_anterior: cantAnterior,
+        cantidad_periodo: cantPeriodo,
+        cantidad_acumulada: cantAcumulada,
+        unidad: concepto.unidad_medida,
+        precio_unitario: pu,
+        importe_periodo: cantPeriodo * pu,
+        importe_acumulado: cantAcumulada * pu,
+        porcentaje_avance: cantPresupuestada > 0 ? (cantAcumulada / cantPresupuestada) * 100 : 0,
+        periodo_inicio: avancePeriodoInicio || new Date().toISOString().slice(0, 10),
+        periodo_fin: avancePeriodoFin || new Date().toISOString().slice(0, 10),
+        estado: 'PENDIENTE',
+        estimacion_id: null,
       };
-      setEstimaciones(prev => [...prev, nueva]);
-      notify({ type: 'success', title: 'Estimación creada', message: `${nueva.codigo} · ${nueva.frente}` });
-      setEstForm({ frente: '', periodo_inicio: '', periodo_fin: '', descripcion: '' });
-      setShowEstForm(false);
+      setAvances(prev => [...prev, nuevo]);
+      notify({ type: 'success', title: 'Avance registrado', message: `${concepto.clave} · ${cantPeriodo} ${concepto.unidad_medida}` });
+      resetAvanceForm();
       return;
+    }
+
+    setRegistrandoAvance(true);
+    setAvanceFormError(null);
+    try {
+      const res = await api.post('/api/v1/control-proyectos/avances', {
+        concepto_id: concepto.id,
+        cantidad_periodo: cantPeriodo,
+        periodo_inicio: avancePeriodoInicio || undefined,
+        periodo_fin: avancePeriodoFin || undefined,
+      });
+      const nuevo = (res.data as any)?.data as AvanceFisico;
+      setAvances(prev => [...prev, nuevo]);
+      notify({ type: 'success', title: 'Avance registrado', message: `${nuevo.concepto_presupuesto} · ${nuevo.cantidad_periodo} ${nuevo.unidad}` });
+      resetAvanceForm();
+    } catch (err: any) {
+      setAvanceFormError(err?.response?.data?.error?.message || 'No se pudo registrar el avance. Intenta de nuevo.');
+    } finally {
+      setRegistrandoAvance(false);
     }
   };
 
-  const handleEnviarRevision = (est: Estimacion) => {
-    if (est.estado !== 'BORRADOR') return;
-    setEstimaciones(prev => prev.map(e => e.id === est.id ? { ...e, estado: 'EN_REVISION' } : e));
-    notify({ type: 'info', title: 'Estimación enviada a revisión', message: `${est.codigo} — pendiente de autorización` });
+  const toggleAvanceSeleccionado = (id: string) => {
+    setSelectedAvanceIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleCrearEstimacion = async () => {
+    if (selectedAvanceIds.size === 0) return;
+    const avanceIds = Array.from(selectedAvanceIds);
+
+    if (isDemo) {
+      const incluidos = avances.filter(a => avanceIds.includes(a.id_avance));
+      const subtotal = incluidos.reduce((s, a) => s + a.importe_periodo, 0);
+      const retencion = subtotal * 0.05;
+      const iva = (subtotal - retencion) * 0.16;
+      const n = estimaciones.length + 1;
+      const nueva: Estimacion = {
+        id_estimacion: `est-demo-${Date.now()}`,
+        numero_estimacion: n,
+        codigo: `EST-DEMO-${String(n).padStart(3, '0')}`,
+        periodo_inicio: incluidos[0]?.periodo_inicio ?? new Date().toISOString().slice(0, 10),
+        periodo_fin: incluidos[0]?.periodo_fin ?? new Date().toISOString().slice(0, 10),
+        subtotal, iva, total_neto: subtotal - retencion + iva,
+        estado: 'BORRADOR',
+        notas: null,
+      };
+      setEstimaciones(prev => [...prev, nueva]);
+      setAvances(prev => prev.map(a => avanceIds.includes(a.id_avance) ? { ...a, estimacion_id: nueva.id_estimacion } : a));
+      setSelectedAvanceIds(new Set());
+      notify({ type: 'success', title: 'Estimación creada', message: nueva.codigo });
+      return;
+    }
+
+    setCreandoEstimacion(true);
+    try {
+      const res = await api.post('/api/v1/control-proyectos/estimaciones', { avance_ids: avanceIds });
+      const nueva = (res.data as any)?.data as Estimacion;
+      setEstimaciones(prev => [...prev, nueva]);
+      setAvances(prev => prev.map(a => avanceIds.includes(a.id_avance) ? { ...a, estimacion_id: nueva.id_estimacion } : a));
+      setSelectedAvanceIds(new Set());
+      notify({ type: 'success', title: 'Estimación creada', message: nueva.codigo });
+    } catch (err: any) {
+      notify({ type: 'error', title: 'No se pudo crear la estimación', message: err?.response?.data?.error?.message || 'Intenta de nuevo.' });
+    } finally {
+      setCreandoEstimacion(false);
+    }
   };
 
   // Marca la prenómina como revisada por Residencia — NO autoriza el pago.
@@ -1362,93 +1541,171 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* TAB: ESTIMACIONES                                               */}
       {/* ════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'estimaciones' && (
+      {activeTab === 'estimaciones' && errorEstimaciones && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest">
-              Estimaciones de Obra
-            </CardTitle>
-            <Button size="sm" onClick={() => setShowEstForm(true)}>
-              <IconPlus className="mr-1.5 h-3.5 w-3.5" />
-              Nueva Estimación
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            <TableContainer>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Frente</TableHead>
-                    <TableHead>Periodo</TableHead>
-                    <TableHead className="text-right">Conceptos</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
-                    <TableHead className="text-right">Total c/IVA</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Autorizador</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {estimaciones.map(est => {
-                    const badge = EST_BADGE[est.estado];
-                    return (
-                      <TableRow key={est.id}>
-                        <TableCell className="font-mono text-xs font-semibold">{est.codigo}</TableCell>
-                        <TableCell>
-                          <p className="text-xs font-medium">{est.frente}</p>
-                          <p className="text-[11px] text-muted-foreground">{est.descripcion}</p>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {fmtDate(est.periodo_inicio)}<br />
-                          <span className="text-[10px]">al {fmtDate(est.periodo_fin)}</span>
-                        </TableCell>
-                        <TableCell className="text-right text-xs">{est.conceptos}</TableCell>
-                        <TableCell className="text-right text-xs tabular-nums">
-                          {est.subtotal > 0 ? fmt$(est.subtotal) : '—'}
-                        </TableCell>
-                        <TableCell className="text-right text-xs font-semibold tabular-nums">
-                          {est.total_neto > 0 ? fmt$(est.total_neto) : '—'}
-                        </TableCell>
-                        <TableCell>
-                          <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', badge.cls)}>
-                            {badge.label}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {est.autorizador ?? '—'}
-                          {est.fecha_autorizacion && (
-                            <p className="text-[10px]">{fmtDate(est.fecha_autorizacion)}</p>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {est.estado === 'BORRADOR' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-[10px] h-6 px-2 text-indigo-600 hover:text-indigo-700"
-                              onClick={() => handleEnviarRevision(est)}
-                            >
-                              Enviar a revisión
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {estimaciones.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={9}>
-                        <EmptyStatePanel title="Sin estimaciones registradas" />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <IconAlertCircle className="h-8 w-8 text-red-500" />
+            <p className="text-sm font-bold text-foreground">No se pudo cargar la información de estimaciones y avances</p>
+            <p className="text-xs text-muted-foreground">Revisa tu conexión e intenta de nuevo.</p>
+            <Button size="sm" onClick={() => void fetchEstimacionesTab()}>Reintentar</Button>
           </CardContent>
         </Card>
       )}
+
+      {activeTab === 'estimaciones' && !errorEstimaciones && (() => {
+        const avancesValidadosDisponibles = avances.filter(a => a.estado === 'VALIDADO' && !a.estimacion_id);
+        return (
+        <div className="space-y-4">
+          {/* ── Avances Físicos ─────────────────────────────────────────── */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest">
+                Avances Físicos
+              </CardTitle>
+              <Button size="sm" onClick={() => setShowAvanceForm(true)}>
+                <IconPlus className="mr-1.5 h-3.5 w-3.5" />
+                Registrar Avance
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <TableContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead />
+                      <TableHead>Concepto</TableHead>
+                      <TableHead className="text-right">Periodo</TableHead>
+                      <TableHead className="text-right">Acumulado</TableHead>
+                      <TableHead className="text-right">Precio Unitario</TableHead>
+                      <TableHead>Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {avances.map(a => {
+                      const badge = AVANCE_BADGE[a.estado];
+                      const seleccionable = a.estado === 'VALIDADO' && !a.estimacion_id;
+                      return (
+                        <TableRow key={a.id_avance}>
+                          <TableCell>
+                            {seleccionable && (
+                              <input
+                                type="checkbox"
+                                aria-label={`${a.concepto_presupuesto} — ${a.id_avance}`}
+                                checked={selectedAvanceIds.has(a.id_avance)}
+                                onChange={() => toggleAvanceSeleccionado(a.id_avance)}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <p className="font-mono text-[10px] text-indigo-600">{a.concepto_presupuesto}</p>
+                            <p className="text-xs font-medium">{a.descripcion_concepto}</p>
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">
+                            {a.cantidad_periodo} {a.unidad}
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">
+                            {a.cantidad_acumulada} / {a.cantidad_presupuestada} {a.unidad}
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">{fmt$(a.precio_unitario)}</TableCell>
+                          <TableCell>
+                            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', badge.cls)}>
+                              {badge.label}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {avances.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6}>
+                          <EmptyStatePanel title={loadingEstimaciones ? 'Cargando avances…' : 'Sin avances registrados'} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <div className="flex items-center justify-between border-t border-border/30 px-4 py-3">
+                {avancesValidadosDisponibles.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    Aún no tienes avances validados para incluir en una estimación.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {selectedAvanceIds.size} avance{selectedAvanceIds.size !== 1 ? 's' : ''} seleccionado{selectedAvanceIds.size !== 1 ? 's' : ''}
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  disabled={selectedAvanceIds.size === 0 || creandoEstimacion}
+                  onClick={() => void handleCrearEstimacion()}
+                >
+                  Crear Estimación{selectedAvanceIds.size > 0 ? ` (${selectedAvanceIds.size})` : ''}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Estimaciones ─────────────────────────────────────────────── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest">
+                Estimaciones de Obra
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <TableContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Periodo</TableHead>
+                      <TableHead className="text-right">Avances</TableHead>
+                      <TableHead className="text-right">Subtotal</TableHead>
+                      <TableHead className="text-right">Total c/IVA</TableHead>
+                      <TableHead>Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {estimaciones.map(est => {
+                      const badge = EST_BADGE[est.estado];
+                      return (
+                        <TableRow key={est.id_estimacion}>
+                          <TableCell className="font-mono text-xs font-semibold">{est.codigo}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {fmtDate(est.periodo_inicio)}<br />
+                            <span className="text-[10px]">al {fmtDate(est.periodo_fin)}</span>
+                          </TableCell>
+                          <TableCell className="text-right text-xs">{est.avances?.length ?? 0}</TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">
+                            {est.subtotal > 0 ? fmt$(est.subtotal) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right text-xs font-semibold tabular-nums">
+                            {est.total_neto > 0 ? fmt$(est.total_neto) : '—'}
+                          </TableCell>
+                          <TableCell>
+                            <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', badge.cls)}>
+                              {badge.label}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {estimaciones.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6}>
+                          <EmptyStatePanel title={loadingEstimaciones ? 'Cargando estimaciones…' : 'Sin estimaciones registradas'} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </div>
+        );
+      })()}
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* TAB: NÓMINA                                                     */}
@@ -1778,54 +2035,117 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       )}
 
       {/* ════════════════════════════════════════════════════════════════ */}
-      {/* SLIDE PANEL — Nueva Estimación                                  */}
+      {/* SLIDE PANEL — Registrar Avance                                  */}
       {/* ════════════════════════════════════════════════════════════════ */}
       <SlidePanel
-        isOpen={showEstForm}
-        onClose={() => setShowEstForm(false)}
-        title="Nueva Estimación"
+        isOpen={showAvanceForm}
+        onClose={resetAvanceForm}
+        title="Registrar Avance"
         accentColor="indigo"
       >
-        <form onSubmit={handleSubmitEstimacion} className="flex flex-col gap-4">
-          <FormField label="Frente de trabajo *">
+        <div className="flex flex-col gap-4">
+          {(() => {
+            const conceptoAvance = conceptos.find(c => c.id === avanceConceptoId) ?? null;
+            const filtrados = avanceConceptoSearch.trim()
+              ? conceptos.filter(c => `${c.clave} ${c.descripcion}`.toLowerCase().includes(avanceConceptoSearch.toLowerCase()))
+              : conceptos;
+            return (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Concepto del catálogo <span className="text-red-500">*</span>
+                </p>
+                {conceptoAvance ? (
+                  <div className="flex items-center justify-between rounded-xl border border-indigo-500/40 bg-indigo-500/5 px-3 py-2">
+                    <div>
+                      <p className="text-[10px] font-mono text-indigo-600 uppercase tracking-wider">{conceptoAvance.clave}</p>
+                      <p className="text-xs font-bold text-foreground/80">{conceptoAvance.descripcion}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Precio unitario: {conceptoAvance.precio_unitario != null ? fmt$(conceptoAvance.precio_unitario) : '—'} · Presupuestado: {conceptoAvance.cantidad_presupuestada ?? '—'} {conceptoAvance.unidad_medida}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => setAvanceConceptoId(null)}
+                      className="ml-2 text-muted-foreground hover:text-red-500">
+                      <IconX className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="relative">
+                      <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Buscar concepto por clave o descripción..."
+                        value={avanceConceptoSearch}
+                        onChange={e => setAvanceConceptoSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border/60 rounded-lg focus:border-indigo-400 outline-none"
+                      />
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                      {filtrados.length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground py-2 text-center">
+                          {conceptos.length === 0 ? 'Sin catálogo de obra — importa en Gerencia Técnica' : 'Sin coincidencias'}
+                        </p>
+                      ) : filtrados.map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => { setAvanceConceptoId(c.id); setAvanceConceptoSearch(''); }}
+                          className="w-full flex items-center gap-3 rounded-lg border border-border/30 px-3 py-2 text-left hover:border-indigo-400/40 hover:bg-indigo-500/5 transition-all"
+                        >
+                          <span className="text-[10px] font-mono text-indigo-600 shrink-0">{c.clave}</span>
+                          <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <div className="space-y-1.5">
+            <label htmlFor="avance-cantidad-periodo" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Cantidad del periodo <span className="text-red-500">*</span>
+            </label>
             <Input
-              placeholder="Ej. Frente B — Acabados nivel 11-13"
-              value={estForm.frente}
-              onChange={e => setEstForm(f => ({ ...f, frente: e.target.value }))}
+              id="avance-cantidad-periodo"
+              type="number"
+              step="0.01"
+              min="0"
+              value={avanceCantidadPeriodo}
+              onChange={e => setAvanceCantidadPeriodo(e.target.value)}
               required
             />
-          </FormField>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Periodo inicio *">
+            <FormField label="Periodo inicio">
               <Input
                 type="date"
-                value={estForm.periodo_inicio}
-                onChange={e => setEstForm(f => ({ ...f, periodo_inicio: e.target.value }))}
-                required
+                value={avancePeriodoInicio}
+                onChange={e => setAvancePeriodoInicio(e.target.value)}
               />
             </FormField>
-            <FormField label="Periodo fin *">
+            <FormField label="Periodo fin">
               <Input
                 type="date"
-                value={estForm.periodo_fin}
-                onChange={e => setEstForm(f => ({ ...f, periodo_fin: e.target.value }))}
-                required
+                value={avancePeriodoFin}
+                onChange={e => setAvancePeriodoFin(e.target.value)}
               />
             </FormField>
           </div>
-          <FormField label="Descripción de trabajos">
-            <Textarea
-              placeholder="Descripción breve de los conceptos incluidos..."
-              value={estForm.descripcion}
-              onChange={e => setEstForm(f => ({ ...f, descripcion: e.target.value }))}
-              rows={3}
-            />
-          </FormField>
-          <p className="text-[11px] text-muted-foreground">
-            La estimación se creará en estado <strong>Borrador</strong>. Podrás agregar conceptos antes de enviarla a revisión.
-          </p>
-          <SubmitButton label="Crear Estimación" color="indigo" />
-        </form>
+
+          {avanceFormError && (
+            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-600">{avanceFormError}</p>
+          )}
+
+          <SubmitButton
+            label="Guardar Avance"
+            color="indigo"
+            loading={registrandoAvance}
+            onClick={() => void handleRegistrarAvance()}
+          />
+        </div>
       </SlidePanel>
 
       {/* ════════════════════════════════════════════════════════════════ */}

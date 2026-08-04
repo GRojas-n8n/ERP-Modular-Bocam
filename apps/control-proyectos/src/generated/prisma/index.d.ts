@@ -5709,6 +5709,7 @@ export namespace Prisma {
     id_avance: string | null
     tenant_id: string | null
     proyecto_id: string | null
+    concepto_id: string | null
     concepto_presupuesto: string | null
     descripcion_concepto: string | null
     cantidad_presupuestada: Decimal | null
@@ -5736,6 +5737,7 @@ export namespace Prisma {
     id_avance: string | null
     tenant_id: string | null
     proyecto_id: string | null
+    concepto_id: string | null
     concepto_presupuesto: string | null
     descripcion_concepto: string | null
     cantidad_presupuestada: Decimal | null
@@ -5763,6 +5765,7 @@ export namespace Prisma {
     id_avance: number
     tenant_id: number
     proyecto_id: number
+    concepto_id: number
     concepto_presupuesto: number
     descripcion_concepto: number
     cantidad_presupuestada: number
@@ -5814,6 +5817,7 @@ export namespace Prisma {
     id_avance?: true
     tenant_id?: true
     proyecto_id?: true
+    concepto_id?: true
     concepto_presupuesto?: true
     descripcion_concepto?: true
     cantidad_presupuestada?: true
@@ -5841,6 +5845,7 @@ export namespace Prisma {
     id_avance?: true
     tenant_id?: true
     proyecto_id?: true
+    concepto_id?: true
     concepto_presupuesto?: true
     descripcion_concepto?: true
     cantidad_presupuestada?: true
@@ -5868,6 +5873,7 @@ export namespace Prisma {
     id_avance?: true
     tenant_id?: true
     proyecto_id?: true
+    concepto_id?: true
     concepto_presupuesto?: true
     descripcion_concepto?: true
     cantidad_presupuestada?: true
@@ -5982,6 +5988,7 @@ export namespace Prisma {
     id_avance: string
     tenant_id: string
     proyecto_id: string
+    concepto_id: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal
@@ -6028,6 +6035,7 @@ export namespace Prisma {
     id_avance?: boolean
     tenant_id?: boolean
     proyecto_id?: boolean
+    concepto_id?: boolean
     concepto_presupuesto?: boolean
     descripcion_concepto?: boolean
     cantidad_presupuestada?: boolean
@@ -6056,6 +6064,7 @@ export namespace Prisma {
     id_avance?: boolean
     tenant_id?: boolean
     proyecto_id?: boolean
+    concepto_id?: boolean
     concepto_presupuesto?: boolean
     descripcion_concepto?: boolean
     cantidad_presupuestada?: boolean
@@ -6084,6 +6093,7 @@ export namespace Prisma {
     id_avance?: boolean
     tenant_id?: boolean
     proyecto_id?: boolean
+    concepto_id?: boolean
     concepto_presupuesto?: boolean
     descripcion_concepto?: boolean
     cantidad_presupuestada?: boolean
@@ -6123,6 +6133,7 @@ export namespace Prisma {
       id_avance: string
       tenant_id: string
       proyecto_id: string
+      concepto_id: string | null
       concepto_presupuesto: string
       descripcion_concepto: string
       cantidad_presupuestada: Prisma.Decimal
@@ -6541,6 +6552,7 @@ export namespace Prisma {
     readonly id_avance: FieldRef<"AvanceFisico", 'String'>
     readonly tenant_id: FieldRef<"AvanceFisico", 'String'>
     readonly proyecto_id: FieldRef<"AvanceFisico", 'String'>
+    readonly concepto_id: FieldRef<"AvanceFisico", 'String'>
     readonly concepto_presupuesto: FieldRef<"AvanceFisico", 'String'>
     readonly descripcion_concepto: FieldRef<"AvanceFisico", 'String'>
     readonly cantidad_presupuestada: FieldRef<"AvanceFisico", 'Decimal'>
@@ -9292,6 +9304,7 @@ export namespace Prisma {
     id_avance: 'id_avance',
     tenant_id: 'tenant_id',
     proyecto_id: 'proyecto_id',
+    concepto_id: 'concepto_id',
     concepto_presupuesto: 'concepto_presupuesto',
     descripcion_concepto: 'descripcion_concepto',
     cantidad_presupuestada: 'cantidad_presupuestada',
@@ -9972,6 +9985,7 @@ export namespace Prisma {
     id_avance?: UuidFilter<"AvanceFisico"> | string
     tenant_id?: UuidFilter<"AvanceFisico"> | string
     proyecto_id?: UuidFilter<"AvanceFisico"> | string
+    concepto_id?: UuidNullableFilter<"AvanceFisico"> | string | null
     concepto_presupuesto?: StringFilter<"AvanceFisico"> | string
     descripcion_concepto?: StringFilter<"AvanceFisico"> | string
     cantidad_presupuestada?: DecimalFilter<"AvanceFisico"> | Decimal | DecimalJsLike | number | string
@@ -10000,6 +10014,7 @@ export namespace Prisma {
     id_avance?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
     concepto_presupuesto?: SortOrder
     descripcion_concepto?: SortOrder
     cantidad_presupuestada?: SortOrder
@@ -10031,6 +10046,7 @@ export namespace Prisma {
     NOT?: AvanceFisicoWhereInput | AvanceFisicoWhereInput[]
     tenant_id?: UuidFilter<"AvanceFisico"> | string
     proyecto_id?: UuidFilter<"AvanceFisico"> | string
+    concepto_id?: UuidNullableFilter<"AvanceFisico"> | string | null
     concepto_presupuesto?: StringFilter<"AvanceFisico"> | string
     descripcion_concepto?: StringFilter<"AvanceFisico"> | string
     cantidad_presupuestada?: DecimalFilter<"AvanceFisico"> | Decimal | DecimalJsLike | number | string
@@ -10059,6 +10075,7 @@ export namespace Prisma {
     id_avance?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
+    concepto_id?: SortOrderInput | SortOrder
     concepto_presupuesto?: SortOrder
     descripcion_concepto?: SortOrder
     cantidad_presupuestada?: SortOrder
@@ -10094,6 +10111,7 @@ export namespace Prisma {
     id_avance?: UuidWithAggregatesFilter<"AvanceFisico"> | string
     tenant_id?: UuidWithAggregatesFilter<"AvanceFisico"> | string
     proyecto_id?: UuidWithAggregatesFilter<"AvanceFisico"> | string
+    concepto_id?: UuidNullableWithAggregatesFilter<"AvanceFisico"> | string | null
     concepto_presupuesto?: StringWithAggregatesFilter<"AvanceFisico"> | string
     descripcion_concepto?: StringWithAggregatesFilter<"AvanceFisico"> | string
     cantidad_presupuestada?: DecimalWithAggregatesFilter<"AvanceFisico"> | Decimal | DecimalJsLike | number | string
@@ -10960,6 +10978,7 @@ export namespace Prisma {
     id_avance?: string
     tenant_id: string
     proyecto_id: string
+    concepto_id?: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal | DecimalJsLike | number | string
@@ -10987,6 +11006,7 @@ export namespace Prisma {
     id_avance?: string
     tenant_id: string
     proyecto_id: string
+    concepto_id?: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal | DecimalJsLike | number | string
@@ -11014,6 +11034,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -11041,6 +11062,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -11068,6 +11090,7 @@ export namespace Prisma {
     id_avance?: string
     tenant_id: string
     proyecto_id: string
+    concepto_id?: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal | DecimalJsLike | number | string
@@ -11095,6 +11118,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -11121,6 +11145,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -12088,6 +12113,7 @@ export namespace Prisma {
     id_avance?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
+    concepto_id?: SortOrder
     concepto_presupuesto?: SortOrder
     descripcion_concepto?: SortOrder
     cantidad_presupuestada?: SortOrder
@@ -12126,6 +12152,7 @@ export namespace Prisma {
     id_avance?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
+    concepto_id?: SortOrder
     concepto_presupuesto?: SortOrder
     descripcion_concepto?: SortOrder
     cantidad_presupuestada?: SortOrder
@@ -12153,6 +12180,7 @@ export namespace Prisma {
     id_avance?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
+    concepto_id?: SortOrder
     concepto_presupuesto?: SortOrder
     descripcion_concepto?: SortOrder
     cantidad_presupuestada?: SortOrder
@@ -12882,6 +12910,7 @@ export namespace Prisma {
     id_avance?: string
     tenant_id: string
     proyecto_id: string
+    concepto_id?: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal | DecimalJsLike | number | string
@@ -12908,6 +12937,7 @@ export namespace Prisma {
     id_avance?: string
     tenant_id: string
     proyecto_id: string
+    concepto_id?: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal | DecimalJsLike | number | string
@@ -12963,6 +12993,7 @@ export namespace Prisma {
     id_avance?: UuidFilter<"AvanceFisico"> | string
     tenant_id?: UuidFilter<"AvanceFisico"> | string
     proyecto_id?: UuidFilter<"AvanceFisico"> | string
+    concepto_id?: UuidNullableFilter<"AvanceFisico"> | string | null
     concepto_presupuesto?: StringFilter<"AvanceFisico"> | string
     descripcion_concepto?: StringFilter<"AvanceFisico"> | string
     cantidad_presupuestada?: DecimalFilter<"AvanceFisico"> | Decimal | DecimalJsLike | number | string
@@ -12990,6 +13021,7 @@ export namespace Prisma {
     id_avance?: string
     tenant_id: string
     proyecto_id: string
+    concepto_id?: string | null
     concepto_presupuesto: string
     descripcion_concepto: string
     cantidad_presupuestada: Decimal | DecimalJsLike | number | string
@@ -13016,6 +13048,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -13042,6 +13075,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -13068,6 +13102,7 @@ export namespace Prisma {
     id_avance?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: NullableStringFieldUpdateOperationsInput | string | null
     concepto_presupuesto?: StringFieldUpdateOperationsInput | string
     descripcion_concepto?: StringFieldUpdateOperationsInput | string
     cantidad_presupuestada?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string

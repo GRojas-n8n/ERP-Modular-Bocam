@@ -222,7 +222,9 @@ app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Respo
  *
  * Devuelve el presupuesto más reciente del proyecto activo con sus conceptos.
  * El frontend de Residencia lo usa para el autocomplete de partidas APU.
- * Returns: { id, nombre, conceptos: [{ id, clave, descripcion, unidad_medida }] }
+ * control-proyectos lo consulta B2B para resolver precio/cantidad de un
+ * concepto al registrar un avance físico (ver capability avances-y-estimaciones).
+ * Returns: { id, nombre, conceptos: [{ id, clave, descripcion, unidad_medida, precio_unitario, cantidad }] }
  */
 app.get('/api/v1/gerencia-tecnica/presupuesto/activo', async (req: Request, res: Response) => {
   try {
@@ -237,7 +239,7 @@ app.get('/api/v1/gerencia-tecnica/presupuesto/activo', async (req: Request, res:
         id: true,
         version: true,
         conceptos: {
-          select: { id: true, clave: true, descripcion: true, unidad_medida: true },
+          select: { id: true, clave: true, descripcion: true, unidad_medida: true, precio_unitario: true, cantidad: true },
           orderBy: { clave: 'asc' },
         },
       },

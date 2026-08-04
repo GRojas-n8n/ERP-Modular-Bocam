@@ -1,0 +1,82 @@
+## 1. Investigación previa (bloquea el resto)
+
+- [x] 1.1 Grep de todos los llamadores actuales de `POST /avances` y `POST /estimaciones` (frontend, tests, scripts, otros microservicios). **Resultado**: `POST /avances` SÍ tiene un llamador real y funcional — `ControlObraView.tsx` (`handleSubmitAvance`, línea ~528-550, y el input de texto libre en línea ~1417), accesible a roles `control_obra`/`control_proyectos`/`director` (`Layout.tsx:126-127`) con el contrato viejo (`concepto_presupuesto` string, precio/cantidad manuales). `POST /estimaciones` NO tiene ningún llamador real (la pestaña "Estimaciones" de `ControlObraView` solo lista con `GET`). Esto amplió el alcance: se agrega la sección 6 (actualizar `ControlObraView`) y se corrige la lista de roles de `POST /avances` para incluir `control_obra`/`director` además de `residencia`/`control_proyectos`/`admin`. Ver `design.md` y `proposal.md` actualizados.
+
+## 2. Backend — gerencia-tecnica: exponer precio/cantidad del catálogo
+
+- [x] 2.1 Test: `GET /api/v1/gerencia-tecnica/presupuesto/activo` devuelve `precio_unitario` y `cantidad` por cada concepto (hoy no vienen en el `select`). **Rojo confirmado**: `apps/gerencia-tecnica/test/integration/presupuesto-activo-precio-cantidad.integration.test.ts` — `precio_unitario` llega `undefined` en vez de `'3450.75'` porque el `select` actual (`main.ts:239-242`) no lo incluye.
+- [x] 2.2 Ampliar el `select` de conceptos en `GET /presupuesto/activo` (`apps/gerencia-tecnica/src/main.ts:239-242`) para incluir `precio_unitario` y `cantidad`. Test 2.1 en verde.
+- [x] 2.3 Correr suite de `apps/gerencia-tecnica` en verde. 9/9 archivos de `test/integration/*.integration.test.ts` pasan (ejecutados individualmente; correrlos encadenados en un mismo shell puede colgarse por reconexiones de EventBus entre procesos, no relacionado con este cambio).
+
+## 3. Backend — control-proyectos: migración de schema
+
+- [x] 3.1 Agregar columna `concepto_id` (UUID, nullable) al modelo `AvanceFisico` en `apps/control-proyectos/prisma/schema.prisma` (+ índice `[tenant_id, proyecto_id, concepto_id]` para la derivación de `cantidad_anterior` de la tarea 4.7).
+- [x] 3.2 Generada y aplicada la migración `20260803223132_add_concepto_id_avance_fisico` contra la BD local real (Docker). Hallazgo: faltaba `prisma/migrations/migration_lock.toml` en este servicio (mismo patrón de gap de baseline ya visto en `auth`/`personal`) — se creó, y se resolvió el baseline existente (`prisma migrate resolve --applied 20260729052327_baseline`) antes de poder aplicar la migración nueva con `migrate deploy`. Columna e índice verificados con `\d` directo en Postgres. `prisma generate` corrido.
+
+## 4. Backend — control-proyectos: RBAC + resolución server-side (TDD: test primero)
+
+- [x] 4.1 Test que reproduce el bug: `POST /avances` sin rol autorizado hoy responde 201 (debería ser 403). Cubierto en `avances-estimaciones-rbac-catalogo.e2e.test.ts`.
+- [x] 4.2 Test que reproduce el bug: `POST /estimaciones` sin rol autorizado hoy responde 201 (debería ser 403). Cubierto en el mismo archivo.
+- [x] 4.3 Test que reproduce el bug: `POST /avances` hoy acepta `precio_unitario`/`cantidad_presupuestada` tal cual del body en vez de resolverlos del catálogo. Cubierto junto con 4.1/4.2/4.6/4.7/4.9/4.10/4.11 en un solo archivo: `test/e2e/avances-estimaciones-rbac-catalogo.e2e.test.ts` (stub local de `gerencia-tecnica` vía `GT_URL`, mismo patrón que `FINANZAS_URL` en `reconciliacion.e2e.test.ts`). Rojo confirmado antes del fix (esperaba `concepto_id`/RBAC que aún no existían).
+- [x] 4.4 Agregado `requireRoles('residencia', 'control_proyectos', 'control_obra', 'director', 'admin')` a `POST /avances` y `requireRoles('residencia', 'control_proyectos', 'admin')` a `POST /estimaciones`.
+- [x] 4.5 Body de `POST /avances` cambiado a `concepto_id`; nueva función `resolverConceptoDelCatalogo` hace la llamada B2B a `GET /presupuesto/activo` reenviando el header `Authorization`, ubica el concepto por `id` y usa `clave`/`descripcion`/`unidad_medida`/`precio_unitario`/`cantidad` (persistiendo también `concepto_id`).
+- [x] 4.6 Rechazo explícito implementado: `502 CO_CATALOGO_NO_DISPONIBLE` si falla/timeout la llamada a GT, `400 CO_CONCEPTO_NO_ENCONTRADO` si el `concepto_id` no está en el presupuesto activo — en ambos casos no se crea el avance.
+- [x] 4.7 `cantidad_anterior` ahora se calcula sumando `cantidad_periodo` de los avances previos con `estado != RECHAZADO` del mismo `concepto_id`, dentro de la misma transacción de `createTenantContext`.
+- [x] 4.8 Test de matriz de roles en verde (autorizados 201/permitido, no autorizados 403, nada se crea).
+- [x] 4.9 Test en verde: precio/cantidad enviados por el cliente se ignoran.
+- [x] 4.10 Test en verde: `cantidad_anterior` acumula correctamente y excluye avances `RECHAZADO`.
+- [x] 4.11 Test en verde: precio congelado (snapshot) aunque el catálogo cambie después.
+- [x] 4.12 Suite completa de `apps/control-proyectos` corrida (7 archivos, todos en verde). **Hallazgo colateral corregido en el mismo alcance**: `PATCH /avances/:id/validar` pasaba `concepto_presupuesto` (una clave tipo "CIM-001") a `recalcularEVMPorAvanceValidado`, que la castea contra la columna UUID `ProgramacionObra.concepto_id` — fallaba en silencio con cualquier clave real (el test viejo lo ocultaba usando un UUID como clave). Corregido para usar `concepto_id` (el campo nuevo de este mismo change). Nota aparte: `test:integration:centro-costos-creado` requiere `JWT_SECRET` exportado en el shell (gap preexistente del archivo, no relacionado); y se limpió un registro de prueba obsoleto (2026-07-11) en `bitacoras_obra` local que producía un falso rojo por ausencia de RLS en Postgres local (gotcha ya documentado, no relacionado con este change).
+
+## 5. Frontend — pestaña Estimaciones de ResidenciaView (TDD: test primero)
+
+- [x] 5.1 Test que reproduce el bug: en producción (`isDemo=false`) la pestaña Estimaciones nunca hace `GET` y la lista queda fija en `[]`. Cubierto en `ResidenciaView.estimaciones-avance-fisico.test.tsx` (8 tests, un solo archivo para 5.1-5.13). Rojo confirmado antes del fix (mostraba el panel viejo "Sin estimaciones registradas" con columnas Frente/Conceptos/Autorizador).
+- [x] 5.2 Test que reproduce el bug: `handleSubmitEstimacion` no llama ningún endpoint fuera de modo demo. `handleSubmitEstimacion` se eliminó por completo (5.5); cubierto indirectamente por el test "ya no muestra el formulario Nueva Estimación".
+- [x] 5.3 Carga inicial conectada a `GET /estimaciones` y `GET /avances` (nuevo `fetchEstimacionesTab`, disparado al activar el tab, reemplaza el `setEstimaciones([])` fijo).
+- [x] 5.4 Test en verde: error de red muestra tarjeta de error con botón "Reintentar", distinguible de `EmptyStatePanel`.
+- [x] 5.5 Formulario "Nueva Estimación" y `handleSubmitEstimacion` eliminados (también `showEstForm`/`estForm`).
+- [x] 5.6 Botón "Enviar a revisión" y `handleEnviarRevision` eliminados.
+- [x] 5.7 Selector de concepto implementado (mismo patrón que Requisiciones/APU), poblado desde `GET /presupuesto/activo` ya ampliado; precio unitario y cantidad presupuestada se muestran de solo lectura, sin campos editables.
+- [x] 5.8 Formulario "Registrar Avance" implementado; envía `POST /avances` con `concepto_id` únicamente (sin precio/cantidad manuales).
+- [x] 5.9 Test en verde: el avance creado se agrega a la lista sin recargar la pestaña.
+- [x] 5.10 Test en verde: si `POST /avances` falla, el panel permanece abierto con los datos capturados y permite reintentar (no se limpia el formulario en el `catch`).
+- [x] 5.11 Selección múltiple de avances `VALIDADO` (checkbox por fila) + botón "Crear Estimación" que envía `POST /estimaciones` con `avance_ids`.
+- [x] 5.12 Test en verde: la estimación creada aparece en la lista en `BORRADOR`.
+- [x] 5.13 Test en verde: sin avances `VALIDADO` disponibles, el botón queda deshabilitado y se explica el motivo.
+- [x] 5.14 Suite completa de `apps/app-shell` corrida — ver resultado abajo.
+
+**Otros cambios necesarios descubiertos al implementar** (mismo alcance, forma de dato consistente): `Estimacion`/`EstimacionEstado`/`EST_BADGE`/`kpiEstimaciones` tenían campos ficticios (`frente`, `descripcion`, `conceptos` como número, `autorizador`, estados `AUTORIZADA`/`PAGADA`) que no correspondían al modelo real de `control-proyectos` — se reescribieron con la forma real (`id_estimacion`, `numero_estimacion`, estados reales incluyendo `APROBADA_FINANCIERA`/`FACTURADA`/etc.). `DEMO_ESTIMACIONES_RESIDENCIA` en `demoData.ts` tenía el mismo problema (mismo patrón ya corregido antes para `DEMO_PRENOMINAS_RESIDENCIA`) — reescrita a la forma real, y se agregó `DEMO_AVANCES_RESIDENCIA` nueva.
+
+## 6. Frontend — formulario de Avances Físicos de ControlObraView (TDD: test primero)
+
+- [x] 6.1 Revisado `ControlObraView.presupuesto-partida.test.tsx` (único test existente de esta vista) — no toca el formulario de Avances Físicos ni `handleSubmitAvance`, no queda roto por el cambio de contrato.
+- [x] 6.2 Test que reproduce el estado actual: `ControlObraView.avance-fisico-catalogo.test.tsx` (3 tests). Rojo confirmado antes del fix — el formulario mostraba el input de texto libre `placeholder="Ej: CIM-001"` y campos editables "Cant. presupuestada"/"P.U.".
+- [x] 6.3 Campo de texto libre reemplazado por el mismo selector de concepto del catálogo (búsqueda + lista) que `ResidenciaView`; no se extrajo a componente compartido — el patrón es casi idéntico pero cada vista tiene su propio estado/estilo de acento (indigo vs sky) y extraerlo no estaba dentro del alcance mínimo de este fix.
+- [x] 6.4 Campos editables de precio unitario, cantidad presupuestada y cantidad anterior eliminados del formulario; se muestran de solo lectura al elegir el concepto (precio y presupuestado desde el catálogo; cantidad anterior se estima en el cliente sumando los avances ya cargados del mismo `concepto_id`, igual que hace el backend).
+- [x] 6.5 `handleSubmitAvance` actualizado: envía `{ concepto_id, cantidad_periodo, periodo_inicio, periodo_fin }`; ya no llama `fetchData()` completo tras crear — agrega el avance devuelto por el `POST` directo al estado `avances`.
+- [x] 6.6 Test en verde: el avance creado aparece en la tabla sin releer bitácoras/estimaciones/dashboard.
+- [x] 6.7 Suite completa de `apps/app-shell` corrida dos veces (`vitest run`, 53 archivos / 170 tests). Ambas corridas dieron el mismo resultado no relacionado a este change: 16 archivos / 22 tests fallan, todos en `ComparativaDetail`/`ComprasView`/`PersonalView` y uno en `ResidenciaView.ficha-tecnica.test.tsx` (pestaña Requisiciones, no tocada por este change) — ninguno de esos archivos importa `ResidenciaView.tsx`, `ControlObraView.tsx` ni `demoData.ts`. Se confirmó que es flakiness de entorno (probable saturación de CPU/memoria al correr 53 suites de jsdom en paralelo) y no una regresión real: los 4 archivos de muestra revisados (incluido `ResidenciaView.ficha-tecnica.test.tsx`) pasan en verde al correrlos aislados. Corrida focalizada de todo `ResidenciaView*` (5 archivos/15 tests) y `ControlObraView*` (2 archivos/5 tests) — 100% verde.
+
+## 7. Verificación en navegador real (local)
+
+- [x] 7.1 Entorno local levantado: Docker (postgres/redis/rabbitmq ya arriba), `auth` (3003), `gerencia-tecnica` (3001, con la migración de `precio_unitario`/`cantidad` ya aplicada), `control-proyectos` (3013, `.env` nuevo — no existía, con la migración de `concepto_id` ya aplicada), `app-shell` (3000). Usuario real `residente@alfa.bocam.com` (rol `residencia`, seed existente de `apps/auth`), proyecto activo "Planta de Tratamiento Guadalajara Norte" (`33333333-...`) — mismo proyecto que ya tenía presupuesto real sembrado en `gerencia-tecnica` con conceptos reales.
+- [x] 7.2 Verificado en navegador: la pestaña Estimaciones ya no está vacía por defecto — carga KPIs reales (en 0, correctos para datos nuevos) y la sección "Avances Físicos" real, sin el panel fijo viejo.
+- [x] 7.3 Verificado en navegador: registrado un avance real contra el concepto `E2E-001` del catálogo — precio unitario ($500) y presupuestado (100 ML) se muestran de solo lectura tomados del catálogo, sin campos editables. El avance persiste (confirmado también contra la BD real) y un segundo avance del mismo concepto acumuló correctamente sobre el primero (12 → 24 acumulado), probando la derivación server-side de `cantidad_anterior` con datos reales.
+- [x] 7.4 Avance validado vía `PATCH /avances/:id/validar` (rol `admin`, no hay UI para esto — Non-Goal del spec). En navegador como Residente: se seleccionó el avance `VALIDADO` (checkbox) y se creó la estimación — toast "Estimación creada · EST-2026-001", KPI "Estimaciones: 1". Confirmado en BD real: `EST-2026-001`, estado `BORRADOR`, `subtotal=$6000`, `total_neto=$6612` (retención 5% + IVA 16% correctos).
+- [x] 7.5 Confirmado en las capturas de 7.2-7.4: no existe en ningún momento el formulario "Nueva Estimación" ni el botón "Enviar a revisión".
+- [x] 7.6 No hay usuario `control_obra`/`control_proyectos` sembrado localmente — se usó `admin@alfa.bocam.com` (bypassa el filtro de rol del menú en `Layout.tsx` y está en el `requireRoles` de `POST /avances`). Verificado en navegador: el formulario "Registrar Avance Físico" de `ControlObraView` usa el mismo selector de concepto del catálogo (sin texto libre), sin campos editables de precio/cantidad, y el avance registrado ($3,500 = 7 ML × $500) aparece en la tabla sin recargar.
+
+**Hallazgo fuera de alcance encontrado y corregido en el mismo momento** (bloqueaba la verificación de 7.6, no relacionado a avances/estimaciones): `ControlObraView.tsx` crasheaba el componente completo (error boundary) con `TypeError: Cannot read properties of null (reading 'toFixed')` al leer `dashData.avance_general.financiero_pct`/`delta_pct`, que el backend (`GET /dashboard-obra`) puede devolver como `null` (sin presupuesto autorizado aún). Corregido con guards `!= null` / `?? 0` en las 3 líneas afectadas (mismo patrón ya usado en el resto del archivo). Pendiente: abrir un change/spec de bug-fix aparte para documentar formalmente este hallazgo (TDD, PR propio) — no se hizo aquí para no mezclar alcance con este spec, más allá del parche mínimo necesario para destrabar la verificación.
+
+## 8. Deploy y verificación en VPS
+
+- [ ] 8.1 Desplegar `gerencia-tecnica`, `control-proyectos` (con migración) y `app-shell` al VPS, en ese orden.
+- [ ] 8.2 Health checks de los tres servicios en verde.
+- [ ] 8.3 Smoke test en producción con un usuario real de rol `residencia`: registrar un avance y confirmar que persiste con el precio correcto del catálogo.
+- [ ] 8.4 Smoke test en producción con un usuario real de rol `control_obra`/`control_proyectos`: registrar un avance desde `ControlObraView` y confirmar que persiste.
+- [ ] 8.5 Confirmar en logs/BD real que `POST /avances` y `POST /estimaciones` rechazan con 403 a un usuario sin rol autorizado.
+
+## 9. Cierre
+
+- [ ] 9.1 Actualizar memoria del proyecto con el resultado (verificado en prod, archivar change).
+- [ ] 9.2 `openspec archive fix-estimaciones-residente-desconectado` una vez verificado en producción.

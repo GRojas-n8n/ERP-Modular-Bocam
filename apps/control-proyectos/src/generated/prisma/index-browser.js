@@ -209,6 +209,7 @@ exports.Prisma.AvanceFisicoScalarFieldEnum = {
   id_avance: 'id_avance',
   tenant_id: 'tenant_id',
   proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
   concepto_presupuesto: 'concepto_presupuesto',
   descripcion_concepto: 'descripcion_concepto',
   cantidad_presupuestada: 'cantidad_presupuestada',

@@ -12,7 +12,8 @@
     "test:integration:finanzas-pago-feedback": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-registrado.integration.test.ts",
     "test:e2e:reconciliacion": "node -r ts-node/register/transpile-only test/e2e/reconciliacion.e2e.test.ts",
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
-    "test:e2e:bitacoras-avances-evm": "node -r ts-node/register/transpile-only test/e2e/bitacoras-avances-evm.e2e.test.ts"
+    "test:e2e:bitacoras-avances-evm": "node -r ts-node/register/transpile-only test/e2e/bitacoras-avances-evm.e2e.test.ts",
+    "test:e2e:avances-estimaciones-rbac-catalogo": "node -r ts-node/register/transpile-only test/e2e/avances-estimaciones-rbac-catalogo.e2e.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

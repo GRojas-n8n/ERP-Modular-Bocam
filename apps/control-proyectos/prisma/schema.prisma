@@ -159,6 +159,7 @@ model AvanceFisico {
   id_avance            String   @id @default(uuid()) @db.Uuid
   tenant_id            String   @db.Uuid
   proyecto_id          String   @db.Uuid
+  concepto_id          String?  @db.Uuid            // Referencia real al Concepto de gerencia-tecnica (cross-service, sin FK)
   concepto_presupuesto String   @db.VarChar(100)    // Clave del concepto (ej: "CIM-001")
   descripcion_concepto String   @db.VarChar(500)    // Descripción corta
 
@@ -193,6 +194,7 @@ model AvanceFisico {
 
   @@index([tenant_id, proyecto_id])
   @@index([tenant_id, proyecto_id, estado])
+  @@index([tenant_id, proyecto_id, concepto_id])
   @@map("avances_fisicos")
 }
 
