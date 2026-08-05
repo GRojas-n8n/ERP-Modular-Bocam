@@ -14,11 +14,11 @@
 
 ## 3. Verificación en VPS real
 
-- [ ] 3.1 Reaplicar el mismo script corregido contra la base real de `compras` en el VPS (mismo procedimiento manual con el que se instaló el trigger originalmente).
-- [ ] 3.2 En el VPS, correr `SELECT pg_get_functiondef('fn_prevent_locked_comparativa_modification'::regproc);` de solo lectura y confirmar que el cuerpo activo ya incluye la rama `TG_OP = 'DELETE'`.
-- [ ] 3.3 Confirmar `git status` limpio fuera de `apps/compras/prisma/migrations/manual/migration.sql`, el nuevo test, y `openspec/changes/fix-trigger-delete-cuadro-comparativo/`.
+- [x] 3.1 Reaplicar el mismo script corregido contra la base real de `compras` en el VPS (`git pull` en `/root/ERP-Modular-Bocam` + `docker exec bocam-vps-postgres psql -U bocam_admin -d bocam_compras` con el contenido de `migration.sql`, mismo procedimiento manual con el que se instaló el trigger originalmente).
+- [x] 3.2 En el VPS, correr `SELECT pg_get_functiondef('fn_prevent_locked_comparativa_modification'::regproc);` de solo lectura y confirmar que el cuerpo activo ya incluye la rama `TG_OP = 'DELETE'`. Confirmado.
+- [x] 3.3 Confirmar `git status` limpio fuera de `apps/compras/prisma/migrations/manual/migration.sql`, el nuevo test, y `openspec/changes/fix-trigger-delete-cuadro-comparativo/`. Commit `f4fff20` pusheado a `main` y ya reflejado en el VPS.
 
 ## 4. Cierre
 
-- [ ] 4.1 Commit con `fix(compras): ...` y PR contra `main` (o commit directo si el flujo del proyecto lo permite para este tipo de fix, siguiendo el patrón de commits recientes de bug-fix en el historial).
-- [ ] 4.2 Archivar el change en OpenSpec una vez verificado en VPS real.
+- [x] 4.1 Commit directo a `main` (`f4fff20`, siguiendo el patrón de commits recientes de bug-fix en el historial; no se abrió PR).
+- [x] 4.2 Archivar el change en OpenSpec una vez verificado en VPS real.
