@@ -201,15 +201,20 @@ jobs:
 
             $COMPOSE up -d "$svc"
             wait_healthy "bocam-vps-$svc"
-
-            # contabilidad-sat-worker comparte imagen con contabilidad
-            # pero es un servicio de compose aparte (no se reconstruye solo).
-            if [ "$svc" = "contabilidad" ]; then
-              echo "-- contabilidad-sat-worker (mismo build) --"
-              $COMPOSE build contabilidad-sat-worker
-              $COMPOSE up -d contabilidad-sat-worker
-            fi
           done
+
+          # contabilidad-sat-worker comparte imagen con contabilidad pero
+          # vive bajo el profile "sat" (docker-compose.vps.yml) — NO se activa
+          # por default porque la integracion SAT real no esta configurada en
+          # produccion (SAT_ADAPTER_BASE_URL/API_KEY vacios). Sin --profile sat,
+          # `compose build/up contabilidad-sat-worker` falla siempre con "no
+          # such service", por eso solo se toca aqui si contabilidad esta en
+          # la lista Y el profile esta explicitamente activado via env.
+          if echo "$SERVICES" | grep -qw contabilidad && [ "${DEPLOY_SAT_WORKER:-}" = "true" ]; then
+            echo "-- contabilidad-sat-worker (profile sat activado) --"
+            COMPOSE_PROFILES=sat $COMPOSE build contabilidad-sat-worker
+            COMPOSE_PROFILES=sat $COMPOSE up -d contabilidad-sat-worker
+          fi
 
           echo "Todos los servicios desplegados quedaron healthy."
           SCRIPT
