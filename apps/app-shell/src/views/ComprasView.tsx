@@ -49,6 +49,8 @@ import {
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 /**
  * ---------------------------------------------------------------------------
@@ -296,6 +298,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const { notify } = useNotification();
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const [confirmAprobarReq, setConfirmAprobarReq] = useState<Requisicion | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
   const roles: string[] = user?.role ?? [];
@@ -1566,6 +1569,10 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
         </div>
 
         {/* Botón contextual por tab */}
@@ -4286,6 +4293,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         onConfirm={() => void handleCancelarOC()}
         onCancel={() => setConfirmCancelarOc(null)}
       />
+
+      <HelpPanel viewId="compras" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

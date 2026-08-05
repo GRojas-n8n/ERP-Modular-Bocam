@@ -46,6 +46,8 @@ import {
   IconX,
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 
 /**
@@ -372,6 +374,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
 
   const activeTab: TabId = (activeSubView as TabId) || 'estimaciones';
   const [loading, setLoading] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // ─ Estimaciones
   const [estimaciones, setEstimaciones] = useState<Estimacion[]>([]);
@@ -1395,6 +1398,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           <IconClipboardCheck className="h-5 w-5 text-indigo-500" />
           <h1 className="text-lg font-bold uppercase tracking-widest text-foreground">Residencia de Obra</h1>
           {isDemo && <SectionBadge className="bg-indigo-500/10 text-indigo-600">DEMO</SectionBadge>}
+          <HelpButton onClick={() => setHelpOpen(true)} />
         </div>
         <p className="text-xs text-muted-foreground">Estimaciones · Aprobación de nómina · Control de asistencia QR</p>
       </div>
@@ -3244,6 +3248,8 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           )}
         </div>
       </Modal>
+
+      <HelpPanel viewId="residencia" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

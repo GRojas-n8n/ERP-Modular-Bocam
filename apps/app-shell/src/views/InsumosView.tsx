@@ -24,6 +24,8 @@ import { useNotification } from '../context/NotificationContext';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { ControlPresupuestalTabla } from '../components/ControlPresupuestalTabla';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 import {
   IconBriefcase,
   IconSearch,
@@ -674,6 +676,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [search, setSearch]           = useState('');
   const [panelImport, setPanelImport] = useState(false);
   const [panelGuia,   setPanelGuia]   = useState(false);
+  const [helpOpen,    setHelpOpen]    = useState(false);
   const [importando,  setImportando]  = useState(false);
   const [aprobando,   setAprobando]   = useState(false);
   const [archivoNombre, setArchivoNombre] = useState('');
@@ -1599,6 +1602,8 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             >
               <IconRefreshCw className={cn('h-4 w-4 text-muted-foreground', (loading || loadingInsumos) && 'animate-spin')} />
             </button>
+
+            <HelpButton onClick={() => setHelpOpen(true)} />
 
             {activeTab === 'catalogo' && (
               <>
@@ -3650,6 +3655,8 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           );
         })()}
       </SlidePanel>
+
+      <HelpPanel viewId="insumos" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );
 };

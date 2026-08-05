@@ -17,6 +17,8 @@ import {
   IconWallet,
 } from '../components/Icons';
 import { TableScrollShadow } from '../components/TableScrollShadow';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 
@@ -112,6 +114,7 @@ const inicioAno = `${new Date().getFullYear()}-01-01`;
 const ContabilidadView: React.FC = () => {
   const { currentProjectId } = useTenant();
   const [tab, setTab] = useState<Tab>('polizas');
+  const [helpOpen, setHelpOpen] = useState(false);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [asientos, setAsientos] = useState<Asiento[]>([]);
   const [loadingAsientos, setLoadingAsientos] = useState(false);
@@ -536,9 +539,12 @@ const ContabilidadView: React.FC = () => {
           <h1 className="text-2xl font-black tracking-tighter text-foreground md:text-3xl">Contabilidad</h1>
           <p className="mt-1 text-sm text-muted-foreground">Pólizas contables en partida doble · Conciliación CFDI y banco · Reportes financieros</p>
         </div>
-        <SectionBadge className="border-primary/20 bg-primary/10 text-primary">
-          Corte partida doble: 29 Jun 2026
-        </SectionBadge>
+        <div className="flex items-center gap-2">
+          <SectionBadge className="border-primary/20 bg-primary/10 text-primary">
+            Corte partida doble: 29 Jun 2026
+          </SectionBadge>
+          <HelpButton onClick={() => setHelpOpen(true)} />
+        </div>
       </div>
 
       {/* KPIs */}
@@ -566,6 +572,8 @@ const ContabilidadView: React.FC = () => {
       {tab === 'polizas'      && renderPolizas()}
       {tab === 'conciliacion' && renderConciliacion()}
       {tab === 'reportes'     && renderReportes()}
+
+      <HelpPanel viewId="contabilidad" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

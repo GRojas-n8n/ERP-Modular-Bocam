@@ -28,6 +28,8 @@ import {
   IconTrendingUp,
   IconUsers,
 } from '../components/Icons';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 /**
  * ---------------------------------------------------------------------------
@@ -134,6 +136,7 @@ type TabId = 'incidentes' | 'inspecciones' | 'permisos' | 'capacitaciones' | 'ep
 export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
   const { tenant } = useTenant();
   const activeTab: TabId = (activeSubView as TabId) || 'incidentes';
+  const [helpOpen, setHelpOpen] = useState(false);
   const [incidentes, setIncidentes] = useState<Incidente[]>([]);
   const [inspecciones, setInspecciones] = useState<Inspeccion[]>([]);
   const [permisos, setPermisos] = useState<Permiso[]>([]);
@@ -323,18 +326,21 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
           </div>
         </div>
 
-        <Button className="rounded-2xl bg-rose-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-rose-600/20 hover:bg-rose-500">
-          <IconPlus className="h-4 w-4" />
-          {activeTab === 'incidentes'
-            ? 'Reportar Incidente'
-            : activeTab === 'inspecciones'
-              ? 'Nueva Inspeccion'
-              : activeTab === 'permisos'
-                ? 'Nuevo Permiso'
-                : activeTab === 'epp'
-                  ? 'Registrar Entrega EPP'
-                  : 'Nueva Capacitacion'}
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
+          <Button className="rounded-2xl bg-rose-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-rose-600/20 hover:bg-rose-500">
+            <IconPlus className="h-4 w-4" />
+            {activeTab === 'incidentes'
+              ? 'Reportar Incidente'
+              : activeTab === 'inspecciones'
+                ? 'Nueva Inspeccion'
+                : activeTab === 'permisos'
+                  ? 'Nuevo Permiso'
+                  : activeTab === 'epp'
+                    ? 'Registrar Entrega EPP'
+                    : 'Nueva Capacitacion'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -809,6 +815,8 @@ export const SeguridadView: React.FC<{ activeSubView?: string }> = ({ activeSubV
           )}
         </>
       )}
+
+      <HelpPanel viewId="seguridad" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

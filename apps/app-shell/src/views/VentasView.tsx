@@ -14,6 +14,8 @@ import { cn } from '../lib/utils';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { SlidePanel } from '../components/SlidePanel';
 import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 // ─── Icono local para ventas ──────────────────────────────────────────────────
 const IconShoppingBag: React.FC<{ className?: string }> = ({ className }) => (
@@ -160,6 +162,7 @@ const EstatusBadge: React.FC<{ estatus: string }> = ({ estatus }) => {
 export const VentasView: React.FC = () => {
   const { tenant, user } = useTenant();
   const [tab, setTab] = useState<TabKey>('clientes');
+  const [helpOpen, setHelpOpen] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
   const [facturas, setFacturas] = useState<Factura[]>([]);
@@ -329,6 +332,7 @@ export const VentasView: React.FC = () => {
           >
             <IconRefreshCw className={cn('h-5 w-5 text-muted-foreground', loading && 'animate-spin')} />
           </button>
+          <HelpButton onClick={() => setHelpOpen(true)} />
           {tab === 'clientes' && esAdmin && (
             <>
               <input
@@ -693,6 +697,8 @@ export const VentasView: React.FC = () => {
           )}
         </div>
       </SlidePanel>
+
+      <HelpPanel viewId="ventas" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

@@ -69,14 +69,14 @@ function useTheme() {
 }
 
 // ─── Nav items ───────────────────────────────────────────────────────────────
-type SubItem = {
+export type SubItem = {
   id: string;
   label: string;
   icon: React.FC<{ className?: string }>;
   roles?: string[];
 };
 
-type NavItem = {
+export type NavItem = {
   name: string;
   icon: React.FC<{ className?: string }>;
   id: string;
@@ -84,7 +84,10 @@ type NavItem = {
   subItems?: SubItem[];
 };
 
-const ALL_NAV_ITEMS: NavItem[] = [
+// Exportado solo para el guard de cobertura de ayuda contextual
+// (apps/app-shell/src/help/registry.test.ts) — no importar desde vistas ni
+// desde lógica de negocio; el sidebar sigue siendo el único consumidor real.
+export const ALL_NAV_ITEMS: NavItem[] = [
   { name: 'Dashboard', icon: IconDashboard, id: 'dashboard', roles: [] },
   {
     name: 'Gerencia Técnica', icon: IconBriefcase, id: 'insumos',

@@ -25,6 +25,8 @@ import {
   IconRefreshCw,
   IconSearch,
 } from '../components/Icons';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 /**
  * ---------------------------------------------------------------------------
@@ -100,6 +102,7 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
   const [inventarioSearch, setInventarioSearch] = useState('');
   const [movFilter, setMovFilter] = useState<MovTipo | ''>('');
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // ─── Fetch ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -170,6 +173,10 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
         </div>
       </div>
 
@@ -435,6 +442,8 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           )}
         </>
       )}
+
+      <HelpPanel viewId="almacen" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

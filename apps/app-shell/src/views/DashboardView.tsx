@@ -31,6 +31,8 @@ import {
   IconUsers,
   IconWallet,
 } from '../components/Icons';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 // ─── Tipos del Dashboard Ejecutivo ───────────────────────────────────────────
 
@@ -75,6 +77,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
   const [loadingResumen, setLoadingResumen] = useState(false);
   const [showResumen, setShowResumen] = useState(false);
   const [resumenData, setResumenData] = useState<ResumenEjecutivo | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const handleVerResumen = async () => {
     setLoadingResumen(true);
@@ -201,6 +204,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
             >
               ↻ Actualizar
             </button>
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </div>
         }
       />
@@ -500,6 +504,7 @@ const DashboardEjecutivo: React.FC<{ onNavigate: (v: string) => void; isDemo: bo
         </div>
       </SideSheet>
 
+      <HelpPanel viewId="dashboard" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };
@@ -614,6 +619,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
   const dashboard = useDashboardData();
   const [visibleItems, setVisibleItems] = useState(0);
+  const [helpOpenEstandar, setHelpOpenEstandar] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -805,6 +811,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             {user?.projects?.[0]?.code || 'Sin Proyecto'}
           </SectionBadge>
+          <HelpButton onClick={() => setHelpOpenEstandar(true)} />
         </div>
       </div>
 
@@ -1060,6 +1067,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </>
         }
       />
+
+      <HelpPanel viewId="dashboard" isOpen={helpOpenEstandar} onClose={() => setHelpOpenEstandar(false)} />
     </div>
   );
 };

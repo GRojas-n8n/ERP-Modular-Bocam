@@ -33,6 +33,8 @@ import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { DEMO_RESUMEN_FINANCIERO, DEMO_PAGOS } from '../lib/demoData';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PresupuestoAsignado {
@@ -195,6 +197,7 @@ export const FinanzasView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // ── Panel Nuevo Presupuesto ──────────────────────────────────────────────
   const [panelOpen, setPanelOpen] = useState(false);
@@ -434,7 +437,8 @@ export const FinanzasView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <HelpButton onClick={() => setHelpOpen(true)} />
           {/* Dropdown de exportación */}
           <div className="relative">
             <Button
@@ -1101,6 +1105,8 @@ export const FinanzasView: React.FC = () => {
           />
         </div>
       </SlidePanel>
+
+      <HelpPanel viewId="finanzas" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

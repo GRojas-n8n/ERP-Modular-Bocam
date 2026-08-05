@@ -3,6 +3,8 @@ import api, { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { ConfirmCriticalActionDialog, cn, getProjectColor } from '@bocam/ui-core';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -571,6 +573,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const currentProjectColor = getProjectColor(currentProjectId);
   const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias') || 'usuarios';
+  const [helpOpen, setHelpOpen] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -676,14 +679,17 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
             Gestión de usuarios, roles y proyectos
           </p>
         </div>
-        {activeTab !== 'categorias' && (
-          <button
-            onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
-            className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
-          >
-            + {activeTab === 'usuarios' ? 'Nuevo Usuario' : 'Nuevo Proyecto'}
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
+          {activeTab !== 'categorias' && (
+            <button
+              onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
+            >
+              + {activeTab === 'usuarios' ? 'Nuevo Usuario' : 'Nuevo Proyecto'}
+            </button>
+          )}
+        </div>
       </div>
 
 
@@ -929,6 +935,8 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
           onClose={() => { setShowProyectoModal(false); setEditingProyecto(undefined); }}
           onSaved={async () => { await loadAll(); await refreshUser(); }} />
       )}
+
+      <HelpPanel viewId="admin" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

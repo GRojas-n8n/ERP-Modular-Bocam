@@ -14,6 +14,8 @@ import {
 } from '../components/Icons';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../lib/api';
@@ -114,6 +116,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const isDemo = tenant?.id === 'iretum-demo';
   const roles: string[] = user?.role ?? [];
   const canEdit = roles.some(r => ['calidad', 'admin'].includes(r));
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // ── State: dashboard ──
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -292,15 +295,18 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </div>
         </div>
 
-        {canEdit && (
-          <Button
-            onClick={() => setShowNuevoDoc(true)}
-            className="rounded-2xl bg-teal-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-teal-600/20 hover:bg-teal-500"
-          >
-            <IconPlus className="h-4 w-4" />
-            Nuevo Documento
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
+          {canEdit && (
+            <Button
+              onClick={() => setShowNuevoDoc(true)}
+              className="rounded-2xl bg-teal-600 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-teal-600/20 hover:bg-teal-500"
+            >
+              <IconPlus className="h-4 w-4" />
+              Nuevo Documento
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPIs */}
@@ -734,6 +740,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         </div>
       )}
 
+      <HelpPanel viewId="calidad" activeSubView="documentos" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 
@@ -806,6 +813,7 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; current
   const [causaEdit, setCausaEdit]   = useState(false);
   const [causaText, setCausaText]   = useState('');
   const [acEstadoLoading, setAcEstadoLoading] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (isDemo) { setNcs([]); setLoading(false); return; }
@@ -901,12 +909,15 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; current
           <h2 className="text-xl font-black tracking-tighter">No Conformidades</h2>
           <p className="text-xs text-muted-foreground mt-0.5">ISO 9001:2015 § 10.2 — Registro y seguimiento de NC</p>
         </div>
-        {canEdit && !isDemo && (
-          <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-widest text-primary-foreground hover:opacity-90 active:scale-95 transition-all">
-            <IconPlus className="h-3.5 w-3.5" /> Nueva NC
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
+          {canEdit && !isDemo && (
+            <button onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-widest text-primary-foreground hover:opacity-90 active:scale-95 transition-all">
+              <IconPlus className="h-3.5 w-3.5" /> Nueva NC
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -1132,6 +1143,8 @@ const NoConformidadesView: React.FC<{ isDemo: boolean; canEdit: boolean; current
           <SubmitButton label={saving ? 'Guardando...' : 'Registrar NC'} loading={saving} onClick={() => void handleCreate()} color="red" />
         </div>
       </SlidePanel>
+
+      <HelpPanel viewId="calidad" activeSubView="no-conformidades" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };
@@ -1177,6 +1190,7 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
   const [form, setForm]                 = useState({ titulo: '', alcance: '', criterios: '', fecha_inicio: '', fecha_fin: '' });
   const [hForm, setHForm]               = useState({ descripcion: '', tipo: 'MENOR', proceso_afectado: '' });
   const [showHForm, setShowHForm]       = useState(false);
+  const [helpOpen, setHelpOpen]         = useState(false);
 
   const load = useCallback(async () => {
     if (isDemo) { setAuditorias([]); setLoading(false); return; }
@@ -1264,12 +1278,15 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
           <h2 className="text-xl font-black tracking-tighter">Auditorías Internas</h2>
           <p className="text-xs text-muted-foreground mt-0.5">ISO 9001:2015 § 9.2 — Programa y hallazgos</p>
         </div>
-        {canEdit && !isDemo && (
-          <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-widest text-primary-foreground hover:opacity-90 active:scale-95 transition-all">
-            <IconPlus className="h-3.5 w-3.5" /> Nueva Auditoría
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
+          {canEdit && !isDemo && (
+            <button onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-widest text-primary-foreground hover:opacity-90 active:scale-95 transition-all">
+              <IconPlus className="h-3.5 w-3.5" /> Nueva Auditoría
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -1461,6 +1478,8 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
           <SubmitButton label={saving ? 'Guardando...' : 'Crear Auditoría'} loading={saving} onClick={() => void handleCreate()} color="emerald" />
         </div>
       </SlidePanel>
+
+      <HelpPanel viewId="calidad" activeSubView="auditorias" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

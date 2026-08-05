@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { DEMO_BITACORAS, DEMO_AVANCES, DEMO_ESTIMACIONES } from '../lib/demoData';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 import {
   Button,
   Card,
@@ -261,6 +263,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     alertas: Array<{ tipo: string; mensaje: string; severidad: string }>;
     parcial: boolean;
   } | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [showBitacoraForm, setShowBitacoraForm] = useState(false);
   const [showAvanceForm, setShowAvanceForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -682,15 +685,18 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
           </div>
         </div>
 
-        {!isDemo && (activeTab === 'bitacoras' || activeTab === 'avances') && (
-          <Button
-            onClick={() => activeTab === 'bitacoras' ? setShowBitacoraForm(true) : setShowAvanceForm(true)}
-            className="bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500"
-          >
-            <IconPlus className="h-4 w-4" />
-            {activeTab === 'bitacoras' ? 'Nueva Bitácora' : 'Registrar Avance'}
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <HelpButton onClick={() => setHelpOpen(true)} />
+          {!isDemo && (activeTab === 'bitacoras' || activeTab === 'avances') && (
+            <Button
+              onClick={() => activeTab === 'bitacoras' ? setShowBitacoraForm(true) : setShowAvanceForm(true)}
+              className="bg-sky-600 text-white shadow-xl shadow-sky-600/20 hover:bg-sky-500"
+            >
+              <IconPlus className="h-4 w-4" />
+              {activeTab === 'bitacoras' ? 'Nueva Bitácora' : 'Registrar Avance'}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* ── KPIs campo (solo en tabs de campo) ──────────────────────────────── */}
@@ -1603,6 +1609,8 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
           </Card>
         </div>
       )}
+
+      <HelpPanel viewId="control-obra" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };

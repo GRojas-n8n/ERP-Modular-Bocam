@@ -36,6 +36,8 @@ import {
   IconX,
 } from '../components/Icons';
 import { FormField, Input, Select, SlidePanel, SubmitButton } from '../components/SlidePanel';
+import { HelpButton } from '../components/HelpButton';
+import { HelpPanel } from '../components/HelpPanel';
 import { TableScrollShadow } from '../components/TableScrollShadow';
 import { descargarPlantillaXlsx, leerColumnaCsv, parseCsvOrExcelFile } from '../lib/csvImport';
 import QRCode from 'qrcode';
@@ -353,6 +355,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const currentProjectColor = getProjectColor(currentProjectId);
   const activeTab: TabId = (activeSubView as TabId) || 'empleados';
+  const [helpOpen, setHelpOpen] = useState(false);
   // Mismos roles que POST /empleados/importar-lote (apps/personal/src/main.ts).
   const puedeImportarEmpleados = (user?.role ?? []).some(r => ['personal_rh', 'admin'].includes(r));
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
@@ -1270,6 +1273,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         </div>
 
         <div className="flex items-center gap-3">
+          <HelpButton onClick={() => setHelpOpen(true)} />
           {activeTab === 'empleados' && puedeImportarEmpleados && (
             <>
               <input
@@ -2851,6 +2855,8 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           </div>
         </div>
       )}
+
+      <HelpPanel viewId="personal" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 };
