@@ -13,6 +13,9 @@ BEGIN
   IF OLD.estado = 'LOCKED' THEN
     RAISE EXCEPTION 'cannot_modify_locked_comparativa: cuadro % está LOCKED', OLD.id_cuadro;
   END IF;
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
