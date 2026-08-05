@@ -52,7 +52,7 @@ function buildClient(): Anthropic {
 
 router.get(
   '/api/v1/asistente/alertas-predictivas',
-  requireRoles('superintendent', 'admin', 'finance'),
+  requireRoles('superintendent', 'admin', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const headers = buildForwardHeaders(req, { Authorization: req.headers.authorization ?? '' });

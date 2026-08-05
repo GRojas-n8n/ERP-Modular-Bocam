@@ -66,6 +66,34 @@ test('requireProjectAccess rejects request without active project for project-le
   assert.equal((res as any).statusCode, 403);
 });
 
+test('requireProjectAccess allows tenant-level access for role finanzas', () => {
+  const middleware = requireProjectAccess();
+  const req = {
+    securityContext: {
+      userId: 'u1',
+      tenantId: 't1',
+      proyectoId: '',
+      email: 'u@bocam.com',
+      name: 'User',
+      userName: 'User',
+      roles: ['finanzas'],
+      authorizedProjects: [],
+      limiteAprobacion: 0,
+    },
+  } as unknown as Request;
+  const res = createResponseMock();
+  let nextCalled = false;
+
+  middleware(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(
+    nextCalled, true,
+    'un usuario con rol finanzas debe tener acceso de nivel tenant (a todos los proyectos), igual que admin/superintendent/procurement'
+  );
+});
+
 test('valid jwt still builds security context', () => {
   const token = jwt.sign(
     {

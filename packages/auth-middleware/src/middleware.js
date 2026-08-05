@@ -214,8 +214,8 @@ function requireProjectAccess() {
             return next();
         }
         const { proyectoId, authorizedProjects, roles } = req.securityContext;
-        // Los roles de nivel Tenant (superintendent, finance, procurement) tienen acceso a todo
-        const tenantLevelRoles = ['admin', 'superintendent', 'finance', 'procurement'];
+        // Los roles de nivel Tenant (superintendent, finanzas, procurement) tienen acceso a todo
+        const tenantLevelRoles = ['admin', 'superintendent', 'finanzas', 'procurement'];
         const hasTenantAccess = roles.some(role => tenantLevelRoles.includes(role));
         if (hasTenantAccess) {
             return next();

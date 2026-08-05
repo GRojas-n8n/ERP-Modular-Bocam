@@ -726,7 +726,7 @@ app.post('/api/v1/auth/switch-project', async (req: Request, res: Response) => {
 
     const hasAccess = user.proyectos_acceso.some((pa) => pa.proyecto_id === proyecto_id);
     const isGlobalRole = user.rol_global.some((r) =>
-      ['admin', 'superintendent', 'finance', 'procurement'].includes(r)
+      ['admin', 'superintendent', 'finanzas', 'procurement'].includes(r)
     );
 
     if (!hasAccess && !isGlobalRole) {

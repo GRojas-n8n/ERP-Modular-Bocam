@@ -1627,7 +1627,7 @@ app.post('/api/v1/compras/ordenes-compra/enviar-correo', requireRoles('procureme
 // --- Recepción de materiales contra OC ---
 
 app.get('/api/v1/compras/ordenes-compra/:id',
-  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica', 'finance'),
+  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -1695,7 +1695,7 @@ app.get('/api/v1/compras/ordenes-compra/:id',
 );
 
 app.get('/api/v1/compras/ordenes-compra/:id/recepciones',
-  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica', 'finance'),
+  requireRoles('procurement', 'admin', 'superintendent', 'gerencia_tecnica', 'finanzas'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2172,7 +2172,7 @@ app.post(
 
 app.get(
   '/api/v1/compras/proveedores/:id/documentos',
-  requireRoles('procurement', 'admin', 'finance', 'gerencia_tecnica', 'superintendent'),
+  requireRoles('procurement', 'admin', 'finanzas', 'gerencia_tecnica', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2204,7 +2204,7 @@ app.get(
 
 app.get(
   '/api/v1/compras/proveedores/:id/documentos/:did/descargar',
-  requireRoles('procurement', 'admin', 'finance', 'gerencia_tecnica', 'superintendent'),
+  requireRoles('procurement', 'admin', 'finanzas', 'gerencia_tecnica', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
@@ -2347,7 +2347,7 @@ app.post(
 
 app.get(
   '/api/v1/compras/proveedores/:id/calificaciones',
-  requireRoles('procurement', 'admin', 'finance', 'gerencia_tecnica', 'superintendent'),
+  requireRoles('procurement', 'admin', 'finanzas', 'gerencia_tecnica', 'superintendent'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
