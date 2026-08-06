@@ -594,6 +594,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [confirmActivar, setConfirmActivar] = useState(false);
   const [activandoProyecto, setActivandoProyecto] = useState(false);
   const [confirmEliminarCategoria, setConfirmEliminarCategoria] = useState<CategoriaAdmin | null>(null);
+  const [confirmCrearCategoria, setConfirmCrearCategoria] = useState(false);
 
   const loadCategorias = useCallback(async () => {
     if (!currentProjectId) return;
@@ -607,7 +608,13 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
     finally { setLoadingCat(false); }
   }, [currentProjectId]);
 
-  const handleCrearCategoria = async () => {
+  const handleCrearCategoria = () => {
+    if (!nuevaCatNombre.trim() || !currentProjectId) return;
+    setConfirmCrearCategoria(true);
+  };
+
+  const crearCategoria = async () => {
+    setConfirmCrearCategoria(false);
     if (!nuevaCatNombre.trim() || !currentProjectId) return;
     setSavingCat(true);
     try {
@@ -912,6 +919,17 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
           </div>
         </div>
       )}
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearCategoria}
+        dismissible={false}
+        title="¿Crear esta categoría de gasto?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={savingCat}
+        onConfirm={() => void crearCategoria()}
+        onCancel={() => setConfirmCrearCategoria(false)}
+      />
 
       <ConfirmCriticalActionDialog
         open={!!confirmEliminarCategoria}

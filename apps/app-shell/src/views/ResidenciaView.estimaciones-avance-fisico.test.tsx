@@ -156,6 +156,7 @@ describe('ResidenciaView — Registrar avance físico (5.7-5.10)', () => {
     fireEvent.click(await screen.findByRole('button', { name: /CIM-001/i }));
     fireEvent.change(await screen.findByLabelText(/Cantidad del periodo/i), { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar Avance' }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/api/v1/control-proyectos/avances', expect.objectContaining({
       concepto_id: 'concepto-1',
@@ -195,12 +196,14 @@ describe('ResidenciaView — Registrar avance físico (5.7-5.10)', () => {
     const cantidadInput = await screen.findByLabelText(/Cantidad del periodo/i);
     fireEvent.change(cantidadInput, { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar Avance' }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledTimes(1));
     // El formulario sigue abierto con el dato capturado — no se perdió.
     expect(await screen.findByDisplayValue('5')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Guardar Avance' }));
+    fireEvent.click(await screen.findByText('Confirmar'));
     await waitFor(() => expect(postMock).toHaveBeenCalledTimes(2));
   });
 });
@@ -228,6 +231,7 @@ describe('ResidenciaView — Crear estimación desde avances validados (5.11-5.1
     const checkbox = await screen.findByRole('checkbox', { name: /CIM-001/i });
     fireEvent.click(checkbox);
     fireEvent.click(await screen.findByRole('button', { name: /Crear Estimación/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/api/v1/control-proyectos/estimaciones', { avance_ids: ['av-1'] }));
     expect(await screen.findByText('EST-2026-002')).toBeInTheDocument();

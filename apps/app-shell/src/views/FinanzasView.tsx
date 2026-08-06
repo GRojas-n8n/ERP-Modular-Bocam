@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  ConfirmCriticalActionDialog,
   EmptyStatePanel,
   OperationalBanner,
   SectionBadge,
@@ -15,6 +16,7 @@ import {
   TableHeader,
   TableRow,
   cn,
+  getProjectColor,
 } from '@bocam/ui-core';
 import {
   IconAlertCircle,
@@ -188,8 +190,10 @@ function exportarPDF(resumen: ResumenFinanciero | null, pagos: PagoProgramado[],
 }
 
 export const FinanzasView: React.FC = () => {
-  const { tenant, currentProjectId } = useTenant();
+  const { tenant, currentProjectId, user } = useTenant();
   const { notify } = useNotification();
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
   const [resumen, setResumen] = useState<ResumenFinanciero | null>(null);
   const [pagos, setPagos] = useState<PagoProgramado[]>([]);
   const [presupuestos, setPresupuestos] = useState<PresupuestoAsignado[]>([]);
@@ -202,6 +206,7 @@ export const FinanzasView: React.FC = () => {
   // ── Panel Nuevo Presupuesto ──────────────────────────────────────────────
   const [panelOpen, setPanelOpen] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [confirmCrearPresupuesto, setConfirmCrearPresupuesto] = useState(false);
 
   // ── Pagos OC ──────────────────────────────────────────────────────────────
   const [pagosOC, setPagosOC] = useState<Array<{
@@ -211,6 +216,7 @@ export const FinanzasView: React.FC = () => {
   }>>([]);
   const [showPagoModal, setShowPagoModal] = useState(false);
   const [guardandoPago, setGuardandoPago] = useState(false);
+  const [confirmRegistrarPago, setConfirmRegistrarPago] = useState(false);
   const [pagoForm, setPagoForm] = useState({
     fuente: 'ANTICIPO' as 'ANTICIPO' | 'CUENTA_BANCARIA',
     cuenta_id: '',
@@ -242,7 +248,7 @@ export const FinanzasView: React.FC = () => {
     setFormError(null);
   };
 
-  const handleGuardarPresupuesto = async () => {
+  const handleGuardarPresupuesto = () => {
     if (!form.codigo.trim() || !form.descripcion.trim() || !form.monto_autorizado) {
       setFormError('Código, descripción y monto son obligatorios.');
       return;
@@ -252,6 +258,13 @@ export const FinanzasView: React.FC = () => {
       setFormError('El monto debe ser un número mayor a cero.');
       return;
     }
+    setFormError(null);
+    setConfirmCrearPresupuesto(true);
+  };
+
+  const crearPresupuesto = async () => {
+    setConfirmCrearPresupuesto(false);
+    const monto = parseFloat(form.monto_autorizado);
     setGuardando(true);
     setFormError(null);
     try {
@@ -303,11 +316,17 @@ export const FinanzasView: React.FC = () => {
 
   useEffect(() => { void fetchData(); }, [currentProjectId]);
 
-  const handleGuardarPagoOC = async () => {
+  const handleGuardarPagoOC = () => {
     if (!pagoForm.referencia || !pagoForm.concepto || !pagoForm.oc_id || !pagoForm.monto_aplicado) {
       setPagoError('Referencia, concepto, OC y monto son obligatorios.');
       return;
     }
+    setPagoError(null);
+    setConfirmRegistrarPago(true);
+  };
+
+  const registrarPagoOC = async () => {
+    setConfirmRegistrarPago(false);
     setGuardandoPago(true);
     setPagoError(null);
     try {
@@ -1011,7 +1030,7 @@ export const FinanzasView: React.FC = () => {
         isOpen={panelOpen}
         onClose={() => { setPanelOpen(false); resetForm(); }}
         title="Nuevo Presupuesto Asignado"
-        subtitle="Define el fondo autorizado para un capítulo del proyecto"
+        subtitle={`Define el fondo autorizado para un capítulo del proyecto · Proyecto: ${currentProjectName}`}
         accentColor="emerald"
       >
         <div className="space-y-5">
@@ -1105,6 +1124,28 @@ export const FinanzasView: React.FC = () => {
           />
         </div>
       </SlidePanel>
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearPresupuesto}
+        dismissible={false}
+        title="¿Crear este presupuesto?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={guardando}
+        onConfirm={() => void crearPresupuesto()}
+        onCancel={() => setConfirmCrearPresupuesto(false)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={confirmRegistrarPago}
+        dismissible={false}
+        title="¿Registrar este pago?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={guardandoPago}
+        onConfirm={() => void registrarPagoOC()}
+        onCancel={() => setConfirmRegistrarPago(false)}
+      />
 
       <HelpPanel viewId="finanzas" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>

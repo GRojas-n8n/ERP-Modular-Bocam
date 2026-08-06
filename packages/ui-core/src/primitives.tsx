@@ -356,6 +356,9 @@ export interface ConfirmCriticalActionDialogProps {
   cancelLabel?: string;
   confirmDisabled?: boolean;
   variant?: 'default' | 'destructive';
+  /** Si es `false`, el diálogo ignora el clic en el overlay y la tecla Escape — solo se
+   * resuelve con clic explícito en "Confirmar" o "Cancelar". Default `true`. */
+  dismissible?: boolean;
   children?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
@@ -378,18 +381,19 @@ export function ConfirmCriticalActionDialog({
   cancelLabel = 'Cancelar',
   confirmDisabled = false,
   variant = 'default',
+  dismissible = true,
   children,
   onConfirm,
   onCancel,
 }: ConfirmCriticalActionDialogProps) {
   React.useEffect(() => {
-    if (!open) return undefined;
+    if (!open || !dismissible) return undefined;
     const onEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onCancel();
     };
     window.addEventListener('keydown', onEsc);
     return () => window.removeEventListener('keydown', onEsc);
-  }, [open, onCancel]);
+  }, [open, dismissible, onCancel]);
 
   if (!open) {
     return null;
@@ -397,7 +401,10 @@ export function ConfirmCriticalActionDialog({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={dismissible ? onCancel : undefined}
+      />
       <div className="relative w-full max-w-md rounded-2xl border border-border/40 bg-card p-6 shadow-2xl">
         <div className="mb-3 flex items-center gap-2">
           {projectColorDot ? <span className={cn('h-2.5 w-2.5 shrink-0 rounded-full', projectColorDot)} /> : null}

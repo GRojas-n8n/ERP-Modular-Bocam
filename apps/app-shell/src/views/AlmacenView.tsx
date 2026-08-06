@@ -5,7 +5,9 @@ import {
   Button,
   Card,
   CardContent,
+  ConfirmCriticalActionDialog,
   FormField,
+  getProjectColor,
   Input,
   SectionBadge,
   Select,
@@ -162,6 +164,7 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const roles: string[] = user?.role ?? [];
   const puedeEscribirActivos = roles.some(r => ['admin', 'superintendent', 'procurement', 'warehouse'].includes(r));
   const proyectosDisponibles = user?.projects ?? [];
+  const currentProjectName = proyectosDisponibles.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
 
   const activeTab: TabId = (activeSubView as TabId) || 'inventario';
 
@@ -183,6 +186,7 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [estadoFilter, setEstadoFilter] = useState<EstadoActivo | ''>('');
 
   const [showActivoForm, setShowActivoForm] = useState(false);
+  const [confirmCrearActivo, setConfirmCrearActivo] = useState(false);
   const [activoForm, setActivoForm] = useState(ACTIVO_FORM_EMPTY);
   const [savingActivo, setSavingActivo] = useState(false);
 
@@ -239,8 +243,13 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   }, [isDemo, currentProjectId]);
 
   // ─── Activos: acciones ──────────────────────────────────────────────────
-  const handleCrearActivo = async () => {
+  const handleCrearActivo = () => {
     if (!activoForm.clave.trim() || !activoForm.descripcion.trim() || !currentProjectId) return;
+    setConfirmCrearActivo(true);
+  };
+
+  const crearActivo = async () => {
+    setConfirmCrearActivo(false);
     setSavingActivo(true);
     try {
       await api.post('/api/v1/almacen/activos', {
@@ -813,8 +822,25 @@ export const AlmacenView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
       <HelpPanel viewId="almacen" activeSubView={activeSubView} isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
 
+      <ConfirmCriticalActionDialog
+        open={confirmCrearActivo}
+        dismissible={false}
+        title="¿Registrar este activo?"
+        projectName={currentProjectName}
+        projectColorDot={getProjectColor(currentProjectId).dot}
+        confirmDisabled={savingActivo}
+        onConfirm={() => void crearActivo()}
+        onCancel={() => setConfirmCrearActivo(false)}
+      />
+
       {/* ── Panel: Nuevo Activo ──────────────────────────────────────────── */}
-      <SlidePanel isOpen={showActivoForm} onClose={() => setShowActivoForm(false)} title="Nuevo Activo" accentColor="emerald">
+      <SlidePanel
+        isOpen={showActivoForm}
+        onClose={() => setShowActivoForm(false)}
+        title="Nuevo Activo"
+        subtitle={`Proyecto: ${currentProjectName}`}
+        accentColor="emerald"
+      >
         <div className="space-y-4">
           <FormField label="Clave" required>
             <Input value={activoForm.clave} onChange={e => setActivoForm(f => ({ ...f, clave: e.target.value }))} placeholder="Ej: VEH-01" />

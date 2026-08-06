@@ -394,6 +394,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [asignacionesFrente, setAsignacionesFrente] = useState<AsignacionFrente[]>([]);
   const [nuevaAsignacionFrente, setNuevaAsignacionFrente] = useState({ frente_trabajo: '', turno: 'DIURNO', fecha_inicio: '', fecha_fin: '', cuadrilla_id: '' });
   const [creandoAsignacionFrente, setCreandoAsignacionFrente] = useState(false);
+  const [confirmCrearAsignacionFrente, setConfirmCrearAsignacionFrente] = useState(false);
 
   // ── Periodicidad de pago del proyecto activo (config-nomina) ────────────────
   const [periodicidadProyecto, setPeriodicidadProyecto] = useState<string>('SEMANAL');
@@ -422,6 +423,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   // ── Alta individual de Empleado ───────────────────────────────────────────
   const [panelNuevoEmpleado, setPanelNuevoEmpleado] = useState(false);
   const [nuevoEmpleadoForm, setNuevoEmpleadoForm] = useState<NuevoEmpleadoForm>(NUEVO_EMPLEADO_FORM_VACIO);
+  const [confirmCrearEmpleado, setConfirmCrearEmpleado] = useState(false);
 
   // ── Edición de datos generales de un Empleado existente ──────────────────
   const [editarEmpleadoPanel, setEditarEmpleadoPanel] = useState<{ empleado: Empleado } | null>(null);
@@ -434,6 +436,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
   const [nuevaCuadrillaForm, setNuevaCuadrillaForm] = useState({ nombre: '', especialidad: '', capataz_nombre: '' });
   const [guardandoNuevaCuadrilla, setGuardandoNuevaCuadrilla] = useState(false);
   const [errorNuevaCuadrilla, setErrorNuevaCuadrilla] = useState<string | null>(null);
+  const [confirmCrearCuadrilla, setConfirmCrearCuadrilla] = useState(false);
 
   // ── Calcular Pre-Nómina ────────────────────────────────────────────────────
   const [panelCalcularNomina, setPanelCalcularNomina] = useState(false);
@@ -464,17 +467,22 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     setErrorNuevoEmpleado(null);
   };
 
-  const handleGuardarNuevoEmpleado = async () => {
+  const handleGuardarNuevoEmpleado = () => {
     const { nombre, apellido_paterno, rfc, puesto, salario_diario } = nuevoEmpleadoForm;
     if (!nombre || !apellido_paterno || !rfc || !puesto || !salario_diario) {
       setErrorNuevoEmpleado('Nombre, apellido paterno, RFC, puesto y salario diario son obligatorios.');
       return;
     }
+    setConfirmCrearEmpleado(true);
+  };
 
+  const crearNuevoEmpleado = async () => {
+    setConfirmCrearEmpleado(false);
     setGuardandoNuevoEmpleado(true);
     setErrorNuevoEmpleado(null);
     try {
       const {
+        nombre, apellido_paterno, rfc, puesto, salario_diario,
         apellido_materno, curp, nss, categoria, tipo_contrato,
         fecha_ingreso, telefono, email,
         contacto_emergencia_nombre, contacto_emergencia_telefono, contacto_emergencia_parentesco,
@@ -563,12 +571,18 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     setErrorNuevaCuadrilla(null);
   };
 
-  const handleGuardarNuevaCuadrilla = async () => {
-    const { nombre, especialidad, capataz_nombre } = nuevaCuadrillaForm;
+  const handleGuardarNuevaCuadrilla = () => {
+    const { nombre, especialidad } = nuevaCuadrillaForm;
     if (!nombre.trim() || !especialidad.trim()) {
       notify({ type: 'error', title: 'Nombre y especialidad son obligatorios.' });
       return;
     }
+    setConfirmCrearCuadrilla(true);
+  };
+
+  const crearNuevaCuadrilla = async () => {
+    setConfirmCrearCuadrilla(false);
+    const { nombre, especialidad, capataz_nombre } = nuevaCuadrillaForm;
     setGuardandoNuevaCuadrilla(true);
     setErrorNuevaCuadrilla(null);
     try {
@@ -1114,12 +1128,18 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     } catch { setAsignacionesFrente([]); }
   };
 
-  const handleCrearAsignacionFrente = async () => {
+  const handleCrearAsignacionFrente = () => {
     if (!configPanel) return;
     if (!nuevaAsignacionFrente.frente_trabajo.trim()) {
       notify({ type: 'error', title: 'El frente de trabajo es obligatorio.' });
       return;
     }
+    setConfirmCrearAsignacionFrente(true);
+  };
+
+  const crearAsignacionFrente = async () => {
+    setConfirmCrearAsignacionFrente(false);
+    if (!configPanel) return;
     setCreandoAsignacionFrente(true);
     try {
       await api.post('/api/v1/personal/asignaciones', {
@@ -1945,7 +1965,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         isOpen={panelNuevoEmpleado}
         onClose={handleCerrarNuevoEmpleado}
         title="Nuevo Empleado"
-        subtitle="Alta individual"
+        subtitle={`Alta individual · Proyecto: ${currentProjectName}`}
         accentColor="emerald"
       >
         <div className="space-y-6 pb-28">
@@ -2105,7 +2125,7 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
         isOpen={panelNuevaCuadrilla}
         onClose={handleCerrarNuevaCuadrilla}
         title="Nueva Cuadrilla"
-        subtitle="Alta de cuadrilla"
+        subtitle={`Alta de cuadrilla · Proyecto: ${currentProjectName}`}
         accentColor="violet"
       >
         <div className="space-y-6 pb-28">
@@ -2739,6 +2759,48 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
           </div>
         )}
       </SlidePanel>
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* MODAL — Confirmación alta de Cuadrilla                           */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <ConfirmCriticalActionDialog
+        open={confirmCrearCuadrilla}
+        dismissible={false}
+        title="¿Crear esta cuadrilla?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={guardandoNuevaCuadrilla}
+        onConfirm={() => void crearNuevaCuadrilla()}
+        onCancel={() => setConfirmCrearCuadrilla(false)}
+      />
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* MODAL — Confirmación alta de Asignación a Frente de Trabajo      */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <ConfirmCriticalActionDialog
+        open={confirmCrearAsignacionFrente}
+        dismissible={false}
+        title="¿Crear esta asignación a frente de trabajo?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={creandoAsignacionFrente}
+        onConfirm={() => void crearAsignacionFrente()}
+        onCancel={() => setConfirmCrearAsignacionFrente(false)}
+      />
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* MODAL — Confirmación alta de Empleado                            */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      <ConfirmCriticalActionDialog
+        open={confirmCrearEmpleado}
+        dismissible={false}
+        title="¿Crear este empleado?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={guardandoNuevoEmpleado}
+        onConfirm={() => void crearNuevoEmpleado()}
+        onCancel={() => setConfirmCrearEmpleado(false)}
+      />
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* MODAL — Confirmación revocar credencial                          */}

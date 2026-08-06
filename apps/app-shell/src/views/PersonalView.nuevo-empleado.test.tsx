@@ -116,6 +116,7 @@ describe('PersonalView — botón "+ Nuevo Empleado"', () => {
     fireEvent.change(inputByLabel(/Salario diario/i), { target: { value: '350' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Guardar empleado/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' })));
     await waitFor(() => expect(screen.queryByRole('button', { name: /Guardar empleado/i })).not.toBeInTheDocument());
@@ -135,6 +136,7 @@ describe('PersonalView — botón "+ Nuevo Empleado"', () => {
     fireEvent.change(inputByLabel(/Salario diario/i), { target: { value: '350' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Guardar empleado/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     expect(await screen.findByText(/obligatorios/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Guardar empleado/i })).toBeInTheDocument();

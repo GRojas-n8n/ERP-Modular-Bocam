@@ -298,6 +298,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const { notify } = useNotification();
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const [confirmAprobarReq, setConfirmAprobarReq] = useState<Requisicion | null>(null);
+  const [confirmCrearReq, setConfirmCrearReq] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
   // Roles del usuario actual — los roles están en user.role, NO en tenant.roles
@@ -834,7 +835,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const reqPendientes = requisiciones.filter(r => r.estado === 'PENDIENTE').length;
 
   // ─── Handlers requisición ─────────────────────────────────────────────────
-  const handleSubmitRequisicion = async () => {
+  const handleSubmitRequisicion = () => {
     const isImprevisto = reqForm.tipo === 'IMPREVISTO';
     const validItems = isImprevisto
       ? reqForm.items.filter(i => i.descripcion_libre.trim() && i.cantidad)
@@ -847,6 +848,15 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       alert('Selecciona la partida del catálogo antes de crear la requisición.');
       return;
     }
+    setConfirmCrearReq(true);
+  };
+
+  const crearRequisicion = async () => {
+    setConfirmCrearReq(false);
+    const isImprevisto = reqForm.tipo === 'IMPREVISTO';
+    const validItems = isImprevisto
+      ? reqForm.items.filter(i => i.descripcion_libre.trim() && i.cantidad)
+      : reqForm.items.filter(i => i.insumo_id && i.cantidad);
     if (isDemo) {
       const folio = `REQ-${new Date().getFullYear()}-${String(requisiciones.length + 41).padStart(3, '0')}`;
       notify({
@@ -3458,7 +3468,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         isOpen={showReqForm}
         onClose={() => { setShowReqForm(false); resetReqForm(); }}
         title="Nueva Requisición"
-        subtitle={reqForm.tipo === 'IMPREVISTO' ? 'Imprevisto de obra — texto libre' : 'Solicitud de compra de insumos'}
+        subtitle={`${reqForm.tipo === 'IMPREVISTO' ? 'Imprevisto de obra — texto libre' : 'Solicitud de compra de insumos'} · Proyecto: ${currentProjectName}`}
         accentColor={reqForm.tipo === 'IMPREVISTO' ? 'amber' : 'emerald'}
       >
         <div className="space-y-5">
@@ -4330,6 +4340,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </div>
         </div>
       </SlidePanel>
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearReq}
+        dismissible={false}
+        title={reqForm.tipo === 'IMPREVISTO' ? '¿Crear esta requisición de imprevisto?' : '¿Crear esta requisición?'}
+        projectName={currentProjectName}
+        projectColorDot={getProjectColor(currentProjectId).dot}
+        confirmDisabled={formLoading}
+        onConfirm={() => void crearRequisicion()}
+        onCancel={() => setConfirmCrearReq(false)}
+      />
 
       <ConfirmCriticalActionDialog
         open={confirmAprobarReq !== null}

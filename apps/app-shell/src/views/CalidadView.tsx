@@ -6,7 +6,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Card, CardContent, CardHeader, CardTitle,
-  Button, EmptyStatePanel, cn,
+  Button, ConfirmCriticalActionDialog, EmptyStatePanel, cn, getProjectColor,
 } from '@bocam/ui-core';
 import {
   IconFileText, IconShieldCheck, IconCheckCircle2, IconClock,
@@ -116,6 +116,8 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const isDemo = tenant?.id === 'iretum-demo';
   const roles: string[] = user?.role ?? [];
   const canEdit = roles.some(r => ['calidad', 'admin'].includes(r));
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
   const [helpOpen, setHelpOpen] = useState(false);
 
   // ── State: dashboard ──
@@ -137,12 +139,14 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [showNuevoDoc, setShowNuevoDoc] = useState(false);
   const [savingDoc, setSavingDoc] = useState(false);
   const [formDoc, setFormDoc] = useState({ codigo: '', titulo: '', tipo: 'PROCEDIMIENTO' as TipoDoc, descripcion: '', responsable_id: '' });
+  const [confirmCrearDocumento, setConfirmCrearDocumento] = useState(false);
 
   // ── State: nueva versión ──
   const [showNuevaVersion, setShowNuevaVersion] = useState(false);
   const [savingVersion, setSavingVersion] = useState(false);
   const [formVersion, setFormVersion] = useState({ numero_version: '', cambios: '' });
   const [archivoVersion, setArchivoVersion] = useState<File | null>(null);
+  const [confirmCrearVersion, setConfirmCrearVersion] = useState(false);
 
   // ── State: confirmación obsoleto ──
   const [confirmObsoleto, setConfirmObsoleto] = useState<{ docId: string; vidId: string } | null>(null);
@@ -188,10 +192,15 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   // ── Crear documento ───────────────────────────────────────────────────────
-  const handleCrearDocumento = async () => {
+  const handleCrearDocumento = () => {
     if (!formDoc.codigo || !formDoc.titulo || !formDoc.responsable_id) {
       return notify({ type: 'error', title: 'Código, título y responsable son obligatorios' });
     }
+    setConfirmCrearDocumento(true);
+  };
+
+  const crearDocumento = async () => {
+    setConfirmCrearDocumento(false);
     setSavingDoc(true);
     try {
       await api.post(`${CALIDAD_URL}/documentos`, { ...formDoc, responsable_id: user?.id ?? formDoc.responsable_id });
@@ -206,11 +215,17 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   };
 
   // ── Crear versión ─────────────────────────────────────────────────────────
-  const handleCrearVersion = async () => {
+  const handleCrearVersion = () => {
     if (!docDetalle) return;
     if (!formVersion.numero_version || !formVersion.cambios) {
       return notify({ type: 'error', title: 'Número de versión y cambios son obligatorios' });
     }
+    setConfirmCrearVersion(true);
+  };
+
+  const crearVersion = async () => {
+    setConfirmCrearVersion(false);
+    if (!docDetalle) return;
     setSavingVersion(true);
     try {
       const fd = new FormData();
@@ -467,7 +482,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         isOpen={showNuevoDoc}
         onClose={() => setShowNuevoDoc(false)}
         title="Nuevo Documento SGC"
-        subtitle="Registra un documento en el sistema de gestión de calidad"
+        subtitle={`Registra un documento en el sistema de gestión de calidad · Proyecto: ${currentProjectName}`}
         accentColor="emerald"
       >
         <div className="space-y-4">
@@ -650,7 +665,7 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         isOpen={showNuevaVersion}
         onClose={() => { setShowNuevaVersion(false); setArchivoVersion(null); }}
         title="Nueva Versión"
-        subtitle={docDetalle ? `Documento ${docDetalle.codigo}` : ''}
+        subtitle={docDetalle ? `Documento ${docDetalle.codigo} · Proyecto: ${currentProjectName}` : ''}
         accentColor="violet"
       >
         <div className="space-y-4">
@@ -739,6 +754,28 @@ export const CalidadView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           </div>
         </div>
       )}
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearDocumento}
+        dismissible={false}
+        title="¿Crear este documento?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={savingDoc}
+        onConfirm={() => void crearDocumento()}
+        onCancel={() => setConfirmCrearDocumento(false)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearVersion}
+        dismissible={false}
+        title="¿Crear esta versión?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={savingVersion}
+        onConfirm={() => void crearVersion()}
+        onCancel={() => setConfirmCrearVersion(false)}
+      />
 
       <HelpPanel viewId="calidad" activeSubView="documentos" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
@@ -1179,6 +1216,9 @@ const HALLAZGO_COLOR: Record<string, string> = {
 
 const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProjectId: string | null }> = ({ isDemo, canEdit, currentProjectId }) => {
   const { notify } = useNotification();
+  const { user } = useTenant();
+  const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
+  const currentProjectColor = getProjectColor(currentProjectId);
   const [auditorias, setAuditorias]     = useState<Auditoria[]>([]);
   const [loading, setLoading]           = useState(true);
   const [selected, setSelected]         = useState<Auditoria | null>(null);
@@ -1187,6 +1227,7 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
   const [audWfLoading, setAudWfLoading] = useState(false);
   const [hEstadoLoading, setHEstadoLoading] = useState<string | null>(null);
   const [crearNcLoading, setCrearNcLoading] = useState<string | null>(null);
+  const [confirmCrearNC, setConfirmCrearNC] = useState<string | null>(null);
   const [form, setForm]                 = useState({ titulo: '', alcance: '', criterios: '', fecha_inicio: '', fecha_fin: '' });
   const [hForm, setHForm]               = useState({ descripcion: '', tipo: 'MENOR', proceso_afectado: '' });
   const [showHForm, setShowHForm]       = useState(false);
@@ -1247,7 +1288,13 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
     finally { setHEstadoLoading(null); }
   };
 
-  const handleCrearNC = async (hid: string) => {
+  const handleCrearNC = (hid: string) => {
+    if (!selected) return;
+    setConfirmCrearNC(hid);
+  };
+
+  const crearNC = async (hid: string) => {
+    setConfirmCrearNC(null);
     if (!selected) return;
     setCrearNcLoading(hid);
     try {
@@ -1478,6 +1525,17 @@ const AuditoriasView: React.FC<{ isDemo: boolean; canEdit: boolean; currentProje
           <SubmitButton label={saving ? 'Guardando...' : 'Crear Auditoría'} loading={saving} onClick={() => void handleCreate()} color="emerald" />
         </div>
       </SlidePanel>
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearNC !== null}
+        dismissible={false}
+        title="¿Crear una No Conformidad a partir de este hallazgo?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={crearNcLoading !== null}
+        onConfirm={() => { const hid = confirmCrearNC; if (hid) void crearNC(hid); }}
+        onCancel={() => setConfirmCrearNC(null)}
+      />
 
       <HelpPanel viewId="calidad" activeSubView="auditorias" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>

@@ -120,6 +120,7 @@ describe('PersonalView — sección Asignación a Frente de Trabajo', () => {
 
     asignacionesResult = [{ id_asignacion: 'asig-nueva', empleado_id: 'emp-1', frente_trabajo: 'Frente 2 — Acabados', turno: 'DIURNO', fecha_inicio: '2026-08-01', fecha_fin: null, estado: 'ACTIVA' }];
     fireEvent.click(screen.getByRole('button', { name: /Crear asignaci[oó]n/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith(
       '/api/v1/personal/asignaciones',
@@ -136,6 +137,7 @@ describe('PersonalView — sección Asignación a Frente de Trabajo', () => {
     const inputFrente = screen.getByLabelText(/frente de trabajo/i) as HTMLInputElement;
     fireEvent.change(inputFrente, { target: { value: 'Frente 5 — Rechazado' } });
     fireEvent.click(screen.getByRole('button', { name: /Crear asignaci[oó]n/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(notify).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', title: expect.stringMatching(/máximo de personal/i) }),

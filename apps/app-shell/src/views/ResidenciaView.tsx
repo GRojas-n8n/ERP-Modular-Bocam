@@ -387,6 +387,8 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [avanceCantidadPeriodo, setAvanceCantidadPeriodo] = useState('');
   const [avancePeriodoInicio, setAvancePeriodoInicio] = useState('');
   const [avancePeriodoFin, setAvancePeriodoFin] = useState('');
+  const [confirmRegistrarAvance, setConfirmRegistrarAvance] = useState(false);
+  const [confirmCrearEstimacion, setConfirmCrearEstimacion] = useState(false);
   const [registrandoAvance, setRegistrandoAvance] = useState(false);
   const [avanceFormError, setAvanceFormError] = useState<string | null>(null);
   const [selectedAvanceIds, setSelectedAvanceIds] = useState<Set<string>>(new Set());
@@ -413,6 +415,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [qrModal, setQrModal] = useState<{ id: string; nombre: string } | null>(null);
   const [bulkChecks, setBulkChecks] = useState<BulkCheck[]>([]);
   const [guardandoBulk, setGuardandoBulk] = useState(false);
+  const [confirmGuardarBulk, setConfirmGuardarBulk] = useState(false);
 
   // ─ Escaneo real de credencial (cámara) ──────────────────────────────────────
   const [scanModalOpen, setScanModalOpen] = useState(false);
@@ -782,7 +785,14 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     setAvanceFormError(null);
   };
 
-  const handleRegistrarAvance = async () => {
+  const handleRegistrarAvance = () => {
+    const concepto = conceptos.find(c => c.id === avanceConceptoId);
+    if (!concepto || !avanceCantidadPeriodo) return;
+    setConfirmRegistrarAvance(true);
+  };
+
+  const registrarAvance = async () => {
+    setConfirmRegistrarAvance(false);
     const concepto = conceptos.find(c => c.id === avanceConceptoId);
     if (!concepto || !avanceCantidadPeriodo) return;
     const cantPeriodo = parseFloat(avanceCantidadPeriodo) || 0;
@@ -847,7 +857,13 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     });
   };
 
-  const handleCrearEstimacion = async () => {
+  const handleCrearEstimacion = () => {
+    if (selectedAvanceIds.size === 0) return;
+    setConfirmCrearEstimacion(true);
+  };
+
+  const crearEstimacion = async () => {
+    setConfirmCrearEstimacion(false);
     if (selectedAvanceIds.size === 0) return;
     const avanceIds = Array.from(selectedAvanceIds);
 
@@ -1341,7 +1357,13 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanModalOpen]);
 
-  const handleGuardarBulk = async () => {
+  const handleGuardarBulk = () => {
+    if (!qrModal || bulkChecks.length === 0) return;
+    setConfirmGuardarBulk(true);
+  };
+
+  const guardarBulk = async () => {
+    setConfirmGuardarBulk(false);
     if (!qrModal || bulkChecks.length === 0) return;
     setGuardandoBulk(true);
     try {
@@ -2045,6 +2067,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
         isOpen={showAvanceForm}
         onClose={resetAvanceForm}
         title="Registrar Avance"
+        subtitle={`Proyecto: ${currentProjectName}`}
         accentColor="indigo"
       >
         <div className="flex flex-col gap-4">
@@ -2151,6 +2174,39 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           />
         </div>
       </SlidePanel>
+
+      <ConfirmCriticalActionDialog
+        open={confirmRegistrarAvance}
+        dismissible={false}
+        title="¿Registrar este avance físico?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={registrandoAvance}
+        onConfirm={() => void registrarAvance()}
+        onCancel={() => setConfirmRegistrarAvance(false)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={confirmCrearEstimacion}
+        dismissible={false}
+        title="¿Crear esta estimación?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={creandoEstimacion}
+        onConfirm={() => void crearEstimacion()}
+        onCancel={() => setConfirmCrearEstimacion(false)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={confirmGuardarBulk}
+        dismissible={false}
+        title="¿Guardar esta asistencia?"
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmDisabled={guardandoBulk}
+        onConfirm={() => void guardarBulk()}
+        onCancel={() => setConfirmGuardarBulk(false)}
+      />
 
       {/* ════════════════════════════════════════════════════════════════ */}
       {/* MODAL — Detalle de Prenómina                                    */}

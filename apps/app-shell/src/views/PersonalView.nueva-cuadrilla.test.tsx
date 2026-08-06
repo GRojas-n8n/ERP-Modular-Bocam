@@ -121,6 +121,7 @@ describe('PersonalView — panel Nueva Cuadrilla', () => {
     fireEvent.change(inputByLabel(/^Nombre$/i), { target: { value: 'Cuadrilla Norte' } });
     fireEvent.change(inputByLabel(/Especialidad/i), { target: { value: 'Albañilería' } });
     fireEvent.click(screen.getByRole('button', { name: /Guardar Cuadrilla/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith(
       '/api/v1/personal/cuadrillas',
@@ -140,6 +141,7 @@ describe('PersonalView — panel Nueva Cuadrilla', () => {
     fireEvent.change(inputByLabel(/^Nombre$/i), { target: { value: 'Cuadrilla Sur' } });
     fireEvent.change(inputByLabel(/Especialidad/i), { target: { value: 'Herrería' } });
     fireEvent.click(screen.getByRole('button', { name: /Guardar Cuadrilla/i }));
+    fireEvent.click(await screen.findByText('Confirmar'));
 
     expect(await screen.findByText(/Ya existe una cuadrilla con ese nombre/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Guardar Cuadrilla/i })).toBeInTheDocument();
