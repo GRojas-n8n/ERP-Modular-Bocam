@@ -1,6 +1,6 @@
 ## 1. Investigación previa (bloquea el resto)
 
-- [ ] 1.1 **BLOQUEANTE PARA PRODUCCIÓN — SIN COMPLETAR.** Correr contra la BD real de producción: `SELECT tenant_id, proyecto_id, presupuesto_id, clave, COUNT(*) FROM conceptos GROUP BY 1,2,3,4 HAVING COUNT(*) > 1`. Si aparecen filas, documentar cuántas y decidir con el dueño del producto cómo resolverlas (fusionar cantidades, renombrar clave) antes de continuar con la migración del índice único. Esta tarea NO se ejecutó en esta sesión de implementación (sin acceso a la BD de producción) — debe correrse contra producción ANTES de desplegar la migración `20260806120000_add_capitulo_conceptocatalogo_unicidad_concepto` (ver advertencia en el encabezado de esa migración). La migración SÍ se generó y se aplicó contra el Postgres LOCAL de Docker (tarea 2.4), donde este riesgo no aplica.
+- [x] 1.1 Corrido contra la BD real de producción (VPS, vía Prisma del propio contenedor `bocam-vps-gerencia-tecnica`, sin exponer credenciales): `SELECT tenant_id, proyecto_id, presupuesto_id, clave, COUNT(*) FROM conceptos GROUP BY 1,2,3,4 HAVING COUNT(*) > 1` → **0 filas**. No hay claves duplicadas existentes — la migración del índice único es segura de aplicar en producción sin pasos de resolución previos.
 
 ## 2. Backend — gerencia-tecnica: schema
 
