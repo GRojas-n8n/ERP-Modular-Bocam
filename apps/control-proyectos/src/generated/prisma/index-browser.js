@@ -139,9 +139,41 @@ exports.Prisma.ProgramacionObraScalarFieldEnum = {
   spi: 'spi',
   eac: 'eac',
   bac: 'bac',
+  ac_comprometido: 'ac_comprometido',
+  ac_ejercido: 'ac_ejercido',
   estado: 'estado',
   created_at: 'created_at',
   updated_at: 'updated_at'
+};
+
+exports.Prisma.OrdenCompraSeguimientoScalarFieldEnum = {
+  id: 'id',
+  oc_id: 'oc_id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  concepto_id: 'concepto_id',
+  monto_comprometido: 'monto_comprometido',
+  monto_ejercido: 'monto_ejercido',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.ManoObraProyectoScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  monto_acumulado: 'monto_acumulado',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.PagoEvmProcesadoScalarFieldEnum = {
+  id_pago: 'id_pago',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  tipo: 'tipo',
+  monto: 'monto',
+  created_at: 'created_at'
 };
 
 exports.Prisma.AlertaProyectoScalarFieldEnum = {
@@ -306,6 +338,9 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   ProgramacionObra: 'ProgramacionObra',
+  OrdenCompraSeguimiento: 'OrdenCompraSeguimiento',
+  ManoObraProyecto: 'ManoObraProyecto',
+  PagoEvmProcesado: 'PagoEvmProcesado',
   AlertaProyecto: 'AlertaProyecto',
   ProyeccionCierre: 'ProyeccionCierre',
   BitacoraObra: 'BitacoraObra',

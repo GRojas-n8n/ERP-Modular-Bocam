@@ -1,0 +1,30 @@
+## Why
+
+El spec `control-proyectos-modulo` ya documenta un EVM completo (PV interpolado de una curva programada, EV por avance físico, AC compuesto de comprometido+ejercido+mano de obra, snapshot diario en `ProyeccionCierre`), pero la implementación real en `apps/control-proyectos` no lo respeta: `recalcularEVMPorAvanceValidado` hace `const ac = acAcumulado ?? ev` (`src/main.ts:461`) y el único llamador pasa el mismo valor (`importe_acumulado`, el avance físico valorizado) tanto para `evAcumulado` como para `acAcumulado` (`src/main.ts:757-758`). El resultado es que `CPI = EV/AC` da ≈1 siempre, sin importar cuánto se haya gastado realmente — el sistema nunca puede detectar sobrecosto, que es precisamente la promesa de venta del EVM ("sabrás si estás perdiendo dinero en cada frente de obra"). Además `pv = bac * (pct/100)` (`src/main.ts:463`) reutiliza el mismo % de avance físico en vez de interpolar `curva_programada` por fecha, así que PV y EV terminan siendo casi el mismo número y SPI tampoco es confiable. Por último, `ProyeccionCierre` (el EVM a nivel proyecto que alimenta el dashboard) nunca se escribe en todo el repo — solo se lee (`src/main.ts:1379,1438`) — por lo que `GET /evm` y `GET /dashboard` siempre devuelven el bloque global en `null`.
+
+Esto es un bug-fix sobre una feature EVM existente que calcula mal, no una feature nueva: el spec ya describe el comportamiento correcto.
+
+## What Changes
+
+- **Backend (`control-proyectos`)**: `ProgramacionObra` gana 2 columnas nuevas para componer el AC real por partida: `ac_comprometido` (de órdenes de compra activas) y `ac_ejercido` (de pagos a proveedor ya realizados). `recalcularEVMPorAvanceValidado` deja de recibir `acAcumulado` desde el llamador de avances y en su lugar lee `ac = ac_comprometido + ac_ejercido` del registro de `ProgramacionObra`.
+- **Backend (`control-proyectos`)**: nueva tabla de seguimiento `OrdenCompraSeguimiento` (`oc_id` → `concepto_id` + `monto_comprometido`), poblada por un subscriber nuevo de `compras.oc_creada` (que sí trae `concepto_id` en el payload) y consultada por un subscriber nuevo de `compras.oc_cancelada` (que **no** trae `concepto_id`, solo `oc_id`/`presupuesto_id` — se resuelve el concepto buscando el registro guardado al crear la OC) para revertir `ac_comprometido`.
+- **Backend (`control-proyectos`)**: el subscriber existente de `finanzas.pago_registrado` (hoy solo procesa pagos donde `referencia_entidad === 'Estimacion'`, para reconciliar estimaciones) se amplía con una rama nueva para `referencia_entidad === 'OrdenCompra'`: resuelve `concepto_id` vía `OrdenCompraSeguimiento` por `referencia_id` (el `oc_id`) y mueve ese monto de `ac_comprometido` a `ac_ejercido` en la partida correspondiente — es el pago real a proveedor, la fuente correcta de AC (costo real incurrido), a diferencia del pago de `Estimacion` (dinero que el cliente paga a BOCAM, no un costo).
+- **Backend (`control-proyectos`)**: `pv` deja de ser `bac * (pct_avance_real/100)` y pasa a interpolarse desde `ProgramacionObra.curva_programada` según la fecha de corte actual (buscando el punto de la curva JSONB más cercano a "hoy", o 0 si `curva_programada` está vacía o `hoy` es anterior al primer punto).
+- **Backend (`control-proyectos`)**: nuevo job en `initJobNocturno` (junto al recálculo de alertas ya existente) que, por cada proyecto activo, calcula y escribe un snapshot de `ProyeccionCierre` (BAC/PV/EV/AC/CPI/SPI/CV/SV/EAC/ETC/VAC agregados de todas las partidas del proyecto). El AC global del snapshot suma el AC por partida (comprometido+ejercido de OC) más el AC de mano de obra a nivel proyecto tomado de `finanzas.pago_registrado` con `referencia_entidad === 'PreNomina'` (no se distribuye por partida — ver Non-Goals en design.md, la nómina no registra a qué concepto/frente correspondió cada monto). Hoy `ProyeccionCierre` nunca se escribe.
+- **BREAKING (contrato interno)**: `recalcularEVMPorAvanceValidado` deja de aceptar el parámetro `acAcumulado`; el llamador en `PATCH /avances/:id/validar` deja de pasarlo.
+
+## Capabilities
+
+### New Capabilities
+(ninguna — este change corrige la implementación de una capability ya especificada)
+
+### Modified Capabilities
+- `control-proyectos-modulo`: los requirements de EVM ("EVM por partida y por proyecto", el snapshot `ProyeccionCierre`) pasan de descripción informal (JSON de ejemplo + prosa en "Reglas de diseño") a requirements SHALL con escenarios explícitos: composición real de AC (comprometido + ejercido + mano de obra, no el mismo valor que EV), PV interpolado de `curva_programada`, y job diario que persiste `ProyeccionCierre`.
+
+## Impact
+
+- `apps/control-proyectos/prisma/schema.prisma` — 2 columnas nuevas en `ProgramacionObra` (`ac_comprometido`, `ac_ejercido`), modelo nuevo `OrdenCompraSeguimiento`, + migración.
+- `apps/control-proyectos/src/main.ts` — `recalcularEVMPorAvanceValidado` (línea ~443-488), su llamador en `PATCH /avances/:id/validar` (línea ~751-758), `initJobNocturno` (línea ~1853-1870), subscriber existente de `finanzas.pago_registrado` (línea ~64-210, nueva rama para `referencia_entidad === 'OrdenCompra'` y otra para `'PreNomina'`), subscribers nuevos de `compras.oc_creada`/`compras.oc_cancelada` (mismo patrón que el subscriber existente de `almacen.salida_obra`).
+- `openspec/specs/control-proyectos-modulo/spec.md` — delta de requirements de EVM.
+- Tests nuevos en `apps/control-proyectos`: cálculo de AC compuesto por partida, resolución de `concepto_id` vía `OrdenCompraSeguimiento` en cancelación y en pago, interpolación de PV, snapshot de `ProyeccionCierre`.
+- No modifica `compras`, `finanzas` ni `personal` — solo agrega consumidores nuevos a eventos que esos servicios ya publican (`compras.oc_creada`, `compras.oc_cancelada`, `finanzas.pago_registrado` con `referencia_entidad` `'OrdenCompra'`/`'PreNomina'`), confirmados por grep en `apps/compras/src/main.ts:3048,4494,4665` y `apps/finanzas/src/main.ts:1396` (con las variantes de `referencia_entidad` en `apps/finanzas/prisma/schema.prisma` y `apps/finanzas/src/main.ts:1029,2170,2245,2326,2400`).

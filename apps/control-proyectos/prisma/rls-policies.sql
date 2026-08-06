@@ -21,6 +21,9 @@ ALTER TABLE bitacoras_obra ENABLE ROW LEVEL SECURITY;
 ALTER TABLE avances_fisicos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE estimaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE materiales_consumidos_obra ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ordenes_compra_seguimiento ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mano_obra_proyecto ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pagos_evm_procesados ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE programacion_obra FORCE ROW LEVEL SECURITY;
 ALTER TABLE alertas_proyecto FORCE ROW LEVEL SECURITY;
@@ -29,6 +32,9 @@ ALTER TABLE bitacoras_obra FORCE ROW LEVEL SECURITY;
 ALTER TABLE avances_fisicos FORCE ROW LEVEL SECURITY;
 ALTER TABLE estimaciones FORCE ROW LEVEL SECURITY;
 ALTER TABLE materiales_consumidos_obra FORCE ROW LEVEL SECURITY;
+ALTER TABLE ordenes_compra_seguimiento FORCE ROW LEVEL SECURITY;
+ALTER TABLE mano_obra_proyecto FORCE ROW LEVEL SECURITY;
+ALTER TABLE pagos_evm_procesados FORCE ROW LEVEL SECURITY;
 
 -- Programación de obra (Gantt/Curva S) — SELECT/INSERT/UPDATE
 -- (findMany/findFirst, upsert, update desde recalcularEVMPorAvanceValidado)
@@ -114,6 +120,47 @@ CREATE POLICY isolation_estimaciones ON estimaciones
 -- código real, ver apps/control-proyectos/src/main.ts)
 DROP POLICY IF EXISTS isolation_materiales_consumidos_obra ON materiales_consumidos_obra;
 CREATE POLICY isolation_materiales_consumidos_obra ON materiales_consumidos_obra
+  USING (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  )
+  WITH CHECK (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  );
+
+-- Seguimiento de OC → concepto (openspec: fix-evm-costos-reales) —
+-- SELECT/INSERT/UPDATE (subscribers de compras.oc_creada/oc_cancelada y de
+-- finanzas.pago_registrado rama OrdenCompra)
+DROP POLICY IF EXISTS isolation_ordenes_compra_seguimiento ON ordenes_compra_seguimiento;
+CREATE POLICY isolation_ordenes_compra_seguimiento ON ordenes_compra_seguimiento
+  USING (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  )
+  WITH CHECK (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  );
+
+-- Acumulador de mano de obra pagada por proyecto (openspec:
+-- fix-evm-costos-reales) — SELECT/INSERT/UPDATE (subscriber de
+-- finanzas.pago_registrado rama PreNomina, job nocturno de snapshot)
+DROP POLICY IF EXISTS isolation_mano_obra_proyecto ON mano_obra_proyecto;
+CREATE POLICY isolation_mano_obra_proyecto ON mano_obra_proyecto
+  USING (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  )
+  WITH CHECK (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+    AND proyecto_id::text = current_setting('app.current_proyecto_id', true)
+  );
+
+-- Idempotencia de pagos aplicados al EVM (openspec: fix-evm-costos-reales) —
+-- SELECT/INSERT (dedupe por id_pago, sin UPDATE/DELETE en el código real)
+DROP POLICY IF EXISTS isolation_pagos_evm_procesados ON pagos_evm_procesados;
+CREATE POLICY isolation_pagos_evm_procesados ON pagos_evm_procesados
   USING (
     tenant_id::text = current_setting('app.current_tenant_id', true)
     AND proyecto_id::text = current_setting('app.current_proyecto_id', true)

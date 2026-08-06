@@ -162,7 +162,18 @@ async function testAvanceValidarRecalculaEVM() {
       tx.programacionObra.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: conceptoId } })
     );
     assert.ok(prog, 'ProgramacionObra debe existir');
-    assert.ok(prog!.cpi !== null, 'CPI debe haberse calculado tras validar el avance');
+    // fix-evm-costos-reales: CPI ya NO es ev/ev≈1 por defecto — sin OC
+    // ligadas a esta partida (ac_comprometido=ac_ejercido=0), no hay dato
+    // de costo real y CPI queda explícitamente null (antes del fix este
+    // assert esperaba `cpi !== null`, que era justamente el síntoma del bug).
+    assert.equal(prog!.cpi, null, 'Sin AC real (sin OC ligadas), CPI debe quedar null, no un valor cosmético');
+    // SPI sí debe calcularse: la curva_programada de esta partida tiene un
+    // único punto en el pasado (2026-W10, 100%), así que PV=bac=100000. EV
+    // pasado a recalcularEVMPorAvanceValidado es importe_acumulado
+    // (cantidad_acumulada 50 × PU 2000 = 100000), que también coincide con
+    // el bac de esta partida (100000, fijado en la seed) → SPI=ev/pv=1.
+    assert.ok(prog!.spi !== null, 'SPI debe haberse calculado desde curva_programada interpolada');
+    assert.equal(Number(prog!.spi), 1, `SPI esperado 1 (ev=pv=100000), fue ${prog!.spi}`);
     assert.ok(['EN_CURSO', 'COMPLETADA'].includes(prog!.estado), `estado esperado EN_CURSO/COMPLETADA, fue ${prog!.estado}`);
 
     console.log('ok - avance validado recalcula EVM (ProgramacionObra) de forma directa, sin pasar por RabbitMQ');

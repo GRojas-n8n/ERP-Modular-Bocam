@@ -19,6 +19,21 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type ProgramacionObra = $Result.DefaultSelection<Prisma.$ProgramacionObraPayload>
 /**
+ * Model OrdenCompraSeguimiento
+ * 
+ */
+export type OrdenCompraSeguimiento = $Result.DefaultSelection<Prisma.$OrdenCompraSeguimientoPayload>
+/**
+ * Model ManoObraProyecto
+ * 
+ */
+export type ManoObraProyecto = $Result.DefaultSelection<Prisma.$ManoObraProyectoPayload>
+/**
+ * Model PagoEvmProcesado
+ * 
+ */
+export type PagoEvmProcesado = $Result.DefaultSelection<Prisma.$PagoEvmProcesadoPayload>
+/**
  * Model AlertaProyecto
  * 
  */
@@ -181,6 +196,36 @@ export class PrismaClient<
     * ```
     */
   get programacionObra(): Prisma.ProgramacionObraDelegate<ExtArgs>;
+
+  /**
+   * `prisma.ordenCompraSeguimiento`: Exposes CRUD operations for the **OrdenCompraSeguimiento** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrdenCompraSeguimientos
+    * const ordenCompraSeguimientos = await prisma.ordenCompraSeguimiento.findMany()
+    * ```
+    */
+  get ordenCompraSeguimiento(): Prisma.OrdenCompraSeguimientoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.manoObraProyecto`: Exposes CRUD operations for the **ManoObraProyecto** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ManoObraProyectos
+    * const manoObraProyectos = await prisma.manoObraProyecto.findMany()
+    * ```
+    */
+  get manoObraProyecto(): Prisma.ManoObraProyectoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.pagoEvmProcesado`: Exposes CRUD operations for the **PagoEvmProcesado** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PagoEvmProcesados
+    * const pagoEvmProcesados = await prisma.pagoEvmProcesado.findMany()
+    * ```
+    */
+  get pagoEvmProcesado(): Prisma.PagoEvmProcesadoDelegate<ExtArgs>;
 
   /**
    * `prisma.alertaProyecto`: Exposes CRUD operations for the **AlertaProyecto** model.
@@ -683,6 +728,9 @@ export namespace Prisma {
 
   export const ModelName: {
     ProgramacionObra: 'ProgramacionObra',
+    OrdenCompraSeguimiento: 'OrdenCompraSeguimiento',
+    ManoObraProyecto: 'ManoObraProyecto',
+    PagoEvmProcesado: 'PagoEvmProcesado',
     AlertaProyecto: 'AlertaProyecto',
     ProyeccionCierre: 'ProyeccionCierre',
     BitacoraObra: 'BitacoraObra',
@@ -704,7 +752,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "programacionObra" | "alertaProyecto" | "proyeccionCierre" | "bitacoraObra" | "avanceFisico" | "materialConsumidoObra" | "estimacion"
+      modelProps: "programacionObra" | "ordenCompraSeguimiento" | "manoObraProyecto" | "pagoEvmProcesado" | "alertaProyecto" | "proyeccionCierre" | "bitacoraObra" | "avanceFisico" | "materialConsumidoObra" | "estimacion"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -775,6 +823,216 @@ export namespace Prisma {
           count: {
             args: Prisma.ProgramacionObraCountArgs<ExtArgs>
             result: $Utils.Optional<ProgramacionObraCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrdenCompraSeguimiento: {
+        payload: Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>
+        fields: Prisma.OrdenCompraSeguimientoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrdenCompraSeguimientoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrdenCompraSeguimientoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>
+          }
+          findFirst: {
+            args: Prisma.OrdenCompraSeguimientoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrdenCompraSeguimientoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>
+          }
+          findMany: {
+            args: Prisma.OrdenCompraSeguimientoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>[]
+          }
+          create: {
+            args: Prisma.OrdenCompraSeguimientoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>
+          }
+          createMany: {
+            args: Prisma.OrdenCompraSeguimientoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrdenCompraSeguimientoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>[]
+          }
+          delete: {
+            args: Prisma.OrdenCompraSeguimientoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>
+          }
+          update: {
+            args: Prisma.OrdenCompraSeguimientoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrdenCompraSeguimientoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrdenCompraSeguimientoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OrdenCompraSeguimientoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenCompraSeguimientoPayload>
+          }
+          aggregate: {
+            args: Prisma.OrdenCompraSeguimientoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrdenCompraSeguimiento>
+          }
+          groupBy: {
+            args: Prisma.OrdenCompraSeguimientoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrdenCompraSeguimientoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrdenCompraSeguimientoCountArgs<ExtArgs>
+            result: $Utils.Optional<OrdenCompraSeguimientoCountAggregateOutputType> | number
+          }
+        }
+      }
+      ManoObraProyecto: {
+        payload: Prisma.$ManoObraProyectoPayload<ExtArgs>
+        fields: Prisma.ManoObraProyectoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ManoObraProyectoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ManoObraProyectoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>
+          }
+          findFirst: {
+            args: Prisma.ManoObraProyectoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ManoObraProyectoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>
+          }
+          findMany: {
+            args: Prisma.ManoObraProyectoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>[]
+          }
+          create: {
+            args: Prisma.ManoObraProyectoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>
+          }
+          createMany: {
+            args: Prisma.ManoObraProyectoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ManoObraProyectoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>[]
+          }
+          delete: {
+            args: Prisma.ManoObraProyectoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>
+          }
+          update: {
+            args: Prisma.ManoObraProyectoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>
+          }
+          deleteMany: {
+            args: Prisma.ManoObraProyectoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ManoObraProyectoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ManoObraProyectoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ManoObraProyectoPayload>
+          }
+          aggregate: {
+            args: Prisma.ManoObraProyectoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateManoObraProyecto>
+          }
+          groupBy: {
+            args: Prisma.ManoObraProyectoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ManoObraProyectoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ManoObraProyectoCountArgs<ExtArgs>
+            result: $Utils.Optional<ManoObraProyectoCountAggregateOutputType> | number
+          }
+        }
+      }
+      PagoEvmProcesado: {
+        payload: Prisma.$PagoEvmProcesadoPayload<ExtArgs>
+        fields: Prisma.PagoEvmProcesadoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PagoEvmProcesadoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PagoEvmProcesadoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>
+          }
+          findFirst: {
+            args: Prisma.PagoEvmProcesadoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PagoEvmProcesadoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>
+          }
+          findMany: {
+            args: Prisma.PagoEvmProcesadoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>[]
+          }
+          create: {
+            args: Prisma.PagoEvmProcesadoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>
+          }
+          createMany: {
+            args: Prisma.PagoEvmProcesadoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PagoEvmProcesadoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>[]
+          }
+          delete: {
+            args: Prisma.PagoEvmProcesadoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>
+          }
+          update: {
+            args: Prisma.PagoEvmProcesadoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>
+          }
+          deleteMany: {
+            args: Prisma.PagoEvmProcesadoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PagoEvmProcesadoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.PagoEvmProcesadoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PagoEvmProcesadoPayload>
+          }
+          aggregate: {
+            args: Prisma.PagoEvmProcesadoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePagoEvmProcesado>
+          }
+          groupBy: {
+            args: Prisma.PagoEvmProcesadoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PagoEvmProcesadoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PagoEvmProcesadoCountArgs<ExtArgs>
+            result: $Utils.Optional<PagoEvmProcesadoCountAggregateOutputType> | number
           }
         }
       }
@@ -1407,6 +1665,8 @@ export namespace Prisma {
     spi: Decimal | null
     eac: Decimal | null
     bac: Decimal | null
+    ac_comprometido: Decimal | null
+    ac_ejercido: Decimal | null
   }
 
   export type ProgramacionObraSumAggregateOutputType = {
@@ -1415,6 +1675,8 @@ export namespace Prisma {
     spi: Decimal | null
     eac: Decimal | null
     bac: Decimal | null
+    ac_comprometido: Decimal | null
+    ac_ejercido: Decimal | null
   }
 
   export type ProgramacionObraMinAggregateOutputType = {
@@ -1433,6 +1695,8 @@ export namespace Prisma {
     spi: Decimal | null
     eac: Decimal | null
     bac: Decimal | null
+    ac_comprometido: Decimal | null
+    ac_ejercido: Decimal | null
     estado: string | null
     created_at: Date | null
     updated_at: Date | null
@@ -1454,6 +1718,8 @@ export namespace Prisma {
     spi: Decimal | null
     eac: Decimal | null
     bac: Decimal | null
+    ac_comprometido: Decimal | null
+    ac_ejercido: Decimal | null
     estado: string | null
     created_at: Date | null
     updated_at: Date | null
@@ -1476,6 +1742,8 @@ export namespace Prisma {
     spi: number
     eac: number
     bac: number
+    ac_comprometido: number
+    ac_ejercido: number
     estado: number
     created_at: number
     updated_at: number
@@ -1489,6 +1757,8 @@ export namespace Prisma {
     spi?: true
     eac?: true
     bac?: true
+    ac_comprometido?: true
+    ac_ejercido?: true
   }
 
   export type ProgramacionObraSumAggregateInputType = {
@@ -1497,6 +1767,8 @@ export namespace Prisma {
     spi?: true
     eac?: true
     bac?: true
+    ac_comprometido?: true
+    ac_ejercido?: true
   }
 
   export type ProgramacionObraMinAggregateInputType = {
@@ -1515,6 +1787,8 @@ export namespace Prisma {
     spi?: true
     eac?: true
     bac?: true
+    ac_comprometido?: true
+    ac_ejercido?: true
     estado?: true
     created_at?: true
     updated_at?: true
@@ -1536,6 +1810,8 @@ export namespace Prisma {
     spi?: true
     eac?: true
     bac?: true
+    ac_comprometido?: true
+    ac_ejercido?: true
     estado?: true
     created_at?: true
     updated_at?: true
@@ -1558,6 +1834,8 @@ export namespace Prisma {
     spi?: true
     eac?: true
     bac?: true
+    ac_comprometido?: true
+    ac_ejercido?: true
     estado?: true
     created_at?: true
     updated_at?: true
@@ -1667,6 +1945,8 @@ export namespace Prisma {
     spi: Decimal | null
     eac: Decimal | null
     bac: Decimal
+    ac_comprometido: Decimal
+    ac_ejercido: Decimal
     estado: string
     created_at: Date
     updated_at: Date
@@ -1708,6 +1988,8 @@ export namespace Prisma {
     spi?: boolean
     eac?: boolean
     bac?: boolean
+    ac_comprometido?: boolean
+    ac_ejercido?: boolean
     estado?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -1730,6 +2012,8 @@ export namespace Prisma {
     spi?: boolean
     eac?: boolean
     bac?: boolean
+    ac_comprometido?: boolean
+    ac_ejercido?: boolean
     estado?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -1752,6 +2036,8 @@ export namespace Prisma {
     spi?: boolean
     eac?: boolean
     bac?: boolean
+    ac_comprometido?: boolean
+    ac_ejercido?: boolean
     estado?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -1778,6 +2064,8 @@ export namespace Prisma {
       spi: Prisma.Decimal | null
       eac: Prisma.Decimal | null
       bac: Prisma.Decimal
+      ac_comprometido: Prisma.Decimal
+      ac_ejercido: Prisma.Decimal
       estado: string
       created_at: Date
       updated_at: Date
@@ -2190,6 +2478,8 @@ export namespace Prisma {
     readonly spi: FieldRef<"ProgramacionObra", 'Decimal'>
     readonly eac: FieldRef<"ProgramacionObra", 'Decimal'>
     readonly bac: FieldRef<"ProgramacionObra", 'Decimal'>
+    readonly ac_comprometido: FieldRef<"ProgramacionObra", 'Decimal'>
+    readonly ac_ejercido: FieldRef<"ProgramacionObra", 'Decimal'>
     readonly estado: FieldRef<"ProgramacionObra", 'String'>
     readonly created_at: FieldRef<"ProgramacionObra", 'DateTime'>
     readonly updated_at: FieldRef<"ProgramacionObra", 'DateTime'>
@@ -2478,6 +2768,2818 @@ export namespace Prisma {
      * Select specific fields to fetch from the ProgramacionObra
      */
     select?: ProgramacionObraSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrdenCompraSeguimiento
+   */
+
+  export type AggregateOrdenCompraSeguimiento = {
+    _count: OrdenCompraSeguimientoCountAggregateOutputType | null
+    _avg: OrdenCompraSeguimientoAvgAggregateOutputType | null
+    _sum: OrdenCompraSeguimientoSumAggregateOutputType | null
+    _min: OrdenCompraSeguimientoMinAggregateOutputType | null
+    _max: OrdenCompraSeguimientoMaxAggregateOutputType | null
+  }
+
+  export type OrdenCompraSeguimientoAvgAggregateOutputType = {
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+  }
+
+  export type OrdenCompraSeguimientoSumAggregateOutputType = {
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+  }
+
+  export type OrdenCompraSeguimientoMinAggregateOutputType = {
+    id: string | null
+    oc_id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type OrdenCompraSeguimientoMaxAggregateOutputType = {
+    id: string | null
+    oc_id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    concepto_id: string | null
+    monto_comprometido: Decimal | null
+    monto_ejercido: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type OrdenCompraSeguimientoCountAggregateOutputType = {
+    id: number
+    oc_id: number
+    tenant_id: number
+    proyecto_id: number
+    concepto_id: number
+    monto_comprometido: number
+    monto_ejercido: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type OrdenCompraSeguimientoAvgAggregateInputType = {
+    monto_comprometido?: true
+    monto_ejercido?: true
+  }
+
+  export type OrdenCompraSeguimientoSumAggregateInputType = {
+    monto_comprometido?: true
+    monto_ejercido?: true
+  }
+
+  export type OrdenCompraSeguimientoMinAggregateInputType = {
+    id?: true
+    oc_id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type OrdenCompraSeguimientoMaxAggregateInputType = {
+    id?: true
+    oc_id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type OrdenCompraSeguimientoCountAggregateInputType = {
+    id?: true
+    oc_id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    concepto_id?: true
+    monto_comprometido?: true
+    monto_ejercido?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type OrdenCompraSeguimientoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrdenCompraSeguimiento to aggregate.
+     */
+    where?: OrdenCompraSeguimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenCompraSeguimientos to fetch.
+     */
+    orderBy?: OrdenCompraSeguimientoOrderByWithRelationInput | OrdenCompraSeguimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrdenCompraSeguimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenCompraSeguimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenCompraSeguimientos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrdenCompraSeguimientos
+    **/
+    _count?: true | OrdenCompraSeguimientoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrdenCompraSeguimientoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrdenCompraSeguimientoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrdenCompraSeguimientoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrdenCompraSeguimientoMaxAggregateInputType
+  }
+
+  export type GetOrdenCompraSeguimientoAggregateType<T extends OrdenCompraSeguimientoAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrdenCompraSeguimiento]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrdenCompraSeguimiento[P]>
+      : GetScalarType<T[P], AggregateOrdenCompraSeguimiento[P]>
+  }
+
+
+
+
+  export type OrdenCompraSeguimientoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrdenCompraSeguimientoWhereInput
+    orderBy?: OrdenCompraSeguimientoOrderByWithAggregationInput | OrdenCompraSeguimientoOrderByWithAggregationInput[]
+    by: OrdenCompraSeguimientoScalarFieldEnum[] | OrdenCompraSeguimientoScalarFieldEnum
+    having?: OrdenCompraSeguimientoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrdenCompraSeguimientoCountAggregateInputType | true
+    _avg?: OrdenCompraSeguimientoAvgAggregateInputType
+    _sum?: OrdenCompraSeguimientoSumAggregateInputType
+    _min?: OrdenCompraSeguimientoMinAggregateInputType
+    _max?: OrdenCompraSeguimientoMaxAggregateInputType
+  }
+
+  export type OrdenCompraSeguimientoGroupByOutputType = {
+    id: string
+    oc_id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    monto_comprometido: Decimal
+    monto_ejercido: Decimal
+    created_at: Date
+    updated_at: Date
+    _count: OrdenCompraSeguimientoCountAggregateOutputType | null
+    _avg: OrdenCompraSeguimientoAvgAggregateOutputType | null
+    _sum: OrdenCompraSeguimientoSumAggregateOutputType | null
+    _min: OrdenCompraSeguimientoMinAggregateOutputType | null
+    _max: OrdenCompraSeguimientoMaxAggregateOutputType | null
+  }
+
+  type GetOrdenCompraSeguimientoGroupByPayload<T extends OrdenCompraSeguimientoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrdenCompraSeguimientoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrdenCompraSeguimientoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrdenCompraSeguimientoGroupByOutputType[P]>
+            : GetScalarType<T[P], OrdenCompraSeguimientoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrdenCompraSeguimientoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    oc_id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    monto_comprometido?: boolean
+    monto_ejercido?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["ordenCompraSeguimiento"]>
+
+  export type OrdenCompraSeguimientoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    oc_id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    monto_comprometido?: boolean
+    monto_ejercido?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["ordenCompraSeguimiento"]>
+
+  export type OrdenCompraSeguimientoSelectScalar = {
+    id?: boolean
+    oc_id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    concepto_id?: boolean
+    monto_comprometido?: boolean
+    monto_ejercido?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $OrdenCompraSeguimientoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrdenCompraSeguimiento"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      oc_id: string
+      tenant_id: string
+      proyecto_id: string
+      concepto_id: string
+      monto_comprometido: Prisma.Decimal
+      monto_ejercido: Prisma.Decimal
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["ordenCompraSeguimiento"]>
+    composites: {}
+  }
+
+  type OrdenCompraSeguimientoGetPayload<S extends boolean | null | undefined | OrdenCompraSeguimientoDefaultArgs> = $Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload, S>
+
+  type OrdenCompraSeguimientoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OrdenCompraSeguimientoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OrdenCompraSeguimientoCountAggregateInputType | true
+    }
+
+  export interface OrdenCompraSeguimientoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrdenCompraSeguimiento'], meta: { name: 'OrdenCompraSeguimiento' } }
+    /**
+     * Find zero or one OrdenCompraSeguimiento that matches the filter.
+     * @param {OrdenCompraSeguimientoFindUniqueArgs} args - Arguments to find a OrdenCompraSeguimiento
+     * @example
+     * // Get one OrdenCompraSeguimiento
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrdenCompraSeguimientoFindUniqueArgs>(args: SelectSubset<T, OrdenCompraSeguimientoFindUniqueArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one OrdenCompraSeguimiento that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OrdenCompraSeguimientoFindUniqueOrThrowArgs} args - Arguments to find a OrdenCompraSeguimiento
+     * @example
+     * // Get one OrdenCompraSeguimiento
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrdenCompraSeguimientoFindUniqueOrThrowArgs>(args: SelectSubset<T, OrdenCompraSeguimientoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first OrdenCompraSeguimiento that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoFindFirstArgs} args - Arguments to find a OrdenCompraSeguimiento
+     * @example
+     * // Get one OrdenCompraSeguimiento
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrdenCompraSeguimientoFindFirstArgs>(args?: SelectSubset<T, OrdenCompraSeguimientoFindFirstArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first OrdenCompraSeguimiento that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoFindFirstOrThrowArgs} args - Arguments to find a OrdenCompraSeguimiento
+     * @example
+     * // Get one OrdenCompraSeguimiento
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrdenCompraSeguimientoFindFirstOrThrowArgs>(args?: SelectSubset<T, OrdenCompraSeguimientoFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more OrdenCompraSeguimientos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrdenCompraSeguimientos
+     * const ordenCompraSeguimientos = await prisma.ordenCompraSeguimiento.findMany()
+     * 
+     * // Get first 10 OrdenCompraSeguimientos
+     * const ordenCompraSeguimientos = await prisma.ordenCompraSeguimiento.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const ordenCompraSeguimientoWithIdOnly = await prisma.ordenCompraSeguimiento.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrdenCompraSeguimientoFindManyArgs>(args?: SelectSubset<T, OrdenCompraSeguimientoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a OrdenCompraSeguimiento.
+     * @param {OrdenCompraSeguimientoCreateArgs} args - Arguments to create a OrdenCompraSeguimiento.
+     * @example
+     * // Create one OrdenCompraSeguimiento
+     * const OrdenCompraSeguimiento = await prisma.ordenCompraSeguimiento.create({
+     *   data: {
+     *     // ... data to create a OrdenCompraSeguimiento
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrdenCompraSeguimientoCreateArgs>(args: SelectSubset<T, OrdenCompraSeguimientoCreateArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many OrdenCompraSeguimientos.
+     * @param {OrdenCompraSeguimientoCreateManyArgs} args - Arguments to create many OrdenCompraSeguimientos.
+     * @example
+     * // Create many OrdenCompraSeguimientos
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrdenCompraSeguimientoCreateManyArgs>(args?: SelectSubset<T, OrdenCompraSeguimientoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrdenCompraSeguimientos and returns the data saved in the database.
+     * @param {OrdenCompraSeguimientoCreateManyAndReturnArgs} args - Arguments to create many OrdenCompraSeguimientos.
+     * @example
+     * // Create many OrdenCompraSeguimientos
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrdenCompraSeguimientos and only return the `id`
+     * const ordenCompraSeguimientoWithIdOnly = await prisma.ordenCompraSeguimiento.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrdenCompraSeguimientoCreateManyAndReturnArgs>(args?: SelectSubset<T, OrdenCompraSeguimientoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a OrdenCompraSeguimiento.
+     * @param {OrdenCompraSeguimientoDeleteArgs} args - Arguments to delete one OrdenCompraSeguimiento.
+     * @example
+     * // Delete one OrdenCompraSeguimiento
+     * const OrdenCompraSeguimiento = await prisma.ordenCompraSeguimiento.delete({
+     *   where: {
+     *     // ... filter to delete one OrdenCompraSeguimiento
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrdenCompraSeguimientoDeleteArgs>(args: SelectSubset<T, OrdenCompraSeguimientoDeleteArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one OrdenCompraSeguimiento.
+     * @param {OrdenCompraSeguimientoUpdateArgs} args - Arguments to update one OrdenCompraSeguimiento.
+     * @example
+     * // Update one OrdenCompraSeguimiento
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrdenCompraSeguimientoUpdateArgs>(args: SelectSubset<T, OrdenCompraSeguimientoUpdateArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more OrdenCompraSeguimientos.
+     * @param {OrdenCompraSeguimientoDeleteManyArgs} args - Arguments to filter OrdenCompraSeguimientos to delete.
+     * @example
+     * // Delete a few OrdenCompraSeguimientos
+     * const { count } = await prisma.ordenCompraSeguimiento.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrdenCompraSeguimientoDeleteManyArgs>(args?: SelectSubset<T, OrdenCompraSeguimientoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrdenCompraSeguimientos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrdenCompraSeguimientos
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrdenCompraSeguimientoUpdateManyArgs>(args: SelectSubset<T, OrdenCompraSeguimientoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one OrdenCompraSeguimiento.
+     * @param {OrdenCompraSeguimientoUpsertArgs} args - Arguments to update or create a OrdenCompraSeguimiento.
+     * @example
+     * // Update or create a OrdenCompraSeguimiento
+     * const ordenCompraSeguimiento = await prisma.ordenCompraSeguimiento.upsert({
+     *   create: {
+     *     // ... data to create a OrdenCompraSeguimiento
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrdenCompraSeguimiento we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrdenCompraSeguimientoUpsertArgs>(args: SelectSubset<T, OrdenCompraSeguimientoUpsertArgs<ExtArgs>>): Prisma__OrdenCompraSeguimientoClient<$Result.GetResult<Prisma.$OrdenCompraSeguimientoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of OrdenCompraSeguimientos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoCountArgs} args - Arguments to filter OrdenCompraSeguimientos to count.
+     * @example
+     * // Count the number of OrdenCompraSeguimientos
+     * const count = await prisma.ordenCompraSeguimiento.count({
+     *   where: {
+     *     // ... the filter for the OrdenCompraSeguimientos we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrdenCompraSeguimientoCountArgs>(
+      args?: Subset<T, OrdenCompraSeguimientoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrdenCompraSeguimientoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrdenCompraSeguimiento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrdenCompraSeguimientoAggregateArgs>(args: Subset<T, OrdenCompraSeguimientoAggregateArgs>): Prisma.PrismaPromise<GetOrdenCompraSeguimientoAggregateType<T>>
+
+    /**
+     * Group by OrdenCompraSeguimiento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenCompraSeguimientoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrdenCompraSeguimientoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrdenCompraSeguimientoGroupByArgs['orderBy'] }
+        : { orderBy?: OrdenCompraSeguimientoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrdenCompraSeguimientoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrdenCompraSeguimientoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrdenCompraSeguimiento model
+   */
+  readonly fields: OrdenCompraSeguimientoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrdenCompraSeguimiento.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrdenCompraSeguimientoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrdenCompraSeguimiento model
+   */ 
+  interface OrdenCompraSeguimientoFieldRefs {
+    readonly id: FieldRef<"OrdenCompraSeguimiento", 'String'>
+    readonly oc_id: FieldRef<"OrdenCompraSeguimiento", 'String'>
+    readonly tenant_id: FieldRef<"OrdenCompraSeguimiento", 'String'>
+    readonly proyecto_id: FieldRef<"OrdenCompraSeguimiento", 'String'>
+    readonly concepto_id: FieldRef<"OrdenCompraSeguimiento", 'String'>
+    readonly monto_comprometido: FieldRef<"OrdenCompraSeguimiento", 'Decimal'>
+    readonly monto_ejercido: FieldRef<"OrdenCompraSeguimiento", 'Decimal'>
+    readonly created_at: FieldRef<"OrdenCompraSeguimiento", 'DateTime'>
+    readonly updated_at: FieldRef<"OrdenCompraSeguimiento", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrdenCompraSeguimiento findUnique
+   */
+  export type OrdenCompraSeguimientoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * Filter, which OrdenCompraSeguimiento to fetch.
+     */
+    where: OrdenCompraSeguimientoWhereUniqueInput
+  }
+
+  /**
+   * OrdenCompraSeguimiento findUniqueOrThrow
+   */
+  export type OrdenCompraSeguimientoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * Filter, which OrdenCompraSeguimiento to fetch.
+     */
+    where: OrdenCompraSeguimientoWhereUniqueInput
+  }
+
+  /**
+   * OrdenCompraSeguimiento findFirst
+   */
+  export type OrdenCompraSeguimientoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * Filter, which OrdenCompraSeguimiento to fetch.
+     */
+    where?: OrdenCompraSeguimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenCompraSeguimientos to fetch.
+     */
+    orderBy?: OrdenCompraSeguimientoOrderByWithRelationInput | OrdenCompraSeguimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrdenCompraSeguimientos.
+     */
+    cursor?: OrdenCompraSeguimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenCompraSeguimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenCompraSeguimientos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrdenCompraSeguimientos.
+     */
+    distinct?: OrdenCompraSeguimientoScalarFieldEnum | OrdenCompraSeguimientoScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenCompraSeguimiento findFirstOrThrow
+   */
+  export type OrdenCompraSeguimientoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * Filter, which OrdenCompraSeguimiento to fetch.
+     */
+    where?: OrdenCompraSeguimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenCompraSeguimientos to fetch.
+     */
+    orderBy?: OrdenCompraSeguimientoOrderByWithRelationInput | OrdenCompraSeguimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrdenCompraSeguimientos.
+     */
+    cursor?: OrdenCompraSeguimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenCompraSeguimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenCompraSeguimientos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrdenCompraSeguimientos.
+     */
+    distinct?: OrdenCompraSeguimientoScalarFieldEnum | OrdenCompraSeguimientoScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenCompraSeguimiento findMany
+   */
+  export type OrdenCompraSeguimientoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * Filter, which OrdenCompraSeguimientos to fetch.
+     */
+    where?: OrdenCompraSeguimientoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenCompraSeguimientos to fetch.
+     */
+    orderBy?: OrdenCompraSeguimientoOrderByWithRelationInput | OrdenCompraSeguimientoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrdenCompraSeguimientos.
+     */
+    cursor?: OrdenCompraSeguimientoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenCompraSeguimientos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenCompraSeguimientos.
+     */
+    skip?: number
+    distinct?: OrdenCompraSeguimientoScalarFieldEnum | OrdenCompraSeguimientoScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenCompraSeguimiento create
+   */
+  export type OrdenCompraSeguimientoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a OrdenCompraSeguimiento.
+     */
+    data: XOR<OrdenCompraSeguimientoCreateInput, OrdenCompraSeguimientoUncheckedCreateInput>
+  }
+
+  /**
+   * OrdenCompraSeguimiento createMany
+   */
+  export type OrdenCompraSeguimientoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrdenCompraSeguimientos.
+     */
+    data: OrdenCompraSeguimientoCreateManyInput | OrdenCompraSeguimientoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrdenCompraSeguimiento createManyAndReturn
+   */
+  export type OrdenCompraSeguimientoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many OrdenCompraSeguimientos.
+     */
+    data: OrdenCompraSeguimientoCreateManyInput | OrdenCompraSeguimientoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrdenCompraSeguimiento update
+   */
+  export type OrdenCompraSeguimientoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a OrdenCompraSeguimiento.
+     */
+    data: XOR<OrdenCompraSeguimientoUpdateInput, OrdenCompraSeguimientoUncheckedUpdateInput>
+    /**
+     * Choose, which OrdenCompraSeguimiento to update.
+     */
+    where: OrdenCompraSeguimientoWhereUniqueInput
+  }
+
+  /**
+   * OrdenCompraSeguimiento updateMany
+   */
+  export type OrdenCompraSeguimientoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrdenCompraSeguimientos.
+     */
+    data: XOR<OrdenCompraSeguimientoUpdateManyMutationInput, OrdenCompraSeguimientoUncheckedUpdateManyInput>
+    /**
+     * Filter which OrdenCompraSeguimientos to update
+     */
+    where?: OrdenCompraSeguimientoWhereInput
+  }
+
+  /**
+   * OrdenCompraSeguimiento upsert
+   */
+  export type OrdenCompraSeguimientoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the OrdenCompraSeguimiento to update in case it exists.
+     */
+    where: OrdenCompraSeguimientoWhereUniqueInput
+    /**
+     * In case the OrdenCompraSeguimiento found by the `where` argument doesn't exist, create a new OrdenCompraSeguimiento with this data.
+     */
+    create: XOR<OrdenCompraSeguimientoCreateInput, OrdenCompraSeguimientoUncheckedCreateInput>
+    /**
+     * In case the OrdenCompraSeguimiento was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrdenCompraSeguimientoUpdateInput, OrdenCompraSeguimientoUncheckedUpdateInput>
+  }
+
+  /**
+   * OrdenCompraSeguimiento delete
+   */
+  export type OrdenCompraSeguimientoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+    /**
+     * Filter which OrdenCompraSeguimiento to delete.
+     */
+    where: OrdenCompraSeguimientoWhereUniqueInput
+  }
+
+  /**
+   * OrdenCompraSeguimiento deleteMany
+   */
+  export type OrdenCompraSeguimientoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrdenCompraSeguimientos to delete
+     */
+    where?: OrdenCompraSeguimientoWhereInput
+  }
+
+  /**
+   * OrdenCompraSeguimiento without action
+   */
+  export type OrdenCompraSeguimientoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenCompraSeguimiento
+     */
+    select?: OrdenCompraSeguimientoSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ManoObraProyecto
+   */
+
+  export type AggregateManoObraProyecto = {
+    _count: ManoObraProyectoCountAggregateOutputType | null
+    _avg: ManoObraProyectoAvgAggregateOutputType | null
+    _sum: ManoObraProyectoSumAggregateOutputType | null
+    _min: ManoObraProyectoMinAggregateOutputType | null
+    _max: ManoObraProyectoMaxAggregateOutputType | null
+  }
+
+  export type ManoObraProyectoAvgAggregateOutputType = {
+    monto_acumulado: Decimal | null
+  }
+
+  export type ManoObraProyectoSumAggregateOutputType = {
+    monto_acumulado: Decimal | null
+  }
+
+  export type ManoObraProyectoMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    monto_acumulado: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ManoObraProyectoMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    monto_acumulado: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ManoObraProyectoCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    monto_acumulado: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ManoObraProyectoAvgAggregateInputType = {
+    monto_acumulado?: true
+  }
+
+  export type ManoObraProyectoSumAggregateInputType = {
+    monto_acumulado?: true
+  }
+
+  export type ManoObraProyectoMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    monto_acumulado?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ManoObraProyectoMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    monto_acumulado?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ManoObraProyectoCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    monto_acumulado?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ManoObraProyectoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ManoObraProyecto to aggregate.
+     */
+    where?: ManoObraProyectoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ManoObraProyectos to fetch.
+     */
+    orderBy?: ManoObraProyectoOrderByWithRelationInput | ManoObraProyectoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ManoObraProyectoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ManoObraProyectos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ManoObraProyectos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ManoObraProyectos
+    **/
+    _count?: true | ManoObraProyectoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ManoObraProyectoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ManoObraProyectoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ManoObraProyectoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ManoObraProyectoMaxAggregateInputType
+  }
+
+  export type GetManoObraProyectoAggregateType<T extends ManoObraProyectoAggregateArgs> = {
+        [P in keyof T & keyof AggregateManoObraProyecto]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateManoObraProyecto[P]>
+      : GetScalarType<T[P], AggregateManoObraProyecto[P]>
+  }
+
+
+
+
+  export type ManoObraProyectoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ManoObraProyectoWhereInput
+    orderBy?: ManoObraProyectoOrderByWithAggregationInput | ManoObraProyectoOrderByWithAggregationInput[]
+    by: ManoObraProyectoScalarFieldEnum[] | ManoObraProyectoScalarFieldEnum
+    having?: ManoObraProyectoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ManoObraProyectoCountAggregateInputType | true
+    _avg?: ManoObraProyectoAvgAggregateInputType
+    _sum?: ManoObraProyectoSumAggregateInputType
+    _min?: ManoObraProyectoMinAggregateInputType
+    _max?: ManoObraProyectoMaxAggregateInputType
+  }
+
+  export type ManoObraProyectoGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    monto_acumulado: Decimal
+    created_at: Date
+    updated_at: Date
+    _count: ManoObraProyectoCountAggregateOutputType | null
+    _avg: ManoObraProyectoAvgAggregateOutputType | null
+    _sum: ManoObraProyectoSumAggregateOutputType | null
+    _min: ManoObraProyectoMinAggregateOutputType | null
+    _max: ManoObraProyectoMaxAggregateOutputType | null
+  }
+
+  type GetManoObraProyectoGroupByPayload<T extends ManoObraProyectoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ManoObraProyectoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ManoObraProyectoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ManoObraProyectoGroupByOutputType[P]>
+            : GetScalarType<T[P], ManoObraProyectoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ManoObraProyectoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    monto_acumulado?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["manoObraProyecto"]>
+
+  export type ManoObraProyectoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    monto_acumulado?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["manoObraProyecto"]>
+
+  export type ManoObraProyectoSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    monto_acumulado?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $ManoObraProyectoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ManoObraProyecto"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      monto_acumulado: Prisma.Decimal
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["manoObraProyecto"]>
+    composites: {}
+  }
+
+  type ManoObraProyectoGetPayload<S extends boolean | null | undefined | ManoObraProyectoDefaultArgs> = $Result.GetResult<Prisma.$ManoObraProyectoPayload, S>
+
+  type ManoObraProyectoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ManoObraProyectoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ManoObraProyectoCountAggregateInputType | true
+    }
+
+  export interface ManoObraProyectoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ManoObraProyecto'], meta: { name: 'ManoObraProyecto' } }
+    /**
+     * Find zero or one ManoObraProyecto that matches the filter.
+     * @param {ManoObraProyectoFindUniqueArgs} args - Arguments to find a ManoObraProyecto
+     * @example
+     * // Get one ManoObraProyecto
+     * const manoObraProyecto = await prisma.manoObraProyecto.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ManoObraProyectoFindUniqueArgs>(args: SelectSubset<T, ManoObraProyectoFindUniqueArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ManoObraProyecto that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ManoObraProyectoFindUniqueOrThrowArgs} args - Arguments to find a ManoObraProyecto
+     * @example
+     * // Get one ManoObraProyecto
+     * const manoObraProyecto = await prisma.manoObraProyecto.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ManoObraProyectoFindUniqueOrThrowArgs>(args: SelectSubset<T, ManoObraProyectoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ManoObraProyecto that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoFindFirstArgs} args - Arguments to find a ManoObraProyecto
+     * @example
+     * // Get one ManoObraProyecto
+     * const manoObraProyecto = await prisma.manoObraProyecto.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ManoObraProyectoFindFirstArgs>(args?: SelectSubset<T, ManoObraProyectoFindFirstArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ManoObraProyecto that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoFindFirstOrThrowArgs} args - Arguments to find a ManoObraProyecto
+     * @example
+     * // Get one ManoObraProyecto
+     * const manoObraProyecto = await prisma.manoObraProyecto.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ManoObraProyectoFindFirstOrThrowArgs>(args?: SelectSubset<T, ManoObraProyectoFindFirstOrThrowArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ManoObraProyectos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ManoObraProyectos
+     * const manoObraProyectos = await prisma.manoObraProyecto.findMany()
+     * 
+     * // Get first 10 ManoObraProyectos
+     * const manoObraProyectos = await prisma.manoObraProyecto.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const manoObraProyectoWithIdOnly = await prisma.manoObraProyecto.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ManoObraProyectoFindManyArgs>(args?: SelectSubset<T, ManoObraProyectoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ManoObraProyecto.
+     * @param {ManoObraProyectoCreateArgs} args - Arguments to create a ManoObraProyecto.
+     * @example
+     * // Create one ManoObraProyecto
+     * const ManoObraProyecto = await prisma.manoObraProyecto.create({
+     *   data: {
+     *     // ... data to create a ManoObraProyecto
+     *   }
+     * })
+     * 
+     */
+    create<T extends ManoObraProyectoCreateArgs>(args: SelectSubset<T, ManoObraProyectoCreateArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ManoObraProyectos.
+     * @param {ManoObraProyectoCreateManyArgs} args - Arguments to create many ManoObraProyectos.
+     * @example
+     * // Create many ManoObraProyectos
+     * const manoObraProyecto = await prisma.manoObraProyecto.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ManoObraProyectoCreateManyArgs>(args?: SelectSubset<T, ManoObraProyectoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ManoObraProyectos and returns the data saved in the database.
+     * @param {ManoObraProyectoCreateManyAndReturnArgs} args - Arguments to create many ManoObraProyectos.
+     * @example
+     * // Create many ManoObraProyectos
+     * const manoObraProyecto = await prisma.manoObraProyecto.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ManoObraProyectos and only return the `id`
+     * const manoObraProyectoWithIdOnly = await prisma.manoObraProyecto.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ManoObraProyectoCreateManyAndReturnArgs>(args?: SelectSubset<T, ManoObraProyectoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ManoObraProyecto.
+     * @param {ManoObraProyectoDeleteArgs} args - Arguments to delete one ManoObraProyecto.
+     * @example
+     * // Delete one ManoObraProyecto
+     * const ManoObraProyecto = await prisma.manoObraProyecto.delete({
+     *   where: {
+     *     // ... filter to delete one ManoObraProyecto
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ManoObraProyectoDeleteArgs>(args: SelectSubset<T, ManoObraProyectoDeleteArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ManoObraProyecto.
+     * @param {ManoObraProyectoUpdateArgs} args - Arguments to update one ManoObraProyecto.
+     * @example
+     * // Update one ManoObraProyecto
+     * const manoObraProyecto = await prisma.manoObraProyecto.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ManoObraProyectoUpdateArgs>(args: SelectSubset<T, ManoObraProyectoUpdateArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ManoObraProyectos.
+     * @param {ManoObraProyectoDeleteManyArgs} args - Arguments to filter ManoObraProyectos to delete.
+     * @example
+     * // Delete a few ManoObraProyectos
+     * const { count } = await prisma.manoObraProyecto.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ManoObraProyectoDeleteManyArgs>(args?: SelectSubset<T, ManoObraProyectoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ManoObraProyectos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ManoObraProyectos
+     * const manoObraProyecto = await prisma.manoObraProyecto.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ManoObraProyectoUpdateManyArgs>(args: SelectSubset<T, ManoObraProyectoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ManoObraProyecto.
+     * @param {ManoObraProyectoUpsertArgs} args - Arguments to update or create a ManoObraProyecto.
+     * @example
+     * // Update or create a ManoObraProyecto
+     * const manoObraProyecto = await prisma.manoObraProyecto.upsert({
+     *   create: {
+     *     // ... data to create a ManoObraProyecto
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ManoObraProyecto we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ManoObraProyectoUpsertArgs>(args: SelectSubset<T, ManoObraProyectoUpsertArgs<ExtArgs>>): Prisma__ManoObraProyectoClient<$Result.GetResult<Prisma.$ManoObraProyectoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ManoObraProyectos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoCountArgs} args - Arguments to filter ManoObraProyectos to count.
+     * @example
+     * // Count the number of ManoObraProyectos
+     * const count = await prisma.manoObraProyecto.count({
+     *   where: {
+     *     // ... the filter for the ManoObraProyectos we want to count
+     *   }
+     * })
+    **/
+    count<T extends ManoObraProyectoCountArgs>(
+      args?: Subset<T, ManoObraProyectoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ManoObraProyectoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ManoObraProyecto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ManoObraProyectoAggregateArgs>(args: Subset<T, ManoObraProyectoAggregateArgs>): Prisma.PrismaPromise<GetManoObraProyectoAggregateType<T>>
+
+    /**
+     * Group by ManoObraProyecto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ManoObraProyectoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ManoObraProyectoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ManoObraProyectoGroupByArgs['orderBy'] }
+        : { orderBy?: ManoObraProyectoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ManoObraProyectoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetManoObraProyectoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ManoObraProyecto model
+   */
+  readonly fields: ManoObraProyectoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ManoObraProyecto.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ManoObraProyectoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ManoObraProyecto model
+   */ 
+  interface ManoObraProyectoFieldRefs {
+    readonly id: FieldRef<"ManoObraProyecto", 'String'>
+    readonly tenant_id: FieldRef<"ManoObraProyecto", 'String'>
+    readonly proyecto_id: FieldRef<"ManoObraProyecto", 'String'>
+    readonly monto_acumulado: FieldRef<"ManoObraProyecto", 'Decimal'>
+    readonly created_at: FieldRef<"ManoObraProyecto", 'DateTime'>
+    readonly updated_at: FieldRef<"ManoObraProyecto", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ManoObraProyecto findUnique
+   */
+  export type ManoObraProyectoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * Filter, which ManoObraProyecto to fetch.
+     */
+    where: ManoObraProyectoWhereUniqueInput
+  }
+
+  /**
+   * ManoObraProyecto findUniqueOrThrow
+   */
+  export type ManoObraProyectoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * Filter, which ManoObraProyecto to fetch.
+     */
+    where: ManoObraProyectoWhereUniqueInput
+  }
+
+  /**
+   * ManoObraProyecto findFirst
+   */
+  export type ManoObraProyectoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * Filter, which ManoObraProyecto to fetch.
+     */
+    where?: ManoObraProyectoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ManoObraProyectos to fetch.
+     */
+    orderBy?: ManoObraProyectoOrderByWithRelationInput | ManoObraProyectoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ManoObraProyectos.
+     */
+    cursor?: ManoObraProyectoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ManoObraProyectos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ManoObraProyectos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ManoObraProyectos.
+     */
+    distinct?: ManoObraProyectoScalarFieldEnum | ManoObraProyectoScalarFieldEnum[]
+  }
+
+  /**
+   * ManoObraProyecto findFirstOrThrow
+   */
+  export type ManoObraProyectoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * Filter, which ManoObraProyecto to fetch.
+     */
+    where?: ManoObraProyectoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ManoObraProyectos to fetch.
+     */
+    orderBy?: ManoObraProyectoOrderByWithRelationInput | ManoObraProyectoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ManoObraProyectos.
+     */
+    cursor?: ManoObraProyectoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ManoObraProyectos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ManoObraProyectos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ManoObraProyectos.
+     */
+    distinct?: ManoObraProyectoScalarFieldEnum | ManoObraProyectoScalarFieldEnum[]
+  }
+
+  /**
+   * ManoObraProyecto findMany
+   */
+  export type ManoObraProyectoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * Filter, which ManoObraProyectos to fetch.
+     */
+    where?: ManoObraProyectoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ManoObraProyectos to fetch.
+     */
+    orderBy?: ManoObraProyectoOrderByWithRelationInput | ManoObraProyectoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ManoObraProyectos.
+     */
+    cursor?: ManoObraProyectoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ManoObraProyectos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ManoObraProyectos.
+     */
+    skip?: number
+    distinct?: ManoObraProyectoScalarFieldEnum | ManoObraProyectoScalarFieldEnum[]
+  }
+
+  /**
+   * ManoObraProyecto create
+   */
+  export type ManoObraProyectoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a ManoObraProyecto.
+     */
+    data: XOR<ManoObraProyectoCreateInput, ManoObraProyectoUncheckedCreateInput>
+  }
+
+  /**
+   * ManoObraProyecto createMany
+   */
+  export type ManoObraProyectoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ManoObraProyectos.
+     */
+    data: ManoObraProyectoCreateManyInput | ManoObraProyectoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ManoObraProyecto createManyAndReturn
+   */
+  export type ManoObraProyectoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ManoObraProyectos.
+     */
+    data: ManoObraProyectoCreateManyInput | ManoObraProyectoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ManoObraProyecto update
+   */
+  export type ManoObraProyectoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a ManoObraProyecto.
+     */
+    data: XOR<ManoObraProyectoUpdateInput, ManoObraProyectoUncheckedUpdateInput>
+    /**
+     * Choose, which ManoObraProyecto to update.
+     */
+    where: ManoObraProyectoWhereUniqueInput
+  }
+
+  /**
+   * ManoObraProyecto updateMany
+   */
+  export type ManoObraProyectoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ManoObraProyectos.
+     */
+    data: XOR<ManoObraProyectoUpdateManyMutationInput, ManoObraProyectoUncheckedUpdateManyInput>
+    /**
+     * Filter which ManoObraProyectos to update
+     */
+    where?: ManoObraProyectoWhereInput
+  }
+
+  /**
+   * ManoObraProyecto upsert
+   */
+  export type ManoObraProyectoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the ManoObraProyecto to update in case it exists.
+     */
+    where: ManoObraProyectoWhereUniqueInput
+    /**
+     * In case the ManoObraProyecto found by the `where` argument doesn't exist, create a new ManoObraProyecto with this data.
+     */
+    create: XOR<ManoObraProyectoCreateInput, ManoObraProyectoUncheckedCreateInput>
+    /**
+     * In case the ManoObraProyecto was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ManoObraProyectoUpdateInput, ManoObraProyectoUncheckedUpdateInput>
+  }
+
+  /**
+   * ManoObraProyecto delete
+   */
+  export type ManoObraProyectoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+    /**
+     * Filter which ManoObraProyecto to delete.
+     */
+    where: ManoObraProyectoWhereUniqueInput
+  }
+
+  /**
+   * ManoObraProyecto deleteMany
+   */
+  export type ManoObraProyectoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ManoObraProyectos to delete
+     */
+    where?: ManoObraProyectoWhereInput
+  }
+
+  /**
+   * ManoObraProyecto without action
+   */
+  export type ManoObraProyectoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ManoObraProyecto
+     */
+    select?: ManoObraProyectoSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PagoEvmProcesado
+   */
+
+  export type AggregatePagoEvmProcesado = {
+    _count: PagoEvmProcesadoCountAggregateOutputType | null
+    _avg: PagoEvmProcesadoAvgAggregateOutputType | null
+    _sum: PagoEvmProcesadoSumAggregateOutputType | null
+    _min: PagoEvmProcesadoMinAggregateOutputType | null
+    _max: PagoEvmProcesadoMaxAggregateOutputType | null
+  }
+
+  export type PagoEvmProcesadoAvgAggregateOutputType = {
+    monto: Decimal | null
+  }
+
+  export type PagoEvmProcesadoSumAggregateOutputType = {
+    monto: Decimal | null
+  }
+
+  export type PagoEvmProcesadoMinAggregateOutputType = {
+    id_pago: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    tipo: string | null
+    monto: Decimal | null
+    created_at: Date | null
+  }
+
+  export type PagoEvmProcesadoMaxAggregateOutputType = {
+    id_pago: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    tipo: string | null
+    monto: Decimal | null
+    created_at: Date | null
+  }
+
+  export type PagoEvmProcesadoCountAggregateOutputType = {
+    id_pago: number
+    tenant_id: number
+    proyecto_id: number
+    tipo: number
+    monto: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type PagoEvmProcesadoAvgAggregateInputType = {
+    monto?: true
+  }
+
+  export type PagoEvmProcesadoSumAggregateInputType = {
+    monto?: true
+  }
+
+  export type PagoEvmProcesadoMinAggregateInputType = {
+    id_pago?: true
+    tenant_id?: true
+    proyecto_id?: true
+    tipo?: true
+    monto?: true
+    created_at?: true
+  }
+
+  export type PagoEvmProcesadoMaxAggregateInputType = {
+    id_pago?: true
+    tenant_id?: true
+    proyecto_id?: true
+    tipo?: true
+    monto?: true
+    created_at?: true
+  }
+
+  export type PagoEvmProcesadoCountAggregateInputType = {
+    id_pago?: true
+    tenant_id?: true
+    proyecto_id?: true
+    tipo?: true
+    monto?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type PagoEvmProcesadoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PagoEvmProcesado to aggregate.
+     */
+    where?: PagoEvmProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoEvmProcesados to fetch.
+     */
+    orderBy?: PagoEvmProcesadoOrderByWithRelationInput | PagoEvmProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PagoEvmProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoEvmProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoEvmProcesados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PagoEvmProcesados
+    **/
+    _count?: true | PagoEvmProcesadoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PagoEvmProcesadoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PagoEvmProcesadoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PagoEvmProcesadoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PagoEvmProcesadoMaxAggregateInputType
+  }
+
+  export type GetPagoEvmProcesadoAggregateType<T extends PagoEvmProcesadoAggregateArgs> = {
+        [P in keyof T & keyof AggregatePagoEvmProcesado]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePagoEvmProcesado[P]>
+      : GetScalarType<T[P], AggregatePagoEvmProcesado[P]>
+  }
+
+
+
+
+  export type PagoEvmProcesadoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PagoEvmProcesadoWhereInput
+    orderBy?: PagoEvmProcesadoOrderByWithAggregationInput | PagoEvmProcesadoOrderByWithAggregationInput[]
+    by: PagoEvmProcesadoScalarFieldEnum[] | PagoEvmProcesadoScalarFieldEnum
+    having?: PagoEvmProcesadoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PagoEvmProcesadoCountAggregateInputType | true
+    _avg?: PagoEvmProcesadoAvgAggregateInputType
+    _sum?: PagoEvmProcesadoSumAggregateInputType
+    _min?: PagoEvmProcesadoMinAggregateInputType
+    _max?: PagoEvmProcesadoMaxAggregateInputType
+  }
+
+  export type PagoEvmProcesadoGroupByOutputType = {
+    id_pago: string
+    tenant_id: string
+    proyecto_id: string
+    tipo: string
+    monto: Decimal
+    created_at: Date
+    _count: PagoEvmProcesadoCountAggregateOutputType | null
+    _avg: PagoEvmProcesadoAvgAggregateOutputType | null
+    _sum: PagoEvmProcesadoSumAggregateOutputType | null
+    _min: PagoEvmProcesadoMinAggregateOutputType | null
+    _max: PagoEvmProcesadoMaxAggregateOutputType | null
+  }
+
+  type GetPagoEvmProcesadoGroupByPayload<T extends PagoEvmProcesadoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PagoEvmProcesadoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PagoEvmProcesadoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PagoEvmProcesadoGroupByOutputType[P]>
+            : GetScalarType<T[P], PagoEvmProcesadoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PagoEvmProcesadoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_pago?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    tipo?: boolean
+    monto?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["pagoEvmProcesado"]>
+
+  export type PagoEvmProcesadoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_pago?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    tipo?: boolean
+    monto?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["pagoEvmProcesado"]>
+
+  export type PagoEvmProcesadoSelectScalar = {
+    id_pago?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    tipo?: boolean
+    monto?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $PagoEvmProcesadoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PagoEvmProcesado"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id_pago: string
+      tenant_id: string
+      proyecto_id: string
+      tipo: string
+      monto: Prisma.Decimal
+      created_at: Date
+    }, ExtArgs["result"]["pagoEvmProcesado"]>
+    composites: {}
+  }
+
+  type PagoEvmProcesadoGetPayload<S extends boolean | null | undefined | PagoEvmProcesadoDefaultArgs> = $Result.GetResult<Prisma.$PagoEvmProcesadoPayload, S>
+
+  type PagoEvmProcesadoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<PagoEvmProcesadoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: PagoEvmProcesadoCountAggregateInputType | true
+    }
+
+  export interface PagoEvmProcesadoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PagoEvmProcesado'], meta: { name: 'PagoEvmProcesado' } }
+    /**
+     * Find zero or one PagoEvmProcesado that matches the filter.
+     * @param {PagoEvmProcesadoFindUniqueArgs} args - Arguments to find a PagoEvmProcesado
+     * @example
+     * // Get one PagoEvmProcesado
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PagoEvmProcesadoFindUniqueArgs>(args: SelectSubset<T, PagoEvmProcesadoFindUniqueArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one PagoEvmProcesado that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {PagoEvmProcesadoFindUniqueOrThrowArgs} args - Arguments to find a PagoEvmProcesado
+     * @example
+     * // Get one PagoEvmProcesado
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PagoEvmProcesadoFindUniqueOrThrowArgs>(args: SelectSubset<T, PagoEvmProcesadoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first PagoEvmProcesado that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoFindFirstArgs} args - Arguments to find a PagoEvmProcesado
+     * @example
+     * // Get one PagoEvmProcesado
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PagoEvmProcesadoFindFirstArgs>(args?: SelectSubset<T, PagoEvmProcesadoFindFirstArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first PagoEvmProcesado that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoFindFirstOrThrowArgs} args - Arguments to find a PagoEvmProcesado
+     * @example
+     * // Get one PagoEvmProcesado
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PagoEvmProcesadoFindFirstOrThrowArgs>(args?: SelectSubset<T, PagoEvmProcesadoFindFirstOrThrowArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more PagoEvmProcesados that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PagoEvmProcesados
+     * const pagoEvmProcesados = await prisma.pagoEvmProcesado.findMany()
+     * 
+     * // Get first 10 PagoEvmProcesados
+     * const pagoEvmProcesados = await prisma.pagoEvmProcesado.findMany({ take: 10 })
+     * 
+     * // Only select the `id_pago`
+     * const pagoEvmProcesadoWithId_pagoOnly = await prisma.pagoEvmProcesado.findMany({ select: { id_pago: true } })
+     * 
+     */
+    findMany<T extends PagoEvmProcesadoFindManyArgs>(args?: SelectSubset<T, PagoEvmProcesadoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a PagoEvmProcesado.
+     * @param {PagoEvmProcesadoCreateArgs} args - Arguments to create a PagoEvmProcesado.
+     * @example
+     * // Create one PagoEvmProcesado
+     * const PagoEvmProcesado = await prisma.pagoEvmProcesado.create({
+     *   data: {
+     *     // ... data to create a PagoEvmProcesado
+     *   }
+     * })
+     * 
+     */
+    create<T extends PagoEvmProcesadoCreateArgs>(args: SelectSubset<T, PagoEvmProcesadoCreateArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many PagoEvmProcesados.
+     * @param {PagoEvmProcesadoCreateManyArgs} args - Arguments to create many PagoEvmProcesados.
+     * @example
+     * // Create many PagoEvmProcesados
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PagoEvmProcesadoCreateManyArgs>(args?: SelectSubset<T, PagoEvmProcesadoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PagoEvmProcesados and returns the data saved in the database.
+     * @param {PagoEvmProcesadoCreateManyAndReturnArgs} args - Arguments to create many PagoEvmProcesados.
+     * @example
+     * // Create many PagoEvmProcesados
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PagoEvmProcesados and only return the `id_pago`
+     * const pagoEvmProcesadoWithId_pagoOnly = await prisma.pagoEvmProcesado.createManyAndReturn({ 
+     *   select: { id_pago: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PagoEvmProcesadoCreateManyAndReturnArgs>(args?: SelectSubset<T, PagoEvmProcesadoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a PagoEvmProcesado.
+     * @param {PagoEvmProcesadoDeleteArgs} args - Arguments to delete one PagoEvmProcesado.
+     * @example
+     * // Delete one PagoEvmProcesado
+     * const PagoEvmProcesado = await prisma.pagoEvmProcesado.delete({
+     *   where: {
+     *     // ... filter to delete one PagoEvmProcesado
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PagoEvmProcesadoDeleteArgs>(args: SelectSubset<T, PagoEvmProcesadoDeleteArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one PagoEvmProcesado.
+     * @param {PagoEvmProcesadoUpdateArgs} args - Arguments to update one PagoEvmProcesado.
+     * @example
+     * // Update one PagoEvmProcesado
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PagoEvmProcesadoUpdateArgs>(args: SelectSubset<T, PagoEvmProcesadoUpdateArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more PagoEvmProcesados.
+     * @param {PagoEvmProcesadoDeleteManyArgs} args - Arguments to filter PagoEvmProcesados to delete.
+     * @example
+     * // Delete a few PagoEvmProcesados
+     * const { count } = await prisma.pagoEvmProcesado.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PagoEvmProcesadoDeleteManyArgs>(args?: SelectSubset<T, PagoEvmProcesadoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PagoEvmProcesados.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PagoEvmProcesados
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PagoEvmProcesadoUpdateManyArgs>(args: SelectSubset<T, PagoEvmProcesadoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PagoEvmProcesado.
+     * @param {PagoEvmProcesadoUpsertArgs} args - Arguments to update or create a PagoEvmProcesado.
+     * @example
+     * // Update or create a PagoEvmProcesado
+     * const pagoEvmProcesado = await prisma.pagoEvmProcesado.upsert({
+     *   create: {
+     *     // ... data to create a PagoEvmProcesado
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PagoEvmProcesado we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PagoEvmProcesadoUpsertArgs>(args: SelectSubset<T, PagoEvmProcesadoUpsertArgs<ExtArgs>>): Prisma__PagoEvmProcesadoClient<$Result.GetResult<Prisma.$PagoEvmProcesadoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of PagoEvmProcesados.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoCountArgs} args - Arguments to filter PagoEvmProcesados to count.
+     * @example
+     * // Count the number of PagoEvmProcesados
+     * const count = await prisma.pagoEvmProcesado.count({
+     *   where: {
+     *     // ... the filter for the PagoEvmProcesados we want to count
+     *   }
+     * })
+    **/
+    count<T extends PagoEvmProcesadoCountArgs>(
+      args?: Subset<T, PagoEvmProcesadoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PagoEvmProcesadoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PagoEvmProcesado.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PagoEvmProcesadoAggregateArgs>(args: Subset<T, PagoEvmProcesadoAggregateArgs>): Prisma.PrismaPromise<GetPagoEvmProcesadoAggregateType<T>>
+
+    /**
+     * Group by PagoEvmProcesado.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PagoEvmProcesadoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PagoEvmProcesadoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PagoEvmProcesadoGroupByArgs['orderBy'] }
+        : { orderBy?: PagoEvmProcesadoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PagoEvmProcesadoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPagoEvmProcesadoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PagoEvmProcesado model
+   */
+  readonly fields: PagoEvmProcesadoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PagoEvmProcesado.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PagoEvmProcesadoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PagoEvmProcesado model
+   */ 
+  interface PagoEvmProcesadoFieldRefs {
+    readonly id_pago: FieldRef<"PagoEvmProcesado", 'String'>
+    readonly tenant_id: FieldRef<"PagoEvmProcesado", 'String'>
+    readonly proyecto_id: FieldRef<"PagoEvmProcesado", 'String'>
+    readonly tipo: FieldRef<"PagoEvmProcesado", 'String'>
+    readonly monto: FieldRef<"PagoEvmProcesado", 'Decimal'>
+    readonly created_at: FieldRef<"PagoEvmProcesado", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PagoEvmProcesado findUnique
+   */
+  export type PagoEvmProcesadoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which PagoEvmProcesado to fetch.
+     */
+    where: PagoEvmProcesadoWhereUniqueInput
+  }
+
+  /**
+   * PagoEvmProcesado findUniqueOrThrow
+   */
+  export type PagoEvmProcesadoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which PagoEvmProcesado to fetch.
+     */
+    where: PagoEvmProcesadoWhereUniqueInput
+  }
+
+  /**
+   * PagoEvmProcesado findFirst
+   */
+  export type PagoEvmProcesadoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which PagoEvmProcesado to fetch.
+     */
+    where?: PagoEvmProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoEvmProcesados to fetch.
+     */
+    orderBy?: PagoEvmProcesadoOrderByWithRelationInput | PagoEvmProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PagoEvmProcesados.
+     */
+    cursor?: PagoEvmProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoEvmProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoEvmProcesados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PagoEvmProcesados.
+     */
+    distinct?: PagoEvmProcesadoScalarFieldEnum | PagoEvmProcesadoScalarFieldEnum[]
+  }
+
+  /**
+   * PagoEvmProcesado findFirstOrThrow
+   */
+  export type PagoEvmProcesadoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which PagoEvmProcesado to fetch.
+     */
+    where?: PagoEvmProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoEvmProcesados to fetch.
+     */
+    orderBy?: PagoEvmProcesadoOrderByWithRelationInput | PagoEvmProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PagoEvmProcesados.
+     */
+    cursor?: PagoEvmProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoEvmProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoEvmProcesados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PagoEvmProcesados.
+     */
+    distinct?: PagoEvmProcesadoScalarFieldEnum | PagoEvmProcesadoScalarFieldEnum[]
+  }
+
+  /**
+   * PagoEvmProcesado findMany
+   */
+  export type PagoEvmProcesadoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which PagoEvmProcesados to fetch.
+     */
+    where?: PagoEvmProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PagoEvmProcesados to fetch.
+     */
+    orderBy?: PagoEvmProcesadoOrderByWithRelationInput | PagoEvmProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PagoEvmProcesados.
+     */
+    cursor?: PagoEvmProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PagoEvmProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PagoEvmProcesados.
+     */
+    skip?: number
+    distinct?: PagoEvmProcesadoScalarFieldEnum | PagoEvmProcesadoScalarFieldEnum[]
+  }
+
+  /**
+   * PagoEvmProcesado create
+   */
+  export type PagoEvmProcesadoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a PagoEvmProcesado.
+     */
+    data: XOR<PagoEvmProcesadoCreateInput, PagoEvmProcesadoUncheckedCreateInput>
+  }
+
+  /**
+   * PagoEvmProcesado createMany
+   */
+  export type PagoEvmProcesadoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PagoEvmProcesados.
+     */
+    data: PagoEvmProcesadoCreateManyInput | PagoEvmProcesadoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PagoEvmProcesado createManyAndReturn
+   */
+  export type PagoEvmProcesadoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many PagoEvmProcesados.
+     */
+    data: PagoEvmProcesadoCreateManyInput | PagoEvmProcesadoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PagoEvmProcesado update
+   */
+  export type PagoEvmProcesadoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a PagoEvmProcesado.
+     */
+    data: XOR<PagoEvmProcesadoUpdateInput, PagoEvmProcesadoUncheckedUpdateInput>
+    /**
+     * Choose, which PagoEvmProcesado to update.
+     */
+    where: PagoEvmProcesadoWhereUniqueInput
+  }
+
+  /**
+   * PagoEvmProcesado updateMany
+   */
+  export type PagoEvmProcesadoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PagoEvmProcesados.
+     */
+    data: XOR<PagoEvmProcesadoUpdateManyMutationInput, PagoEvmProcesadoUncheckedUpdateManyInput>
+    /**
+     * Filter which PagoEvmProcesados to update
+     */
+    where?: PagoEvmProcesadoWhereInput
+  }
+
+  /**
+   * PagoEvmProcesado upsert
+   */
+  export type PagoEvmProcesadoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the PagoEvmProcesado to update in case it exists.
+     */
+    where: PagoEvmProcesadoWhereUniqueInput
+    /**
+     * In case the PagoEvmProcesado found by the `where` argument doesn't exist, create a new PagoEvmProcesado with this data.
+     */
+    create: XOR<PagoEvmProcesadoCreateInput, PagoEvmProcesadoUncheckedCreateInput>
+    /**
+     * In case the PagoEvmProcesado was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PagoEvmProcesadoUpdateInput, PagoEvmProcesadoUncheckedUpdateInput>
+  }
+
+  /**
+   * PagoEvmProcesado delete
+   */
+  export type PagoEvmProcesadoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter which PagoEvmProcesado to delete.
+     */
+    where: PagoEvmProcesadoWhereUniqueInput
+  }
+
+  /**
+   * PagoEvmProcesado deleteMany
+   */
+  export type PagoEvmProcesadoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PagoEvmProcesados to delete
+     */
+    where?: PagoEvmProcesadoWhereInput
+  }
+
+  /**
+   * PagoEvmProcesado without action
+   */
+  export type PagoEvmProcesadoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PagoEvmProcesado
+     */
+    select?: PagoEvmProcesadoSelect<ExtArgs> | null
   }
 
 
@@ -9222,12 +12324,53 @@ export namespace Prisma {
     spi: 'spi',
     eac: 'eac',
     bac: 'bac',
+    ac_comprometido: 'ac_comprometido',
+    ac_ejercido: 'ac_ejercido',
     estado: 'estado',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
 
   export type ProgramacionObraScalarFieldEnum = (typeof ProgramacionObraScalarFieldEnum)[keyof typeof ProgramacionObraScalarFieldEnum]
+
+
+  export const OrdenCompraSeguimientoScalarFieldEnum: {
+    id: 'id',
+    oc_id: 'oc_id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    concepto_id: 'concepto_id',
+    monto_comprometido: 'monto_comprometido',
+    monto_ejercido: 'monto_ejercido',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type OrdenCompraSeguimientoScalarFieldEnum = (typeof OrdenCompraSeguimientoScalarFieldEnum)[keyof typeof OrdenCompraSeguimientoScalarFieldEnum]
+
+
+  export const ManoObraProyectoScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    monto_acumulado: 'monto_acumulado',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ManoObraProyectoScalarFieldEnum = (typeof ManoObraProyectoScalarFieldEnum)[keyof typeof ManoObraProyectoScalarFieldEnum]
+
+
+  export const PagoEvmProcesadoScalarFieldEnum: {
+    id_pago: 'id_pago',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    tipo: 'tipo',
+    monto: 'monto',
+    created_at: 'created_at'
+  };
+
+  export type PagoEvmProcesadoScalarFieldEnum = (typeof PagoEvmProcesadoScalarFieldEnum)[keyof typeof PagoEvmProcesadoScalarFieldEnum]
 
 
   export const AlertaProyectoScalarFieldEnum: {
@@ -9527,6 +12670,8 @@ export namespace Prisma {
     spi?: DecimalNullableFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string | null
     eac?: DecimalNullableFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
     estado?: StringFilter<"ProgramacionObra"> | string
     created_at?: DateTimeFilter<"ProgramacionObra"> | Date | string
     updated_at?: DateTimeFilter<"ProgramacionObra"> | Date | string
@@ -9549,6 +12694,8 @@ export namespace Prisma {
     spi?: SortOrderInput | SortOrder
     eac?: SortOrderInput | SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
     estado?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -9575,6 +12722,8 @@ export namespace Prisma {
     spi?: DecimalNullableFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string | null
     eac?: DecimalNullableFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
     estado?: StringFilter<"ProgramacionObra"> | string
     created_at?: DateTimeFilter<"ProgramacionObra"> | Date | string
     updated_at?: DateTimeFilter<"ProgramacionObra"> | Date | string
@@ -9597,6 +12746,8 @@ export namespace Prisma {
     spi?: SortOrderInput | SortOrder
     eac?: SortOrderInput | SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
     estado?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -9627,9 +12778,204 @@ export namespace Prisma {
     spi?: DecimalNullableWithAggregatesFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string | null
     eac?: DecimalNullableWithAggregatesFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalWithAggregatesFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalWithAggregatesFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalWithAggregatesFilter<"ProgramacionObra"> | Decimal | DecimalJsLike | number | string
     estado?: StringWithAggregatesFilter<"ProgramacionObra"> | string
     created_at?: DateTimeWithAggregatesFilter<"ProgramacionObra"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"ProgramacionObra"> | Date | string
+  }
+
+  export type OrdenCompraSeguimientoWhereInput = {
+    AND?: OrdenCompraSeguimientoWhereInput | OrdenCompraSeguimientoWhereInput[]
+    OR?: OrdenCompraSeguimientoWhereInput[]
+    NOT?: OrdenCompraSeguimientoWhereInput | OrdenCompraSeguimientoWhereInput[]
+    id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    oc_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    tenant_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    proyecto_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    concepto_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    monto_comprometido?: DecimalFilter<"OrdenCompraSeguimiento"> | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFilter<"OrdenCompraSeguimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"OrdenCompraSeguimiento"> | Date | string
+    updated_at?: DateTimeFilter<"OrdenCompraSeguimiento"> | Date | string
+  }
+
+  export type OrdenCompraSeguimientoOrderByWithRelationInput = {
+    id?: SortOrder
+    oc_id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type OrdenCompraSeguimientoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    oc_id?: string
+    AND?: OrdenCompraSeguimientoWhereInput | OrdenCompraSeguimientoWhereInput[]
+    OR?: OrdenCompraSeguimientoWhereInput[]
+    NOT?: OrdenCompraSeguimientoWhereInput | OrdenCompraSeguimientoWhereInput[]
+    tenant_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    proyecto_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    concepto_id?: UuidFilter<"OrdenCompraSeguimiento"> | string
+    monto_comprometido?: DecimalFilter<"OrdenCompraSeguimiento"> | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFilter<"OrdenCompraSeguimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"OrdenCompraSeguimiento"> | Date | string
+    updated_at?: DateTimeFilter<"OrdenCompraSeguimiento"> | Date | string
+  }, "id" | "oc_id">
+
+  export type OrdenCompraSeguimientoOrderByWithAggregationInput = {
+    id?: SortOrder
+    oc_id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: OrdenCompraSeguimientoCountOrderByAggregateInput
+    _avg?: OrdenCompraSeguimientoAvgOrderByAggregateInput
+    _max?: OrdenCompraSeguimientoMaxOrderByAggregateInput
+    _min?: OrdenCompraSeguimientoMinOrderByAggregateInput
+    _sum?: OrdenCompraSeguimientoSumOrderByAggregateInput
+  }
+
+  export type OrdenCompraSeguimientoScalarWhereWithAggregatesInput = {
+    AND?: OrdenCompraSeguimientoScalarWhereWithAggregatesInput | OrdenCompraSeguimientoScalarWhereWithAggregatesInput[]
+    OR?: OrdenCompraSeguimientoScalarWhereWithAggregatesInput[]
+    NOT?: OrdenCompraSeguimientoScalarWhereWithAggregatesInput | OrdenCompraSeguimientoScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"OrdenCompraSeguimiento"> | string
+    oc_id?: UuidWithAggregatesFilter<"OrdenCompraSeguimiento"> | string
+    tenant_id?: UuidWithAggregatesFilter<"OrdenCompraSeguimiento"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"OrdenCompraSeguimiento"> | string
+    concepto_id?: UuidWithAggregatesFilter<"OrdenCompraSeguimiento"> | string
+    monto_comprometido?: DecimalWithAggregatesFilter<"OrdenCompraSeguimiento"> | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalWithAggregatesFilter<"OrdenCompraSeguimiento"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeWithAggregatesFilter<"OrdenCompraSeguimiento"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"OrdenCompraSeguimiento"> | Date | string
+  }
+
+  export type ManoObraProyectoWhereInput = {
+    AND?: ManoObraProyectoWhereInput | ManoObraProyectoWhereInput[]
+    OR?: ManoObraProyectoWhereInput[]
+    NOT?: ManoObraProyectoWhereInput | ManoObraProyectoWhereInput[]
+    id?: UuidFilter<"ManoObraProyecto"> | string
+    tenant_id?: UuidFilter<"ManoObraProyecto"> | string
+    proyecto_id?: UuidFilter<"ManoObraProyecto"> | string
+    monto_acumulado?: DecimalFilter<"ManoObraProyecto"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ManoObraProyecto"> | Date | string
+    updated_at?: DateTimeFilter<"ManoObraProyecto"> | Date | string
+  }
+
+  export type ManoObraProyectoOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    monto_acumulado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ManoObraProyectoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tenant_id_proyecto_id?: ManoObraProyectoTenant_idProyecto_idCompoundUniqueInput
+    AND?: ManoObraProyectoWhereInput | ManoObraProyectoWhereInput[]
+    OR?: ManoObraProyectoWhereInput[]
+    NOT?: ManoObraProyectoWhereInput | ManoObraProyectoWhereInput[]
+    tenant_id?: UuidFilter<"ManoObraProyecto"> | string
+    proyecto_id?: UuidFilter<"ManoObraProyecto"> | string
+    monto_acumulado?: DecimalFilter<"ManoObraProyecto"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"ManoObraProyecto"> | Date | string
+    updated_at?: DateTimeFilter<"ManoObraProyecto"> | Date | string
+  }, "id" | "tenant_id_proyecto_id">
+
+  export type ManoObraProyectoOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    monto_acumulado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: ManoObraProyectoCountOrderByAggregateInput
+    _avg?: ManoObraProyectoAvgOrderByAggregateInput
+    _max?: ManoObraProyectoMaxOrderByAggregateInput
+    _min?: ManoObraProyectoMinOrderByAggregateInput
+    _sum?: ManoObraProyectoSumOrderByAggregateInput
+  }
+
+  export type ManoObraProyectoScalarWhereWithAggregatesInput = {
+    AND?: ManoObraProyectoScalarWhereWithAggregatesInput | ManoObraProyectoScalarWhereWithAggregatesInput[]
+    OR?: ManoObraProyectoScalarWhereWithAggregatesInput[]
+    NOT?: ManoObraProyectoScalarWhereWithAggregatesInput | ManoObraProyectoScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ManoObraProyecto"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ManoObraProyecto"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"ManoObraProyecto"> | string
+    monto_acumulado?: DecimalWithAggregatesFilter<"ManoObraProyecto"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeWithAggregatesFilter<"ManoObraProyecto"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"ManoObraProyecto"> | Date | string
+  }
+
+  export type PagoEvmProcesadoWhereInput = {
+    AND?: PagoEvmProcesadoWhereInput | PagoEvmProcesadoWhereInput[]
+    OR?: PagoEvmProcesadoWhereInput[]
+    NOT?: PagoEvmProcesadoWhereInput | PagoEvmProcesadoWhereInput[]
+    id_pago?: UuidFilter<"PagoEvmProcesado"> | string
+    tenant_id?: UuidFilter<"PagoEvmProcesado"> | string
+    proyecto_id?: UuidFilter<"PagoEvmProcesado"> | string
+    tipo?: StringFilter<"PagoEvmProcesado"> | string
+    monto?: DecimalFilter<"PagoEvmProcesado"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"PagoEvmProcesado"> | Date | string
+  }
+
+  export type PagoEvmProcesadoOrderByWithRelationInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    tipo?: SortOrder
+    monto?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoEvmProcesadoWhereUniqueInput = Prisma.AtLeast<{
+    id_pago?: string
+    AND?: PagoEvmProcesadoWhereInput | PagoEvmProcesadoWhereInput[]
+    OR?: PagoEvmProcesadoWhereInput[]
+    NOT?: PagoEvmProcesadoWhereInput | PagoEvmProcesadoWhereInput[]
+    tenant_id?: UuidFilter<"PagoEvmProcesado"> | string
+    proyecto_id?: UuidFilter<"PagoEvmProcesado"> | string
+    tipo?: StringFilter<"PagoEvmProcesado"> | string
+    monto?: DecimalFilter<"PagoEvmProcesado"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFilter<"PagoEvmProcesado"> | Date | string
+  }, "id_pago">
+
+  export type PagoEvmProcesadoOrderByWithAggregationInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    tipo?: SortOrder
+    monto?: SortOrder
+    created_at?: SortOrder
+    _count?: PagoEvmProcesadoCountOrderByAggregateInput
+    _avg?: PagoEvmProcesadoAvgOrderByAggregateInput
+    _max?: PagoEvmProcesadoMaxOrderByAggregateInput
+    _min?: PagoEvmProcesadoMinOrderByAggregateInput
+    _sum?: PagoEvmProcesadoSumOrderByAggregateInput
+  }
+
+  export type PagoEvmProcesadoScalarWhereWithAggregatesInput = {
+    AND?: PagoEvmProcesadoScalarWhereWithAggregatesInput | PagoEvmProcesadoScalarWhereWithAggregatesInput[]
+    OR?: PagoEvmProcesadoScalarWhereWithAggregatesInput[]
+    NOT?: PagoEvmProcesadoScalarWhereWithAggregatesInput | PagoEvmProcesadoScalarWhereWithAggregatesInput[]
+    id_pago?: UuidWithAggregatesFilter<"PagoEvmProcesado"> | string
+    tenant_id?: UuidWithAggregatesFilter<"PagoEvmProcesado"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"PagoEvmProcesado"> | string
+    tipo?: StringWithAggregatesFilter<"PagoEvmProcesado"> | string
+    monto?: DecimalWithAggregatesFilter<"PagoEvmProcesado"> | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeWithAggregatesFilter<"PagoEvmProcesado"> | Date | string
   }
 
   export type AlertaProyectoWhereInput = {
@@ -10410,6 +13756,8 @@ export namespace Prisma {
     spi?: Decimal | DecimalJsLike | number | string | null
     eac?: Decimal | DecimalJsLike | number | string | null
     bac?: Decimal | DecimalJsLike | number | string
+    ac_comprometido?: Decimal | DecimalJsLike | number | string
+    ac_ejercido?: Decimal | DecimalJsLike | number | string
     estado?: string
     created_at?: Date | string
     updated_at?: Date | string
@@ -10432,6 +13780,8 @@ export namespace Prisma {
     spi?: Decimal | DecimalJsLike | number | string | null
     eac?: Decimal | DecimalJsLike | number | string | null
     bac?: Decimal | DecimalJsLike | number | string
+    ac_comprometido?: Decimal | DecimalJsLike | number | string
+    ac_ejercido?: Decimal | DecimalJsLike | number | string
     estado?: string
     created_at?: Date | string
     updated_at?: Date | string
@@ -10454,6 +13804,8 @@ export namespace Prisma {
     spi?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     eac?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10476,6 +13828,8 @@ export namespace Prisma {
     spi?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     eac?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10498,6 +13852,8 @@ export namespace Prisma {
     spi?: Decimal | DecimalJsLike | number | string | null
     eac?: Decimal | DecimalJsLike | number | string | null
     bac?: Decimal | DecimalJsLike | number | string
+    ac_comprometido?: Decimal | DecimalJsLike | number | string
+    ac_ejercido?: Decimal | DecimalJsLike | number | string
     estado?: string
     created_at?: Date | string
     updated_at?: Date | string
@@ -10520,6 +13876,8 @@ export namespace Prisma {
     spi?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     eac?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10542,9 +13900,221 @@ export namespace Prisma {
     spi?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     eac?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     bac?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ac_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     estado?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenCompraSeguimientoCreateInput = {
+    id?: string
+    oc_id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type OrdenCompraSeguimientoUncheckedCreateInput = {
+    id?: string
+    oc_id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type OrdenCompraSeguimientoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenCompraSeguimientoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenCompraSeguimientoCreateManyInput = {
+    id?: string
+    oc_id: string
+    tenant_id: string
+    proyecto_id: string
+    concepto_id: string
+    monto_comprometido?: Decimal | DecimalJsLike | number | string
+    monto_ejercido?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type OrdenCompraSeguimientoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenCompraSeguimientoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    concepto_id?: StringFieldUpdateOperationsInput | string
+    monto_comprometido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto_ejercido?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ManoObraProyectoCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    monto_acumulado?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ManoObraProyectoUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    monto_acumulado?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ManoObraProyectoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    monto_acumulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ManoObraProyectoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    monto_acumulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ManoObraProyectoCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    monto_acumulado?: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ManoObraProyectoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    monto_acumulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ManoObraProyectoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    monto_acumulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PagoEvmProcesadoCreateInput = {
+    id_pago: string
+    tenant_id: string
+    proyecto_id: string
+    tipo: string
+    monto: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type PagoEvmProcesadoUncheckedCreateInput = {
+    id_pago: string
+    tenant_id: string
+    proyecto_id: string
+    tipo: string
+    monto: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type PagoEvmProcesadoUpdateInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PagoEvmProcesadoUncheckedUpdateInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PagoEvmProcesadoCreateManyInput = {
+    id_pago: string
+    tenant_id: string
+    proyecto_id: string
+    tipo: string
+    monto: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+  }
+
+  export type PagoEvmProcesadoUpdateManyMutationInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PagoEvmProcesadoUncheckedUpdateManyInput = {
+    id_pago?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AlertaProyectoCreateInput = {
@@ -11609,6 +15179,8 @@ export namespace Prisma {
     spi?: SortOrder
     eac?: SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
     estado?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -11620,6 +15192,8 @@ export namespace Prisma {
     spi?: SortOrder
     eac?: SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
   }
 
   export type ProgramacionObraMaxOrderByAggregateInput = {
@@ -11638,6 +15212,8 @@ export namespace Prisma {
     spi?: SortOrder
     eac?: SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
     estado?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -11659,6 +15235,8 @@ export namespace Prisma {
     spi?: SortOrder
     eac?: SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
     estado?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -11670,6 +15248,8 @@ export namespace Prisma {
     spi?: SortOrder
     eac?: SortOrder
     bac?: SortOrder
+    ac_comprometido?: SortOrder
+    ac_ejercido?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -11788,6 +15368,127 @@ export namespace Prisma {
     _sum?: NestedDecimalNullableFilter<$PrismaModel>
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type OrdenCompraSeguimientoCountOrderByAggregateInput = {
+    id?: SortOrder
+    oc_id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type OrdenCompraSeguimientoAvgOrderByAggregateInput = {
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+  }
+
+  export type OrdenCompraSeguimientoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    oc_id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type OrdenCompraSeguimientoMinOrderByAggregateInput = {
+    id?: SortOrder
+    oc_id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    concepto_id?: SortOrder
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type OrdenCompraSeguimientoSumOrderByAggregateInput = {
+    monto_comprometido?: SortOrder
+    monto_ejercido?: SortOrder
+  }
+
+  export type ManoObraProyectoTenant_idProyecto_idCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+  }
+
+  export type ManoObraProyectoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    monto_acumulado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ManoObraProyectoAvgOrderByAggregateInput = {
+    monto_acumulado?: SortOrder
+  }
+
+  export type ManoObraProyectoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    monto_acumulado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ManoObraProyectoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    monto_acumulado?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ManoObraProyectoSumOrderByAggregateInput = {
+    monto_acumulado?: SortOrder
+  }
+
+  export type PagoEvmProcesadoCountOrderByAggregateInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    tipo?: SortOrder
+    monto?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoEvmProcesadoAvgOrderByAggregateInput = {
+    monto?: SortOrder
+  }
+
+  export type PagoEvmProcesadoMaxOrderByAggregateInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    tipo?: SortOrder
+    monto?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoEvmProcesadoMinOrderByAggregateInput = {
+    id_pago?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    tipo?: SortOrder
+    monto?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PagoEvmProcesadoSumOrderByAggregateInput = {
+    monto?: SortOrder
   }
 
   export type UuidNullableFilter<$PrismaModel = never> = {
@@ -13138,6 +16839,18 @@ export namespace Prisma {
      * @deprecated Use ProgramacionObraDefaultArgs instead
      */
     export type ProgramacionObraArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProgramacionObraDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use OrdenCompraSeguimientoDefaultArgs instead
+     */
+    export type OrdenCompraSeguimientoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrdenCompraSeguimientoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ManoObraProyectoDefaultArgs instead
+     */
+    export type ManoObraProyectoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ManoObraProyectoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use PagoEvmProcesadoDefaultArgs instead
+     */
+    export type PagoEvmProcesadoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PagoEvmProcesadoDefaultArgs<ExtArgs>
     /**
      * @deprecated Use AlertaProyectoDefaultArgs instead
      */

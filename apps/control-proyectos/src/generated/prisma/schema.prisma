@@ -37,6 +37,15 @@ model ProgramacionObra {
   eac Decimal? @db.Decimal(18, 2)
   bac Decimal  @default(0) @db.Decimal(18, 2)
 
+  // AC (costo real) compuesto — openspec: fix-evm-costos-reales.
+  // ac_comprometido: suma de OrdenCompraSeguimiento.monto_comprometido de las
+  // OC activas ligadas a este concepto_id (subscriber compras.oc_creada).
+  // ac_ejercido: suma de OrdenCompraSeguimiento.monto_ejercido, movido desde
+  // comprometido cuando se paga la OC (subscriber finanzas.pago_registrado,
+  // referencia_entidad = 'OrdenCompra'). ac = ac_comprometido + ac_ejercido.
+  ac_comprometido Decimal @default(0) @db.Decimal(18, 2)
+  ac_ejercido     Decimal @default(0) @db.Decimal(18, 2)
+
   // PENDIENTE | EN_CURSO | COMPLETADA | ATRASADA
   estado String @default("PENDIENTE") @db.VarChar(20)
 
@@ -46,6 +55,70 @@ model ProgramacionObra {
   @@unique([tenant_id, proyecto_id, concepto_id])
   @@index([tenant_id, proyecto_id], name: "idx_prog_proyecto")
   @@map("programacion_obra")
+}
+
+// Seguimiento de orden de compra → concepto (openspec: fix-evm-costos-reales).
+// Poblado por el subscriber de compras.oc_creada (único momento en que el
+// payload trae concepto_id) y consultado por los subscribers de
+// compras.oc_cancelada / finanzas.pago_registrado (referencia_entidad =
+// 'OrdenCompra'), que NO traen concepto_id en su payload — ver design.md
+// Decisión 1/2.
+model OrdenCompraSeguimiento {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  oc_id       String @unique @db.Uuid
+  tenant_id   String @db.Uuid
+  proyecto_id String @db.Uuid
+  concepto_id String @db.Uuid
+
+  monto_comprometido Decimal @default(0) @db.Decimal(18, 2)
+  monto_ejercido     Decimal @default(0) @db.Decimal(18, 2)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([tenant_id, proyecto_id, concepto_id], name: "idx_oc_seguimiento_concepto")
+  @@map("ordenes_compra_seguimiento")
+}
+
+// Acumulador de mano de obra pagada por proyecto (openspec:
+// fix-evm-costos-reales, design.md Decisión 6 / Non-Goal de distribución por
+// partida). Alimentado por el subscriber de finanzas.pago_registrado con
+// referencia_entidad = 'PreNomina'; leído por el job nocturno para sumar al
+// AC global de ProyeccionCierre. No existe forma de atribuir esto a un
+// concepto_id individual (ver Non-Goals de design.md), por eso vive a nivel
+// proyecto y no en ProgramacionObra.
+model ManoObraProyecto {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String  @db.Uuid
+  proyecto_id     String  @db.Uuid
+  monto_acumulado Decimal @default(0) @db.Decimal(18, 2)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenant_id, proyecto_id])
+  @@map("mano_obra_proyecto")
+}
+
+// Idempotencia de finanzas.pago_registrado para las ramas nuevas
+// (OrdenCompra / PreNomina) — a diferencia del subscriber de
+// almacen.salida_obra (dedupe por movimiento_almacen_id) o el de
+// compras.oc_creada (dedupe por oc_id en OrdenCompraSeguimiento), un pago
+// no tiene una entidad propia en este esquema donde apoyar el dedupe: se
+// registra explícitamente por id_pago para que un redelivery de RabbitMQ no
+// vuelva a mover fondos de comprometido→ejercido ni a inflar el acumulado
+// de mano de obra.
+model PagoEvmProcesado {
+  id_pago     String  @id @db.Uuid
+  tenant_id   String  @db.Uuid
+  proyecto_id String  @db.Uuid
+  tipo        String  @db.VarChar(20) // ORDEN_COMPRA | PRE_NOMINA
+  monto       Decimal @db.Decimal(18, 2)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([tenant_id, proyecto_id], name: "idx_pago_evm_proyecto")
+  @@map("pagos_evm_procesados")
 }
 
 // Alertas predictivas generadas automáticamente

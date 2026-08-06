@@ -61,6 +61,243 @@ const ESTIMACION_STATUS = {
 } as const;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUSCRIPTORES: compras.oc_creada / compras.oc_cancelada → AC comprometido
+// por partida (fix-evm-costos-reales, design.md Decisión 1/2). Mismo patrón
+// que handleSalidaObraEvent: createTenantContext con el contexto del propio
+// evento, fail-soft (try/catch + log, sin relanzar — un evento perdido no
+// debe tumbar el suscriptor).
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function handleOcCreadaEvent(event: any): Promise<void> {
+  const { oc_id, total, concepto_id } = event.payload as {
+    oc_id?: string;
+    codigo?: string;
+    total?: number;
+    concepto_id?: string | null;
+  };
+  const ctx = {
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
+    userId: event.context.user_id,
+  };
+
+  if (!oc_id || total === undefined || total === null) {
+    console.error(JSON.stringify({ action: 'control_proyectos.oc_creada.invalid_payload', oc_id }));
+    return;
+  }
+
+  // Sin concepto_id no hay a qué partida atribuir el comprometido, ni forma
+  // de resolverlo después en la cancelación/pago (compras.oc_creada trae
+  // concepto_id: loteData.conceptoId || null — puede venir null si la OC no
+  // se originó de una requisición ligada a una partida).
+  if (!concepto_id) {
+    console.log(JSON.stringify({ action: 'control_proyectos.oc_creada.sin_concepto_id', oc_id }));
+    return;
+  }
+
+  try {
+    await createTenantContext(ctx, async (prisma) => {
+      const existing = await prisma.ordenCompraSeguimiento.findUnique({ where: { oc_id } });
+      if (existing) {
+        console.log(JSON.stringify({ action: 'control_proyectos.oc_creada.idempotent', oc_id }));
+        return;
+      }
+
+      await prisma.ordenCompraSeguimiento.create({
+        data: {
+          tenant_id: ctx.tenantId,
+          proyecto_id: ctx.proyectoId,
+          oc_id,
+          concepto_id,
+          monto_comprometido: total,
+          monto_ejercido: 0,
+        },
+      });
+
+      const prog = await prisma.programacionObra.findFirst({
+        where: { tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, concepto_id },
+      });
+      if (!prog) {
+        console.log(JSON.stringify({ action: 'control_proyectos.oc_creada.sin_programacion', oc_id, concepto_id }));
+        return;
+      }
+
+      await prisma.programacionObra.update({
+        where: { id: prog.id },
+        data: { ac_comprometido: { increment: total } },
+      });
+
+      console.log(JSON.stringify({ action: 'control_proyectos.oc_creada.applied', oc_id, concepto_id, total }));
+    });
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'control_proyectos.oc_creada.error', oc_id, error: err.message }));
+  }
+}
+
+export async function handleOcCanceladaEvent(event: any): Promise<void> {
+  const { oc_id } = event.payload as { oc_id?: string; codigo?: string; total?: number };
+  const ctx = {
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
+    userId: event.context.user_id,
+  };
+
+  if (!oc_id) {
+    console.error(JSON.stringify({ action: 'control_proyectos.oc_cancelada.invalid_payload' }));
+    return;
+  }
+
+  try {
+    await createTenantContext(ctx, async (prisma) => {
+      // El payload de oc_cancelada NO trae concepto_id — se resuelve vía el
+      // registro guardado al procesar oc_creada (design.md Decisión 1/2).
+      const seguimiento = await prisma.ordenCompraSeguimiento.findUnique({ where: { oc_id } });
+      if (!seguimiento) {
+        console.log(JSON.stringify({ action: 'control_proyectos.oc_cancelada.sin_seguimiento', oc_id }));
+        return;
+      }
+
+      // Se revierte lo que sigue comprometido de ESTA OC (no el total
+      // original del evento) — así una OC parcialmente pagada y luego
+      // cancelada solo revierte el remanente, sin tocar lo ya movido a
+      // ac_ejercido por un pago previo.
+      const montoARevertir = Number(seguimiento.monto_comprometido);
+      if (montoARevertir <= 0) {
+        console.log(JSON.stringify({ action: 'control_proyectos.oc_cancelada.idempotent', oc_id }));
+        return;
+      }
+
+      await prisma.ordenCompraSeguimiento.update({
+        where: { oc_id },
+        data: { monto_comprometido: 0 },
+      });
+
+      const prog = await prisma.programacionObra.findFirst({
+        where: { tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, concepto_id: seguimiento.concepto_id },
+      });
+      if (prog) {
+        await prisma.programacionObra.update({
+          where: { id: prog.id },
+          data: { ac_comprometido: { decrement: montoARevertir } },
+        });
+      }
+
+      console.log(JSON.stringify({
+        action: 'control_proyectos.oc_cancelada.applied',
+        oc_id,
+        concepto_id: seguimiento.concepto_id,
+        monto: montoARevertir,
+      }));
+    });
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'control_proyectos.oc_cancelada.error', oc_id, error: err.message }));
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Ramas nuevas de finanzas.pago_registrado (fix-evm-costos-reales) — se
+// definen antes de handlePagoRegistradoEvent porque este las invoca. Ambas
+// usan PagoEvmProcesado (dedupe por id_pago) porque, a diferencia de
+// almacen.salida_obra (dedupe por movimiento_almacen_id) o compras.oc_creada
+// (dedupe por oc_id en OrdenCompraSeguimiento), un pago no tiene una
+// entidad propia en este esquema donde apoyar la idempotencia — sin esto,
+// un redelivery de RabbitMQ movería fondos o infralría el acumulado de
+// mano de obra dos veces.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function aplicarPagoOrdenCompraAlEvm(
+  ctx: { tenantId: string; proyectoId: string; userId: string },
+  params: { id_pago: string; oc_id: string; monto: number }
+): Promise<void> {
+  const { id_pago, oc_id, monto } = params;
+  try {
+    await createTenantContext(ctx, async (prisma) => {
+      const yaProcesado = await prisma.pagoEvmProcesado.findUnique({ where: { id_pago } });
+      if (yaProcesado) {
+        console.log(JSON.stringify({ action: 'control_proyectos.pago_registrado.orden_compra.idempotent', id_pago, oc_id }));
+        return;
+      }
+
+      const seguimiento = await prisma.ordenCompraSeguimiento.findUnique({ where: { oc_id } });
+      if (!seguimiento) {
+        console.log(JSON.stringify({ action: 'control_proyectos.pago_registrado.orden_compra.sin_seguimiento', id_pago, oc_id }));
+        // Se registra igual como procesado para no reintentar por siempre
+        // un oc_id que nunca vamos a poder resolver.
+        await prisma.pagoEvmProcesado.create({
+          data: { id_pago, tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, tipo: 'ORDEN_COMPRA', monto },
+        });
+        return;
+      }
+
+      // Acotado por lo que sigue comprometido de esta OC — protege el
+      // invariante ac_comprometido >= 0 sin depender de que monto_pagado
+      // del evento coincida exactamente con lo comprometido restante.
+      const montoAMover = Math.min(monto, Number(seguimiento.monto_comprometido));
+      if (montoAMover > 0) {
+        await prisma.ordenCompraSeguimiento.update({
+          where: { oc_id },
+          data: {
+            monto_comprometido: { decrement: montoAMover },
+            monto_ejercido: { increment: montoAMover },
+          },
+        });
+
+        const prog = await prisma.programacionObra.findFirst({
+          where: { tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, concepto_id: seguimiento.concepto_id },
+        });
+        if (prog) {
+          await prisma.programacionObra.update({
+            where: { id: prog.id },
+            data: {
+              ac_comprometido: { decrement: montoAMover },
+              ac_ejercido: { increment: montoAMover },
+            },
+          });
+        }
+      }
+
+      await prisma.pagoEvmProcesado.create({
+        data: { id_pago, tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, tipo: 'ORDEN_COMPRA', monto },
+      });
+
+      console.log(JSON.stringify({ action: 'control_proyectos.pago_registrado.orden_compra.applied', id_pago, oc_id, monto: montoAMover }));
+    });
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'control_proyectos.pago_registrado.orden_compra.error', id_pago, oc_id, error: err.message }));
+  }
+}
+
+async function aplicarPagoPreNominaAlEvm(
+  ctx: { tenantId: string; proyectoId: string; userId: string },
+  params: { id_pago: string; monto: number }
+): Promise<void> {
+  const { id_pago, monto } = params;
+  try {
+    await createTenantContext(ctx, async (prisma) => {
+      const yaProcesado = await prisma.pagoEvmProcesado.findUnique({ where: { id_pago } });
+      if (yaProcesado) {
+        console.log(JSON.stringify({ action: 'control_proyectos.pago_registrado.pre_nomina.idempotent', id_pago }));
+        return;
+      }
+
+      if (monto > 0) {
+        await prisma.manoObraProyecto.upsert({
+          where: { tenant_id_proyecto_id: { tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId } },
+          create: { tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, monto_acumulado: monto },
+          update: { monto_acumulado: { increment: monto } },
+        });
+      }
+
+      await prisma.pagoEvmProcesado.create({
+        data: { id_pago, tenant_id: ctx.tenantId, proyecto_id: ctx.proyectoId, tipo: 'PRE_NOMINA', monto },
+      });
+
+      console.log(JSON.stringify({ action: 'control_proyectos.pago_registrado.pre_nomina.applied', id_pago, monto }));
+    });
+  } catch (err: any) {
+    console.error(JSON.stringify({ action: 'control_proyectos.pago_registrado.pre_nomina.error', id_pago, error: err.message }));
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SUSCRIPTOR: finanzas.pago_registrado (migrado de control-obra)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export async function handlePagoRegistradoEvent(event: any): Promise<void> {
@@ -90,6 +327,38 @@ export async function handlePagoRegistradoEvent(event: any): Promise<void> {
       id_pago,
       referencia_id,
     }));
+    return;
+  }
+
+  const pagoCtx = {
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
+    userId: event.context.user_id,
+  };
+
+  // AC-ejercido real (fix-evm-costos-reales, design.md Decisión 3): el pago
+  // de una OrdenCompra es dinero que BOCAM paga a un proveedor — el costo
+  // real que pide PMBOK para AC — a diferencia del pago de Estimacion
+  // (dinero que el cliente paga a BOCAM, la rama que ya maneja el resto de
+  // esta función sin cambios).
+  if (referencia_modulo === 'compras' && referencia_entidad === 'OrdenCompra') {
+    await aplicarPagoOrdenCompraAlEvm(pagoCtx, {
+      id_pago,
+      oc_id: referencia_id,
+      monto: Number(monto_pagado || 0),
+    });
+    return;
+  }
+
+  // Mano de obra (fix-evm-costos-reales, design.md Decisión 6): no se
+  // distribuye por partida (PreNominaDetalle no tiene concepto_id) — se
+  // acumula a nivel proyecto para sumarse al AC global del próximo
+  // snapshot de ProyeccionCierre.
+  if (referencia_modulo === 'personal' && referencia_entidad === 'PreNomina') {
+    await aplicarPagoPreNominaAlEvm(pagoCtx, {
+      id_pago,
+      monto: Number(monto_pagado || 0),
+    });
     return;
   }
 
@@ -340,6 +609,35 @@ function isoWeek(date: Date): string {
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
+// ─── EVM: PV interpolado de curva_programada (fix-evm-costos-reales) ────────
+// Dado el JSONB [{ semana: "2026-W22", pct_acumulado }] y la semana de
+// corte actual (formato isoWeek), retorna el pct_acumulado del último punto
+// con semana <= corte. `null` si la curva está vacía (partida sin
+// programación cargada — no hay PV/SPI para esa partida, design.md
+// Decisión 4); `0` si `hoy` es anterior al primer punto de la curva.
+export function interpolarPctProgramado(
+  curvaProgramada: unknown,
+  semanaCorte: string
+): number | null {
+  const curva = Array.isArray(curvaProgramada)
+    ? (curvaProgramada as Array<{ semana: string; pct_acumulado: number }>)
+    : [];
+  if (curva.length === 0) return null;
+
+  const ordenada = [...curva].sort((a, b) => String(a.semana).localeCompare(String(b.semana)));
+  if (semanaCorte < ordenada[0].semana) return 0;
+
+  let pct = 0;
+  for (const punto of ordenada) {
+    if (punto.semana <= semanaCorte) {
+      pct = Number(punto.pct_acumulado);
+    } else {
+      break;
+    }
+  }
+  return pct;
+}
+
 // ─── Motor de alertas ─────────────────────────────────────────────────────────
 // Retrofit (tarea 2.10): reciben `prisma` como parámetro — antes usaban
 // basePrisma directo, lo que bajo RLS real (tarea 3) habría devuelto 0 filas
@@ -447,7 +745,6 @@ async function recalcularEVMPorAvanceValidado(
   conceptoId: string,
   pctAvance: number,
   evAcumulado?: number,
-  acAcumulado?: number,
 ): Promise<void> {
   try {
     const prog = await prisma.programacionObra.findFirst({
@@ -458,11 +755,25 @@ async function recalcularEVMPorAvanceValidado(
     const bac = Number(prog.bac);
     const pct = Math.min(100, pctAvance);
     const ev = evAcumulado ?? (pct / 100) * bac;
-    const ac = acAcumulado ?? ev;
+
+    // AC compuesto (fix-evm-costos-reales): ya NO es `acAcumulado ?? ev`
+    // (que hacía CPI ≈ 1 siempre) — se lee de lo que los subscribers de
+    // compras.oc_creada/oc_cancelada y finanzas.pago_registrado
+    // (referencia_entidad='OrdenCompra') fueron acumulando en esta misma
+    // partida. Sin OC ligadas todavía, ac=0 y cpi queda null (sin datos de
+    // costo real), no un valor cosmético.
+    const ac = Number(prog.ac_comprometido) + Number(prog.ac_ejercido);
     const cpi = ac > 0 ? ev / ac : null;
-    const pv = bac * (pct / 100);
-    const spi = pv > 0 ? ev / pv : null;
-    const eac = cpi && cpi > 0 ? bac / cpi : null;
+
+    // PV interpolado de curva_programada (fix-evm-costos-reales): ya no es
+    // bac * (pct/100), que reutilizaba el mismo % de avance físico usado
+    // para EV. null si la partida no tiene curva cargada → spi también null.
+    const semanaCorte = isoWeek(new Date());
+    const pctProgramado = interpolarPctProgramado(prog.curva_programada, semanaCorte);
+    const pv = pctProgramado !== null ? bac * (pctProgramado / 100) : null;
+    const spi = pv !== null && pv > 0 ? ev / pv : null;
+
+    const eac = cpi !== null && cpi > 0 ? bac / cpi : null;
 
     const nuevoEstado = pct >= 100 ? 'COMPLETADA' : pct > 0 ? 'EN_CURSO' : prog.estado;
     const fechaInicio = pct > 0 && !prog.fecha_inicio_real ? new Date() : prog.fecha_inicio_real;
@@ -472,9 +783,9 @@ async function recalcularEVMPorAvanceValidado(
       where: { id: prog.id },
       data: {
         pct_avance_real: pct,
-        cpi: cpi !== null ? cpi : undefined,
-        spi: spi !== null ? spi : undefined,
-        eac: eac !== null ? eac : undefined,
+        cpi,
+        spi,
+        eac,
         estado: nuevoEstado,
         fecha_inicio_real: fechaInicio ?? undefined,
         fecha_fin_real: fechaFin ?? undefined,
@@ -754,7 +1065,6 @@ controlObraRouter.patch('/avances/:id/validar', async (req: Request, res: Respon
           proyectoId,
           updated.concepto_id,
           Number(updated.porcentaje_avance),
-          Number(updated.importe_acumulado),
           Number(updated.importe_acumulado),
         );
       }
@@ -1835,13 +2145,94 @@ async function initEventSubscribers(): Promise<void> {
     // Salida de almacén hacia obra → costo real por concepto (migrado de control-obra)
     await eventBus.subscribe('almacen.salida_obra', handleSalidaObraEvent);
 
-    console.log('[CP] Suscriptores de eventos activos: partida_bloqueada, transferencia_partida_aprobada, centro_costos_creado, pago_registrado, salida_obra');
+    // OC creada/cancelada → AC comprometido por partida (fix-evm-costos-reales)
+    await eventBus.subscribe('compras.oc_creada', handleOcCreadaEvent);
+    await eventBus.subscribe('compras.oc_cancelada', handleOcCanceladaEvent);
+
+    console.log('[CP] Suscriptores de eventos activos: partida_bloqueada, transferencia_partida_aprobada, centro_costos_creado, pago_registrado, salida_obra, oc_creada, oc_cancelada');
   } catch (err) {
     console.warn('[CP] RabbitMQ no disponible, suscriptores desactivados:', (err as Error).message);
   }
 }
 
-// Job nocturno: recalcular alertas cada 24h.
+// ─── EVM global: snapshot diario de ProyeccionCierre (fix-evm-costos-reales) ─
+// design.md Decisión 5/6 — agrega BAC/PV/EV/AC de todas las
+// ProgramacionObra del proyecto + mano de obra pagada (ManoObraProyecto, NO
+// distribuida por partida, ver Non-Goals) y calcula las métricas derivadas.
+// ProyeccionCierre no tiene columnas nullable (cpi/spi/etc son NOT NULL en
+// el schema) — cuando todavía no hay AC/PV (proyecto recién cargado, sin OC
+// ni pagos), se usa 1 como CPI/SPI neutro (sin desviación conocida) en vez
+// de dejar la fila sin crear, para que /dashboard y /evm dejen de devolver
+// `global`/`resumen_evm` en null apenas hay programación cargada.
+// Un solo snapshot por (tenant, proyecto, día): si el job corre más de una
+// vez el mismo día (o se llama dos veces en un test), se actualiza el
+// mismo registro en vez de duplicar filas.
+export async function calcularYGuardarProyeccionCierre(
+  prisma: PrismaClient,
+  tenantId: string,
+  proyectoId: string
+): Promise<void> {
+  const partidas = await prisma.programacionObra.findMany({
+    where: { tenant_id: tenantId, proyecto_id: proyectoId },
+  });
+  if (partidas.length === 0) return;
+
+  const semanaCorte = isoWeek(new Date());
+
+  let bac = 0;
+  let ev = 0;
+  let pv = 0;
+  let acPartidas = 0;
+  let fechaFinPlanMax: Date | null = null;
+
+  for (const p of partidas) {
+    const bacPartida = Number(p.bac);
+    bac += bacPartida;
+    ev += (Number(p.pct_avance_real) / 100) * bacPartida;
+    acPartidas += Number(p.ac_comprometido) + Number(p.ac_ejercido);
+
+    // Partidas sin curva_programada no aportan PV (tratadas como 0 al
+    // agregar, consistente con "sin datos de programación no hay SPI" a
+    // nivel partida — a nivel proyecto simplemente no suman al total).
+    const pctProgramado = interpolarPctProgramado(p.curva_programada, semanaCorte);
+    pv += pctProgramado !== null ? (pctProgramado / 100) * bacPartida : 0;
+
+    if (p.fecha_fin_plan && (!fechaFinPlanMax || p.fecha_fin_plan > fechaFinPlanMax)) {
+      fechaFinPlanMax = p.fecha_fin_plan;
+    }
+  }
+
+  const manoObra = await prisma.manoObraProyecto.findUnique({
+    where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: proyectoId } },
+  });
+  const acManoObra = manoObra ? Number(manoObra.monto_acumulado) : 0;
+  const ac = acPartidas + acManoObra;
+
+  const cpi = ac > 0 ? ev / ac : 1;
+  const spi = pv > 0 ? ev / pv : 1;
+  const cv = ev - ac;
+  const sv = ev - pv;
+  const eac = cpi > 0 ? bac / cpi : bac;
+  const etc = eac - ac;
+  const vac = bac - eac;
+
+  const hoy = new Date(new Date().toISOString().split('T')[0]);
+  const data = { bac, pv, ev, ac, cpi, spi, cv, sv, eac, etc, vac, fecha_fin_plan: fechaFinPlanMax };
+
+  const existente = await prisma.proyeccionCierre.findFirst({
+    where: { tenant_id: tenantId, proyecto_id: proyectoId, fecha_calculo: hoy },
+  });
+
+  if (existente) {
+    await prisma.proyeccionCierre.update({ where: { id: existente.id }, data });
+  } else {
+    await prisma.proyeccionCierre.create({
+      data: { tenant_id: tenantId, proyecto_id: proyectoId, fecha_calculo: hoy, ...data },
+    });
+  }
+}
+
+// Job nocturno: recalcular alertas + snapshot de ProyeccionCierre cada 24h.
 // NOTA (gap conocido, ver design.md): esta consulta enumera combinaciones
 // (tenant_id, proyecto_id) de TODOS los tenants — es una lectura
 // intencionalmente cross-tenant para un job de mantenimiento interno, no
@@ -1860,9 +2251,10 @@ function initJobNocturno(): void {
       for (const { tenant_id, proyecto_id } of activos) {
         await createTenantContext({ tenantId: tenant_id, proyectoId: proyecto_id, userId: 'system' }, async (prisma) => {
           await calcularAlertas(prisma, tenant_id, proyecto_id);
+          await calcularYGuardarProyeccionCierre(prisma, tenant_id, proyecto_id);
         });
       }
-      console.log(`[CP] Job nocturno: alertas recalculadas para ${activos.length} proyectos`);
+      console.log(`[CP] Job nocturno: alertas y proyección de cierre recalculadas para ${activos.length} proyectos`);
     } catch (err) {
       console.error('[CP] Job nocturno error:', err);
     }
