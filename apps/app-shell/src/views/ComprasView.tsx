@@ -476,9 +476,20 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [reqFiltroConcepto, setReqFiltroConcepto] = useState('');
   const [dashboardData, setDashboardData] = useState<{
     kpis: { total_requisiciones: number; pendiente_aprobacion: number; lista_cotizar: number; cotizando: number; pendiente_gt: number; ocs_emitidas: number; ocs_pendientes_recibir: number };
-    alertas: Array<{ tipo: string; req_id: string; folio: string; dias_vencida: number }>;
+    alertas: Array<{
+      tipo: string;
+      dias_vencida: number;
+      req_id?: string;
+      folio?: string;
+      oc_id?: string;
+      oc_codigo?: string;
+      error_message?: string;
+      cuadro_id?: string;
+      estado?: string;
+    }>;
     actividad_reciente: Array<{ id: string; folio: string; concepto: string; estado: string; updated_at: string }>;
   } | null>(null);
+  const [reconciliandoOcId, setReconciliandoOcId] = useState<string | null>(null);
   const [gtDashboardData, setGtDashboardData] = useState<{
     pendientes_revision: number; en_evaluacion_tecnica: number; aprobados_este_mes: number;
     monto_comprometido: number;
@@ -1469,6 +1480,19 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     }
   };
 
+  const handleReintentarFinanzas = async (ocId: string, ocCodigo?: string) => {
+    try {
+      setReconciliandoOcId(ocId);
+      await api.post(`/api/v1/compras/ordenes-compra/${ocId}/reconciliar-finanzas`);
+      notify({ type: 'success', title: 'OC reconciliada', message: `${ocCodigo || ocId} quedó EMITIDA.` });
+      await fetchData();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'No se pudo reconciliar', message: err.response?.data?.message || err.message });
+    } finally {
+      setReconciliandoOcId(null);
+    }
+  };
+
   // ─── Badge helpers ─────────────────────────────────────────────────────────
   const claseBadge = (clase: string) => {
     const s = CLASE_STYLE[clase] || DEFAULT_CLASE;
@@ -1679,24 +1703,69 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         ))}
       </div>
 
-      {/* Alertas del dashboard — cotizaciones vencidas */}
+      {/* Alertas del dashboard — cotizaciones vencidas, OCs en error de Finanzas,
+          requisiciones/cuadros atorados. Ver openspec/changes/fix-alertas-compras-procesos-atorados */}
       {dashboardData && dashboardData.alertas.length > 0 && (
         <Card className="rounded-2xl border-amber-500/30 bg-amber-500/5">
           <CardContent className="p-4 space-y-2">
             <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-              ⚠ {dashboardData.alertas.length} cotización{dashboardData.alertas.length !== 1 ? 'es' : ''} vencida{dashboardData.alertas.length !== 1 ? 's' : ''}
+              ⚠ {dashboardData.alertas.length} alerta{dashboardData.alertas.length !== 1 ? 's' : ''}
             </p>
-            {dashboardData.alertas.map((a) => (
-              <div key={a.req_id} className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2">
-                <span className="text-xs font-semibold text-amber-800">{a.folio} · {a.dias_vencida} día{a.dias_vencida !== 1 ? 's' : ''} vencida</span>
-                <button
-                  onClick={() => setSolicitudPanelReqId(a.req_id)}
-                  className="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-900"
-                >
-                  Ver →
-                </button>
-              </div>
-            ))}
+            {dashboardData.alertas.map((a, i) => {
+              if (a.tipo === 'cotizacion_vencida') {
+                return (
+                  <div key={`cv-${a.req_id ?? i}`} className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2">
+                    <span className="text-xs font-semibold text-amber-800">{a.folio} · {a.dias_vencida} día{a.dias_vencida !== 1 ? 's' : ''} vencida (cotización)</span>
+                    <button
+                      onClick={() => a.req_id && setSolicitudPanelReqId(a.req_id)}
+                      className="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-900"
+                    >
+                      Ver →
+                    </button>
+                  </div>
+                );
+              }
+              if (a.tipo === 'oc_error_finanzas') {
+                return (
+                  <div key={`oef-${a.oc_id ?? i}`} className="flex items-center justify-between gap-3 rounded-xl bg-red-500/10 px-3 py-2">
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-red-800">
+                        {a.oc_codigo} · {a.dias_vencida} día{a.dias_vencida !== 1 ? 's' : ''} sin resolver
+                      </span>
+                      <p className="truncate text-[10px] text-red-700">{a.error_message}</p>
+                    </div>
+                    {isProcurement && (
+                      <button
+                        disabled={reconciliandoOcId === a.oc_id}
+                        onClick={() => a.oc_id && handleReintentarFinanzas(a.oc_id, a.oc_codigo)}
+                        className="shrink-0 text-[10px] font-black uppercase tracking-widest text-red-700 hover:text-red-900 disabled:opacity-50"
+                      >
+                        {reconciliandoOcId === a.oc_id ? 'Reintentando…' : 'Reintentar'}
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+              if (a.tipo === 'requisicion_sin_cuadro') {
+                return (
+                  <div key={`rsc-${a.req_id ?? i}`} className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2">
+                    <span className="text-xs font-semibold text-amber-800">
+                      {a.folio} · aprobada hace {a.dias_vencida} día{a.dias_vencida !== 1 ? 's' : ''}, sin Cuadro Comparativo
+                    </span>
+                  </div>
+                );
+              }
+              if (a.tipo === 'cuadro_atorado') {
+                return (
+                  <div key={`ca-${a.cuadro_id ?? i}`} className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2">
+                    <span className="text-xs font-semibold text-amber-800">
+                      {a.folio} · {a.estado} desde hace {a.dias_vencida} día{a.dias_vencida !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })}
           </CardContent>
         </Card>
       )}
