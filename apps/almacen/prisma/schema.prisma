@@ -64,3 +64,68 @@ model MovimientoAlmacen {
   @@index([tenant_id, proyecto_id, concepto_id])
   @@map("movimientos_almacen")
 }
+
+// -----------------------------------------------------------------------------
+// Activos fijos (equipo/herramienta/maquinaria/vehículos) — ver
+// openspec/changes/control-almacen-activos. A diferencia de ItemInventario
+// (stock consumible), un Activo se rastrea individualmente: no tiene
+// cantidad, tiene un estado y una ubicación/asignación puntual.
+// -----------------------------------------------------------------------------
+
+model Activo {
+  id_activo     String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  numero_activo String   @db.VarChar(20) // "ACT-001"
+  clave         String   @db.VarChar(50)
+  descripcion   String   @db.VarChar(255)
+  clasificacion String   @db.VarChar(20) // EQUIPO | HERRAMIENTA | MAQUINARIA | VEHICULO
+  estado        String   @default("DISPONIBLE") @db.VarChar(20) // DISPONIBLE | ASIGNADO | EN_TRASPASO | BAJA
+  proyecto_id   String   @db.Uuid
+  ubicacion     String?  @db.VarChar(100)
+
+  asignado_a_empleado_id     String? @db.Uuid
+  asignado_a_empleado_nombre String? @db.VarChar(200)
+
+  fecha_alta        DateTime  @default(now())
+  fecha_baja         DateTime?
+  motivo_baja        String?   @db.VarChar(255)
+  valor_adquisicion  Decimal?  @db.Decimal(18, 2)
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  traspasos     TraspasoActivo[]
+
+  @@unique([tenant_id, numero_activo])
+  @@index([tenant_id, proyecto_id])
+  @@map("activos")
+}
+
+model TraspasoActivo {
+  id_traspaso   String   @id @default(uuid()) @db.Uuid
+  tenant_id     String   @db.Uuid
+  activo_id     String   @db.Uuid
+  tipo          String   @db.VarChar(20) // PROYECTO | ASIGNACION | AMBOS
+  estado        String   @default("PENDIENTE") @db.VarChar(20) // PENDIENTE | CONFIRMADO | RECHAZADO
+
+  proyecto_origen_id   String  @db.Uuid
+  proyecto_destino_id  String? @db.Uuid
+
+  empleado_origen_id     String? @db.Uuid
+  empleado_origen_nombre String? @db.VarChar(200)
+  empleado_destino_id     String? @db.Uuid
+  empleado_destino_nombre String? @db.VarChar(200)
+
+  solicitado_por  String   @db.VarChar(200)
+  solicitado_en   DateTime @default(now())
+  confirmado_por  String?  @db.VarChar(200)
+  rechazado_por   String?  @db.VarChar(200)
+  resuelto_en     DateTime?
+  notas           String?  @db.VarChar(500)
+
+  activo          Activo   @relation(fields: [activo_id], references: [id_activo], onDelete: Cascade)
+
+  @@index([tenant_id, activo_id])
+  @@index([tenant_id, proyecto_destino_id, estado])
+  @@map("traspasos_activos")
+}

@@ -23,6 +23,16 @@ export type ItemInventario = $Result.DefaultSelection<Prisma.$ItemInventarioPayl
  * 
  */
 export type MovimientoAlmacen = $Result.DefaultSelection<Prisma.$MovimientoAlmacenPayload>
+/**
+ * Model Activo
+ * 
+ */
+export type Activo = $Result.DefaultSelection<Prisma.$ActivoPayload>
+/**
+ * Model TraspasoActivo
+ * 
+ */
+export type TraspasoActivo = $Result.DefaultSelection<Prisma.$TraspasoActivoPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -166,6 +176,26 @@ export class PrismaClient<
     * ```
     */
   get movimientoAlmacen(): Prisma.MovimientoAlmacenDelegate<ExtArgs>;
+
+  /**
+   * `prisma.activo`: Exposes CRUD operations for the **Activo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Activos
+    * const activos = await prisma.activo.findMany()
+    * ```
+    */
+  get activo(): Prisma.ActivoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.traspasoActivo`: Exposes CRUD operations for the **TraspasoActivo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TraspasoActivos
+    * const traspasoActivos = await prisma.traspasoActivo.findMany()
+    * ```
+    */
+  get traspasoActivo(): Prisma.TraspasoActivoDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -608,7 +638,9 @@ export namespace Prisma {
 
   export const ModelName: {
     ItemInventario: 'ItemInventario',
-    MovimientoAlmacen: 'MovimientoAlmacen'
+    MovimientoAlmacen: 'MovimientoAlmacen',
+    Activo: 'Activo',
+    TraspasoActivo: 'TraspasoActivo'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -624,7 +656,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "itemInventario" | "movimientoAlmacen"
+      modelProps: "itemInventario" | "movimientoAlmacen" | "activo" | "traspasoActivo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -765,6 +797,146 @@ export namespace Prisma {
           count: {
             args: Prisma.MovimientoAlmacenCountArgs<ExtArgs>
             result: $Utils.Optional<MovimientoAlmacenCountAggregateOutputType> | number
+          }
+        }
+      }
+      Activo: {
+        payload: Prisma.$ActivoPayload<ExtArgs>
+        fields: Prisma.ActivoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ActivoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ActivoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>
+          }
+          findFirst: {
+            args: Prisma.ActivoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ActivoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>
+          }
+          findMany: {
+            args: Prisma.ActivoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>[]
+          }
+          create: {
+            args: Prisma.ActivoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>
+          }
+          createMany: {
+            args: Prisma.ActivoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ActivoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>[]
+          }
+          delete: {
+            args: Prisma.ActivoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>
+          }
+          update: {
+            args: Prisma.ActivoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>
+          }
+          deleteMany: {
+            args: Prisma.ActivoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ActivoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ActivoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ActivoPayload>
+          }
+          aggregate: {
+            args: Prisma.ActivoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateActivo>
+          }
+          groupBy: {
+            args: Prisma.ActivoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ActivoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ActivoCountArgs<ExtArgs>
+            result: $Utils.Optional<ActivoCountAggregateOutputType> | number
+          }
+        }
+      }
+      TraspasoActivo: {
+        payload: Prisma.$TraspasoActivoPayload<ExtArgs>
+        fields: Prisma.TraspasoActivoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TraspasoActivoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TraspasoActivoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>
+          }
+          findFirst: {
+            args: Prisma.TraspasoActivoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TraspasoActivoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>
+          }
+          findMany: {
+            args: Prisma.TraspasoActivoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>[]
+          }
+          create: {
+            args: Prisma.TraspasoActivoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>
+          }
+          createMany: {
+            args: Prisma.TraspasoActivoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TraspasoActivoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>[]
+          }
+          delete: {
+            args: Prisma.TraspasoActivoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>
+          }
+          update: {
+            args: Prisma.TraspasoActivoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>
+          }
+          deleteMany: {
+            args: Prisma.TraspasoActivoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TraspasoActivoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.TraspasoActivoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraspasoActivoPayload>
+          }
+          aggregate: {
+            args: Prisma.TraspasoActivoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTraspasoActivo>
+          }
+          groupBy: {
+            args: Prisma.TraspasoActivoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TraspasoActivoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TraspasoActivoCountArgs<ExtArgs>
+            result: $Utils.Optional<TraspasoActivoCountAggregateOutputType> | number
           }
         }
       }
@@ -952,6 +1124,37 @@ export namespace Prisma {
    */
   export type ItemInventarioCountOutputTypeCountMovimientosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: MovimientoAlmacenWhereInput
+  }
+
+
+  /**
+   * Count Type ActivoCountOutputType
+   */
+
+  export type ActivoCountOutputType = {
+    traspasos: number
+  }
+
+  export type ActivoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    traspasos?: boolean | ActivoCountOutputTypeCountTraspasosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ActivoCountOutputType without action
+   */
+  export type ActivoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ActivoCountOutputType
+     */
+    select?: ActivoCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ActivoCountOutputType without action
+   */
+  export type ActivoCountOutputTypeCountTraspasosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TraspasoActivoWhereInput
   }
 
 
@@ -3141,6 +3344,2209 @@ export namespace Prisma {
 
 
   /**
+   * Model Activo
+   */
+
+  export type AggregateActivo = {
+    _count: ActivoCountAggregateOutputType | null
+    _avg: ActivoAvgAggregateOutputType | null
+    _sum: ActivoSumAggregateOutputType | null
+    _min: ActivoMinAggregateOutputType | null
+    _max: ActivoMaxAggregateOutputType | null
+  }
+
+  export type ActivoAvgAggregateOutputType = {
+    valor_adquisicion: Decimal | null
+  }
+
+  export type ActivoSumAggregateOutputType = {
+    valor_adquisicion: Decimal | null
+  }
+
+  export type ActivoMinAggregateOutputType = {
+    id_activo: string | null
+    tenant_id: string | null
+    numero_activo: string | null
+    clave: string | null
+    descripcion: string | null
+    clasificacion: string | null
+    estado: string | null
+    proyecto_id: string | null
+    ubicacion: string | null
+    asignado_a_empleado_id: string | null
+    asignado_a_empleado_nombre: string | null
+    fecha_alta: Date | null
+    fecha_baja: Date | null
+    motivo_baja: string | null
+    valor_adquisicion: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ActivoMaxAggregateOutputType = {
+    id_activo: string | null
+    tenant_id: string | null
+    numero_activo: string | null
+    clave: string | null
+    descripcion: string | null
+    clasificacion: string | null
+    estado: string | null
+    proyecto_id: string | null
+    ubicacion: string | null
+    asignado_a_empleado_id: string | null
+    asignado_a_empleado_nombre: string | null
+    fecha_alta: Date | null
+    fecha_baja: Date | null
+    motivo_baja: string | null
+    valor_adquisicion: Decimal | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ActivoCountAggregateOutputType = {
+    id_activo: number
+    tenant_id: number
+    numero_activo: number
+    clave: number
+    descripcion: number
+    clasificacion: number
+    estado: number
+    proyecto_id: number
+    ubicacion: number
+    asignado_a_empleado_id: number
+    asignado_a_empleado_nombre: number
+    fecha_alta: number
+    fecha_baja: number
+    motivo_baja: number
+    valor_adquisicion: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ActivoAvgAggregateInputType = {
+    valor_adquisicion?: true
+  }
+
+  export type ActivoSumAggregateInputType = {
+    valor_adquisicion?: true
+  }
+
+  export type ActivoMinAggregateInputType = {
+    id_activo?: true
+    tenant_id?: true
+    numero_activo?: true
+    clave?: true
+    descripcion?: true
+    clasificacion?: true
+    estado?: true
+    proyecto_id?: true
+    ubicacion?: true
+    asignado_a_empleado_id?: true
+    asignado_a_empleado_nombre?: true
+    fecha_alta?: true
+    fecha_baja?: true
+    motivo_baja?: true
+    valor_adquisicion?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ActivoMaxAggregateInputType = {
+    id_activo?: true
+    tenant_id?: true
+    numero_activo?: true
+    clave?: true
+    descripcion?: true
+    clasificacion?: true
+    estado?: true
+    proyecto_id?: true
+    ubicacion?: true
+    asignado_a_empleado_id?: true
+    asignado_a_empleado_nombre?: true
+    fecha_alta?: true
+    fecha_baja?: true
+    motivo_baja?: true
+    valor_adquisicion?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ActivoCountAggregateInputType = {
+    id_activo?: true
+    tenant_id?: true
+    numero_activo?: true
+    clave?: true
+    descripcion?: true
+    clasificacion?: true
+    estado?: true
+    proyecto_id?: true
+    ubicacion?: true
+    asignado_a_empleado_id?: true
+    asignado_a_empleado_nombre?: true
+    fecha_alta?: true
+    fecha_baja?: true
+    motivo_baja?: true
+    valor_adquisicion?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ActivoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Activo to aggregate.
+     */
+    where?: ActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Activos to fetch.
+     */
+    orderBy?: ActivoOrderByWithRelationInput | ActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Activos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Activos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Activos
+    **/
+    _count?: true | ActivoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ActivoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ActivoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ActivoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ActivoMaxAggregateInputType
+  }
+
+  export type GetActivoAggregateType<T extends ActivoAggregateArgs> = {
+        [P in keyof T & keyof AggregateActivo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateActivo[P]>
+      : GetScalarType<T[P], AggregateActivo[P]>
+  }
+
+
+
+
+  export type ActivoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ActivoWhereInput
+    orderBy?: ActivoOrderByWithAggregationInput | ActivoOrderByWithAggregationInput[]
+    by: ActivoScalarFieldEnum[] | ActivoScalarFieldEnum
+    having?: ActivoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ActivoCountAggregateInputType | true
+    _avg?: ActivoAvgAggregateInputType
+    _sum?: ActivoSumAggregateInputType
+    _min?: ActivoMinAggregateInputType
+    _max?: ActivoMaxAggregateInputType
+  }
+
+  export type ActivoGroupByOutputType = {
+    id_activo: string
+    tenant_id: string
+    numero_activo: string
+    clave: string
+    descripcion: string
+    clasificacion: string
+    estado: string
+    proyecto_id: string
+    ubicacion: string | null
+    asignado_a_empleado_id: string | null
+    asignado_a_empleado_nombre: string | null
+    fecha_alta: Date
+    fecha_baja: Date | null
+    motivo_baja: string | null
+    valor_adquisicion: Decimal | null
+    created_at: Date
+    updated_at: Date
+    _count: ActivoCountAggregateOutputType | null
+    _avg: ActivoAvgAggregateOutputType | null
+    _sum: ActivoSumAggregateOutputType | null
+    _min: ActivoMinAggregateOutputType | null
+    _max: ActivoMaxAggregateOutputType | null
+  }
+
+  type GetActivoGroupByPayload<T extends ActivoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ActivoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ActivoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ActivoGroupByOutputType[P]>
+            : GetScalarType<T[P], ActivoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ActivoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_activo?: boolean
+    tenant_id?: boolean
+    numero_activo?: boolean
+    clave?: boolean
+    descripcion?: boolean
+    clasificacion?: boolean
+    estado?: boolean
+    proyecto_id?: boolean
+    ubicacion?: boolean
+    asignado_a_empleado_id?: boolean
+    asignado_a_empleado_nombre?: boolean
+    fecha_alta?: boolean
+    fecha_baja?: boolean
+    motivo_baja?: boolean
+    valor_adquisicion?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    traspasos?: boolean | Activo$traspasosArgs<ExtArgs>
+    _count?: boolean | ActivoCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["activo"]>
+
+  export type ActivoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_activo?: boolean
+    tenant_id?: boolean
+    numero_activo?: boolean
+    clave?: boolean
+    descripcion?: boolean
+    clasificacion?: boolean
+    estado?: boolean
+    proyecto_id?: boolean
+    ubicacion?: boolean
+    asignado_a_empleado_id?: boolean
+    asignado_a_empleado_nombre?: boolean
+    fecha_alta?: boolean
+    fecha_baja?: boolean
+    motivo_baja?: boolean
+    valor_adquisicion?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["activo"]>
+
+  export type ActivoSelectScalar = {
+    id_activo?: boolean
+    tenant_id?: boolean
+    numero_activo?: boolean
+    clave?: boolean
+    descripcion?: boolean
+    clasificacion?: boolean
+    estado?: boolean
+    proyecto_id?: boolean
+    ubicacion?: boolean
+    asignado_a_empleado_id?: boolean
+    asignado_a_empleado_nombre?: boolean
+    fecha_alta?: boolean
+    fecha_baja?: boolean
+    motivo_baja?: boolean
+    valor_adquisicion?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type ActivoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    traspasos?: boolean | Activo$traspasosArgs<ExtArgs>
+    _count?: boolean | ActivoCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ActivoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $ActivoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Activo"
+    objects: {
+      traspasos: Prisma.$TraspasoActivoPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_activo: string
+      tenant_id: string
+      numero_activo: string
+      clave: string
+      descripcion: string
+      clasificacion: string
+      estado: string
+      proyecto_id: string
+      ubicacion: string | null
+      asignado_a_empleado_id: string | null
+      asignado_a_empleado_nombre: string | null
+      fecha_alta: Date
+      fecha_baja: Date | null
+      motivo_baja: string | null
+      valor_adquisicion: Prisma.Decimal | null
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["activo"]>
+    composites: {}
+  }
+
+  type ActivoGetPayload<S extends boolean | null | undefined | ActivoDefaultArgs> = $Result.GetResult<Prisma.$ActivoPayload, S>
+
+  type ActivoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ActivoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ActivoCountAggregateInputType | true
+    }
+
+  export interface ActivoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Activo'], meta: { name: 'Activo' } }
+    /**
+     * Find zero or one Activo that matches the filter.
+     * @param {ActivoFindUniqueArgs} args - Arguments to find a Activo
+     * @example
+     * // Get one Activo
+     * const activo = await prisma.activo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ActivoFindUniqueArgs>(args: SelectSubset<T, ActivoFindUniqueArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Activo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ActivoFindUniqueOrThrowArgs} args - Arguments to find a Activo
+     * @example
+     * // Get one Activo
+     * const activo = await prisma.activo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ActivoFindUniqueOrThrowArgs>(args: SelectSubset<T, ActivoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Activo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoFindFirstArgs} args - Arguments to find a Activo
+     * @example
+     * // Get one Activo
+     * const activo = await prisma.activo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ActivoFindFirstArgs>(args?: SelectSubset<T, ActivoFindFirstArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Activo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoFindFirstOrThrowArgs} args - Arguments to find a Activo
+     * @example
+     * // Get one Activo
+     * const activo = await prisma.activo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ActivoFindFirstOrThrowArgs>(args?: SelectSubset<T, ActivoFindFirstOrThrowArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Activos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Activos
+     * const activos = await prisma.activo.findMany()
+     * 
+     * // Get first 10 Activos
+     * const activos = await prisma.activo.findMany({ take: 10 })
+     * 
+     * // Only select the `id_activo`
+     * const activoWithId_activoOnly = await prisma.activo.findMany({ select: { id_activo: true } })
+     * 
+     */
+    findMany<T extends ActivoFindManyArgs>(args?: SelectSubset<T, ActivoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Activo.
+     * @param {ActivoCreateArgs} args - Arguments to create a Activo.
+     * @example
+     * // Create one Activo
+     * const Activo = await prisma.activo.create({
+     *   data: {
+     *     // ... data to create a Activo
+     *   }
+     * })
+     * 
+     */
+    create<T extends ActivoCreateArgs>(args: SelectSubset<T, ActivoCreateArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Activos.
+     * @param {ActivoCreateManyArgs} args - Arguments to create many Activos.
+     * @example
+     * // Create many Activos
+     * const activo = await prisma.activo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ActivoCreateManyArgs>(args?: SelectSubset<T, ActivoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Activos and returns the data saved in the database.
+     * @param {ActivoCreateManyAndReturnArgs} args - Arguments to create many Activos.
+     * @example
+     * // Create many Activos
+     * const activo = await prisma.activo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Activos and only return the `id_activo`
+     * const activoWithId_activoOnly = await prisma.activo.createManyAndReturn({ 
+     *   select: { id_activo: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ActivoCreateManyAndReturnArgs>(args?: SelectSubset<T, ActivoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Activo.
+     * @param {ActivoDeleteArgs} args - Arguments to delete one Activo.
+     * @example
+     * // Delete one Activo
+     * const Activo = await prisma.activo.delete({
+     *   where: {
+     *     // ... filter to delete one Activo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ActivoDeleteArgs>(args: SelectSubset<T, ActivoDeleteArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Activo.
+     * @param {ActivoUpdateArgs} args - Arguments to update one Activo.
+     * @example
+     * // Update one Activo
+     * const activo = await prisma.activo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ActivoUpdateArgs>(args: SelectSubset<T, ActivoUpdateArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Activos.
+     * @param {ActivoDeleteManyArgs} args - Arguments to filter Activos to delete.
+     * @example
+     * // Delete a few Activos
+     * const { count } = await prisma.activo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ActivoDeleteManyArgs>(args?: SelectSubset<T, ActivoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Activos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Activos
+     * const activo = await prisma.activo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ActivoUpdateManyArgs>(args: SelectSubset<T, ActivoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Activo.
+     * @param {ActivoUpsertArgs} args - Arguments to update or create a Activo.
+     * @example
+     * // Update or create a Activo
+     * const activo = await prisma.activo.upsert({
+     *   create: {
+     *     // ... data to create a Activo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Activo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ActivoUpsertArgs>(args: SelectSubset<T, ActivoUpsertArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Activos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoCountArgs} args - Arguments to filter Activos to count.
+     * @example
+     * // Count the number of Activos
+     * const count = await prisma.activo.count({
+     *   where: {
+     *     // ... the filter for the Activos we want to count
+     *   }
+     * })
+    **/
+    count<T extends ActivoCountArgs>(
+      args?: Subset<T, ActivoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ActivoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Activo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ActivoAggregateArgs>(args: Subset<T, ActivoAggregateArgs>): Prisma.PrismaPromise<GetActivoAggregateType<T>>
+
+    /**
+     * Group by Activo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ActivoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ActivoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ActivoGroupByArgs['orderBy'] }
+        : { orderBy?: ActivoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ActivoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetActivoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Activo model
+   */
+  readonly fields: ActivoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Activo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ActivoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    traspasos<T extends Activo$traspasosArgs<ExtArgs> = {}>(args?: Subset<T, Activo$traspasosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Activo model
+   */ 
+  interface ActivoFieldRefs {
+    readonly id_activo: FieldRef<"Activo", 'String'>
+    readonly tenant_id: FieldRef<"Activo", 'String'>
+    readonly numero_activo: FieldRef<"Activo", 'String'>
+    readonly clave: FieldRef<"Activo", 'String'>
+    readonly descripcion: FieldRef<"Activo", 'String'>
+    readonly clasificacion: FieldRef<"Activo", 'String'>
+    readonly estado: FieldRef<"Activo", 'String'>
+    readonly proyecto_id: FieldRef<"Activo", 'String'>
+    readonly ubicacion: FieldRef<"Activo", 'String'>
+    readonly asignado_a_empleado_id: FieldRef<"Activo", 'String'>
+    readonly asignado_a_empleado_nombre: FieldRef<"Activo", 'String'>
+    readonly fecha_alta: FieldRef<"Activo", 'DateTime'>
+    readonly fecha_baja: FieldRef<"Activo", 'DateTime'>
+    readonly motivo_baja: FieldRef<"Activo", 'String'>
+    readonly valor_adquisicion: FieldRef<"Activo", 'Decimal'>
+    readonly created_at: FieldRef<"Activo", 'DateTime'>
+    readonly updated_at: FieldRef<"Activo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Activo findUnique
+   */
+  export type ActivoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which Activo to fetch.
+     */
+    where: ActivoWhereUniqueInput
+  }
+
+  /**
+   * Activo findUniqueOrThrow
+   */
+  export type ActivoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which Activo to fetch.
+     */
+    where: ActivoWhereUniqueInput
+  }
+
+  /**
+   * Activo findFirst
+   */
+  export type ActivoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which Activo to fetch.
+     */
+    where?: ActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Activos to fetch.
+     */
+    orderBy?: ActivoOrderByWithRelationInput | ActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Activos.
+     */
+    cursor?: ActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Activos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Activos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Activos.
+     */
+    distinct?: ActivoScalarFieldEnum | ActivoScalarFieldEnum[]
+  }
+
+  /**
+   * Activo findFirstOrThrow
+   */
+  export type ActivoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which Activo to fetch.
+     */
+    where?: ActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Activos to fetch.
+     */
+    orderBy?: ActivoOrderByWithRelationInput | ActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Activos.
+     */
+    cursor?: ActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Activos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Activos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Activos.
+     */
+    distinct?: ActivoScalarFieldEnum | ActivoScalarFieldEnum[]
+  }
+
+  /**
+   * Activo findMany
+   */
+  export type ActivoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which Activos to fetch.
+     */
+    where?: ActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Activos to fetch.
+     */
+    orderBy?: ActivoOrderByWithRelationInput | ActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Activos.
+     */
+    cursor?: ActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Activos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Activos.
+     */
+    skip?: number
+    distinct?: ActivoScalarFieldEnum | ActivoScalarFieldEnum[]
+  }
+
+  /**
+   * Activo create
+   */
+  export type ActivoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Activo.
+     */
+    data: XOR<ActivoCreateInput, ActivoUncheckedCreateInput>
+  }
+
+  /**
+   * Activo createMany
+   */
+  export type ActivoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Activos.
+     */
+    data: ActivoCreateManyInput | ActivoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Activo createManyAndReturn
+   */
+  export type ActivoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Activos.
+     */
+    data: ActivoCreateManyInput | ActivoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Activo update
+   */
+  export type ActivoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Activo.
+     */
+    data: XOR<ActivoUpdateInput, ActivoUncheckedUpdateInput>
+    /**
+     * Choose, which Activo to update.
+     */
+    where: ActivoWhereUniqueInput
+  }
+
+  /**
+   * Activo updateMany
+   */
+  export type ActivoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Activos.
+     */
+    data: XOR<ActivoUpdateManyMutationInput, ActivoUncheckedUpdateManyInput>
+    /**
+     * Filter which Activos to update
+     */
+    where?: ActivoWhereInput
+  }
+
+  /**
+   * Activo upsert
+   */
+  export type ActivoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Activo to update in case it exists.
+     */
+    where: ActivoWhereUniqueInput
+    /**
+     * In case the Activo found by the `where` argument doesn't exist, create a new Activo with this data.
+     */
+    create: XOR<ActivoCreateInput, ActivoUncheckedCreateInput>
+    /**
+     * In case the Activo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ActivoUpdateInput, ActivoUncheckedUpdateInput>
+  }
+
+  /**
+   * Activo delete
+   */
+  export type ActivoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+    /**
+     * Filter which Activo to delete.
+     */
+    where: ActivoWhereUniqueInput
+  }
+
+  /**
+   * Activo deleteMany
+   */
+  export type ActivoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Activos to delete
+     */
+    where?: ActivoWhereInput
+  }
+
+  /**
+   * Activo.traspasos
+   */
+  export type Activo$traspasosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    where?: TraspasoActivoWhereInput
+    orderBy?: TraspasoActivoOrderByWithRelationInput | TraspasoActivoOrderByWithRelationInput[]
+    cursor?: TraspasoActivoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TraspasoActivoScalarFieldEnum | TraspasoActivoScalarFieldEnum[]
+  }
+
+  /**
+   * Activo without action
+   */
+  export type ActivoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Activo
+     */
+    select?: ActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ActivoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TraspasoActivo
+   */
+
+  export type AggregateTraspasoActivo = {
+    _count: TraspasoActivoCountAggregateOutputType | null
+    _min: TraspasoActivoMinAggregateOutputType | null
+    _max: TraspasoActivoMaxAggregateOutputType | null
+  }
+
+  export type TraspasoActivoMinAggregateOutputType = {
+    id_traspaso: string | null
+    tenant_id: string | null
+    activo_id: string | null
+    tipo: string | null
+    estado: string | null
+    proyecto_origen_id: string | null
+    proyecto_destino_id: string | null
+    empleado_origen_id: string | null
+    empleado_origen_nombre: string | null
+    empleado_destino_id: string | null
+    empleado_destino_nombre: string | null
+    solicitado_por: string | null
+    solicitado_en: Date | null
+    confirmado_por: string | null
+    rechazado_por: string | null
+    resuelto_en: Date | null
+    notas: string | null
+  }
+
+  export type TraspasoActivoMaxAggregateOutputType = {
+    id_traspaso: string | null
+    tenant_id: string | null
+    activo_id: string | null
+    tipo: string | null
+    estado: string | null
+    proyecto_origen_id: string | null
+    proyecto_destino_id: string | null
+    empleado_origen_id: string | null
+    empleado_origen_nombre: string | null
+    empleado_destino_id: string | null
+    empleado_destino_nombre: string | null
+    solicitado_por: string | null
+    solicitado_en: Date | null
+    confirmado_por: string | null
+    rechazado_por: string | null
+    resuelto_en: Date | null
+    notas: string | null
+  }
+
+  export type TraspasoActivoCountAggregateOutputType = {
+    id_traspaso: number
+    tenant_id: number
+    activo_id: number
+    tipo: number
+    estado: number
+    proyecto_origen_id: number
+    proyecto_destino_id: number
+    empleado_origen_id: number
+    empleado_origen_nombre: number
+    empleado_destino_id: number
+    empleado_destino_nombre: number
+    solicitado_por: number
+    solicitado_en: number
+    confirmado_por: number
+    rechazado_por: number
+    resuelto_en: number
+    notas: number
+    _all: number
+  }
+
+
+  export type TraspasoActivoMinAggregateInputType = {
+    id_traspaso?: true
+    tenant_id?: true
+    activo_id?: true
+    tipo?: true
+    estado?: true
+    proyecto_origen_id?: true
+    proyecto_destino_id?: true
+    empleado_origen_id?: true
+    empleado_origen_nombre?: true
+    empleado_destino_id?: true
+    empleado_destino_nombre?: true
+    solicitado_por?: true
+    solicitado_en?: true
+    confirmado_por?: true
+    rechazado_por?: true
+    resuelto_en?: true
+    notas?: true
+  }
+
+  export type TraspasoActivoMaxAggregateInputType = {
+    id_traspaso?: true
+    tenant_id?: true
+    activo_id?: true
+    tipo?: true
+    estado?: true
+    proyecto_origen_id?: true
+    proyecto_destino_id?: true
+    empleado_origen_id?: true
+    empleado_origen_nombre?: true
+    empleado_destino_id?: true
+    empleado_destino_nombre?: true
+    solicitado_por?: true
+    solicitado_en?: true
+    confirmado_por?: true
+    rechazado_por?: true
+    resuelto_en?: true
+    notas?: true
+  }
+
+  export type TraspasoActivoCountAggregateInputType = {
+    id_traspaso?: true
+    tenant_id?: true
+    activo_id?: true
+    tipo?: true
+    estado?: true
+    proyecto_origen_id?: true
+    proyecto_destino_id?: true
+    empleado_origen_id?: true
+    empleado_origen_nombre?: true
+    empleado_destino_id?: true
+    empleado_destino_nombre?: true
+    solicitado_por?: true
+    solicitado_en?: true
+    confirmado_por?: true
+    rechazado_por?: true
+    resuelto_en?: true
+    notas?: true
+    _all?: true
+  }
+
+  export type TraspasoActivoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TraspasoActivo to aggregate.
+     */
+    where?: TraspasoActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraspasoActivos to fetch.
+     */
+    orderBy?: TraspasoActivoOrderByWithRelationInput | TraspasoActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TraspasoActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraspasoActivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraspasoActivos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TraspasoActivos
+    **/
+    _count?: true | TraspasoActivoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TraspasoActivoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TraspasoActivoMaxAggregateInputType
+  }
+
+  export type GetTraspasoActivoAggregateType<T extends TraspasoActivoAggregateArgs> = {
+        [P in keyof T & keyof AggregateTraspasoActivo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTraspasoActivo[P]>
+      : GetScalarType<T[P], AggregateTraspasoActivo[P]>
+  }
+
+
+
+
+  export type TraspasoActivoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TraspasoActivoWhereInput
+    orderBy?: TraspasoActivoOrderByWithAggregationInput | TraspasoActivoOrderByWithAggregationInput[]
+    by: TraspasoActivoScalarFieldEnum[] | TraspasoActivoScalarFieldEnum
+    having?: TraspasoActivoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TraspasoActivoCountAggregateInputType | true
+    _min?: TraspasoActivoMinAggregateInputType
+    _max?: TraspasoActivoMaxAggregateInputType
+  }
+
+  export type TraspasoActivoGroupByOutputType = {
+    id_traspaso: string
+    tenant_id: string
+    activo_id: string
+    tipo: string
+    estado: string
+    proyecto_origen_id: string
+    proyecto_destino_id: string | null
+    empleado_origen_id: string | null
+    empleado_origen_nombre: string | null
+    empleado_destino_id: string | null
+    empleado_destino_nombre: string | null
+    solicitado_por: string
+    solicitado_en: Date
+    confirmado_por: string | null
+    rechazado_por: string | null
+    resuelto_en: Date | null
+    notas: string | null
+    _count: TraspasoActivoCountAggregateOutputType | null
+    _min: TraspasoActivoMinAggregateOutputType | null
+    _max: TraspasoActivoMaxAggregateOutputType | null
+  }
+
+  type GetTraspasoActivoGroupByPayload<T extends TraspasoActivoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TraspasoActivoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TraspasoActivoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TraspasoActivoGroupByOutputType[P]>
+            : GetScalarType<T[P], TraspasoActivoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TraspasoActivoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_traspaso?: boolean
+    tenant_id?: boolean
+    activo_id?: boolean
+    tipo?: boolean
+    estado?: boolean
+    proyecto_origen_id?: boolean
+    proyecto_destino_id?: boolean
+    empleado_origen_id?: boolean
+    empleado_origen_nombre?: boolean
+    empleado_destino_id?: boolean
+    empleado_destino_nombre?: boolean
+    solicitado_por?: boolean
+    solicitado_en?: boolean
+    confirmado_por?: boolean
+    rechazado_por?: boolean
+    resuelto_en?: boolean
+    notas?: boolean
+    activo?: boolean | ActivoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["traspasoActivo"]>
+
+  export type TraspasoActivoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id_traspaso?: boolean
+    tenant_id?: boolean
+    activo_id?: boolean
+    tipo?: boolean
+    estado?: boolean
+    proyecto_origen_id?: boolean
+    proyecto_destino_id?: boolean
+    empleado_origen_id?: boolean
+    empleado_origen_nombre?: boolean
+    empleado_destino_id?: boolean
+    empleado_destino_nombre?: boolean
+    solicitado_por?: boolean
+    solicitado_en?: boolean
+    confirmado_por?: boolean
+    rechazado_por?: boolean
+    resuelto_en?: boolean
+    notas?: boolean
+    activo?: boolean | ActivoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["traspasoActivo"]>
+
+  export type TraspasoActivoSelectScalar = {
+    id_traspaso?: boolean
+    tenant_id?: boolean
+    activo_id?: boolean
+    tipo?: boolean
+    estado?: boolean
+    proyecto_origen_id?: boolean
+    proyecto_destino_id?: boolean
+    empleado_origen_id?: boolean
+    empleado_origen_nombre?: boolean
+    empleado_destino_id?: boolean
+    empleado_destino_nombre?: boolean
+    solicitado_por?: boolean
+    solicitado_en?: boolean
+    confirmado_por?: boolean
+    rechazado_por?: boolean
+    resuelto_en?: boolean
+    notas?: boolean
+  }
+
+  export type TraspasoActivoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    activo?: boolean | ActivoDefaultArgs<ExtArgs>
+  }
+  export type TraspasoActivoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    activo?: boolean | ActivoDefaultArgs<ExtArgs>
+  }
+
+  export type $TraspasoActivoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TraspasoActivo"
+    objects: {
+      activo: Prisma.$ActivoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id_traspaso: string
+      tenant_id: string
+      activo_id: string
+      tipo: string
+      estado: string
+      proyecto_origen_id: string
+      proyecto_destino_id: string | null
+      empleado_origen_id: string | null
+      empleado_origen_nombre: string | null
+      empleado_destino_id: string | null
+      empleado_destino_nombre: string | null
+      solicitado_por: string
+      solicitado_en: Date
+      confirmado_por: string | null
+      rechazado_por: string | null
+      resuelto_en: Date | null
+      notas: string | null
+    }, ExtArgs["result"]["traspasoActivo"]>
+    composites: {}
+  }
+
+  type TraspasoActivoGetPayload<S extends boolean | null | undefined | TraspasoActivoDefaultArgs> = $Result.GetResult<Prisma.$TraspasoActivoPayload, S>
+
+  type TraspasoActivoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<TraspasoActivoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: TraspasoActivoCountAggregateInputType | true
+    }
+
+  export interface TraspasoActivoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TraspasoActivo'], meta: { name: 'TraspasoActivo' } }
+    /**
+     * Find zero or one TraspasoActivo that matches the filter.
+     * @param {TraspasoActivoFindUniqueArgs} args - Arguments to find a TraspasoActivo
+     * @example
+     * // Get one TraspasoActivo
+     * const traspasoActivo = await prisma.traspasoActivo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TraspasoActivoFindUniqueArgs>(args: SelectSubset<T, TraspasoActivoFindUniqueArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one TraspasoActivo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {TraspasoActivoFindUniqueOrThrowArgs} args - Arguments to find a TraspasoActivo
+     * @example
+     * // Get one TraspasoActivo
+     * const traspasoActivo = await prisma.traspasoActivo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TraspasoActivoFindUniqueOrThrowArgs>(args: SelectSubset<T, TraspasoActivoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first TraspasoActivo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoFindFirstArgs} args - Arguments to find a TraspasoActivo
+     * @example
+     * // Get one TraspasoActivo
+     * const traspasoActivo = await prisma.traspasoActivo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TraspasoActivoFindFirstArgs>(args?: SelectSubset<T, TraspasoActivoFindFirstArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first TraspasoActivo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoFindFirstOrThrowArgs} args - Arguments to find a TraspasoActivo
+     * @example
+     * // Get one TraspasoActivo
+     * const traspasoActivo = await prisma.traspasoActivo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TraspasoActivoFindFirstOrThrowArgs>(args?: SelectSubset<T, TraspasoActivoFindFirstOrThrowArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more TraspasoActivos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TraspasoActivos
+     * const traspasoActivos = await prisma.traspasoActivo.findMany()
+     * 
+     * // Get first 10 TraspasoActivos
+     * const traspasoActivos = await prisma.traspasoActivo.findMany({ take: 10 })
+     * 
+     * // Only select the `id_traspaso`
+     * const traspasoActivoWithId_traspasoOnly = await prisma.traspasoActivo.findMany({ select: { id_traspaso: true } })
+     * 
+     */
+    findMany<T extends TraspasoActivoFindManyArgs>(args?: SelectSubset<T, TraspasoActivoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a TraspasoActivo.
+     * @param {TraspasoActivoCreateArgs} args - Arguments to create a TraspasoActivo.
+     * @example
+     * // Create one TraspasoActivo
+     * const TraspasoActivo = await prisma.traspasoActivo.create({
+     *   data: {
+     *     // ... data to create a TraspasoActivo
+     *   }
+     * })
+     * 
+     */
+    create<T extends TraspasoActivoCreateArgs>(args: SelectSubset<T, TraspasoActivoCreateArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many TraspasoActivos.
+     * @param {TraspasoActivoCreateManyArgs} args - Arguments to create many TraspasoActivos.
+     * @example
+     * // Create many TraspasoActivos
+     * const traspasoActivo = await prisma.traspasoActivo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TraspasoActivoCreateManyArgs>(args?: SelectSubset<T, TraspasoActivoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TraspasoActivos and returns the data saved in the database.
+     * @param {TraspasoActivoCreateManyAndReturnArgs} args - Arguments to create many TraspasoActivos.
+     * @example
+     * // Create many TraspasoActivos
+     * const traspasoActivo = await prisma.traspasoActivo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TraspasoActivos and only return the `id_traspaso`
+     * const traspasoActivoWithId_traspasoOnly = await prisma.traspasoActivo.createManyAndReturn({ 
+     *   select: { id_traspaso: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TraspasoActivoCreateManyAndReturnArgs>(args?: SelectSubset<T, TraspasoActivoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a TraspasoActivo.
+     * @param {TraspasoActivoDeleteArgs} args - Arguments to delete one TraspasoActivo.
+     * @example
+     * // Delete one TraspasoActivo
+     * const TraspasoActivo = await prisma.traspasoActivo.delete({
+     *   where: {
+     *     // ... filter to delete one TraspasoActivo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TraspasoActivoDeleteArgs>(args: SelectSubset<T, TraspasoActivoDeleteArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one TraspasoActivo.
+     * @param {TraspasoActivoUpdateArgs} args - Arguments to update one TraspasoActivo.
+     * @example
+     * // Update one TraspasoActivo
+     * const traspasoActivo = await prisma.traspasoActivo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TraspasoActivoUpdateArgs>(args: SelectSubset<T, TraspasoActivoUpdateArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more TraspasoActivos.
+     * @param {TraspasoActivoDeleteManyArgs} args - Arguments to filter TraspasoActivos to delete.
+     * @example
+     * // Delete a few TraspasoActivos
+     * const { count } = await prisma.traspasoActivo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TraspasoActivoDeleteManyArgs>(args?: SelectSubset<T, TraspasoActivoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TraspasoActivos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TraspasoActivos
+     * const traspasoActivo = await prisma.traspasoActivo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TraspasoActivoUpdateManyArgs>(args: SelectSubset<T, TraspasoActivoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one TraspasoActivo.
+     * @param {TraspasoActivoUpsertArgs} args - Arguments to update or create a TraspasoActivo.
+     * @example
+     * // Update or create a TraspasoActivo
+     * const traspasoActivo = await prisma.traspasoActivo.upsert({
+     *   create: {
+     *     // ... data to create a TraspasoActivo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TraspasoActivo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TraspasoActivoUpsertArgs>(args: SelectSubset<T, TraspasoActivoUpsertArgs<ExtArgs>>): Prisma__TraspasoActivoClient<$Result.GetResult<Prisma.$TraspasoActivoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of TraspasoActivos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoCountArgs} args - Arguments to filter TraspasoActivos to count.
+     * @example
+     * // Count the number of TraspasoActivos
+     * const count = await prisma.traspasoActivo.count({
+     *   where: {
+     *     // ... the filter for the TraspasoActivos we want to count
+     *   }
+     * })
+    **/
+    count<T extends TraspasoActivoCountArgs>(
+      args?: Subset<T, TraspasoActivoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TraspasoActivoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TraspasoActivo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TraspasoActivoAggregateArgs>(args: Subset<T, TraspasoActivoAggregateArgs>): Prisma.PrismaPromise<GetTraspasoActivoAggregateType<T>>
+
+    /**
+     * Group by TraspasoActivo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraspasoActivoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TraspasoActivoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TraspasoActivoGroupByArgs['orderBy'] }
+        : { orderBy?: TraspasoActivoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TraspasoActivoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTraspasoActivoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TraspasoActivo model
+   */
+  readonly fields: TraspasoActivoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TraspasoActivo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TraspasoActivoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    activo<T extends ActivoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ActivoDefaultArgs<ExtArgs>>): Prisma__ActivoClient<$Result.GetResult<Prisma.$ActivoPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TraspasoActivo model
+   */ 
+  interface TraspasoActivoFieldRefs {
+    readonly id_traspaso: FieldRef<"TraspasoActivo", 'String'>
+    readonly tenant_id: FieldRef<"TraspasoActivo", 'String'>
+    readonly activo_id: FieldRef<"TraspasoActivo", 'String'>
+    readonly tipo: FieldRef<"TraspasoActivo", 'String'>
+    readonly estado: FieldRef<"TraspasoActivo", 'String'>
+    readonly proyecto_origen_id: FieldRef<"TraspasoActivo", 'String'>
+    readonly proyecto_destino_id: FieldRef<"TraspasoActivo", 'String'>
+    readonly empleado_origen_id: FieldRef<"TraspasoActivo", 'String'>
+    readonly empleado_origen_nombre: FieldRef<"TraspasoActivo", 'String'>
+    readonly empleado_destino_id: FieldRef<"TraspasoActivo", 'String'>
+    readonly empleado_destino_nombre: FieldRef<"TraspasoActivo", 'String'>
+    readonly solicitado_por: FieldRef<"TraspasoActivo", 'String'>
+    readonly solicitado_en: FieldRef<"TraspasoActivo", 'DateTime'>
+    readonly confirmado_por: FieldRef<"TraspasoActivo", 'String'>
+    readonly rechazado_por: FieldRef<"TraspasoActivo", 'String'>
+    readonly resuelto_en: FieldRef<"TraspasoActivo", 'DateTime'>
+    readonly notas: FieldRef<"TraspasoActivo", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TraspasoActivo findUnique
+   */
+  export type TraspasoActivoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which TraspasoActivo to fetch.
+     */
+    where: TraspasoActivoWhereUniqueInput
+  }
+
+  /**
+   * TraspasoActivo findUniqueOrThrow
+   */
+  export type TraspasoActivoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which TraspasoActivo to fetch.
+     */
+    where: TraspasoActivoWhereUniqueInput
+  }
+
+  /**
+   * TraspasoActivo findFirst
+   */
+  export type TraspasoActivoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which TraspasoActivo to fetch.
+     */
+    where?: TraspasoActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraspasoActivos to fetch.
+     */
+    orderBy?: TraspasoActivoOrderByWithRelationInput | TraspasoActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TraspasoActivos.
+     */
+    cursor?: TraspasoActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraspasoActivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraspasoActivos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TraspasoActivos.
+     */
+    distinct?: TraspasoActivoScalarFieldEnum | TraspasoActivoScalarFieldEnum[]
+  }
+
+  /**
+   * TraspasoActivo findFirstOrThrow
+   */
+  export type TraspasoActivoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which TraspasoActivo to fetch.
+     */
+    where?: TraspasoActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraspasoActivos to fetch.
+     */
+    orderBy?: TraspasoActivoOrderByWithRelationInput | TraspasoActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TraspasoActivos.
+     */
+    cursor?: TraspasoActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraspasoActivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraspasoActivos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TraspasoActivos.
+     */
+    distinct?: TraspasoActivoScalarFieldEnum | TraspasoActivoScalarFieldEnum[]
+  }
+
+  /**
+   * TraspasoActivo findMany
+   */
+  export type TraspasoActivoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * Filter, which TraspasoActivos to fetch.
+     */
+    where?: TraspasoActivoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraspasoActivos to fetch.
+     */
+    orderBy?: TraspasoActivoOrderByWithRelationInput | TraspasoActivoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TraspasoActivos.
+     */
+    cursor?: TraspasoActivoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraspasoActivos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraspasoActivos.
+     */
+    skip?: number
+    distinct?: TraspasoActivoScalarFieldEnum | TraspasoActivoScalarFieldEnum[]
+  }
+
+  /**
+   * TraspasoActivo create
+   */
+  export type TraspasoActivoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TraspasoActivo.
+     */
+    data: XOR<TraspasoActivoCreateInput, TraspasoActivoUncheckedCreateInput>
+  }
+
+  /**
+   * TraspasoActivo createMany
+   */
+  export type TraspasoActivoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TraspasoActivos.
+     */
+    data: TraspasoActivoCreateManyInput | TraspasoActivoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TraspasoActivo createManyAndReturn
+   */
+  export type TraspasoActivoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many TraspasoActivos.
+     */
+    data: TraspasoActivoCreateManyInput | TraspasoActivoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TraspasoActivo update
+   */
+  export type TraspasoActivoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TraspasoActivo.
+     */
+    data: XOR<TraspasoActivoUpdateInput, TraspasoActivoUncheckedUpdateInput>
+    /**
+     * Choose, which TraspasoActivo to update.
+     */
+    where: TraspasoActivoWhereUniqueInput
+  }
+
+  /**
+   * TraspasoActivo updateMany
+   */
+  export type TraspasoActivoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TraspasoActivos.
+     */
+    data: XOR<TraspasoActivoUpdateManyMutationInput, TraspasoActivoUncheckedUpdateManyInput>
+    /**
+     * Filter which TraspasoActivos to update
+     */
+    where?: TraspasoActivoWhereInput
+  }
+
+  /**
+   * TraspasoActivo upsert
+   */
+  export type TraspasoActivoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TraspasoActivo to update in case it exists.
+     */
+    where: TraspasoActivoWhereUniqueInput
+    /**
+     * In case the TraspasoActivo found by the `where` argument doesn't exist, create a new TraspasoActivo with this data.
+     */
+    create: XOR<TraspasoActivoCreateInput, TraspasoActivoUncheckedCreateInput>
+    /**
+     * In case the TraspasoActivo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TraspasoActivoUpdateInput, TraspasoActivoUncheckedUpdateInput>
+  }
+
+  /**
+   * TraspasoActivo delete
+   */
+  export type TraspasoActivoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+    /**
+     * Filter which TraspasoActivo to delete.
+     */
+    where: TraspasoActivoWhereUniqueInput
+  }
+
+  /**
+   * TraspasoActivo deleteMany
+   */
+  export type TraspasoActivoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TraspasoActivos to delete
+     */
+    where?: TraspasoActivoWhereInput
+  }
+
+  /**
+   * TraspasoActivo without action
+   */
+  export type TraspasoActivoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraspasoActivo
+     */
+    select?: TraspasoActivoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraspasoActivoInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -3193,6 +5599,52 @@ export namespace Prisma {
   };
 
   export type MovimientoAlmacenScalarFieldEnum = (typeof MovimientoAlmacenScalarFieldEnum)[keyof typeof MovimientoAlmacenScalarFieldEnum]
+
+
+  export const ActivoScalarFieldEnum: {
+    id_activo: 'id_activo',
+    tenant_id: 'tenant_id',
+    numero_activo: 'numero_activo',
+    clave: 'clave',
+    descripcion: 'descripcion',
+    clasificacion: 'clasificacion',
+    estado: 'estado',
+    proyecto_id: 'proyecto_id',
+    ubicacion: 'ubicacion',
+    asignado_a_empleado_id: 'asignado_a_empleado_id',
+    asignado_a_empleado_nombre: 'asignado_a_empleado_nombre',
+    fecha_alta: 'fecha_alta',
+    fecha_baja: 'fecha_baja',
+    motivo_baja: 'motivo_baja',
+    valor_adquisicion: 'valor_adquisicion',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ActivoScalarFieldEnum = (typeof ActivoScalarFieldEnum)[keyof typeof ActivoScalarFieldEnum]
+
+
+  export const TraspasoActivoScalarFieldEnum: {
+    id_traspaso: 'id_traspaso',
+    tenant_id: 'tenant_id',
+    activo_id: 'activo_id',
+    tipo: 'tipo',
+    estado: 'estado',
+    proyecto_origen_id: 'proyecto_origen_id',
+    proyecto_destino_id: 'proyecto_destino_id',
+    empleado_origen_id: 'empleado_origen_id',
+    empleado_origen_nombre: 'empleado_origen_nombre',
+    empleado_destino_id: 'empleado_destino_id',
+    empleado_destino_nombre: 'empleado_destino_nombre',
+    solicitado_por: 'solicitado_por',
+    solicitado_en: 'solicitado_en',
+    confirmado_por: 'confirmado_por',
+    rechazado_por: 'rechazado_por',
+    resuelto_en: 'resuelto_en',
+    notas: 'notas'
+  };
+
+  export type TraspasoActivoScalarFieldEnum = (typeof TraspasoActivoScalarFieldEnum)[keyof typeof TraspasoActivoScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -3492,6 +5944,239 @@ export namespace Prisma {
     oc_item_id?: UuidNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
   }
 
+  export type ActivoWhereInput = {
+    AND?: ActivoWhereInput | ActivoWhereInput[]
+    OR?: ActivoWhereInput[]
+    NOT?: ActivoWhereInput | ActivoWhereInput[]
+    id_activo?: UuidFilter<"Activo"> | string
+    tenant_id?: UuidFilter<"Activo"> | string
+    numero_activo?: StringFilter<"Activo"> | string
+    clave?: StringFilter<"Activo"> | string
+    descripcion?: StringFilter<"Activo"> | string
+    clasificacion?: StringFilter<"Activo"> | string
+    estado?: StringFilter<"Activo"> | string
+    proyecto_id?: UuidFilter<"Activo"> | string
+    ubicacion?: StringNullableFilter<"Activo"> | string | null
+    asignado_a_empleado_id?: UuidNullableFilter<"Activo"> | string | null
+    asignado_a_empleado_nombre?: StringNullableFilter<"Activo"> | string | null
+    fecha_alta?: DateTimeFilter<"Activo"> | Date | string
+    fecha_baja?: DateTimeNullableFilter<"Activo"> | Date | string | null
+    motivo_baja?: StringNullableFilter<"Activo"> | string | null
+    valor_adquisicion?: DecimalNullableFilter<"Activo"> | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFilter<"Activo"> | Date | string
+    updated_at?: DateTimeFilter<"Activo"> | Date | string
+    traspasos?: TraspasoActivoListRelationFilter
+  }
+
+  export type ActivoOrderByWithRelationInput = {
+    id_activo?: SortOrder
+    tenant_id?: SortOrder
+    numero_activo?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    clasificacion?: SortOrder
+    estado?: SortOrder
+    proyecto_id?: SortOrder
+    ubicacion?: SortOrderInput | SortOrder
+    asignado_a_empleado_id?: SortOrderInput | SortOrder
+    asignado_a_empleado_nombre?: SortOrderInput | SortOrder
+    fecha_alta?: SortOrder
+    fecha_baja?: SortOrderInput | SortOrder
+    motivo_baja?: SortOrderInput | SortOrder
+    valor_adquisicion?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    traspasos?: TraspasoActivoOrderByRelationAggregateInput
+  }
+
+  export type ActivoWhereUniqueInput = Prisma.AtLeast<{
+    id_activo?: string
+    tenant_id_numero_activo?: ActivoTenant_idNumero_activoCompoundUniqueInput
+    AND?: ActivoWhereInput | ActivoWhereInput[]
+    OR?: ActivoWhereInput[]
+    NOT?: ActivoWhereInput | ActivoWhereInput[]
+    tenant_id?: UuidFilter<"Activo"> | string
+    numero_activo?: StringFilter<"Activo"> | string
+    clave?: StringFilter<"Activo"> | string
+    descripcion?: StringFilter<"Activo"> | string
+    clasificacion?: StringFilter<"Activo"> | string
+    estado?: StringFilter<"Activo"> | string
+    proyecto_id?: UuidFilter<"Activo"> | string
+    ubicacion?: StringNullableFilter<"Activo"> | string | null
+    asignado_a_empleado_id?: UuidNullableFilter<"Activo"> | string | null
+    asignado_a_empleado_nombre?: StringNullableFilter<"Activo"> | string | null
+    fecha_alta?: DateTimeFilter<"Activo"> | Date | string
+    fecha_baja?: DateTimeNullableFilter<"Activo"> | Date | string | null
+    motivo_baja?: StringNullableFilter<"Activo"> | string | null
+    valor_adquisicion?: DecimalNullableFilter<"Activo"> | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFilter<"Activo"> | Date | string
+    updated_at?: DateTimeFilter<"Activo"> | Date | string
+    traspasos?: TraspasoActivoListRelationFilter
+  }, "id_activo" | "tenant_id_numero_activo">
+
+  export type ActivoOrderByWithAggregationInput = {
+    id_activo?: SortOrder
+    tenant_id?: SortOrder
+    numero_activo?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    clasificacion?: SortOrder
+    estado?: SortOrder
+    proyecto_id?: SortOrder
+    ubicacion?: SortOrderInput | SortOrder
+    asignado_a_empleado_id?: SortOrderInput | SortOrder
+    asignado_a_empleado_nombre?: SortOrderInput | SortOrder
+    fecha_alta?: SortOrder
+    fecha_baja?: SortOrderInput | SortOrder
+    motivo_baja?: SortOrderInput | SortOrder
+    valor_adquisicion?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: ActivoCountOrderByAggregateInput
+    _avg?: ActivoAvgOrderByAggregateInput
+    _max?: ActivoMaxOrderByAggregateInput
+    _min?: ActivoMinOrderByAggregateInput
+    _sum?: ActivoSumOrderByAggregateInput
+  }
+
+  export type ActivoScalarWhereWithAggregatesInput = {
+    AND?: ActivoScalarWhereWithAggregatesInput | ActivoScalarWhereWithAggregatesInput[]
+    OR?: ActivoScalarWhereWithAggregatesInput[]
+    NOT?: ActivoScalarWhereWithAggregatesInput | ActivoScalarWhereWithAggregatesInput[]
+    id_activo?: UuidWithAggregatesFilter<"Activo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"Activo"> | string
+    numero_activo?: StringWithAggregatesFilter<"Activo"> | string
+    clave?: StringWithAggregatesFilter<"Activo"> | string
+    descripcion?: StringWithAggregatesFilter<"Activo"> | string
+    clasificacion?: StringWithAggregatesFilter<"Activo"> | string
+    estado?: StringWithAggregatesFilter<"Activo"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"Activo"> | string
+    ubicacion?: StringNullableWithAggregatesFilter<"Activo"> | string | null
+    asignado_a_empleado_id?: UuidNullableWithAggregatesFilter<"Activo"> | string | null
+    asignado_a_empleado_nombre?: StringNullableWithAggregatesFilter<"Activo"> | string | null
+    fecha_alta?: DateTimeWithAggregatesFilter<"Activo"> | Date | string
+    fecha_baja?: DateTimeNullableWithAggregatesFilter<"Activo"> | Date | string | null
+    motivo_baja?: StringNullableWithAggregatesFilter<"Activo"> | string | null
+    valor_adquisicion?: DecimalNullableWithAggregatesFilter<"Activo"> | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeWithAggregatesFilter<"Activo"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"Activo"> | Date | string
+  }
+
+  export type TraspasoActivoWhereInput = {
+    AND?: TraspasoActivoWhereInput | TraspasoActivoWhereInput[]
+    OR?: TraspasoActivoWhereInput[]
+    NOT?: TraspasoActivoWhereInput | TraspasoActivoWhereInput[]
+    id_traspaso?: UuidFilter<"TraspasoActivo"> | string
+    tenant_id?: UuidFilter<"TraspasoActivo"> | string
+    activo_id?: UuidFilter<"TraspasoActivo"> | string
+    tipo?: StringFilter<"TraspasoActivo"> | string
+    estado?: StringFilter<"TraspasoActivo"> | string
+    proyecto_origen_id?: UuidFilter<"TraspasoActivo"> | string
+    proyecto_destino_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_origen_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_origen_nombre?: StringNullableFilter<"TraspasoActivo"> | string | null
+    empleado_destino_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_destino_nombre?: StringNullableFilter<"TraspasoActivo"> | string | null
+    solicitado_por?: StringFilter<"TraspasoActivo"> | string
+    solicitado_en?: DateTimeFilter<"TraspasoActivo"> | Date | string
+    confirmado_por?: StringNullableFilter<"TraspasoActivo"> | string | null
+    rechazado_por?: StringNullableFilter<"TraspasoActivo"> | string | null
+    resuelto_en?: DateTimeNullableFilter<"TraspasoActivo"> | Date | string | null
+    notas?: StringNullableFilter<"TraspasoActivo"> | string | null
+    activo?: XOR<ActivoRelationFilter, ActivoWhereInput>
+  }
+
+  export type TraspasoActivoOrderByWithRelationInput = {
+    id_traspaso?: SortOrder
+    tenant_id?: SortOrder
+    activo_id?: SortOrder
+    tipo?: SortOrder
+    estado?: SortOrder
+    proyecto_origen_id?: SortOrder
+    proyecto_destino_id?: SortOrderInput | SortOrder
+    empleado_origen_id?: SortOrderInput | SortOrder
+    empleado_origen_nombre?: SortOrderInput | SortOrder
+    empleado_destino_id?: SortOrderInput | SortOrder
+    empleado_destino_nombre?: SortOrderInput | SortOrder
+    solicitado_por?: SortOrder
+    solicitado_en?: SortOrder
+    confirmado_por?: SortOrderInput | SortOrder
+    rechazado_por?: SortOrderInput | SortOrder
+    resuelto_en?: SortOrderInput | SortOrder
+    notas?: SortOrderInput | SortOrder
+    activo?: ActivoOrderByWithRelationInput
+  }
+
+  export type TraspasoActivoWhereUniqueInput = Prisma.AtLeast<{
+    id_traspaso?: string
+    AND?: TraspasoActivoWhereInput | TraspasoActivoWhereInput[]
+    OR?: TraspasoActivoWhereInput[]
+    NOT?: TraspasoActivoWhereInput | TraspasoActivoWhereInput[]
+    tenant_id?: UuidFilter<"TraspasoActivo"> | string
+    activo_id?: UuidFilter<"TraspasoActivo"> | string
+    tipo?: StringFilter<"TraspasoActivo"> | string
+    estado?: StringFilter<"TraspasoActivo"> | string
+    proyecto_origen_id?: UuidFilter<"TraspasoActivo"> | string
+    proyecto_destino_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_origen_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_origen_nombre?: StringNullableFilter<"TraspasoActivo"> | string | null
+    empleado_destino_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_destino_nombre?: StringNullableFilter<"TraspasoActivo"> | string | null
+    solicitado_por?: StringFilter<"TraspasoActivo"> | string
+    solicitado_en?: DateTimeFilter<"TraspasoActivo"> | Date | string
+    confirmado_por?: StringNullableFilter<"TraspasoActivo"> | string | null
+    rechazado_por?: StringNullableFilter<"TraspasoActivo"> | string | null
+    resuelto_en?: DateTimeNullableFilter<"TraspasoActivo"> | Date | string | null
+    notas?: StringNullableFilter<"TraspasoActivo"> | string | null
+    activo?: XOR<ActivoRelationFilter, ActivoWhereInput>
+  }, "id_traspaso">
+
+  export type TraspasoActivoOrderByWithAggregationInput = {
+    id_traspaso?: SortOrder
+    tenant_id?: SortOrder
+    activo_id?: SortOrder
+    tipo?: SortOrder
+    estado?: SortOrder
+    proyecto_origen_id?: SortOrder
+    proyecto_destino_id?: SortOrderInput | SortOrder
+    empleado_origen_id?: SortOrderInput | SortOrder
+    empleado_origen_nombre?: SortOrderInput | SortOrder
+    empleado_destino_id?: SortOrderInput | SortOrder
+    empleado_destino_nombre?: SortOrderInput | SortOrder
+    solicitado_por?: SortOrder
+    solicitado_en?: SortOrder
+    confirmado_por?: SortOrderInput | SortOrder
+    rechazado_por?: SortOrderInput | SortOrder
+    resuelto_en?: SortOrderInput | SortOrder
+    notas?: SortOrderInput | SortOrder
+    _count?: TraspasoActivoCountOrderByAggregateInput
+    _max?: TraspasoActivoMaxOrderByAggregateInput
+    _min?: TraspasoActivoMinOrderByAggregateInput
+  }
+
+  export type TraspasoActivoScalarWhereWithAggregatesInput = {
+    AND?: TraspasoActivoScalarWhereWithAggregatesInput | TraspasoActivoScalarWhereWithAggregatesInput[]
+    OR?: TraspasoActivoScalarWhereWithAggregatesInput[]
+    NOT?: TraspasoActivoScalarWhereWithAggregatesInput | TraspasoActivoScalarWhereWithAggregatesInput[]
+    id_traspaso?: UuidWithAggregatesFilter<"TraspasoActivo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"TraspasoActivo"> | string
+    activo_id?: UuidWithAggregatesFilter<"TraspasoActivo"> | string
+    tipo?: StringWithAggregatesFilter<"TraspasoActivo"> | string
+    estado?: StringWithAggregatesFilter<"TraspasoActivo"> | string
+    proyecto_origen_id?: UuidWithAggregatesFilter<"TraspasoActivo"> | string
+    proyecto_destino_id?: UuidNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    empleado_origen_id?: UuidNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    empleado_origen_nombre?: StringNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    empleado_destino_id?: UuidNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    empleado_destino_nombre?: StringNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    solicitado_por?: StringWithAggregatesFilter<"TraspasoActivo"> | string
+    solicitado_en?: DateTimeWithAggregatesFilter<"TraspasoActivo"> | Date | string
+    confirmado_por?: StringNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    rechazado_por?: StringNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+    resuelto_en?: DateTimeNullableWithAggregatesFilter<"TraspasoActivo"> | Date | string | null
+    notas?: StringNullableWithAggregatesFilter<"TraspasoActivo"> | string | null
+  }
+
   export type ItemInventarioCreateInput = {
     id?: string
     tenant_id: string
@@ -3738,6 +6423,289 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ActivoCreateInput = {
+    id_activo?: string
+    tenant_id: string
+    numero_activo: string
+    clave: string
+    descripcion: string
+    clasificacion: string
+    estado?: string
+    proyecto_id: string
+    ubicacion?: string | null
+    asignado_a_empleado_id?: string | null
+    asignado_a_empleado_nombre?: string | null
+    fecha_alta?: Date | string
+    fecha_baja?: Date | string | null
+    motivo_baja?: string | null
+    valor_adquisicion?: Decimal | DecimalJsLike | number | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    traspasos?: TraspasoActivoCreateNestedManyWithoutActivoInput
+  }
+
+  export type ActivoUncheckedCreateInput = {
+    id_activo?: string
+    tenant_id: string
+    numero_activo: string
+    clave: string
+    descripcion: string
+    clasificacion: string
+    estado?: string
+    proyecto_id: string
+    ubicacion?: string | null
+    asignado_a_empleado_id?: string | null
+    asignado_a_empleado_nombre?: string | null
+    fecha_alta?: Date | string
+    fecha_baja?: Date | string | null
+    motivo_baja?: string | null
+    valor_adquisicion?: Decimal | DecimalJsLike | number | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    traspasos?: TraspasoActivoUncheckedCreateNestedManyWithoutActivoInput
+  }
+
+  export type ActivoUpdateInput = {
+    id_activo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    numero_activo?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    clasificacion?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_id?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_alta?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    motivo_baja?: NullableStringFieldUpdateOperationsInput | string | null
+    valor_adquisicion?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    traspasos?: TraspasoActivoUpdateManyWithoutActivoNestedInput
+  }
+
+  export type ActivoUncheckedUpdateInput = {
+    id_activo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    numero_activo?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    clasificacion?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_id?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_alta?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    motivo_baja?: NullableStringFieldUpdateOperationsInput | string | null
+    valor_adquisicion?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    traspasos?: TraspasoActivoUncheckedUpdateManyWithoutActivoNestedInput
+  }
+
+  export type ActivoCreateManyInput = {
+    id_activo?: string
+    tenant_id: string
+    numero_activo: string
+    clave: string
+    descripcion: string
+    clasificacion: string
+    estado?: string
+    proyecto_id: string
+    ubicacion?: string | null
+    asignado_a_empleado_id?: string | null
+    asignado_a_empleado_nombre?: string | null
+    fecha_alta?: Date | string
+    fecha_baja?: Date | string | null
+    motivo_baja?: string | null
+    valor_adquisicion?: Decimal | DecimalJsLike | number | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ActivoUpdateManyMutationInput = {
+    id_activo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    numero_activo?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    clasificacion?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_id?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_alta?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    motivo_baja?: NullableStringFieldUpdateOperationsInput | string | null
+    valor_adquisicion?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ActivoUncheckedUpdateManyInput = {
+    id_activo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    numero_activo?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    clasificacion?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_id?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_alta?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    motivo_baja?: NullableStringFieldUpdateOperationsInput | string | null
+    valor_adquisicion?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraspasoActivoCreateInput = {
+    id_traspaso?: string
+    tenant_id: string
+    tipo: string
+    estado?: string
+    proyecto_origen_id: string
+    proyecto_destino_id?: string | null
+    empleado_origen_id?: string | null
+    empleado_origen_nombre?: string | null
+    empleado_destino_id?: string | null
+    empleado_destino_nombre?: string | null
+    solicitado_por: string
+    solicitado_en?: Date | string
+    confirmado_por?: string | null
+    rechazado_por?: string | null
+    resuelto_en?: Date | string | null
+    notas?: string | null
+    activo: ActivoCreateNestedOneWithoutTraspasosInput
+  }
+
+  export type TraspasoActivoUncheckedCreateInput = {
+    id_traspaso?: string
+    tenant_id: string
+    activo_id: string
+    tipo: string
+    estado?: string
+    proyecto_origen_id: string
+    proyecto_destino_id?: string | null
+    empleado_origen_id?: string | null
+    empleado_origen_nombre?: string | null
+    empleado_destino_id?: string | null
+    empleado_destino_nombre?: string | null
+    solicitado_por: string
+    solicitado_en?: Date | string
+    confirmado_por?: string | null
+    rechazado_por?: string | null
+    resuelto_en?: Date | string | null
+    notas?: string | null
+  }
+
+  export type TraspasoActivoUpdateInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: ActivoUpdateOneRequiredWithoutTraspasosNestedInput
+  }
+
+  export type TraspasoActivoUncheckedUpdateInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    activo_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TraspasoActivoCreateManyInput = {
+    id_traspaso?: string
+    tenant_id: string
+    activo_id: string
+    tipo: string
+    estado?: string
+    proyecto_origen_id: string
+    proyecto_destino_id?: string | null
+    empleado_origen_id?: string | null
+    empleado_origen_nombre?: string | null
+    empleado_destino_id?: string | null
+    empleado_destino_nombre?: string | null
+    solicitado_por: string
+    solicitado_en?: Date | string
+    confirmado_por?: string | null
+    rechazado_por?: string | null
+    resuelto_en?: Date | string | null
+    notas?: string | null
+  }
+
+  export type TraspasoActivoUpdateManyMutationInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TraspasoActivoUncheckedUpdateManyInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    activo_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -4055,6 +7023,206 @@ export namespace Prisma {
     cantidad?: SortOrder
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type TraspasoActivoListRelationFilter = {
+    every?: TraspasoActivoWhereInput
+    some?: TraspasoActivoWhereInput
+    none?: TraspasoActivoWhereInput
+  }
+
+  export type TraspasoActivoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ActivoTenant_idNumero_activoCompoundUniqueInput = {
+    tenant_id: string
+    numero_activo: string
+  }
+
+  export type ActivoCountOrderByAggregateInput = {
+    id_activo?: SortOrder
+    tenant_id?: SortOrder
+    numero_activo?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    clasificacion?: SortOrder
+    estado?: SortOrder
+    proyecto_id?: SortOrder
+    ubicacion?: SortOrder
+    asignado_a_empleado_id?: SortOrder
+    asignado_a_empleado_nombre?: SortOrder
+    fecha_alta?: SortOrder
+    fecha_baja?: SortOrder
+    motivo_baja?: SortOrder
+    valor_adquisicion?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ActivoAvgOrderByAggregateInput = {
+    valor_adquisicion?: SortOrder
+  }
+
+  export type ActivoMaxOrderByAggregateInput = {
+    id_activo?: SortOrder
+    tenant_id?: SortOrder
+    numero_activo?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    clasificacion?: SortOrder
+    estado?: SortOrder
+    proyecto_id?: SortOrder
+    ubicacion?: SortOrder
+    asignado_a_empleado_id?: SortOrder
+    asignado_a_empleado_nombre?: SortOrder
+    fecha_alta?: SortOrder
+    fecha_baja?: SortOrder
+    motivo_baja?: SortOrder
+    valor_adquisicion?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ActivoMinOrderByAggregateInput = {
+    id_activo?: SortOrder
+    tenant_id?: SortOrder
+    numero_activo?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    clasificacion?: SortOrder
+    estado?: SortOrder
+    proyecto_id?: SortOrder
+    ubicacion?: SortOrder
+    asignado_a_empleado_id?: SortOrder
+    asignado_a_empleado_nombre?: SortOrder
+    fecha_alta?: SortOrder
+    fecha_baja?: SortOrder
+    motivo_baja?: SortOrder
+    valor_adquisicion?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ActivoSumOrderByAggregateInput = {
+    valor_adquisicion?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type ActivoRelationFilter = {
+    is?: ActivoWhereInput
+    isNot?: ActivoWhereInput
+  }
+
+  export type TraspasoActivoCountOrderByAggregateInput = {
+    id_traspaso?: SortOrder
+    tenant_id?: SortOrder
+    activo_id?: SortOrder
+    tipo?: SortOrder
+    estado?: SortOrder
+    proyecto_origen_id?: SortOrder
+    proyecto_destino_id?: SortOrder
+    empleado_origen_id?: SortOrder
+    empleado_origen_nombre?: SortOrder
+    empleado_destino_id?: SortOrder
+    empleado_destino_nombre?: SortOrder
+    solicitado_por?: SortOrder
+    solicitado_en?: SortOrder
+    confirmado_por?: SortOrder
+    rechazado_por?: SortOrder
+    resuelto_en?: SortOrder
+    notas?: SortOrder
+  }
+
+  export type TraspasoActivoMaxOrderByAggregateInput = {
+    id_traspaso?: SortOrder
+    tenant_id?: SortOrder
+    activo_id?: SortOrder
+    tipo?: SortOrder
+    estado?: SortOrder
+    proyecto_origen_id?: SortOrder
+    proyecto_destino_id?: SortOrder
+    empleado_origen_id?: SortOrder
+    empleado_origen_nombre?: SortOrder
+    empleado_destino_id?: SortOrder
+    empleado_destino_nombre?: SortOrder
+    solicitado_por?: SortOrder
+    solicitado_en?: SortOrder
+    confirmado_por?: SortOrder
+    rechazado_por?: SortOrder
+    resuelto_en?: SortOrder
+    notas?: SortOrder
+  }
+
+  export type TraspasoActivoMinOrderByAggregateInput = {
+    id_traspaso?: SortOrder
+    tenant_id?: SortOrder
+    activo_id?: SortOrder
+    tipo?: SortOrder
+    estado?: SortOrder
+    proyecto_origen_id?: SortOrder
+    proyecto_destino_id?: SortOrder
+    empleado_origen_id?: SortOrder
+    empleado_origen_nombre?: SortOrder
+    empleado_destino_id?: SortOrder
+    empleado_destino_nombre?: SortOrder
+    solicitado_por?: SortOrder
+    solicitado_en?: SortOrder
+    confirmado_por?: SortOrder
+    rechazado_por?: SortOrder
+    resuelto_en?: SortOrder
+    notas?: SortOrder
+  }
+
   export type MovimientoAlmacenCreateNestedManyWithoutItemInput = {
     create?: XOR<MovimientoAlmacenCreateWithoutItemInput, MovimientoAlmacenUncheckedCreateWithoutItemInput> | MovimientoAlmacenCreateWithoutItemInput[] | MovimientoAlmacenUncheckedCreateWithoutItemInput[]
     connectOrCreate?: MovimientoAlmacenCreateOrConnectWithoutItemInput | MovimientoAlmacenCreateOrConnectWithoutItemInput[]
@@ -4129,6 +7297,74 @@ export namespace Prisma {
     upsert?: ItemInventarioUpsertWithoutMovimientosInput
     connect?: ItemInventarioWhereUniqueInput
     update?: XOR<XOR<ItemInventarioUpdateToOneWithWhereWithoutMovimientosInput, ItemInventarioUpdateWithoutMovimientosInput>, ItemInventarioUncheckedUpdateWithoutMovimientosInput>
+  }
+
+  export type TraspasoActivoCreateNestedManyWithoutActivoInput = {
+    create?: XOR<TraspasoActivoCreateWithoutActivoInput, TraspasoActivoUncheckedCreateWithoutActivoInput> | TraspasoActivoCreateWithoutActivoInput[] | TraspasoActivoUncheckedCreateWithoutActivoInput[]
+    connectOrCreate?: TraspasoActivoCreateOrConnectWithoutActivoInput | TraspasoActivoCreateOrConnectWithoutActivoInput[]
+    createMany?: TraspasoActivoCreateManyActivoInputEnvelope
+    connect?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+  }
+
+  export type TraspasoActivoUncheckedCreateNestedManyWithoutActivoInput = {
+    create?: XOR<TraspasoActivoCreateWithoutActivoInput, TraspasoActivoUncheckedCreateWithoutActivoInput> | TraspasoActivoCreateWithoutActivoInput[] | TraspasoActivoUncheckedCreateWithoutActivoInput[]
+    connectOrCreate?: TraspasoActivoCreateOrConnectWithoutActivoInput | TraspasoActivoCreateOrConnectWithoutActivoInput[]
+    createMany?: TraspasoActivoCreateManyActivoInputEnvelope
+    connect?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type TraspasoActivoUpdateManyWithoutActivoNestedInput = {
+    create?: XOR<TraspasoActivoCreateWithoutActivoInput, TraspasoActivoUncheckedCreateWithoutActivoInput> | TraspasoActivoCreateWithoutActivoInput[] | TraspasoActivoUncheckedCreateWithoutActivoInput[]
+    connectOrCreate?: TraspasoActivoCreateOrConnectWithoutActivoInput | TraspasoActivoCreateOrConnectWithoutActivoInput[]
+    upsert?: TraspasoActivoUpsertWithWhereUniqueWithoutActivoInput | TraspasoActivoUpsertWithWhereUniqueWithoutActivoInput[]
+    createMany?: TraspasoActivoCreateManyActivoInputEnvelope
+    set?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    disconnect?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    delete?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    connect?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    update?: TraspasoActivoUpdateWithWhereUniqueWithoutActivoInput | TraspasoActivoUpdateWithWhereUniqueWithoutActivoInput[]
+    updateMany?: TraspasoActivoUpdateManyWithWhereWithoutActivoInput | TraspasoActivoUpdateManyWithWhereWithoutActivoInput[]
+    deleteMany?: TraspasoActivoScalarWhereInput | TraspasoActivoScalarWhereInput[]
+  }
+
+  export type TraspasoActivoUncheckedUpdateManyWithoutActivoNestedInput = {
+    create?: XOR<TraspasoActivoCreateWithoutActivoInput, TraspasoActivoUncheckedCreateWithoutActivoInput> | TraspasoActivoCreateWithoutActivoInput[] | TraspasoActivoUncheckedCreateWithoutActivoInput[]
+    connectOrCreate?: TraspasoActivoCreateOrConnectWithoutActivoInput | TraspasoActivoCreateOrConnectWithoutActivoInput[]
+    upsert?: TraspasoActivoUpsertWithWhereUniqueWithoutActivoInput | TraspasoActivoUpsertWithWhereUniqueWithoutActivoInput[]
+    createMany?: TraspasoActivoCreateManyActivoInputEnvelope
+    set?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    disconnect?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    delete?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    connect?: TraspasoActivoWhereUniqueInput | TraspasoActivoWhereUniqueInput[]
+    update?: TraspasoActivoUpdateWithWhereUniqueWithoutActivoInput | TraspasoActivoUpdateWithWhereUniqueWithoutActivoInput[]
+    updateMany?: TraspasoActivoUpdateManyWithWhereWithoutActivoInput | TraspasoActivoUpdateManyWithWhereWithoutActivoInput[]
+    deleteMany?: TraspasoActivoScalarWhereInput | TraspasoActivoScalarWhereInput[]
+  }
+
+  export type ActivoCreateNestedOneWithoutTraspasosInput = {
+    create?: XOR<ActivoCreateWithoutTraspasosInput, ActivoUncheckedCreateWithoutTraspasosInput>
+    connectOrCreate?: ActivoCreateOrConnectWithoutTraspasosInput
+    connect?: ActivoWhereUniqueInput
+  }
+
+  export type ActivoUpdateOneRequiredWithoutTraspasosNestedInput = {
+    create?: XOR<ActivoCreateWithoutTraspasosInput, ActivoUncheckedCreateWithoutTraspasosInput>
+    connectOrCreate?: ActivoCreateOrConnectWithoutTraspasosInput
+    upsert?: ActivoUpsertWithoutTraspasosInput
+    connect?: ActivoWhereUniqueInput
+    update?: XOR<XOR<ActivoUpdateToOneWithWhereWithoutTraspasosInput, ActivoUpdateWithoutTraspasosInput>, ActivoUncheckedUpdateWithoutTraspasosInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -4317,6 +7553,58 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
   export type MovimientoAlmacenCreateWithoutItemInput = {
     id?: string
     tenant_id: string
@@ -4481,6 +7769,189 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TraspasoActivoCreateWithoutActivoInput = {
+    id_traspaso?: string
+    tenant_id: string
+    tipo: string
+    estado?: string
+    proyecto_origen_id: string
+    proyecto_destino_id?: string | null
+    empleado_origen_id?: string | null
+    empleado_origen_nombre?: string | null
+    empleado_destino_id?: string | null
+    empleado_destino_nombre?: string | null
+    solicitado_por: string
+    solicitado_en?: Date | string
+    confirmado_por?: string | null
+    rechazado_por?: string | null
+    resuelto_en?: Date | string | null
+    notas?: string | null
+  }
+
+  export type TraspasoActivoUncheckedCreateWithoutActivoInput = {
+    id_traspaso?: string
+    tenant_id: string
+    tipo: string
+    estado?: string
+    proyecto_origen_id: string
+    proyecto_destino_id?: string | null
+    empleado_origen_id?: string | null
+    empleado_origen_nombre?: string | null
+    empleado_destino_id?: string | null
+    empleado_destino_nombre?: string | null
+    solicitado_por: string
+    solicitado_en?: Date | string
+    confirmado_por?: string | null
+    rechazado_por?: string | null
+    resuelto_en?: Date | string | null
+    notas?: string | null
+  }
+
+  export type TraspasoActivoCreateOrConnectWithoutActivoInput = {
+    where: TraspasoActivoWhereUniqueInput
+    create: XOR<TraspasoActivoCreateWithoutActivoInput, TraspasoActivoUncheckedCreateWithoutActivoInput>
+  }
+
+  export type TraspasoActivoCreateManyActivoInputEnvelope = {
+    data: TraspasoActivoCreateManyActivoInput | TraspasoActivoCreateManyActivoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TraspasoActivoUpsertWithWhereUniqueWithoutActivoInput = {
+    where: TraspasoActivoWhereUniqueInput
+    update: XOR<TraspasoActivoUpdateWithoutActivoInput, TraspasoActivoUncheckedUpdateWithoutActivoInput>
+    create: XOR<TraspasoActivoCreateWithoutActivoInput, TraspasoActivoUncheckedCreateWithoutActivoInput>
+  }
+
+  export type TraspasoActivoUpdateWithWhereUniqueWithoutActivoInput = {
+    where: TraspasoActivoWhereUniqueInput
+    data: XOR<TraspasoActivoUpdateWithoutActivoInput, TraspasoActivoUncheckedUpdateWithoutActivoInput>
+  }
+
+  export type TraspasoActivoUpdateManyWithWhereWithoutActivoInput = {
+    where: TraspasoActivoScalarWhereInput
+    data: XOR<TraspasoActivoUpdateManyMutationInput, TraspasoActivoUncheckedUpdateManyWithoutActivoInput>
+  }
+
+  export type TraspasoActivoScalarWhereInput = {
+    AND?: TraspasoActivoScalarWhereInput | TraspasoActivoScalarWhereInput[]
+    OR?: TraspasoActivoScalarWhereInput[]
+    NOT?: TraspasoActivoScalarWhereInput | TraspasoActivoScalarWhereInput[]
+    id_traspaso?: UuidFilter<"TraspasoActivo"> | string
+    tenant_id?: UuidFilter<"TraspasoActivo"> | string
+    activo_id?: UuidFilter<"TraspasoActivo"> | string
+    tipo?: StringFilter<"TraspasoActivo"> | string
+    estado?: StringFilter<"TraspasoActivo"> | string
+    proyecto_origen_id?: UuidFilter<"TraspasoActivo"> | string
+    proyecto_destino_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_origen_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_origen_nombre?: StringNullableFilter<"TraspasoActivo"> | string | null
+    empleado_destino_id?: UuidNullableFilter<"TraspasoActivo"> | string | null
+    empleado_destino_nombre?: StringNullableFilter<"TraspasoActivo"> | string | null
+    solicitado_por?: StringFilter<"TraspasoActivo"> | string
+    solicitado_en?: DateTimeFilter<"TraspasoActivo"> | Date | string
+    confirmado_por?: StringNullableFilter<"TraspasoActivo"> | string | null
+    rechazado_por?: StringNullableFilter<"TraspasoActivo"> | string | null
+    resuelto_en?: DateTimeNullableFilter<"TraspasoActivo"> | Date | string | null
+    notas?: StringNullableFilter<"TraspasoActivo"> | string | null
+  }
+
+  export type ActivoCreateWithoutTraspasosInput = {
+    id_activo?: string
+    tenant_id: string
+    numero_activo: string
+    clave: string
+    descripcion: string
+    clasificacion: string
+    estado?: string
+    proyecto_id: string
+    ubicacion?: string | null
+    asignado_a_empleado_id?: string | null
+    asignado_a_empleado_nombre?: string | null
+    fecha_alta?: Date | string
+    fecha_baja?: Date | string | null
+    motivo_baja?: string | null
+    valor_adquisicion?: Decimal | DecimalJsLike | number | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ActivoUncheckedCreateWithoutTraspasosInput = {
+    id_activo?: string
+    tenant_id: string
+    numero_activo: string
+    clave: string
+    descripcion: string
+    clasificacion: string
+    estado?: string
+    proyecto_id: string
+    ubicacion?: string | null
+    asignado_a_empleado_id?: string | null
+    asignado_a_empleado_nombre?: string | null
+    fecha_alta?: Date | string
+    fecha_baja?: Date | string | null
+    motivo_baja?: string | null
+    valor_adquisicion?: Decimal | DecimalJsLike | number | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ActivoCreateOrConnectWithoutTraspasosInput = {
+    where: ActivoWhereUniqueInput
+    create: XOR<ActivoCreateWithoutTraspasosInput, ActivoUncheckedCreateWithoutTraspasosInput>
+  }
+
+  export type ActivoUpsertWithoutTraspasosInput = {
+    update: XOR<ActivoUpdateWithoutTraspasosInput, ActivoUncheckedUpdateWithoutTraspasosInput>
+    create: XOR<ActivoCreateWithoutTraspasosInput, ActivoUncheckedCreateWithoutTraspasosInput>
+    where?: ActivoWhereInput
+  }
+
+  export type ActivoUpdateToOneWithWhereWithoutTraspasosInput = {
+    where?: ActivoWhereInput
+    data: XOR<ActivoUpdateWithoutTraspasosInput, ActivoUncheckedUpdateWithoutTraspasosInput>
+  }
+
+  export type ActivoUpdateWithoutTraspasosInput = {
+    id_activo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    numero_activo?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    clasificacion?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_id?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_alta?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    motivo_baja?: NullableStringFieldUpdateOperationsInput | string | null
+    valor_adquisicion?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ActivoUncheckedUpdateWithoutTraspasosInput = {
+    id_activo?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    numero_activo?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    clasificacion?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_id?: NullableStringFieldUpdateOperationsInput | string | null
+    asignado_a_empleado_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_alta?: DateTimeFieldUpdateOperationsInput | Date | string
+    fecha_baja?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    motivo_baja?: NullableStringFieldUpdateOperationsInput | string | null
+    valor_adquisicion?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MovimientoAlmacenCreateManyItemInput = {
     id?: string
     tenant_id: string
@@ -4553,6 +8024,82 @@ export namespace Prisma {
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type TraspasoActivoCreateManyActivoInput = {
+    id_traspaso?: string
+    tenant_id: string
+    tipo: string
+    estado?: string
+    proyecto_origen_id: string
+    proyecto_destino_id?: string | null
+    empleado_origen_id?: string | null
+    empleado_origen_nombre?: string | null
+    empleado_destino_id?: string | null
+    empleado_destino_nombre?: string | null
+    solicitado_por: string
+    solicitado_en?: Date | string
+    confirmado_por?: string | null
+    rechazado_por?: string | null
+    resuelto_en?: Date | string | null
+    notas?: string | null
+  }
+
+  export type TraspasoActivoUpdateWithoutActivoInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TraspasoActivoUncheckedUpdateWithoutActivoInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TraspasoActivoUncheckedUpdateManyWithoutActivoInput = {
+    id_traspaso?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    proyecto_origen_id?: StringFieldUpdateOperationsInput | string
+    proyecto_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_origen_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_id?: NullableStringFieldUpdateOperationsInput | string | null
+    empleado_destino_nombre?: NullableStringFieldUpdateOperationsInput | string | null
+    solicitado_por?: StringFieldUpdateOperationsInput | string
+    solicitado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    rechazado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    resuelto_en?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
 
 
   /**
@@ -4563,6 +8110,10 @@ export namespace Prisma {
      */
     export type ItemInventarioCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ItemInventarioCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use ActivoCountOutputTypeDefaultArgs instead
+     */
+    export type ActivoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ActivoCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use ItemInventarioDefaultArgs instead
      */
     export type ItemInventarioArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ItemInventarioDefaultArgs<ExtArgs>
@@ -4570,6 +8121,14 @@ export namespace Prisma {
      * @deprecated Use MovimientoAlmacenDefaultArgs instead
      */
     export type MovimientoAlmacenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MovimientoAlmacenDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ActivoDefaultArgs instead
+     */
+    export type ActivoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ActivoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use TraspasoActivoDefaultArgs instead
+     */
+    export type TraspasoActivoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TraspasoActivoDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

@@ -320,6 +320,348 @@ app.post('/api/v1/almacen/movimientos',
 );
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ACTIVOS FIJOS (equipo/herramienta/maquinaria/vehículos)
+// Ver openspec/changes/control-almacen-activos
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const ACTIVO_ROLES_ESCRITURA = ['admin', 'superintendent', 'procurement', 'warehouse'] as const;
+const CLASIFICACIONES_ACTIVO = ['EQUIPO', 'HERRAMIENTA', 'MAQUINARIA', 'VEHICULO'] as const;
+
+function serializeActivo(a: any) {
+  return { ...a, valor_adquisicion: a.valor_adquisicion != null ? Number(a.valor_adquisicion) : null };
+}
+
+app.get('/api/v1/almacen/activos', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { clasificacion, estado, q } = req.query as Record<string, string | undefined>;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.activo.findMany({
+        where: {
+          tenant_id: tenantId,
+          ...(clasificacion ? { clasificacion } : {}),
+          ...(estado ? { estado } : {}),
+          ...(q ? {
+            OR: [
+              { clave: { contains: q, mode: 'insensitive' } },
+              { descripcion: { contains: q, mode: 'insensitive' } },
+            ],
+          } : {}),
+        },
+        orderBy: { numero_activo: 'asc' },
+      });
+    });
+
+    res.json({ success: true, data: data.map(serializeActivo) });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/v1/almacen/activos', requireRoles(...ACTIVO_ROLES_ESCRITURA), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { clave, descripcion, clasificacion, proyecto_id, ubicacion, valor_adquisicion } = req.body;
+
+    if (!clave || !descripcion || !clasificacion || !proyecto_id) {
+      return res.status(400).json({ success: false, message: 'clave, descripcion, clasificacion y proyecto_id son obligatorios.' });
+    }
+    if (!CLASIFICACIONES_ACTIVO.includes(clasificacion)) {
+      return res.status(400).json({ success: false, message: `clasificacion debe ser una de: ${CLASIFICACIONES_ACTIVO.join(', ')}.` });
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      // numero_activo autoincremental por tenant — mismo patrón que
+      // numero_empleado en apps/personal/src/main.ts.
+      const last = await prisma.activo.findFirst({
+        where: { tenant_id: tenantId },
+        orderBy: { numero_activo: 'desc' },
+        select: { numero_activo: true },
+      });
+      const lastNum = last ? parseInt(last.numero_activo.replace('ACT-', '')) : 0;
+      const numero_activo = `ACT-${String(lastNum + 1).padStart(3, '0')}`;
+
+      return prisma.activo.create({
+        data: {
+          tenant_id: tenantId,
+          numero_activo,
+          clave,
+          descripcion,
+          clasificacion,
+          proyecto_id,
+          ubicacion: ubicacion ?? null,
+          valor_adquisicion: valor_adquisicion != null ? Number(valor_adquisicion) : null,
+        },
+      });
+    });
+
+    logInfo(req, 'almacen', 'almacen.activo.creado', `Activo ${data.numero_activo} registrado`, { activo_id: data.id_activo });
+    res.status(201).json({ success: true, data: serializeActivo(data) });
+  } catch (error: any) {
+    logError(req, 'almacen', 'almacen.activo.crear.error', 'Error al crear activo', { error_message: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.patch('/api/v1/almacen/activos/:id', requireRoles(...ACTIVO_ROLES_ESCRITURA), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    // proyecto_id/asignado_a_empleado_id se ignoran deliberadamente aquí —
+    // esos cambios solo pueden aplicarse vía el flujo de traspasos (ver
+    // Requirement "El sistema SHALL NOT permitir cambiar proyecto_id ni
+    // asignado_a_empleado_id desde este endpoint").
+    const { descripcion, ubicacion, valor_adquisicion } = req.body;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const existe = await prisma.activo.findFirst({ where: { id_activo: id, tenant_id: tenantId } });
+      if (!existe) {
+        const err = new Error('Activo no encontrado.') as any;
+        err.status = 404;
+        throw err;
+      }
+      return prisma.activo.update({
+        where: { id_activo: id },
+        data: {
+          ...(descripcion !== undefined ? { descripcion } : {}),
+          ...(ubicacion !== undefined ? { ubicacion } : {}),
+          ...(valor_adquisicion !== undefined ? { valor_adquisicion: valor_adquisicion != null ? Number(valor_adquisicion) : null } : {}),
+        },
+      });
+    });
+
+    res.json({ success: true, data: serializeActivo(data) });
+  } catch (error: any) {
+    res.status((error as any).status ?? 500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/v1/almacen/activos/:id/baja', requireRoles(...ACTIVO_ROLES_ESCRITURA), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { motivo } = req.body;
+
+    if (!motivo) {
+      return res.status(400).json({ success: false, message: 'motivo es obligatorio para dar de baja un activo.' });
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const existe = await prisma.activo.findFirst({ where: { id_activo: id, tenant_id: tenantId } });
+      if (!existe) {
+        const err = new Error('Activo no encontrado.') as any;
+        err.status = 404;
+        throw err;
+      }
+      return prisma.activo.update({
+        where: { id_activo: id },
+        data: { estado: 'BAJA', fecha_baja: new Date(), motivo_baja: motivo },
+      });
+    });
+
+    logInfo(req, 'almacen', 'almacen.activo.baja', `Activo ${data.numero_activo} dado de baja`, { activo_id: data.id_activo, motivo });
+    res.json({ success: true, data: serializeActivo(data) });
+  } catch (error: any) {
+    res.status((error as any).status ?? 500).json({ success: false, message: error.message });
+  }
+});
+
+// ── Traspasos (proyecto y/o asignación a empleado, con aprobación) ────────
+// Ver Decisión D3 de openspec/changes/control-almacen-activos/design.md.
+
+const TRASPASO_TIPOS = ['PROYECTO', 'ASIGNACION', 'AMBOS'] as const;
+
+app.post('/api/v1/almacen/activos/:id/traspasos', requireRoles(...ACTIVO_ROLES_ESCRITURA), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+    const { tipo, proyecto_destino_id, empleado_destino_id, empleado_destino_nombre } = req.body;
+
+    if (!tipo || !TRASPASO_TIPOS.includes(tipo)) {
+      return res.status(400).json({ success: false, message: `tipo debe ser una de: ${TRASPASO_TIPOS.join(', ')}.` });
+    }
+    if ((tipo === 'PROYECTO' || tipo === 'AMBOS') && !proyecto_destino_id) {
+      return res.status(400).json({ success: false, message: 'proyecto_destino_id es obligatorio para tipo PROYECTO o AMBOS.' });
+    }
+    if ((tipo === 'ASIGNACION' || tipo === 'AMBOS') && empleado_destino_id === undefined) {
+      return res.status(400).json({ success: false, message: 'empleado_destino_id es obligatorio para tipo ASIGNACION o AMBOS (usar null para liberar).' });
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const activo = await prisma.activo.findFirst({ where: { id_activo: id, tenant_id: tenantId } });
+      if (!activo) {
+        const err = new Error('Activo no encontrado.') as any;
+        err.status = 404;
+        throw err;
+      }
+      if (activo.estado === 'BAJA' || activo.estado === 'EN_TRASPASO') {
+        const err = new Error(`El activo está en estado ${activo.estado} y no admite una nueva solicitud de traspaso.`) as any;
+        err.status = 409;
+        throw err;
+      }
+
+      const solicitud = await prisma.traspasoActivo.create({
+        data: {
+          tenant_id: tenantId,
+          activo_id: id,
+          tipo,
+          proyecto_origen_id: activo.proyecto_id,
+          proyecto_destino_id: proyecto_destino_id ?? null,
+          empleado_origen_id: activo.asignado_a_empleado_id,
+          empleado_origen_nombre: activo.asignado_a_empleado_nombre,
+          empleado_destino_id: empleado_destino_id ?? null,
+          empleado_destino_nombre: empleado_destino_nombre ?? null,
+          solicitado_por: userName || userId,
+        },
+      });
+
+      await prisma.activo.update({ where: { id_activo: id }, data: { estado: 'EN_TRASPASO' } });
+
+      return solicitud;
+    });
+
+    logInfo(req, 'almacen', 'almacen.activo.traspaso.solicitado', `Traspaso solicitado para activo ${id}`, { activo_id: id, traspaso_id: data.id_traspaso, tipo });
+    res.status(201).json({ success: true, data });
+  } catch (error: any) {
+    res.status((error as any).status ?? 500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/v1/almacen/activos/traspasos', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { estado, proyecto_destino_id } = req.query as Record<string, string | undefined>;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.traspasoActivo.findMany({
+        where: {
+          tenant_id: tenantId,
+          ...(estado ? { estado } : {}),
+          ...(proyecto_destino_id ? { proyecto_destino_id } : {}),
+        },
+        include: { activo: { select: { numero_activo: true, clave: true, descripcion: true } } },
+        orderBy: { solicitado_en: 'desc' },
+      });
+    });
+
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.patch('/api/v1/almacen/activos/traspasos/:id/confirmar', requireRoles(...ACTIVO_ROLES_ESCRITURA), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const solicitud = await prisma.traspasoActivo.findFirst({ where: { id_traspaso: id, tenant_id: tenantId } });
+      if (!solicitud) {
+        const err = new Error('Solicitud de traspaso no encontrada.') as any;
+        err.status = 404;
+        throw err;
+      }
+      if (solicitud.estado !== 'PENDIENTE') {
+        const err = new Error(`La solicitud ya está ${solicitud.estado}.`) as any;
+        err.status = 409;
+        throw err;
+      }
+      // Quien confirma un cambio de proyecto SHALL estar operando con el
+      // proyecto destino activo en su sesión (ver Requirement en
+      // specs/activos-fijos-traspasos).
+      if (solicitud.proyecto_destino_id && solicitud.proyecto_destino_id !== proyectoId) {
+        const err = new Error('Debes tener el proyecto destino activo en tu sesión para confirmar este traspaso.') as any;
+        err.status = 403;
+        throw err;
+      }
+
+      const nuevoEstadoActivo = solicitud.empleado_destino_id ? 'ASIGNADO' : 'DISPONIBLE';
+      await prisma.activo.update({
+        where: { id_activo: solicitud.activo_id },
+        data: {
+          ...(solicitud.proyecto_destino_id ? { proyecto_id: solicitud.proyecto_destino_id } : {}),
+          ...(solicitud.tipo !== 'PROYECTO' ? {
+            asignado_a_empleado_id: solicitud.empleado_destino_id,
+            asignado_a_empleado_nombre: solicitud.empleado_destino_nombre,
+          } : {}),
+          estado: nuevoEstadoActivo,
+        },
+      });
+
+      return prisma.traspasoActivo.update({
+        where: { id_traspaso: id },
+        data: { estado: 'CONFIRMADO', confirmado_por: userName || userId, resuelto_en: new Date() },
+      });
+    });
+
+    logInfo(req, 'almacen', 'almacen.activo.traspaso.confirmado', `Traspaso confirmado`, { traspaso_id: id, activo_id: data.activo_id });
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status((error as any).status ?? 500).json({ success: false, message: error.message });
+  }
+});
+
+app.patch('/api/v1/almacen/activos/traspasos/:id/rechazar', requireRoles(...ACTIVO_ROLES_ESCRITURA), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+    const { notas } = req.body;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const solicitud = await prisma.traspasoActivo.findFirst({ where: { id_traspaso: id, tenant_id: tenantId } });
+      if (!solicitud) {
+        const err = new Error('Solicitud de traspaso no encontrada.') as any;
+        err.status = 404;
+        throw err;
+      }
+      if (solicitud.estado !== 'PENDIENTE') {
+        const err = new Error(`La solicitud ya está ${solicitud.estado}.`) as any;
+        err.status = 409;
+        throw err;
+      }
+
+      // El activo vuelve a su estado previo — DISPONIBLE si no tenía
+      // asignación, ASIGNADO si ya tenía un empleado asignado antes de
+      // esta solicitud (snapshot en empleado_origen_id).
+      await prisma.activo.update({
+        where: { id_activo: solicitud.activo_id },
+        data: { estado: solicitud.empleado_origen_id ? 'ASIGNADO' : 'DISPONIBLE' },
+      });
+
+      return prisma.traspasoActivo.update({
+        where: { id_traspaso: id },
+        data: { estado: 'RECHAZADO', rechazado_por: userName || userId, resuelto_en: new Date(), notas: notas ?? null },
+      });
+    });
+
+    logInfo(req, 'almacen', 'almacen.activo.traspaso.rechazado', `Traspaso rechazado`, { traspaso_id: id, activo_id: data.activo_id });
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status((error as any).status ?? 500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/v1/almacen/activos/:id/historial', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return prisma.traspasoActivo.findMany({
+        where: { tenant_id: tenantId, activo_id: id },
+        orderBy: { solicitado_en: 'desc' },
+      });
+    });
+
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SALIDAS DE OBRA (EGRESO_OBRA)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

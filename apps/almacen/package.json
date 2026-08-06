@@ -10,7 +10,9 @@
     "prisma:migrate": "prisma migrate dev",
     "test:integration:api": "node -r ts-node/register/transpile-only test/integration/almacen-api.integration.test.ts",
     "test:integration:eventos-oc": "node -r ts-node/register/transpile-only test/integration/almacen-eventos-oc.integration.test.ts",
-    "test:integration:salida-obra": "node -r ts-node/register/transpile-only test/integration/almacen-salida-obra.integration.test.ts"
+    "test:integration:salida-obra": "node -r ts-node/register/transpile-only test/integration/almacen-salida-obra.integration.test.ts",
+    "test:integration:activos-crud": "node -r ts-node/register/transpile-only test/integration/activos-crud.integration.test.ts",
+    "test:integration:activos-traspasos": "node -r ts-node/register/transpile-only test/integration/activos-traspasos.integration.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
