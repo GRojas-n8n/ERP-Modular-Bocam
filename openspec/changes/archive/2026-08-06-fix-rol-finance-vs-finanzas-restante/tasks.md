@@ -32,6 +32,6 @@
 
 ## 7. Cierre
 
-- [ ] 7.1 Commit `fix(compras,asistente,auth,auth-middleware): ...` — commit directo a `main`, siguiendo el patrón de fixes de rol anteriores (sin PR).
-- [ ] 7.2 Verificar en VPS real: reconstruir/redeploy `compras`, `asistente` y `auth` (los 3 recompilan el middleware compartido por inclusión directa en su propio `tsconfig.json`, sin build separado del paquete).
-- [ ] 7.3 Archivar el change en OpenSpec una vez verificado en VPS real.
+- [x] 7.1 Commit directo a `main` (`932fc55`), sin PR.
+- [x] 7.2 Verificado en VPS real: el push (al tocar `packages/auth-middleware/**`) disparó automáticamente `deploy-vps-backend.yml`, que reconstruyó los 13 microservicios por seguridad (regla ya documentada del workflow: un cambio en un package compartido reconstruye todos). Run [31058488514](https://github.com/GRojas-n8n/ERP-Modular-Bocam/actions/runs/31058488514) exitoso (13m52s) + smoke test Playwright en verde. Verificado además por línea de comandos contra los contenedores reales: `bocam-vps-compras` (0 `'finance'`, 53 `'finanzas'` en `main.js`; middleware compartido recompilado con `'finanzas'` en `tenantLevelRoles`), `bocam-vps-asistente` (0 `'finance'`, 3 `'finanzas'` en `alertas-predictivas.js`), `bocam-vps-auth` (0 `'finance'`, `'finanzas'` presente en `main.js`).
+- [x] 7.3 Archivar el change en OpenSpec una vez verificado en VPS real.
