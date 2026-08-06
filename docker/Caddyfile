@@ -1,4 +1,19 @@
 iretum.com, www.iretum.com {
     reverse_proxy app-shell:80
     encode gzip zstd
+
+    # openspec: hardening-headers-http-caddy — headers de seguridad HTTP
+    # estándar en el único punto de entrada público. CSP queda fuera a
+    # propósito (ver design.md del change): en una SPA con Vite es la forma
+    # más común de romper producción si se improvisa; se trata como su
+    # propio change, primero en modo Report-Only.
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # camera=(self): el lector de QR de asistencia (Personal/RH) usa la
+        # cámara del navegador. El resto del ERP no usa ninguna de estas APIs.
+        Permissions-Policy "camera=(self), geolocation=(), microphone=(), payment=()"
+    }
 }
