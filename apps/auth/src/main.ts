@@ -30,6 +30,14 @@ import {
   validarEmpresaGrupo,
   validarEstatus,
 } from './centro-costos-policy';
+import { parseOrRespond } from './validation/parse-or-respond';
+import { loginSchema } from './validation/schemas/login.schema';
+import { registerSchema } from './validation/schemas/register.schema';
+import { refreshSchema } from './validation/schemas/refresh.schema';
+import { switchProjectSchema } from './validation/schemas/switch-project.schema';
+import { crearUsuarioSchema, actualizarUsuarioSchema } from './validation/schemas/admin-users.schema';
+import { crearProyectoSchema, actualizarProyectoSchema } from './validation/schemas/admin-proyectos.schema';
+import { crearTenantSchema, actualizarTenantSchema } from './validation/schemas/master-tenants.schema';
 
 const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'] as const;
 const ROLES_ALTA_CENTRO_COSTOS = ['admin', 'gerencia_tecnica', 'control_proyectos'];
@@ -209,21 +217,12 @@ function generateTokenPair(user: AuthUser, activeProyectoId?: string) {
 
 app.post('/api/v1/auth/login', loginLimiter as express.RequestHandler, async (req: Request, res: Response) => {
   try {
-    const { email, password, tenant_id, proyecto_id } = req.body;
-    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : '';
-    const normalizedTenantId = typeof tenant_id === 'string' ? tenant_id.trim() : '';
-    const requestedProjectId = typeof proyecto_id === 'string' ? proyecto_id.trim() : '';
-
-    if (!normalizedEmail || !password || !normalizedTenantId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_MISSING_FIELDS',
-          message: 'Los campos email, password y tenant_id son obligatorios.',
-        },
-      });
-      return;
-    }
+    const parsed = parseOrRespond(loginSchema, req.body, res);
+    if (!parsed) return;
+    const { email, password, tenant_id, proyecto_id } = parsed;
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedTenantId = tenant_id.trim();
+    const requestedProjectId = proyecto_id ? proyecto_id.trim() : '';
 
     const user = await createTenantContext(
       { tenantId: normalizedTenantId },
@@ -351,20 +350,11 @@ app.post('/api/v1/auth/login', loginLimiter as express.RequestHandler, async (re
 
 app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
   try {
-    const { email, password, nombre, tenant_id, roles, proyecto_ids } = req.body;
-    const normalizedEmail = typeof email === 'string' ? normalizeEmail(email) : '';
-    const normalizedTenantId = typeof tenant_id === 'string' ? tenant_id.trim() : '';
-
-    if (!normalizedEmail || !password || !nombre || !normalizedTenantId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_MISSING_FIELDS',
-          message: 'Los campos email, password, nombre y tenant_id son obligatorios.',
-        },
-      });
-      return;
-    }
+    const parsed = parseOrRespond(registerSchema, req.body, res);
+    if (!parsed) return;
+    const { email, password, nombre, tenant_id, roles, proyecto_ids } = parsed;
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedTenantId = tenant_id.trim();
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
@@ -462,18 +452,9 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
 
 app.post('/api/v1/auth/refresh', refreshLimiter as express.RequestHandler, async (req: Request, res: Response) => {
   try {
-    const { refresh_token } = req.body;
-
-    if (!refresh_token) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_MISSING_REFRESH_TOKEN',
-          message: 'El refresh_token es obligatorio.',
-        },
-      });
-      return;
-    }
+    const parsed = parseOrRespond(refreshSchema, req.body, res);
+    if (!parsed) return;
+    const { refresh_token } = parsed;
 
     const tokenHash = crypto
       .createHash('sha256')
@@ -689,18 +670,9 @@ app.get('/api/v1/auth/me', async (req: Request, res: Response) => {
 app.post('/api/v1/auth/switch-project', async (req: Request, res: Response) => {
   try {
     const { tenantId, userId } = req.securityContext;
-    const { proyecto_id } = req.body;
-
-    if (!proyecto_id) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_MISSING_PROJECT',
-          message: 'El campo proyecto_id es obligatorio.',
-        },
-      });
-      return;
-    }
+    const parsed = parseOrRespond(switchProjectSchema, req.body, res);
+    if (!parsed) return;
+    const { proyecto_id } = parsed;
 
     const user = await createTenantContext(
       { tenantId, userId },
@@ -809,11 +781,9 @@ app.get('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler, 
 app.post('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
-    const { email, password, nombre, roles: userRoles, proyecto_ids, limite_aprobacion } = req.body;
-    if (!email || !password || !nombre) {
-      res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'email, password y nombre son obligatorios.' } });
-      return;
-    }
+    const parsed = parseOrRespond(crearUsuarioSchema, req.body, res);
+    if (!parsed) return;
+    const { email, password, nombre, roles: userRoles, proyecto_ids, limite_aprobacion } = parsed;
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const user = await createTenantContext({ tenantId }, async (prisma) =>
       prisma.user.create({
@@ -838,7 +808,9 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
   try {
     const { tenantId } = req.securityContext;
     const { id } = req.params;
-    const { nombre, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = req.body;
+    const parsed = parseOrRespond(actualizarUsuarioSchema, req.body, res);
+    if (!parsed) return;
+    const { nombre, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = parsed;
     const updateData: Record<string, unknown> = {};
     if (nombre !== undefined) updateData.nombre = nombre;
     if (userRoles !== undefined) updateData.rol_global = userRoles;
@@ -907,22 +879,19 @@ app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS
 app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
+    const parsed = parseOrRespond(crearProyectoSchema, req.body, res);
+    if (!parsed) return;
     const {
       nombre_oficial, tipo_contrato, moneda_base, estatus,
       es_especial, tipo_especial, codigo_centro_costos: codigoEspecialInput,
       empresa_grupo, anio_centro_costos, cliente_id, codigo_cliente,
       monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
       total_dias_naturales, total_dias_laborables,
-    } = req.body;
-    const fecha_inicio_real = normalizarFecha(req.body.fecha_inicio_real);
-    const fecha_firma_contrato = normalizarFecha(req.body.fecha_firma_contrato);
-    const fecha_programada_inicio = normalizarFecha(req.body.fecha_programada_inicio);
-    const fecha_programada_fin = normalizarFecha(req.body.fecha_programada_fin);
-
-    if (!nombre_oficial) {
-      res.status(400).json({ success: false, error: { code: 'ADMIN_MISSING_FIELDS', message: 'nombre_oficial es obligatorio.' } });
-      return;
-    }
+    } = parsed;
+    const fecha_inicio_real = normalizarFecha(parsed.fecha_inicio_real);
+    const fecha_firma_contrato = normalizarFecha(parsed.fecha_firma_contrato);
+    const fecha_programada_inicio = normalizarFecha(parsed.fecha_programada_inicio);
+    const fecha_programada_fin = normalizarFecha(parsed.fecha_programada_fin);
 
     if (estatus !== undefined && !validarEstatus(estatus)) {
       res.status(400).json({ success: false, error: { code: 'ADMIN_ESTATUS_INVALIDO', message: 'estatus debe ser uno de: ABIERTO, EN EJECUCIÓN, EN COBRO, TERMINADO, CERRADO.' } });
@@ -937,7 +906,10 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
     let camposCentroCostos: Record<string, any>;
 
     if (es_especial) {
-      if (!TIPOS_ESPECIALES.includes(tipo_especial)) {
+      // tipo_especial es string|undefined tras el schema Zod (campo opcional a nivel
+      // de forma; solo es obligatorio de negocio cuando es_especial=true, chequeo que
+      // se preserva aquí igual que antes de este change).
+      if (!TIPOS_ESPECIALES.includes(tipo_especial as (typeof TIPOS_ESPECIALES)[number])) {
         res.status(400).json({ success: false, error: { code: 'ADMIN_TIPO_ESPECIAL_INVALIDO', message: `tipo_especial debe ser uno de: ${TIPOS_ESPECIALES.join(', ')}.` } });
         return;
       }
@@ -951,7 +923,10 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
         codigo_centro_costos: codigoEspecialInput,
       };
     } else {
-      if (!validarEmpresaGrupo(empresa_grupo)) {
+      // empresa_grupo es string|undefined tras el schema Zod (opcional a nivel de
+      // forma; solo obligatorio de negocio cuando es_especial=false, chequeo que se
+      // preserva aquí igual que antes de este change).
+      if (!validarEmpresaGrupo(empresa_grupo as string)) {
         res.status(400).json({ success: false, error: { code: 'ADMIN_EMPRESA_INVALIDA', message: `empresa_grupo debe ser uno de: CIB, HCO, HSE, SEO.` } });
         return;
       }
@@ -985,7 +960,10 @@ app.post('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTO
             where: { tenant_id: tenantId, empresa_grupo, anio_centro_costos, cliente_id },
           });
           const consecutivo = siguienteConsecutivo(countExistente) + intento;
-          const codigo = ensamblarCodigoCentroCostos({ empresa: empresa_grupo, anio: anio_centro_costos, codigoCliente: codigo_cliente, consecutivo });
+          // empresa_grupo/anio_centro_costos/codigo_cliente ya se validaron como
+          // presentes arriba (guard clauses del bloque `else` de es_especial) antes
+          // de llegar a este punto — los `!` reflejan esa garantía en runtime.
+          const codigo = ensamblarCodigoCentroCostos({ empresa: empresa_grupo!, anio: anio_centro_costos!, codigoCliente: codigo_cliente!, consecutivo });
           try {
             nuevo = await prisma.proyecto.create({
               data: {
@@ -1060,15 +1038,17 @@ app.patch('/api/v1/auth/admin/proyectos/:id', requireRoles(...ROLES_ALTA_CENTRO_
   try {
     const { tenantId } = req.securityContext;
     const { id } = req.params;
+    const parsed = parseOrRespond(actualizarProyectoSchema, req.body, res);
+    if (!parsed) return;
     const {
       nombre_oficial, tipo_contrato, moneda_base, estatus, activo,
       monto_total_vendido, periodo_ejecucion, periodo_ejecucion_unidad,
       total_dias_naturales, total_dias_laborables,
-    } = req.body;
-    const fecha_inicio_real = normalizarFecha(req.body.fecha_inicio_real);
-    const fecha_firma_contrato = normalizarFecha(req.body.fecha_firma_contrato);
-    const fecha_programada_inicio = normalizarFecha(req.body.fecha_programada_inicio);
-    const fecha_programada_fin = normalizarFecha(req.body.fecha_programada_fin);
+    } = parsed;
+    const fecha_inicio_real = normalizarFecha(parsed.fecha_inicio_real);
+    const fecha_firma_contrato = normalizarFecha(parsed.fecha_firma_contrato);
+    const fecha_programada_inicio = normalizarFecha(parsed.fecha_programada_inicio);
+    const fecha_programada_fin = normalizarFecha(parsed.fecha_programada_fin);
 
     if (estatus !== undefined && !validarEstatus(estatus)) {
       res.status(400).json({ success: false, error: { code: 'ADMIN_ESTATUS_INVALIDO', message: 'estatus debe ser uno de: ABIERTO, EN EJECUCIÓN, EN COBRO, TERMINADO, CERRADO.' } });
@@ -1139,12 +1119,12 @@ app.post('/api/v1/master/tenants',
   masterWriteLimiter as express.RequestHandler,
   requireMasterSecret as express.RequestHandler,
   async (req: Request, res: Response) => {
-    const { nombre, rfc, plan, primary_color, logo_url } = req.body;
-    if (!nombre) {
-      void logMasterAction({ accion: 'CREATE_TENANT', status_code: 400, ip: req.ip, error_msg: 'nombre requerido' });
-      res.status(400).json({ success: false, error: { code: 'MASTER_MISSING_FIELDS', message: 'El campo nombre es obligatorio.' } });
+    const parsed = parseOrRespond(crearTenantSchema, req.body, res);
+    if (!parsed) {
+      void logMasterAction({ accion: 'CREATE_TENANT', status_code: 400, ip: req.ip, error_msg: 'validacion fallida' });
       return;
     }
+    const { nombre, rfc, plan, primary_color, logo_url } = parsed;
     try {
       const tenant = await runAsSystem(async (prisma) =>
         prisma.tenant.create({
@@ -1166,7 +1146,12 @@ app.patch('/api/v1/master/tenants/:id',
   requireMasterSecret as express.RequestHandler,
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { nombre, rfc, plan, primary_color, logo_url, activo } = req.body;
+    const parsed = parseOrRespond(actualizarTenantSchema, req.body, res);
+    if (!parsed) {
+      void logMasterAction({ accion: 'UPDATE_TENANT', entity_id: id, status_code: 400, ip: req.ip, error_msg: 'validacion fallida' });
+      return;
+    }
+    const { nombre, rfc, plan, primary_color, logo_url, activo } = parsed;
     try {
       const tenant = await runAsSystem(async (prisma) =>
         prisma.tenant.update({
