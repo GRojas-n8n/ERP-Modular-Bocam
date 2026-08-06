@@ -48,6 +48,12 @@ ALTER TABLE inventario_almacen FORCE ROW LEVEL SECURITY;
 ALTER TABLE movimientos_almacen ENABLE ROW LEVEL SECURITY;
 ALTER TABLE movimientos_almacen FORCE ROW LEVEL SECURITY;
 
+ALTER TABLE activos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activos FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE traspasos_activos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE traspasos_activos FORCE ROW LEVEL SECURITY;
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3. POLÍTICAS DE AISLAMIENTO
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -69,6 +75,32 @@ CREATE POLICY rls_movimientos_almacen_context ON movimientos_almacen
     USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
     WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
 
+-- ─── ACTIVOS FIJOS (solo tenant — catálogo cruza proyectos) ────────────────
+-- A diferencia de inventario_almacen, el catálogo de activos es visible en
+-- todo el tenant sin importar el proyecto activo de la sesión: main.ts
+-- (GET /activos, GET /activos/traspasos, GET /activos/:id/historial) filtra
+-- únicamente por tenant_id — un activo se mueve de proyecto vía traspaso y su
+-- historial debe seguir siendo consultable desde cualquier proyecto del
+-- tenant. Restringir aquí por proyecto_id rompería esa navegación cross-
+-- proyecto ya prevista en el diseño (control-almacen-activos/design.md D3).
+DROP POLICY IF EXISTS rls_activos_context ON activos;
+CREATE POLICY rls_activos_context ON activos
+    FOR ALL
+    USING (tenant_id = current_tenant_id())
+    WITH CHECK (tenant_id = current_tenant_id());
+
+-- ─── TRASPASOS DE ACTIVOS (solo tenant) ─────────────────────────────────────
+-- Un traspaso vincula un proyecto_origen_id y un proyecto_destino_id
+-- distintos por definición; confirmar/rechazar exige que la sesión tenga el
+-- proyecto destino activo, pero esa verificación ya la hace main.ts a nivel
+-- de aplicación (403 explícito) — no se puede expresar como un único
+-- proyecto_id en la política sin bloquear la confirmación desde el destino.
+DROP POLICY IF EXISTS rls_traspasos_activos_context ON traspasos_activos;
+CREATE POLICY rls_traspasos_activos_context ON traspasos_activos
+    FOR ALL
+    USING (tenant_id = current_tenant_id())
+    WITH CHECK (tenant_id = current_tenant_id());
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. COMENTARIOS DE AUDITORÍA
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -77,3 +109,7 @@ COMMENT ON POLICY rls_inventario_almacen_context ON inventario_almacen IS
     'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Almacén.';
 COMMENT ON POLICY rls_movimientos_almacen_context ON movimientos_almacen IS
     'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Almacén.';
+COMMENT ON POLICY rls_activos_context ON activos IS
+    'Aislamiento Multi-Tenant (cross-proyecto por diseño). Módulo: Almacén.';
+COMMENT ON POLICY rls_traspasos_activos_context ON traspasos_activos IS
+    'Aislamiento Multi-Tenant (cross-proyecto por diseño). Módulo: Almacén.';

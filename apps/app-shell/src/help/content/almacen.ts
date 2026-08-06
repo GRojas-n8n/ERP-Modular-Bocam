@@ -60,6 +60,35 @@ export const almacen: ModuleHelp = {
         },
       ],
     },
+    {
+      id: 'activos',
+      titulo: 'Activos',
+      proposito: 'Catálogo de activos fijos (equipo, herramienta, maquinaria, vehículos) y sus traspasos entre proyectos o a un empleado.',
+      bloques: [
+        { tipo: 'parrafo', texto: 'A diferencia de Inventario, el catálogo de Activos es visible en todo el tenant sin importar el proyecto activo de la sesión — un activo se mueve de proyecto vía traspaso y su historial debe seguir siendo consultable desde cualquier proyecto.' },
+        {
+          tipo: 'pasos',
+          titulo: 'Solicitar y confirmar un traspaso',
+          items: [
+            'Desde la fila del activo, "Traspasar" abre el panel para elegir proyecto destino y/o empleado destino.',
+            'El activo queda en estado EN_TRASPASO — no admite una segunda solicitud mientras la primera esté pendiente.',
+            'Solo alguien con acceso de almacén que tenga el proyecto destino activo en su sesión puede confirmar la bandeja de pendientes; confirmar desde el proyecto equivocado se rechaza (403).',
+            'Rechazar un traspaso revierte el activo a su estado previo sin aplicar ningún cambio.',
+          ],
+        },
+        {
+          tipo: 'estados',
+          titulo: 'Estado del activo',
+          items: [
+            { estado: 'DISPONIBLE', color: 'verde', desc: 'Sin asignar, listo para usar o traspasar.' },
+            { estado: 'ASIGNADO', color: 'azul', desc: 'Asignado a un empleado.' },
+            { estado: 'EN_TRASPASO', color: 'ambar', desc: 'Traspaso solicitado, pendiente de confirmación en el proyecto destino.' },
+            { estado: 'BAJA', color: 'rojo', desc: 'Dado de baja — no admite nuevos traspasos.' },
+          ],
+        },
+        { tipo: 'parrafo', texto: 'El historial de un activo muestra cada traspaso (solicitado, confirmado, rechazado) con quién lo solicitó y quién lo resolvió — funciona como bitácora de auditoría del activo.' },
+      ],
+    },
   ],
   erroresComunes: [
     {
