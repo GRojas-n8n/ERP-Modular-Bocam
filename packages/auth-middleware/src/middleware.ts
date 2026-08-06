@@ -117,7 +117,9 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions) {
 
     try {
       // ─── Verificar firma criptográfica ──────────────────────────────
-      const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+      // algorithms explícito (jwt-hardening-algoritmo-y-timing): no depender
+      // del default implícito de jsonwebtoken ante un futuro refactor/upgrade.
+      const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] }) as JwtPayload;
 
       // ─── Validar campos obligatorios del payload ────────────────────
       if (!decoded.sub || !decoded.tenant_id) {

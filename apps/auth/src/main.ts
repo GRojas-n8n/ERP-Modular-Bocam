@@ -23,6 +23,7 @@ import { createEventBus } from '../../../packages/event-bus/src';
 import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './login-policy';
 import { resolveAutoAssignedUserIds } from './project-access-policy';
 import { sesionExcedeLimite } from './sesion-policy';
+import { secretsMatch } from './master-secret-policy';
 import {
   ensamblarCodigoCentroCostos,
   siguienteConsecutivo,
@@ -1107,7 +1108,7 @@ app.patch('/api/v1/auth/admin/proyectos/:id', requireRoles(...ROLES_ALTA_CENTRO_
 function requireMasterSecret(req: Request, res: Response, next: () => void): void {
   const auth = req.headers.authorization || '';
   const secret = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  if (!MASTER_SECRET || secret !== MASTER_SECRET) {
+  if (!MASTER_SECRET || !secretsMatch(secret, MASTER_SECRET)) {
     void logMasterAction({ accion: 'UNAUTHORIZED_ATTEMPT', status_code: 401, ip: req.ip, user_agent: req.headers['user-agent'] });
     res.status(401).json({ success: false, error: { code: 'MASTER_UNAUTHORIZED', message: 'Clave maestra invalida.' } });
     return;

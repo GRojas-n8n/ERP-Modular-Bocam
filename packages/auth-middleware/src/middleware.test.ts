@@ -121,3 +121,32 @@ test('valid jwt still builds security context', () => {
   assert.equal(nextCalled, true);
   assert.equal(req.securityContext.tenantId, 'tenant-1');
 });
+
+test('jwt firmado con algoritmo distinto a HS256 es rechazado (jwt-hardening-algoritmo-y-timing)', () => {
+  const token = jwt.sign(
+    {
+      sub: 'user-1',
+      tenant_id: 'tenant-1',
+      proyecto_id: 'proj-001',
+      roles: ['admin'],
+      projects: ['proj-001'],
+      limite_aprobacion: 1000,
+    },
+    'test-secret',
+    { algorithm: 'HS384' }
+  );
+  const middleware = createAuthMiddleware({ jwtSecret: 'test-secret' });
+  const req = {
+    path: '/api/v1/secure',
+    headers: { authorization: `Bearer ${token}` },
+  } as unknown as Request;
+  const res = createResponseMock();
+  let nextCalled = false;
+
+  middleware(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(nextCalled, false);
+  assert.equal((res as any).statusCode, 401);
+});
