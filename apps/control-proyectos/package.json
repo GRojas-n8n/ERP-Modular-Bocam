@@ -14,7 +14,8 @@
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
     "test:e2e:bitacoras-avances-evm": "node -r ts-node/register/transpile-only test/e2e/bitacoras-avances-evm.e2e.test.ts",
     "test:e2e:evm-costos-reales": "node -r ts-node/register/transpile-only test/e2e/evm-costos-reales.e2e.test.ts",
-    "test:e2e:avances-estimaciones-rbac-catalogo": "node -r ts-node/register/transpile-only test/e2e/avances-estimaciones-rbac-catalogo.e2e.test.ts"
+    "test:e2e:avances-estimaciones-rbac-catalogo": "node -r ts-node/register/transpile-only test/e2e/avances-estimaciones-rbac-catalogo.e2e.test.ts",
+    "test:e2e:alertas-volumen-ejecutado-contratado": "node -r ts-node/register/transpile-only test/e2e/alertas-volumen-ejecutado-contratado.e2e.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

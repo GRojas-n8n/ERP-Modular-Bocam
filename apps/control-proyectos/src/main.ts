@@ -690,7 +690,7 @@ async function resolverAlertaSiExiste(prisma: PrismaClient, tenantId: string, pr
   });
 }
 
-async function calcularAlertas(prisma: PrismaClient, tenantId: string, proyectoId: string): Promise<void> {
+export async function calcularAlertas(prisma: PrismaClient, tenantId: string, proyectoId: string): Promise<void> {
   try {
     const partidas = await prisma.programacionObra.findMany({
       where: { tenant_id: tenantId, proyecto_id: proyectoId },
@@ -728,6 +728,32 @@ async function calcularAlertas(prisma: PrismaClient, tenantId: string, proyectoI
         }
       } else if (spi !== null && spi >= 0.8) {
         await resolverAlertaSiExiste(prisma, tenantId, proyectoId, 'RETRASO_CRITICO', p.concepto_id);
+      }
+
+      // VOLUMEN_EXCEDIDO (openspec: alertas-volumen-ejecutado-contratado):
+      // compara el AvanceFisico más reciente no RECHAZADO del concepto_id de
+      // la partida contra su propia cantidad_presupuestada (congelada al
+      // crear el avance, ver design.md Decisión 2) — no contra `bac`, que es
+      // el presupuesto económico, no el volumen físico contratado.
+      const ultimoAvance = await prisma.avanceFisico.findFirst({
+        where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: p.concepto_id, estado: { not: EstadoAvance.RECHAZADO } },
+        orderBy: { created_at: 'desc' },
+      });
+      if (ultimoAvance) {
+        const cantAcumuladaVol = Number(ultimoAvance.cantidad_acumulada);
+        const cantPresupuestadaVol = Number(ultimoAvance.cantidad_presupuestada);
+        if (cantAcumuladaVol > cantPresupuestadaVol) {
+          const cantExcedente = cantAcumuladaVol - cantPresupuestadaVol;
+          const pctExcedido = cantPresupuestadaVol > 0 ? (cantExcedente / cantPresupuestadaVol) * 100 : 0;
+          await upsertAlerta(prisma, tenantId, proyectoId, 'VOLUMEN_EXCEDIDO', p.concepto_id, {
+            severidad: 'WARN',
+            titulo: `Volumen excedido en ${p.concepto_clave}`,
+            descripcion: `La partida ${p.concepto_clave} lleva ${cantAcumuladaVol} ${ultimoAvance.unidad} ejecutados, superando los ${cantPresupuestadaVol} ${ultimoAvance.unidad} contratados (${pctExcedido.toFixed(1)}% de exceso). Requiere autorización de alcance adicional.`,
+            datos: { cantidad_acumulada: cantAcumuladaVol, cantidad_presupuestada: cantPresupuestadaVol, cantidad_excedente: cantExcedente, pct_excedido: pctExcedido, unidad: ultimoAvance.unidad },
+          });
+        } else {
+          await resolverAlertaSiExiste(prisma, tenantId, proyectoId, 'VOLUMEN_EXCEDIDO', p.concepto_id);
+        }
       }
     }
   } catch (err) {
@@ -1017,7 +1043,24 @@ controlObraRouter.post('/avances', requireRoles('residencia', 'control_proyectos
       payload: { avance_id: data.id_avance, concepto: concepto.clave, porcentaje: Number(data.porcentaje_avance).toFixed(1), importe: Number(data.importe_periodo) },
     });
 
-    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+    // openspec: alertas-volumen-ejecutado-contratado — advertencia inmediata
+    // y no bloqueante cuando el avance recién creado deja cantidad_acumulada
+    // por encima de lo contratado. No rechaza el POST (design.md Decisión 1):
+    // el avance físico ya ocurrió en campo, CP solo informa y alerta.
+    const cantAcumuladaResp = Number(data.cantidad_acumulada);
+    const cantPresupuestadaResp = Number(data.cantidad_presupuestada);
+    const responseData: Record<string, unknown> = { ...data };
+    if (cantAcumuladaResp > cantPresupuestadaResp) {
+      const cantExcedente = cantAcumuladaResp - cantPresupuestadaResp;
+      const pctExcedido = cantPresupuestadaResp > 0 ? (cantExcedente / cantPresupuestadaResp) * 100 : 0;
+      responseData.advertencia_volumen_excedido = {
+        excedido: true,
+        cantidad_excedente: cantExcedente,
+        pct_excedido: pctExcedido,
+      };
+    }
+
+    res.status(201).json(createApiResponse(responseData, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('CO_INTERNAL_ERROR', error.message));
   }

@@ -38,6 +38,9 @@ export interface MinimalRedisClient {
   on(event: 'error', listener: (err: Error) => void): unknown;
   connect(): Promise<unknown>;
   sendCommand(args: string[]): Promise<unknown>;
+  /** No-op en el doble de prueba; en el cliente real evita que la conexión
+   * mantenga vivo el proceso cuando no queda ningún otro handle activo. */
+  unref?(): unknown;
 }
 
 export interface RateLimiterDeps {
@@ -101,6 +104,14 @@ export function createRateLimiter(options: RateLimiterOptions, deps: RateLimiter
     redisClient.on('error', (err: Error) =>
       console.error(`[${serviceName}] Redis rate-limit error:`, err.message)
     );
+
+    // unref() (node-redis v4): esta conexión es una mejora opcional, no debe
+    // impedir que el proceso salga por sí mismo si no queda ningún otro
+    // handle activo — relevante sobre todo para scripts/tests que arrancan
+    // la app directamente (sin esto, el proceso queda colgado para siempre
+    // aunque todo el trabajo haya terminado). En servidores de producción no
+    // cambia nada: el propio listener HTTP ya mantiene el proceso vivo.
+    redisClient.unref?.();
 
     // Fire-and-forget: no se hace `await` de esta conexión. node-redis encola
     // los comandos emitidos antes de que el socket termine de conectar, así

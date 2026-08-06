@@ -130,7 +130,10 @@ model AlertaProyecto {
 
   // PARTIDA_BLOQUEADA | SOBRE_COSTO_PROYECTADO | RETRASO_CRITICO |
   // MATERIAL_INMOVILIZADO | BRECHA_FISICO_ECONOMICO | PROVEEDOR_SIN_PAGAR |
-  // NOMINA_SIN_COSTO | IMPREVISTO_EXCESIVO | TRANSFERENCIA_PENDIENTE
+  // NOMINA_SIN_COSTO | IMPREVISTO_EXCESIVO | TRANSFERENCIA_PENDIENTE |
+  // VOLUMEN_EXCEDIDO (openspec: alertas-volumen-ejecutado-contratado — el
+  // AvanceFisico más reciente no RECHAZADO de un concepto tiene
+  // cantidad_acumulada > cantidad_presupuestada; severidad WARN)
   tipo          String    @db.VarChar(50)
   severidad     String    @db.VarChar(10)  // INFO | WARN | CRITICA
   titulo        String    @db.VarChar(200)

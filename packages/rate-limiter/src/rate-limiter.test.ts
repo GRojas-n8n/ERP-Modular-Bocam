@@ -140,6 +140,23 @@ test('con REDIS_URL configurado: usa RedisStore (createClient invocado con la ur
   assert.ok(sentCommands.length > 0, 'debe usar el cliente Redis (RedisStore) para contar peticiones, no MemoryStore');
 });
 
+test('con REDIS_URL configurado: llama unref() en el cliente Redis (no debe mantener vivo el proceso)', () => {
+  let unrefCalled = false;
+  const fakeClient: MinimalRedisClient = {
+    on: () => fakeClient,
+    connect: async () => fakeClient,
+    sendCommand: async () => 'OK',
+    unref: () => {
+      unrefCalled = true;
+    },
+  };
+
+  const deps: RateLimiterDeps = { createClient: () => fakeClient };
+  createRateLimiter({ max: 5, redisUrl: 'redis://fake-host:6379' }, deps);
+
+  assert.equal(unrefCalled, true, 'la conexión de rate-limiting no debe impedir que el proceso salga por sí mismo');
+});
+
 test('respuesta 429 tiene la forma estándar del proyecto con RATE_LIMIT_EXCEEDED', async () => {
   const middleware = createRateLimiter({ max: 1, windowMs: 60_000, redisUrl: undefined });
 
