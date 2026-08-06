@@ -39,6 +39,23 @@ export type Insumo = $Result.DefaultSelection<Prisma.$InsumoPayload>
  */
 export type PresupuestoBase = $Result.DefaultSelection<Prisma.$PresupuestoBasePayload>
 /**
+ * Model Capitulo
+ * Capítulo de un presupuesto: agrupación jerárquica de conceptos (WBS, tipo OPUS).
+ * Alcance por presupuesto (no por tenant como ConceptoCatalogo): la estructura de
+ * capítulos de una obra puede variar legítimamente entre obras del mismo tenant.
+ * Ver openspec/changes/wbs-jerarquico-conceptos/design.md Decision 1.
+ */
+export type Capitulo = $Result.DefaultSelection<Prisma.$CapituloPayload>
+/**
+ * Model ConceptoCatalogo
+ * Catálogo Maestro de Conceptos: reutilizable entre proyectos del mismo tenant.
+ * Mismo patrón que Insumo (único por tenant_id + clave). Solo referencia
+ * descripcion/unidad_medida para detectar divergencias al importar — NUNCA
+ * guarda precio_unitario ni cantidad (esos siempre vienen del presupuesto real).
+ * Ver design.md Decision 5.
+ */
+export type ConceptoCatalogo = $Result.DefaultSelection<Prisma.$ConceptoCatalogoPayload>
+/**
  * Model Concepto
  * Concepto de Obra: Línea o partida específica de un presupuesto.
  * Tabla transaccional hija, hereda tenant_id y proyecto_id del padre.
@@ -283,6 +300,26 @@ export class PrismaClient<
     * ```
     */
   get presupuestoBase(): Prisma.PresupuestoBaseDelegate<ExtArgs>;
+
+  /**
+   * `prisma.capitulo`: Exposes CRUD operations for the **Capitulo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Capitulos
+    * const capitulos = await prisma.capitulo.findMany()
+    * ```
+    */
+  get capitulo(): Prisma.CapituloDelegate<ExtArgs>;
+
+  /**
+   * `prisma.conceptoCatalogo`: Exposes CRUD operations for the **ConceptoCatalogo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ConceptoCatalogos
+    * const conceptoCatalogos = await prisma.conceptoCatalogo.findMany()
+    * ```
+    */
+  get conceptoCatalogo(): Prisma.ConceptoCatalogoDelegate<ExtArgs>;
 
   /**
    * `prisma.concepto`: Exposes CRUD operations for the **Concepto** model.
@@ -808,6 +845,8 @@ export namespace Prisma {
     ProyectoCostosConfig: 'ProyectoCostosConfig',
     Insumo: 'Insumo',
     PresupuestoBase: 'PresupuestoBase',
+    Capitulo: 'Capitulo',
+    ConceptoCatalogo: 'ConceptoCatalogo',
     Concepto: 'Concepto',
     ConceptoInsumo: 'ConceptoInsumo',
     SaldoPartida: 'SaldoPartida',
@@ -831,7 +870,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "transferenciaPartida" | "compraProyectada" | "fichaTecnicaInsumo" | "proyectoObraVinculado"
+      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "capitulo" | "conceptoCatalogo" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "transferenciaPartida" | "compraProyectada" | "fichaTecnicaInsumo" | "proyectoObraVinculado"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1112,6 +1151,146 @@ export namespace Prisma {
           count: {
             args: Prisma.PresupuestoBaseCountArgs<ExtArgs>
             result: $Utils.Optional<PresupuestoBaseCountAggregateOutputType> | number
+          }
+        }
+      }
+      Capitulo: {
+        payload: Prisma.$CapituloPayload<ExtArgs>
+        fields: Prisma.CapituloFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CapituloFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CapituloFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>
+          }
+          findFirst: {
+            args: Prisma.CapituloFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CapituloFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>
+          }
+          findMany: {
+            args: Prisma.CapituloFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>[]
+          }
+          create: {
+            args: Prisma.CapituloCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>
+          }
+          createMany: {
+            args: Prisma.CapituloCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CapituloCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>[]
+          }
+          delete: {
+            args: Prisma.CapituloDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>
+          }
+          update: {
+            args: Prisma.CapituloUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>
+          }
+          deleteMany: {
+            args: Prisma.CapituloDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CapituloUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CapituloUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapituloPayload>
+          }
+          aggregate: {
+            args: Prisma.CapituloAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCapitulo>
+          }
+          groupBy: {
+            args: Prisma.CapituloGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CapituloGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CapituloCountArgs<ExtArgs>
+            result: $Utils.Optional<CapituloCountAggregateOutputType> | number
+          }
+        }
+      }
+      ConceptoCatalogo: {
+        payload: Prisma.$ConceptoCatalogoPayload<ExtArgs>
+        fields: Prisma.ConceptoCatalogoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ConceptoCatalogoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ConceptoCatalogoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>
+          }
+          findFirst: {
+            args: Prisma.ConceptoCatalogoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ConceptoCatalogoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>
+          }
+          findMany: {
+            args: Prisma.ConceptoCatalogoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>[]
+          }
+          create: {
+            args: Prisma.ConceptoCatalogoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>
+          }
+          createMany: {
+            args: Prisma.ConceptoCatalogoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ConceptoCatalogoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>[]
+          }
+          delete: {
+            args: Prisma.ConceptoCatalogoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>
+          }
+          update: {
+            args: Prisma.ConceptoCatalogoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>
+          }
+          deleteMany: {
+            args: Prisma.ConceptoCatalogoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ConceptoCatalogoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ConceptoCatalogoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ConceptoCatalogoPayload>
+          }
+          aggregate: {
+            args: Prisma.ConceptoCatalogoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateConceptoCatalogo>
+          }
+          groupBy: {
+            args: Prisma.ConceptoCatalogoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ConceptoCatalogoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ConceptoCatalogoCountArgs<ExtArgs>
+            result: $Utils.Optional<ConceptoCatalogoCountAggregateOutputType> | number
           }
         }
       }
@@ -1899,10 +2078,12 @@ export namespace Prisma {
 
   export type PresupuestoBaseCountOutputType = {
     conceptos: number
+    capitulos: number
   }
 
   export type PresupuestoBaseCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conceptos?: boolean | PresupuestoBaseCountOutputTypeCountConceptosArgs
+    capitulos?: boolean | PresupuestoBaseCountOutputTypeCountCapitulosArgs
   }
 
   // Custom InputTypes
@@ -1920,6 +2101,44 @@ export namespace Prisma {
    * PresupuestoBaseCountOutputType without action
    */
   export type PresupuestoBaseCountOutputTypeCountConceptosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConceptoWhereInput
+  }
+
+  /**
+   * PresupuestoBaseCountOutputType without action
+   */
+  export type PresupuestoBaseCountOutputTypeCountCapitulosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CapituloWhereInput
+  }
+
+
+  /**
+   * Count Type CapituloCountOutputType
+   */
+
+  export type CapituloCountOutputType = {
+    conceptos: number
+  }
+
+  export type CapituloCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    conceptos?: boolean | CapituloCountOutputTypeCountConceptosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CapituloCountOutputType without action
+   */
+  export type CapituloCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapituloCountOutputType
+     */
+    select?: CapituloCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CapituloCountOutputType without action
+   */
+  export type CapituloCountOutputTypeCountConceptosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ConceptoWhereInput
   }
 
@@ -5202,6 +5421,7 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     conceptos?: boolean | PresupuestoBase$conceptosArgs<ExtArgs>
+    capitulos?: boolean | PresupuestoBase$capitulosArgs<ExtArgs>
     _count?: boolean | PresupuestoBaseCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["presupuestoBase"]>
 
@@ -5233,6 +5453,7 @@ export namespace Prisma {
 
   export type PresupuestoBaseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conceptos?: boolean | PresupuestoBase$conceptosArgs<ExtArgs>
+    capitulos?: boolean | PresupuestoBase$capitulosArgs<ExtArgs>
     _count?: boolean | PresupuestoBaseCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PresupuestoBaseIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -5241,6 +5462,7 @@ export namespace Prisma {
     name: "PresupuestoBase"
     objects: {
       conceptos: Prisma.$ConceptoPayload<ExtArgs>[]
+      capitulos: Prisma.$CapituloPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5618,6 +5840,7 @@ export namespace Prisma {
   export interface Prisma__PresupuestoBaseClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     conceptos<T extends PresupuestoBase$conceptosArgs<ExtArgs> = {}>(args?: Subset<T, PresupuestoBase$conceptosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoPayload<ExtArgs>, T, "findMany"> | Null>
+    capitulos<T extends PresupuestoBase$capitulosArgs<ExtArgs> = {}>(args?: Subset<T, PresupuestoBase$capitulosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5991,6 +6214,26 @@ export namespace Prisma {
   }
 
   /**
+   * PresupuestoBase.capitulos
+   */
+  export type PresupuestoBase$capitulosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    where?: CapituloWhereInput
+    orderBy?: CapituloOrderByWithRelationInput | CapituloOrderByWithRelationInput[]
+    cursor?: CapituloWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CapituloScalarFieldEnum | CapituloScalarFieldEnum[]
+  }
+
+  /**
    * PresupuestoBase without action
    */
   export type PresupuestoBaseDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6002,6 +6245,1949 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PresupuestoBaseInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Capitulo
+   */
+
+  export type AggregateCapitulo = {
+    _count: CapituloCountAggregateOutputType | null
+    _avg: CapituloAvgAggregateOutputType | null
+    _sum: CapituloSumAggregateOutputType | null
+    _min: CapituloMinAggregateOutputType | null
+    _max: CapituloMaxAggregateOutputType | null
+  }
+
+  export type CapituloAvgAggregateOutputType = {
+    orden: number | null
+  }
+
+  export type CapituloSumAggregateOutputType = {
+    orden: number | null
+  }
+
+  export type CapituloMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    presupuesto_id: string | null
+    clave: string | null
+    nombre: string | null
+    orden: number | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type CapituloMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    presupuesto_id: string | null
+    clave: string | null
+    nombre: string | null
+    orden: number | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type CapituloCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    presupuesto_id: number
+    clave: number
+    nombre: number
+    orden: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type CapituloAvgAggregateInputType = {
+    orden?: true
+  }
+
+  export type CapituloSumAggregateInputType = {
+    orden?: true
+  }
+
+  export type CapituloMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    presupuesto_id?: true
+    clave?: true
+    nombre?: true
+    orden?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type CapituloMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    presupuesto_id?: true
+    clave?: true
+    nombre?: true
+    orden?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type CapituloCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    presupuesto_id?: true
+    clave?: true
+    nombre?: true
+    orden?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type CapituloAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Capitulo to aggregate.
+     */
+    where?: CapituloWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Capitulos to fetch.
+     */
+    orderBy?: CapituloOrderByWithRelationInput | CapituloOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CapituloWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Capitulos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Capitulos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Capitulos
+    **/
+    _count?: true | CapituloCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CapituloAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CapituloSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CapituloMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CapituloMaxAggregateInputType
+  }
+
+  export type GetCapituloAggregateType<T extends CapituloAggregateArgs> = {
+        [P in keyof T & keyof AggregateCapitulo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCapitulo[P]>
+      : GetScalarType<T[P], AggregateCapitulo[P]>
+  }
+
+
+
+
+  export type CapituloGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CapituloWhereInput
+    orderBy?: CapituloOrderByWithAggregationInput | CapituloOrderByWithAggregationInput[]
+    by: CapituloScalarFieldEnum[] | CapituloScalarFieldEnum
+    having?: CapituloScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CapituloCountAggregateInputType | true
+    _avg?: CapituloAvgAggregateInputType
+    _sum?: CapituloSumAggregateInputType
+    _min?: CapituloMinAggregateInputType
+    _max?: CapituloMaxAggregateInputType
+  }
+
+  export type CapituloGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    nombre: string
+    orden: number
+    created_at: Date
+    updated_at: Date
+    _count: CapituloCountAggregateOutputType | null
+    _avg: CapituloAvgAggregateOutputType | null
+    _sum: CapituloSumAggregateOutputType | null
+    _min: CapituloMinAggregateOutputType | null
+    _max: CapituloMaxAggregateOutputType | null
+  }
+
+  type GetCapituloGroupByPayload<T extends CapituloGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CapituloGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CapituloGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CapituloGroupByOutputType[P]>
+            : GetScalarType<T[P], CapituloGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CapituloSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    presupuesto_id?: boolean
+    clave?: boolean
+    nombre?: boolean
+    orden?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    conceptos?: boolean | Capitulo$conceptosArgs<ExtArgs>
+    _count?: boolean | CapituloCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["capitulo"]>
+
+  export type CapituloSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    presupuesto_id?: boolean
+    clave?: boolean
+    nombre?: boolean
+    orden?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+    presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["capitulo"]>
+
+  export type CapituloSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    presupuesto_id?: boolean
+    clave?: boolean
+    nombre?: boolean
+    orden?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+  export type CapituloInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    conceptos?: boolean | Capitulo$conceptosArgs<ExtArgs>
+    _count?: boolean | CapituloCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CapituloIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+  }
+
+  export type $CapituloPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Capitulo"
+    objects: {
+      presupuesto: Prisma.$PresupuestoBasePayload<ExtArgs>
+      conceptos: Prisma.$ConceptoPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      presupuesto_id: string
+      clave: string
+      nombre: string
+      orden: number
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["capitulo"]>
+    composites: {}
+  }
+
+  type CapituloGetPayload<S extends boolean | null | undefined | CapituloDefaultArgs> = $Result.GetResult<Prisma.$CapituloPayload, S>
+
+  type CapituloCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CapituloFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CapituloCountAggregateInputType | true
+    }
+
+  export interface CapituloDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Capitulo'], meta: { name: 'Capitulo' } }
+    /**
+     * Find zero or one Capitulo that matches the filter.
+     * @param {CapituloFindUniqueArgs} args - Arguments to find a Capitulo
+     * @example
+     * // Get one Capitulo
+     * const capitulo = await prisma.capitulo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CapituloFindUniqueArgs>(args: SelectSubset<T, CapituloFindUniqueArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Capitulo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CapituloFindUniqueOrThrowArgs} args - Arguments to find a Capitulo
+     * @example
+     * // Get one Capitulo
+     * const capitulo = await prisma.capitulo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CapituloFindUniqueOrThrowArgs>(args: SelectSubset<T, CapituloFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Capitulo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloFindFirstArgs} args - Arguments to find a Capitulo
+     * @example
+     * // Get one Capitulo
+     * const capitulo = await prisma.capitulo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CapituloFindFirstArgs>(args?: SelectSubset<T, CapituloFindFirstArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Capitulo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloFindFirstOrThrowArgs} args - Arguments to find a Capitulo
+     * @example
+     * // Get one Capitulo
+     * const capitulo = await prisma.capitulo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CapituloFindFirstOrThrowArgs>(args?: SelectSubset<T, CapituloFindFirstOrThrowArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Capitulos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Capitulos
+     * const capitulos = await prisma.capitulo.findMany()
+     * 
+     * // Get first 10 Capitulos
+     * const capitulos = await prisma.capitulo.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const capituloWithIdOnly = await prisma.capitulo.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CapituloFindManyArgs>(args?: SelectSubset<T, CapituloFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Capitulo.
+     * @param {CapituloCreateArgs} args - Arguments to create a Capitulo.
+     * @example
+     * // Create one Capitulo
+     * const Capitulo = await prisma.capitulo.create({
+     *   data: {
+     *     // ... data to create a Capitulo
+     *   }
+     * })
+     * 
+     */
+    create<T extends CapituloCreateArgs>(args: SelectSubset<T, CapituloCreateArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Capitulos.
+     * @param {CapituloCreateManyArgs} args - Arguments to create many Capitulos.
+     * @example
+     * // Create many Capitulos
+     * const capitulo = await prisma.capitulo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CapituloCreateManyArgs>(args?: SelectSubset<T, CapituloCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Capitulos and returns the data saved in the database.
+     * @param {CapituloCreateManyAndReturnArgs} args - Arguments to create many Capitulos.
+     * @example
+     * // Create many Capitulos
+     * const capitulo = await prisma.capitulo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Capitulos and only return the `id`
+     * const capituloWithIdOnly = await prisma.capitulo.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CapituloCreateManyAndReturnArgs>(args?: SelectSubset<T, CapituloCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Capitulo.
+     * @param {CapituloDeleteArgs} args - Arguments to delete one Capitulo.
+     * @example
+     * // Delete one Capitulo
+     * const Capitulo = await prisma.capitulo.delete({
+     *   where: {
+     *     // ... filter to delete one Capitulo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CapituloDeleteArgs>(args: SelectSubset<T, CapituloDeleteArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Capitulo.
+     * @param {CapituloUpdateArgs} args - Arguments to update one Capitulo.
+     * @example
+     * // Update one Capitulo
+     * const capitulo = await prisma.capitulo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CapituloUpdateArgs>(args: SelectSubset<T, CapituloUpdateArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Capitulos.
+     * @param {CapituloDeleteManyArgs} args - Arguments to filter Capitulos to delete.
+     * @example
+     * // Delete a few Capitulos
+     * const { count } = await prisma.capitulo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CapituloDeleteManyArgs>(args?: SelectSubset<T, CapituloDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Capitulos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Capitulos
+     * const capitulo = await prisma.capitulo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CapituloUpdateManyArgs>(args: SelectSubset<T, CapituloUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Capitulo.
+     * @param {CapituloUpsertArgs} args - Arguments to update or create a Capitulo.
+     * @example
+     * // Update or create a Capitulo
+     * const capitulo = await prisma.capitulo.upsert({
+     *   create: {
+     *     // ... data to create a Capitulo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Capitulo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CapituloUpsertArgs>(args: SelectSubset<T, CapituloUpsertArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Capitulos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloCountArgs} args - Arguments to filter Capitulos to count.
+     * @example
+     * // Count the number of Capitulos
+     * const count = await prisma.capitulo.count({
+     *   where: {
+     *     // ... the filter for the Capitulos we want to count
+     *   }
+     * })
+    **/
+    count<T extends CapituloCountArgs>(
+      args?: Subset<T, CapituloCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CapituloCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Capitulo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CapituloAggregateArgs>(args: Subset<T, CapituloAggregateArgs>): Prisma.PrismaPromise<GetCapituloAggregateType<T>>
+
+    /**
+     * Group by Capitulo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapituloGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CapituloGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CapituloGroupByArgs['orderBy'] }
+        : { orderBy?: CapituloGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CapituloGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCapituloGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Capitulo model
+   */
+  readonly fields: CapituloFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Capitulo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CapituloClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    presupuesto<T extends PresupuestoBaseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PresupuestoBaseDefaultArgs<ExtArgs>>): Prisma__PresupuestoBaseClient<$Result.GetResult<Prisma.$PresupuestoBasePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    conceptos<T extends Capitulo$conceptosArgs<ExtArgs> = {}>(args?: Subset<T, Capitulo$conceptosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Capitulo model
+   */ 
+  interface CapituloFieldRefs {
+    readonly id: FieldRef<"Capitulo", 'String'>
+    readonly tenant_id: FieldRef<"Capitulo", 'String'>
+    readonly proyecto_id: FieldRef<"Capitulo", 'String'>
+    readonly presupuesto_id: FieldRef<"Capitulo", 'String'>
+    readonly clave: FieldRef<"Capitulo", 'String'>
+    readonly nombre: FieldRef<"Capitulo", 'String'>
+    readonly orden: FieldRef<"Capitulo", 'Int'>
+    readonly created_at: FieldRef<"Capitulo", 'DateTime'>
+    readonly updated_at: FieldRef<"Capitulo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Capitulo findUnique
+   */
+  export type CapituloFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * Filter, which Capitulo to fetch.
+     */
+    where: CapituloWhereUniqueInput
+  }
+
+  /**
+   * Capitulo findUniqueOrThrow
+   */
+  export type CapituloFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * Filter, which Capitulo to fetch.
+     */
+    where: CapituloWhereUniqueInput
+  }
+
+  /**
+   * Capitulo findFirst
+   */
+  export type CapituloFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * Filter, which Capitulo to fetch.
+     */
+    where?: CapituloWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Capitulos to fetch.
+     */
+    orderBy?: CapituloOrderByWithRelationInput | CapituloOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Capitulos.
+     */
+    cursor?: CapituloWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Capitulos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Capitulos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Capitulos.
+     */
+    distinct?: CapituloScalarFieldEnum | CapituloScalarFieldEnum[]
+  }
+
+  /**
+   * Capitulo findFirstOrThrow
+   */
+  export type CapituloFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * Filter, which Capitulo to fetch.
+     */
+    where?: CapituloWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Capitulos to fetch.
+     */
+    orderBy?: CapituloOrderByWithRelationInput | CapituloOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Capitulos.
+     */
+    cursor?: CapituloWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Capitulos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Capitulos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Capitulos.
+     */
+    distinct?: CapituloScalarFieldEnum | CapituloScalarFieldEnum[]
+  }
+
+  /**
+   * Capitulo findMany
+   */
+  export type CapituloFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * Filter, which Capitulos to fetch.
+     */
+    where?: CapituloWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Capitulos to fetch.
+     */
+    orderBy?: CapituloOrderByWithRelationInput | CapituloOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Capitulos.
+     */
+    cursor?: CapituloWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Capitulos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Capitulos.
+     */
+    skip?: number
+    distinct?: CapituloScalarFieldEnum | CapituloScalarFieldEnum[]
+  }
+
+  /**
+   * Capitulo create
+   */
+  export type CapituloCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Capitulo.
+     */
+    data: XOR<CapituloCreateInput, CapituloUncheckedCreateInput>
+  }
+
+  /**
+   * Capitulo createMany
+   */
+  export type CapituloCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Capitulos.
+     */
+    data: CapituloCreateManyInput | CapituloCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Capitulo createManyAndReturn
+   */
+  export type CapituloCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Capitulos.
+     */
+    data: CapituloCreateManyInput | CapituloCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Capitulo update
+   */
+  export type CapituloUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Capitulo.
+     */
+    data: XOR<CapituloUpdateInput, CapituloUncheckedUpdateInput>
+    /**
+     * Choose, which Capitulo to update.
+     */
+    where: CapituloWhereUniqueInput
+  }
+
+  /**
+   * Capitulo updateMany
+   */
+  export type CapituloUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Capitulos.
+     */
+    data: XOR<CapituloUpdateManyMutationInput, CapituloUncheckedUpdateManyInput>
+    /**
+     * Filter which Capitulos to update
+     */
+    where?: CapituloWhereInput
+  }
+
+  /**
+   * Capitulo upsert
+   */
+  export type CapituloUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Capitulo to update in case it exists.
+     */
+    where: CapituloWhereUniqueInput
+    /**
+     * In case the Capitulo found by the `where` argument doesn't exist, create a new Capitulo with this data.
+     */
+    create: XOR<CapituloCreateInput, CapituloUncheckedCreateInput>
+    /**
+     * In case the Capitulo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CapituloUpdateInput, CapituloUncheckedUpdateInput>
+  }
+
+  /**
+   * Capitulo delete
+   */
+  export type CapituloDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    /**
+     * Filter which Capitulo to delete.
+     */
+    where: CapituloWhereUniqueInput
+  }
+
+  /**
+   * Capitulo deleteMany
+   */
+  export type CapituloDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Capitulos to delete
+     */
+    where?: CapituloWhereInput
+  }
+
+  /**
+   * Capitulo.conceptos
+   */
+  export type Capitulo$conceptosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Concepto
+     */
+    select?: ConceptoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ConceptoInclude<ExtArgs> | null
+    where?: ConceptoWhereInput
+    orderBy?: ConceptoOrderByWithRelationInput | ConceptoOrderByWithRelationInput[]
+    cursor?: ConceptoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ConceptoScalarFieldEnum | ConceptoScalarFieldEnum[]
+  }
+
+  /**
+   * Capitulo without action
+   */
+  export type CapituloDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ConceptoCatalogo
+   */
+
+  export type AggregateConceptoCatalogo = {
+    _count: ConceptoCatalogoCountAggregateOutputType | null
+    _min: ConceptoCatalogoMinAggregateOutputType | null
+    _max: ConceptoCatalogoMaxAggregateOutputType | null
+  }
+
+  export type ConceptoCatalogoMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    clave: string | null
+    descripcion: string | null
+    unidad_medida: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ConceptoCatalogoMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    clave: string | null
+    descripcion: string | null
+    unidad_medida: string | null
+    created_at: Date | null
+    updated_at: Date | null
+  }
+
+  export type ConceptoCatalogoCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    clave: number
+    descripcion: number
+    unidad_medida: number
+    created_at: number
+    updated_at: number
+    _all: number
+  }
+
+
+  export type ConceptoCatalogoMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    clave?: true
+    descripcion?: true
+    unidad_medida?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ConceptoCatalogoMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    clave?: true
+    descripcion?: true
+    unidad_medida?: true
+    created_at?: true
+    updated_at?: true
+  }
+
+  export type ConceptoCatalogoCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    clave?: true
+    descripcion?: true
+    unidad_medida?: true
+    created_at?: true
+    updated_at?: true
+    _all?: true
+  }
+
+  export type ConceptoCatalogoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConceptoCatalogo to aggregate.
+     */
+    where?: ConceptoCatalogoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoCatalogos to fetch.
+     */
+    orderBy?: ConceptoCatalogoOrderByWithRelationInput | ConceptoCatalogoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ConceptoCatalogoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoCatalogos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoCatalogos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ConceptoCatalogos
+    **/
+    _count?: true | ConceptoCatalogoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ConceptoCatalogoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ConceptoCatalogoMaxAggregateInputType
+  }
+
+  export type GetConceptoCatalogoAggregateType<T extends ConceptoCatalogoAggregateArgs> = {
+        [P in keyof T & keyof AggregateConceptoCatalogo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateConceptoCatalogo[P]>
+      : GetScalarType<T[P], AggregateConceptoCatalogo[P]>
+  }
+
+
+
+
+  export type ConceptoCatalogoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ConceptoCatalogoWhereInput
+    orderBy?: ConceptoCatalogoOrderByWithAggregationInput | ConceptoCatalogoOrderByWithAggregationInput[]
+    by: ConceptoCatalogoScalarFieldEnum[] | ConceptoCatalogoScalarFieldEnum
+    having?: ConceptoCatalogoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ConceptoCatalogoCountAggregateInputType | true
+    _min?: ConceptoCatalogoMinAggregateInputType
+    _max?: ConceptoCatalogoMaxAggregateInputType
+  }
+
+  export type ConceptoCatalogoGroupByOutputType = {
+    id: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    created_at: Date
+    updated_at: Date
+    _count: ConceptoCatalogoCountAggregateOutputType | null
+    _min: ConceptoCatalogoMinAggregateOutputType | null
+    _max: ConceptoCatalogoMaxAggregateOutputType | null
+  }
+
+  type GetConceptoCatalogoGroupByPayload<T extends ConceptoCatalogoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ConceptoCatalogoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ConceptoCatalogoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ConceptoCatalogoGroupByOutputType[P]>
+            : GetScalarType<T[P], ConceptoCatalogoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ConceptoCatalogoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    clave?: boolean
+    descripcion?: boolean
+    unidad_medida?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["conceptoCatalogo"]>
+
+  export type ConceptoCatalogoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    clave?: boolean
+    descripcion?: boolean
+    unidad_medida?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }, ExtArgs["result"]["conceptoCatalogo"]>
+
+  export type ConceptoCatalogoSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    clave?: boolean
+    descripcion?: boolean
+    unidad_medida?: boolean
+    created_at?: boolean
+    updated_at?: boolean
+  }
+
+
+  export type $ConceptoCatalogoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ConceptoCatalogo"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      clave: string
+      descripcion: string
+      unidad_medida: string
+      created_at: Date
+      updated_at: Date
+    }, ExtArgs["result"]["conceptoCatalogo"]>
+    composites: {}
+  }
+
+  type ConceptoCatalogoGetPayload<S extends boolean | null | undefined | ConceptoCatalogoDefaultArgs> = $Result.GetResult<Prisma.$ConceptoCatalogoPayload, S>
+
+  type ConceptoCatalogoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ConceptoCatalogoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ConceptoCatalogoCountAggregateInputType | true
+    }
+
+  export interface ConceptoCatalogoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ConceptoCatalogo'], meta: { name: 'ConceptoCatalogo' } }
+    /**
+     * Find zero or one ConceptoCatalogo that matches the filter.
+     * @param {ConceptoCatalogoFindUniqueArgs} args - Arguments to find a ConceptoCatalogo
+     * @example
+     * // Get one ConceptoCatalogo
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ConceptoCatalogoFindUniqueArgs>(args: SelectSubset<T, ConceptoCatalogoFindUniqueArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ConceptoCatalogo that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ConceptoCatalogoFindUniqueOrThrowArgs} args - Arguments to find a ConceptoCatalogo
+     * @example
+     * // Get one ConceptoCatalogo
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ConceptoCatalogoFindUniqueOrThrowArgs>(args: SelectSubset<T, ConceptoCatalogoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ConceptoCatalogo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoFindFirstArgs} args - Arguments to find a ConceptoCatalogo
+     * @example
+     * // Get one ConceptoCatalogo
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ConceptoCatalogoFindFirstArgs>(args?: SelectSubset<T, ConceptoCatalogoFindFirstArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ConceptoCatalogo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoFindFirstOrThrowArgs} args - Arguments to find a ConceptoCatalogo
+     * @example
+     * // Get one ConceptoCatalogo
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ConceptoCatalogoFindFirstOrThrowArgs>(args?: SelectSubset<T, ConceptoCatalogoFindFirstOrThrowArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ConceptoCatalogos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ConceptoCatalogos
+     * const conceptoCatalogos = await prisma.conceptoCatalogo.findMany()
+     * 
+     * // Get first 10 ConceptoCatalogos
+     * const conceptoCatalogos = await prisma.conceptoCatalogo.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const conceptoCatalogoWithIdOnly = await prisma.conceptoCatalogo.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ConceptoCatalogoFindManyArgs>(args?: SelectSubset<T, ConceptoCatalogoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ConceptoCatalogo.
+     * @param {ConceptoCatalogoCreateArgs} args - Arguments to create a ConceptoCatalogo.
+     * @example
+     * // Create one ConceptoCatalogo
+     * const ConceptoCatalogo = await prisma.conceptoCatalogo.create({
+     *   data: {
+     *     // ... data to create a ConceptoCatalogo
+     *   }
+     * })
+     * 
+     */
+    create<T extends ConceptoCatalogoCreateArgs>(args: SelectSubset<T, ConceptoCatalogoCreateArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ConceptoCatalogos.
+     * @param {ConceptoCatalogoCreateManyArgs} args - Arguments to create many ConceptoCatalogos.
+     * @example
+     * // Create many ConceptoCatalogos
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ConceptoCatalogoCreateManyArgs>(args?: SelectSubset<T, ConceptoCatalogoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ConceptoCatalogos and returns the data saved in the database.
+     * @param {ConceptoCatalogoCreateManyAndReturnArgs} args - Arguments to create many ConceptoCatalogos.
+     * @example
+     * // Create many ConceptoCatalogos
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ConceptoCatalogos and only return the `id`
+     * const conceptoCatalogoWithIdOnly = await prisma.conceptoCatalogo.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ConceptoCatalogoCreateManyAndReturnArgs>(args?: SelectSubset<T, ConceptoCatalogoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ConceptoCatalogo.
+     * @param {ConceptoCatalogoDeleteArgs} args - Arguments to delete one ConceptoCatalogo.
+     * @example
+     * // Delete one ConceptoCatalogo
+     * const ConceptoCatalogo = await prisma.conceptoCatalogo.delete({
+     *   where: {
+     *     // ... filter to delete one ConceptoCatalogo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ConceptoCatalogoDeleteArgs>(args: SelectSubset<T, ConceptoCatalogoDeleteArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ConceptoCatalogo.
+     * @param {ConceptoCatalogoUpdateArgs} args - Arguments to update one ConceptoCatalogo.
+     * @example
+     * // Update one ConceptoCatalogo
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ConceptoCatalogoUpdateArgs>(args: SelectSubset<T, ConceptoCatalogoUpdateArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ConceptoCatalogos.
+     * @param {ConceptoCatalogoDeleteManyArgs} args - Arguments to filter ConceptoCatalogos to delete.
+     * @example
+     * // Delete a few ConceptoCatalogos
+     * const { count } = await prisma.conceptoCatalogo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ConceptoCatalogoDeleteManyArgs>(args?: SelectSubset<T, ConceptoCatalogoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ConceptoCatalogos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ConceptoCatalogos
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ConceptoCatalogoUpdateManyArgs>(args: SelectSubset<T, ConceptoCatalogoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ConceptoCatalogo.
+     * @param {ConceptoCatalogoUpsertArgs} args - Arguments to update or create a ConceptoCatalogo.
+     * @example
+     * // Update or create a ConceptoCatalogo
+     * const conceptoCatalogo = await prisma.conceptoCatalogo.upsert({
+     *   create: {
+     *     // ... data to create a ConceptoCatalogo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ConceptoCatalogo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ConceptoCatalogoUpsertArgs>(args: SelectSubset<T, ConceptoCatalogoUpsertArgs<ExtArgs>>): Prisma__ConceptoCatalogoClient<$Result.GetResult<Prisma.$ConceptoCatalogoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ConceptoCatalogos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoCountArgs} args - Arguments to filter ConceptoCatalogos to count.
+     * @example
+     * // Count the number of ConceptoCatalogos
+     * const count = await prisma.conceptoCatalogo.count({
+     *   where: {
+     *     // ... the filter for the ConceptoCatalogos we want to count
+     *   }
+     * })
+    **/
+    count<T extends ConceptoCatalogoCountArgs>(
+      args?: Subset<T, ConceptoCatalogoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ConceptoCatalogoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ConceptoCatalogo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ConceptoCatalogoAggregateArgs>(args: Subset<T, ConceptoCatalogoAggregateArgs>): Prisma.PrismaPromise<GetConceptoCatalogoAggregateType<T>>
+
+    /**
+     * Group by ConceptoCatalogo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ConceptoCatalogoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ConceptoCatalogoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ConceptoCatalogoGroupByArgs['orderBy'] }
+        : { orderBy?: ConceptoCatalogoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ConceptoCatalogoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetConceptoCatalogoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ConceptoCatalogo model
+   */
+  readonly fields: ConceptoCatalogoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ConceptoCatalogo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ConceptoCatalogoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ConceptoCatalogo model
+   */ 
+  interface ConceptoCatalogoFieldRefs {
+    readonly id: FieldRef<"ConceptoCatalogo", 'String'>
+    readonly tenant_id: FieldRef<"ConceptoCatalogo", 'String'>
+    readonly clave: FieldRef<"ConceptoCatalogo", 'String'>
+    readonly descripcion: FieldRef<"ConceptoCatalogo", 'String'>
+    readonly unidad_medida: FieldRef<"ConceptoCatalogo", 'String'>
+    readonly created_at: FieldRef<"ConceptoCatalogo", 'DateTime'>
+    readonly updated_at: FieldRef<"ConceptoCatalogo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ConceptoCatalogo findUnique
+   */
+  export type ConceptoCatalogoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConceptoCatalogo to fetch.
+     */
+    where: ConceptoCatalogoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoCatalogo findUniqueOrThrow
+   */
+  export type ConceptoCatalogoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConceptoCatalogo to fetch.
+     */
+    where: ConceptoCatalogoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoCatalogo findFirst
+   */
+  export type ConceptoCatalogoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConceptoCatalogo to fetch.
+     */
+    where?: ConceptoCatalogoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoCatalogos to fetch.
+     */
+    orderBy?: ConceptoCatalogoOrderByWithRelationInput | ConceptoCatalogoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConceptoCatalogos.
+     */
+    cursor?: ConceptoCatalogoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoCatalogos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoCatalogos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConceptoCatalogos.
+     */
+    distinct?: ConceptoCatalogoScalarFieldEnum | ConceptoCatalogoScalarFieldEnum[]
+  }
+
+  /**
+   * ConceptoCatalogo findFirstOrThrow
+   */
+  export type ConceptoCatalogoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConceptoCatalogo to fetch.
+     */
+    where?: ConceptoCatalogoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoCatalogos to fetch.
+     */
+    orderBy?: ConceptoCatalogoOrderByWithRelationInput | ConceptoCatalogoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ConceptoCatalogos.
+     */
+    cursor?: ConceptoCatalogoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoCatalogos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoCatalogos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ConceptoCatalogos.
+     */
+    distinct?: ConceptoCatalogoScalarFieldEnum | ConceptoCatalogoScalarFieldEnum[]
+  }
+
+  /**
+   * ConceptoCatalogo findMany
+   */
+  export type ConceptoCatalogoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * Filter, which ConceptoCatalogos to fetch.
+     */
+    where?: ConceptoCatalogoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ConceptoCatalogos to fetch.
+     */
+    orderBy?: ConceptoCatalogoOrderByWithRelationInput | ConceptoCatalogoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ConceptoCatalogos.
+     */
+    cursor?: ConceptoCatalogoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ConceptoCatalogos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ConceptoCatalogos.
+     */
+    skip?: number
+    distinct?: ConceptoCatalogoScalarFieldEnum | ConceptoCatalogoScalarFieldEnum[]
+  }
+
+  /**
+   * ConceptoCatalogo create
+   */
+  export type ConceptoCatalogoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a ConceptoCatalogo.
+     */
+    data: XOR<ConceptoCatalogoCreateInput, ConceptoCatalogoUncheckedCreateInput>
+  }
+
+  /**
+   * ConceptoCatalogo createMany
+   */
+  export type ConceptoCatalogoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ConceptoCatalogos.
+     */
+    data: ConceptoCatalogoCreateManyInput | ConceptoCatalogoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConceptoCatalogo createManyAndReturn
+   */
+  export type ConceptoCatalogoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ConceptoCatalogos.
+     */
+    data: ConceptoCatalogoCreateManyInput | ConceptoCatalogoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ConceptoCatalogo update
+   */
+  export type ConceptoCatalogoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a ConceptoCatalogo.
+     */
+    data: XOR<ConceptoCatalogoUpdateInput, ConceptoCatalogoUncheckedUpdateInput>
+    /**
+     * Choose, which ConceptoCatalogo to update.
+     */
+    where: ConceptoCatalogoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoCatalogo updateMany
+   */
+  export type ConceptoCatalogoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ConceptoCatalogos.
+     */
+    data: XOR<ConceptoCatalogoUpdateManyMutationInput, ConceptoCatalogoUncheckedUpdateManyInput>
+    /**
+     * Filter which ConceptoCatalogos to update
+     */
+    where?: ConceptoCatalogoWhereInput
+  }
+
+  /**
+   * ConceptoCatalogo upsert
+   */
+  export type ConceptoCatalogoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the ConceptoCatalogo to update in case it exists.
+     */
+    where: ConceptoCatalogoWhereUniqueInput
+    /**
+     * In case the ConceptoCatalogo found by the `where` argument doesn't exist, create a new ConceptoCatalogo with this data.
+     */
+    create: XOR<ConceptoCatalogoCreateInput, ConceptoCatalogoUncheckedCreateInput>
+    /**
+     * In case the ConceptoCatalogo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ConceptoCatalogoUpdateInput, ConceptoCatalogoUncheckedUpdateInput>
+  }
+
+  /**
+   * ConceptoCatalogo delete
+   */
+  export type ConceptoCatalogoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
+    /**
+     * Filter which ConceptoCatalogo to delete.
+     */
+    where: ConceptoCatalogoWhereUniqueInput
+  }
+
+  /**
+   * ConceptoCatalogo deleteMany
+   */
+  export type ConceptoCatalogoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ConceptoCatalogos to delete
+     */
+    where?: ConceptoCatalogoWhereInput
+  }
+
+  /**
+   * ConceptoCatalogo without action
+   */
+  export type ConceptoCatalogoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ConceptoCatalogo
+     */
+    select?: ConceptoCatalogoSelect<ExtArgs> | null
   }
 
 
@@ -6034,6 +8220,7 @@ export namespace Prisma {
     tenant_id: string | null
     proyecto_id: string | null
     presupuesto_id: string | null
+    capitulo_id: string | null
     clave: string | null
     descripcion: string | null
     unidad_medida: string | null
@@ -6049,6 +8236,7 @@ export namespace Prisma {
     tenant_id: string | null
     proyecto_id: string | null
     presupuesto_id: string | null
+    capitulo_id: string | null
     clave: string | null
     descripcion: string | null
     unidad_medida: string | null
@@ -6064,6 +8252,7 @@ export namespace Prisma {
     tenant_id: number
     proyecto_id: number
     presupuesto_id: number
+    capitulo_id: number
     clave: number
     descripcion: number
     unidad_medida: number
@@ -6093,6 +8282,7 @@ export namespace Prisma {
     tenant_id?: true
     proyecto_id?: true
     presupuesto_id?: true
+    capitulo_id?: true
     clave?: true
     descripcion?: true
     unidad_medida?: true
@@ -6108,6 +8298,7 @@ export namespace Prisma {
     tenant_id?: true
     proyecto_id?: true
     presupuesto_id?: true
+    capitulo_id?: true
     clave?: true
     descripcion?: true
     unidad_medida?: true
@@ -6123,6 +8314,7 @@ export namespace Prisma {
     tenant_id?: true
     proyecto_id?: true
     presupuesto_id?: true
+    capitulo_id?: true
     clave?: true
     descripcion?: true
     unidad_medida?: true
@@ -6225,6 +8417,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     presupuesto_id: string
+    capitulo_id: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -6259,6 +8452,7 @@ export namespace Prisma {
     tenant_id?: boolean
     proyecto_id?: boolean
     presupuesto_id?: boolean
+    capitulo_id?: boolean
     clave?: boolean
     descripcion?: boolean
     unidad_medida?: boolean
@@ -6268,6 +8462,7 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    capitulo?: boolean | Concepto$capituloArgs<ExtArgs>
     insumos?: boolean | Concepto$insumosArgs<ExtArgs>
     _count?: boolean | ConceptoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["concepto"]>
@@ -6277,6 +8472,7 @@ export namespace Prisma {
     tenant_id?: boolean
     proyecto_id?: boolean
     presupuesto_id?: boolean
+    capitulo_id?: boolean
     clave?: boolean
     descripcion?: boolean
     unidad_medida?: boolean
@@ -6286,6 +8482,7 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    capitulo?: boolean | Concepto$capituloArgs<ExtArgs>
   }, ExtArgs["result"]["concepto"]>
 
   export type ConceptoSelectScalar = {
@@ -6293,6 +8490,7 @@ export namespace Prisma {
     tenant_id?: boolean
     proyecto_id?: boolean
     presupuesto_id?: boolean
+    capitulo_id?: boolean
     clave?: boolean
     descripcion?: boolean
     unidad_medida?: boolean
@@ -6305,17 +8503,20 @@ export namespace Prisma {
 
   export type ConceptoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    capitulo?: boolean | Concepto$capituloArgs<ExtArgs>
     insumos?: boolean | Concepto$insumosArgs<ExtArgs>
     _count?: boolean | ConceptoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ConceptoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     presupuesto?: boolean | PresupuestoBaseDefaultArgs<ExtArgs>
+    capitulo?: boolean | Concepto$capituloArgs<ExtArgs>
   }
 
   export type $ConceptoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Concepto"
     objects: {
       presupuesto: Prisma.$PresupuestoBasePayload<ExtArgs>
+      capitulo: Prisma.$CapituloPayload<ExtArgs> | null
       insumos: Prisma.$ConceptoInsumoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -6323,6 +8524,11 @@ export namespace Prisma {
       tenant_id: string
       proyecto_id: string
       presupuesto_id: string
+      /**
+       * Capítulo al que pertenece este concepto (WBS). Nullable: los conceptos
+       * históricos y los importados sin columna de capítulo quedan sin agrupar.
+       */
+      capitulo_id: string | null
       clave: string
       descripcion: string
       unidad_medida: string
@@ -6696,6 +8902,7 @@ export namespace Prisma {
   export interface Prisma__ConceptoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     presupuesto<T extends PresupuestoBaseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PresupuestoBaseDefaultArgs<ExtArgs>>): Prisma__PresupuestoBaseClient<$Result.GetResult<Prisma.$PresupuestoBasePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    capitulo<T extends Concepto$capituloArgs<ExtArgs> = {}>(args?: Subset<T, Concepto$capituloArgs<ExtArgs>>): Prisma__CapituloClient<$Result.GetResult<Prisma.$CapituloPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     insumos<T extends Concepto$insumosArgs<ExtArgs> = {}>(args?: Subset<T, Concepto$insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -6730,6 +8937,7 @@ export namespace Prisma {
     readonly tenant_id: FieldRef<"Concepto", 'String'>
     readonly proyecto_id: FieldRef<"Concepto", 'String'>
     readonly presupuesto_id: FieldRef<"Concepto", 'String'>
+    readonly capitulo_id: FieldRef<"Concepto", 'String'>
     readonly clave: FieldRef<"Concepto", 'String'>
     readonly descripcion: FieldRef<"Concepto", 'String'>
     readonly unidad_medida: FieldRef<"Concepto", 'String'>
@@ -7053,6 +9261,21 @@ export namespace Prisma {
      * Filter which Conceptos to delete
      */
     where?: ConceptoWhereInput
+  }
+
+  /**
+   * Concepto.capitulo
+   */
+  export type Concepto$capituloArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Capitulo
+     */
+    select?: CapituloSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CapituloInclude<ExtArgs> | null
+    where?: CapituloWhereInput
   }
 
   /**
@@ -14488,11 +16711,40 @@ export namespace Prisma {
   export type PresupuestoBaseScalarFieldEnum = (typeof PresupuestoBaseScalarFieldEnum)[keyof typeof PresupuestoBaseScalarFieldEnum]
 
 
+  export const CapituloScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    presupuesto_id: 'presupuesto_id',
+    clave: 'clave',
+    nombre: 'nombre',
+    orden: 'orden',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type CapituloScalarFieldEnum = (typeof CapituloScalarFieldEnum)[keyof typeof CapituloScalarFieldEnum]
+
+
+  export const ConceptoCatalogoScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    clave: 'clave',
+    descripcion: 'descripcion',
+    unidad_medida: 'unidad_medida',
+    created_at: 'created_at',
+    updated_at: 'updated_at'
+  };
+
+  export type ConceptoCatalogoScalarFieldEnum = (typeof ConceptoCatalogoScalarFieldEnum)[keyof typeof ConceptoCatalogoScalarFieldEnum]
+
+
   export const ConceptoScalarFieldEnum: {
     id: 'id',
     tenant_id: 'tenant_id',
     proyecto_id: 'proyecto_id',
     presupuesto_id: 'presupuesto_id',
+    capitulo_id: 'capitulo_id',
     clave: 'clave',
     descripcion: 'descripcion',
     unidad_medida: 'unidad_medida',
@@ -15018,6 +17270,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     updated_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     conceptos?: ConceptoListRelationFilter
+    capitulos?: CapituloListRelationFilter
   }
 
   export type PresupuestoBaseOrderByWithRelationInput = {
@@ -15032,6 +17285,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     conceptos?: ConceptoOrderByRelationAggregateInput
+    capitulos?: CapituloOrderByRelationAggregateInput
   }
 
   export type PresupuestoBaseWhereUniqueInput = Prisma.AtLeast<{
@@ -15049,6 +17303,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     updated_at?: DateTimeFilter<"PresupuestoBase"> | Date | string
     conceptos?: ConceptoListRelationFilter
+    capitulos?: CapituloListRelationFilter
   }, "id">
 
   export type PresupuestoBaseOrderByWithAggregationInput = {
@@ -15085,6 +17340,150 @@ export namespace Prisma {
     updated_at?: DateTimeWithAggregatesFilter<"PresupuestoBase"> | Date | string
   }
 
+  export type CapituloWhereInput = {
+    AND?: CapituloWhereInput | CapituloWhereInput[]
+    OR?: CapituloWhereInput[]
+    NOT?: CapituloWhereInput | CapituloWhereInput[]
+    id?: UuidFilter<"Capitulo"> | string
+    tenant_id?: UuidFilter<"Capitulo"> | string
+    proyecto_id?: UuidFilter<"Capitulo"> | string
+    presupuesto_id?: UuidFilter<"Capitulo"> | string
+    clave?: StringFilter<"Capitulo"> | string
+    nombre?: StringFilter<"Capitulo"> | string
+    orden?: IntFilter<"Capitulo"> | number
+    created_at?: DateTimeFilter<"Capitulo"> | Date | string
+    updated_at?: DateTimeFilter<"Capitulo"> | Date | string
+    presupuesto?: XOR<PresupuestoBaseRelationFilter, PresupuestoBaseWhereInput>
+    conceptos?: ConceptoListRelationFilter
+  }
+
+  export type CapituloOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    presupuesto_id?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    presupuesto?: PresupuestoBaseOrderByWithRelationInput
+    conceptos?: ConceptoOrderByRelationAggregateInput
+  }
+
+  export type CapituloWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_capitulo_presupuesto_clave?: CapituloUq_capitulo_presupuesto_claveCompoundUniqueInput
+    AND?: CapituloWhereInput | CapituloWhereInput[]
+    OR?: CapituloWhereInput[]
+    NOT?: CapituloWhereInput | CapituloWhereInput[]
+    tenant_id?: UuidFilter<"Capitulo"> | string
+    proyecto_id?: UuidFilter<"Capitulo"> | string
+    presupuesto_id?: UuidFilter<"Capitulo"> | string
+    clave?: StringFilter<"Capitulo"> | string
+    nombre?: StringFilter<"Capitulo"> | string
+    orden?: IntFilter<"Capitulo"> | number
+    created_at?: DateTimeFilter<"Capitulo"> | Date | string
+    updated_at?: DateTimeFilter<"Capitulo"> | Date | string
+    presupuesto?: XOR<PresupuestoBaseRelationFilter, PresupuestoBaseWhereInput>
+    conceptos?: ConceptoListRelationFilter
+  }, "id" | "uq_capitulo_presupuesto_clave">
+
+  export type CapituloOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    presupuesto_id?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: CapituloCountOrderByAggregateInput
+    _avg?: CapituloAvgOrderByAggregateInput
+    _max?: CapituloMaxOrderByAggregateInput
+    _min?: CapituloMinOrderByAggregateInput
+    _sum?: CapituloSumOrderByAggregateInput
+  }
+
+  export type CapituloScalarWhereWithAggregatesInput = {
+    AND?: CapituloScalarWhereWithAggregatesInput | CapituloScalarWhereWithAggregatesInput[]
+    OR?: CapituloScalarWhereWithAggregatesInput[]
+    NOT?: CapituloScalarWhereWithAggregatesInput | CapituloScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"Capitulo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"Capitulo"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"Capitulo"> | string
+    presupuesto_id?: UuidWithAggregatesFilter<"Capitulo"> | string
+    clave?: StringWithAggregatesFilter<"Capitulo"> | string
+    nombre?: StringWithAggregatesFilter<"Capitulo"> | string
+    orden?: IntWithAggregatesFilter<"Capitulo"> | number
+    created_at?: DateTimeWithAggregatesFilter<"Capitulo"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"Capitulo"> | Date | string
+  }
+
+  export type ConceptoCatalogoWhereInput = {
+    AND?: ConceptoCatalogoWhereInput | ConceptoCatalogoWhereInput[]
+    OR?: ConceptoCatalogoWhereInput[]
+    NOT?: ConceptoCatalogoWhereInput | ConceptoCatalogoWhereInput[]
+    id?: UuidFilter<"ConceptoCatalogo"> | string
+    tenant_id?: UuidFilter<"ConceptoCatalogo"> | string
+    clave?: StringFilter<"ConceptoCatalogo"> | string
+    descripcion?: StringFilter<"ConceptoCatalogo"> | string
+    unidad_medida?: StringFilter<"ConceptoCatalogo"> | string
+    created_at?: DateTimeFilter<"ConceptoCatalogo"> | Date | string
+    updated_at?: DateTimeFilter<"ConceptoCatalogo"> | Date | string
+  }
+
+  export type ConceptoCatalogoOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConceptoCatalogoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_concepto_catalogo_tenant_clave?: ConceptoCatalogoUq_concepto_catalogo_tenant_claveCompoundUniqueInput
+    AND?: ConceptoCatalogoWhereInput | ConceptoCatalogoWhereInput[]
+    OR?: ConceptoCatalogoWhereInput[]
+    NOT?: ConceptoCatalogoWhereInput | ConceptoCatalogoWhereInput[]
+    tenant_id?: UuidFilter<"ConceptoCatalogo"> | string
+    clave?: StringFilter<"ConceptoCatalogo"> | string
+    descripcion?: StringFilter<"ConceptoCatalogo"> | string
+    unidad_medida?: StringFilter<"ConceptoCatalogo"> | string
+    created_at?: DateTimeFilter<"ConceptoCatalogo"> | Date | string
+    updated_at?: DateTimeFilter<"ConceptoCatalogo"> | Date | string
+  }, "id" | "uq_concepto_catalogo_tenant_clave">
+
+  export type ConceptoCatalogoOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+    _count?: ConceptoCatalogoCountOrderByAggregateInput
+    _max?: ConceptoCatalogoMaxOrderByAggregateInput
+    _min?: ConceptoCatalogoMinOrderByAggregateInput
+  }
+
+  export type ConceptoCatalogoScalarWhereWithAggregatesInput = {
+    AND?: ConceptoCatalogoScalarWhereWithAggregatesInput | ConceptoCatalogoScalarWhereWithAggregatesInput[]
+    OR?: ConceptoCatalogoScalarWhereWithAggregatesInput[]
+    NOT?: ConceptoCatalogoScalarWhereWithAggregatesInput | ConceptoCatalogoScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ConceptoCatalogo"> | string
+    tenant_id?: UuidWithAggregatesFilter<"ConceptoCatalogo"> | string
+    clave?: StringWithAggregatesFilter<"ConceptoCatalogo"> | string
+    descripcion?: StringWithAggregatesFilter<"ConceptoCatalogo"> | string
+    unidad_medida?: StringWithAggregatesFilter<"ConceptoCatalogo"> | string
+    created_at?: DateTimeWithAggregatesFilter<"ConceptoCatalogo"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"ConceptoCatalogo"> | Date | string
+  }
+
   export type ConceptoWhereInput = {
     AND?: ConceptoWhereInput | ConceptoWhereInput[]
     OR?: ConceptoWhereInput[]
@@ -15093,6 +17492,7 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"Concepto"> | string
     proyecto_id?: UuidFilter<"Concepto"> | string
     presupuesto_id?: UuidFilter<"Concepto"> | string
+    capitulo_id?: UuidNullableFilter<"Concepto"> | string | null
     clave?: StringFilter<"Concepto"> | string
     descripcion?: StringFilter<"Concepto"> | string
     unidad_medida?: StringFilter<"Concepto"> | string
@@ -15102,6 +17502,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Concepto"> | Date | string
     updated_at?: DateTimeFilter<"Concepto"> | Date | string
     presupuesto?: XOR<PresupuestoBaseRelationFilter, PresupuestoBaseWhereInput>
+    capitulo?: XOR<CapituloNullableRelationFilter, CapituloWhereInput> | null
     insumos?: ConceptoInsumoListRelationFilter
   }
 
@@ -15110,6 +17511,7 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     presupuesto_id?: SortOrder
+    capitulo_id?: SortOrderInput | SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -15119,17 +17521,20 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     presupuesto?: PresupuestoBaseOrderByWithRelationInput
+    capitulo?: CapituloOrderByWithRelationInput
     insumos?: ConceptoInsumoOrderByRelationAggregateInput
   }
 
   export type ConceptoWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    uq_concepto_tenant_proyecto_presupuesto_clave?: ConceptoUq_concepto_tenant_proyecto_presupuesto_claveCompoundUniqueInput
     AND?: ConceptoWhereInput | ConceptoWhereInput[]
     OR?: ConceptoWhereInput[]
     NOT?: ConceptoWhereInput | ConceptoWhereInput[]
     tenant_id?: UuidFilter<"Concepto"> | string
     proyecto_id?: UuidFilter<"Concepto"> | string
     presupuesto_id?: UuidFilter<"Concepto"> | string
+    capitulo_id?: UuidNullableFilter<"Concepto"> | string | null
     clave?: StringFilter<"Concepto"> | string
     descripcion?: StringFilter<"Concepto"> | string
     unidad_medida?: StringFilter<"Concepto"> | string
@@ -15139,14 +17544,16 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Concepto"> | Date | string
     updated_at?: DateTimeFilter<"Concepto"> | Date | string
     presupuesto?: XOR<PresupuestoBaseRelationFilter, PresupuestoBaseWhereInput>
+    capitulo?: XOR<CapituloNullableRelationFilter, CapituloWhereInput> | null
     insumos?: ConceptoInsumoListRelationFilter
-  }, "id">
+  }, "id" | "uq_concepto_tenant_proyecto_presupuesto_clave">
 
   export type ConceptoOrderByWithAggregationInput = {
     id?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     presupuesto_id?: SortOrder
+    capitulo_id?: SortOrderInput | SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -15170,6 +17577,7 @@ export namespace Prisma {
     tenant_id?: UuidWithAggregatesFilter<"Concepto"> | string
     proyecto_id?: UuidWithAggregatesFilter<"Concepto"> | string
     presupuesto_id?: UuidWithAggregatesFilter<"Concepto"> | string
+    capitulo_id?: UuidNullableWithAggregatesFilter<"Concepto"> | string | null
     clave?: StringWithAggregatesFilter<"Concepto"> | string
     descripcion?: StringWithAggregatesFilter<"Concepto"> | string
     unidad_medida?: StringWithAggregatesFilter<"Concepto"> | string
@@ -16134,6 +18542,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     conceptos?: ConceptoCreateNestedManyWithoutPresupuestoInput
+    capitulos?: CapituloCreateNestedManyWithoutPresupuestoInput
   }
 
   export type PresupuestoBaseUncheckedCreateInput = {
@@ -16148,6 +18557,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     conceptos?: ConceptoUncheckedCreateNestedManyWithoutPresupuestoInput
+    capitulos?: CapituloUncheckedCreateNestedManyWithoutPresupuestoInput
   }
 
   export type PresupuestoBaseUpdateInput = {
@@ -16162,6 +18572,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     conceptos?: ConceptoUpdateManyWithoutPresupuestoNestedInput
+    capitulos?: CapituloUpdateManyWithoutPresupuestoNestedInput
   }
 
   export type PresupuestoBaseUncheckedUpdateInput = {
@@ -16176,6 +18587,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     conceptos?: ConceptoUncheckedUpdateManyWithoutPresupuestoNestedInput
+    capitulos?: CapituloUncheckedUpdateManyWithoutPresupuestoNestedInput
   }
 
   export type PresupuestoBaseCreateManyInput = {
@@ -16217,6 +18629,163 @@ export namespace Prisma {
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CapituloCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    presupuesto: PresupuestoBaseCreateNestedOneWithoutCapitulosInput
+    conceptos?: ConceptoCreateNestedManyWithoutCapituloInput
+  }
+
+  export type CapituloUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    conceptos?: ConceptoUncheckedCreateNestedManyWithoutCapituloInput
+  }
+
+  export type CapituloUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutCapitulosNestedInput
+    conceptos?: ConceptoUpdateManyWithoutCapituloNestedInput
+  }
+
+  export type CapituloUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    presupuesto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    conceptos?: ConceptoUncheckedUpdateManyWithoutCapituloNestedInput
+  }
+
+  export type CapituloCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CapituloUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CapituloUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    presupuesto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoCatalogoCreateInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoCatalogoUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoCatalogoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoCatalogoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoCatalogoCreateManyInput = {
+    id?: string
+    tenant_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoCatalogoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoCatalogoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ConceptoCreateInput = {
     id?: string
     tenant_id: string
@@ -16230,6 +18799,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     presupuesto: PresupuestoBaseCreateNestedOneWithoutConceptosInput
+    capitulo?: CapituloCreateNestedOneWithoutConceptosInput
     insumos?: ConceptoInsumoCreateNestedManyWithoutConceptoInput
   }
 
@@ -16238,6 +18808,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     presupuesto_id: string
+    capitulo_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -16262,6 +18833,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutConceptosNestedInput
+    capitulo?: CapituloUpdateOneWithoutConceptosNestedInput
     insumos?: ConceptoInsumoUpdateManyWithoutConceptoNestedInput
   }
 
@@ -16270,6 +18842,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     presupuesto_id?: StringFieldUpdateOperationsInput | string
+    capitulo_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -16286,6 +18859,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     presupuesto_id: string
+    capitulo_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -16315,6 +18889,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     presupuesto_id?: StringFieldUpdateOperationsInput | string
+    capitulo_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -17502,7 +20077,17 @@ export namespace Prisma {
     none?: ConceptoWhereInput
   }
 
+  export type CapituloListRelationFilter = {
+    every?: CapituloWhereInput
+    some?: CapituloWhereInput
+    none?: CapituloWhereInput
+  }
+
   export type ConceptoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CapituloOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -17586,11 +20171,108 @@ export namespace Prisma {
     isNot?: PresupuestoBaseWhereInput
   }
 
+  export type CapituloUq_capitulo_presupuesto_claveCompoundUniqueInput = {
+    presupuesto_id: string
+    clave: string
+  }
+
+  export type CapituloCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    presupuesto_id?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CapituloAvgOrderByAggregateInput = {
+    orden?: SortOrder
+  }
+
+  export type CapituloMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    presupuesto_id?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CapituloMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    presupuesto_id?: SortOrder
+    clave?: SortOrder
+    nombre?: SortOrder
+    orden?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CapituloSumOrderByAggregateInput = {
+    orden?: SortOrder
+  }
+
+  export type ConceptoCatalogoUq_concepto_catalogo_tenant_claveCompoundUniqueInput = {
+    tenant_id: string
+    clave: string
+  }
+
+  export type ConceptoCatalogoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConceptoCatalogoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type ConceptoCatalogoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    clave?: SortOrder
+    descripcion?: SortOrder
+    unidad_medida?: SortOrder
+    created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type CapituloNullableRelationFilter = {
+    is?: CapituloWhereInput | null
+    isNot?: CapituloWhereInput | null
+  }
+
+  export type ConceptoUq_concepto_tenant_proyecto_presupuesto_claveCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+  }
+
   export type ConceptoCountOrderByAggregateInput = {
     id?: SortOrder
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     presupuesto_id?: SortOrder
+    capitulo_id?: SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -17612,6 +20294,7 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     presupuesto_id?: SortOrder
+    capitulo_id?: SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -17627,6 +20310,7 @@ export namespace Prisma {
     tenant_id?: SortOrder
     proyecto_id?: SortOrder
     presupuesto_id?: SortOrder
+    capitulo_id?: SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -18284,11 +20968,25 @@ export namespace Prisma {
     connect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
   }
 
+  export type CapituloCreateNestedManyWithoutPresupuestoInput = {
+    create?: XOR<CapituloCreateWithoutPresupuestoInput, CapituloUncheckedCreateWithoutPresupuestoInput> | CapituloCreateWithoutPresupuestoInput[] | CapituloUncheckedCreateWithoutPresupuestoInput[]
+    connectOrCreate?: CapituloCreateOrConnectWithoutPresupuestoInput | CapituloCreateOrConnectWithoutPresupuestoInput[]
+    createMany?: CapituloCreateManyPresupuestoInputEnvelope
+    connect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+  }
+
   export type ConceptoUncheckedCreateNestedManyWithoutPresupuestoInput = {
     create?: XOR<ConceptoCreateWithoutPresupuestoInput, ConceptoUncheckedCreateWithoutPresupuestoInput> | ConceptoCreateWithoutPresupuestoInput[] | ConceptoUncheckedCreateWithoutPresupuestoInput[]
     connectOrCreate?: ConceptoCreateOrConnectWithoutPresupuestoInput | ConceptoCreateOrConnectWithoutPresupuestoInput[]
     createMany?: ConceptoCreateManyPresupuestoInputEnvelope
     connect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+  }
+
+  export type CapituloUncheckedCreateNestedManyWithoutPresupuestoInput = {
+    create?: XOR<CapituloCreateWithoutPresupuestoInput, CapituloUncheckedCreateWithoutPresupuestoInput> | CapituloCreateWithoutPresupuestoInput[] | CapituloUncheckedCreateWithoutPresupuestoInput[]
+    connectOrCreate?: CapituloCreateOrConnectWithoutPresupuestoInput | CapituloCreateOrConnectWithoutPresupuestoInput[]
+    createMany?: CapituloCreateManyPresupuestoInputEnvelope
+    connect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -18317,6 +21015,20 @@ export namespace Prisma {
     deleteMany?: ConceptoScalarWhereInput | ConceptoScalarWhereInput[]
   }
 
+  export type CapituloUpdateManyWithoutPresupuestoNestedInput = {
+    create?: XOR<CapituloCreateWithoutPresupuestoInput, CapituloUncheckedCreateWithoutPresupuestoInput> | CapituloCreateWithoutPresupuestoInput[] | CapituloUncheckedCreateWithoutPresupuestoInput[]
+    connectOrCreate?: CapituloCreateOrConnectWithoutPresupuestoInput | CapituloCreateOrConnectWithoutPresupuestoInput[]
+    upsert?: CapituloUpsertWithWhereUniqueWithoutPresupuestoInput | CapituloUpsertWithWhereUniqueWithoutPresupuestoInput[]
+    createMany?: CapituloCreateManyPresupuestoInputEnvelope
+    set?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    disconnect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    delete?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    connect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    update?: CapituloUpdateWithWhereUniqueWithoutPresupuestoInput | CapituloUpdateWithWhereUniqueWithoutPresupuestoInput[]
+    updateMany?: CapituloUpdateManyWithWhereWithoutPresupuestoInput | CapituloUpdateManyWithWhereWithoutPresupuestoInput[]
+    deleteMany?: CapituloScalarWhereInput | CapituloScalarWhereInput[]
+  }
+
   export type ConceptoUncheckedUpdateManyWithoutPresupuestoNestedInput = {
     create?: XOR<ConceptoCreateWithoutPresupuestoInput, ConceptoUncheckedCreateWithoutPresupuestoInput> | ConceptoCreateWithoutPresupuestoInput[] | ConceptoUncheckedCreateWithoutPresupuestoInput[]
     connectOrCreate?: ConceptoCreateOrConnectWithoutPresupuestoInput | ConceptoCreateOrConnectWithoutPresupuestoInput[]
@@ -18331,10 +21043,86 @@ export namespace Prisma {
     deleteMany?: ConceptoScalarWhereInput | ConceptoScalarWhereInput[]
   }
 
+  export type CapituloUncheckedUpdateManyWithoutPresupuestoNestedInput = {
+    create?: XOR<CapituloCreateWithoutPresupuestoInput, CapituloUncheckedCreateWithoutPresupuestoInput> | CapituloCreateWithoutPresupuestoInput[] | CapituloUncheckedCreateWithoutPresupuestoInput[]
+    connectOrCreate?: CapituloCreateOrConnectWithoutPresupuestoInput | CapituloCreateOrConnectWithoutPresupuestoInput[]
+    upsert?: CapituloUpsertWithWhereUniqueWithoutPresupuestoInput | CapituloUpsertWithWhereUniqueWithoutPresupuestoInput[]
+    createMany?: CapituloCreateManyPresupuestoInputEnvelope
+    set?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    disconnect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    delete?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    connect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
+    update?: CapituloUpdateWithWhereUniqueWithoutPresupuestoInput | CapituloUpdateWithWhereUniqueWithoutPresupuestoInput[]
+    updateMany?: CapituloUpdateManyWithWhereWithoutPresupuestoInput | CapituloUpdateManyWithWhereWithoutPresupuestoInput[]
+    deleteMany?: CapituloScalarWhereInput | CapituloScalarWhereInput[]
+  }
+
+  export type PresupuestoBaseCreateNestedOneWithoutCapitulosInput = {
+    create?: XOR<PresupuestoBaseCreateWithoutCapitulosInput, PresupuestoBaseUncheckedCreateWithoutCapitulosInput>
+    connectOrCreate?: PresupuestoBaseCreateOrConnectWithoutCapitulosInput
+    connect?: PresupuestoBaseWhereUniqueInput
+  }
+
+  export type ConceptoCreateNestedManyWithoutCapituloInput = {
+    create?: XOR<ConceptoCreateWithoutCapituloInput, ConceptoUncheckedCreateWithoutCapituloInput> | ConceptoCreateWithoutCapituloInput[] | ConceptoUncheckedCreateWithoutCapituloInput[]
+    connectOrCreate?: ConceptoCreateOrConnectWithoutCapituloInput | ConceptoCreateOrConnectWithoutCapituloInput[]
+    createMany?: ConceptoCreateManyCapituloInputEnvelope
+    connect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+  }
+
+  export type ConceptoUncheckedCreateNestedManyWithoutCapituloInput = {
+    create?: XOR<ConceptoCreateWithoutCapituloInput, ConceptoUncheckedCreateWithoutCapituloInput> | ConceptoCreateWithoutCapituloInput[] | ConceptoUncheckedCreateWithoutCapituloInput[]
+    connectOrCreate?: ConceptoCreateOrConnectWithoutCapituloInput | ConceptoCreateOrConnectWithoutCapituloInput[]
+    createMany?: ConceptoCreateManyCapituloInputEnvelope
+    connect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+  }
+
+  export type PresupuestoBaseUpdateOneRequiredWithoutCapitulosNestedInput = {
+    create?: XOR<PresupuestoBaseCreateWithoutCapitulosInput, PresupuestoBaseUncheckedCreateWithoutCapitulosInput>
+    connectOrCreate?: PresupuestoBaseCreateOrConnectWithoutCapitulosInput
+    upsert?: PresupuestoBaseUpsertWithoutCapitulosInput
+    connect?: PresupuestoBaseWhereUniqueInput
+    update?: XOR<XOR<PresupuestoBaseUpdateToOneWithWhereWithoutCapitulosInput, PresupuestoBaseUpdateWithoutCapitulosInput>, PresupuestoBaseUncheckedUpdateWithoutCapitulosInput>
+  }
+
+  export type ConceptoUpdateManyWithoutCapituloNestedInput = {
+    create?: XOR<ConceptoCreateWithoutCapituloInput, ConceptoUncheckedCreateWithoutCapituloInput> | ConceptoCreateWithoutCapituloInput[] | ConceptoUncheckedCreateWithoutCapituloInput[]
+    connectOrCreate?: ConceptoCreateOrConnectWithoutCapituloInput | ConceptoCreateOrConnectWithoutCapituloInput[]
+    upsert?: ConceptoUpsertWithWhereUniqueWithoutCapituloInput | ConceptoUpsertWithWhereUniqueWithoutCapituloInput[]
+    createMany?: ConceptoCreateManyCapituloInputEnvelope
+    set?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    disconnect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    delete?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    connect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    update?: ConceptoUpdateWithWhereUniqueWithoutCapituloInput | ConceptoUpdateWithWhereUniqueWithoutCapituloInput[]
+    updateMany?: ConceptoUpdateManyWithWhereWithoutCapituloInput | ConceptoUpdateManyWithWhereWithoutCapituloInput[]
+    deleteMany?: ConceptoScalarWhereInput | ConceptoScalarWhereInput[]
+  }
+
+  export type ConceptoUncheckedUpdateManyWithoutCapituloNestedInput = {
+    create?: XOR<ConceptoCreateWithoutCapituloInput, ConceptoUncheckedCreateWithoutCapituloInput> | ConceptoCreateWithoutCapituloInput[] | ConceptoUncheckedCreateWithoutCapituloInput[]
+    connectOrCreate?: ConceptoCreateOrConnectWithoutCapituloInput | ConceptoCreateOrConnectWithoutCapituloInput[]
+    upsert?: ConceptoUpsertWithWhereUniqueWithoutCapituloInput | ConceptoUpsertWithWhereUniqueWithoutCapituloInput[]
+    createMany?: ConceptoCreateManyCapituloInputEnvelope
+    set?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    disconnect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    delete?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    connect?: ConceptoWhereUniqueInput | ConceptoWhereUniqueInput[]
+    update?: ConceptoUpdateWithWhereUniqueWithoutCapituloInput | ConceptoUpdateWithWhereUniqueWithoutCapituloInput[]
+    updateMany?: ConceptoUpdateManyWithWhereWithoutCapituloInput | ConceptoUpdateManyWithWhereWithoutCapituloInput[]
+    deleteMany?: ConceptoScalarWhereInput | ConceptoScalarWhereInput[]
+  }
+
   export type PresupuestoBaseCreateNestedOneWithoutConceptosInput = {
     create?: XOR<PresupuestoBaseCreateWithoutConceptosInput, PresupuestoBaseUncheckedCreateWithoutConceptosInput>
     connectOrCreate?: PresupuestoBaseCreateOrConnectWithoutConceptosInput
     connect?: PresupuestoBaseWhereUniqueInput
+  }
+
+  export type CapituloCreateNestedOneWithoutConceptosInput = {
+    create?: XOR<CapituloCreateWithoutConceptosInput, CapituloUncheckedCreateWithoutConceptosInput>
+    connectOrCreate?: CapituloCreateOrConnectWithoutConceptosInput
+    connect?: CapituloWhereUniqueInput
   }
 
   export type ConceptoInsumoCreateNestedManyWithoutConceptoInput = {
@@ -18357,6 +21145,16 @@ export namespace Prisma {
     upsert?: PresupuestoBaseUpsertWithoutConceptosInput
     connect?: PresupuestoBaseWhereUniqueInput
     update?: XOR<XOR<PresupuestoBaseUpdateToOneWithWhereWithoutConceptosInput, PresupuestoBaseUpdateWithoutConceptosInput>, PresupuestoBaseUncheckedUpdateWithoutConceptosInput>
+  }
+
+  export type CapituloUpdateOneWithoutConceptosNestedInput = {
+    create?: XOR<CapituloCreateWithoutConceptosInput, CapituloUncheckedCreateWithoutConceptosInput>
+    connectOrCreate?: CapituloCreateOrConnectWithoutConceptosInput
+    upsert?: CapituloUpsertWithoutConceptosInput
+    disconnect?: CapituloWhereInput | boolean
+    delete?: CapituloWhereInput | boolean
+    connect?: CapituloWhereUniqueInput
+    update?: XOR<XOR<CapituloUpdateToOneWithWhereWithoutConceptosInput, CapituloUpdateWithoutConceptosInput>, CapituloUncheckedUpdateWithoutConceptosInput>
   }
 
   export type ConceptoInsumoUpdateManyWithoutConceptoNestedInput = {
@@ -18964,6 +21762,7 @@ export namespace Prisma {
     importe: Decimal | DecimalJsLike | number | string
     created_at?: Date | string
     updated_at?: Date | string
+    capitulo?: CapituloCreateNestedOneWithoutConceptosInput
     insumos?: ConceptoInsumoCreateNestedManyWithoutConceptoInput
   }
 
@@ -18971,6 +21770,7 @@ export namespace Prisma {
     id?: string
     tenant_id: string
     proyecto_id: string
+    capitulo_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -18989,6 +21789,40 @@ export namespace Prisma {
 
   export type ConceptoCreateManyPresupuestoInputEnvelope = {
     data: ConceptoCreateManyPresupuestoInput | ConceptoCreateManyPresupuestoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CapituloCreateWithoutPresupuestoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    conceptos?: ConceptoCreateNestedManyWithoutCapituloInput
+  }
+
+  export type CapituloUncheckedCreateWithoutPresupuestoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    conceptos?: ConceptoUncheckedCreateNestedManyWithoutCapituloInput
+  }
+
+  export type CapituloCreateOrConnectWithoutPresupuestoInput = {
+    where: CapituloWhereUniqueInput
+    create: XOR<CapituloCreateWithoutPresupuestoInput, CapituloUncheckedCreateWithoutPresupuestoInput>
+  }
+
+  export type CapituloCreateManyPresupuestoInputEnvelope = {
+    data: CapituloCreateManyPresupuestoInput | CapituloCreateManyPresupuestoInput[]
     skipDuplicates?: boolean
   }
 
@@ -19016,6 +21850,7 @@ export namespace Prisma {
     tenant_id?: UuidFilter<"Concepto"> | string
     proyecto_id?: UuidFilter<"Concepto"> | string
     presupuesto_id?: UuidFilter<"Concepto"> | string
+    capitulo_id?: UuidNullableFilter<"Concepto"> | string | null
     clave?: StringFilter<"Concepto"> | string
     descripcion?: StringFilter<"Concepto"> | string
     unidad_medida?: StringFilter<"Concepto"> | string
@@ -19024,6 +21859,167 @@ export namespace Prisma {
     importe?: DecimalFilter<"Concepto"> | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFilter<"Concepto"> | Date | string
     updated_at?: DateTimeFilter<"Concepto"> | Date | string
+  }
+
+  export type CapituloUpsertWithWhereUniqueWithoutPresupuestoInput = {
+    where: CapituloWhereUniqueInput
+    update: XOR<CapituloUpdateWithoutPresupuestoInput, CapituloUncheckedUpdateWithoutPresupuestoInput>
+    create: XOR<CapituloCreateWithoutPresupuestoInput, CapituloUncheckedCreateWithoutPresupuestoInput>
+  }
+
+  export type CapituloUpdateWithWhereUniqueWithoutPresupuestoInput = {
+    where: CapituloWhereUniqueInput
+    data: XOR<CapituloUpdateWithoutPresupuestoInput, CapituloUncheckedUpdateWithoutPresupuestoInput>
+  }
+
+  export type CapituloUpdateManyWithWhereWithoutPresupuestoInput = {
+    where: CapituloScalarWhereInput
+    data: XOR<CapituloUpdateManyMutationInput, CapituloUncheckedUpdateManyWithoutPresupuestoInput>
+  }
+
+  export type CapituloScalarWhereInput = {
+    AND?: CapituloScalarWhereInput | CapituloScalarWhereInput[]
+    OR?: CapituloScalarWhereInput[]
+    NOT?: CapituloScalarWhereInput | CapituloScalarWhereInput[]
+    id?: UuidFilter<"Capitulo"> | string
+    tenant_id?: UuidFilter<"Capitulo"> | string
+    proyecto_id?: UuidFilter<"Capitulo"> | string
+    presupuesto_id?: UuidFilter<"Capitulo"> | string
+    clave?: StringFilter<"Capitulo"> | string
+    nombre?: StringFilter<"Capitulo"> | string
+    orden?: IntFilter<"Capitulo"> | number
+    created_at?: DateTimeFilter<"Capitulo"> | Date | string
+    updated_at?: DateTimeFilter<"Capitulo"> | Date | string
+  }
+
+  export type PresupuestoBaseCreateWithoutCapitulosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    version?: number
+    estado?: $Enums.EstadoPresupuesto
+    importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    conceptos?: ConceptoCreateNestedManyWithoutPresupuestoInput
+  }
+
+  export type PresupuestoBaseUncheckedCreateWithoutCapitulosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    version?: number
+    estado?: $Enums.EstadoPresupuesto
+    importe_total?: Decimal | DecimalJsLike | number | string
+    aprobado_por?: string | null
+    fecha_aprobacion?: Date | string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    conceptos?: ConceptoUncheckedCreateNestedManyWithoutPresupuestoInput
+  }
+
+  export type PresupuestoBaseCreateOrConnectWithoutCapitulosInput = {
+    where: PresupuestoBaseWhereUniqueInput
+    create: XOR<PresupuestoBaseCreateWithoutCapitulosInput, PresupuestoBaseUncheckedCreateWithoutCapitulosInput>
+  }
+
+  export type ConceptoCreateWithoutCapituloInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    precio_unitario: Decimal | DecimalJsLike | number | string
+    importe: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    presupuesto: PresupuestoBaseCreateNestedOneWithoutConceptosInput
+    insumos?: ConceptoInsumoCreateNestedManyWithoutConceptoInput
+  }
+
+  export type ConceptoUncheckedCreateWithoutCapituloInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    precio_unitario: Decimal | DecimalJsLike | number | string
+    importe: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+    insumos?: ConceptoInsumoUncheckedCreateNestedManyWithoutConceptoInput
+  }
+
+  export type ConceptoCreateOrConnectWithoutCapituloInput = {
+    where: ConceptoWhereUniqueInput
+    create: XOR<ConceptoCreateWithoutCapituloInput, ConceptoUncheckedCreateWithoutCapituloInput>
+  }
+
+  export type ConceptoCreateManyCapituloInputEnvelope = {
+    data: ConceptoCreateManyCapituloInput | ConceptoCreateManyCapituloInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PresupuestoBaseUpsertWithoutCapitulosInput = {
+    update: XOR<PresupuestoBaseUpdateWithoutCapitulosInput, PresupuestoBaseUncheckedUpdateWithoutCapitulosInput>
+    create: XOR<PresupuestoBaseCreateWithoutCapitulosInput, PresupuestoBaseUncheckedCreateWithoutCapitulosInput>
+    where?: PresupuestoBaseWhereInput
+  }
+
+  export type PresupuestoBaseUpdateToOneWithWhereWithoutCapitulosInput = {
+    where?: PresupuestoBaseWhereInput
+    data: XOR<PresupuestoBaseUpdateWithoutCapitulosInput, PresupuestoBaseUncheckedUpdateWithoutCapitulosInput>
+  }
+
+  export type PresupuestoBaseUpdateWithoutCapitulosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
+    importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    conceptos?: ConceptoUpdateManyWithoutPresupuestoNestedInput
+  }
+
+  export type PresupuestoBaseUncheckedUpdateWithoutCapitulosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoPresupuestoFieldUpdateOperationsInput | $Enums.EstadoPresupuesto
+    importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
+    fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    conceptos?: ConceptoUncheckedUpdateManyWithoutPresupuestoNestedInput
+  }
+
+  export type ConceptoUpsertWithWhereUniqueWithoutCapituloInput = {
+    where: ConceptoWhereUniqueInput
+    update: XOR<ConceptoUpdateWithoutCapituloInput, ConceptoUncheckedUpdateWithoutCapituloInput>
+    create: XOR<ConceptoCreateWithoutCapituloInput, ConceptoUncheckedCreateWithoutCapituloInput>
+  }
+
+  export type ConceptoUpdateWithWhereUniqueWithoutCapituloInput = {
+    where: ConceptoWhereUniqueInput
+    data: XOR<ConceptoUpdateWithoutCapituloInput, ConceptoUncheckedUpdateWithoutCapituloInput>
+  }
+
+  export type ConceptoUpdateManyWithWhereWithoutCapituloInput = {
+    where: ConceptoScalarWhereInput
+    data: XOR<ConceptoUpdateManyMutationInput, ConceptoUncheckedUpdateManyWithoutCapituloInput>
   }
 
   export type PresupuestoBaseCreateWithoutConceptosInput = {
@@ -19037,6 +22033,7 @@ export namespace Prisma {
     fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
+    capitulos?: CapituloCreateNestedManyWithoutPresupuestoInput
   }
 
   export type PresupuestoBaseUncheckedCreateWithoutConceptosInput = {
@@ -19050,11 +22047,41 @@ export namespace Prisma {
     fecha_aprobacion?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
+    capitulos?: CapituloUncheckedCreateNestedManyWithoutPresupuestoInput
   }
 
   export type PresupuestoBaseCreateOrConnectWithoutConceptosInput = {
     where: PresupuestoBaseWhereUniqueInput
     create: XOR<PresupuestoBaseCreateWithoutConceptosInput, PresupuestoBaseUncheckedCreateWithoutConceptosInput>
+  }
+
+  export type CapituloCreateWithoutConceptosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+    presupuesto: PresupuestoBaseCreateNestedOneWithoutCapitulosInput
+  }
+
+  export type CapituloUncheckedCreateWithoutConceptosInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    nombre: string
+    orden?: number
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CapituloCreateOrConnectWithoutConceptosInput = {
+    where: CapituloWhereUniqueInput
+    create: XOR<CapituloCreateWithoutConceptosInput, CapituloUncheckedCreateWithoutConceptosInput>
   }
 
   export type ConceptoInsumoCreateWithoutConceptoInput = {
@@ -19115,6 +22142,7 @@ export namespace Prisma {
     fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    capitulos?: CapituloUpdateManyWithoutPresupuestoNestedInput
   }
 
   export type PresupuestoBaseUncheckedUpdateWithoutConceptosInput = {
@@ -19126,6 +22154,42 @@ export namespace Prisma {
     importe_total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     aprobado_por?: NullableStringFieldUpdateOperationsInput | string | null
     fecha_aprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    capitulos?: CapituloUncheckedUpdateManyWithoutPresupuestoNestedInput
+  }
+
+  export type CapituloUpsertWithoutConceptosInput = {
+    update: XOR<CapituloUpdateWithoutConceptosInput, CapituloUncheckedUpdateWithoutConceptosInput>
+    create: XOR<CapituloCreateWithoutConceptosInput, CapituloUncheckedCreateWithoutConceptosInput>
+    where?: CapituloWhereInput
+  }
+
+  export type CapituloUpdateToOneWithWhereWithoutConceptosInput = {
+    where?: CapituloWhereInput
+    data: XOR<CapituloUpdateWithoutConceptosInput, CapituloUncheckedUpdateWithoutConceptosInput>
+  }
+
+  export type CapituloUpdateWithoutConceptosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutCapitulosNestedInput
+  }
+
+  export type CapituloUncheckedUpdateWithoutConceptosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    presupuesto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -19159,6 +22223,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     presupuesto: PresupuestoBaseCreateNestedOneWithoutConceptosInput
+    capitulo?: CapituloCreateNestedOneWithoutConceptosInput
   }
 
   export type ConceptoUncheckedCreateWithoutInsumosInput = {
@@ -19166,6 +22231,7 @@ export namespace Prisma {
     tenant_id: string
     proyecto_id: string
     presupuesto_id: string
+    capitulo_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -19238,6 +22304,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutConceptosNestedInput
+    capitulo?: CapituloUpdateOneWithoutConceptosNestedInput
   }
 
   export type ConceptoUncheckedUpdateWithoutInsumosInput = {
@@ -19245,6 +22312,7 @@ export namespace Prisma {
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
     presupuesto_id?: StringFieldUpdateOperationsInput | string
+    capitulo_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -19562,12 +22630,24 @@ export namespace Prisma {
     id?: string
     tenant_id: string
     proyecto_id: string
+    capitulo_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
     cantidad: Decimal | DecimalJsLike | number | string
     precio_unitario: Decimal | DecimalJsLike | number | string
     importe: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type CapituloCreateManyPresupuestoInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    clave: string
+    nombre: string
+    orden?: number
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -19584,6 +22664,7 @@ export namespace Prisma {
     importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    capitulo?: CapituloUpdateOneWithoutConceptosNestedInput
     insumos?: ConceptoInsumoUpdateManyWithoutConceptoNestedInput
   }
 
@@ -19591,6 +22672,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    capitulo_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -19606,6 +22688,104 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
     proyecto_id?: StringFieldUpdateOperationsInput | string
+    capitulo_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CapituloUpdateWithoutPresupuestoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    conceptos?: ConceptoUpdateManyWithoutCapituloNestedInput
+  }
+
+  export type CapituloUncheckedUpdateWithoutPresupuestoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    conceptos?: ConceptoUncheckedUpdateManyWithoutCapituloNestedInput
+  }
+
+  export type CapituloUncheckedUpdateManyWithoutPresupuestoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    orden?: IntFieldUpdateOperationsInput | number
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ConceptoCreateManyCapituloInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    presupuesto_id: string
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    cantidad: Decimal | DecimalJsLike | number | string
+    precio_unitario: Decimal | DecimalJsLike | number | string
+    importe: Decimal | DecimalJsLike | number | string
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type ConceptoUpdateWithoutCapituloInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    presupuesto?: PresupuestoBaseUpdateOneRequiredWithoutConceptosNestedInput
+    insumos?: ConceptoInsumoUpdateManyWithoutConceptoNestedInput
+  }
+
+  export type ConceptoUncheckedUpdateWithoutCapituloInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    presupuesto_id?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    precio_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    importe?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: ConceptoInsumoUncheckedUpdateManyWithoutConceptoNestedInput
+  }
+
+  export type ConceptoUncheckedUpdateManyWithoutCapituloInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    presupuesto_id?: StringFieldUpdateOperationsInput | string
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -19734,6 +22914,10 @@ export namespace Prisma {
      */
     export type PresupuestoBaseCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PresupuestoBaseCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use CapituloCountOutputTypeDefaultArgs instead
+     */
+    export type CapituloCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CapituloCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use ConceptoCountOutputTypeDefaultArgs instead
      */
     export type ConceptoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoCountOutputTypeDefaultArgs<ExtArgs>
@@ -19757,6 +22941,14 @@ export namespace Prisma {
      * @deprecated Use PresupuestoBaseDefaultArgs instead
      */
     export type PresupuestoBaseArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PresupuestoBaseDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CapituloDefaultArgs instead
+     */
+    export type CapituloArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CapituloDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ConceptoCatalogoDefaultArgs instead
+     */
+    export type ConceptoCatalogoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ConceptoCatalogoDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ConceptoDefaultArgs instead
      */

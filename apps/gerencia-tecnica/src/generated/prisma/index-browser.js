@@ -170,11 +170,34 @@ exports.Prisma.PresupuestoBaseScalarFieldEnum = {
   updated_at: 'updated_at'
 };
 
+exports.Prisma.CapituloScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  presupuesto_id: 'presupuesto_id',
+  clave: 'clave',
+  nombre: 'nombre',
+  orden: 'orden',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
+exports.Prisma.ConceptoCatalogoScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  clave: 'clave',
+  descripcion: 'descripcion',
+  unidad_medida: 'unidad_medida',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.ConceptoScalarFieldEnum = {
   id: 'id',
   tenant_id: 'tenant_id',
   proyecto_id: 'proyecto_id',
   presupuesto_id: 'presupuesto_id',
+  capitulo_id: 'capitulo_id',
   clave: 'clave',
   descripcion: 'descripcion',
   unidad_medida: 'unidad_medida',
@@ -335,6 +358,8 @@ exports.Prisma.ModelName = {
   ProyectoCostosConfig: 'ProyectoCostosConfig',
   Insumo: 'Insumo',
   PresupuestoBase: 'PresupuestoBase',
+  Capitulo: 'Capitulo',
+  ConceptoCatalogo: 'ConceptoCatalogo',
   Concepto: 'Concepto',
   ConceptoInsumo: 'ConceptoInsumo',
   SaldoPartida: 'SaldoPartida',

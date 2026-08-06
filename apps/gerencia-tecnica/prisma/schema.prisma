@@ -100,6 +100,7 @@ model PresupuestoBase {
   fecha_aprobacion DateTime?
 
   conceptos        Concepto[]
+  capitulos        Capitulo[]
 
   created_at       DateTime          @default(now()) @db.Timestamptz(6)
   updated_at       DateTime          @updatedAt @db.Timestamptz(6)
@@ -110,6 +111,53 @@ model PresupuestoBase {
   @@map("presupuestos_base")
 }
 
+/// Capítulo de un presupuesto: agrupación jerárquica de conceptos (WBS, tipo OPUS).
+/// Alcance por presupuesto (no por tenant como ConceptoCatalogo): la estructura de
+/// capítulos de una obra puede variar legítimamente entre obras del mismo tenant.
+/// Ver openspec/changes/wbs-jerarquico-conceptos/design.md Decision 1.
+model Capitulo {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String          @db.Uuid
+  proyecto_id     String          @db.Uuid
+  presupuesto_id  String          @db.Uuid
+  presupuesto     PresupuestoBase @relation(fields: [presupuesto_id], references: [id], onDelete: Cascade)
+
+  clave           String          @db.VarChar(50)
+  nombre          String          @db.VarChar(255)
+  orden           Int             @default(0)
+
+  conceptos       Concepto[]
+
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime        @updatedAt @db.Timestamptz(6)
+
+  @@unique([presupuesto_id, clave], name: "uq_capitulo_presupuesto_clave")
+  @@index([tenant_id, proyecto_id], name: "idx_capitulo_tenant_proyecto")
+  @@index([tenant_id, presupuesto_id], name: "idx_capitulo_tenant_presupuesto")
+  @@map("capitulos")
+}
+
+/// Catálogo Maestro de Conceptos: reutilizable entre proyectos del mismo tenant.
+/// Mismo patrón que Insumo (único por tenant_id + clave). Solo referencia
+/// descripcion/unidad_medida para detectar divergencias al importar — NUNCA
+/// guarda precio_unitario ni cantidad (esos siempre vienen del presupuesto real).
+/// Ver design.md Decision 5.
+model ConceptoCatalogo {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+
+  clave         String   @db.VarChar(50)
+  descripcion   String   @db.Text
+  unidad_medida String   @db.VarChar(20)
+
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([tenant_id, clave], name: "uq_concepto_catalogo_tenant_clave")
+  @@index([tenant_id], name: "idx_concepto_catalogo_tenant")
+  @@map("conceptos_catalogo")
+}
+
 /// Concepto de Obra: Línea o partida específica de un presupuesto.
 /// Tabla transaccional hija, hereda tenant_id y proyecto_id del padre.
 model Concepto {
@@ -118,6 +166,11 @@ model Concepto {
   proyecto_id     String          @db.Uuid
   presupuesto_id  String          @db.Uuid
   presupuesto     PresupuestoBase @relation(fields: [presupuesto_id], references: [id], onDelete: Cascade)
+
+  /// Capítulo al que pertenece este concepto (WBS). Nullable: los conceptos
+  /// históricos y los importados sin columna de capítulo quedan sin agrupar.
+  capitulo_id     String?         @db.Uuid
+  capitulo        Capitulo?       @relation(fields: [capitulo_id], references: [id])
 
   clave           String          @db.VarChar(50)
   descripcion     String          @db.Text
@@ -133,8 +186,13 @@ model Concepto {
   insumos         ConceptoInsumo[]
 
   // Índices de rendimiento Multi-Tenant + Multi-Proyecto
+  // Unicidad por versión de presupuesto (no por proyecto completo): un proyecto
+  // tiene varias versiones de PresupuestoBase a lo largo del tiempo que
+  // reutilizan legítimamente las mismas claves. Ver design.md Decision 2.
+  @@unique([tenant_id, proyecto_id, presupuesto_id, clave], name: "uq_concepto_tenant_proyecto_presupuesto_clave")
   @@index([tenant_id, proyecto_id], name: "idx_concepto_tenant_proyecto")
   @@index([tenant_id, presupuesto_id], name: "idx_concepto_tenant_presupuesto")
+  @@index([tenant_id, capitulo_id], name: "idx_concepto_tenant_capitulo")
   @@map("conceptos")
 }
 

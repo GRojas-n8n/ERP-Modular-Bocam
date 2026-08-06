@@ -241,7 +241,7 @@ app.get('/api/v1/gerencia-tecnica/presupuesto/activo', async (req: Request, res:
         id: true,
         version: true,
         conceptos: {
-          select: { id: true, clave: true, descripcion: true, unidad_medida: true, precio_unitario: true, cantidad: true },
+          select: { id: true, clave: true, descripcion: true, unidad_medida: true, precio_unitario: true, cantidad: true, capitulo_id: true },
           orderBy: { clave: 'asc' },
         },
       },
@@ -501,6 +501,20 @@ app.delete('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin'), async 
 /**
  * POST /api/v1/gerencia-tecnica/presupuestos
  * Crea un nuevo presupuesto base para un proyecto.
+ *
+ * Ver openspec/changes/wbs-jerarquico-conceptos:
+ * - Rechaza con 422 si el LOTE trae dos o más conceptos con la misma
+ *   `clave` (validado antes de tocar Prisma, no solo confiando en el
+ *   error de BD, para poder devolver qué clave(s) chocaron).
+ * - Resuelve cada `clave` contra el catálogo maestro (`ConceptoCatalogo`,
+ *   único por tenant): si ya existe con descripción/unidad distinta, se
+ *   agrega una advertencia (no bloquea); si no existe, se agrega al
+ *   catálogo. `precio_unitario`/`cantidad` SIEMPRE vienen del archivo
+ *   importado, nunca del catálogo (que no los guarda).
+ * - Si el body trae `capitulo_clave`/`capitulo_nombre` por concepto,
+ *   resuelve/crea el `Capitulo` correspondiente a este presupuesto y
+ *   asocia `capitulo_id`. Conceptos sin esa referencia quedan con
+ *   `capitulo_id = null` (no se rechaza la importación).
  */
 app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
@@ -513,11 +527,76 @@ app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superin
       );
     }
 
+    const conceptosBody: any[] = Array.isArray(conceptos) ? conceptos : [];
+
+    // ── Validar duplicados de clave DENTRO del mismo lote, antes de tocar Prisma ──
+    // Así podemos devolver un 422 con la(s) clave(s) exacta(s) que chocaron, en
+    // vez de depender del error de BD del índice único (que no distingue cuál
+    // de las N filas del lote es la duplicada).
+    const conteoClaves = new Map<string, number>();
+    for (const c of conceptosBody) {
+      const clave = String(c?.clave ?? '');
+      if (!clave) continue;
+      conteoClaves.set(clave, (conteoClaves.get(clave) ?? 0) + 1);
+    }
+    const clavesDuplicadas = [...conteoClaves.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([clave]) => clave);
+
+    if (clavesDuplicadas.length > 0) {
+      return res.status(422).json(
+        createApiError(
+          'CLAVE_DUPLICADA',
+          `El presupuesto trae conceptos con clave duplicada en el mismo lote: ${clavesDuplicadas.join(', ')}.`,
+          { claves_duplicadas: clavesDuplicadas }
+        )
+      );
+    }
+
     const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
+    // ── Resolver catálogo maestro de conceptos (ConceptoCatalogo, único por tenant) ──
+    const clavesUnicas = [...new Set(
+      conceptosBody.map((c: any) => String(c?.clave ?? '')).filter(Boolean)
+    )];
+    const catalogoExistente = clavesUnicas.length > 0
+      ? await db.conceptoCatalogo.findMany({
+          where: { tenant_id: tenantId, clave: { in: clavesUnicas } },
+        })
+      : [];
+    const catalogoPorClave = new Map(catalogoExistente.map((cc: any) => [cc.clave, cc]));
+
+    const advertencias: string[] = [];
+    for (const c of conceptosBody) {
+      const clave = String(c?.clave ?? '');
+      if (!clave) continue;
+      const descripcion = String(c?.descripcion ?? '');
+      const unidadMedida = String(c?.unidad_medida ?? '');
+      const existente = catalogoPorClave.get(clave);
+
+      if (!existente) {
+        try {
+          const creado = await db.conceptoCatalogo.create({
+            data: { tenant_id: tenantId, clave, descripcion, unidad_medida: unidadMedida },
+          });
+          catalogoPorClave.set(clave, creado);
+        } catch (_e) {
+          // Carrera (otro request ya la creó) o error no bloqueante — no
+          // detiene la importación, ver Decision 3 del design.md.
+        }
+      } else if (existente.descripcion !== descripcion || existente.unidad_medida !== unidadMedida) {
+        advertencias.push(
+          `La clave "${clave}" ya existe en el catálogo maestro de conceptos con datos distintos ` +
+          `(catálogo: "${existente.descripcion}" / "${existente.unidad_medida}"; ` +
+          `importado: "${descripcion}" / "${unidadMedida}").`
+        );
+      }
+    }
+
     // Calcular importe_total sumando los importes de cada concepto.
+    // precio_unitario/cantidad SIEMPRE vienen del archivo importado, nunca del catálogo.
     let importeTotal = 0;
-    const conceptosNormalizados = (conceptos || []).map((c: any) => {
+    const conceptosNormalizados = conceptosBody.map((c: any) => {
       const cantidad = parseFloat(c.cantidad);
       const precioUnitario = parseFloat(c.precio_unitario);
       const importe = cantidad * precioUnitario;
@@ -531,23 +610,73 @@ app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superin
         cantidad,
         precio_unitario: precioUnitario,
         importe,
+        capitulo_clave: c?.capitulo_clave ? String(c.capitulo_clave) : null,
+        capitulo_nombre: c?.capitulo_nombre ? String(c.capitulo_nombre) : null,
       };
     });
 
-    const presupuesto = await db.presupuestoBase.create({
+    // Crear el presupuesto + conceptos en una sola operación atómica (misma
+    // garantía que antes de este change: o se crean todos los conceptos del
+    // lote, o ninguno).
+    let presupuesto = await db.presupuestoBase.create({
       data: {
         tenant_id: tenantId,
         proyecto_id,
         version: parseInt(String(version), 10) || 1,
         importe_total: importeTotal,
         conceptos: conceptosNormalizados.length > 0
-          ? { create: conceptosNormalizados }
+          ? { create: conceptosNormalizados.map(({ capitulo_clave, capitulo_nombre, ...concepto }) => concepto) }
           : undefined,
       },
       include: { conceptos: true },
     });
 
-    res.status(201).json(createApiResponse(presupuesto, tenantId, proyectoId));
+    // ── Resolver/crear capítulos referenciados en el lote y asociar capitulo_id ──
+    const capituloAConceptoClaves = new Map<string, string[]>();
+    const capituloANombre = new Map<string, string>();
+    for (const c of conceptosNormalizados) {
+      if (c.capitulo_clave) {
+        const arr = capituloAConceptoClaves.get(c.capitulo_clave) ?? [];
+        arr.push(c.clave);
+        capituloAConceptoClaves.set(c.capitulo_clave, arr);
+        if (!capituloANombre.has(c.capitulo_clave)) {
+          capituloANombre.set(c.capitulo_clave, c.capitulo_nombre || c.capitulo_clave);
+        }
+      }
+    }
+
+    if (capituloAConceptoClaves.size > 0) {
+      let orden = 0;
+      for (const [claveCap, conceptoClaves] of capituloAConceptoClaves) {
+        const capitulo = await db.capitulo.create({
+          data: {
+            tenant_id: tenantId,
+            proyecto_id,
+            presupuesto_id: presupuesto.id,
+            clave: claveCap,
+            nombre: capituloANombre.get(claveCap) || claveCap,
+            orden: orden++,
+          },
+        });
+        await db.concepto.updateMany({
+          where: { presupuesto_id: presupuesto.id, clave: { in: conceptoClaves } },
+          data: { capitulo_id: capitulo.id },
+        });
+      }
+
+      // Refrescar la respuesta para reflejar el capitulo_id ya asociado.
+      presupuesto = await db.presupuestoBase.findUnique({
+        where: { id: presupuesto.id },
+        include: { conceptos: true },
+      }) as typeof presupuesto;
+    }
+
+    const responseData = {
+      ...presupuesto,
+      ...(advertencias.length > 0 ? { advertencias } : {}),
+    };
+
+    res.status(201).json(createApiResponse(responseData, tenantId, proyectoId));
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en POST /presupuestos:', error.message);
     res.status(500).json(

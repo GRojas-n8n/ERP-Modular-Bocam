@@ -10,7 +10,10 @@
     "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "test:integration": "node -r ts-node/register/transpile-only test/integration/saldo-partida.integration.test.ts",
     "test:integration:fichas-tecnicas-residente": "node -r ts-node/register/transpile-only test/integration/fichas-tecnicas-residente.integration.test.ts",
-    "test:integration:presupuesto-activo-precio-cantidad": "node -r ts-node/register/transpile-only test/integration/presupuesto-activo-precio-cantidad.integration.test.ts"
+    "test:integration:presupuesto-activo-precio-cantidad": "node -r ts-node/register/transpile-only test/integration/presupuesto-activo-precio-cantidad.integration.test.ts",
+    "test:integration:presupuestos-unicidad-clave": "node -r ts-node/register/transpile-only test/integration/presupuestos-unicidad-clave.integration.test.ts",
+    "test:integration:presupuestos-catalogo-maestro": "node -r ts-node/register/transpile-only test/integration/presupuestos-catalogo-maestro.integration.test.ts",
+    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

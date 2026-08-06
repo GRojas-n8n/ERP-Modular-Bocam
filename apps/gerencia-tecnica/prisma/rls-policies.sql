@@ -206,3 +206,34 @@ CREATE POLICY rls_proyectos_obra_vinculados_tenant ON proyectos_obra_vinculados
     FOR ALL
     USING (tenant_id = get_current_tenant_id())
     WITH CHECK (tenant_id = get_current_tenant_id());
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 6. TABLAS AGREGADAS POR wbs-jerarquico-conceptos (2026-08-06)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─── CAPÍTULOS (tenant + proyecto — cuelga de presupuestos_base, mismo
+-- patrón estricto que categorias_gasto/concepto_insumos: el código siempre
+-- pasa proyecto_id a createTenantContext() en los endpoints que tocan esta
+-- tabla) ──────────────────────────────────────────────────────────────────
+ALTER TABLE capitulos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE capitulos FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_capitulos_context ON capitulos;
+CREATE POLICY rls_capitulos_context ON capitulos
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id())
+    WITH CHECK (tenant_id = get_current_tenant_id() AND proyecto_id = get_current_proyecto_id());
+
+-- ─── CATÁLOGO MAESTRO DE CONCEPTOS (solo tenant — reutilizable entre
+-- proyectos del mismo tenant, mismo patrón que insumos) ─────────────────────
+ALTER TABLE conceptos_catalogo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conceptos_catalogo FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_conceptos_catalogo_tenant ON conceptos_catalogo;
+CREATE POLICY rls_conceptos_catalogo_tenant ON conceptos_catalogo
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
+
+COMMENT ON POLICY rls_capitulos_context ON capitulos IS
+    'Aislamiento Multi-Tenant + Multi-Proyecto (hereda de presupuesto). Módulo: Gerencia Técnica.';
+COMMENT ON POLICY rls_conceptos_catalogo_tenant ON conceptos_catalogo IS
+    'Aislamiento Multi-Tenant. Catálogo maestro reutilizable entre proyectos del tenant. Módulo: Gerencia Técnica.';
