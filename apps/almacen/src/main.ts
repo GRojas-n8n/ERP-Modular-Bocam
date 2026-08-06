@@ -15,6 +15,7 @@
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
@@ -35,6 +36,7 @@ const PORT = process.env.PORT || 3012;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'almacen' }));
 app.use(requireProjectAccess());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

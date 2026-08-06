@@ -6,6 +6,7 @@
 
 import express, { Request, Response } from 'express';
 import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createObservabilityMiddleware, initSentry, logError, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { generateOcPdf } from './generators/oc-pdf';
 import { generateComparativaPdf } from './generators/comparativa-pdf';
@@ -22,6 +23,7 @@ export const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(createObservabilityMiddleware('reportes'));
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'reportes' }));
 
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {

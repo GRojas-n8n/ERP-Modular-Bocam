@@ -24,6 +24,7 @@
     "test:integration:rbac-rol-finanzas": "node -r ts-node/register/transpile-only test/integration/rbac-rol-finanzas.integration.test.ts"
   },
   "dependencies": {
+    "@bocam/rate-limiter": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "amqplib": "^0.10.3",
     "exceljs": "^4.4.0",

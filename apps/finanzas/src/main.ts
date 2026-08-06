@@ -40,6 +40,7 @@ import type { PrismaClient } from './generated/prisma';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
@@ -83,6 +84,7 @@ app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
   excludePaths: ['/health'],
 }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'finanzas' }));
 app.use(requireProjectAccess());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

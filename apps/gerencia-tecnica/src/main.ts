@@ -28,6 +28,7 @@ import {
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import type { SecurityContext } from '../../../packages/auth-middleware/src';
 
@@ -62,6 +63,7 @@ app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
   excludePaths: ['/health'],
 }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'gerencia-tecnica' }));
 app.use(requireProjectAccess());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

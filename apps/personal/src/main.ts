@@ -10,6 +10,7 @@ import {
   DIAS_VENCIMIENTO_DEFAULT, ASISTENCIA_COOLDOWN_MINUTOS,
 } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { createEventBus } from '../../../packages/event-bus/src';
 import {
@@ -45,6 +46,7 @@ app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
   excludePaths: ['/health'],
 }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'personal' }));
 app.use(requireProjectAccess());
 
 // ── Expediente digital: almacenamiento en volumen propio (mismo patrón que Calidad) ──

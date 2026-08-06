@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createEventBus } from '../../../packages/event-bus/src';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import {
   buildEventContext,
   createObservabilityMiddleware,
@@ -28,6 +29,7 @@ app.use(
     excludePaths: ['/health'],
   })
 );
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'ventas' }));
 app.use(requireProjectAccess());
 
 app.get('/health', (_req: Request, res: Response) => {

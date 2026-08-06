@@ -27,6 +27,7 @@ import {
   EstadoEstimacion,
 } from './types';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
   buildEventContext,
@@ -590,6 +591,7 @@ export async function handleCentroCostosCreadoEvent(event: BocamEvent<{ codigo_c
 // MIDDLEWARE JWT REAL
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'control-proyectos' }));
 app.use(requireProjectAccess());
 
 // ─── Helpers EVM/Alertas ─────────────────────────────────────────────────────

@@ -8,6 +8,7 @@
     "dev": "ts-node-dev --transpile-only src/main.ts"
   },
   "dependencies": {
+    "@bocam/rate-limiter": "^1.0.0",
     "@types/express": "^4.17.17",
     "@types/node": "^20.0.0",
     "@types/pdfkit": "^0.13.6",

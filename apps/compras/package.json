@@ -20,6 +20,7 @@
     "test:integration:proveedores-importar-lote": "node -r ts-node/register/transpile-only test/integration/proveedores-importar-lote.integration.test.ts"
   },
   "dependencies": {
+    "@bocam/rate-limiter": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "amqplib": "^0.10.3",
     "axios": "^1.18.1",

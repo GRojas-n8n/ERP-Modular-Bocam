@@ -17,6 +17,7 @@
     "test:e2e:idempotencia": "node -r ts-node/register/transpile-only test/e2e/idempotencia.e2e.test.ts"
   },
   "dependencies": {
+    "@bocam/rate-limiter": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "amqplib": "^0.10.3",
     "express": "^4.18.2",

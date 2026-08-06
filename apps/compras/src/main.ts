@@ -7,6 +7,7 @@ import { createTenantContext } from './db';
 import type { PrismaClient } from './generated/prisma';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import {
   buildEventContext,
   buildForwardHeaders,
@@ -246,6 +247,7 @@ app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
   excludePaths: ['/health'],
 }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'compras' }));
 app.use(requireProjectAccess());
 
 app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {

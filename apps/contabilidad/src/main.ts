@@ -45,6 +45,7 @@ import {
 import { buildMovimientosForPoliza, persistMovimientos, TipoPoliza } from './mapper';
 import { getSatCallbackSecret, safeSecretEquals, requireSatCallbackSecret } from './sat-callback-auth';
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
@@ -1695,6 +1696,7 @@ app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
   excludePaths: ['/health', ...INTEGRATION_CALLBACK_PATHS],
 }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'contabilidad' }));
 app.use((req: Request, res: Response, next) => {
   if (INTEGRATION_CALLBACK_PATHS.includes(req.path)) {
     return requireSatCallbackSecret(req, res, next);

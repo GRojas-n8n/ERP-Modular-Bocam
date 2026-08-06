@@ -10,6 +10,7 @@ import fs from 'fs';
 import multer from 'multer';
 import { createCalidadContext, disconnectDb } from './db';
 import { createAuthMiddleware, requireEnv, requireRoles } from '../../../packages/auth-middleware/src';
+import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createObservabilityMiddleware, initSentry, logError, logInfo, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import {
@@ -81,6 +82,7 @@ export const app = express();
 app.use(express.json());
 app.use(createObservabilityMiddleware('calidad'));
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
+app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'calidad' }));
 
 app.get('/api/v1/calidad/resumen-dashboard',
   requireRoles('superintendent', 'admin'),
