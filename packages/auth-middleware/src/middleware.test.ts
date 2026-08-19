@@ -90,7 +90,121 @@ test('requireProjectAccess allows tenant-level access for role finanzas', () => 
 
   assert.equal(
     nextCalled, true,
-    'un usuario con rol finanzas debe tener acceso de nivel tenant (a todos los proyectos), igual que admin/superintendent/procurement'
+    'un usuario con rol finanzas debe tener acceso de nivel tenant (a todos los proyectos), igual que admin/superintendent/personal_rh'
+  );
+});
+
+test('requireProjectAccess allows tenant-level access for roles admin and superintendent', () => {
+  const middleware = requireProjectAccess();
+
+  for (const rol of ['admin', 'superintendent']) {
+    const req = {
+      securityContext: {
+        userId: 'u1',
+        tenantId: 't1',
+        proyectoId: '',
+        email: 'u@bocam.com',
+        name: 'User',
+        userName: 'User',
+        roles: [rol],
+        authorizedProjects: [],
+        limiteAprobacion: 0,
+      },
+    } as unknown as Request;
+    const res = createResponseMock();
+    let nextCalled = false;
+
+    middleware(req, res, () => {
+      nextCalled = true;
+    });
+
+    assert.equal(nextCalled, true, `rol ${rol} debe seguir teniendo acceso de nivel tenant sin cambios`);
+  }
+});
+
+test('requireProjectAccess allows tenant-level access for role personal_rh (aislamiento-proyecto-por-modulo)', () => {
+  const middleware = requireProjectAccess();
+  const req = {
+    securityContext: {
+      userId: 'u1',
+      tenantId: 't1',
+      proyectoId: '',
+      email: 'u@bocam.com',
+      name: 'User',
+      userName: 'User',
+      roles: ['personal_rh'],
+      authorizedProjects: [],
+      limiteAprobacion: 0,
+    },
+  } as unknown as Request;
+  const res = createResponseMock();
+  let nextCalled = false;
+
+  middleware(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(
+    nextCalled, true,
+    'personal_rh debe tener acceso de nivel tenant — Personal ya expone GET /empleados y GET /dashboard sin filtro de proyecto'
+  );
+});
+
+test('requireProjectAccess rejects role procurement without active/authorized project (aislamiento-proyecto-por-modulo)', () => {
+  const middleware = requireProjectAccess();
+  const req = {
+    securityContext: {
+      userId: 'u1',
+      tenantId: 't1',
+      proyectoId: '',
+      email: 'u@bocam.com',
+      name: 'User',
+      userName: 'User',
+      roles: ['procurement'],
+      authorizedProjects: [],
+      limiteAprobacion: 0,
+    },
+  } as unknown as Request;
+  const res = createResponseMock();
+  let nextCalled = false;
+
+  middleware(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(
+    nextCalled, false,
+    'procurement ya NO debe tener acceso de nivel tenant — Compras debe permanecer estrictamente acotado por proyecto'
+  );
+  assert.equal((res as any).statusCode, 403);
+  assert.equal((res as any).body.error.code, 'AUTH_PROJECT_REQUIRED');
+});
+
+test('requireProjectAccess allows role procurement with active project included in authorizedProjects', () => {
+  const middleware = requireProjectAccess();
+  const req = {
+    securityContext: {
+      userId: 'u1',
+      tenantId: 't1',
+      proyectoId: 'proj-001',
+      email: 'u@bocam.com',
+      name: 'User',
+      userName: 'User',
+      roles: ['procurement'],
+      authorizedProjects: ['proj-001'],
+      limiteAprobacion: 0,
+    },
+  } as unknown as Request;
+  const res = createResponseMock();
+  let nextCalled = false;
+
+  middleware(req, res, () => {
+    nextCalled = true;
+  });
+
+  assert.equal(
+    nextCalled, true,
+    'procurement debe seguir operando con normalidad dentro de un proyecto que tiene autorizado explícitamente'
   );
 });
 
