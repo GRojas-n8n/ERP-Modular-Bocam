@@ -3,6 +3,7 @@ import api, { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { ConfirmCriticalActionDialog, cn, getProjectColor } from '@bocam/ui-core';
+import { ROLES_ASIGNABLES, etiquetaDeRol } from '@bocam/roles';
 import { HelpButton } from '../components/HelpButton';
 import { HelpPanel } from '../components/HelpPanel';
 
@@ -37,22 +38,11 @@ const ESTATUS_CENTRO_COSTOS = ['ABIERTO', 'EN EJECUCIÓN', 'EN COBRO', 'TERMINAD
 
 // ─── Role catalog ─────────────────────────────────────────────────────────────
 // IMPORTANTE: Mantener sincronizado con CLAUDE.md §11 y Layout.tsx ALL_NAV_ITEMS.
-const ROLES = [
-  { value: 'admin',            label: 'Administrador' },
-  { value: 'superintendent',   label: 'Superintendencia' },
-  { value: 'procurement',      label: 'Compras / Procurement' },
-  { value: 'gerencia_tecnica', label: 'Gerencia Técnica' },
-  { value: 'residencia',       label: 'Residencia de Obra' },
-  { value: 'control_obra',     label: 'Control de Obra' },
-  { value: 'finanzas',         label: 'Finanzas' },
-  { value: 'contabilidad',     label: 'Contabilidad' },
-  { value: 'personal_rh',      label: 'Personal / RH' },
-  { value: 'seguridad_hse',    label: 'Seguridad HSE' },
-  { value: 'calidad',          label: 'Calidad / SGC' },
-  { value: 'ventas',           label: 'Ventas' },
-];
-
-const rolLabel = (r: string) => ROLES.find(x => x.value === r)?.label ?? r;
+// El catálogo vive en @bocam/roles, compartido con los servicios. Cuando estaba
+// duplicado aquí le faltaban warehouse, control_proyectos y director — roles que
+// el backend sí exige, así que no había forma de dar de alta un almacenista.
+// Un test guardián en el paquete falla si vuelven a desincronizarse.
+const rolLabel = etiquetaDeRol;
 
 const RoleBadge: React.FC<{ role: string }> = ({ role }) => (
   <span className="rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
@@ -152,17 +142,24 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
           <div>
             <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Roles de Acceso *</label>
             <div className="flex flex-wrap gap-2">
-              {ROLES.map(r => (
-                <button key={r.value} onClick={() => toggleRole(r.value)}
+              {ROLES_ASIGNABLES.map(r => (
+                <button key={r.id} onClick={() => toggleRole(r.id)} title={r.nota}
                   className={`rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-colors ${
-                    form.roles.includes(r.value)
+                    form.roles.includes(r.id)
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border/40 text-muted-foreground hover:border-primary/40'
                   }`}>
                   {r.label}
+                  {r.estado === 'sin-backend' && <span className="ml-1 text-amber-500" aria-hidden>•</span>}
                 </button>
               ))}
             </div>
+            {ROLES_ASIGNABLES.some(r => r.estado === 'sin-backend' && form.roles.includes(r.id)) && (
+              <p className="mt-2 text-[10px] leading-relaxed text-amber-600">
+                Los roles marcados con • todavía no abren su módulo: el usuario verá la
+                sección en el menú y recibirá &laquo;acceso denegado&raquo; al usarla.
+              </p>
+            )}
           </div>
 
           {/* Proyectos */}

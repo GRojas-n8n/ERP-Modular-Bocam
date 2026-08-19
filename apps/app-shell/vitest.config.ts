@@ -16,6 +16,7 @@ export default defineConfig({
     alias: {
       '@bocam/ui-core': fileURLToPath(new URL('../../packages/ui-core/src/index.tsx', import.meta.url)),
       '@bocam/ui-core/dashboard': fileURLToPath(new URL('../../packages/ui-core/src/dashboard/index.tsx', import.meta.url)),
+      '@bocam/roles': fileURLToPath(new URL('../../packages/roles/src/index.ts', import.meta.url)),
     },
     dedupe: ['react', 'react-dom'],
   },
