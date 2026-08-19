@@ -94,7 +94,11 @@ app.use(requireProjectAccess());
 // Compras DEBE llamar este endpoint ANTES de emitir una Orden de Compra.
 // Retorna resumen global + desglose por capítulo de gasto.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-app.get('/api/v1/finanzas/suficiencia', async (req: Request, res: Response) => {
+// Roles: 'procurement' y 'superintendent' porque Compras resuelve suficiencia
+// dentro de convertir-oc reenviando el JWT del comprador.
+app.get('/api/v1/finanzas/suficiencia',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent', 'procurement'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const correlationId = getCorrelationId(req);
@@ -168,7 +172,9 @@ app.get('/api/v1/finanzas/suficiencia', async (req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Listar presupuestos del proyecto activo
-app.get('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) => {
+app.get('/api/v1/finanzas/presupuestos',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
@@ -196,7 +202,10 @@ app.get('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) => 
 // selector manual (ver openspec/changes/unificar-presupuesto-a-partidas-gt).
 // Debe registrarse ANTES de /presupuestos/:id para no ser capturado por ese
 // parámetro genérico.
-app.get('/api/v1/finanzas/presupuestos/por-concepto/:conceptoId', async (req: Request, res: Response) => {
+// Roles: mismo caso que /suficiencia — Compras la consulta al emitir la OC.
+app.get('/api/v1/finanzas/presupuestos/por-concepto/:conceptoId',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent', 'procurement'),
+  async (req: Request, res: Response) => {
   try {
     const { conceptoId } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -219,7 +228,9 @@ app.get('/api/v1/finanzas/presupuestos/por-concepto/:conceptoId', async (req: Re
 });
 
 // Obtener un presupuesto por ID con sus movimientos
-app.get('/api/v1/finanzas/presupuestos/:id', async (req: Request, res: Response) => {
+app.get('/api/v1/finanzas/presupuestos/:id',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent'),
+  async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -339,7 +350,13 @@ app.post('/api/v1/finanzas/presupuestos', async (req: Request, res: Response) =>
 // ACTIVO sincronizado a esa partida (ver openspec/changes/trazabilidad-partida-gt-cp) —
 // permite a GT/CP consultar sin conocer el presupuesto_id interno de Finanzas.
 // presupuesto_id tiene precedencia si ambos se envían.
-app.get('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => {
+// Roles: conjunto ancho porque ControlPresupuestalTabla es un componente
+// compartido, montado tanto en InsumosView (Gerencia Tecnica) como en
+// ControlObraView. Estrecharlo deja el control presupuestal por partida sin
+// cargar en uno de los dos modulos.
+app.get('/api/v1/finanzas/movimientos',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent', 'gerencia_tecnica', 'control_obra', 'control_proyectos'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const presupuestoId = req.query.presupuesto_id as string | undefined;
@@ -531,7 +548,7 @@ app.post('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => 
 
 app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, res: Response) => {
   try {
-    const { tenantId, proyectoId, userId, roles } = req.securityContext;
+    const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
     const correlationId = getCorrelationId(req);
     const {
       transferencia_id,
@@ -568,6 +585,17 @@ app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, 
 
     const transferenciaId = transferencia_id || uuidv4();
     const montoNum = Number(monto);
+
+    // Validar Límite de Autoridad Financiera
+    if (montoNum > limiteAprobacion) {
+      res.status(403).json(createApiError(
+        'FIN_LIMIT_EXCEEDED',
+        `El monto $${montoNum.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+        undefined,
+        correlationId
+      ));
+      return;
+    }
 
     const result = await createTenantContext(
       { tenantId, proyectoId, userId },
@@ -1109,7 +1137,9 @@ app.post('/api/v1/finanzas/liberar-fondos',
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Listar pagos programados (flujo de caja)
-app.get('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
+app.get('/api/v1/finanzas/pagos',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const estado = req.query.estado as string;
@@ -1133,6 +1163,12 @@ app.get('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
 });
 
 // Crear pago programado
+// El Límite de Autoridad Financiera NO se valida aquí a propósito: programar un
+// pago no mueve dinero. El límite se ejerce al ejecutarlo
+// (PATCH /pagos/:id/pagar) y al registrarlo contra una OC (POST /pagos-oc).
+// Los roles tampoco coinciden con esos dos por diseño: 'superintendent' puede
+// planear el pago pero no ejecutarlo — segregación de funciones deliberada.
+// Ver openspec/changes/limite-autoridad-pagos-oc.
 app.post('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
@@ -1263,6 +1299,12 @@ app.post('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
 });
 
 // Crear programación de pagos masiva
+// El Límite de Autoridad Financiera NO se valida aquí a propósito: programar un
+// pago no mueve dinero. El límite se ejerce al ejecutarlo
+// (PATCH /pagos/:id/pagar) y al registrarlo contra una OC (POST /pagos-oc).
+// Los roles tampoco coinciden con esos dos por diseño: 'superintendent' puede
+// planear el pago pero no ejecutarlo — segregación de funciones deliberada.
+// Ver openspec/changes/limite-autoridad-pagos-oc.
 app.post('/api/v1/finanzas/pagos/bulk', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
@@ -1449,7 +1491,12 @@ app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // DASHBOARD DE FLUJO DE CAJA
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-app.get('/api/v1/finanzas/dashboard', async (req: Request, res: Response) => {
+// Roles: lo consume la pantalla de inicio, que no filtra por rol. El cliente
+// usa Promise.allSettled y oculta la tarjeta ante un 403, asi que cerrar esto
+// no rompe la home. El asistente tambien lo consulta, con superintendent/admin.
+app.get('/api/v1/finanzas/dashboard',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
@@ -1676,10 +1723,20 @@ app.post('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
   async (req: Request, res: Response) => {
     try {
       const { proyectoId: pId } = req.params;
-      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
       const { anticipo_total } = req.body;
       if (anticipo_total === undefined) {
         return res.status(400).json({ success: false, message: 'anticipo_total es obligatorio.' });
+      }
+
+      // Validar Límite de Autoridad Financiera
+      if (Number(anticipo_total) > limiteAprobacion) {
+        return res.status(403).json(createApiError(
+          'FIN_LIMIT_EXCEEDED',
+          `El monto $${Number(anticipo_total).toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+          undefined,
+          getCorrelationId(req)
+        ));
       }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
         return (prisma as any).proyectoFinanzas.upsert({
@@ -1752,7 +1809,7 @@ app.post('/api/v1/finanzas/pagos-oc',
   requireRoles('finanzas', 'admin'),
   async (req: Request, res: Response) => {
     try {
-      const { tenantId, proyectoId: ctxPid, userId } = req.securityContext;
+      const { tenantId, proyectoId: ctxPid, userId, limiteAprobacion } = req.securityContext;
       const { fuente, cuenta_id, tipo_pago, referencia, concepto, fecha_pago, proyecto_id, detalles } = req.body;
 
       if (!fuente || !tipo_pago || !referencia || !concepto || !fecha_pago || !proyecto_id || !Array.isArray(detalles) || detalles.length === 0) {
@@ -1766,6 +1823,20 @@ app.post('/api/v1/finanzas/pagos-oc',
       }
 
       const montoTotal = (detalles as any[]).reduce((sum: number, d: any) => sum + Number(d.monto_aplicado), 0);
+
+      // Validar Límite de Autoridad Financiera ANTES de descontar saldo o anticipo.
+      // Sin esto, este endpoint era un bypass del límite: el mismo pago rechazado
+      // por PATCH /pagos/:id/pagar se podía registrar aquí contra una OC sin que
+      // nadie mirara el límite del usuario.
+      // Ver openspec/changes/limite-autoridad-pagos-oc.
+      if (montoTotal > limiteAprobacion) {
+        return res.status(403).json(createApiError(
+          'FIN_LIMIT_EXCEEDED',
+          `El monto $${montoTotal.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+          undefined,
+          getCorrelationId(req)
+        ));
+      }
 
       const data = await createTenantContext({ tenantId, proyectoId: ctxPid, userId }, async (prisma) => {
         return (prisma as any).$transaction(async (tx: any) => {
@@ -1874,7 +1945,10 @@ function requireInternalService(serviceName: string) {
 // GET /api/v1/finanzas/reportes/pagado-por-concepto?proyectoId=<uuid>
 // Agrega SUM(monto_aplicado) por concepto_id para reporte de control presupuestal.
 // Uso: B2B desde gerencia-tecnica.
+// Roles: lo consulta GET /gerencia-tecnica/dashboard por backend-to-backend,
+// que admite superintendent, admin, technical y gerencia_tecnica.
 app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
+  requireRoles('finanzas', 'admin', 'director', 'superintendent', 'gerencia_tecnica', 'technical'),
   requireInternalService('gerencia-tecnica'),
   async (req: Request, res: Response) => {
     try {
