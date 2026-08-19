@@ -708,7 +708,15 @@ app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, 
 });
 
 // ENDPOINT: POST /api/v1/finanzas/comprometer-fondos
-app.post('/api/v1/finanzas/comprometer-fondos', async (req: Request, res: Response) => {
+// Roles: incluye 'procurement' y 'superintendent' a proposito. Compras invoca
+// este endpoint backend-to-backend reenviando el JWT del usuario original
+// (buildForwardHeaders), no una credencial de servicio, asi que los roles que
+// llegan aqui son los del usuario que emitio/cancelo la OC. Estrechar el
+// conjunto a finanzas/admin rompe la saga y deja las OC en ERROR_FINANZAS.
+// Ver openspec/changes/rbac-finanzas-saga-fondos.
+app.post('/api/v1/finanzas/comprometer-fondos',
+  requireRoles('finanzas', 'admin', 'superintendent', 'procurement'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const correlationId = getCorrelationId(req);
@@ -927,7 +935,15 @@ app.post('/api/v1/finanzas/comprometer-fondos', async (req: Request, res: Respon
 });
 
 // ENDPOINT: POST /api/v1/finanzas/liberar-fondos
-app.post('/api/v1/finanzas/liberar-fondos', async (req: Request, res: Response) => {
+// Roles: incluye 'procurement' y 'superintendent' a proposito. Compras invoca
+// este endpoint backend-to-backend reenviando el JWT del usuario original
+// (buildForwardHeaders), no una credencial de servicio, asi que los roles que
+// llegan aqui son los del usuario que emitio/cancelo la OC. Estrechar el
+// conjunto a finanzas/admin rompe la saga y deja las OC en ERROR_FINANZAS.
+// Ver openspec/changes/rbac-finanzas-saga-fondos.
+app.post('/api/v1/finanzas/liberar-fondos',
+  requireRoles('finanzas', 'admin', 'superintendent', 'procurement'),
+  async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const correlationId = getCorrelationId(req);
