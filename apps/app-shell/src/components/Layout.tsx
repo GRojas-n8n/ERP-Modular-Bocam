@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, cn, getProjectColor } from '@bocam/ui-core';
+import { CambiarPasswordDialog } from './CambiarPasswordDialog';
 import {
   IconDashboard,
   IconBriefcase,
@@ -250,6 +251,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     setIsMobileNavOpen(false);
   };
   const handleLogout   = () => { setIsMobileNavOpen(false); logout(); };
+  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
   const projects       = user?.projects || [];
   const currentProject = projects.find(p => p.id === currentProjectId) || projects[0];
   const currentProjectColor = getProjectColor(currentProject?.id);
@@ -446,6 +448,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
           </div>
         </div>
         <button
+          onClick={() => { setIsMobileNavOpen(false); setMostrarCambioPassword(true); }}
+          id="cambiar-password-btn"
+          className="mb-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground"
+        >
+          <IconSettings className="h-4 w-4" />
+          Cambiar contraseña
+        </button>
+        <button
           onClick={handleLogout}
           id="logout-btn"
           className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-destructive transition-all hover:bg-destructive/10"
@@ -459,6 +469,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans">
+
+      {/* El dialogo se monta aqui y no dentro de renderSidebarContent(), que se
+          invoca dos veces (sidebar de escritorio y overlay movil) y lo
+          duplicaria en el DOM. */}
+      {mostrarCambioPassword && (
+        <CambiarPasswordDialog
+          onCerrar={() => setMostrarCambioPassword(false)}
+          onCambioExitoso={() => { setMostrarCambioPassword(false); logout(); }}
+        />
+      )}
 
       {/* ── Sidebar desktop ── */}
       <aside className="z-20 hidden w-60 flex-col border-r shadow-sm md:flex overflow-hidden"
