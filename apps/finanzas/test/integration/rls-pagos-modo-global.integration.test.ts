@@ -22,6 +22,7 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
+import { createTenantContext } from '../../src/db';
 
 const dbUrl = process.env.FINANZAS_DATABASE_URL
   || process.env.DATABASE_URL
@@ -44,37 +45,59 @@ async function teardown() {
   await prisma.$disconnect();
 }
 
-async function cleanupTenant(tenantId: string) {
-  await prisma.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId } });
+async function cleanupTenant(tenantId: string, proyectoIds: string[]) {
+  // Limpieza vía createTenantContext (mismo camino que usa la app en runtime)
+  // en vez del `prisma` de módulo sin contexto: bajo RLS real (rol no-bypass),
+  // un DELETE sin `app.current_tenant_id`/`app.current_proyecto_id` fijados no
+  // ve ninguna fila que borrar. `programa_pagos` acepta modo global
+  // (proyectoId '' → current_proyecto_id() IS NULL) porque su política de
+  // DELETE es la combinada; `presupuestos_asignados` sigue siendo Patrón
+  // Estricto, así que se borra proyecto por proyecto.
+  await createTenantContext({ tenantId, proyectoId: '', userId: 'test-seed' }, async (tx) => {
+    await tx.programaPagos.deleteMany({ where: { tenant_id: tenantId } });
+  });
+  for (const proyectoId of proyectoIds) {
+    await createTenantContext({ tenantId, proyectoId, userId: 'test-seed' }, async (tx) => {
+      await tx.presupuestoAsignado.deleteMany({ where: { tenant_id: tenantId, proyecto_id: proyectoId } });
+    });
+  }
 }
 
 async function crearPresupuestoYPago(tenantId: string, proyectoId: string, concepto: string) {
-  const presupuesto = await prisma.presupuestoAsignado.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      codigo: `PRES-GLOBAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      descripcion: `Presupuesto de prueba modo global — ${concepto}`,
-      monto_autorizado: 50000,
-      monto_disponible: 50000,
-      capitulo: 'MATERIALES',
-      moneda: 'MXN',
-      estatus: 'ACTIVO',
-    },
-  });
+  // Sembrado vía createTenantContext: bajo RLS real, un INSERT con `tenant_id`/
+  // `proyecto_id` que no coincide con las variables de sesión de Postgres
+  // viola la política (`new row violates row-level security policy`) aunque
+  // los valores del `data` sean correctos — la política evalúa contra el GUC
+  // de sesión, no contra el payload. Se replica exactamente el mismo mecanismo
+  // que usa la app en runtime (`src/db.ts`), en vez de asumir una conexión con
+  // bypass de RLS.
+  return createTenantContext({ tenantId, proyectoId, userId: 'test-seed' }, async (tx) => {
+    const presupuesto = await tx.presupuestoAsignado.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        codigo: `PRES-GLOBAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        descripcion: `Presupuesto de prueba modo global — ${concepto}`,
+        monto_autorizado: 50000,
+        monto_disponible: 50000,
+        capitulo: 'MATERIALES',
+        moneda: 'MXN',
+        estatus: 'ACTIVO',
+      },
+    });
 
-  return prisma.programaPagos.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      presupuesto_id: presupuesto.id_presupuesto,
-      concepto,
-      beneficiario: 'Proveedor de prueba',
-      monto_programado: 10000,
-      fecha_programada: new Date('2026-09-01'),
-      estado: 'PROGRAMADO',
-    },
+    return tx.programaPagos.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        presupuesto_id: presupuesto.id_presupuesto,
+        concepto,
+        beneficiario: 'Proveedor de prueba',
+        monto_programado: 10000,
+        fecha_programada: new Date('2026-09-01'),
+        estado: 'PROGRAMADO',
+      },
+    });
   });
 }
 
@@ -106,7 +129,7 @@ async function testConProyectoActivoSigueEstricto() {
 
     console.log('ok - GET /pagos con proyecto activo sigue estricto (regresión, tarea 6.1)');
   } finally {
-    await cleanupTenant(tenantA);
+    await cleanupTenant(tenantA, [proyectoA, proyectoOtroDeA]);
   }
 }
 
@@ -145,8 +168,8 @@ async function testSinProyectoActivoConsolidaTodoElTenant() {
 
     console.log('ok - GET /pagos sin proyecto activo consolida todos los proyectos del tenant, trazable por fila (tarea 6.2)');
   } finally {
-    await cleanupTenant(tenantA);
-    await cleanupTenant(tenantB);
+    await cleanupTenant(tenantA, [proyectoA, proyectoOtroDeA]);
+    await cleanupTenant(tenantB, [proyectoB]);
   }
 }
 

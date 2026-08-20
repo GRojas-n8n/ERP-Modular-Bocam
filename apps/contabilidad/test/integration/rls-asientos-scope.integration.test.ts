@@ -22,6 +22,7 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
+import { createTenantContext } from '../../src/db';
 
 const dbUrl = process.env.DATABASE_URL?.replace('schema=finanzas', 'schema=contabilidad')
   ?? 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=contabilidad';
@@ -44,10 +45,17 @@ async function teardown() {
 }
 
 async function cleanupTenant(tenantId: string) {
-  await prisma.movimientoPoliza.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.conciliacionFiscal.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.conciliacionBancaria.deleteMany({ where: { tenant_id: tenantId } });
-  await prisma.asientoContable.deleteMany({ where: { tenant_id: tenantId } });
+  // Vía createTenantContext (modo global, proyectoId '') para que el DELETE
+  // vea las filas bajo RLS real: sin GUC fijado, current_tenant_id() es NULL
+  // y ninguna política hace match. Cubre las 3 tablas en Patrón Global
+  // (asientos_contables, conciliaciones_bancarias, movimientos_poliza);
+  // conciliaciones_fiscales sigue estricta y este test no crea filas ahí.
+  await createTenantContext({ tenantId, proyectoId: '', userId: 'test-seed' }, async (tx) => {
+    await tx.movimientoPoliza.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.conciliacionFiscal.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.conciliacionBancaria.deleteMany({ where: { tenant_id: tenantId } });
+    await tx.asientoContable.deleteMany({ where: { tenant_id: tenantId } });
+  });
 }
 
 async function get(path: string, token: string) {
@@ -57,16 +65,18 @@ async function get(path: string, token: string) {
 }
 
 async function crearAsiento(tenantId: string, proyectoId: string, folio: string) {
-  return prisma.asientoContable.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      folio_poliza: folio,
-      concepto: `Asiento de prueba ${folio}`,
-      monto_total: 1000,
-      beneficiario: 'Proveedor de prueba',
-    },
-  });
+  return createTenantContext({ tenantId, proyectoId, userId: 'test-seed' }, (tx) =>
+    tx.asientoContable.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        folio_poliza: folio,
+        concepto: `Asiento de prueba ${folio}`,
+        monto_total: 1000,
+        beneficiario: 'Proveedor de prueba',
+      },
+    })
+  );
 }
 
 async function testGetAsientosSoloDevuelveTenantYProyectoPropio() {

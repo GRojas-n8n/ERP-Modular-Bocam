@@ -82,18 +82,22 @@ ALTER TABLE "detalles_pago_oc" FORCE ROW LEVEL SECURITY;
 -- 3. POLÍTICAS: PRESUPUESTOS ASIGNADOS
 -- Filtro doble: tenant_id + proyecto_id (Centro de Costos)
 --
--- EXCLUIDA A PROPÓSITO del Patrón Global (openspec: aislamiento-proyecto-
--- por-modulo): un presupuesto asignado pertenece a un único proyecto por
--- definición — no existe un "presupuesto global" que consolidar entre
--- proyectos. Se evaluó y se descartó deliberadamente subir esta tabla a
--- Patrón Global; permanece estricta, sin la rama `current_proyecto_id() IS
--- NULL`. No agregarla sin una decisión de negocio explícita nueva.
+-- SELECT en Patrón Global desde 2026-08-20 (openspec: aislamiento-proyecto-
+-- por-modulo, hallazgo al correr el test de integración 6.2 contra Postgres
+-- real con RLS forzado — no bypass): `GET /pagos` en modo global (rol
+-- tenant-level, sin proyecto activo) hace `include: { presupuesto }` sobre
+-- `programa_pagos`, que sí está en Patrón Global. Con `presupuestos_asignados`
+-- en Patrón Estricto, `current_proyecto_id() IS NULL` no hace match con
+-- ninguna fila, el JOIN vuelve vacío, y Prisma revienta con "Field
+-- presupuesto is required" (500) — el bug original que este mismo change dice
+-- corregir. INSERT/UPDATE/DELETE se quedan estrictos a propósito: no existe un
+-- caso de negocio para escribir un presupuesto sin proyecto activo.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS rls_presupuestos_select ON "presupuestos_asignados";
 CREATE POLICY rls_presupuestos_select ON "presupuestos_asignados"
     FOR SELECT USING (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 DROP POLICY IF EXISTS rls_presupuestos_insert ON "presupuestos_asignados";

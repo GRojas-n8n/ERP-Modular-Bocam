@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
+import { createTenantContext } from '../../src/db';
 
 const dbUrl = process.env.DATABASE_URL
   || 'postgresql://postgres:bocam_dev_password@localhost:5432/bocam_erp?schema=control_proyectos';
@@ -45,8 +46,10 @@ async function teardown() {
   await prisma.$disconnect();
 }
 
-async function cleanupTenant(tenantId: string) {
-  await prisma.estimacion.deleteMany({ where: { tenant_id: tenantId } });
+async function cleanupTenant(tenantId: string, proyectoId: string) {
+  await createTenantContext({ tenantId, proyectoId, userId: 'test-seed' }, (tx) =>
+    tx.estimacion.deleteMany({ where: { tenant_id: tenantId } })
+  );
 }
 
 async function get(pathUrl: string, token: string) {
@@ -59,21 +62,24 @@ async function testResidenciaConProyectoActivoNoLeeEstimacionDeOtroProyecto() {
   const proyectoB = randomUUID();
   const userId = randomUUID();
 
-  const estimacionB = await prisma.estimacion.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoB,
-      numero_estimacion: Math.floor(Date.now() / 1000),
-      codigo: `EST-AISLAMIENTO-${Date.now()}`,
-      periodo_inicio: new Date('2026-03-01'),
-      periodo_fin: new Date('2026-03-15'),
-      subtotal: '10000.00',
-      total_neto: '11600.00',
-      iva: '1600.00',
-      elaborado_por_id: userId,
-      elaborado_por_nombre: 'Residente de prueba',
-    },
-  });
+  const estimacionB = await createTenantContext(
+    { tenantId, proyectoId: proyectoB, userId: 'test-seed' },
+    (tx) => tx.estimacion.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoB,
+        numero_estimacion: Math.floor(Date.now() / 1000),
+        codigo: `EST-AISLAMIENTO-${Date.now()}`,
+        periodo_inicio: new Date('2026-03-01'),
+        periodo_fin: new Date('2026-03-15'),
+        subtotal: '10000.00',
+        total_neto: '11600.00',
+        iva: '1600.00',
+        elaborado_por_id: userId,
+        elaborado_por_nombre: 'Residente de prueba',
+      },
+    })
+  );
 
   try {
     const token = signTenantToken({
@@ -93,7 +99,7 @@ async function testResidenciaConProyectoActivoNoLeeEstimacionDeOtroProyecto() {
 
     console.log('ok - Control de Proyectos: residencia con proyecto A activo no puede leer una estimación del proyecto B por URL manipulada');
   } finally {
-    await cleanupTenant(tenantId);
+    await cleanupTenant(tenantId, proyectoB);
   }
 }
 

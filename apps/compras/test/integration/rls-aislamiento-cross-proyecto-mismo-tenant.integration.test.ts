@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
+import { createTenantContext } from '../../src/db';
 
 const comprasDbUrl =
   process.env.DATABASE_URL ||
@@ -46,8 +47,10 @@ async function teardown() {
   await prisma.$disconnect();
 }
 
-async function cleanupTenant(tenantId: string) {
-  await prisma.requisicion.deleteMany({ where: { tenant_id: tenantId } });
+async function cleanupTenant(tenantId: string, proyectoId: string) {
+  await createTenantContext({ tenantId, proyectoId, userId: 'test-seed' }, (tx) =>
+    tx.requisicion.deleteMany({ where: { tenant_id: tenantId } })
+  );
 }
 
 async function get(pathUrl: string, token: string) {
@@ -60,15 +63,18 @@ async function testProcurementConProyectoAutorizadoNoLeeRequisicionDeOtroProyect
   const proyectoB = randomUUID();
   const solicitanteId = randomUUID();
 
-  const requisicionB = await prisma.requisicion.create({
-    data: {
-      tenant_id: tenantId,
-      proyecto_id: proyectoB,
-      codigo: `REQ-AISLAMIENTO-${Date.now()}`,
-      solicitante_id: solicitanteId,
-      solicitante_nombre: 'Residente de prueba',
-    },
-  });
+  const requisicionB = await createTenantContext(
+    { tenantId, proyectoId: proyectoB, userId: 'test-seed' },
+    (tx) => tx.requisicion.create({
+      data: {
+        tenant_id: tenantId,
+        proyecto_id: proyectoB,
+        codigo: `REQ-AISLAMIENTO-${Date.now()}`,
+        solicitante_id: solicitanteId,
+        solicitante_nombre: 'Residente de prueba',
+      },
+    })
+  );
 
   try {
     // procurement, con proyecto A activo Y autorizado explícitamente — ya NO
@@ -90,7 +96,7 @@ async function testProcurementConProyectoAutorizadoNoLeeRequisicionDeOtroProyect
 
     console.log('ok - Compras: procurement con proyecto A activo no puede leer una requisición del proyecto B por URL manipulada');
   } finally {
-    await cleanupTenant(tenantId);
+    await cleanupTenant(tenantId, proyectoB);
   }
 }
 
