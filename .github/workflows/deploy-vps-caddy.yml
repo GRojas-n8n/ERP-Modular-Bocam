@@ -90,6 +90,12 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             'curl -skI https://iretum.com/ --resolve iretum.com:443:127.0.0.1 && echo "---HTTP (puerto 80)---" && curl -sI http://iretum.com/ --resolve iretum.com:80:127.0.0.1'
 
+      - name: Diagnóstico — JSON adaptado del Caddyfile real en el VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && echo '--- md5 del Caddyfile en el repo vs el que ve el contenedor ---' && md5sum docker/Caddyfile && docker compose -f docker-compose.vps.yml exec -T caddy md5sum /etc/caddy/Caddyfile && echo '--- contenido visto por el contenedor ---' && docker compose -f docker-compose.vps.yml exec -T caddy cat /etc/caddy/Caddyfile && echo '--- JSON adaptado ---' && docker compose -f docker-compose.vps.yml exec -T caddy caddy adapt --config /etc/caddy/Caddyfile --pretty"
+
       # ── 5b. Verificar que los headers de seguridad quedaron activos ──
       - name: Verificar headers de seguridad
         run: |
