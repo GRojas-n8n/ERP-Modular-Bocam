@@ -8,13 +8,14 @@
 # es una operación deliberada sobre políticas de acceso a datos
 # reales, no una config de proxy sin estado.
 #
-# No usa psql (no está instalado en la imagen `docker/Dockerfile.backend`,
-# basada en Node). Usa `prisma db execute`, que ya está disponible en el
-# contenedor (mismo mecanismo que `prisma migrate deploy` en
-# deploy-vps-backend.yml) y resuelve la URL de conexión desde
-# `schema.prisma` + el DATABASE_URL real del contenedor — no hace
-# falta conocer ni exponer la contraseña de producción en este
-# workflow.
+# `prisma db execute` (rol de runtime `bocam_app`) NO alcanza: tras el
+# hardening de openspec: fix-rls-bypass-bocam-admin, ese rol no es
+# superusuario ni dueño de las funciones/políticas — falla con "must be
+# owner of function current_tenant_id". Se aplica como superusuario
+# (contenedor `postgres`, rol POSTGRES_USER) vía
+# scripts/ci/apply-rls-as-admin.sh, que resuelve el nombre real de la base
+# del servicio a partir de su propio DATABASE_URL sin necesitar conocer ni
+# exponer credenciales de producción en este workflow.
 #
 # El script es idempotente (`DROP POLICY IF EXISTS` + `CREATE POLICY`,
 # `CREATE OR REPLACE FUNCTION`), así que correrlo dos veces no rompe
@@ -62,32 +63,19 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
 
-      # ── 3. Aplicar el script contra la base real, vía el contenedor
-      # del propio servicio (ya tiene DATABASE_URL resuelto en su entorno) ──
-      - name: prisma db execute (rls-policies.sql)
+      # ── 3. Aplicar el script como superusuario ──────────────
+      - name: Aplicar rls-policies.sql (superusuario)
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T ${{ inputs.service }} \
-              node_modules/.bin/prisma db execute \
-                --file apps/${{ inputs.service }}/prisma/rls-policies.sql \
-                --schema apps/${{ inputs.service }}/prisma/schema.prisma"
+            "cd ${{ env.VPS_REPO_PATH }} && bash scripts/ci/apply-rls-as-admin.sh ${{ inputs.service }}"
 
       # ── 4. Confirmar que las políticas quedaron activas ─────
-      # `docker/Dockerfile.backend` no copia scripts/ ni psql al runner de
-      # cada microservicio, así que se consulta vía el contenedor de
-      # `postgres` (que sí trae psql) pero usando el DATABASE_URL REAL que
-      # ya tiene resuelto el contenedor del servicio — evita tener que
-      # adivinar o exponer usuario/nombre de base de producción en este
-      # workflow.
       - name: Verificar políticas RLS aplicadas
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd ${{ env.VPS_REPO_PATH }} && \
-             DBURL=\$(docker compose -f docker-compose.vps.yml exec -T ${{ inputs.service }} printenv DATABASE_URL) && \
-             docker compose -f docker-compose.vps.yml exec -T postgres psql \"\$DBURL\" -c \
-               \"SELECT tablename, policyname, cmd FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename, policyname;\""
+            "cd ${{ env.VPS_REPO_PATH }} && bash scripts/ci/verify-rls-policies.sh ${{ inputs.service }}"
 
       # ── 5. Resumen ───────────────────────────────────────
       - name: Resumen
