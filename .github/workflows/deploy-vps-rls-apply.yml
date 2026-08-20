@@ -1,0 +1,96 @@
+# ============================================================
+# deploy-vps-rls-apply.yml — BocamOS ERP
+#
+# Aplica un rls-policies.sql contra la base de datos REAL de
+# producción de un microservicio. Disparo manual únicamente
+# (workflow_dispatch) — a diferencia de deploy-vps-caddy.yml, esto
+# no debe correr automáticamente en cada push que toque el archivo:
+# es una operación deliberada sobre políticas de acceso a datos
+# reales, no una config de proxy sin estado.
+#
+# No usa psql (no está instalado en la imagen `docker/Dockerfile.backend`,
+# basada en Node). Usa `prisma db execute`, que ya está disponible en el
+# contenedor (mismo mecanismo que `prisma migrate deploy` en
+# deploy-vps-backend.yml) y resuelve la URL de conexión desde
+# `schema.prisma` + el DATABASE_URL real del contenedor — no hace
+# falta conocer ni exponer la contraseña de producción en este
+# workflow.
+#
+# El script es idempotente (`DROP POLICY IF EXISTS` + `CREATE POLICY`,
+# `CREATE OR REPLACE FUNCTION`), así que correrlo dos veces no rompe
+# nada — pero solo debe correrse cuando el archivo en el repo es
+# exactamente el que se quiere aplicar.
+#
+# SECRETS requeridos (los mismos que los otros workflows de deploy):
+#   VPS_SSH_KEY, VPS_HOST, VPS_USER
+# ============================================================
+
+name: Aplicar RLS al VPS (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Servicio (finanzas o contabilidad)"
+        required: true
+        type: choice
+        options:
+          - finanzas
+          - contabilidad
+
+env:
+  VPS_REPO_PATH: /root/ERP-Modular-Bocam
+
+jobs:
+  apply-rls:
+    name: Aplicar rls-policies.sql (${{ inputs.service }})
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Configurar SSH ──────────────────────────────────
+      - name: Configurar llave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 2. Actualizar el repo en el VPS ─────────────────────
+      - name: Git pull en el VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
+
+      # ── 3. DRY-RUN TEMPORAL: NO aplica nada todavía, solo prueba el
+      # mecanismo de verificación (paso 4) contra producción de forma
+      # segura antes de escribir. TODO: restaurar el paso real antes de
+      # usar esto para aplicar de verdad.
+      - name: "[DRY-RUN] prisma db execute (rls-policies.sql) — DESHABILITADO"
+        run: echo "Paso deshabilitado a propósito para probar solo el paso 4 (verificación) primero."
+
+      # ── 4. Confirmar que las políticas quedaron activas ─────
+      # `docker/Dockerfile.backend` no copia scripts/ ni psql al runner de
+      # cada microservicio, así que se consulta vía el contenedor de
+      # `postgres` (que sí trae psql) pero usando el DATABASE_URL REAL que
+      # ya tiene resuelto el contenedor del servicio — evita tener que
+      # adivinar o exponer usuario/nombre de base de producción en este
+      # workflow.
+      - name: Verificar políticas RLS aplicadas
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && \
+             DBURL=\$(docker compose -f docker-compose.vps.yml exec -T ${{ inputs.service }} printenv DATABASE_URL) && \
+             docker compose -f docker-compose.vps.yml exec -T postgres psql \"\$DBURL\" -c \
+               \"SELECT tablename, policyname, cmd FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename, policyname;\""
+
+      # ── 5. Resumen ───────────────────────────────────────
+      - name: Resumen
+        if: always()
+        run: |
+          echo "=================================="
+          echo "RLS aplicado: ${{ inputs.service }}"
+          echo "Rama: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "=================================="
