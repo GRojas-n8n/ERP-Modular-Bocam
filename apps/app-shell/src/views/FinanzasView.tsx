@@ -353,7 +353,15 @@ export const FinanzasView: React.FC = () => {
       setShowPagoModal(false);
       void fetchData();
     } catch (err: any) {
-      setPagoError(err.response?.data?.message ?? 'Error al registrar el pago.');
+      // Finanzas responde con dos formas de error segun el endpoint: la estandar
+      // del proyecto ({ error: { code, message } }) y una local ({ message }).
+      // Se leen ambas para que el rechazo por limite de autoridad llegue al
+      // usuario con su monto, en vez del texto generico.
+      setPagoError(
+        err.response?.data?.error?.message
+        ?? err.response?.data?.message
+        ?? 'Error al registrar el pago.'
+      );
     } finally {
       setGuardandoPago(false);
     }

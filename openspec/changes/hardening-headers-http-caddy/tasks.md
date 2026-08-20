@@ -8,7 +8,7 @@
 
 ## 2. Verificación local
 
-- [ ] 2.1 Levantar el stack local (`docker compose up`) y confirmar con `curl -I` que los headers aparecen en la respuesta. (No aplica en este entorno: Caddy solo corre en `docker-compose.vps.yml`, no en el compose de desarrollo local — el Postgres/Redis/RabbitMQ local no incluye Caddy/app-shell. Se valida directamente en el paso 3.)
+- [x] 2.1 Confirmado con el `docker/Caddyfile` real, sin modificar: se levantó un contenedor `caddy:2-alpine` aislado (red Docker propia, backend `nginx:alpine` alias `app-shell` para satisfacer `reverse_proxy app-shell:80`, sitio adaptado a `:80` en vez de `iretum.com` para evitar el flujo ACME/TLS automático — el bloque `header` es idéntico al de producción, sin tocar). `caddy adapt` confirma el handler `headers` con los 5 valores correctos cargados desde el archivo real. `curl -I` contra el contenedor confirma los 5 headers presentes en la respuesta proxied (`Server: nginx/...` confirma que el `reverse_proxy` sigue funcionando): `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`. Contenedores y red de prueba eliminados al terminar.
 - [ ] 2.2 Verificar en navegador que el lector QR de asistencia (Personal/RH) sigue pidiendo y usando la cámara con normalidad. (pendiente — junto con la verificación final en producción)
 - [ ] 2.3 Verificar que la SPA carga sin errores de consola nuevos. (pendiente — junto con la verificación final en producción)
 

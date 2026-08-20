@@ -1,0 +1,41 @@
+## Why
+
+Al auditar las políticas RLS reales de los 5 servicios (no solo `gerencia-tecnica`, que fue el único revisado en la ronda anterior) se confirmó que **Compras, Control de Proyectos y Personal ya implementan correctamente el aislamiento estricto por `proyecto_id` a nivel de base de datos** — con `FORCE ROW LEVEL SECURITY` y, en las tablas agregadas más recientemente, una sola política combinada (`tenant_id = ... AND proyecto_id = ...`) para evitar el bug ya documentado en este repo de que dos políticas PERMISSIVE separadas se combinan con OR en Postgres, no con AND (`fix-rls-bypass-bocam-admin`, `fix-rls-personal-tablas-nuevas`). Personal además ya distingue correctamente qué tablas son globales (`empleados`, `credenciales_empleado`, `documentos_empleado`) de cuáles son por proyecto (`asignaciones_frente`, `cuadrillas`, `pre_nominas`).
+
+El gap real es más angosto que lo planteado inicialmente, en dos frentes:
+
+1. **Finanzas y Contabilidad tienen RLS `proyecto_id` 100% estricto, sin ninguna vía de consulta global** — cada política es `tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id()`, sin excepción. Esto contradice el requisito de negocio de que estos dos módulos deben poder operar de forma consolidada (nómina, pagos a proveedores, mantenimientos) manteniendo trazabilidad por proyecto: hoy, si el código de aplicación intenta una consulta "global" (sin `proyecto_id` en el contexto de sesión), la comparación `proyecto_id = NULL` no es verdadera en SQL y la política RLS devuelve **cero filas**, no todas — el propio candado que instalaron para blindar el aislamiento es el que bloquea la vista global que ahora se pide.
+2. El middleware compartido `requireProjectAccess()` (`packages/auth-middleware`) trata a `procurement` (rol de Compras) como rol de nivel tenant con acceso irrestricto a todos los proyectos — documentado y confirmado intencional en la spec existente `control-acceso-rol-finanzas-nivel-tenant` — lo cual contradice el requisito de que Compras nunca debe mezclar información entre proyectos, aunque la RLS ya lo bloquee por debajo. Y el rol real de Personal (`personal_rh`) no está en esa misma lista, a pesar de que las consultas globales de Personal (`GET /empleados`, `GET /dashboard`) ya están escritas sin filtro de proyecto — hoy pueden recibir `403 AUTH_PROJECT_REQUIRED` antes de llegar a una consulta que de todas formas es global.
+
+Se documenta aquí el diseño para cerrar ambos frentes antes de tocar RLS de pagos en dos servicios y el middleware compartido de los cinco.
+
+## What Changes
+
+- Se formalizan **tres patrones de aislamiento** ya presentes de facto en el código (antes documentados solo de forma dispersa, tabla por tabla, en comentarios de cada `rls-policies.sql`):
+  - **Patrón Estricto** (`tenant_id = ... AND proyecto_id = ...`, sin excepción): ya vigente en Compras (17/21 tablas), Control de Proyectos (10/10 tablas) y las tablas operativas de Personal (`asignaciones_frente`, `cuadrillas`, `pre_nominas`, `pre_nomina_detalles`, `registros_asistencia`, `nominas_complementarias`, `config_asistencia_proyecto`, `config_nomina_proyecto`) — **sin cambios** para estas tablas.
+  - **Patrón Global con Trazabilidad** (`current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()` — Finanzas y Contabilidad nombran su función de contexto `current_proyecto_id()`, sin el prefijo `get_` que usa `gerencia-tecnica`; no son intercambiables, cada servicio define la suya en su propio `rls-policies.sql`): patrón conceptualmente igual al que ya usa `gerencia-tecnica` en `presupuestos_base`/`conceptos` (aunque ahí es un remanente histórico, no una función de negocio deliberada). Se extiende deliberadamente a las tablas de **pago** de Finanzas (`programa_pagos`, `pagos_oc`, `detalles_pago_oc`) y a las que correspondan de Contabilidad tras clasificarlas (ver Open Question en design.md) — **no** a las tablas de presupuesto por proyecto (`presupuestos_asignados`, `movimientos_presupuestales`, `proyectos_finanzas`), que deben seguir estrictas porque un presupuesto pertenece a un único proyecto por definición.
+  - **Patrón Catálogo Compartido** (`tenant_id = ...` únicamente, o sin RLS si el catálogo es cross-tenant): ya vigente y correcto para `proveedores`/`documentos_proveedor` (Compras), `cuentas_bancarias` (Finanzas), `cuentas_contables` (Contabilidad, incluso cross-tenant por diseño), y `empleados`/`credenciales_empleado`/`documentos_empleado`/`asignaciones_residente`/`config_deducciones_empleados` (Personal) — **sin cambios**.
+- Se agregan migraciones + políticas RLS nuevas **solo** en las tablas de pago de `finanzas` y las que correspondan de `contabilidad`, upgradeando de Patrón Estricto a Patrón Global con Trazabilidad.
+- **BREAKING**: se retira `procurement` de la lista de roles de nivel tenant (`tenantLevelRoles`) en `requireProjectAccess()` (`packages/auth-middleware`). Un usuario con rol `procurement` deja de tener acceso irrestricto a todos los proyectos del tenant a nivel de aplicación — la RLS ya lo bloqueaba, esto cierra la contradicción en la capa de acceso y en los mensajes de error que recibe el usuario.
+- Se agrega `personal_rh` a `tenantLevelRoles`, para que las consultas de Personal que ya son globales por diseño dejen de ser bloqueadas con `403 AUTH_PROJECT_REQUIRED` cuando el usuario no tiene un proyecto activo/autorizado seleccionado.
+- Se expone `proyecto_id` (y, cuando sea viable, el nombre del proyecto) en cada asignación activa devuelta por `GET /api/v1/personal/empleados`, para que quede visible en qué proyecto(s) está cada empleado sin llamadas adicionales. No se requiere cambio de esquema: `AsignacionFrente` ya soporta múltiples asignaciones `ACTIVA` simultáneas del mismo empleado en distintos proyectos.
+- Contabilidad no requiere cambio de roles en el middleware: sus rutas protegidas ya verifican el rol `'finanzas'` (confirmado en la spec existente `control-acceso-rol-finanzas-contabilidad`), y ese rol ya está en `tenantLevelRoles`.
+
+## Capabilities
+
+### New Capabilities
+- `aislamiento-proyecto-por-modulo`: formaliza los tres patrones de aislamiento por proyecto (estricto, global-con-trazabilidad, catálogo-compartido) ya presentes de facto en el código, y aplica el upgrade de estricto a global-con-trazabilidad en las tablas de pago de Finanzas y las que correspondan de Contabilidad — más la exposición de `proyecto_id` por asignación activa en el listado de empleados de Personal.
+- `control-acceso-rol-personal-nivel-tenant`: el rol `personal_rh` se trata como rol de nivel tenant en `requireProjectAccess()`, igual que ya ocurre con `finanzas`, `admin` y `superintendent` (ver spec existente `control-acceso-rol-finanzas-nivel-tenant`).
+
+### Modified Capabilities
+- `control-acceso-rol-finanzas-nivel-tenant`: cambia el conjunto de roles tratados como nivel-tenant en `requireProjectAccess()` — se retira `procurement` de la lista. Compras deja de tener acceso irrestricto a todos los proyectos por rol; queda sujeto a `authorizedProjects` como cualquier rol de nivel proyecto.
+
+## Impact
+
+- `packages/auth-middleware/src/middleware.ts` — array `tenantLevelRoles` dentro de `requireProjectAccess()` (quita `procurement`, agrega `personal_rh`). Afecta a los 5 servicios que importan este middleware.
+- `apps/finanzas/prisma/rls-policies.sql` + migración nueva — solo tablas de pago (`programa_pagos`, `pagos_oc`, `detalles_pago_oc`); `presupuestos_asignados`, `movimientos_presupuestales`, `proyectos_finanzas` y `cuentas_bancarias` **no cambian**.
+- `apps/contabilidad/prisma/rls-policies.sql` + migración nueva — alcance exacto pendiente de clasificación (ver design.md).
+- `apps/personal/src/main.ts` — `GET /empleados`, exponer `proyecto_id` por asignación activa. Sin cambio de esquema ni de RLS.
+- `apps/compras`, `apps/control-proyectos`: **sin cambios de RLS** — ya cumplen el Patrón Estricto en sus tablas transaccionales.
+- Usuarios con rol `procurement`: pierden el acceso "todos los proyectos" que tenían hoy a nivel de aplicación (la RLS ya se lo impedía a nivel de datos) — cambio de comportamiento visible, debe comunicarse antes de desplegar.
+- Suite de tests de integración nueva: Finanzas/Contabilidad (modo global sí filtra correctamente y sigue trazable por proyecto), y regresión en los 5 servicios sobre el cambio de `tenantLevelRoles`.

@@ -125,11 +125,86 @@ async function testIncluyeSoloResidenteVigente() {
   }
 }
 
+async function testAsignacionIncluyeProyectoId() {
+  // openspec: aislamiento-proyecto-por-modulo, tarea 5.3
+  const tenantId = randomUUID();
+  const proyectoId = randomUUID();
+  const userId = randomUUID();
+  try {
+    const emp = await crearEmpleado(tenantId);
+    await prisma.asignacionFrente.create({
+      data: {
+        tenant_id: tenantId, proyecto_id: proyectoId, empleado_id: emp.id_empleado,
+        frente_trabajo: 'Frente 1 — Cimentación', fecha_inicio: new Date('2026-01-01'),
+        horas_diarias: 8, estado: 'ACTIVA',
+      },
+    });
+    const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
+
+    const r = await get('/api/v1/personal/empleados', tokenRh);
+    assert.equal(r.status, 200);
+    const body = (await r.json()) as any;
+    const encontrado = body.data.find((e: any) => e.id_empleado === emp.id_empleado);
+    assert.equal(encontrado.asignaciones.length, 1);
+    assert.equal(encontrado.asignaciones[0].proyecto_id, proyectoId, 'la asignación debe incluir su proyecto_id');
+    assert.equal(encontrado.asignaciones[0].es_prestamo, false);
+
+    console.log('ok - GET /empleados incluye proyecto_id en cada asignación activa');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
+async function testEmpleadoConMultiplesAsignacionesActivas() {
+  // openspec: aislamiento-proyecto-por-modulo, tarea 5.4 — un empleado puede
+  // estar asignado a 2-3 proyectos simultáneos (uno estructural, otros por
+  // préstamo temporal); la respuesta debe traer una entrada por asignación,
+  // cada una con su propio proyecto_id.
+  const tenantId = randomUUID();
+  const proyectoA = randomUUID();
+  const proyectoB = randomUUID();
+  const userId = randomUUID();
+  try {
+    const emp = await crearEmpleado(tenantId);
+    await prisma.asignacionFrente.create({
+      data: {
+        tenant_id: tenantId, proyecto_id: proyectoA, empleado_id: emp.id_empleado,
+        frente_trabajo: 'Frente 1 — Cimentación', fecha_inicio: new Date('2026-01-01'),
+        horas_diarias: 8, estado: 'ACTIVA', es_prestamo: false,
+      },
+    });
+    await prisma.asignacionFrente.create({
+      data: {
+        tenant_id: tenantId, proyecto_id: proyectoB, empleado_id: emp.id_empleado,
+        frente_trabajo: 'Frente 2 — Préstamo', fecha_inicio: new Date('2026-02-01'),
+        horas_diarias: 4, estado: 'ACTIVA', es_prestamo: true,
+      },
+    });
+    const tokenRh = signTenantToken({ userId, tenantId, proyectoId: proyectoA, roles: ['personal_rh'] });
+
+    const r = await get('/api/v1/personal/empleados', tokenRh);
+    assert.equal(r.status, 200);
+    const body = (await r.json()) as any;
+    const encontrado = body.data.find((e: any) => e.id_empleado === emp.id_empleado);
+    assert.equal(encontrado.asignaciones.length, 2, 'debe traer las 2 asignaciones activas simultáneas');
+    const proyectosDevueltos = encontrado.asignaciones.map((a: any) => a.proyecto_id).sort();
+    assert.deepEqual(proyectosDevueltos, [proyectoA, proyectoB].sort());
+    const prestamo = encontrado.asignaciones.find((a: any) => a.proyecto_id === proyectoB);
+    assert.equal(prestamo.es_prestamo, true);
+
+    console.log('ok - GET /empleados muestra las asignaciones activas de un empleado en 2 proyectos distintos');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
 async function main() {
   await setup();
   try {
     await testIncluyeFrenteTrabajoActivo();
     await testIncluyeSoloResidenteVigente();
+    await testAsignacionIncluyeProyectoId();
+    await testEmpleadoConMultiplesAsignacionesActivas();
   } finally {
     await teardown();
   }

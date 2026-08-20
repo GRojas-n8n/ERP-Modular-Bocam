@@ -8,7 +8,8 @@
     "baseUrl": ".",
     "paths": {
       "@bocam/ui-core": ["../../packages/ui-core/src/index.tsx"],
-      "@bocam/ui-core/dashboard": ["../../packages/ui-core/src/dashboard/index.tsx"]
+      "@bocam/ui-core/dashboard": ["../../packages/ui-core/src/dashboard/index.tsx"],
+      "@bocam/roles": ["../../packages/roles/src/index.ts"]
     },
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "skipLibCheck": true,

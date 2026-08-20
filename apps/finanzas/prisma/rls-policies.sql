@@ -17,14 +17,41 @@
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. FUNCIONES AUXILIARES (idempotentes)
+--
+-- Actualizado a plpgsql con EXCEPTION WHEN OTHERS THEN RETURN NULL (openspec:
+-- aislamiento-proyecto-por-modulo) — mismo molde que ya usan gerencia-tecnica
+-- y contabilidad. Motivo: la versión anterior (`sql` puro, sin protección)
+-- lanzaba un error de cast (`invalid input syntax for type uuid`) cuando el
+-- GUC de sesión estaba fijado a cadena vacía (`''`) en vez de no estar
+-- fijado — exactamente lo que ocurre hoy cuando un usuario con rol `finanzas`
+-- (rol de nivel tenant, sin proyecto activo obligatorio) llega a un endpoint
+-- sin `proyectoId`: `securityContext.proyectoId` es `''` (ver
+-- packages/auth-middleware/src/middleware.ts, `decoded.proyecto_id || ''`),
+-- y `createTenantContext()` hace `set_config('app.current_proyecto_id', '',
+-- true)`. Sin este fix, el Patrón Global con Trazabilidad nuevo de este
+-- cambio (`current_proyecto_id() IS NULL OR ...`) nunca llegaría a evaluar
+-- la rama IS NULL — el cast fallaría antes, devolviendo un 500 en vez de la
+-- vista consolidada. Efecto secundario (beneficioso, sin cambio de
+-- comportamiento visible): las tablas que se quedan en Patrón Estricto
+-- (presupuestos_asignados, movimientos_presupuestales, proyectos_finanzas,
+-- cuentas_bancarias) ahora fallan cerrado con 0 filas ante un GUC vacío, en
+-- vez de un error crudo de base de datos — igual que ya hace contabilidad.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
-    SELECT current_setting('app.current_tenant_id', true)::UUID;
-$$ LANGUAGE sql STABLE;
+BEGIN
+    RETURN current_setting('app.current_tenant_id', true)::UUID;
+EXCEPTION WHEN OTHERS THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION current_proyecto_id() RETURNS UUID AS $$
-    SELECT current_setting('app.current_proyecto_id', true)::UUID;
-$$ LANGUAGE sql STABLE;
+BEGIN
+    RETURN current_setting('app.current_proyecto_id', true)::UUID;
+EXCEPTION WHEN OTHERS THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 2. HABILITAR Y FORZAR RLS EN TODAS LAS TABLAS
@@ -54,12 +81,23 @@ ALTER TABLE "detalles_pago_oc" FORCE ROW LEVEL SECURITY;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 3. POLÍTICAS: PRESUPUESTOS ASIGNADOS
 -- Filtro doble: tenant_id + proyecto_id (Centro de Costos)
+--
+-- SELECT en Patrón Global desde 2026-08-20 (openspec: aislamiento-proyecto-
+-- por-modulo, hallazgo al correr el test de integración 6.2 contra Postgres
+-- real con RLS forzado — no bypass): `GET /pagos` en modo global (rol
+-- tenant-level, sin proyecto activo) hace `include: { presupuesto }` sobre
+-- `programa_pagos`, que sí está en Patrón Global. Con `presupuestos_asignados`
+-- en Patrón Estricto, `current_proyecto_id() IS NULL` no hace match con
+-- ninguna fila, el JOIN vuelve vacío, y Prisma revienta con "Field
+-- presupuesto is required" (500) — el bug original que este mismo change dice
+-- corregir. INSERT/UPDATE/DELETE se quedan estrictos a propósito: no existe un
+-- caso de negocio para escribir un presupuesto sin proyecto activo.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS rls_presupuestos_select ON "presupuestos_asignados";
 CREATE POLICY rls_presupuestos_select ON "presupuestos_asignados"
     FOR SELECT USING (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 DROP POLICY IF EXISTS rls_presupuestos_insert ON "presupuestos_asignados";
@@ -93,6 +131,11 @@ CREATE POLICY rls_presupuestos_delete ON "presupuestos_asignados"
 -- afectadas), reforzando la inmutabilidad en vez de solo confiar en que el
 -- código nunca lo haga. Si se requiere corrección, se crea un movimiento
 -- inverso (CONTRAPARTIDA).
+--
+-- EXCLUIDA A PROPÓSITO del Patrón Global (openspec: aislamiento-proyecto-
+-- por-modulo), mismo motivo que presupuestos_asignados (sección 3): un
+-- movimiento presupuestal es de un proyecto específico, no hay vista
+-- consolidada de movimientos de presupuesto que tenga sentido de negocio.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS rls_movimientos_select ON "movimientos_presupuestales";
 CREATE POLICY rls_movimientos_select ON "movimientos_presupuestales"
@@ -110,34 +153,38 @@ CREATE POLICY rls_movimientos_insert ON "movimientos_presupuestales"
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. POLÍTICAS: PROGRAMA DE PAGOS
--- Filtro doble: tenant_id + proyecto_id
+-- Patrón Global con Trazabilidad (openspec: aislamiento-proyecto-por-modulo):
+-- si hay proyecto activo en la sesión, filtra por ese proyecto (igual que antes);
+-- si NO hay proyecto activo (current_proyecto_id() IS NULL — modo consolidado,
+-- gateado por rol en requireProjectAccess()), retorna pagos de todos los
+-- proyectos del tenant, cada fila con su proyecto_id original intacto.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS rls_pagos_select ON "programa_pagos";
 CREATE POLICY rls_pagos_select ON "programa_pagos"
     FOR SELECT USING (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 DROP POLICY IF EXISTS rls_pagos_insert ON "programa_pagos";
 CREATE POLICY rls_pagos_insert ON "programa_pagos"
     FOR INSERT WITH CHECK (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 DROP POLICY IF EXISTS rls_pagos_update ON "programa_pagos";
 CREATE POLICY rls_pagos_update ON "programa_pagos"
     FOR UPDATE USING (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 DROP POLICY IF EXISTS rls_pagos_delete ON "programa_pagos";
 CREATE POLICY rls_pagos_delete ON "programa_pagos"
     FOR DELETE USING (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -175,6 +222,9 @@ CREATE POLICY rls_cuentas_delete ON "cuentas_bancarias"
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 7. POLÍTICAS: PROYECTOS FINANZAS (anticipos)  (tabla nueva, sin policies previas)
+-- EXCLUIDA A PROPÓSITO del Patrón Global (openspec: aislamiento-proyecto-
+-- por-modulo): un anticipo es de un proyecto específico, mismo motivo que
+-- presupuestos_asignados (sección 3).
 -- Filtro doble: tenant_id + proyecto_id. Se usa vía upsert (main.ts:1612,
 -- 1707, 2062) — requiere policy de UPDATE explícita o la rama `update` del
 -- upsert falla silenciosamente bajo FORCE RLS (0 filas, sin error).
@@ -202,29 +252,33 @@ CREATE POLICY rls_proyectos_finanzas_update ON "proyectos_finanzas"
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 8. POLÍTICAS: PAGOS OC  (tabla nueva, sin policies previas)
--- Filtro doble: tenant_id + proyecto_id. Solo create/findMany/findFirst/count
--- en main.ts — sin UPDATE/DELETE hoy, se agregan solo SELECT/INSERT.
+-- Patrón Global con Trazabilidad (openspec: aislamiento-proyecto-por-modulo) —
+-- mismo criterio que programa_pagos (sección 5). Solo create/findMany/
+-- findFirst/count en main.ts — sin UPDATE/DELETE hoy, se agregan solo
+-- SELECT/INSERT.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS rls_pagos_oc_select ON "pagos_oc";
 CREATE POLICY rls_pagos_oc_select ON "pagos_oc"
     FOR SELECT USING (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 DROP POLICY IF EXISTS rls_pagos_oc_insert ON "pagos_oc";
 CREATE POLICY rls_pagos_oc_insert ON "pagos_oc"
     FOR INSERT WITH CHECK (
         tenant_id = current_tenant_id()
-        AND proyecto_id = current_proyecto_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 9. POLÍTICAS: DETALLES PAGO OC  (tabla nueva, sin policies previas)
 -- Esta tabla NO tiene tenant_id/proyecto_id propio (solo pago_id, oc_id,
 -- proveedor_id — ver schema.prisma). El aislamiento se resuelve vía EXISTS
--- contra `pagos_oc` (su padre, FK onDelete: Cascade). Solo create (anidado
--- bajo pagoOC.create) en main.ts — sin UPDATE/DELETE hoy, solo SELECT/INSERT.
+-- contra `pagos_oc` (su padre, FK onDelete: Cascade), heredando su Patrón
+-- Global con Trazabilidad (openspec: aislamiento-proyecto-por-modulo). Solo
+-- create (anidado bajo pagoOC.create) en main.ts — sin UPDATE/DELETE hoy,
+-- solo SELECT/INSERT.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS rls_detalles_pago_oc_select ON "detalles_pago_oc";
 CREATE POLICY rls_detalles_pago_oc_select ON "detalles_pago_oc"
@@ -233,7 +287,7 @@ CREATE POLICY rls_detalles_pago_oc_select ON "detalles_pago_oc"
             SELECT 1 FROM "pagos_oc" p
             WHERE p.id_pago = "detalles_pago_oc".pago_id
               AND p.tenant_id = current_tenant_id()
-              AND p.proyecto_id = current_proyecto_id()
+              AND (current_proyecto_id() IS NULL OR p.proyecto_id = current_proyecto_id())
         )
     );
 
@@ -244,7 +298,7 @@ CREATE POLICY rls_detalles_pago_oc_insert ON "detalles_pago_oc"
             SELECT 1 FROM "pagos_oc" p
             WHERE p.id_pago = "detalles_pago_oc".pago_id
               AND p.tenant_id = current_tenant_id()
-              AND p.proyecto_id = current_proyecto_id()
+              AND (current_proyecto_id() IS NULL OR p.proyecto_id = current_proyecto_id())
         )
     );
 

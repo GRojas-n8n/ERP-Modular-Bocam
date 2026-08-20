@@ -639,6 +639,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const totalComprometido = dashboard.resumen?.total_comprometido || 0;
   const totalDisponible = dashboard.resumen?.total_disponible || 0;
   const porcentajeEjercido = dashboard.resumen?.porcentaje_ejercido || 0;
+  // /api/v1/finanzas/dashboard exige rol desde openspec:rbac-finanzas-lecturas.
+  // Para el resto de los roles la peticion responde 403 y `resumen` queda en null,
+  // asi que los bloques financieros se ocultan en vez de renderizarse en cero —
+  // un presupuesto en $0 se lee como "este proyecto no tiene presupuesto", que es
+  // peor que no mostrarlo.
+  const puedeVerFinanzas = roles.some(r =>
+    ['finanzas', 'admin', 'director', 'superintendent'].includes(r)
+  );
+
   const ocCount = dashboard.ordenesCompra.length;
   const ocPendientes = dashboard.ordenesCompra.filter((oc) => oc.estado === 'EMITIDA' || oc.estado === 'PENDIENTE').length;
 
@@ -828,6 +837,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             valueClass: 'text-indigo-600',
           },
           {
+            esFinanciero: true,
             label: 'Presupuesto Autorizado',
             value: formatCurrency(animPresupuesto),
             desc: 'MXN Acumulado',
@@ -848,6 +858,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             valueClass: 'text-amber-600',
           },
           {
+            esFinanciero: true,
             label: 'Ejecucion Presupuestal',
             value: `${(animEficiencia / 10).toFixed(1)}%`,
             desc: 'Comprometido + Ejercido',
@@ -857,7 +868,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             iconBg: 'bg-primary/8',
             valueClass: 'text-primary',
           },
-        ].map((stat, index) => (
+        ].filter(stat => puedeVerFinanzas || !('esFinanciero' in stat)).map((stat, index) => (
           <div key={stat.label} className={cn(visibleItems >= index + 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6', 'transition-all duration-700')} style={{ transitionDelay: `${index * 60}ms` }}>
             <MetricCard
               icon={stat.icon}
@@ -874,7 +885,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <BudgetHealthCard
+        {puedeVerFinanzas && <BudgetHealthCard
           className={cn(
             'lg:col-span-3',
             visibleItems >= 7 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6',
@@ -910,9 +921,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               colorClassName: 'text-amber-500',
             },
           ]}
-        />
+        />}
 
-        <Card className={cn('rounded-2xl border-border/30 p-6 shadow-sm md:p-8 lg:col-span-2', visibleItems >= 8 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6', 'transition-all duration-700')}>
+        <Card className={cn('rounded-2xl border-border/30 p-6 shadow-sm md:p-8', puedeVerFinanzas ? 'lg:col-span-2' : 'lg:col-span-5', visibleItems >= 8 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6', 'transition-all duration-700')}>
           <CardContent className="p-0">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest">

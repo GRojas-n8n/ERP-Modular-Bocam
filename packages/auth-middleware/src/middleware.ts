@@ -246,8 +246,10 @@ export function requireProjectAccess() {
 
     const { proyectoId, authorizedProjects, roles } = req.securityContext;
 
-    // Los roles de nivel Tenant (superintendent, finanzas, procurement) tienen acceso a todo
-    const tenantLevelRoles = ['admin', 'superintendent', 'finanzas', 'procurement'];
+    // Los roles de nivel Tenant (superintendent, finanzas, personal_rh) tienen acceso a todo.
+    // 'procurement' (Compras) NO está aquí a propósito: Compras debe permanecer estrictamente
+    // acotado por proyecto, sin excepción de rol (ver openspec: aislamiento-proyecto-por-modulo).
+    const tenantLevelRoles = ['admin', 'superintendent', 'finanzas', 'personal_rh'];
     const hasTenantAccess = roles.some(role => tenantLevelRoles.includes(role));
 
     if (hasTenantAccess) {

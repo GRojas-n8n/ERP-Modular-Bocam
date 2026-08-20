@@ -24,6 +24,7 @@ import { normalizeEmail, resolveActiveProjectId, resolveRefreshExpiry } from './
 import { resolveAutoAssignedUserIds } from './project-access-policy';
 import { sesionExcedeLimite } from './sesion-policy';
 import { secretsMatch } from './master-secret-policy';
+import { validarPasswordNueva } from './password-policy';
 import {
   ensamblarCodigoCentroCostos,
   siguienteConsecutivo,
@@ -34,6 +35,7 @@ import { parseOrRespond } from './validation/parse-or-respond';
 import { loginSchema } from './validation/schemas/login.schema';
 import { registerSchema } from './validation/schemas/register.schema';
 import { refreshSchema } from './validation/schemas/refresh.schema';
+import { logoutSchema, cambiarPasswordSchema } from './validation/schemas/sesion.schema';
 import { switchProjectSchema } from './validation/schemas/switch-project.schema';
 import { crearUsuarioSchema, actualizarUsuarioSchema } from './validation/schemas/admin-users.schema';
 import { crearProyectoSchema, actualizarProyectoSchema } from './validation/schemas/admin-proyectos.schema';
@@ -136,6 +138,9 @@ const masterReadLimiter   = makeLimiter(30);
 const masterModifyLimiter = makeLimiter(10);
 const loginLimiter        = makeLimiter(10);
 const refreshLimiter      = makeLimiter(20);
+// Limita el sondeo de la contraseña actual: el endpoint la verifica con
+// bcrypt.compare, asi que es un oraculo si se deja sin techo.
+const changePasswordLimiter = makeLimiter(5);
 
 // ─── Audit Log Helper (best-effort — nunca bloquea el flujo) ────────────────
 
@@ -585,6 +590,155 @@ app.post('/api/v1/auth/refresh', refreshLimiter as express.RequestHandler, async
         code: 'INTERNAL_ERROR',
         message: 'Error interno del servidor.',
       },
+    });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// POST /api/v1/auth/logout — cierre de sesión del lado del servidor
+//
+// Antes el cierre de sesión era solo del cliente: borraba los tokens de
+// localStorage y el refresh token seguía vivo en la base hasta expirar. Quien
+// lo hubiera copiado antes podía seguir emitiendo access tokens.
+//
+// Sin `refresh_token` en el cuerpo (o con `todas: true`) se revoca la cadena
+// completa del usuario — es también la vía para expulsar sesiones abiertas en
+// un dispositivo que ya no se tiene a mano.
+//
+// Idempotente a propósito: cerrar una sesión ya cerrada responde 200. Un
+// cliente que reintenta no debe quedarse atrapado en un error.
+// Ver openspec/changes/cambio-password-y-logout.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post('/api/v1/auth/logout', async (req: Request, res: Response) => {
+  try {
+    const parsed = parseOrRespond(logoutSchema, req.body ?? {}, res);
+    if (!parsed) return;
+    const { refresh_token, todas } = parsed;
+    const { tenantId, userId } = req.securityContext;
+
+    const revocados = await createTenantContext(
+      { tenantId, userId },
+      async (prisma) => {
+        // El user_id del JWT acota la revocación: un refresh token de otro
+        // usuario no se puede revocar aunque se envíe su valor.
+        const where = refresh_token && !todas
+          ? {
+              user_id: userId,
+              revoked: false,
+              token_hash: crypto.createHash('sha256').update(refresh_token).digest('hex'),
+            }
+          : { user_id: userId, revoked: false };
+
+        const { count } = await prisma.refreshToken.updateMany({
+          where,
+          data: { revoked: true },
+        });
+        return count;
+      }
+    );
+
+    console.log(`[Auth] Sesión cerrada: usuario=${userId} tokens_revocados=${revocados}`);
+
+    res.json({
+      success: true,
+      data: {
+        sesiones_cerradas: revocados,
+        todas: Boolean(todas) || !refresh_token,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Auth] Error al cerrar sesión:', error.message);
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_INTERNAL_ERROR', message: 'Error al cerrar la sesión.' },
+    });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// POST /api/v1/auth/change-password — cambio de contraseña autoservicio
+//
+// Sin esto, todos los usuarios del piloto compartían la contraseña de arranque
+// sin forma de cambiarla salvo pidiéndoselo a un administrador.
+//
+// Al cambiarla se revocan TODAS las sesiones del usuario, incluida la que hace
+// la petición: si la razón del cambio es que alguien más la conocía, dejar sus
+// sesiones vivas vacía el gesto. El cliente vuelve a iniciar sesión.
+// Ver openspec/changes/cambio-password-y-logout.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post('/api/v1/auth/change-password', changePasswordLimiter as express.RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const parsed = parseOrRespond(cambiarPasswordSchema, req.body, res);
+    if (!parsed) return;
+    const { password_actual, password_nueva } = parsed;
+    const { tenantId, userId } = req.securityContext;
+
+    const user = await createTenantContext(
+      { tenantId, userId },
+      async (prisma) => prisma.user.findUnique({ where: { id_usuario: userId } })
+    );
+
+    if (!user || !user.activo) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'AUTH_USER_NOT_FOUND', message: 'Usuario no encontrado o desactivado.' },
+      });
+      return;
+    }
+
+    const actualEsCorrecta = await bcrypt.compare(password_actual, user.password_hash);
+    if (!actualEsCorrecta) {
+      console.warn(`[Auth] Cambio de contraseña rechazado — actual incorrecta: usuario=${userId}`);
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTH_PASSWORD_ACTUAL_INCORRECTA',
+          message: 'La contraseña actual no es correcta.',
+        },
+      });
+      return;
+    }
+
+    const validacion = validarPasswordNueva({ actual: password_actual, nueva: password_nueva });
+    if (!validacion.valida) {
+      res.status(400).json({
+        success: false,
+        error: { code: validacion.codigo, message: validacion.mensaje },
+      });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password_nueva, BCRYPT_ROUNDS);
+
+    const sesionesCerradas = await createTenantContext(
+      { tenantId, userId },
+      async (prisma) => {
+        await prisma.user.update({
+          where: { id_usuario: userId },
+          data: { password_hash: passwordHash },
+        });
+        const { count } = await prisma.refreshToken.updateMany({
+          where: { user_id: userId, revoked: false },
+          data: { revoked: true },
+        });
+        return count;
+      }
+    );
+
+    console.log(`[Auth] Contraseña cambiada: usuario=${userId} sesiones_cerradas=${sesionesCerradas}`);
+
+    res.json({
+      success: true,
+      data: {
+        sesiones_cerradas: sesionesCerradas,
+        mensaje: 'Contraseña actualizada. Vuelve a iniciar sesión.',
+      },
+    });
+  } catch (error: any) {
+    console.error('[Auth] Error al cambiar contraseña:', error.message);
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_INTERNAL_ERROR', message: 'Error al cambiar la contraseña.' },
     });
   }
 });

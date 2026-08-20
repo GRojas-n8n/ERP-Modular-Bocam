@@ -78,38 +78,56 @@ ALTER TABLE movimientos_poliza FORCE ROW LEVEL SECURITY;
 -- 4. POLÍTICAS DE AISLAMIENTO
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- ─── ASIENTOS CONTABLES (tenant + proyecto) ─────────────────────────────────
+-- ─── ASIENTOS CONTABLES (Patrón Global con Trazabilidad) ────────────────────
 -- Evidencia de scoping por proyecto: @@unique([tenant_id, proyecto_id,
 -- folio_poliza]) — el folio de póliza es una serie por proyecto.
+-- Actualizado a Patrón Global (openspec: aislamiento-proyecto-por-modulo,
+-- tarea 1.2): los asientos registran el efecto contable de pagos que ya son
+-- globales en Finanzas (programa_pagos, pagos_oc) — mantener esta tabla
+-- estricta rompería la trazabilidad justo donde más importa. Si hay proyecto
+-- activo en la sesión, sigue filtrando por ese proyecto igual que antes.
 DROP POLICY IF EXISTS rls_asientos_contables_context ON asientos_contables;
 CREATE POLICY rls_asientos_contables_context ON asientos_contables
     FOR ALL
-    USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
-    WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
+    USING (tenant_id = current_tenant_id() AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()))
+    WITH CHECK (tenant_id = current_tenant_id() AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()));
 
--- ─── CONCILIACIONES FISCALES (CFDI/SAT) (tenant + proyecto) ─────────────────
+-- ─── CONCILIACIONES FISCALES (CFDI/SAT) — Patrón Estricto, SIN cambio ───────
+-- Evaluada y excluida a propósito del Patrón Global (openspec: aislamiento-
+-- proyecto-por-modulo, tarea 1.2): un CFDI se emite contra una operación de
+-- un proyecto puntual (una OC, una factura) — no existe una "conciliación
+-- fiscal global" real. Permanece estricta.
 DROP POLICY IF EXISTS rls_conciliaciones_fiscales_context ON conciliaciones_fiscales;
 CREATE POLICY rls_conciliaciones_fiscales_context ON conciliaciones_fiscales
     FOR ALL
     USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
     WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
 
--- ─── CONCILIACIONES BANCARIAS (tenant + proyecto) ───────────────────────────
+-- ─── CONCILIACIONES BANCARIAS (Patrón Global con Trazabilidad) ──────────────
+-- Actualizado a Patrón Global (openspec: aislamiento-proyecto-por-modulo,
+-- tarea 1.2): `cuentas_bancarias` en Finanzas ya es Catálogo Compartido (la
+-- cuenta es de la empresa, no de un proyecto) — conciliar un estado de
+-- cuenta que mezcla movimientos de varios proyectos es inherentemente una
+-- operación cross-proyecto.
 DROP POLICY IF EXISTS rls_conciliaciones_bancarias_context ON conciliaciones_bancarias;
 CREATE POLICY rls_conciliaciones_bancarias_context ON conciliaciones_bancarias
     FOR ALL
-    USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
-    WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
+    USING (tenant_id = current_tenant_id() AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()))
+    WITH CHECK (tenant_id = current_tenant_id() AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()));
 
--- ─── MOVIMIENTOS DE PÓLIZA (tenant + proyecto) ──────────────────────────────
+-- ─── MOVIMIENTOS DE PÓLIZA (Patrón Global con Trazabilidad) ─────────────────
 -- La tabla hija referencia cuenta_id -> cuentas_contables (catálogo global,
 -- sin RLS por diseño — ver sección 3). El JOIN sigue funcionando porque el
 -- filtro RLS aplica solo sobre movimientos_poliza, no sobre cuentas_contables.
+-- Actualizado a Patrón Global (openspec: aislamiento-proyecto-por-modulo,
+-- tarea 1.2): hija directa de asientos_contables (mismo tenant_id/
+-- proyecto_id) — debe seguir al padre para no fragmentar una póliza entre
+-- modos distintos.
 DROP POLICY IF EXISTS rls_movimientos_poliza_context ON movimientos_poliza;
 CREATE POLICY rls_movimientos_poliza_context ON movimientos_poliza
     FOR ALL
-    USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
-    WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
+    USING (tenant_id = current_tenant_id() AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()))
+    WITH CHECK (tenant_id = current_tenant_id() AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id()));
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 5. COMENTARIOS DE AUDITORÍA

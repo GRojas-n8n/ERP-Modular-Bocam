@@ -157,6 +157,28 @@ export async function fetchMe() {
   return response.data;
 }
 
+/**
+ * Revoca el refresh token en el servidor. El cierre de sesion local no depende
+ * de que esto responda — ver el comentario en TenantContext.logout.
+ */
+export async function logoutApi(refreshToken: string) {
+  const response = await api.post('/api/v1/auth/logout', { refresh_token: refreshToken });
+  return response.data;
+}
+
+/**
+ * Cambia la contrasena del usuario autenticado. El servidor revoca TODAS sus
+ * sesiones al hacerlo, incluida la actual, asi que quien llame debe cerrar
+ * sesion despues.
+ */
+export async function changePasswordApi(passwordActual: string, passwordNueva: string) {
+  const response = await api.post('/api/v1/auth/change-password', {
+    password_actual: passwordActual,
+    password_nueva: passwordNueva,
+  });
+  return response.data;
+}
+
 export async function switchProjectApi(proyectoId: string) {
   const response = await api.post('/api/v1/auth/switch-project', {
     proyecto_id: proyectoId,

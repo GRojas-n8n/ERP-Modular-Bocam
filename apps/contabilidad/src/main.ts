@@ -1724,8 +1724,15 @@ app.get(
       const data = await createTenantContext(
         { tenantId, proyectoId, userId },
         async (prisma) => {
+          // proyecto_id se filtra explícitamente solo cuando hay proyecto activo.
+          // Cuando no lo hay (modo global, rol tenant-level — ver openspec:
+          // aislamiento-proyecto-por-modulo), NO se agrega el filtro aquí: la
+          // RLS Patrón Global con Trazabilidad de asientos_contables ya resuelve
+          // el aislamiento (tenant_id siempre obligatorio vía RLS). Filtrar
+          // proyecto_id = '' aquí bloquearía el modo global antes de que la
+          // RLS pudiera actuar.
           return await prisma.asientoContable.findMany({
-            where: { tenant_id: tenantId, proyecto_id: proyectoId },
+            where: { tenant_id: tenantId, ...(proyectoId ? { proyecto_id: proyectoId } : {}) },
             orderBy: {
               created_at: 'desc',
             },

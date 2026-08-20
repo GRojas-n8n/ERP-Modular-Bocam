@@ -91,7 +91,7 @@ app.get('/api/v1/personal/empleados', async (req: Request, res: Response) => {
         },
         include: {
           cuadrilla: { select: { nombre: true, codigo: true } },
-          asignaciones: { where: { estado: 'ACTIVA' }, select: { frente_trabajo: true } },
+          asignaciones: { where: { estado: 'ACTIVA' }, select: { proyecto_id: true, frente_trabajo: true, es_prestamo: true } },
           asignacionesResidente: { where: { fecha_fin: null }, select: { residente_id: true } },
         },
         orderBy: { nombre: 'asc' },

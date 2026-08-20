@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as Sentry from '@sentry/react';
 import type { TenantConfig, UserContext, AppState, ProjectAccess } from '../types';
-import { getAccessToken, setTokens, clearTokens, loginApi, fetchMe, switchProjectApi } from '../lib/api';
+import { getAccessToken, setTokens, clearTokens, loginApi, logoutApi, fetchMe, switchProjectApi } from '../lib/api';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
 
 // Ver openspec/changes/sesion-jwt-inactividad. Coincide por default con el
@@ -197,6 +197,21 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // ─── Logout ────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
+    // Revocar el refresh token en el servidor antes de soltarlo. Sin esto el
+    // token seguia vivo en la base hasta expirar, asi que "cerrar sesion" solo
+    // limpiaba localStorage y quien lo hubiera copiado podia seguir emitiendo
+    // access tokens (ver openspec/changes/cambio-password-y-logout).
+    //
+    // No se espera la respuesta ni se bloquea el cierre si falla: el usuario
+    // pidio salir y debe salir aunque el backend este caido. La sesion local se
+    // limpia igual, y el token expira solo.
+    const refreshToken = localStorage.getItem('iretum_refresh_token');
+    if (refreshToken) {
+      void logoutApi(refreshToken).catch(() => {
+        /* el cierre local no depende del servidor */
+      });
+    }
+
     clearTokens();
     Sentry.setUser(null);
     setState({

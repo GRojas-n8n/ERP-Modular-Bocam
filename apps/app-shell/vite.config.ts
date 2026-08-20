@@ -11,6 +11,7 @@ export default defineConfig({
     alias: {
       // Aliases de módulos locales
       '@bocam/ui-core': fileURLToPath(new URL('../../packages/ui-core/src/index.tsx', import.meta.url)),
+      '@bocam/roles': fileURLToPath(new URL('../../packages/roles/src/index.ts', import.meta.url)),
       '@bocam/ui-core/dashboard': fileURLToPath(new URL('../../packages/ui-core/src/dashboard/index.tsx', import.meta.url)),
     },
     // React y react-dom están unificados a una sola versión en todo el
