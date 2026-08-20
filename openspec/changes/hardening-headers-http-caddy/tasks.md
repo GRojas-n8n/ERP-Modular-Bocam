@@ -14,9 +14,11 @@
 
 ## 3. Despliegue
 
-- [ ] 3.1 Desplegar `docker/Caddyfile` a producción (recarga de Caddy, sin downtime esperado). (pendiente — deploy final)
-- [ ] 3.2 Verificar con `curl -I https://iretum.com` en producción que los headers están presentes. (pendiente)
-- [ ] 3.3 Verificar manualmente en `iretum.com` que login, navegación general y el lector QR de asistencia siguen funcionando. (pendiente)
+**Hallazgo (2026-08-20):** ni `deploy-vps.yml` (frontend) ni `deploy-vps-backend.yml` (backend) reinician o recargan el contenedor `caddy` — ambos solo reconstruyen `app-shell`/los microservicios. El `docker/Caddyfile` con los headers ya está en `main` desde el merge de `fix/finanzas-rbac-saga-fondos`, pero nunca llegó a producción porque nada le pedía a Caddy releer su configuración. Se creó `.github/workflows/deploy-vps-caddy.yml`: dispara en push a `main` sobre `docker/Caddyfile`, hace `caddy reload` (no `up -d`/recreate, para no soltar el bind en :80/:443 ni cortar sesiones activas) y verifica con `curl -I` que los 5 headers quedaron presentes antes de dar el job por bueno.
+
+- [ ] 3.1 Desplegar `docker/Caddyfile` a producción — vía el nuevo workflow `deploy-vps-caddy.yml` (push a `main` con ese archivo, o `workflow_dispatch` manual). Pendiente de que el workflow se mergee a `main` y corra al menos una vez.
+- [ ] 3.2 Verificar con `curl -I https://iretum.com` en producción que los headers están presentes. El paso 5 del workflow nuevo ya lo hace automáticamente en cada corrida; falta la primera corrida real.
+- [ ] 3.3 Verificar manualmente en `iretum.com` que login, navegación general y el lector QR de asistencia siguen funcionando. (pendiente — sigue necesitando verificación humana en navegador, el workflow no la cubre)
 
 ## 4. Seguimiento
 

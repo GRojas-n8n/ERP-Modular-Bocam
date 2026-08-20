@@ -1,0 +1,105 @@
+# ============================================================
+# deploy-vps-caddy.yml — BocamOS ERP
+# Dispara en cada push a main que toque docker/Caddyfile.
+#
+# Ni deploy-vps.yml (frontend) ni deploy-vps-backend.yml tocan el
+# contenedor `caddy` — solo reconstruyen app-shell/los microservicios.
+# Un cambio en el Caddyfile (ej. openspec: hardening-headers-http-caddy)
+# quedaba comiteado en `main` sin llegar nunca a producción, porque
+# nada le pedía a Caddy releer su configuración. Este workflow cierra
+# ese hueco.
+#
+# `caddy reload` en vez de `up -d`/`--force-recreate`: aplica la
+# config nueva sin recrear el contenedor ni soltar el bind en :80/:443,
+# así que no hay corte de conexiones para usuarios con una sesión
+# activa — es exactamente para esto que existe el subcomando.
+#
+# SECRETS requeridos (los mismos que deploy-vps.yml / deploy-vps-backend.yml):
+#   VPS_SSH_KEY, VPS_HOST, VPS_USER
+# ============================================================
+
+name: Deploy Caddy al VPS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docker/Caddyfile"
+      - ".github/workflows/deploy-vps-caddy.yml"
+
+  # Permite disparar manualmente desde la UI de GitHub Actions
+  workflow_dispatch:
+
+# Mismo grupo que deploy-vps.yml / deploy-vps-backend.yml: los tres
+# hacen `git pull` sobre el mismo checkout del VPS y se serializan
+# entre sí para no pisarse el working directory.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+env:
+  VPS_REPO_PATH: /root/ERP-Modular-Bocam
+
+jobs:
+  deploy:
+    name: Reload Caddy (config)
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Configurar SSH ──────────────────────────────────
+      - name: Configurar llave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 2. Actualizar el repo en el VPS ─────────────────────
+      # Fast-forward only, igual que los otros dos workflows de deploy.
+      - name: Git pull en el VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
+
+      # ── 3. Validar el Caddyfile ANTES de pedirle que lo recargue ──
+      # `caddy reload` ya valida internamente, pero fallar aquí con un
+      # mensaje explícito de `caddy validate` es más claro que dejar
+      # que el reload falle a medias.
+      - name: Validar Caddyfile
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile"
+
+      # ── 4. Recargar Caddy con la config nueva, sin downtime ────
+      - name: caddy reload
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force"
+
+      # ── 5. Verificar que los headers de seguridad quedaron activos ──
+      - name: Verificar headers de seguridad
+        run: |
+          sleep 2
+          HEADERS=$(curl -sI https://iretum.com/)
+          echo "$HEADERS"
+          for h in "Strict-Transport-Security" "X-Content-Type-Options" "X-Frame-Options" "Referrer-Policy" "Permissions-Policy"; do
+            if ! echo "$HEADERS" | grep -qi "^$h:"; then
+              echo "ERROR: falta el header $h en la respuesta de producción"
+              exit 1
+            fi
+          done
+          echo "OK: los 5 headers de seguridad están presentes en https://iretum.com"
+
+      # ── 6. Notificación de resultado ───────────────────────
+      - name: Resumen del deploy
+        if: always()
+        run: |
+          echo "=================================="
+          echo "Reload de Caddy completado"
+          echo "Rama: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "=================================="
