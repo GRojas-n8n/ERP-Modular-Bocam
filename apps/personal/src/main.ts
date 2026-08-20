@@ -17,6 +17,8 @@ import {
   calcularISR, calcularSubsidio, calcularIMSS, calcularHorasExtra, calcularHorasTrabajadas,
   calcularHorasDesglose, calcularMontoHEPorSemana, esPeriodoTipoValido, PERIODOS_TIPO_VALIDOS,
 } from './tablas-fiscales';
+import { parseOrRespond } from './validation/parse-or-respond';
+import { longitudEmpleadoSchema } from './validation/schemas/empleado.schema';
 
 /**
  * ---------------------------------------------------------------------------
@@ -119,6 +121,8 @@ app.post('/api/v1/personal/empleados', requireRoles('personal_rh', 'admin'), asy
       return;
     }
 
+    if (!parseOrRespond(longitudEmpleadoSchema, req.body, res)) return;
+
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       const lastEmp = await prisma.empleado.findFirst({
         orderBy: { numero_empleado: 'desc' },
@@ -148,7 +152,7 @@ app.post('/api/v1/personal/empleados', requireRoles('personal_rh', 'admin'), asy
     console.log(`[Personal] ✅ Empleado ${data.numero_empleado} registrado: ${data.nombre}`);
     res.status(201).json(createApiResponse(data, tenantId, proyectoId));
   } catch (error: any) {
-    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', 'Error al crear el empleado.'));
   }
 });
 
@@ -224,6 +228,13 @@ app.post('/api/v1/personal/empleados/importar-lote', requireRoles('personal_rh',
         continue;
       }
 
+      const longitud = longitudEmpleadoSchema.safeParse(registro);
+      if (!longitud.success) {
+        const motivo = longitud.error.issues.map((issue) => issue.message).join(' ');
+        errores.push({ fila, motivo });
+        continue;
+      }
+
       validos.push({ registro, fila });
     }
 
@@ -290,7 +301,7 @@ app.post('/api/v1/personal/empleados/importar-lote', requireRoles('personal_rh',
       errores: errores.sort((a, b) => a.fila - b.fila),
     }, tenantId, proyectoId));
   } catch (error: any) {
-    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', 'Error al importar el lote de empleados.'));
   }
 });
 
@@ -319,6 +330,8 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
     if (horas_jornada !== undefined && (Number(horas_jornada) < 1 || Number(horas_jornada) > 24)) {
       return res.status(400).json(createApiError('PER_VALIDATION', 'horas_jornada debe estar entre 1 y 24.'));
     }
+
+    if (!parseOrRespond(longitudEmpleadoSchema, req.body, res)) return;
 
     const resultado = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       const emp = await prisma.empleado.findFirst({ where: { id_empleado: id, tenant_id: tenantId } });
@@ -361,7 +374,7 @@ app.patch('/api/v1/personal/empleados/:id', requireRoles('personal_rh', 'admin')
     if (resultado.status === 'rfc_duplicado') return res.status(400).json(createApiError('PER_RFC_DUPLICADO', 'Ya existe un empleado con ese RFC en este tenant.'));
     res.json(createApiResponse(resultado.data, tenantId, proyectoId));
   } catch (error: any) {
-    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', 'Error al actualizar el empleado.'));
   }
 });
 
