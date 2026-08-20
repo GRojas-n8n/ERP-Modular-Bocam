@@ -9,10 +9,20 @@
 # nada le pedía a Caddy releer su configuración. Este workflow cierra
 # ese hueco.
 #
-# `caddy reload` en vez de `up -d`/`--force-recreate`: aplica la
-# config nueva sin recrear el contenedor ni soltar el bind en :80/:443,
-# así que no hay corte de conexiones para usuarios con una sesión
-# activa — es exactamente para esto que existe el subcomando.
+# `--force-recreate`, no `caddy reload`: el compose monta
+# `./docker/Caddyfile:/etc/caddy/Caddyfile:ro` como bind mount de un
+# ARCHIVO individual, que Docker ata al inodo que existía al crear el
+# contenedor. `git merge`/`checkout` reemplaza el archivo vía
+# write-nuevo-archivo + rename (no lo edita in-place), así que el
+# inodo cambia — el contenedor sigue viendo el contenido viejo para
+# siempre sin importar cuántas veces se le pida `caddy reload`.
+# Confirmado empíricamente 2026-08-20: `caddy reload` corría sin
+# error, pero `md5sum` del archivo en el repo vs. el que veía el
+# contenedor no coincidían, y el JSON adaptado adentro del contenedor
+# ni siquiera tenía el bloque `header`. Recrear el contenedor es la
+# única forma de que tome un bind mount fresco. Implica una
+# desconexión breve (~1-2s) al liberar y volver a bindear :80/:443 —
+# inevitable dado el problema real, no una regresión de este fix.
 #
 # SECRETS requeridos (los mismos que deploy-vps.yml / deploy-vps-backend.yml):
 #   VPS_SSH_KEY, VPS_HOST, VPS_USER
@@ -43,7 +53,7 @@ env:
 
 jobs:
   deploy:
-    name: Reload Caddy (config)
+    name: Recrear contenedor Caddy
     runs-on: ubuntu-latest
 
     steps:
@@ -63,22 +73,26 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
 
-      # ── 3. Validar el Caddyfile ANTES de pedirle que lo recargue ──
-      # `caddy reload` ya valida internamente, pero fallar aquí con un
-      # mensaje explícito de `caddy validate` es más claro que dejar
-      # que el reload falle a medias.
-      - name: Validar Caddyfile
+      # ── 3. Recrear el contenedor con el bind mount fresco ──────
+      # `up -d --force-recreate` en vez de `caddy reload`: ver
+      # explicación arriba (bind mount de archivo atado al inodo viejo).
+      - name: docker compose up -d --force-recreate caddy
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile"
+            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml up -d --force-recreate caddy"
 
-      # ── 4. Recargar Caddy con la config nueva, sin downtime ────
-      - name: caddy reload
+      # ── 4. Confirmar que el contenedor nuevo cargó el Caddyfile correcto ──
+      - name: Validar que el contenedor ve el Caddyfile actual del repo
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force"
+            "cd ${{ env.VPS_REPO_PATH }} && sleep 2 && \
+             REPO_MD5=\$(md5sum docker/Caddyfile | awk '{print \$1}') && \
+             CONTAINER_MD5=\$(docker compose -f docker-compose.vps.yml exec -T caddy md5sum /etc/caddy/Caddyfile | awk '{print \$1}') && \
+             echo \"repo: \$REPO_MD5 / contenedor: \$CONTAINER_MD5\" && \
+             if [ \"\$REPO_MD5\" != \"\$CONTAINER_MD5\" ]; then echo 'ERROR: el contenedor sigue viendo un Caddyfile distinto al del repo'; exit 1; fi && \
+             docker compose -f docker-compose.vps.yml exec -T caddy caddy validate --config /etc/caddy/Caddyfile"
 
       # ── 5. Verificar que los headers de seguridad quedaron activos ──
       - name: Verificar headers de seguridad
@@ -99,7 +113,7 @@ jobs:
         if: always()
         run: |
           echo "=================================="
-          echo "Reload de Caddy completado"
+          echo "Deploy de Caddy completado"
           echo "Rama: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
           echo "=================================="
