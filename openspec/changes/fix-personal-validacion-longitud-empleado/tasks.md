@@ -38,6 +38,6 @@ Ver `apps/personal/test/integration/validacion-longitud-empleado.integration.tes
 
 ## 7. Deploy y cierre
 
-- [ ] 7.1 Desplegado vía CI (push a `main`).
+- [x] 7.1 Desplegado vía CI (push a `main`, PR #100 mergeado). Backend (`personal`) desplegado exitosamente por `deploy-vps-backend.yml` (el rojo del gate de smoke test es el ruido de consola por 403 ya conocido de RBAC, decidido dejar así en la sesión anterior — no relacionado a este fix). Frontend (`app-shell`) desplegado por `deploy-vps.yml` — falló una vez en el paso de SSH (transitorio) y se reintentó con éxito. `https://iretum.com` responde 200 tras ambos.
 - [ ] 7.2 Verificar en `iretum.com` que el alta de empleado que originalmente falló (RFC largo) ahora responde con un mensaje claro, y que un alta normal sigue funcionando.
 - [ ] 7.3 `openspec archive fix-personal-validacion-longitud-empleado` tras verificación en producción.
