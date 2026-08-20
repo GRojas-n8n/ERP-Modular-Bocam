@@ -62,12 +62,16 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && git fetch origin main && git merge --ff-only origin/main"
 
-      # ── 3. DRY-RUN TEMPORAL: NO aplica nada todavía, solo prueba el
-      # mecanismo de verificación (paso 4) contra producción de forma
-      # segura antes de escribir. TODO: restaurar el paso real antes de
-      # usar esto para aplicar de verdad.
-      - name: "[DRY-RUN] prisma db execute (rls-policies.sql) — DESHABILITADO"
-        run: echo "Paso deshabilitado a propósito para probar solo el paso 4 (verificación) primero."
+      # ── 3. Aplicar el script contra la base real, vía el contenedor
+      # del propio servicio (ya tiene DATABASE_URL resuelto en su entorno) ──
+      - name: prisma db execute (rls-policies.sql)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T ${{ inputs.service }} \
+              node_modules/.bin/prisma db execute \
+                --file apps/${{ inputs.service }}/prisma/rls-policies.sql \
+                --schema apps/${{ inputs.service }}/prisma/schema.prisma"
 
       # ── 4. Confirmar que las políticas quedaron activas ─────
       # `docker/Dockerfile.backend` no copia scripts/ ni psql al runner de
