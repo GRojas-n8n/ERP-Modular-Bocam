@@ -104,9 +104,10 @@ ocurre en middleware, antes de tocar la base de datos.
 
 ## 5. Cierre
 
-- [ ] 5.1 Branch `fix/rbac-seguridad-endpoints-sin-rol` (o directo a `main`,
-      según indique el usuario), commit con tests + fix.
+- [x] 5.1 Branch `fix/rbac-seguridad-endpoints-sin-rol` (decisión del
+      usuario: commit local en branch, sin push). **Resultado:** commit
+      `5a8d4be` con tests + fix.
 - [ ] 5.2 PR contra `main` referenciando este change de OpenSpec (o push
-      directo, según indique el usuario).
+      directo, según indique el usuario — pendiente, no se hizo push).
 - [ ] 5.3 Tras merge y verificación en producción, archivar el change
       (`openspec archive`).
