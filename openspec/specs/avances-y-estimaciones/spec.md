@@ -28,7 +28,11 @@ suma de `cantidad_periodo` de los avances previos en estado distinto de
 `RECHAZADO` del mismo `concepto_id` en el proyecto, calculando cantidades y
 montos acumulados a partir de esos valores, y SHALL rechazar la petición
 con `403` si el usuario no tiene rol `residencia`, `control_proyectos`,
-`control_obra`, `director` o `admin`.
+`control_obra`, `director` o `admin`. El sistema SHALL persistir la
+`cantidad_acumulada` real sin recortarla al 100% del presupuestado (solo el
+`porcentaje_avance` mostrado se recorta a 100), y SHALL incluir en la
+respuesta una advertencia no bloqueante cuando el avance recién creado deja
+`cantidad_acumulada > cantidad_presupuestada`.
 
 #### Scenario: Residente registra avance del periodo
 - **WHEN** un usuario con rol `residencia` envía
@@ -43,6 +47,18 @@ con `403` si el usuario no tiene rol `residencia`, `control_proyectos`,
   `importe_periodo`/`importe_acumulado` con el precio unitario resuelto del
   catálogo, y crea el registro en estado `PENDIENTE`
 - **AND** publica `control_obra.avance_fisico_registrado`
+
+#### Scenario: El avance registrado excede el volumen contratado
+- **WHEN** un avance se crea y su `cantidad_acumulada` resultante supera la
+  `cantidad_presupuestada` del concepto
+- **THEN** el sistema crea el registro igualmente (no lo rechaza)
+- **AND** la respuesta incluye `advertencia_volumen_excedido` con la
+  cantidad excedente y el porcentaje sobre lo contratado
+
+#### Scenario: El avance registrado no excede el volumen contratado
+- **WHEN** un avance se crea y su `cantidad_acumulada` resultante es menor
+  o igual a la `cantidad_presupuestada` del concepto
+- **THEN** la respuesta no incluye `advertencia_volumen_excedido`
 
 #### Scenario: Control de Obra registra avance del periodo
 - **WHEN** un usuario con rol `control_proyectos`, `control_obra`,
