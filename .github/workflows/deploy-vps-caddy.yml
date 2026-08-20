@@ -80,7 +80,17 @@ jobs:
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ${{ env.VPS_REPO_PATH }} && docker compose -f docker-compose.vps.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force"
 
-      # ── 5. Verificar que los headers de seguridad quedaron activos ──
+      # ── 5a. Diagnóstico temporal: golpear a Caddy directo desde el VPS,
+      # sin pasar por Cloudflare/DNS, para descartar que algo intermedio
+      # esté quitando los headers antes de que lleguen al cliente.
+      # TODO: quitar este paso una vez confirmado el origen del problema.
+      - name: Diagnóstico — Caddy directo (bypass Cloudflare)
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'curl -skI https://localhost/ -H "Host: iretum.com" && echo "---HTTP (puerto 80)---" && curl -sI http://localhost/ -H "Host: iretum.com"'
+
+      # ── 5b. Verificar que los headers de seguridad quedaron activos ──
       - name: Verificar headers de seguridad
         run: |
           sleep 2
