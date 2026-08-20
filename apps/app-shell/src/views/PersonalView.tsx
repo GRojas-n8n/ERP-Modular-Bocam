@@ -1987,16 +1987,16 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
               <Input value={nuevoEmpleadoForm.apellido_materno} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, apellido_materno: e.target.value })} />
             </FormField>
             <FormField label="RFC" required>
-              <Input value={nuevoEmpleadoForm.rfc} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, rfc: e.target.value.toUpperCase() })} />
+              <Input maxLength={13} value={nuevoEmpleadoForm.rfc} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, rfc: e.target.value.toUpperCase() })} />
             </FormField>
             <FormField label="CURP">
-              <Input value={nuevoEmpleadoForm.curp} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, curp: e.target.value.toUpperCase() })} />
+              <Input maxLength={18} value={nuevoEmpleadoForm.curp} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, curp: e.target.value.toUpperCase() })} />
             </FormField>
             <FormField label="NSS">
-              <Input value={nuevoEmpleadoForm.nss} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, nss: e.target.value })} />
+              <Input maxLength={11} value={nuevoEmpleadoForm.nss} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, nss: e.target.value })} />
             </FormField>
             <FormField label="Puesto" required>
-              <Input value={nuevoEmpleadoForm.puesto} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, puesto: e.target.value })} />
+              <Input maxLength={100} value={nuevoEmpleadoForm.puesto} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, puesto: e.target.value })} />
             </FormField>
             <FormField label="Salario diario (MXN)" required>
               <Input type="number" min="0" step="0.01" value={nuevoEmpleadoForm.salario_diario} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, salario_diario: e.target.value })} />
@@ -2020,19 +2020,19 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
               <Input type="date" value={nuevoEmpleadoForm.fecha_ingreso} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, fecha_ingreso: e.target.value })} />
             </FormField>
             <FormField label="Teléfono">
-              <Input value={nuevoEmpleadoForm.telefono} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, telefono: e.target.value })} />
+              <Input maxLength={20} value={nuevoEmpleadoForm.telefono} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, telefono: e.target.value })} />
             </FormField>
             <FormField label="Email">
-              <Input type="email" value={nuevoEmpleadoForm.email} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, email: e.target.value })} />
+              <Input type="email" maxLength={100} value={nuevoEmpleadoForm.email} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, email: e.target.value })} />
             </FormField>
             <FormField label="Contacto de emergencia (nombre)">
-              <Input value={nuevoEmpleadoForm.contacto_emergencia_nombre} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_nombre: e.target.value })} />
+              <Input maxLength={200} value={nuevoEmpleadoForm.contacto_emergencia_nombre} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_nombre: e.target.value })} />
             </FormField>
             <FormField label="Contacto de emergencia (teléfono)">
-              <Input value={nuevoEmpleadoForm.contacto_emergencia_telefono} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_telefono: e.target.value })} />
+              <Input maxLength={30} value={nuevoEmpleadoForm.contacto_emergencia_telefono} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_telefono: e.target.value })} />
             </FormField>
             <FormField label="Contacto de emergencia (parentesco)">
-              <Input value={nuevoEmpleadoForm.contacto_emergencia_parentesco} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_parentesco: e.target.value })} />
+              <Input maxLength={50} value={nuevoEmpleadoForm.contacto_emergencia_parentesco} onChange={e => setNuevoEmpleadoForm({ ...nuevoEmpleadoForm, contacto_emergencia_parentesco: e.target.value })} />
             </FormField>
           </div>
         </div>
@@ -2076,34 +2076,34 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   <Input value={editarEmpleadoForm.apellido_materno} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, apellido_materno: e.target.value })} />
                 </FormField>
                 <FormField label="RFC" required>
-                  <Input value={editarEmpleadoForm.rfc} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, rfc: e.target.value.toUpperCase() })} />
+                  <Input maxLength={13} value={editarEmpleadoForm.rfc} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, rfc: e.target.value.toUpperCase() })} />
                 </FormField>
                 <FormField label="CURP">
-                  <Input value={editarEmpleadoForm.curp} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, curp: e.target.value.toUpperCase() })} />
+                  <Input maxLength={18} value={editarEmpleadoForm.curp} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, curp: e.target.value.toUpperCase() })} />
                 </FormField>
                 <FormField label="NSS">
-                  <Input value={editarEmpleadoForm.nss} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, nss: e.target.value })} />
+                  <Input maxLength={11} value={editarEmpleadoForm.nss} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, nss: e.target.value })} />
                 </FormField>
                 <FormField label="Puesto" required>
-                  <Input value={editarEmpleadoForm.puesto} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, puesto: e.target.value })} />
+                  <Input maxLength={100} value={editarEmpleadoForm.puesto} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, puesto: e.target.value })} />
                 </FormField>
                 <FormField label="Salario diario (MXN)" required>
                   <Input type="number" min="0" step="0.01" value={editarEmpleadoForm.salario_diario} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, salario_diario: e.target.value })} />
                 </FormField>
                 <FormField label="Teléfono">
-                  <Input value={editarEmpleadoForm.telefono} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, telefono: e.target.value })} />
+                  <Input maxLength={20} value={editarEmpleadoForm.telefono} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, telefono: e.target.value })} />
                 </FormField>
                 <FormField label="Email">
-                  <Input type="email" value={editarEmpleadoForm.email} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, email: e.target.value })} />
+                  <Input type="email" maxLength={100} value={editarEmpleadoForm.email} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, email: e.target.value })} />
                 </FormField>
                 <FormField label="Contacto de emergencia (nombre)">
-                  <Input value={editarEmpleadoForm.contacto_emergencia_nombre} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_nombre: e.target.value })} />
+                  <Input maxLength={200} value={editarEmpleadoForm.contacto_emergencia_nombre} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_nombre: e.target.value })} />
                 </FormField>
                 <FormField label="Contacto de emergencia (teléfono)">
-                  <Input value={editarEmpleadoForm.contacto_emergencia_telefono} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_telefono: e.target.value })} />
+                  <Input maxLength={30} value={editarEmpleadoForm.contacto_emergencia_telefono} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_telefono: e.target.value })} />
                 </FormField>
                 <FormField label="Contacto de emergencia (parentesco)">
-                  <Input value={editarEmpleadoForm.contacto_emergencia_parentesco} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_parentesco: e.target.value })} />
+                  <Input maxLength={50} value={editarEmpleadoForm.contacto_emergencia_parentesco} onChange={e => setEditarEmpleadoForm({ ...editarEmpleadoForm, contacto_emergencia_parentesco: e.target.value })} />
                 </FormField>
               </div>
             </div>
