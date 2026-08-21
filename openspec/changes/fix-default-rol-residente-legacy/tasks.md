@@ -85,8 +85,9 @@ prueba creados y limpiados por test, Postgres real).
 
 ## 5. Cierre
 
-- [ ] 5.1 Commit en branch `fix/default-rol-residente-legacy` (confirmar con
-      el usuario si va con push directo o PR, siguiendo el patrón de
-      `fix-rbac-seguridad-endpoints-sin-rol`).
-- [ ] 5.2 PR contra `main` referenciando este change de OpenSpec.
+- [x] 5.1 Commit en branch `fix/default-rol-residente-legacy` (rama nueva
+      desde `origin/main`, confirmado con el usuario: commit + push + PR).
+      **Resultado:** commit `42ae0f3`.
+- [x] 5.2 PR contra `main` referenciando este change de OpenSpec.
+      **Resultado:** https://github.com/GRojas-n8n/ERP-Modular-Bocam/pull/106
 - [ ] 5.3 Tras merge, archivar el change (`openspec archive`).
