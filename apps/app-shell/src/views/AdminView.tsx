@@ -25,6 +25,16 @@ interface Proyecto {
   total_dias_naturales?: number | null; total_dias_laborables?: number | null;
 }
 interface ClienteVentas { id_cliente: string; razon_social: string; codigo_cliente: string | null; }
+interface TenantAuditLogRow {
+  id: string;
+  tenant_id: string;
+  proyecto_id: string;
+  actor_user_id: string;
+  event_type: string;
+  entity_id: string | null;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+}
 
 // Ver openspec/changes/centro-costos-alta-formal
 const EMPRESAS_GRUPO = [
@@ -35,6 +45,19 @@ const EMPRESAS_GRUPO = [
 ];
 const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'];
 const ESTATUS_CENTRO_COSTOS = ['ABIERTO', 'EN EJECUCIÓN', 'EN COBRO', 'TERMINADO', 'CERRADO'];
+
+// Ver openspec/changes/auditoria-acciones-tenant — debe coincidir con la
+// allowlist de apps/auth/src/tenant-audit-log-policy.ts.
+const EVENTOS_AUDITORIA: { value: string; label: string }[] = [
+  { value: 'compras.comparativa_aprobada_gt', label: 'Comparativa aprobada (GT)' },
+  { value: 'compras.oc_creada',               label: 'Orden de compra creada' },
+  { value: 'compras.oc_cancelada',            label: 'Orden de compra cancelada' },
+  { value: 'finanzas.pago_registrado',        label: 'Pago registrado' },
+  { value: 'finanzas.oc_pagada_total',        label: 'OC pagada (total)' },
+  { value: 'finanzas.oc_pagada_parcial',      label: 'OC pagada (parcial)' },
+];
+const etiquetaDeEventoAuditoria = (eventType: string) =>
+  EVENTOS_AUDITORIA.find(e => e.value === eventType)?.label ?? eventType;
 
 // ─── Role catalog ─────────────────────────────────────────────────────────────
 // IMPORTANTE: Mantener sincronizado con CLAUDE.md §11 y Layout.tsx ALL_NAV_ITEMS.
@@ -569,7 +592,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const { notify } = useNotification();
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const currentProjectColor = getProjectColor(currentProjectId);
-  const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias') || 'usuarios';
+  const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias' | 'auditoria') || 'usuarios';
   const [helpOpen, setHelpOpen] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -592,6 +615,26 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [activandoProyecto, setActivandoProyecto] = useState(false);
   const [confirmEliminarCategoria, setConfirmEliminarCategoria] = useState<CategoriaAdmin | null>(null);
   const [confirmCrearCategoria, setConfirmCrearCategoria] = useState(false);
+
+  // ── Auditoría de tenant (ver openspec/changes/auditoria-acciones-tenant) ──
+  const [auditLogs, setAuditLogs] = useState<TenantAuditLogRow[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  const [auditFiltros, setAuditFiltros] = useState({ desde: '', hasta: '', proyecto_id: '', event_type: '', actor_user_id: '' });
+
+  const loadAuditLog = useCallback(async () => {
+    setLoadingAudit(true);
+    try {
+      const params: Record<string, string> = {};
+      if (auditFiltros.desde) params.desde = auditFiltros.desde;
+      if (auditFiltros.hasta) params.hasta = auditFiltros.hasta;
+      if (auditFiltros.proyecto_id) params.proyecto_id = auditFiltros.proyecto_id;
+      if (auditFiltros.event_type) params.event_type = auditFiltros.event_type;
+      if (auditFiltros.actor_user_id) params.actor_user_id = auditFiltros.actor_user_id;
+      const res = await api.get('/api/v1/auth/audit-log', { params });
+      setAuditLogs((res.data as { data: TenantAuditLogRow[] }).data);
+    } catch { /* silencioso: la vista muestra "Sin registros" */ }
+    finally { setLoadingAudit(false); }
+  }, [auditFiltros]);
 
   const loadCategorias = useCallback(async () => {
     if (!currentProjectId) return;
@@ -672,6 +715,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
 
   useEffect(() => { void loadAll(); }, [loadAll]);
   useEffect(() => { if (activeTab === 'categorias') loadCategorias(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'auditoria') void loadAuditLog(); }, [activeTab, loadAuditLog]);
 
   return (
     <div className="space-y-6">
@@ -685,7 +729,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <HelpButton onClick={() => setHelpOpen(true)} />
-          {activeTab !== 'categorias' && (
+          {activeTab !== 'categorias' && activeTab !== 'auditoria' && (
             <button
               onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
               className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
@@ -865,6 +909,82 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
               </div>
             </div>
           )}
+        </div>
+      ) : activeTab === 'auditoria' ? (
+        /* ── Bitácora de Auditoría (quién hizo qué) ── */
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border/30 bg-card p-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Desde</label>
+                <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={auditFiltros.desde} onChange={e => setAuditFiltros(f => ({ ...f, desde: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hasta</label>
+                <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={auditFiltros.hasta} onChange={e => setAuditFiltros(f => ({ ...f, hasta: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Proyecto</label>
+                <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={auditFiltros.proyecto_id} onChange={e => setAuditFiltros(f => ({ ...f, proyecto_id: e.target.value }))}>
+                  <option value="">Todos</option>
+                  {proyectos.map(p => <option key={p.id_proyecto} value={p.id_proyecto}>{p.codigo_centro_costos}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de Acción</label>
+                <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={auditFiltros.event_type} onChange={e => setAuditFiltros(f => ({ ...f, event_type: e.target.value }))}>
+                  <option value="">Todas</option>
+                  {EVENTOS_AUDITORIA.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Usuario</label>
+                <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:outline-none"
+                  value={auditFiltros.actor_user_id} onChange={e => setAuditFiltros(f => ({ ...f, actor_user_id: e.target.value }))}>
+                  <option value="">Todos</option>
+                  {users.map(u => <option key={u.id} value={u.id}>{u.nombre}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
+            {loadingAudit ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary/10 border-t-primary" />
+              </div>
+            ) : auditLogs.length === 0 ? (
+              <div className="p-12 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Sin acciones registradas para estos filtros
+              </div>
+            ) : (
+              <div className="divide-y divide-border/20">
+                {auditLogs.map(row => {
+                  const actor = users.find(u => u.id === row.actor_user_id);
+                  const proyecto = proyectos.find(p => p.id_proyecto === row.proyecto_id);
+                  return (
+                    <div key={row.id} className="flex items-start gap-4 px-6 py-3.5 hover:bg-muted/20 transition-colors">
+                      <div className="w-36 shrink-0 text-[11px] font-mono text-muted-foreground">
+                        {new Date(row.created_at).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold">{etiquetaDeEventoAuditoria(row.event_type)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {actor?.nombre ?? 'Usuario no disponible'}
+                          {proyecto && <> · {proyecto.codigo_centro_costos}</>}
+                          {row.entity_id && <> · <span className="font-mono">{row.entity_id.slice(0, 8)}</span></>}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         /* ── Projects Table ── */

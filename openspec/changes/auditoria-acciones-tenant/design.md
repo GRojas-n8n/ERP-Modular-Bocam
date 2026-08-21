@@ -21,9 +21,13 @@ index.ts:152-156`). Eso es exactamente el actor+contexto que se necesita
 para la bitácora, y ya se está publicando hoy sin que nadie lo persista.
 
 `apps/auth` ya tiene RLS operativo (`apps/auth/prisma/rls-policies.sql`,
-tablas `users`/`proyectos`/`tenants`/...) y `packages/tenant-idempotency`
-ya provee el patrón `runInContext` para mutaciones/lecturas scoped a un
-tenant bajo RLS — se reutiliza tal cual, no se inventa un mecanismo nuevo.
+tablas `users`/`proyectos`/`tenants`/...) y `apps/auth/src/db.ts` ya provee
+`createTenantContext()` — el helper que todo el resto de `apps/auth/src/
+main.ts` usa para ejecutar lecturas/escrituras dentro de una transacción con
+`set_config('app.current_tenant_id', ...)` ya aplicado. Se reutiliza tal
+cual, no se inventa un mecanismo nuevo (no se necesita traer
+`packages/tenant-idempotency`, que resuelve un problema distinto —
+deduplicación de mutaciones, no scoping RLS).
 
 ## Goals / Non-Goals
 

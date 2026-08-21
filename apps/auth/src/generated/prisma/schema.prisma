@@ -161,3 +161,23 @@ model MasterAuditLog {
   @@index([entity_id])
   @@map("master_audit_logs")
 }
+
+// --- Audit Log de Acciones de Negocio por Tenant (RLS habilitado) ---
+// Proyección derivada de eventos ya publicados a bocam.events por otros
+// servicios (compras, finanzas) — no es la fuente de verdad transaccional.
+// Best-effort: un fallo al persistir no bloquea al publisher del evento.
+// Ver openspec/changes/auditoria-acciones-tenant.
+model TenantAuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  proyecto_id    String   @db.Uuid
+  actor_user_id  String   @db.Uuid
+  event_type     String   @db.VarChar(100)
+  entity_id      String?  @db.Uuid
+  payload        Json?
+  correlation_id String?  @db.VarChar(100)
+  created_at     DateTime @default(now())
+
+  @@index([tenant_id, created_at])
+  @@map("tenant_audit_logs")
+}
