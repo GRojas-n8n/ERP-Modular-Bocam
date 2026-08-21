@@ -402,6 +402,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [complementos, setComplementos] = useState<Complemento[]>([]);
   const [confirmRevisarComplemento, setConfirmRevisarComplemento] = useState<Complemento | null>(null);
   const [marcandoRevisadoComplemento, setMarcandoRevisadoComplemento] = useState(false);
+  const [loadingNomina, setLoadingNomina] = useState(false);
 
   // ─ Mi equipo
   const [equipoPorCategoria, setEquipoPorCategoria] = useState<EquipoCategoria[]>([]);
@@ -462,6 +463,8 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
   const [dashData, setDashData] = useState<{
     mis_requisiciones: number;
     estimaciones_pendientes: number;
+    prenominas_pendientes: number | null;
+    complementos_pendientes: number | null;
     ocs_por_recibir: Array<{ id: string; folio: string; proveedor: string; monto: number; estado: string }>;
     alertas: Array<{ tipo: string; mensaje: string; severidad: string }>;
     parcial: boolean;
@@ -539,19 +542,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
     }
     const fetchData = async () => {
       try {
-        const [nomRes, compRes, dashRes] = await Promise.allSettled([
-          api.get('/api/v1/personal/prenominas'),
-          api.get('/api/v1/personal/complementos'),
-          api.get('/api/v1/control-proyectos/dashboard/residente'),
-        ]);
-        if (nomRes.status === 'fulfilled') {
-          setPrenominas((nomRes.value.data as any)?.data ?? []);
-        }
-        if (compRes.status === 'fulfilled') {
-          setComplementos((compRes.value.data as any)?.data ?? []);
-        }
-        if (dashRes.status === 'fulfilled' && (dashRes.value.data as any)?.data) {
-          setDashData((dashRes.value.data as any).data);
+        const dashRes = await api.get('/api/v1/control-proyectos/dashboard/residente');
+        if ((dashRes.data as any)?.data) {
+          setDashData((dashRes.data as any).data);
         }
       } catch { /* silencioso */ } finally { setLoading(false); }
     };
@@ -615,6 +608,30 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       } catch { /* silencioso */ }
     };
     void fetchAsistencia();
+  }, [activeTab, isDemo]);
+
+  // ── Carga de nómina (prenóminas + complementos) cuando se activa el tab ──
+  // Ver openspec/changes/residencia-consolidar-dashboard: antes se cargaba
+  // incondicionalmente al montar la vista, aunque "Nómina" ni siquiera es la
+  // pestaña por defecto.
+  useEffect(() => {
+    if (activeTab !== 'nomina' || isDemo) return;
+    setLoadingNomina(true);
+    const fetchNomina = async () => {
+      try {
+        const [nomRes, compRes] = await Promise.allSettled([
+          api.get('/api/v1/personal/prenominas'),
+          api.get('/api/v1/personal/complementos'),
+        ]);
+        if (nomRes.status === 'fulfilled') {
+          setPrenominas((nomRes.value.data as any)?.data ?? []);
+        }
+        if (compRes.status === 'fulfilled') {
+          setComplementos((compRes.value.data as any)?.data ?? []);
+        }
+      } finally { setLoadingNomina(false); }
+    };
+    void fetchNomina();
   }, [activeTab, isDemo]);
 
   // ── Carga de "Mi equipo" cuando se activa el tab ────────────────────────
@@ -1428,7 +1445,7 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
       {/* ── Dashboard Residente ─────────────────────────────────────────── */}
       {dashData && (
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardContent className="pt-4 pb-3 px-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Mis Requisiciones</p>
@@ -1443,6 +1460,24 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
                   {dashData.estimaciones_pendientes}
                 </p>
                 <p className="text-[10px] text-muted-foreground">por revisión</p>
+              </CardContent>
+            </Card>
+            <Card className={(dashData.prenominas_pendientes ?? 0) > 0 ? 'border-amber-500/20 bg-amber-500/5' : ''}>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Prenóminas</p>
+                <p className={cn('mt-1 text-xl font-black', (dashData.prenominas_pendientes ?? 0) > 0 ? 'text-amber-700' : 'text-foreground')}>
+                  {dashData.prenominas_pendientes ?? '—'}
+                </p>
+                <p className="text-[10px] text-muted-foreground">sin revisar</p>
+              </CardContent>
+            </Card>
+            <Card className={(dashData.complementos_pendientes ?? 0) > 0 ? 'border-amber-500/20 bg-amber-500/5' : ''}>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Complementos</p>
+                <p className={cn('mt-1 text-xl font-black', (dashData.complementos_pendientes ?? 0) > 0 ? 'text-amber-700' : 'text-foreground')}>
+                  {dashData.complementos_pendientes ?? '—'}
+                </p>
+                <p className="text-[10px] text-muted-foreground">sin revisar</p>
               </CardContent>
             </Card>
             <Card className={dashData.ocs_por_recibir.length > 0 ? 'border-sky-500/20 bg-sky-500/5' : ''}>
@@ -1827,7 +1862,9 @@ export const ResidenciaView: React.FC<{ activeSubView?: string }> = ({ activeSub
           </CardHeader>
           <CardContent className="p-0">
             {complementos.length === 0 ? (
-              <p className="px-4 py-6 text-xs text-muted-foreground">Sin complementos salariales en este periodo.</p>
+              <p className="px-4 py-6 text-xs text-muted-foreground">
+                {loadingNomina ? 'Cargando complementos…' : 'Sin complementos salariales en este periodo.'}
+              </p>
             ) : (
               <TableContainer>
                 <Table>
