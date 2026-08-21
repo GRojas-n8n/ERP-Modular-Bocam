@@ -54,6 +54,7 @@ const JWT_SECRET = requireEnv('JWT_SECRET');
 const FINANZAS_URL = process.env.FINANZAS_URL || 'http://localhost:3004/api/v1/finanzas';
 const COMPRAS_URL  = process.env.COMPRAS_URL  || 'http://localhost:3002/api/v1/compras';
 const GT_URL       = process.env.GT_URL       || 'http://localhost:3001/api/v1/gerencia-tecnica';
+const PERSONAL_URL = process.env.PERSONAL_URL || 'http://localhost:3006/api/v1/personal';
 
 const ESTIMACION_STATUS = {
   PENDIENTE_FINANZAS: EstadoEstimacion.PENDIENTE_CONFIRMACION_FINANZAS,
@@ -1617,9 +1618,11 @@ controlObraRouter.get('/dashboard/residente',
 
         let misReqs = 0;
         let ocsPorRecibir: Array<{ id: string; folio: string; proveedor: string; monto: number; estado: string }> = [];
+        let prenominasPendientes: number | null = null;
+        let complementosPendientes: number | null = null;
         let parcial = false;
         try {
-          const [reqRes, ocRes] = await Promise.allSettled([
+          const [reqRes, ocRes, prenominasRes, complementosRes] = await Promise.allSettled([
             axios.get(`${COMPRAS_URL}/requisiciones`, {
               headers: authHeader ? { Authorization: authHeader } : {},
               timeout: 3000,
@@ -1627,6 +1630,14 @@ controlObraRouter.get('/dashboard/residente',
             axios.get(`${COMPRAS_URL}/ordenes-compra`, {
               headers: authHeader ? { Authorization: authHeader } : {},
               params: { estado: 'EMITIDA,PARCIALMENTE_RECIBIDA' },
+              timeout: 3000,
+            }),
+            axios.get(`${PERSONAL_URL}/prenominas`, {
+              headers: authHeader ? { Authorization: authHeader } : {},
+              timeout: 3000,
+            }),
+            axios.get(`${PERSONAL_URL}/complementos`, {
+              headers: authHeader ? { Authorization: authHeader } : {},
               timeout: 3000,
             }),
           ]);
@@ -1650,6 +1661,20 @@ controlObraRouter.get('/dashboard/residente',
           } else {
             parcial = true;
           }
+
+          if (prenominasRes.status === 'fulfilled') {
+            const prenominas = (prenominasRes.value.data?.data ?? []) as any[];
+            prenominasPendientes = prenominas.filter((p: any) => p.estado === 'CALCULADA' && !p.revisado_por_residencia).length;
+          } else {
+            parcial = true;
+          }
+
+          if (complementosRes.status === 'fulfilled') {
+            const complementos = (complementosRes.value.data?.data ?? []) as any[];
+            complementosPendientes = complementos.filter((c: any) => !c.revisado_por_residencia).length;
+          } else {
+            parcial = true;
+          }
         } catch {
           parcial = true;
         }
@@ -1660,12 +1685,14 @@ controlObraRouter.get('/dashboard/residente',
         }
 
         return {
-          mis_requisiciones:       misReqs,
-          estimaciones_pendientes: estimacionesPendientes,
-          ocs_por_recibir:         ocsPorRecibir,
+          mis_requisiciones:        misReqs,
+          estimaciones_pendientes:  estimacionesPendientes,
+          prenominas_pendientes:    prenominasPendientes,
+          complementos_pendientes:  complementosPendientes,
+          ocs_por_recibir:          ocsPorRecibir,
           alertas,
           parcial,
-          generado_at:             now.toISOString(),
+          generado_at:              now.toISOString(),
         };
       });
 
