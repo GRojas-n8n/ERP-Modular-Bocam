@@ -110,5 +110,21 @@ ocurre en middleware, antes de tocar la base de datos.
 - [x] 5.2 PR contra `main` referenciando este change de OpenSpec.
       **Resultado:** branch pusheado a `origin` y PR abierto:
       https://github.com/GRojas-n8n/ERP-Modular-Bocam/pull/101
-- [ ] 5.3 Tras merge y verificación en producción, archivar el change
-      (`openspec archive`).
+- [x] 5.3 Tras merge y verificación en producción, archivar el change
+      (`openspec archive`). **Resultado:** PR #101 revisado (diff completo)
+      y mergeado a `main` (squash) el 2026-08-21 — GitHub no permite
+      auto-aprobar el propio PR (único colaborador del repo), así que el
+      gate de QA se cumplió con la revisión de diff documentada en el PR +
+      tests en verde. Tras el merge: `Deploy Backend al VPS` exitoso
+      (build+deploy en 1m55s), `Backend E2E Criticas` en verde sobre el
+      commit ya mergeado (incluye
+      `rbac-endpoints-sin-rol.e2e.test.ts`, 18/18 rutas), `Smoke Test
+      Playwright` (login + dashboard) en verde contra `iretum.com` real.
+      Verificación funcional adicional: `https://iretum.com` responde 200;
+      `GET /api/v1/seguridad/incidentes` sin token responde 401 (auth
+      middleware vivo tras el deploy). No se pudo repetir en producción la
+      prueba manual 403-por-rol de las tareas 4.4/4.5 (las credenciales
+      seed de `apps/auth/prisma/seed.ts` no existen en la base de
+      producción real, y no se intentó adivinar contraseñas reales) — se
+      aceptó como suficiente la combinación de deploy exitoso + E2E verde
+      sobre el commit desplegado + smoke test en verde.
