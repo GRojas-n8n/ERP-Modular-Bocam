@@ -32,12 +32,13 @@ on:
   workflow_dispatch:
     inputs:
       service:
-        description: "Servicio (finanzas o contabilidad)"
+        description: "Servicio (finanzas, contabilidad o auth)"
         required: true
         type: choice
         options:
           - finanzas
           - contabilidad
+          - auth
 
 env:
   VPS_REPO_PATH: /root/ERP-Modular-Bocam

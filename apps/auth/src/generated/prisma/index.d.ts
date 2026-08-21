@@ -43,6 +43,11 @@ export type RefreshToken = $Result.DefaultSelection<Prisma.$RefreshTokenPayload>
  * 
  */
 export type MasterAuditLog = $Result.DefaultSelection<Prisma.$MasterAuditLogPayload>
+/**
+ * Model TenantAuditLog
+ * 
+ */
+export type TenantAuditLog = $Result.DefaultSelection<Prisma.$TenantAuditLogPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -226,6 +231,16 @@ export class PrismaClient<
     * ```
     */
   get masterAuditLog(): Prisma.MasterAuditLogDelegate<ExtArgs>;
+
+  /**
+   * `prisma.tenantAuditLog`: Exposes CRUD operations for the **TenantAuditLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TenantAuditLogs
+    * const tenantAuditLogs = await prisma.tenantAuditLog.findMany()
+    * ```
+    */
+  get tenantAuditLog(): Prisma.TenantAuditLogDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -672,7 +687,8 @@ export namespace Prisma {
     User: 'User',
     UserProjectAccess: 'UserProjectAccess',
     RefreshToken: 'RefreshToken',
-    MasterAuditLog: 'MasterAuditLog'
+    MasterAuditLog: 'MasterAuditLog',
+    TenantAuditLog: 'TenantAuditLog'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -688,7 +704,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "tenant" | "proyecto" | "user" | "userProjectAccess" | "refreshToken" | "masterAuditLog"
+      modelProps: "tenant" | "proyecto" | "user" | "userProjectAccess" | "refreshToken" | "masterAuditLog" | "tenantAuditLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1109,6 +1125,76 @@ export namespace Prisma {
           count: {
             args: Prisma.MasterAuditLogCountArgs<ExtArgs>
             result: $Utils.Optional<MasterAuditLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      TenantAuditLog: {
+        payload: Prisma.$TenantAuditLogPayload<ExtArgs>
+        fields: Prisma.TenantAuditLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenantAuditLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenantAuditLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>
+          }
+          findFirst: {
+            args: Prisma.TenantAuditLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenantAuditLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>
+          }
+          findMany: {
+            args: Prisma.TenantAuditLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>[]
+          }
+          create: {
+            args: Prisma.TenantAuditLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>
+          }
+          createMany: {
+            args: Prisma.TenantAuditLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenantAuditLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>[]
+          }
+          delete: {
+            args: Prisma.TenantAuditLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>
+          }
+          update: {
+            args: Prisma.TenantAuditLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.TenantAuditLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenantAuditLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.TenantAuditLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantAuditLogPayload>
+          }
+          aggregate: {
+            args: Prisma.TenantAuditLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenantAuditLog>
+          }
+          groupBy: {
+            args: Prisma.TenantAuditLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenantAuditLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenantAuditLogCountArgs<ExtArgs>
+            result: $Utils.Optional<TenantAuditLogCountAggregateOutputType> | number
           }
         }
       }
@@ -7594,6 +7680,928 @@ export namespace Prisma {
 
 
   /**
+   * Model TenantAuditLog
+   */
+
+  export type AggregateTenantAuditLog = {
+    _count: TenantAuditLogCountAggregateOutputType | null
+    _min: TenantAuditLogMinAggregateOutputType | null
+    _max: TenantAuditLogMaxAggregateOutputType | null
+  }
+
+  export type TenantAuditLogMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    actor_user_id: string | null
+    event_type: string | null
+    entity_id: string | null
+    correlation_id: string | null
+    created_at: Date | null
+  }
+
+  export type TenantAuditLogMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    actor_user_id: string | null
+    event_type: string | null
+    entity_id: string | null
+    correlation_id: string | null
+    created_at: Date | null
+  }
+
+  export type TenantAuditLogCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    actor_user_id: number
+    event_type: number
+    entity_id: number
+    payload: number
+    correlation_id: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type TenantAuditLogMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    actor_user_id?: true
+    event_type?: true
+    entity_id?: true
+    correlation_id?: true
+    created_at?: true
+  }
+
+  export type TenantAuditLogMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    actor_user_id?: true
+    event_type?: true
+    entity_id?: true
+    correlation_id?: true
+    created_at?: true
+  }
+
+  export type TenantAuditLogCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    actor_user_id?: true
+    event_type?: true
+    entity_id?: true
+    payload?: true
+    correlation_id?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type TenantAuditLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantAuditLog to aggregate.
+     */
+    where?: TenantAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantAuditLogs to fetch.
+     */
+    orderBy?: TenantAuditLogOrderByWithRelationInput | TenantAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenantAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TenantAuditLogs
+    **/
+    _count?: true | TenantAuditLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenantAuditLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenantAuditLogMaxAggregateInputType
+  }
+
+  export type GetTenantAuditLogAggregateType<T extends TenantAuditLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenantAuditLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenantAuditLog[P]>
+      : GetScalarType<T[P], AggregateTenantAuditLog[P]>
+  }
+
+
+
+
+  export type TenantAuditLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenantAuditLogWhereInput
+    orderBy?: TenantAuditLogOrderByWithAggregationInput | TenantAuditLogOrderByWithAggregationInput[]
+    by: TenantAuditLogScalarFieldEnum[] | TenantAuditLogScalarFieldEnum
+    having?: TenantAuditLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenantAuditLogCountAggregateInputType | true
+    _min?: TenantAuditLogMinAggregateInputType
+    _max?: TenantAuditLogMaxAggregateInputType
+  }
+
+  export type TenantAuditLogGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    actor_user_id: string
+    event_type: string
+    entity_id: string | null
+    payload: JsonValue | null
+    correlation_id: string | null
+    created_at: Date
+    _count: TenantAuditLogCountAggregateOutputType | null
+    _min: TenantAuditLogMinAggregateOutputType | null
+    _max: TenantAuditLogMaxAggregateOutputType | null
+  }
+
+  type GetTenantAuditLogGroupByPayload<T extends TenantAuditLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenantAuditLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenantAuditLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenantAuditLogGroupByOutputType[P]>
+            : GetScalarType<T[P], TenantAuditLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenantAuditLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    actor_user_id?: boolean
+    event_type?: boolean
+    entity_id?: boolean
+    payload?: boolean
+    correlation_id?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["tenantAuditLog"]>
+
+  export type TenantAuditLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    actor_user_id?: boolean
+    event_type?: boolean
+    entity_id?: boolean
+    payload?: boolean
+    correlation_id?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["tenantAuditLog"]>
+
+  export type TenantAuditLogSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    actor_user_id?: boolean
+    event_type?: boolean
+    entity_id?: boolean
+    payload?: boolean
+    correlation_id?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $TenantAuditLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TenantAuditLog"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      actor_user_id: string
+      event_type: string
+      entity_id: string | null
+      payload: Prisma.JsonValue | null
+      correlation_id: string | null
+      created_at: Date
+    }, ExtArgs["result"]["tenantAuditLog"]>
+    composites: {}
+  }
+
+  type TenantAuditLogGetPayload<S extends boolean | null | undefined | TenantAuditLogDefaultArgs> = $Result.GetResult<Prisma.$TenantAuditLogPayload, S>
+
+  type TenantAuditLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<TenantAuditLogFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: TenantAuditLogCountAggregateInputType | true
+    }
+
+  export interface TenantAuditLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TenantAuditLog'], meta: { name: 'TenantAuditLog' } }
+    /**
+     * Find zero or one TenantAuditLog that matches the filter.
+     * @param {TenantAuditLogFindUniqueArgs} args - Arguments to find a TenantAuditLog
+     * @example
+     * // Get one TenantAuditLog
+     * const tenantAuditLog = await prisma.tenantAuditLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenantAuditLogFindUniqueArgs>(args: SelectSubset<T, TenantAuditLogFindUniqueArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one TenantAuditLog that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {TenantAuditLogFindUniqueOrThrowArgs} args - Arguments to find a TenantAuditLog
+     * @example
+     * // Get one TenantAuditLog
+     * const tenantAuditLog = await prisma.tenantAuditLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenantAuditLogFindUniqueOrThrowArgs>(args: SelectSubset<T, TenantAuditLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first TenantAuditLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogFindFirstArgs} args - Arguments to find a TenantAuditLog
+     * @example
+     * // Get one TenantAuditLog
+     * const tenantAuditLog = await prisma.tenantAuditLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenantAuditLogFindFirstArgs>(args?: SelectSubset<T, TenantAuditLogFindFirstArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first TenantAuditLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogFindFirstOrThrowArgs} args - Arguments to find a TenantAuditLog
+     * @example
+     * // Get one TenantAuditLog
+     * const tenantAuditLog = await prisma.tenantAuditLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenantAuditLogFindFirstOrThrowArgs>(args?: SelectSubset<T, TenantAuditLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more TenantAuditLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TenantAuditLogs
+     * const tenantAuditLogs = await prisma.tenantAuditLog.findMany()
+     * 
+     * // Get first 10 TenantAuditLogs
+     * const tenantAuditLogs = await prisma.tenantAuditLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenantAuditLogWithIdOnly = await prisma.tenantAuditLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenantAuditLogFindManyArgs>(args?: SelectSubset<T, TenantAuditLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a TenantAuditLog.
+     * @param {TenantAuditLogCreateArgs} args - Arguments to create a TenantAuditLog.
+     * @example
+     * // Create one TenantAuditLog
+     * const TenantAuditLog = await prisma.tenantAuditLog.create({
+     *   data: {
+     *     // ... data to create a TenantAuditLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenantAuditLogCreateArgs>(args: SelectSubset<T, TenantAuditLogCreateArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many TenantAuditLogs.
+     * @param {TenantAuditLogCreateManyArgs} args - Arguments to create many TenantAuditLogs.
+     * @example
+     * // Create many TenantAuditLogs
+     * const tenantAuditLog = await prisma.tenantAuditLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenantAuditLogCreateManyArgs>(args?: SelectSubset<T, TenantAuditLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TenantAuditLogs and returns the data saved in the database.
+     * @param {TenantAuditLogCreateManyAndReturnArgs} args - Arguments to create many TenantAuditLogs.
+     * @example
+     * // Create many TenantAuditLogs
+     * const tenantAuditLog = await prisma.tenantAuditLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TenantAuditLogs and only return the `id`
+     * const tenantAuditLogWithIdOnly = await prisma.tenantAuditLog.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenantAuditLogCreateManyAndReturnArgs>(args?: SelectSubset<T, TenantAuditLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a TenantAuditLog.
+     * @param {TenantAuditLogDeleteArgs} args - Arguments to delete one TenantAuditLog.
+     * @example
+     * // Delete one TenantAuditLog
+     * const TenantAuditLog = await prisma.tenantAuditLog.delete({
+     *   where: {
+     *     // ... filter to delete one TenantAuditLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenantAuditLogDeleteArgs>(args: SelectSubset<T, TenantAuditLogDeleteArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one TenantAuditLog.
+     * @param {TenantAuditLogUpdateArgs} args - Arguments to update one TenantAuditLog.
+     * @example
+     * // Update one TenantAuditLog
+     * const tenantAuditLog = await prisma.tenantAuditLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenantAuditLogUpdateArgs>(args: SelectSubset<T, TenantAuditLogUpdateArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more TenantAuditLogs.
+     * @param {TenantAuditLogDeleteManyArgs} args - Arguments to filter TenantAuditLogs to delete.
+     * @example
+     * // Delete a few TenantAuditLogs
+     * const { count } = await prisma.tenantAuditLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenantAuditLogDeleteManyArgs>(args?: SelectSubset<T, TenantAuditLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenantAuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TenantAuditLogs
+     * const tenantAuditLog = await prisma.tenantAuditLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenantAuditLogUpdateManyArgs>(args: SelectSubset<T, TenantAuditLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one TenantAuditLog.
+     * @param {TenantAuditLogUpsertArgs} args - Arguments to update or create a TenantAuditLog.
+     * @example
+     * // Update or create a TenantAuditLog
+     * const tenantAuditLog = await prisma.tenantAuditLog.upsert({
+     *   create: {
+     *     // ... data to create a TenantAuditLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TenantAuditLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenantAuditLogUpsertArgs>(args: SelectSubset<T, TenantAuditLogUpsertArgs<ExtArgs>>): Prisma__TenantAuditLogClient<$Result.GetResult<Prisma.$TenantAuditLogPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of TenantAuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogCountArgs} args - Arguments to filter TenantAuditLogs to count.
+     * @example
+     * // Count the number of TenantAuditLogs
+     * const count = await prisma.tenantAuditLog.count({
+     *   where: {
+     *     // ... the filter for the TenantAuditLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenantAuditLogCountArgs>(
+      args?: Subset<T, TenantAuditLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenantAuditLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TenantAuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenantAuditLogAggregateArgs>(args: Subset<T, TenantAuditLogAggregateArgs>): Prisma.PrismaPromise<GetTenantAuditLogAggregateType<T>>
+
+    /**
+     * Group by TenantAuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAuditLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenantAuditLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenantAuditLogGroupByArgs['orderBy'] }
+        : { orderBy?: TenantAuditLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenantAuditLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenantAuditLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TenantAuditLog model
+   */
+  readonly fields: TenantAuditLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TenantAuditLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenantAuditLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TenantAuditLog model
+   */ 
+  interface TenantAuditLogFieldRefs {
+    readonly id: FieldRef<"TenantAuditLog", 'String'>
+    readonly tenant_id: FieldRef<"TenantAuditLog", 'String'>
+    readonly proyecto_id: FieldRef<"TenantAuditLog", 'String'>
+    readonly actor_user_id: FieldRef<"TenantAuditLog", 'String'>
+    readonly event_type: FieldRef<"TenantAuditLog", 'String'>
+    readonly entity_id: FieldRef<"TenantAuditLog", 'String'>
+    readonly payload: FieldRef<"TenantAuditLog", 'Json'>
+    readonly correlation_id: FieldRef<"TenantAuditLog", 'String'>
+    readonly created_at: FieldRef<"TenantAuditLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TenantAuditLog findUnique
+   */
+  export type TenantAuditLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which TenantAuditLog to fetch.
+     */
+    where: TenantAuditLogWhereUniqueInput
+  }
+
+  /**
+   * TenantAuditLog findUniqueOrThrow
+   */
+  export type TenantAuditLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which TenantAuditLog to fetch.
+     */
+    where: TenantAuditLogWhereUniqueInput
+  }
+
+  /**
+   * TenantAuditLog findFirst
+   */
+  export type TenantAuditLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which TenantAuditLog to fetch.
+     */
+    where?: TenantAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantAuditLogs to fetch.
+     */
+    orderBy?: TenantAuditLogOrderByWithRelationInput | TenantAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantAuditLogs.
+     */
+    cursor?: TenantAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantAuditLogs.
+     */
+    distinct?: TenantAuditLogScalarFieldEnum | TenantAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * TenantAuditLog findFirstOrThrow
+   */
+  export type TenantAuditLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which TenantAuditLog to fetch.
+     */
+    where?: TenantAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantAuditLogs to fetch.
+     */
+    orderBy?: TenantAuditLogOrderByWithRelationInput | TenantAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenantAuditLogs.
+     */
+    cursor?: TenantAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantAuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenantAuditLogs.
+     */
+    distinct?: TenantAuditLogScalarFieldEnum | TenantAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * TenantAuditLog findMany
+   */
+  export type TenantAuditLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter, which TenantAuditLogs to fetch.
+     */
+    where?: TenantAuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenantAuditLogs to fetch.
+     */
+    orderBy?: TenantAuditLogOrderByWithRelationInput | TenantAuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TenantAuditLogs.
+     */
+    cursor?: TenantAuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenantAuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenantAuditLogs.
+     */
+    skip?: number
+    distinct?: TenantAuditLogScalarFieldEnum | TenantAuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * TenantAuditLog create
+   */
+  export type TenantAuditLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * The data needed to create a TenantAuditLog.
+     */
+    data: XOR<TenantAuditLogCreateInput, TenantAuditLogUncheckedCreateInput>
+  }
+
+  /**
+   * TenantAuditLog createMany
+   */
+  export type TenantAuditLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TenantAuditLogs.
+     */
+    data: TenantAuditLogCreateManyInput | TenantAuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantAuditLog createManyAndReturn
+   */
+  export type TenantAuditLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many TenantAuditLogs.
+     */
+    data: TenantAuditLogCreateManyInput | TenantAuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenantAuditLog update
+   */
+  export type TenantAuditLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * The data needed to update a TenantAuditLog.
+     */
+    data: XOR<TenantAuditLogUpdateInput, TenantAuditLogUncheckedUpdateInput>
+    /**
+     * Choose, which TenantAuditLog to update.
+     */
+    where: TenantAuditLogWhereUniqueInput
+  }
+
+  /**
+   * TenantAuditLog updateMany
+   */
+  export type TenantAuditLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TenantAuditLogs.
+     */
+    data: XOR<TenantAuditLogUpdateManyMutationInput, TenantAuditLogUncheckedUpdateManyInput>
+    /**
+     * Filter which TenantAuditLogs to update
+     */
+    where?: TenantAuditLogWhereInput
+  }
+
+  /**
+   * TenantAuditLog upsert
+   */
+  export type TenantAuditLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * The filter to search for the TenantAuditLog to update in case it exists.
+     */
+    where: TenantAuditLogWhereUniqueInput
+    /**
+     * In case the TenantAuditLog found by the `where` argument doesn't exist, create a new TenantAuditLog with this data.
+     */
+    create: XOR<TenantAuditLogCreateInput, TenantAuditLogUncheckedCreateInput>
+    /**
+     * In case the TenantAuditLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenantAuditLogUpdateInput, TenantAuditLogUncheckedUpdateInput>
+  }
+
+  /**
+   * TenantAuditLog delete
+   */
+  export type TenantAuditLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+    /**
+     * Filter which TenantAuditLog to delete.
+     */
+    where: TenantAuditLogWhereUniqueInput
+  }
+
+  /**
+   * TenantAuditLog deleteMany
+   */
+  export type TenantAuditLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenantAuditLogs to delete
+     */
+    where?: TenantAuditLogWhereInput
+  }
+
+  /**
+   * TenantAuditLog without action
+   */
+  export type TenantAuditLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantAuditLog
+     */
+    select?: TenantAuditLogSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -7707,6 +8715,21 @@ export namespace Prisma {
   };
 
   export type MasterAuditLogScalarFieldEnum = (typeof MasterAuditLogScalarFieldEnum)[keyof typeof MasterAuditLogScalarFieldEnum]
+
+
+  export const TenantAuditLogScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    actor_user_id: 'actor_user_id',
+    event_type: 'event_type',
+    entity_id: 'entity_id',
+    payload: 'payload',
+    correlation_id: 'correlation_id',
+    created_at: 'created_at'
+  };
+
+  export type TenantAuditLogScalarFieldEnum = (typeof TenantAuditLogScalarFieldEnum)[keyof typeof TenantAuditLogScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -8373,6 +9396,78 @@ export namespace Prisma {
     created_at?: DateTimeWithAggregatesFilter<"MasterAuditLog"> | Date | string
   }
 
+  export type TenantAuditLogWhereInput = {
+    AND?: TenantAuditLogWhereInput | TenantAuditLogWhereInput[]
+    OR?: TenantAuditLogWhereInput[]
+    NOT?: TenantAuditLogWhereInput | TenantAuditLogWhereInput[]
+    id?: UuidFilter<"TenantAuditLog"> | string
+    tenant_id?: UuidFilter<"TenantAuditLog"> | string
+    proyecto_id?: UuidFilter<"TenantAuditLog"> | string
+    actor_user_id?: UuidFilter<"TenantAuditLog"> | string
+    event_type?: StringFilter<"TenantAuditLog"> | string
+    entity_id?: UuidNullableFilter<"TenantAuditLog"> | string | null
+    payload?: JsonNullableFilter<"TenantAuditLog">
+    correlation_id?: StringNullableFilter<"TenantAuditLog"> | string | null
+    created_at?: DateTimeFilter<"TenantAuditLog"> | Date | string
+  }
+
+  export type TenantAuditLogOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    actor_user_id?: SortOrder
+    event_type?: SortOrder
+    entity_id?: SortOrderInput | SortOrder
+    payload?: SortOrderInput | SortOrder
+    correlation_id?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+  }
+
+  export type TenantAuditLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TenantAuditLogWhereInput | TenantAuditLogWhereInput[]
+    OR?: TenantAuditLogWhereInput[]
+    NOT?: TenantAuditLogWhereInput | TenantAuditLogWhereInput[]
+    tenant_id?: UuidFilter<"TenantAuditLog"> | string
+    proyecto_id?: UuidFilter<"TenantAuditLog"> | string
+    actor_user_id?: UuidFilter<"TenantAuditLog"> | string
+    event_type?: StringFilter<"TenantAuditLog"> | string
+    entity_id?: UuidNullableFilter<"TenantAuditLog"> | string | null
+    payload?: JsonNullableFilter<"TenantAuditLog">
+    correlation_id?: StringNullableFilter<"TenantAuditLog"> | string | null
+    created_at?: DateTimeFilter<"TenantAuditLog"> | Date | string
+  }, "id">
+
+  export type TenantAuditLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    actor_user_id?: SortOrder
+    event_type?: SortOrder
+    entity_id?: SortOrderInput | SortOrder
+    payload?: SortOrderInput | SortOrder
+    correlation_id?: SortOrderInput | SortOrder
+    created_at?: SortOrder
+    _count?: TenantAuditLogCountOrderByAggregateInput
+    _max?: TenantAuditLogMaxOrderByAggregateInput
+    _min?: TenantAuditLogMinOrderByAggregateInput
+  }
+
+  export type TenantAuditLogScalarWhereWithAggregatesInput = {
+    AND?: TenantAuditLogScalarWhereWithAggregatesInput | TenantAuditLogScalarWhereWithAggregatesInput[]
+    OR?: TenantAuditLogScalarWhereWithAggregatesInput[]
+    NOT?: TenantAuditLogScalarWhereWithAggregatesInput | TenantAuditLogScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"TenantAuditLog"> | string
+    tenant_id?: UuidWithAggregatesFilter<"TenantAuditLog"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"TenantAuditLog"> | string
+    actor_user_id?: UuidWithAggregatesFilter<"TenantAuditLog"> | string
+    event_type?: StringWithAggregatesFilter<"TenantAuditLog"> | string
+    entity_id?: UuidNullableWithAggregatesFilter<"TenantAuditLog"> | string | null
+    payload?: JsonNullableWithAggregatesFilter<"TenantAuditLog">
+    correlation_id?: StringNullableWithAggregatesFilter<"TenantAuditLog"> | string | null
+    created_at?: DateTimeWithAggregatesFilter<"TenantAuditLog"> | Date | string
+  }
+
   export type TenantCreateInput = {
     id_tenant?: string
     nombre: string
@@ -8973,6 +10068,90 @@ export namespace Prisma {
     payload?: NullableJsonNullValueInput | InputJsonValue
     status_code?: IntFieldUpdateOperationsInput | number
     error_msg?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantAuditLogCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    actor_user_id: string
+    event_type: string
+    entity_id?: string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: string | null
+    created_at?: Date | string
+  }
+
+  export type TenantAuditLogUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    actor_user_id: string
+    event_type: string
+    entity_id?: string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: string | null
+    created_at?: Date | string
+  }
+
+  export type TenantAuditLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    actor_user_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantAuditLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    actor_user_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantAuditLogCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    actor_user_id: string
+    event_type: string
+    entity_id?: string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: string | null
+    created_at?: Date | string
+  }
+
+  export type TenantAuditLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    actor_user_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantAuditLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    actor_user_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    entity_id?: NullableStringFieldUpdateOperationsInput | string | null
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    correlation_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9677,6 +10856,40 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type TenantAuditLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    actor_user_id?: SortOrder
+    event_type?: SortOrder
+    entity_id?: SortOrder
+    payload?: SortOrder
+    correlation_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type TenantAuditLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    actor_user_id?: SortOrder
+    event_type?: SortOrder
+    entity_id?: SortOrder
+    correlation_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type TenantAuditLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    actor_user_id?: SortOrder
+    event_type?: SortOrder
+    entity_id?: SortOrder
+    correlation_id?: SortOrder
+    created_at?: SortOrder
   }
 
   export type UserCreateNestedManyWithoutTenantInput = {
@@ -11376,6 +12589,10 @@ export namespace Prisma {
      * @deprecated Use MasterAuditLogDefaultArgs instead
      */
     export type MasterAuditLogArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MasterAuditLogDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use TenantAuditLogDefaultArgs instead
+     */
+    export type TenantAuditLogArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TenantAuditLogDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

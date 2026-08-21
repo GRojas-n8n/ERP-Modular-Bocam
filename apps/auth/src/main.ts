@@ -40,6 +40,7 @@ import { switchProjectSchema } from './validation/schemas/switch-project.schema'
 import { crearUsuarioSchema, actualizarUsuarioSchema } from './validation/schemas/admin-users.schema';
 import { crearProyectoSchema, actualizarProyectoSchema } from './validation/schemas/admin-proyectos.schema';
 import { crearTenantSchema, actualizarTenantSchema } from './validation/schemas/master-tenants.schema';
+import { TENANT_AUDIT_EVENT_ENTITY_FIELD, isTenantAuditEventAllowed, extractTenantAuditEntityId } from './tenant-audit-log-policy';
 
 const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'] as const;
 const ROLES_ALTA_CENTRO_COSTOS = ['admin', 'gerencia_tecnica', 'control_proyectos'];
@@ -141,6 +142,7 @@ const refreshLimiter      = makeLimiter(20);
 // Limita el sondeo de la contraseña actual: el endpoint la verifica con
 // bcrypt.compare, asi que es un oraculo si se deja sin techo.
 const changePasswordLimiter = makeLimiter(5);
+const tenantAuditReadLimiter = makeLimiter(30);
 
 // ─── Audit Log Helper (best-effort — nunca bloquea el flujo) ────────────────
 
@@ -169,6 +171,46 @@ async function logMasterAction(opts: {
       })
     );
   } catch (_) { /* best-effort */ }
+}
+
+// ─── Tenant Audit Log: consumidor de bocam.events ────────────────────────────
+// Ver openspec/changes/auditoria-acciones-tenant. Persiste, en TenantAuditLog,
+// una allowlist explícita de eventos de negocio ya publicados hoy por
+// compras/finanzas — no crea eventos nuevos, no modifica esos publishers.
+// Best-effort: un fallo al persistir hace `nack` (EventBus.subscribe ya lo
+// maneja al capturar la excepción del handler) sin afectar al publisher,
+// que ya completó su transacción antes de publicar el evento.
+
+const AUDIT_LOG_CONSUMER_ENABLED = (process.env.AUDIT_LOG_CONSUMER_ENABLED ?? 'true').trim() !== 'false';
+
+export async function persistTenantAuditEvent(event: { event_type: string; context: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string }; payload: unknown }): Promise<void> {
+  if (!isTenantAuditEventAllowed(event.event_type)) return; // fuera de la allowlist: se ignora, no se persiste
+
+  const { tenant_id, proyecto_id, user_id, correlation_id } = event.context;
+
+  await createTenantContext({ tenantId: tenant_id, userId: user_id }, async (prisma) =>
+    prisma.tenantAuditLog.create({
+      data: {
+        tenant_id,
+        proyecto_id,
+        actor_user_id:  user_id,
+        event_type:     event.event_type,
+        entity_id:      extractTenantAuditEntityId(event.event_type, event.payload),
+        payload:        (event.payload as object) ?? undefined,
+        correlation_id: correlation_id ?? null,
+      },
+    })
+  );
+}
+
+async function subscribeTenantAuditLog(): Promise<void> {
+  if (!AUDIT_LOG_CONSUMER_ENABLED) {
+    console.log('[Auth] AUDIT_LOG_CONSUMER_ENABLED=false — bitácora de auditoría de tenant deshabilitada.');
+    return;
+  }
+  await eventBus.subscribe('compras.*', persistTenantAuditEvent, { queueName: 'auth.tenant_audit_compras' });
+  await eventBus.subscribe('finanzas.*', persistTenantAuditEvent, { queueName: 'auth.tenant_audit_finanzas' });
+  console.log('[Auth] 📡 Bitácora de auditoría de tenant suscrita a: compras.*, finanzas.* (allowlist: ' + Object.keys(TENANT_AUDIT_EVENT_ENTITY_FIELD).join(', ') + ')');
 }
 
 app.use(createAuthMiddleware({
@@ -995,6 +1037,40 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
   }
 });
 
+// ─── GET /api/v1/auth/audit-log ───────────────────────────────────────────────
+// Bitácora de acciones de negocio del tenant (quién hizo qué, cuándo), scoped
+// por RLS al tenant de la sesión. Admin de tenant, NO requiere MASTER_SECRET.
+// Ver openspec/changes/auditoria-acciones-tenant.
+app.get('/api/v1/auth/audit-log',
+  tenantAuditReadLimiter as express.RequestHandler,
+  requireAdminRole as express.RequestHandler,
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = req.securityContext;
+      const { desde, hasta, proyecto_id, event_type, actor_user_id } = req.query as Record<string, string | undefined>;
+      const desdeDate = desde ? new Date(desde) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const hastaDate = hasta ? new Date(hasta) : new Date();
+
+      const logs = await createTenantContext({ tenantId }, async (prisma) =>
+        prisma.tenantAuditLog.findMany({
+          where: {
+            tenant_id: tenantId,
+            created_at: { gte: desdeDate, lte: hastaDate },
+            ...(proyecto_id && { proyecto_id }),
+            ...(event_type && { event_type }),
+            ...(actor_user_id && { actor_user_id }),
+          },
+          orderBy: { created_at: 'desc' },
+          take: 200,
+        })
+      );
+      res.json({ success: true, data: logs });
+    } catch (err) {
+      res.status(500).json({ success: false, error: { code: 'AUDIT_LOG_ERROR', message: String(err) } });
+    }
+  }
+);
+
 // ─── GET /api/v1/auth/usuarios ────────────────────────────────────────────────
 app.get('/api/v1/auth/usuarios', requireRoles('personal_rh', 'admin') as express.RequestHandler, async (req: Request, res: Response) => {
   try {
@@ -1383,6 +1459,7 @@ setupSentryExpressHandler(app);
 
 async function startServer() {
   await eventBus.connect();
+  await subscribeTenantAuditLog();
   if (redisClient) {
     try {
       await redisClient.connect();
@@ -1411,6 +1488,7 @@ async function startServer() {
   console.log('   PATCH /api/v1/master/tenants/:id');
   console.log('   DELETE /api/v1/master/tenants/:id');
   console.log('   GET  /api/v1/master/audit-log');
+  console.log('   GET  /api/v1/auth/audit-log');
   });
 }
 
