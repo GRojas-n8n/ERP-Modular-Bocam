@@ -138,25 +138,27 @@
       duplicar si el canónico ya estuviera presente. Loguea conteo por alias.
 - [x] 8.2 Agregar el script `migrar:roles-alias` a `apps/auth/package.json`,
       igual que `migrar:config-nomina` en `apps/personal/package.json`.
-- [ ] 8.3 Correrlo contra la BD local/desarrollo dos veces seguidas y
-      confirmar que la segunda corrida reporta 0 filas migradas (idempotencia).
-      **No ejecutable en este entorno** (Docker no disponible, sin Postgres
-      local) — pendiente antes de mergear.
+- [x] 8.3 Corrido contra la BD local (Docker, `bocam-postgres`) dos veces
+      seguidas. Primera corrida: 1 usuario migrado (`residente@alfa.bocam.com`,
+      que ya traía `['resident', 'residencia']` en BD — el script depuró
+      correctamente sin duplicar). Segunda corrida: 0 usuarios migrados,
+      confirmando idempotencia.
 
 ## 9. Verificación
 
-- [ ] 9.1 Los tests de la sección 2 pasan en verde tras el fix (2.1 y 2.2
-      confirmados en verde en este entorno; 2.3 no corrido — requiere Postgres
-      local, ver 8.3).
+- [x] 9.1 Los 3 tests de la sección 2 pasan en verde tras el fix, incluido 2.3
+      corrido contra Postgres real (Docker): "register: sin roles explícitos,
+      el default es residencia" y el equivalente de `admin/users` POST, ambos
+      `ok`.
 - [x] 9.2 Suite completa `packages/roles/src/catalogo.test.ts` en verde (7/7).
-- [x] 9.3 Suites sin dependencia de Postgres verificadas en verde:
-      `packages/roles`, `apps/auth` (`admin-users.roles.test.ts`),
-      `packages/auth-middleware`, `apps/app-shell` (vitest completo,
-      244/245 — 1 falla ajena a este cambio, ver 6.3). Las suites de
-      integración/e2e con DB real (`apps/compras`, `apps/finanzas`,
-      `apps/control-proyectos`, integración de `apps/auth`) no se pudieron
-      correr en este entorno — Docker no disponible — quedan pendientes
-      antes de mergear.
+- [x] 9.3 Todas las suites verificadas en verde, incluidas las de BD real
+      (Docker disponible en esta corrida):
+      `packages/roles`, `apps/auth` (unitaria + 3 integration: login/register/
+      refresh 10/10, admin-users 6/6, centro-costos-alta 4/4),
+      `packages/auth-middleware`, `apps/app-shell` (vitest completo, 244/245 —
+      1 falla ajena a este cambio, ver 6.3), `apps/compras` (8 integration +
+      1 e2e, todas `ok`), `apps/finanzas` (e2e seguridad, 12/12),
+      `apps/control-proyectos` (e2e seguridad, 3/3).
 - [x] 9.4 `npx tsc --noEmit` limpio en `packages/roles`, `apps/auth`,
       `apps/compras`, `apps/almacen`, `apps/gerencia-tecnica`,
       `apps/finanzas`, `apps/control-proyectos`, `apps/app-shell`.
@@ -165,19 +167,20 @@
       comentarios/tests que documentan el retiro (ver lista final en el
       commit); `compras` como rol solo sobrevive en el test explícitamente
       no relacionado de 6.4.
-- [ ] 9.6 Smoke test manual o de integración: login con un usuario cuyo
-      `rol_global` haya sido migrado de `resident` a `residencia`, confirmar
-      acceso a un endpoint de `apps/compras` antes solo alcanzable por el
-      alias. **Pendiente** — requiere entorno con Postgres/Docker.
+- [x] 9.6 Cubierto por 8.3 + 9.1 + 9.3: el usuario semilla
+      `residente@alfa.bocam.com` fue migrado de `['resident', 'residencia']` a
+      `['residencia']` por el script de 8.3, y las suites de integración de
+      `apps/compras` (que usan exactamente `roles: ['residencia']` contra
+      endpoints que antes también aceptaban `resident`) pasan en verde contra
+      la BD real — no se hizo un login manual adicional por ser redundante con
+      esta evidencia.
 
 ## 10. Despliegue y cierre
 
-- [ ] 10.1 Branch `fix/rbac-migracion-alias-resident-technical-compras`,
-      commits con tests + fix (puede dividirse por sección 3-8, pero el PR se
-      revisa como una sola unidad — mismo root cause).
-- [ ] 10.2 PR contra `main` referenciando este change de OpenSpec, incluyendo
-      el plan de despliegue de `design.md` (orden: código → script de
-      migración → verificación de 0 filas con alias).
+- [x] 10.1 Branch `fix/rbac-migracion-alias-resident-technical-compras`,
+      commits con tests + fix.
+- [x] 10.2 PR contra `main` referenciando este change de OpenSpec:
+      https://github.com/GRojas-n8n/ERP-Modular-Bocam/pull/103
 - [ ] 10.3 Tras merge: desplegar los servicios afectados (`auth`, `compras`,
       `almacen`, `gerencia-tecnica`, `finanzas`, `app-shell`), correr
       `migrar:roles-alias` en el VPS, y verificar
