@@ -26,7 +26,7 @@ import { initSentry, logWarn, setupSentryExpressHandler } from '../../../package
  * ---------------------------------------------------------------------------
  */
 
-const app = express();
+export const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3007;
@@ -65,7 +65,7 @@ app.use(requireProjectAccess());
 // INCIDENTES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-app.get('/api/v1/seguridad/incidentes', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/incidentes', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const tipo = req.query.tipo as string;
@@ -88,7 +88,7 @@ app.get('/api/v1/seguridad/incidentes', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/v1/seguridad/incidentes', async (req: Request, res: Response) => {
+app.post('/api/v1/seguridad/incidentes', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
@@ -134,7 +134,7 @@ app.post('/api/v1/seguridad/incidentes', async (req: Request, res: Response) => 
   }
 });
 
-app.patch('/api/v1/seguridad/incidentes/:id/investigar', async (req: Request, res: Response) => {
+app.patch('/api/v1/seguridad/incidentes/:id/investigar', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -156,7 +156,7 @@ app.patch('/api/v1/seguridad/incidentes/:id/investigar', async (req: Request, re
   }
 });
 
-app.patch('/api/v1/seguridad/incidentes/:id/cerrar', async (req: Request, res: Response) => {
+app.patch('/api/v1/seguridad/incidentes/:id/cerrar', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -198,7 +198,7 @@ app.patch('/api/v1/seguridad/incidentes/:id/cerrar', async (req: Request, res: R
 // INSPECCIONES DE SEGURIDAD
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-app.get('/api/v1/seguridad/inspecciones', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/inspecciones', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const resultado = req.query.resultado as string;
@@ -215,7 +215,7 @@ app.get('/api/v1/seguridad/inspecciones', async (req: Request, res: Response) =>
   }
 });
 
-app.post('/api/v1/seguridad/inspecciones', async (req: Request, res: Response) => {
+app.post('/api/v1/seguridad/inspecciones', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
@@ -276,7 +276,7 @@ app.post('/api/v1/seguridad/inspecciones', async (req: Request, res: Response) =
 // PERMISOS DE TRABAJO
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-app.get('/api/v1/seguridad/permisos', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/permisos', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const tipo = req.query.tipo as string;
@@ -297,7 +297,7 @@ app.get('/api/v1/seguridad/permisos', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/v1/seguridad/permisos', async (req: Request, res: Response) => {
+app.post('/api/v1/seguridad/permisos', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
@@ -354,16 +354,11 @@ app.post('/api/v1/seguridad/permisos', async (req: Request, res: Response) => {
   }
 });
 
-app.patch('/api/v1/seguridad/permisos/:id/autorizar', async (req: Request, res: Response) => {
+app.patch('/api/v1/seguridad/permisos/:id/autorizar', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { tenantId, proyectoId, userId, roles } = req.securityContext;
+    const { tenantId, proyectoId, userId } = req.securityContext;
     const { autorizador_nombre } = req.body;
-
-    if (!roles.includes('admin') && !roles.includes('hse_manager') && !roles.includes('superintendent')) {
-      res.status(403).json(createApiError('SEG_FORBIDDEN', 'Solo admin, hse_manager o superintendent pueden autorizar permisos.'));
-      return;
-    }
 
     const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
       return await prisma.permisoTrabajo.update({
@@ -382,7 +377,7 @@ app.patch('/api/v1/seguridad/permisos/:id/autorizar', async (req: Request, res: 
   }
 });
 
-app.patch('/api/v1/seguridad/permisos/:id/cerrar', async (req: Request, res: Response) => {
+app.patch('/api/v1/seguridad/permisos/:id/cerrar', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -414,7 +409,7 @@ app.patch('/api/v1/seguridad/permisos/:id/cerrar', async (req: Request, res: Res
 // CAPACITACIONES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-app.get('/api/v1/seguridad/capacitaciones', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/capacitaciones', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
@@ -430,7 +425,7 @@ app.get('/api/v1/seguridad/capacitaciones', async (req: Request, res: Response) 
   }
 });
 
-app.get('/api/v1/seguridad/capacitaciones/:id', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/capacitaciones/:id', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -449,7 +444,7 @@ app.get('/api/v1/seguridad/capacitaciones/:id', async (req: Request, res: Respon
   }
 });
 
-app.post('/api/v1/seguridad/capacitaciones', async (req: Request, res: Response) => {
+app.post('/api/v1/seguridad/capacitaciones', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { titulo, tipo, instructor, fecha, duracion_horas, ubicacion, contenido, validez_meses } = req.body;
@@ -483,7 +478,7 @@ app.post('/api/v1/seguridad/capacitaciones', async (req: Request, res: Response)
   }
 });
 
-app.patch('/api/v1/seguridad/capacitaciones/:id/completar', async (req: Request, res: Response) => {
+app.patch('/api/v1/seguridad/capacitaciones/:id/completar', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -516,7 +511,7 @@ app.patch('/api/v1/seguridad/capacitaciones/:id/completar', async (req: Request,
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // DASHBOARD DE SEGURIDAD
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-app.get('/api/v1/seguridad/dashboard', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/dashboard', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
 
@@ -637,7 +632,8 @@ export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<
   }));
 }
 
-app.listen(PORT, async () => {
+export function startServer() {
+  return app.listen(PORT, async () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('  🛡️  Módulo: SEGURIDAD / HSE');
   console.log('  🏢  Propiedad: Constructora Bocam, S. A. de C.V.');
@@ -671,11 +667,16 @@ app.listen(PORT, async () => {
   } catch (err) {
     console.warn(`[Seguridad] ⚠️ EventBus no disponible (modo degradado)`);
   }
-});
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
 
 // ── EPP ──────────────────────────────────────────────────────────────────────
 
-app.get('/api/v1/seguridad/epp', async (req: Request, res: Response) => {
+app.get('/api/v1/seguridad/epp', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const { estado, empleado_id } = req.query;
@@ -698,7 +699,7 @@ app.get('/api/v1/seguridad/epp', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/v1/seguridad/epp', async (req: Request, res: Response) => {
+app.post('/api/v1/seguridad/epp', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
     const {
@@ -739,7 +740,7 @@ app.post('/api/v1/seguridad/epp', async (req: Request, res: Response) => {
   }
 });
 
-app.patch('/api/v1/seguridad/epp/:id/estado', async (req: Request, res: Response) => {
+app.patch('/api/v1/seguridad/epp/:id/estado', requireRoles('seguridad_hse', 'superintendent', 'admin'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId } = req.securityContext;

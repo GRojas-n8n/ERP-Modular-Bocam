@@ -8,7 +8,8 @@
     "dev": "ts-node-dev --transpile-only src/main.ts",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "test:e2e:rbac": "node -r ts-node/register/transpile-only test/e2e/rbac-endpoints-sin-rol.e2e.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
