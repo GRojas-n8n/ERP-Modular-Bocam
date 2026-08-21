@@ -17,6 +17,7 @@ ALTER TABLE proyectos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_project_access ENABLE ROW LEVEL SECURITY;
 ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- 2. Forzar RLS incluso para el dueño de la tabla (seguridad extra)
 ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
@@ -24,6 +25,7 @@ ALTER TABLE proyectos FORCE ROW LEVEL SECURITY;
 ALTER TABLE users FORCE ROW LEVEL SECURITY;
 ALTER TABLE user_project_access FORCE ROW LEVEL SECURITY;
 ALTER TABLE refresh_tokens FORCE ROW LEVEL SECURITY;
+ALTER TABLE tenant_audit_logs FORCE ROW LEVEL SECURITY;
 
 -- =============================================================================
 -- POLÍTICAS POR TABLA
@@ -155,8 +157,23 @@ CREATE POLICY rt_isolation_delete ON refresh_tokens
     )
   );
 
+-- --- TENANT_AUDIT_LOGS ---
+-- Bitacora de acciones de negocio por tenant (ver
+-- openspec/changes/auditoria-acciones-tenant). Solo SELECT/INSERT: la
+-- bitacora es un registro append-only, nunca se actualiza ni se borra por
+-- la aplicacion.
+CREATE POLICY tenant_audit_log_isolation_select ON tenant_audit_logs
+  FOR SELECT USING (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+  );
+
+CREATE POLICY tenant_audit_log_isolation_insert ON tenant_audit_logs
+  FOR INSERT WITH CHECK (
+    tenant_id::text = current_setting('app.current_tenant_id', true)
+  );
+
 -- =============================================================================
 -- NOTA: Estas políticas aplican sobre el user de PostgreSQL que use Prisma.
--- El servicio de Auth inyecta set_config('app.current_tenant_id', ...) 
+-- El servicio de Auth inyecta set_config('app.current_tenant_id', ...)
 -- ANTES de cada operación para activar el filtrado automático.
 -- =============================================================================
