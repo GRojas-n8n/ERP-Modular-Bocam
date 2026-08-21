@@ -18,8 +18,8 @@ import { ROLES_VALIDOS, ROLES_ASIGNABLES } from '../../../../../packages/roles/s
  * como un 403 inexplicable en su módulo.
  *
  * Al crear se exige un rol asignable. Al editar se aceptan además los alias
- * históricos, para no bloquear la edición de usuarios que ya los traen — de lo
- * contrario cambiarle el nombre a un usuario con rol 'resident' fallaría.
+ * históricos vigentes (hoy ninguno — ver packages/roles/src/index.ts), para
+ * no bloquear la edición de usuarios que ya los traen mientras existan.
  */
 const IDS_ASIGNABLES = ROLES_ASIGNABLES.map(r => r.id);
 

@@ -425,7 +425,7 @@ async function testAccesoDenegadoParaResident() {
     userId: randomUUID(),
     tenantId: randomUUID(),
     proyectoId: randomUUID(),
-    roles: ['resident'],
+    roles: ['residencia'],
   });
 
   const response = await fetch(
@@ -436,10 +436,10 @@ async function testAccesoDenegadoParaResident() {
   assert.equal(
     response.status,
     403,
-    'El rol resident debe recibir 403 Forbidden en GET /alertas/oc-error'
+    'El rol residencia debe recibir 403 Forbidden en GET /alertas/oc-error'
   );
 
-  console.log('ok - rol resident recibe 403 en GET /alertas/oc-error');
+  console.log('ok - rol residencia recibe 403 en GET /alertas/oc-error');
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────

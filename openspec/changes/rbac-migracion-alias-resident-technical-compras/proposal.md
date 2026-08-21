@@ -64,6 +64,19 @@ documentada y pendiente.
   fallar la suite, para forzar su retiro del catálogo en vez de dejarlo
   como documentación obsoleta (mismo patrón que el guardián de `sin-backend`
   agregado en `rbac-seguridad-rol-catalogo-desactualizado`, PR #102).
+- El alias también leaked al frontend de `apps/app-shell` (auditoría completa
+  tras la primera versión de este proposal, ver Impact): quitar `'resident'`
+  de la lógica de permisos de `ComparativaDetail.tsx` (`isResident`) y del
+  menú (`Layout.tsx`, 2 entradas), quitar `'compras'` de las 6 entradas de
+  `Layout.tsx` que ya listan `'procurement'`, y renombrar `'compras'` →
+  `'procurement'` en el usuario demo de `TenantContext.tsx` (único caso
+  frontend donde el canónico no está ya presente).
+- Actualizar ~30 fixtures de test que firman un JWT o mockean un usuario con
+  el alias (`roles: ['resident']` etc.) en `apps/compras`, `apps/finanzas`,
+  `apps/control-proyectos`, `apps/auth` y `apps/app-shell` — renombrar al
+  canónico, preservando el resultado esperado de cada test (positivo o
+  negativo, ver Impact). Sin esto, retirar el alias del backend/catálogo
+  rompe esos tests aunque el comportamiento de producción sea correcto.
 
 ## Capabilities
 
@@ -76,12 +89,25 @@ documentada y pendiente.
 
 ## Impact
 
-- **Código**: `apps/compras/src/main.ts`, `apps/almacen/src/main.ts`,
+- **Código backend**: `apps/compras/src/main.ts`, `apps/almacen/src/main.ts`,
   `apps/gerencia-tecnica/src/main.ts`, `apps/finanzas/src/main.ts`,
   `apps/auth/src/main.ts`, `apps/auth/src/validation/schemas/register.schema.ts`,
   `apps/auth/prisma/seed.ts`, `packages/roles/src/index.ts`,
   `packages/roles/src/catalogo.test.ts`,
   `apps/auth/src/validation/schemas/admin-users.roles.test.ts`.
+- **Código frontend** (`apps/app-shell/src`): `components/ComparativaDetail.tsx`
+  (permiso `isResident`), `components/Layout.tsx` (menú, 8 entradas),
+  `context/TenantContext.tsx` (usuario demo).
+- **Tests que fijan el alias como fixture** (renombrar al canónico, sin
+  cambiar la aserción de cada test): `apps/compras/test/integration/{especificacion-simple-post-creacion,cuadro-comparativo-dos-etapas,revision-especificaciones,seleccion-proveedor-recomendado,firma-cierre-requisicion,evaluar-especificaciones,req-imprevisto-aprobar,oc-error-alert}.integration.test.ts`,
+  `apps/compras/test/e2e/seguridad.e2e.test.ts`,
+  `apps/finanzas/test/e2e/seguridad.e2e.test.ts`,
+  `apps/control-proyectos/test/e2e/seguridad.e2e.test.ts`,
+  `apps/auth/test/integration/centro-costos-alta.integration.test.ts`,
+  `apps/app-shell/src/components/ComparativaDetail.{confirmacion-proyecto-firma,evaluacion-especificacion,firma-seleccion}.test.tsx`.
+  `apps/auth/src/project-access-policy.test.ts` usa `'compras'` y `'residente'`
+  (tercer deletreo, no catalogado) en un contexto no relacionado — confirmado
+  que no forma parte de este alias y se deja intacto.
 - **Datos**: script de migración de una sola vez sobre `apps/auth` (tabla
   `users`, columna `rol_global`), a ejecutar en el VPS. Ningún cambio de
   esquema Prisma.

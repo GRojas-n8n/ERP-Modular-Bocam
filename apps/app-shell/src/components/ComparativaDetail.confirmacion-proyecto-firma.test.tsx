@@ -16,7 +16,7 @@ vi.mock('../context/TenantContext', () => ({
     user: {
       id: 'user-1',
       name: 'Residente de Prueba',
-      role: ['resident'],
+      role: ['residencia'],
       projects: [
         { id: 'proj-001', name: 'Torre Corporativa Norte', code: 'TCN-2024', status: 'En curso' },
         { id: 'proj-002', name: 'Residencial Las Palmas', code: 'RLP-2024', status: 'En curso' },

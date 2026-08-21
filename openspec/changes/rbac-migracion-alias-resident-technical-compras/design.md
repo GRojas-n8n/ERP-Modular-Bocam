@@ -112,6 +112,17 @@ desactualizada.
   ("todo rol exigido por un servicio está en el catálogo") ya cubre esto — un
   `requireRoles('resident', ...)` nuevo fallaría de inmediato porque
   `resident` ya no estará en `ROLES_VALIDOS`.
+- **[Riesgo, descubierto durante la implementación] El guardián de
+  `catalogo.test.ts` no resuelve `requireRoles(...CONST)` con spread de una
+  constante — solo `requireRoles('a', 'b')` y `rolesAutorizados = [...]`
+  literales.** `apps/gerencia-tecnica/src/main.ts` tenía `'resident'` en
+  `ROLES_FICHAS_UPLOAD`/`ROLES_FICHAS_LECTURA`, usadas vía
+  `requireRoles(...ROLES_FICHAS_UPLOAD)`, y el guardián nunca lo detectó — se
+  encontró por un grep manual de cierre, no por la suite. Corregido en este
+  change (sección 3.6 de `tasks.md`), pero el punto ciego del guardián sigue
+  ahí para el próximo rol que se declare así. → Mitigación aplicada: ninguna
+  en el guardián mismo (fuera de alcance); queda como deuda documentada para
+  un change de seguimiento sobre `packages/roles/src/catalogo.test.ts`.
 - **Trade-off**: se acepta que este change sea **BREAKING** para sesiones
   activas con el alias en vez de hacerlo en dos etapas (deprecar, esperar,
   retirar) — el volumen esperado de usuarios afectados es bajo (piloto,

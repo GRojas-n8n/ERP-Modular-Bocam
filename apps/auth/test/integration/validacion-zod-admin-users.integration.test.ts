@@ -73,7 +73,7 @@ async function testCrearUsuarioPayloadValidoSigueFuncionando() {
   try {
     const email = `admin-users-zod-${Date.now()}@bocam.test`;
     const r = await post('/api/v1/auth/admin/users', adminToken(tenantId), {
-      email, password: 'ClaveSegura123!', nombre: 'Nuevo Usuario', roles: ['resident'],
+      email, password: 'ClaveSegura123!', nombre: 'Nuevo Usuario', roles: ['residencia'],
     });
     assert.equal(r.status, 201, 'un payload con la misma forma que hoy debe seguir aceptándose');
     const body = (await r.json()) as any;
@@ -101,6 +101,26 @@ async function testCrearUsuarioRechazaRolesComoString() {
   }
 }
 
+async function testCrearUsuarioSinRolesDefaultAResidenciaNoAlias() {
+  // rbac-migracion-alias-resident-technical-compras: el default de rol_global
+  // cuando no se envía `roles` debía ser el alias 'resident'. Debe ser el rol
+  // canónico 'residencia'.
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const email = `admin-users-default-rol-${Date.now()}@bocam.test`;
+    const r = await post('/api/v1/auth/admin/users', adminToken(tenantId), {
+      email, password: 'ClaveSegura123!', nombre: 'Sin Rol Explicito',
+    });
+    assert.equal(r.status, 201);
+    const body = (await r.json()) as any;
+    assert.deepEqual(body.data.roles, ['residencia'], 'el default de rol_global sin roles explícitos debe ser residencia, no el alias resident');
+    console.log('ok - admin/users POST: sin roles explícitos, el default es residencia (no el alias resident)');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
 async function testCrearUsuarioRechazaEmailFaltante() {
   const tenantId = randomUUID();
   await seedTenant(tenantId);
@@ -122,7 +142,7 @@ async function testActualizarUsuarioPayloadValidoSigueFuncionando() {
   await seedTenant(tenantId);
   const userId = randomUUID();
   await prisma.user.create({
-    data: { id_usuario: userId, tenant_id: tenantId, email: `patch-zod-${Date.now()}@bocam.test`, password_hash: 'x', nombre: 'Original', rol_global: ['resident'] },
+    data: { id_usuario: userId, tenant_id: tenantId, email: `patch-zod-${Date.now()}@bocam.test`, password_hash: 'x', nombre: 'Original', rol_global: ['residencia'] },
   });
   try {
     const r = await patch(`/api/v1/auth/admin/users/${userId}`, adminToken(tenantId), { nombre: 'Actualizado', activo: false });
@@ -141,7 +161,7 @@ async function testActualizarUsuarioRechazaActivoComoString() {
   await seedTenant(tenantId);
   const userId = randomUUID();
   await prisma.user.create({
-    data: { id_usuario: userId, tenant_id: tenantId, email: `patch-zod-2-${Date.now()}@bocam.test`, password_hash: 'x', nombre: 'Original', rol_global: ['resident'] },
+    data: { id_usuario: userId, tenant_id: tenantId, email: `patch-zod-2-${Date.now()}@bocam.test`, password_hash: 'x', nombre: 'Original', rol_global: ['residencia'] },
   });
   try {
     const r = await patch(`/api/v1/auth/admin/users/${userId}`, adminToken(tenantId), { activo: 'si' });
@@ -163,6 +183,7 @@ async function main() {
   try {
     await testCrearUsuarioPayloadValidoSigueFuncionando();
     await testCrearUsuarioRechazaRolesComoString();
+    await testCrearUsuarioSinRolesDefaultAResidenciaNoAlias();
     await testCrearUsuarioRechazaEmailFaltante();
     await testActualizarUsuarioPayloadValidoSigueFuncionando();
     await testActualizarUsuarioRechazaActivoComoString();

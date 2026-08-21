@@ -858,7 +858,7 @@ export const ComparativaDetail: React.FC<Props> = ({
 
   // 6.2 Determinar qué botones de acción muestra el usuario según su rol y el estado del cuadro
   const isProcurement = roles.some(r => ['procurement', 'admin'].includes(r));
-  const isResident    = roles.some(r => ['resident', 'residencia', 'control_obra'].includes(r));
+  const isResident    = roles.some(r => ['residencia', 'control_obra'].includes(r));
   const isSuperint    = roles.includes('superintendent');
   const isGT          = roles.some(r => ['gerencia_tecnica', 'superintendent', 'admin'].includes(r));
 

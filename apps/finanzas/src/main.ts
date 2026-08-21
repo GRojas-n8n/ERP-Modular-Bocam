@@ -1948,7 +1948,7 @@ function requireInternalService(serviceName: string) {
 // Roles: lo consulta GET /gerencia-tecnica/dashboard por backend-to-backend,
 // que admite superintendent, admin, technical y gerencia_tecnica.
 app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
-  requireRoles('finanzas', 'admin', 'director', 'superintendent', 'gerencia_tecnica', 'technical'),
+  requireRoles('finanzas', 'admin', 'director', 'superintendent', 'gerencia_tecnica'),
   requireInternalService('gerencia-tecnica'),
   async (req: Request, res: Response) => {
     try {
