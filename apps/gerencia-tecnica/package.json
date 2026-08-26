@@ -13,7 +13,8 @@
     "test:integration:presupuesto-activo-precio-cantidad": "node -r ts-node/register/transpile-only test/integration/presupuesto-activo-precio-cantidad.integration.test.ts",
     "test:integration:presupuestos-unicidad-clave": "node -r ts-node/register/transpile-only test/integration/presupuestos-unicidad-clave.integration.test.ts",
     "test:integration:presupuestos-catalogo-maestro": "node -r ts-node/register/transpile-only test/integration/presupuestos-catalogo-maestro.integration.test.ts",
-    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts"
+    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts",
+    "test:integration:validacion-longitud-insumo": "node -r ts-node/register/transpile-only test/integration/validacion-longitud-insumo.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
@@ -21,7 +22,8 @@
     "amqplib": "^0.10.3",
     "express": "^4.18.2",
     "multer": "^2.1.1",
-    "redis": "^4.6.7"
+    "redis": "^4.6.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.1",

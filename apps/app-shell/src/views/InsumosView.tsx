@@ -291,6 +291,16 @@ function esCapituloNormalizado(c: ConceptoPreview): boolean {
   return false;
 }
 
+// Límites de columna de Insumo (apps/gerencia-tecnica/prisma/schema.prisma) —
+// deben coincidir con los del backend (insumo.schema.ts). Ver
+// openspec/changes/fix-500-importar-insumos-explosion-apu/: sin este chequeo
+// en el parser, una fila mal alineada (clave/unidad_medida leídas de la
+// columna equivocada, o un importe tomado como costo unitario) solo se
+// descubre hoy con un 500 del backend al confirmar la importación.
+const LIMITE_CLAVE = 50;
+const LIMITE_UNIDAD_MEDIDA = 20;
+const COSTO_BASE_MAX = 99_999_999.9999;
+
 // ─── Parser: APU — Análisis de Precios Unitarios ─────────────────────────────
 //
 // El APU de OPUS tiene una estructura jerárquica:
@@ -473,16 +483,20 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
 
     // ── Catálogo plano (único por clave) ─────────────────────────────────────
     if (!insumoMap.has(claveNorm)) {
+      const unidadNorm = (unidad || 'PZA').toUpperCase();
       const errores: string[] = [];
       if (!desc)           errores.push('sin descripción');
       if (costoBase === 0) errores.push('sin costo unitario');
+      if (claveNorm.length > LIMITE_CLAVE)         errores.push(`clave excede ${LIMITE_CLAVE} caracteres`);
+      if (unidadNorm.length > LIMITE_UNIDAD_MEDIDA) errores.push(`unidad excede ${LIMITE_UNIDAD_MEDIDA} caracteres`);
+      if (costoBase > COSTO_BASE_MAX)               errores.push(`costo unitario excede ${COSTO_BASE_MAX}`);
       insumoMap.set(claveNorm, {
         clave:         claveNorm,
         descripcion:   desc || '(sin descripción)',
-        unidad_medida: (unidad || 'PZA').toUpperCase(),
+        unidad_medida: unidadNorm,
         tipo_insumo:   tipo,
         costo_base:    costoBase,
-        _valido:       Boolean(clave && desc),
+        _valido:       Boolean(clave && desc) && claveNorm.length <= LIMITE_CLAVE && unidadNorm.length <= LIMITE_UNIDAD_MEDIDA && costoBase <= COSTO_BASE_MAX,
         _error:        errores.length ? errores.join(', ') : undefined,
       });
     }
@@ -626,18 +640,22 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
     const claveNorm = clave.toUpperCase().trim();
 
     if (!insumoMap.has(claveNorm)) {
+      const unidadNorm = (unidad || 'PZA').toUpperCase();
       const errores: string[] = [];
       if (!desc)        errores.push('sin descripción');
       if (!unidad)      errores.push('sin unidad');
       if (precio === 0) errores.push('sin costo unitario');
+      if (claveNorm.length > LIMITE_CLAVE)         errores.push(`clave excede ${LIMITE_CLAVE} caracteres`);
+      if (unidadNorm.length > LIMITE_UNIDAD_MEDIDA) errores.push(`unidad excede ${LIMITE_UNIDAD_MEDIDA} caracteres`);
+      if (precio > COSTO_BASE_MAX)                  errores.push(`costo unitario excede ${COSTO_BASE_MAX}`);
 
       insumoMap.set(claveNorm, {
         clave:         claveNorm,
         descripcion:   desc || '(sin descripción)',
-        unidad_medida: (unidad || 'PZA').toUpperCase(),
+        unidad_medida: unidadNorm,
         tipo_insumo:   tipoActual,
         costo_base:    precio,
-        _valido:       Boolean(clave && desc && unidad),
+        _valido:       Boolean(clave && desc && unidad) && claveNorm.length <= LIMITE_CLAVE && unidadNorm.length <= LIMITE_UNIDAD_MEDIDA && precio <= COSTO_BASE_MAX,
         _error:        errores.length ? errores.join(', ') : undefined,
       });
     }

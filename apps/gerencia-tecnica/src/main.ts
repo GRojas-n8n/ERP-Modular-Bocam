@@ -25,6 +25,8 @@ import {
   createApiResponse,
   createApiError,
 } from './types';
+import { parseOrRespond } from './validation/parse-or-respond';
+import { longitudInsumoSchema } from './validation/schemas/insumo.schema';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
@@ -277,6 +279,8 @@ app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintende
       );
     }
 
+    if (parseOrRespond(longitudInsumoSchema, { clave, unidad_medida, costo_base }, res) === undefined) return;
+
     const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
     const insumoExistente = await db.insumo.findFirst({ where: { clave } });
@@ -302,7 +306,7 @@ app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintende
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en POST /insumos:', error.message);
     res.status(500).json(
-      createApiError('INTERNAL_ERROR', 'Error al crear insumo.', error.message)
+      createApiError('INTERNAL_ERROR', 'Error al crear insumo.')
     );
   }
 });
@@ -353,13 +357,21 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
         omitidos++;
         continue;
       }
-      validos.push({
+
+      const normalizado = {
         clave: String(clave).trim().toUpperCase(),
         descripcion: String(descripcion).trim(),
         unidad_medida: String(unidad_medida).trim().toUpperCase(),
         tipo_insumo,
         costo_base: Math.max(0, parseFloat(String(costo_base ?? 0)) || 0),
-      });
+      };
+
+      if (!longitudInsumoSchema.safeParse(normalizado).success) {
+        omitidos++;
+        continue;
+      }
+
+      validos.push(normalizado);
     }
 
     if (validos.length === 0) {
@@ -423,7 +435,7 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en POST /insumos/importar-lote:', error.message);
     res.status(500).json(
-      createApiError('INTERNAL_ERROR', 'Error al importar lote de insumos.', error.message)
+      createApiError('INTERNAL_ERROR', 'Error al importar lote de insumos.')
     );
   }
 });
@@ -437,6 +449,8 @@ app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superin
     const { tenantId, proyectoId } = req.securityContext;
     const { id } = req.params;
     const { descripcion, unidad_medida, costo_base, tipo_insumo } = req.body;
+
+    if (parseOrRespond(longitudInsumoSchema, { unidad_medida, costo_base }, res) === undefined) return;
 
     const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
@@ -461,7 +475,7 @@ app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superin
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en PATCH /insumos/:id:', error.message);
     res.status(500).json(
-      createApiError('INTERNAL_ERROR', 'Error al actualizar insumo.', error.message)
+      createApiError('INTERNAL_ERROR', 'Error al actualizar insumo.')
     );
   }
 });
