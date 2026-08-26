@@ -17,7 +17,8 @@
     "test:integration:estado-respuesta-proveedor": "node -r ts-node/register/transpile-only test/integration/estado-respuesta-proveedor-comparativo.integration.test.ts",
     "test:integration:fecha-entrega-partida": "node -r ts-node/register/transpile-only test/integration/fecha-entrega-estimada-por-partida.integration.test.ts",
     "test:integration:fichas-tecnicas-adjuntas": "node -r ts-node/register/transpile-only test/integration/fichas-tecnicas-adjuntas.integration.test.ts",
-    "test:integration:proveedores-importar-lote": "node -r ts-node/register/transpile-only test/integration/proveedores-importar-lote.integration.test.ts"
+    "test:integration:proveedores-importar-lote": "node -r ts-node/register/transpile-only test/integration/proveedores-importar-lote.integration.test.ts",
+    "test:integration:validacion-longitud-proveedor": "node -r ts-node/register/transpile-only test/integration/validacion-longitud-proveedor.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
@@ -28,7 +29,8 @@
     "multer": "^2.1.1",
     "nodemailer": "^9.0.3",
     "redis": "^4.6.7",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.1",

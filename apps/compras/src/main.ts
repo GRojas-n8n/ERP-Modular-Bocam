@@ -26,6 +26,8 @@ import { requisicionQuedoCubiertaPorLote, GrupoOcEmitido } from './requisicion-c
 import { buildOcPdfPayload, InsumoCatalogo } from './orden-compra-pdf-payload';
 import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
 import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from './purga-bloqueos';
+import { parseOrRespond } from './validation/parse-or-respond';
+import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
 
 const eventBus = createEventBus('compras');
 
@@ -1895,6 +1897,7 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
     if (calificacion_desempeno !== undefined && (Number(calificacion_desempeno) < 0 || Number(calificacion_desempeno) > 5)) {
       return void res.status(400).json({ success: false, message: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
     }
+    if (!parseOrRespond(longitudProveedorSchema, req.body, res)) return;
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
@@ -1924,7 +1927,7 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
   } catch (error: any) {
     if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe un proveedor con ese RFC para este tenant.' });
     logError(req, 'compras', 'compras.proveedor.crear.error', 'Error al crear proveedor', { error_message: error.message });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Error al crear el proveedor.' });
   }
 });
 
@@ -1998,6 +2001,13 @@ app.post('/api/v1/compras/proveedores/importar-lote', requireRoles('procurement'
         }
       }
 
+      const longitud = longitudProveedorSchema.safeParse(registro);
+      if (!longitud.success) {
+        const motivo = longitud.error.issues.map((issue) => issue.message).join(' ');
+        errores.push({ fila, motivo });
+        continue;
+      }
+
       validos.push({ registro, fila });
     }
 
@@ -2049,7 +2059,7 @@ app.post('/api/v1/compras/proveedores/importar-lote', requireRoles('procurement'
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     logError(req, 'compras', 'compras.proveedores.importar_lote.error', message, {});
-    res.status(500).json({ success: false, message });
+    res.status(500).json({ success: false, message: 'Error al importar el lote de proveedores.' });
   }
 });
 
@@ -2068,6 +2078,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
         (Number(calificacion_desempeno) < 0 || Number(calificacion_desempeno) > 5)) {
       return void res.status(400).json({ success: false, message: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
     }
+    if (!parseOrRespond(longitudProveedorSchema, req.body, res)) return;
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
@@ -2101,7 +2112,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
   } catch (error: any) {
     const status = error.status ?? 500;
     logError(req, 'compras', 'compras.proveedor.actualizar.error', 'Error al actualizar proveedor', { error_message: error.message });
-    res.status(status).json({ success: false, message: error.message });
+    res.status(status).json({ success: false, message: status === 500 ? 'Error al actualizar el proveedor.' : error.message });
   }
 });
 

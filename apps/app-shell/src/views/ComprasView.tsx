@@ -4273,6 +4273,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           <FormField label="RFC / Tax ID" required>
             <Input
               placeholder="Ej: XAXX010101000"
+              maxLength={20}
               value={proveedorForm.rfc_tax_id}
               onChange={e => setProveedorForm(f => ({ ...f, rfc_tax_id: e.target.value }))}
               disabled={!!editingProveedor}
@@ -4281,16 +4282,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           <FormField label="Razón Social" required>
             <Input
               placeholder="Nombre o razón social del proveedor"
+              maxLength={255}
               value={proveedorForm.razon_social}
               onChange={e => setProveedorForm(f => ({ ...f, razon_social: e.target.value }))}
             />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
             <FormField label="Email">
-              <Input type="email" placeholder="contacto@empresa.com" value={proveedorForm.email_contacto} onChange={e => setProveedorForm(f => ({ ...f, email_contacto: e.target.value }))} />
+              <Input type="email" placeholder="contacto@empresa.com" maxLength={100} value={proveedorForm.email_contacto} onChange={e => setProveedorForm(f => ({ ...f, email_contacto: e.target.value }))} />
             </FormField>
             <FormField label="Teléfono">
-              <Input placeholder="(55) 1234-5678" value={proveedorForm.telefono} onChange={e => setProveedorForm(f => ({ ...f, telefono: e.target.value }))} />
+              <Input placeholder="(55) 1234-5678" maxLength={20} value={proveedorForm.telefono} onChange={e => setProveedorForm(f => ({ ...f, telefono: e.target.value }))} />
             </FormField>
           </div>
           <FormField label="Estatus">
@@ -4304,7 +4306,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
           <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Logística</p>
           <div className="grid grid-cols-2 gap-3">
             <FormField label="Ciudad">
-              <Input placeholder="Ciudad de operación" value={proveedorForm.ciudad} onChange={e => setProveedorForm(f => ({ ...f, ciudad: e.target.value }))} />
+              <Input placeholder="Ciudad de operación" maxLength={100} value={proveedorForm.ciudad} onChange={e => setProveedorForm(f => ({ ...f, ciudad: e.target.value }))} />
             </FormField>
             <FormField label="Ubicación">
               <Select value={proveedorForm.tipo_ubicacion} onChange={e => setProveedorForm(f => ({ ...f, tipo_ubicacion: e.target.value }))}>
