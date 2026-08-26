@@ -396,6 +396,24 @@ app.patch('/api/v1/personal/empleados/:id/baja', requireRoles('personal_rh', 'ad
   }
 });
 
+app.patch('/api/v1/personal/empleados/:id/reactivar', requireRoles('personal_rh', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      return await prisma.empleado.update({
+        where: { id_empleado: id },
+        data: { estado: 'ACTIVO', fecha_baja: null },
+      });
+    });
+    console.log(`[Personal] ✅ Empleado ${data.numero_empleado} reactivado`);
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('PER_INTERNAL_ERROR', error.message));
+  }
+});
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CUADRILLAS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
