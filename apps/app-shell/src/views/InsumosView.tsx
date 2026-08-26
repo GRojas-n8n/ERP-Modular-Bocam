@@ -175,9 +175,19 @@ interface ComposicionConcepto {
 }
 
 /** Resultado completo del parser APU: insumos planos + composiciones por concepto. */
-interface APUParseResult {
+export interface APUParseResult {
   insumos: InsumoPreview[];
   composiciones: ComposicionConcepto[];
+  /** Columnas secundarias (Unidad, Cantidad, Rendimiento, Costo Unitario) que no
+   *  se pudieron confirmar contra el encabezado real del archivo — se leyeron
+   *  desde una posición por defecto. Ver openspec/changes/advertir-columnas-no-detectadas-parser-gt/. */
+  columnasNoConfirmadas: string[];
+}
+
+/** Resultado del parser de Explosión de Insumos: insumos planos + columnas no confirmadas. */
+export interface ExplosionParseResult {
+  insumos: InsumoPreview[];
+  columnasNoConfirmadas: string[];
 }
 
 // ─── Constantes de UI ─────────────────────────────────────────────────────────
@@ -310,7 +320,7 @@ function esCapituloNormalizado(c: ConceptoPreview): boolean {
 //
 // Extrae insumos únicos (por clave) de todas las secciones.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
+export function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
   // Infiere tipo de insumo desde prefijo de clave OPUS (sección "Auxiliar")
   function inferirTipoAPU(clave: string): TipoInsumo {
     const c = clave.toUpperCase();
@@ -361,6 +371,13 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
   let colRendimiento   = 5;
   let colCostoUnitario = 6;
 
+  // Columnas secundarias no confirmadas contra el encabezado real — se leyeron
+  // desde la posición por defecto de arriba. Ver design.md del change.
+  // El APU repite su fila de encabezado por cada concepto (headerDetectado se
+  // resetea al inicio de cada uno) — un Set evita reportar la misma columna
+  // una vez por concepto en vez de una vez por archivo.
+  const columnasNoConfirmadasSet = new Set<string>();
+
   for (const fila of rawRows) {
     const celdas = fila.map(c => String(c ?? '').trim());
     const noVacias = celdas.filter(c => c !== '');
@@ -406,13 +423,13 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
         colClave       = iCl;
         colDescripcion = iDe;
         const iU  = norm.findIndex(c => c === 'UNIDAD' || c === 'UM' || c === 'UNIDADMEDIDA');
-        if (iU  >= 0) colUnidad = iU;
+        if (iU  >= 0) colUnidad = iU; else columnasNoConfirmadasSet.add('Unidad');
         const iCa = norm.findIndex(c => c === 'CANTIDAD' || c === 'CANT');
-        if (iCa >= 0) colCantidad = iCa;
+        if (iCa >= 0) colCantidad = iCa; else columnasNoConfirmadasSet.add('Cantidad');
         const iRe = norm.findIndex(c => c === 'RENDIMIENTO' || c.startsWith('RENDIM'));
-        if (iRe >= 0) colRendimiento = iRe;
+        if (iRe >= 0) colRendimiento = iRe; else columnasNoConfirmadasSet.add('Rendimiento');
         const iCo = celdas.findIndex(c => /costo\s*unit/i.test(c) || /costo\s*dir/i.test(c));
-        if (iCo >= 0) colCostoUnitario = iCo;
+        if (iCo >= 0) colCostoUnitario = iCo; else columnasNoConfirmadasSet.add('Costo Unitario');
         headerDetectado = true;
       }
       continue;
@@ -529,6 +546,7 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
   return {
     insumos:       Array.from(insumoMap.values()),
     composiciones: Array.from(composicionMap.values()),
+    columnasNoConfirmadas: Array.from(columnasNoConfirmadasSet),
   };
 }
 
@@ -558,7 +576,7 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
 //     ante desplazamientos de columna en distintas versiones de OPUS).
 //   - Herramienta → INDIRECTO  /  Equipo → EQUIPO.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[] {
+export function parsearArchivoExplosion(rawRows: (string | number)[][]): ExplosionParseResult {
   const insumoMap = new Map<string, InsumoPreview>();
   let tipoActual: TipoInsumo = 'MATERIAL';
   let headerDetectado = false; // una vez true, nunca regresa
@@ -569,6 +587,11 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
   let colDescripcion   = 1;
   let colUnidad        = 2;
   let colCostoUnitario = 4;
+
+  // Columnas secundarias no confirmadas contra el encabezado real — se leyeron
+  // desde la posición por defecto de arriba. El encabezado de Explosión
+  // aparece una sola vez, así que no hace falta deduplicar.
+  const columnasNoConfirmadas: string[] = [];
 
   for (const fila of rawRows) {
     const celdas = fila.map(c => String(c ?? '').trim());
@@ -591,12 +614,12 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
         colClave       = iClave;
         colDescripcion = iDesc;
         const iU = norm.findIndex(c => c === 'UNIDAD' || c === 'UM');
-        if (iU >= 0) colUnidad = iU;
+        if (iU >= 0) colUnidad = iU; else columnasNoConfirmadas.push('Unidad');
         // Detectar columna de costo: "COSTO UNITARIO" / "PRECIO UNITARIO" / "COSTO DIRECTO"
         const iCosto = celdas.findIndex(c =>
           /costo\s*unit/i.test(c) || /precio\s*unit/i.test(c) || /costo\s*dir/i.test(c)
         );
-        if (iCosto >= 0) colCostoUnitario = iCosto;
+        if (iCosto >= 0) colCostoUnitario = iCosto; else columnasNoConfirmadas.push('Costo Unitario');
         headerDetectado = true;
       }
       // Saltear cualquier fila antes de que aparezca el encabezado
@@ -643,7 +666,7 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
     }
   }
 
-  return Array.from(insumoMap.values());
+  return { insumos: Array.from(insumoMap.values()), columnasNoConfirmadas };
 }
 
 
@@ -734,6 +757,10 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [panelExplosion, setPanelExplosion] = useState(false);
   const [importandoInsumos, setImportandoInsumos] = useState(false);
   const [archivoNombreInsumo, setArchivoNombreInsumo] = useState('');
+  // Columnas secundarias que el parser no pudo confirmar contra el encabezado
+  // real del archivo (se leyeron desde una posición por defecto). Ver
+  // openspec/changes/advertir-columnas-no-detectadas-parser-gt/.
+  const [columnasNoConfirmadas, setColumnasNoConfirmadas] = useState<string[]>([]);
   const [previewInsumos, setPreviewInsumos] = useState<InsumoPreview[]>([]);
   const [parseErrorInsumos, setParseErrorInsumos] = useState<string | null>(null);
   // Composiciones APU: solo disponibles cuando se importa un APU (no Explosión)
@@ -1455,6 +1482,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         }
         setPreviewInsumos(resultado.insumos);
         setPreviewComposiciones(resultado.composiciones);
+        setColumnasNoConfirmadas(resultado.columnasNoConfirmadas);
         setPanelAPU(true);
       },
       (msg) => setParseErrorInsumos(msg)
@@ -1472,15 +1500,16 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     leerArchivoComoRawRows(
       file,
       (rows) => {
-        const extraidos = parsearArchivoExplosion(rows);
-        if (extraidos.length === 0) {
+        const resultado = parsearArchivoExplosion(rows);
+        if (resultado.insumos.length === 0) {
           setParseErrorInsumos(
             'No se encontraron insumos en el archivo.\n' +
             'Verifica que el archivo sea la "EXPLOSIÓN DE INSUMOS" de OPUS.'
           );
           return;
         }
-        setPreviewInsumos(extraidos);
+        setPreviewInsumos(resultado.insumos);
+        setColumnasNoConfirmadas(resultado.columnasNoConfirmadas);
         setPanelExplosion(true);
       },
       (msg) => setParseErrorInsumos(msg)
@@ -2686,14 +2715,14 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
       {[
         {
           isOpen: panelAPU,
-          onClose: () => { setPanelAPU(false); setPreviewInsumos([]); setPreviewComposiciones([]); setArchivoNombreInsumo(''); },
+          onClose: () => { setPanelAPU(false); setPreviewInsumos([]); setPreviewComposiciones([]); setArchivoNombreInsumo(''); setColumnasNoConfirmadas([]); },
           title: 'Vista previa — Importación APU',
           subtitle: 'Análisis de Precios Unitarios · OPUS',
           mostrarComposicion: true,
         },
         {
           isOpen: panelExplosion,
-          onClose: () => { setPanelExplosion(false); setPreviewInsumos([]); setPreviewComposiciones([]); setArchivoNombreInsumo(''); },
+          onClose: () => { setPanelExplosion(false); setPreviewInsumos([]); setPreviewComposiciones([]); setArchivoNombreInsumo(''); setColumnasNoConfirmadas([]); },
           title: 'Vista previa — Explosión de Insumos',
           subtitle: 'Catálogo consolidado de insumos · OPUS',
           mostrarComposicion: false,
@@ -2752,6 +2781,21 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   <p className="text-[10px] text-amber-600/80 mt-1">
                     {invalidPreviewInsumos.slice(0, 3).map(r => `"${r.clave}" (${r._error})`).join(' · ')}
                     {invalidPreviewInsumos.length > 3 && ` · y ${invalidPreviewInsumos.length - 3} más`}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Banner: columnas secundarias no confirmadas por encabezado ── */}
+            {columnasNoConfirmadas.length > 0 && (
+              <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-4 flex gap-3">
+                <IconAlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-amber-700">
+                    No se confirmó la columna {columnasNoConfirmadas.join(', ')} en el encabezado del archivo
+                  </p>
+                  <p className="text-[10px] text-amber-600/80 mt-1">
+                    Se usó una posición por defecto — verifica los valores antes de confirmar la importación.
                   </p>
                 </div>
               </div>
