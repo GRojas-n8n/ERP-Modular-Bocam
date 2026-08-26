@@ -73,7 +73,7 @@ async function testCrearUsuarioPayloadValidoSigueFuncionando() {
   try {
     const email = `admin-users-zod-${Date.now()}@bocam.test`;
     const r = await post('/api/v1/auth/admin/users', adminToken(tenantId), {
-      email, password: 'ClaveSegura123!', nombre: 'Nuevo Usuario', roles: ['resident'],
+      email, password: 'ClaveSegura123!', nombre: 'Nuevo Usuario', roles: ['residencia'],
     });
     assert.equal(r.status, 201, 'un payload con la misma forma que hoy debe seguir aceptándose');
     const body = (await r.json()) as any;
