@@ -5,7 +5,9 @@ El sistema SHALL permitir a un usuario con rol `procurement` o `admin`
 importar múltiples Proveedores de una sola vez a partir de un archivo
 CSV o Excel, validando cada registro con las mismas reglas que la alta
 individual (`rfc_tax_id`/`razon_social` obligatorios;
-`calificacion_desempeno` opcional entre 0.00 y 5.00 si se envía).
+`calificacion_desempeno` opcional entre 0.00 y 5.00 si se envía; y los
+límites de longitud por columna: `rfc_tax_id` ≤ 20, `razon_social` ≤ 255,
+`email_contacto` ≤ 100, `telefono` ≤ 20).
 
 #### Scenario: Lote con todos los registros válidos
 - **WHEN** se envía un lote de registros donde todos cumplen las reglas
@@ -31,3 +33,11 @@ individual (`rfc_tax_id`/`razon_social` obligatorios;
 - **WHEN** un usuario sin rol `procurement` ni `admin` intenta usar el
   endpoint de importación masiva
 - **THEN** el sistema responde 403 y no crea ningún registro
+
+#### Scenario: Fila con un campo demasiado largo dentro de una importación masiva
+- **WHEN** `POST /api/v1/compras/proveedores/importar-lote` recibe un lote
+  donde una fila tiene `razon_social` de más de 255 caracteres y el resto
+  de las filas son válidas
+- **THEN** esa fila SHALL reportarse en `errores` con el motivo del campo
+  excedido, y las demás filas válidas SHALL crearse normalmente — la
+  importación no SHALL abortar el lote completo por una fila inválida

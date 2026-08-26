@@ -36,6 +36,6 @@
 
 ## 7. Deploy y cierre
 
-- [ ] 7.1 Desplegar vía CI (push a `main` tras PR aprobado).
-- [ ] 7.2 Verificar en `iretum.com` que el alta/edición de proveedor con un campo largo (p. ej. RFC) ya no produce el 500 crudo, y que un alta normal sigue funcionando.
-- [ ] 7.3 `openspec archive fix-compras-validacion-longitud-proveedor` tras verificación en producción.
+- [x] 7.1 Desplegado vía CI (PR #109 mergeado a `main`). `Build + Deploy backend (Docker)` y `Build + Deploy (Docker)` (frontend) exitosos en ambos workflows — el único rojo fue el smoke test post-deploy por el ruido de consola 403 ya conocido de RBAC (documentado y aceptado en la sesión de `fix-personal-validacion-longitud-empleado`, no relacionado a este fix).
+- [x] 7.2 Verificado en `iretum.com` (2026-08-26, sesión real rol `admin`, vía Claude en Chrome): en "Nuevo Proveedor", el campo RFC trunca a 20 caracteres al escribir más (`maxLength` de la tarea 5.1 confirmado en prod). Alta normal con datos válidos (RFC de 12 chars) respondió 201 — "Proveedor creado" — sin regresión. El proveedor de prueba se archivó con el botón "Archivar" existente al terminar (acción reversible, no queda como ruido activo).
+- [x] 7.3 `openspec archive fix-compras-validacion-longitud-proveedor` — ver abajo.
