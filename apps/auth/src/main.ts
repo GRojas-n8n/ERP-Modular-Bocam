@@ -953,7 +953,7 @@ app.post('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler,
     );
     res.status(201).json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global } });
   } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: 'Error al crear el usuario.' } });
   }
 });
 
@@ -991,7 +991,7 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
     });
     res.json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global, activo: user.activo } });
   } catch (err) {
-    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: String(err) } });
+    res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: 'Error al actualizar el usuario.' } });
   }
 });
 

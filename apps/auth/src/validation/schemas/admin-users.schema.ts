@@ -40,16 +40,16 @@ const rolesAlCrear = z.array(z.string()).superRefine(validarRoles(IDS_ASIGNABLES
 const rolesAlEditar = z.array(z.string()).superRefine(validarRoles(ROLES_VALIDOS)).optional();
 
 export const crearUsuarioSchema = z.object({
-  email: z.string().trim().min(1, 'email es obligatorio'),
+  email: z.string().trim().min(1, 'email es obligatorio').max(255, 'email no puede tener más de 255 caracteres.'),
   password: z.string().min(1, 'password es obligatorio'),
-  nombre: z.string().trim().min(1, 'nombre es obligatorio'),
+  nombre: z.string().trim().min(1, 'nombre es obligatorio').max(150, 'nombre no puede tener más de 150 caracteres.'),
   roles: rolesAlCrear,
   proyecto_ids: z.array(z.string()).optional(),
   limite_aprobacion: z.number().optional(),
 });
 
 export const actualizarUsuarioSchema = z.object({
-  nombre: z.string().trim().min(1).optional(),
+  nombre: z.string().trim().min(1).max(150, 'nombre no puede tener más de 150 caracteres.').optional(),
   roles: rolesAlEditar,
   activo: z.boolean().optional(),
   limite_aprobacion: z.number().optional(),
