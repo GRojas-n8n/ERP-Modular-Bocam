@@ -22,7 +22,7 @@ model Proveedor {
   razon_social   String   @db.VarChar(255)
   email_contacto String?  @db.VarChar(100)
   telefono       String?  @db.VarChar(20)
-  estatus        String   @default("ACTIVO") // ACTIVO, VETADO, PENDIENTE
+  estatus        String   @default("ACTIVO") // ACTIVO, VETADO, PENDIENTE, ARCHIVADO
 
   // ── Segmentación Logística ───────────────────────────────────────────────
   ciudad           String?  @db.VarChar(100)

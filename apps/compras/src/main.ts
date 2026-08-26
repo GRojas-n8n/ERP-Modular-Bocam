@@ -1863,10 +1863,14 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
 app.get('/api/v1/compras/proveedores', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
+    const incluirArchivados = req.query.incluir_archivados === 'true';
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
-      async (prisma) => prisma.proveedor.findMany({ orderBy: { razon_social: 'asc' } })
+      async (prisma) => prisma.proveedor.findMany({
+        where: incluirArchivados ? undefined : { estatus: { not: 'ARCHIVADO' } },
+        orderBy: { razon_social: 'asc' },
+      })
     );
 
     res.json({ success: true, data });
@@ -2097,6 +2101,59 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
   } catch (error: any) {
     const status = error.status ?? 500;
     logError(req, 'compras', 'compras.proveedor.actualizar.error', 'Error al actualizar proveedor', { error_message: error.message });
+    res.status(status).json({ success: false, message: error.message });
+  }
+});
+
+// ── Ciclo de vida: Archivar / Activar Proveedor ───────────────────────────────
+// Ver openspec/changes/archivar-proveedores. Acción reversible, no borra ni
+// altera ninguna fila relacionada (ordenes, comparativas, documentos,
+// calificaciones, solicitudes_cotizacion, evaluaciones_especificacion).
+
+app.post('/api/v1/compras/proveedores/:id/archivar', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const proveedorId = req.params.id;
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        const exists = await prisma.proveedor.findFirst({ where: { id_proveedor: proveedorId, tenant_id: tenantId } });
+        if (!exists) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+        return prisma.proveedor.update({ where: { id_proveedor: proveedorId }, data: { estatus: 'ARCHIVADO' } });
+      }
+    );
+
+    logInfo(req, 'compras', 'compras.proveedor.archivado', 'Proveedor archivado', { proveedor_id: proveedorId });
+    res.json({ success: true, data });
+  } catch (error: any) {
+    const status = error.status ?? 500;
+    logError(req, 'compras', 'compras.proveedor.archivar.error', 'Error al archivar proveedor', { error_message: error.message });
+    res.status(status).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/v1/compras/proveedores/:id/activar', requireRoles('procurement', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const proveedorId = req.params.id;
+
+    const data = await createTenantContext(
+      { tenantId, proyectoId, userId },
+      async (prisma) => {
+        const exists = await prisma.proveedor.findFirst({ where: { id_proveedor: proveedorId, tenant_id: tenantId } });
+        if (!exists) throw Object.assign(new Error('Proveedor no encontrado.'), { status: 404 });
+
+        return prisma.proveedor.update({ where: { id_proveedor: proveedorId }, data: { estatus: 'ACTIVO' } });
+      }
+    );
+
+    logInfo(req, 'compras', 'compras.proveedor.activado', 'Proveedor activado', { proveedor_id: proveedorId });
+    res.json({ success: true, data });
+  } catch (error: any) {
+    const status = error.status ?? 500;
+    logError(req, 'compras', 'compras.proveedor.activar.error', 'Error al activar proveedor', { error_message: error.message });
     res.status(status).json({ success: false, message: error.message });
   }
 });
