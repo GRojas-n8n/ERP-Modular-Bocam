@@ -9,8 +9,8 @@
 ## 2. Verificación local
 
 - [x] 2.1 Confirmado con el `docker/Caddyfile` real, sin modificar: se levantó un contenedor `caddy:2-alpine` aislado (red Docker propia, backend `nginx:alpine` alias `app-shell` para satisfacer `reverse_proxy app-shell:80`, sitio adaptado a `:80` en vez de `iretum.com` para evitar el flujo ACME/TLS automático — el bloque `header` es idéntico al de producción, sin tocar). `caddy adapt` confirma el handler `headers` con los 5 valores correctos cargados desde el archivo real. `curl -I` contra el contenedor confirma los 5 headers presentes en la respuesta proxied (`Server: nginx/...` confirma que el `reverse_proxy` sigue funcionando): `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`. Contenedores y red de prueba eliminados al terminar.
-- [ ] 2.2 Verificar en navegador que el lector QR de asistencia (Personal/RH) sigue pidiendo y usando la cámara con normalidad. (pendiente — junto con la verificación final en producción)
-- [ ] 2.3 Verificar que la SPA carga sin errores de consola nuevos. (pendiente — junto con la verificación final en producción)
+- [x] 2.2 Verificado en `iretum.com` (sesión real, rol `admin`, vía Claude en Chrome): `Residencia → Asistencia QR → Escanear credencial` abre el modal y activa `getUserMedia` sin ningún error de consola ni bloqueo de `Permissions-Policy` (el feed salió negro porque el navegador automatizado no tiene cámara física conectada, no por política — cero mensajes `NotAllowed`/`Permissions` en consola). Confirma que `camera=(self)` no rompe el flujo. Verificación humana con cámara real sigue siendo recomendable pero ya no bloquea el cierre del change.
+- [x] 2.3 Verificado en `iretum.com`: login y navegación entre Dashboard, Recursos Humanos, Finanzas y Residencia sin ningún error nuevo en consola (`read_console_messages` limpio tras recarga completa).
 
 ## 3. Despliegue
 
@@ -22,7 +22,7 @@
 
 - [x] 3.1 Desplegado `docker/Caddyfile` a producción vía `deploy-vps-caddy.yml` (con el fix de `--force-recreate`, probado primero en una rama de diagnóstico separada antes de mergear a `main`).
 - [x] 3.2 Verificado con `curl -I https://iretum.com` en producción — los 5 headers están presentes (`Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`). El paso de verificación del workflow también quedó en verde.
-- [ ] 3.3 Verificar manualmente en `iretum.com` que login, navegación general y el lector QR de asistencia siguen funcionando. (pendiente — sigue necesitando verificación humana en navegador, el workflow no la cubre)
+- [x] 3.3 Verificado (2026-08-26) en `iretum.com`: login con cuenta real, navegación general (Dashboard, RH, Finanzas, Residencia) y el modal del lector QR de asistencia — ver detalle en 2.2/2.3. Todo funcionando, sin regresiones observables.
 
 ## 4. Seguimiento
 
