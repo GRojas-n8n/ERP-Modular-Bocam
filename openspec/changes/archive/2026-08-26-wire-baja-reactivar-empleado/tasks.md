@@ -20,6 +20,6 @@
 
 ## 4. Deploy y cierre
 
-- [ ] 4.1 Desplegar vía CI (push a `main` tras PR aprobado).
-- [ ] 4.2 Verificar en `iretum.com` que dar de baja y reactivar un empleado funcionan de extremo a extremo.
-- [ ] 4.3 `openspec archive wire-baja-reactivar-empleado` tras verificación en producción.
+- [x] 4.1 Desplegado vía CI (PR #110 mergeado a `main`). `Build + Deploy backend (Docker)` y `Build + Deploy (Docker)` (frontend) exitosos — el único rojo fue el smoke test post-deploy por el ruido de consola 403 ya conocido de RBAC (no relacionado a este cambio).
+- [x] 4.2 Verificado en `iretum.com` (2026-08-26, sesión real rol `admin`, vía Claude en Chrome) usando el empleado `EMP-003 "QA Prueba Longitud"`: clic en "Dar de baja" → confirmación con el texto esperado ("Deja de aparecer como activo en nómina y pierde su cuadrilla asignada. Puede reactivarse después.") → toast "Empleado dado de baja" → badge cambia a `BAJA` sin recargar la página, y el botón pasa a "Reactivar". Clic en "Reactivar" → confirmación ("Vuelve a aparecer como activo, sin cuadrilla asignada.") → toast "Empleado reactivado" → badge vuelve a `ACTIVO`. Ciclo completo de extremo a extremo sin errores de consola. El empleado de prueba quedó `ACTIVO` al terminar (resuelve también la limpieza pendiente de `EMP-003`).
+- [x] 4.3 `openspec archive wire-baja-reactivar-empleado` — ver abajo.
