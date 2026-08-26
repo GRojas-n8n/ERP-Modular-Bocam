@@ -19,7 +19,7 @@ import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import { createTenantContext, disconnectDb } from './db';
+import { createTenantContext, withTenantTransaction, withSavepoint, disconnectDb } from './db';
 import { initEventBus, closeEventBus, publishEvent, subscribeToEvent } from './event-bus';
 import {
   createApiResponse,
@@ -398,24 +398,36 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
     }
 
     // ── Actualizar existentes ───────────────────────────────────────────────────
+    // Una sola transacción compartida para todo el lote (en vez de una por
+    // fila) — cada fila se aísla con SAVEPOINT para que una falla individual
+    // no arrastre a las demás. Ver openspec/changes/reducir-transacciones-por-operacion-lotes-gt/.
     let actualizados = 0;
-    for (const item of aActualizar) {
-      const id = claveAId.get(item.clave)!;
-      try {
-        await db.insumo.update({
-          where: { id },
-          data: {
-            descripcion: item.descripcion,
-            unidad_medida: item.unidad_medida,
-            tipo_insumo: item.tipo_insumo as any,
-            costo_base: item.costo_base,
-            activo: true,
-          },
-        });
-        actualizados++;
-      } catch (_) {
-        omitidos++;
-      }
+    if (aActualizar.length > 0) {
+      await withTenantTransaction(
+        { tenant_id: tenantId, proyecto_id: proyectoId },
+        async (tx) => {
+          for (let idx = 0; idx < aActualizar.length; idx++) {
+            const item = aActualizar[idx];
+            const id = claveAId.get(item.clave)!;
+            try {
+              await withSavepoint(tx, `row_${idx}`, () => tx.insumo.update({
+                where: { id },
+                data: {
+                  descripcion: item.descripcion,
+                  unidad_medida: item.unidad_medida,
+                  tipo_insumo: item.tipo_insumo as any,
+                  costo_base: item.costo_base,
+                  activo: true,
+                },
+              }));
+              actualizados++;
+            } catch (_) {
+              omitidos++;
+            }
+          }
+        },
+        { timeoutMs: 60000 }
+      );
     }
 
     console.log(`[Gerencia Técnica] Importación lote: +${creados} nuevos, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
@@ -748,53 +760,66 @@ app.post(
       let actualizados = 0;
       let omitidos = 0;
 
-      for (const comp of composiciones) {
-        const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
-        const conceptoId = claveAConceptoId.get(claveConcepto);
-        if (!conceptoId) { omitidos++; continue; }
-        if (!Array.isArray(comp.insumos)) { omitidos++; continue; }
+      // Una sola transacción compartida para todo el lote (en vez de hasta 2
+      // por fila) — cada fila (concepto,insumo) se aísla con SAVEPOINT para
+      // que una falla individual no arrastre a las demás. Ver
+      // openspec/changes/reducir-transacciones-por-operacion-lotes-gt/.
+      let savepointIdx = 0;
+      await withTenantTransaction(
+        { tenant_id: tenantId, proyecto_id: proyectoId },
+        async (tx) => {
+          for (const comp of composiciones) {
+            const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
+            const conceptoId = claveAConceptoId.get(claveConcepto);
+            if (!conceptoId) { omitidos++; continue; }
+            if (!Array.isArray(comp.insumos)) { omitidos++; continue; }
 
-        for (const ins of comp.insumos) {
-          const claveInsumo = String(ins.clave_insumo ?? '').trim().toUpperCase();
-          const insumoId = claveAInsumoId.get(claveInsumo);
-          if (!insumoId) { omitidos++; continue; }
-          if (!TIPOS_VALIDOS.includes(ins.tipo_insumo)) { omitidos++; continue; }
+            for (const ins of comp.insumos) {
+              const claveInsumo = String(ins.clave_insumo ?? '').trim().toUpperCase();
+              const insumoId = claveAInsumoId.get(claveInsumo);
+              if (!insumoId) { omitidos++; continue; }
+              if (!TIPOS_VALIDOS.includes(ins.tipo_insumo)) { omitidos++; continue; }
 
-          const cantidad      = Math.max(0, parseFloat(String(ins.cantidad      ?? 0)) || 0);
-          const rendimiento   = Math.max(0, parseFloat(String(ins.rendimiento   ?? 0)) || 0);
-          const costoUnitario = Math.max(0, parseFloat(String(ins.costo_unitario ?? 0)) || 0);
+              const cantidad      = Math.max(0, parseFloat(String(ins.cantidad      ?? 0)) || 0);
+              const rendimiento   = Math.max(0, parseFloat(String(ins.rendimiento   ?? 0)) || 0);
+              const costoUnitario = Math.max(0, parseFloat(String(ins.costo_unitario ?? 0)) || 0);
 
-          try {
-            const existing = await db.conceptoInsumo.findUnique({
-              where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
-            });
+              try {
+                await withSavepoint(tx, `row_${savepointIdx++}`, async () => {
+                  const existing = await tx.conceptoInsumo.findUnique({
+                    where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+                  });
 
-            if (existing) {
-              await db.conceptoInsumo.update({
-                where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
-                data: { tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
-              });
-              actualizados++;
-            } else {
-              await db.conceptoInsumo.create({
-                data: {
-                  tenant_id: tenantId,
-                  proyecto_id: proyectoId,
-                  concepto_id: conceptoId,
-                  insumo_id: insumoId,
-                  tipo_insumo: ins.tipo_insumo as any,
-                  cantidad,
-                  rendimiento,
-                  costo_unitario: costoUnitario,
-                },
-              });
-              vinculados++;
+                  if (existing) {
+                    await tx.conceptoInsumo.update({
+                      where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+                      data: { tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
+                    });
+                    actualizados++;
+                  } else {
+                    await tx.conceptoInsumo.create({
+                      data: {
+                        tenant_id: tenantId,
+                        proyecto_id: proyectoId,
+                        concepto_id: conceptoId,
+                        insumo_id: insumoId,
+                        tipo_insumo: ins.tipo_insumo as any,
+                        cantidad,
+                        rendimiento,
+                        costo_unitario: costoUnitario,
+                      },
+                    });
+                    vinculados++;
+                  }
+                });
+              } catch (_) {
+                omitidos++;
+              }
             }
-          } catch (_) {
-            omitidos++;
           }
-        }
-      }
+        },
+        { timeoutMs: 60000 }
+      );
 
       console.log(`[Gerencia Técnica] Composición APU (presupuesto ${presupuesto_id}): +${vinculados} vinculados, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
       res.json(createApiResponse({ presupuesto_id, vinculados, actualizados, omitidos }, tenantId, proyectoId));
@@ -846,37 +871,48 @@ app.post(
       const TIPOS_VALIDOS = ['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'];
       let vinculados = 0; let actualizados = 0; let omitidos = 0;
 
-      for (const comp of composiciones) {
-        const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
-        const conceptoId = claveAConceptoId.get(claveConcepto);
-        if (!conceptoId) { omitidos++; continue; }
-        if (!Array.isArray(comp.insumos)) { omitidos++; continue; }
-        for (const ins of comp.insumos) {
-          const claveInsumo = String(ins.clave_insumo ?? '').trim().toUpperCase();
-          const insumoId = claveAInsumoId.get(claveInsumo);
-          if (!insumoId || !TIPOS_VALIDOS.includes(ins.tipo_insumo)) { omitidos++; continue; }
-          const cantidad = Math.max(0, parseFloat(String(ins.cantidad ?? 0)) || 0);
-          const rendimiento = Math.max(0, parseFloat(String(ins.rendimiento ?? 0)) || 0);
-          const costoUnitario = Math.max(0, parseFloat(String(ins.costo_unitario ?? 0)) || 0);
-          try {
-            const existing = await db.conceptoInsumo.findUnique({
-              where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
-            });
-            if (existing) {
-              await db.conceptoInsumo.update({
-                where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
-                data: { tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
-              });
-              actualizados++;
-            } else {
-              await db.conceptoInsumo.create({
-                data: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: conceptoId, insumo_id: insumoId, tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
-              });
-              vinculados++;
+      // Una sola transacción compartida para todo el lote (en vez de hasta 2
+      // por fila), con SAVEPOINT por fila — ver openspec/changes/reducir-transacciones-por-operacion-lotes-gt/.
+      let savepointIdx = 0;
+      await withTenantTransaction(
+        { tenant_id: tenantId, proyecto_id: proyectoId },
+        async (tx) => {
+          for (const comp of composiciones) {
+            const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
+            const conceptoId = claveAConceptoId.get(claveConcepto);
+            if (!conceptoId) { omitidos++; continue; }
+            if (!Array.isArray(comp.insumos)) { omitidos++; continue; }
+            for (const ins of comp.insumos) {
+              const claveInsumo = String(ins.clave_insumo ?? '').trim().toUpperCase();
+              const insumoId = claveAInsumoId.get(claveInsumo);
+              if (!insumoId || !TIPOS_VALIDOS.includes(ins.tipo_insumo)) { omitidos++; continue; }
+              const cantidad = Math.max(0, parseFloat(String(ins.cantidad ?? 0)) || 0);
+              const rendimiento = Math.max(0, parseFloat(String(ins.rendimiento ?? 0)) || 0);
+              const costoUnitario = Math.max(0, parseFloat(String(ins.costo_unitario ?? 0)) || 0);
+              try {
+                await withSavepoint(tx, `row_${savepointIdx++}`, async () => {
+                  const existing = await tx.conceptoInsumo.findUnique({
+                    where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+                  });
+                  if (existing) {
+                    await tx.conceptoInsumo.update({
+                      where: { uq_concepto_insumo: { concepto_id: conceptoId, insumo_id: insumoId } },
+                      data: { tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
+                    });
+                    actualizados++;
+                  } else {
+                    await tx.conceptoInsumo.create({
+                      data: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: conceptoId, insumo_id: insumoId, tipo_insumo: ins.tipo_insumo as any, cantidad, rendimiento, costo_unitario: costoUnitario },
+                    });
+                    vinculados++;
+                  }
+                });
+              } catch (_) { omitidos++; }
             }
-          } catch (_) { omitidos++; }
-        }
-      }
+          }
+        },
+        { timeoutMs: 60000 }
+      );
       res.json(createApiResponse({ presupuesto_id: presupuesto.id, vinculados, actualizados, omitidos }, tenantId, proyectoId));
     } catch (error: any) {
       res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al importar composición APU.', error.message));
@@ -1463,22 +1499,29 @@ app.put(
         return res.status(400).json({ success: false, message: 'Se requiere un array items no vacío.' });
       }
 
-      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
       let actualizados = 0;
       let omitidos = 0;
 
-      for (const { insumo_id, categoria_gasto_id } of items) {
-        if (!insumo_id) { omitidos++; continue; }
-        try {
-          await db.insumo.update({
-            where: { id: insumo_id },
-            data: { categoria_gasto_id: categoria_gasto_id || null },
-          });
-          actualizados++;
-        } catch (_) {
-          omitidos++;
+      // Una sola transacción compartida para todo el lote, con SAVEPOINT por
+      // fila — ver openspec/changes/reducir-transacciones-por-operacion-lotes-gt/.
+      await withTenantTransaction(
+        { tenant_id: tenantId, proyecto_id: proyectoId },
+        async (tx) => {
+          for (let idx = 0; idx < items.length; idx++) {
+            const { insumo_id, categoria_gasto_id } = items[idx];
+            if (!insumo_id) { omitidos++; continue; }
+            try {
+              await withSavepoint(tx, `row_${idx}`, () => tx.insumo.update({
+                where: { id: insumo_id },
+                data: { categoria_gasto_id: categoria_gasto_id || null },
+              }));
+              actualizados++;
+            } catch (_) {
+              omitidos++;
+            }
+          }
         }
-      }
+      );
 
       res.json({ success: true, data: { actualizados, omitidos } });
     } catch (error: any) {
