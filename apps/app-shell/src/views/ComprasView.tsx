@@ -328,6 +328,12 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [pendientesGT, setPendientesGT] = useState<ComparativaLocal[]>([]);
   const [filtroEstadoCiclo, setFiltroEstadoCiclo] = useState<string>('todos');
   const [proveedoresList, setProveedoresList] = useState<ProveedorCatalogo[]>([]);
+  // Proveedores ARCHIVADO — cargados aparte (opt-in) para no filtrar a los
+  // selectores que ya leen proveedoresList (cotización, agregar manualmente
+  // a un cuadro). Ver openspec/changes/archivar-proveedores/design.md, Decisión 2.
+  const [proveedoresArchivados, setProveedoresArchivados] = useState<ProveedorCatalogo[]>([]);
+  const [mostrarArchivados, setMostrarArchivados] = useState(false);
+  const [archivandoProveedorId, setArchivandoProveedorId] = useState<string | null>(null);
   const [proveedoresSearch, setProveedoresSearch] = useState('');
   const [showProveedorForm, setShowProveedorForm] = useState(false);
   const [editingProveedor, setEditingProveedor] = useState<ProveedorCatalogo | null>(null);
@@ -717,6 +723,49 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   useEffect(() => { if (activeTab === 'trazabilidad') { loadTrazabilidad(); void loadCpResumen(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'ordenes-compra') { void loadOrdenesCompra(); } }, [activeTab, currentProjectId]);
   useEffect(() => { if (activeTab === 'admin-purga' && isAdminRole) { void loadPurgaResumen(); } }, [activeTab, currentProjectId, isAdminRole]);
+
+  // ── Ciclo de vida: Archivar / Activar Proveedor ───────────────────────────
+  // Ver openspec/changes/archivar-proveedores.
+  const fetchProveedoresArchivados = async () => {
+    try {
+      const res = await comprasApi.getProveedoresIncluirArchivados();
+      const todos: ProveedorCatalogo[] = res.data?.data || [];
+      setProveedoresArchivados(todos.filter(p => p.estatus === 'ARCHIVADO'));
+    } catch {
+      notify({ title: 'No se pudieron cargar los proveedores archivados', type: 'error' });
+    }
+  };
+  useEffect(() => {
+    if (activeTab === 'proveedores' && mostrarArchivados) void fetchProveedoresArchivados();
+  }, [activeTab, mostrarArchivados, currentProjectId]);
+
+  const handleArchivarProveedor = async (p: ProveedorCatalogo) => {
+    setArchivandoProveedorId(p.id_proveedor);
+    try {
+      await comprasApi.archivarProveedor(p.id_proveedor);
+      setProveedoresList(list => list.filter(x => x.id_proveedor !== p.id_proveedor));
+      setProveedoresArchivados(list => [...list, { ...p, estatus: 'ARCHIVADO' }]);
+      notify({ title: 'Proveedor archivado', type: 'success' });
+    } catch {
+      notify({ title: 'No se pudo archivar el proveedor', type: 'error' });
+    } finally {
+      setArchivandoProveedorId(null);
+    }
+  };
+
+  const handleActivarProveedor = async (p: ProveedorCatalogo) => {
+    setArchivandoProveedorId(p.id_proveedor);
+    try {
+      await comprasApi.activarProveedor(p.id_proveedor);
+      setProveedoresArchivados(list => list.filter(x => x.id_proveedor !== p.id_proveedor));
+      setProveedoresList(list => [...list, { ...p, estatus: 'ACTIVO' }]);
+      notify({ title: 'Proveedor activado', type: 'success' });
+    } catch {
+      notify({ title: 'No se pudo activar el proveedor', type: 'error' });
+    } finally {
+      setArchivandoProveedorId(null);
+    }
+  };
 
   // ── Importación masiva de Proveedores ─────────────────────────────────────
   const handleImportProveedoresFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2297,8 +2346,19 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     </button>
                   )}
                 </div>
+                {isProcurement && (
+                  <label className="flex shrink-0 items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={mostrarArchivados}
+                      onChange={e => setMostrarArchivados(e.target.checked)}
+                      className="h-4 w-4 rounded border-border/60"
+                    />
+                    Mostrar archivados
+                  </label>
+                )}
               </div>
-              {proveedoresList.filter(p => {
+              {(mostrarArchivados ? [...proveedoresList, ...proveedoresArchivados] : proveedoresList).filter(p => {
                 const q = proveedoresSearch.toLowerCase();
                 return !q || p.razon_social.toLowerCase().includes(q) || p.rfc_tax_id.toLowerCase().includes(q);
               }).length === 0 ? (
@@ -2321,14 +2381,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
-                      {proveedoresList.filter(p => {
+                      {(mostrarArchivados ? [...proveedoresList, ...proveedoresArchivados] : proveedoresList).filter(p => {
                         const q = proveedoresSearch.toLowerCase();
                         return !q || p.razon_social.toLowerCase().includes(q) || p.rfc_tax_id.toLowerCase().includes(q);
                       }).map(p => (
-                        <tr key={p.id_proveedor} className="bg-background hover:bg-muted/20 transition-colors">
+                        <tr key={p.id_proveedor} className={`bg-background hover:bg-muted/20 transition-colors ${p.estatus === 'ARCHIVADO' ? 'opacity-50' : ''}`}>
                           <td className="px-4 py-3">
                             <p className="font-semibold text-foreground">{p.razon_social}</p>
                             <p className="text-[10px] text-muted-foreground">{p.rfc_tax_id}</p>
+                            {p.estatus === 'ARCHIVADO' && (
+                              <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">📦 Archivado</span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
@@ -2412,6 +2475,25 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 >
                                   Editar
                                 </button>
+                                {p.estatus === 'ARCHIVADO' ? (
+                                  <button
+                                    type="button"
+                                    disabled={archivandoProveedorId === p.id_proveedor}
+                                    onClick={() => void handleActivarProveedor(p)}
+                                    className="rounded-lg border border-emerald-500/30 px-2 py-1 text-[10px] font-bold text-emerald-600 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    Activar
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={archivandoProveedorId === p.id_proveedor}
+                                    onClick={() => void handleArchivarProveedor(p)}
+                                    className="rounded-lg border border-border/50 px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors disabled:opacity-50"
+                                  >
+                                    📦 Archivar
+                                  </button>
+                                )}
                               </div>
                             </td>
                           )}
