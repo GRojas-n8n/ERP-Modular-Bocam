@@ -135,6 +135,81 @@ export function createTenantContext(ctx: TenantContext) {
 // ─── Tipo exportado del cliente contextualizado ─────────────────────────────
 export type BocamPrismaClient = ReturnType<typeof createTenantContext>;
 
+// ─── Transacción Compartida para Lotes ──────────────────────────────────────
+// spec: openspec/changes/reducir-transacciones-por-operacion-lotes-gt/
+//
+// `createTenantContext(ctx)` de arriba abre una transacción de Postgres POR
+// CADA operación — correcto para una operación aislada, pero un loop de N
+// filas (importación en lote, composición APU) abre N transacciones
+// independientes, cada una pagando el overhead completo de BEGIN/set_config/
+// COMMIT. `withTenantTransaction` es el mismo mecanismo que usan los otros
+// 10 microservicios de este repo (`createTenantContext(context, callback)`,
+// ver p. ej. apps/compras/src/db.ts): UNA sola transacción, `set_config` una
+// vez, el llamador ejecuta todas las operaciones del lote dentro de esa
+// misma transacción vía `callback(tx)`.
+//
+// No reemplaza `createTenantContext(ctx)` (49 call sites en main.ts que
+// asumen un cliente de operación única) — es una función nueva, de uso
+// específico en los loops de lote identificados en la auditoría.
+export async function withTenantTransaction<T>(
+  ctx: TenantContext,
+  callback: (tx: Prisma.TransactionClient) => Promise<T>,
+  opts?: { timeoutMs?: number }
+): Promise<T> {
+  if (!ctx.tenant_id) {
+    throw new Error(
+      '[BOCAM::DB] VIOLACIÓN DE SEGURIDAD: Se intentó crear una transacción de BD sin tenant_id. ' +
+      'Esto es una violación directa de la arquitectura Multi-Tenant. Abortando.'
+    );
+  }
+
+  return basePrisma.$transaction(async (tx) => {
+    await tx.$executeRaw`
+      SELECT set_config('app.current_tenant_id', ${ctx.tenant_id}, true)
+    `;
+    if (ctx.proyecto_id) {
+      await tx.$executeRaw`
+        SELECT set_config('app.current_proyecto_id', ${ctx.proyecto_id}, true)
+      `;
+    }
+    return callback(tx);
+  }, {
+    maxWait: 5000,
+    timeout: opts?.timeoutMs ?? 10000,
+    isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+  });
+}
+
+/**
+ * Envuelve `fn()` en un SAVEPOINT de Postgres dentro de la transacción `tx`.
+ * Aísla el fallo de una sola operación (constraint, FK inexistente) sin
+ * abortar el resto de la transacción compartida — necesario porque Postgres
+ * rechaza toda sentencia posterior una vez que una falla, hasta el fin de la
+ * transacción o un ROLLBACK TO SAVEPOINT.
+ *
+ * `label` SHALL ser un identificador generado por el llamador (p. ej. un
+ * índice de loop) — NUNCA un valor derivado del payload del usuario.
+ * `SAVEPOINT` no admite parámetros bindeados; el nombre va interpolado
+ * directamente en el SQL, así que un valor de usuario abriría una vía de
+ * inyección SQL.
+ */
+export async function withSavepoint<T>(
+  tx: Prisma.TransactionClient,
+  label: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  const safeLabel = `sp_${label.replace(/[^a-zA-Z0-9_]/g, '')}`;
+  await tx.$executeRawUnsafe(`SAVEPOINT "${safeLabel}"`);
+  try {
+    const result = await fn();
+    await tx.$executeRawUnsafe(`RELEASE SAVEPOINT "${safeLabel}"`);
+    return result;
+  } catch (error) {
+    await tx.$executeRawUnsafe(`ROLLBACK TO SAVEPOINT "${safeLabel}"`);
+    throw error;
+  }
+}
+
 // ─── Utilidad: Desconectar limpiamente ──────────────────────────────────────
 export async function disconnectDb(): Promise<void> {
   await basePrisma.$disconnect();
