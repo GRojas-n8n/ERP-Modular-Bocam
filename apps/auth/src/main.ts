@@ -388,7 +388,7 @@ app.post('/api/v1/auth/register', async (req: Request, res: Response) => {
             email: normalizedEmail,
             password_hash: passwordHash,
             nombre,
-            rol_global: roles || ['resident'],
+            rol_global: roles || ['residencia'],
             proyectos_acceso: Array.isArray(proyecto_ids) && proyecto_ids.length > 0
               ? {
                   create: proyecto_ids.map((pid: string) => ({ proyecto_id: pid })),
@@ -943,7 +943,7 @@ app.post('/api/v1/auth/admin/users', requireAdminRole as express.RequestHandler,
       prisma.user.create({
         data: {
           tenant_id: tenantId, email, password_hash: passwordHash, nombre,
-          rol_global: Array.isArray(userRoles) ? userRoles : ['resident'],
+          rol_global: Array.isArray(userRoles) ? userRoles : ['residencia'],
           limite_aprobacion_financiera: limite_aprobacion || 0,
           proyectos_acceso: Array.isArray(proyecto_ids) && proyecto_ids.length > 0
             ? { create: proyecto_ids.map((pid: string) => ({ proyecto_id: pid })) }
