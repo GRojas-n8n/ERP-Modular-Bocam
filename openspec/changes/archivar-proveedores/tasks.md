@@ -50,5 +50,5 @@ Nuevo archivo `apps/compras/test/integration/archivar-proveedores.integration.te
 ## 6. Cierre
 
 - [x] 6.1 Commit en una rama nueva desde `origin/main` (confirmar con el usuario nombre de rama, ej. `feat/archivar-proveedores`). **Resultado:** rama `feat/archivar-proveedores` creada desde `origin/main`.
-- [ ] 6.2 PR contra `main` referenciando este change de OpenSpec.
+- [x] 6.2 PR contra `main` referenciando este change de OpenSpec. **Resultado:** https://github.com/GRojas-n8n/ERP-Modular-Bocam/pull/108
 - [ ] 6.3 Tras merge, archivar el change (`openspec archive`).
