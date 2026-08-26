@@ -22,7 +22,8 @@
     "test:integration:eliminar-presupuesto-admin": "node -r ts-node/register/transpile-only test/integration/eliminar-presupuesto-admin.integration.test.ts",
     "test:integration:revertir-lote-insumos": "node -r ts-node/register/transpile-only test/integration/revertir-lote-insumos.integration.test.ts",
     "test:integration:eliminar-composicion-apu": "node -r ts-node/register/transpile-only test/integration/eliminar-composicion-apu.integration.test.ts",
-    "test:integration:validacion-longitud-insumo": "node -r ts-node/register/transpile-only test/integration/validacion-longitud-insumo.integration.test.ts"
+    "test:integration:validacion-longitud-insumo": "node -r ts-node/register/transpile-only test/integration/validacion-longitud-insumo.integration.test.ts",
+    "test:integration:transaccion-compartida-lotes": "node -r ts-node/register/transpile-only test/integration/transaccion-compartida-lotes.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
