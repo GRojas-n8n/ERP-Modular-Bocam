@@ -26,7 +26,7 @@
   - `TEST-AMBIGUO` (2 referencias, proyectos distintos) → `proyecto_id` sigue `NULL`, `activo = false`.
   - `INS-E2E-001` (preexistente, 0 referencias) → `proyecto_id` sigue `NULL`, `activo = false`.
   Log del script: `Insumos legacy procesados: 3 | Asignados: 1 | Archivados (ambiguos): 1 | Archivados (huérfanos): 1` — coincide exactamente con lo esperado. Fixtures de prueba eliminados y `INS-E2E-001` restaurado a `activo = true` tras la verificación (no forma parte de este change).
-- [ ] 3.5 Documentar aquí el resultado real de la corrida en producción cuando se ejecute (grupo 10.3).
+- [x] 3.5 Corrido contra producción 2026-08-27 (ver 10.3): 441 procesados → 394 asignados, 9 archivados (ambiguos), 38 archivados (huérfanos) — coincide exactamente con la auditoría de la tarea 1.1. Verificado post-corrida: 0 filas `proyecto_id NULL AND activo=true` sin resolver.
 
 ## 4. RLS
 
@@ -78,8 +78,9 @@ Todos corridos en verde contra Postgres real. 8.1-8.6 en `test/integration/aisla
 ## 10. Deploy y cierre
 
 - [x] 10.1 PR #116 contra `main`: https://github.com/GRojas-n8n/ERP-Modular-Bocam/pull/116 (branch `feat/gt-aislamiento-insumos-proyecto` — sin número de issue formal, confirmado con el usuario).
-- [ ] 10.2 Aplicar la migración de schema + `rls-policies.sql` actualizado contra las bases reales, vía el mecanismo ya establecido (`scripts/ci/apply-rls-as-admin.sh` / workflow `deploy-vps-rls-apply.yml`, usados en `aislamiento-proyecto-por-modulo`).
-- [ ] 10.3 Correr el script de backfill (grupo 3) contra producción — una sola vez. Documentar el resultado real (tarea 3.5).
-- [ ] 10.4 Desplegado vía CI — confirmar workflows de build+deploy backend y frontend en verde.
-- [ ] 10.5 Verificado en `iretum.com`: el Gerente Técnico confirma que la pantalla de Insumos ahora muestra solo el catálogo de su proyecto activo. Si algún insumo esperado no aparece (candidato a archivado por ambigüedad/huérfano), reimportarlo vía Explosión/APU en el proyecto correspondiente.
-- [ ] 10.6 `openspec archive aislamiento-insumos-por-proyecto-gt` tras verificación en producción.
+- [x] 10.2 Migración de schema aplicada automáticamente por el propio `Deploy Backend al VPS` (corre `prisma migrate deploy` como parte de desplegar `gerencia-tecnica`, confirmado contra `bocam_gerencia_tecnica` real: columna `proyecto_id`, índice e unique constraint nuevos presentes). RLS aplicada por separado, vía SSH directo con `scripts/ci/apply-rls-as-admin.sh gerencia-tecnica` (el workflow `deploy-vps-rls-apply.yml` solo lista `finanzas`/`contabilidad` en su dropdown — no se modificó el workflow, se corrió el mismo script que usa por debajo, decisión del usuario). Verificado con `scripts/ci/verify-rls-policies.sh gerencia-tecnica`: `rls_insumos_context` activa con el patrón esperado.
+  - **Orden real de ejecución (distinto al de este checklist, ver nota abajo):** 1) migración de schema (automática, vía CI) → 2) backfill (10.3) → 3) RLS. Aplicar la RLS antes del backfill habría dejado momentáneamente invisibles TODOS los insumos para roles de nivel-proyecto (todas las filas con `proyecto_id NULL` recién migradas), no solo los 47 que debían archivarse — mismo orden que ya documentaba design.md (Migration Plan), aunque este checklist lo listaba al revés.
+- [x] 10.3 Backfill corrido contra producción 2026-08-27: **441 procesados → 394 asignados, 9 archivados (ambiguos), 38 archivados (huérfanos)** — coincide exactamente con la auditoría de 1.1. Ejecutado dentro del contenedor real `bocam-vps-gerencia-tecnica` (tiene `ts-node` y el script ya incluidos por el build), reconectado como superusuario (`bocam_admin`) porque el rol de runtime (`bocam_app`) ya no tiene bypass de RLS desde el hardening de `fix-rls-bypass-bocam-admin` — con la conexión normal de runtime el script veía 0 filas (RLS sin contexto de sesión = ninguna fila visible), no un bug del script. Verificado post-corrida: 0 filas `proyecto_id NULL AND activo=true` sin resolver. Detalle también en tarea 3.5.
+- [x] 10.4 Desplegado vía CI, ambos confirmados: `Deploy Backend al VPS` (run 33103659938) success completo. `Deploy Backend al VPS` frontend (`Deploy Frontend al VPS`, run 33103659860): el job real `Build + Deploy (Docker)` success — el workflow completo marcó `failure` solo por el sub-job `Smoke Test Playwright`, que falla por un 403 de consola ya conocido y no relacionado (ver memoria del proyecto "Known CI smoke-test noise"), confirmado en el log de este run.
+- [x] 10.5 Verificado en `iretum.com` por el usuario (2026-08-27): la pantalla de Insumos ya muestra solo el catálogo del proyecto activo.
+- [x] 10.6 `openspec archive aislamiento-insumos-por-proyecto-gt` tras verificación en producción.
