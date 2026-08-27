@@ -77,7 +77,7 @@ Todos corridos en verde contra Postgres real. 8.1-8.6 en `test/integration/aisla
 
 ## 10. Deploy y cierre
 
-- [ ] 10.1 PR contra `main` (branch `feat/gt-<numero>-aislamiento-insumos-proyecto` — confirmar número de issue con el usuario).
+- [x] 10.1 PR #116 contra `main`: https://github.com/GRojas-n8n/ERP-Modular-Bocam/pull/116 (branch `feat/gt-aislamiento-insumos-proyecto` — sin número de issue formal, confirmado con el usuario).
 - [ ] 10.2 Aplicar la migración de schema + `rls-policies.sql` actualizado contra las bases reales, vía el mecanismo ya establecido (`scripts/ci/apply-rls-as-admin.sh` / workflow `deploy-vps-rls-apply.yml`, usados en `aislamiento-proyecto-por-modulo`).
 - [ ] 10.3 Correr el script de backfill (grupo 3) contra producción — una sola vez. Documentar el resultado real (tarea 3.5).
 - [ ] 10.4 Desplegado vía CI — confirmar workflows de build+deploy backend y frontend en verde.
