@@ -13,7 +13,9 @@
     "test:integration:presupuesto-activo-precio-cantidad": "node -r ts-node/register/transpile-only test/integration/presupuesto-activo-precio-cantidad.integration.test.ts",
     "test:integration:presupuestos-unicidad-clave": "node -r ts-node/register/transpile-only test/integration/presupuestos-unicidad-clave.integration.test.ts",
     "test:integration:presupuestos-catalogo-maestro": "node -r ts-node/register/transpile-only test/integration/presupuestos-catalogo-maestro.integration.test.ts",
-    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts"
+    "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts",
+    "test:integration:aislamiento-insumos-por-proyecto": "node -r ts-node/register/transpile-only test/integration/aislamiento-insumos-por-proyecto.integration.test.ts",
+    "test:integration:backfill-proyecto-id-insumos": "node -r ts-node/register/transpile-only test/integration/backfill-proyecto-id-insumos.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

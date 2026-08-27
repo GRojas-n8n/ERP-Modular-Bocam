@@ -146,6 +146,7 @@ exports.Prisma.ProyectoCostosConfigScalarFieldEnum = {
 exports.Prisma.InsumoScalarFieldEnum = {
   id: 'id',
   tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
   clave: 'clave',
   descripcion: 'descripcion',
   unidad_medida: 'unidad_medida',

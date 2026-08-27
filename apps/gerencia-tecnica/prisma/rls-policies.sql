@@ -35,7 +35,9 @@ $$ LANGUAGE plpgsql STABLE;
 -- 2. HABILITAR RLS EN TABLAS DEL MÓDULO
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Tabla: insumos (Maestra — aislamiento por tenant_id)
+-- Tabla: insumos (Maestra — aislamiento por tenant_id + proyecto_id, con
+-- fallback de consolidación tenant-wide para roles sin proyecto activo —
+-- ver aislamiento-insumos-por-proyecto-gt)
 ALTER TABLE insumos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE insumos FORCE ROW LEVEL SECURITY;
 
@@ -52,12 +54,28 @@ ALTER TABLE conceptos FORCE ROW LEVEL SECURITY;
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── INSUMOS ────────────────────────────────────────────────────────────────
--- Solo lectura/escritura de insumos que pertenezcan al tenant actual.
+-- Aislamiento por tenant. Si hay proyecto en contexto, también filtra por
+-- proyecto (roles de nivel-proyecto siempre lo tienen). Sin proyecto en
+-- contexto (admin/superintendent), consolida todo el tenant — mismo patrón
+-- que presupuestos_base/conceptos.
 DROP POLICY IF EXISTS rls_insumos_tenant ON insumos;
-CREATE POLICY rls_insumos_tenant ON insumos
+DROP POLICY IF EXISTS rls_insumos_context ON insumos;
+CREATE POLICY rls_insumos_context ON insumos
     FOR ALL
-    USING (tenant_id = get_current_tenant_id())
-    WITH CHECK (tenant_id = get_current_tenant_id());
+    USING (
+        tenant_id = get_current_tenant_id()
+        AND (
+            get_current_proyecto_id() IS NULL
+            OR proyecto_id = get_current_proyecto_id()
+        )
+    )
+    WITH CHECK (
+        tenant_id = get_current_tenant_id()
+        AND (
+            get_current_proyecto_id() IS NULL
+            OR proyecto_id = get_current_proyecto_id()
+        )
+    );
 
 -- ─── PRESUPUESTOS BASE ─────────────────────────────────────────────────────
 -- Aislamiento por tenant. Si hay proyecto en contexto, también filtra por proyecto.
@@ -103,8 +121,8 @@ CREATE POLICY rls_conceptos_tenant ON conceptos
 -- 4. COMENTARIOS DE AUDITORÍA
 -- ═══════════════════════════════════════════════════════════════════════════
 
-COMMENT ON POLICY rls_insumos_tenant ON insumos IS
-    'Aislamiento Multi-Tenant por tenant_id. Módulo: Gerencia Técnica.';
+COMMENT ON POLICY rls_insumos_context ON insumos IS
+    'Aislamiento Multi-Tenant + Multi-Proyecto, con fallback de consolidación para roles sin proyecto activo. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_presupuestos_tenant ON presupuestos_base IS
     'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_conceptos_tenant ON conceptos IS
