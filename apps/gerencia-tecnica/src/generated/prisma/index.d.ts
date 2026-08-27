@@ -4118,6 +4118,7 @@ export namespace Prisma {
   export type InsumoMinAggregateOutputType = {
     id: string | null
     tenant_id: string | null
+    proyecto_id: string | null
     clave: string | null
     descripcion: string | null
     unidad_medida: string | null
@@ -4132,6 +4133,7 @@ export namespace Prisma {
   export type InsumoMaxAggregateOutputType = {
     id: string | null
     tenant_id: string | null
+    proyecto_id: string | null
     clave: string | null
     descripcion: string | null
     unidad_medida: string | null
@@ -4146,6 +4148,7 @@ export namespace Prisma {
   export type InsumoCountAggregateOutputType = {
     id: number
     tenant_id: number
+    proyecto_id: number
     clave: number
     descripcion: number
     unidad_medida: number
@@ -4170,6 +4173,7 @@ export namespace Prisma {
   export type InsumoMinAggregateInputType = {
     id?: true
     tenant_id?: true
+    proyecto_id?: true
     clave?: true
     descripcion?: true
     unidad_medida?: true
@@ -4184,6 +4188,7 @@ export namespace Prisma {
   export type InsumoMaxAggregateInputType = {
     id?: true
     tenant_id?: true
+    proyecto_id?: true
     clave?: true
     descripcion?: true
     unidad_medida?: true
@@ -4198,6 +4203,7 @@ export namespace Prisma {
   export type InsumoCountAggregateInputType = {
     id?: true
     tenant_id?: true
+    proyecto_id?: true
     clave?: true
     descripcion?: true
     unidad_medida?: true
@@ -4299,6 +4305,7 @@ export namespace Prisma {
   export type InsumoGroupByOutputType = {
     id: string
     tenant_id: string
+    proyecto_id: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -4332,6 +4339,7 @@ export namespace Prisma {
   export type InsumoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     tenant_id?: boolean
+    proyecto_id?: boolean
     clave?: boolean
     descripcion?: boolean
     unidad_medida?: boolean
@@ -4349,6 +4357,7 @@ export namespace Prisma {
   export type InsumoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     tenant_id?: boolean
+    proyecto_id?: boolean
     clave?: boolean
     descripcion?: boolean
     unidad_medida?: boolean
@@ -4364,6 +4373,7 @@ export namespace Prisma {
   export type InsumoSelectScalar = {
     id?: boolean
     tenant_id?: boolean
+    proyecto_id?: boolean
     clave?: boolean
     descripcion?: boolean
     unidad_medida?: boolean
@@ -4393,6 +4403,10 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       tenant_id: string
+      /**
+       * NULL = insumo legacy sin proyecto atribuible (ver aislamiento-insumos-por-proyecto-gt, Decision 1/3)
+       */
+      proyecto_id: string | null
       clave: string
       descripcion: string
       unidad_medida: string
@@ -4802,6 +4816,7 @@ export namespace Prisma {
   interface InsumoFieldRefs {
     readonly id: FieldRef<"Insumo", 'String'>
     readonly tenant_id: FieldRef<"Insumo", 'String'>
+    readonly proyecto_id: FieldRef<"Insumo", 'String'>
     readonly clave: FieldRef<"Insumo", 'String'>
     readonly descripcion: FieldRef<"Insumo", 'String'>
     readonly unidad_medida: FieldRef<"Insumo", 'String'>
@@ -16681,6 +16696,7 @@ export namespace Prisma {
   export const InsumoScalarFieldEnum: {
     id: 'id',
     tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
     clave: 'clave',
     descripcion: 'descripcion',
     unidad_medida: 'unidad_medida',
@@ -17170,6 +17186,7 @@ export namespace Prisma {
     NOT?: InsumoWhereInput | InsumoWhereInput[]
     id?: UuidFilter<"Insumo"> | string
     tenant_id?: UuidFilter<"Insumo"> | string
+    proyecto_id?: UuidNullableFilter<"Insumo"> | string | null
     clave?: StringFilter<"Insumo"> | string
     descripcion?: StringFilter<"Insumo"> | string
     unidad_medida?: StringFilter<"Insumo"> | string
@@ -17186,6 +17203,7 @@ export namespace Prisma {
   export type InsumoOrderByWithRelationInput = {
     id?: SortOrder
     tenant_id?: SortOrder
+    proyecto_id?: SortOrderInput | SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -17201,11 +17219,12 @@ export namespace Prisma {
 
   export type InsumoWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    uq_insumo_tenant_clave?: InsumoUq_insumo_tenant_claveCompoundUniqueInput
+    uq_insumo_tenant_proyecto_clave?: InsumoUq_insumo_tenant_proyecto_claveCompoundUniqueInput
     AND?: InsumoWhereInput | InsumoWhereInput[]
     OR?: InsumoWhereInput[]
     NOT?: InsumoWhereInput | InsumoWhereInput[]
     tenant_id?: UuidFilter<"Insumo"> | string
+    proyecto_id?: UuidNullableFilter<"Insumo"> | string | null
     clave?: StringFilter<"Insumo"> | string
     descripcion?: StringFilter<"Insumo"> | string
     unidad_medida?: StringFilter<"Insumo"> | string
@@ -17217,11 +17236,12 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
     categoria_gasto?: XOR<CategoriaGastoNullableRelationFilter, CategoriaGastoWhereInput> | null
     concepto_insumos?: ConceptoInsumoListRelationFilter
-  }, "id" | "uq_insumo_tenant_clave">
+  }, "id" | "uq_insumo_tenant_proyecto_clave">
 
   export type InsumoOrderByWithAggregationInput = {
     id?: SortOrder
     tenant_id?: SortOrder
+    proyecto_id?: SortOrderInput | SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -17244,6 +17264,7 @@ export namespace Prisma {
     NOT?: InsumoScalarWhereWithAggregatesInput | InsumoScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"Insumo"> | string
     tenant_id?: UuidWithAggregatesFilter<"Insumo"> | string
+    proyecto_id?: UuidNullableWithAggregatesFilter<"Insumo"> | string | null
     clave?: StringWithAggregatesFilter<"Insumo"> | string
     descripcion?: StringWithAggregatesFilter<"Insumo"> | string
     unidad_medida?: StringWithAggregatesFilter<"Insumo"> | string
@@ -18432,6 +18453,7 @@ export namespace Prisma {
   export type InsumoCreateInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -18447,6 +18469,7 @@ export namespace Prisma {
   export type InsumoUncheckedCreateInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -18462,6 +18485,7 @@ export namespace Prisma {
   export type InsumoUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -18477,6 +18501,7 @@ export namespace Prisma {
   export type InsumoUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -18492,6 +18517,7 @@ export namespace Prisma {
   export type InsumoCreateManyInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -18506,6 +18532,7 @@ export namespace Prisma {
   export type InsumoUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -18519,6 +18546,7 @@ export namespace Prisma {
   export type InsumoUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -19972,14 +20000,16 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type InsumoUq_insumo_tenant_claveCompoundUniqueInput = {
+  export type InsumoUq_insumo_tenant_proyecto_claveCompoundUniqueInput = {
     tenant_id: string
+    proyecto_id: string
     clave: string
   }
 
   export type InsumoCountOrderByAggregateInput = {
     id?: SortOrder
     tenant_id?: SortOrder
+    proyecto_id?: SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -19998,6 +20028,7 @@ export namespace Prisma {
   export type InsumoMaxOrderByAggregateInput = {
     id?: SortOrder
     tenant_id?: SortOrder
+    proyecto_id?: SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -20012,6 +20043,7 @@ export namespace Prisma {
   export type InsumoMinOrderByAggregateInput = {
     id?: SortOrder
     tenant_id?: SortOrder
+    proyecto_id?: SortOrder
     clave?: SortOrder
     descripcion?: SortOrder
     unidad_medida?: SortOrder
@@ -21557,6 +21589,7 @@ export namespace Prisma {
   export type InsumoCreateWithoutCategoria_gastoInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -21571,6 +21604,7 @@ export namespace Prisma {
   export type InsumoUncheckedCreateWithoutCategoria_gastoInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -21614,6 +21648,7 @@ export namespace Prisma {
     NOT?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
     id?: UuidFilter<"Insumo"> | string
     tenant_id?: UuidFilter<"Insumo"> | string
+    proyecto_id?: UuidNullableFilter<"Insumo"> | string | null
     clave?: StringFilter<"Insumo"> | string
     descripcion?: StringFilter<"Insumo"> | string
     unidad_medida?: StringFilter<"Insumo"> | string
@@ -22250,6 +22285,7 @@ export namespace Prisma {
   export type InsumoCreateWithoutConcepto_insumosInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -22264,6 +22300,7 @@ export namespace Prisma {
   export type InsumoUncheckedCreateWithoutConcepto_insumosInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -22337,6 +22374,7 @@ export namespace Prisma {
   export type InsumoUpdateWithoutConcepto_insumosInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -22351,6 +22389,7 @@ export namespace Prisma {
   export type InsumoUncheckedUpdateWithoutConcepto_insumosInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -22523,6 +22562,7 @@ export namespace Prisma {
   export type InsumoCreateManyCategoria_gastoInput = {
     id?: string
     tenant_id: string
+    proyecto_id?: string | null
     clave: string
     descripcion: string
     unidad_medida: string
@@ -22536,6 +22576,7 @@ export namespace Prisma {
   export type InsumoUpdateWithoutCategoria_gastoInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -22550,6 +22591,7 @@ export namespace Prisma {
   export type InsumoUncheckedUpdateWithoutCategoria_gastoInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string
@@ -22564,6 +22606,7 @@ export namespace Prisma {
   export type InsumoUncheckedUpdateManyWithoutCategoria_gastoInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
     clave?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     unidad_medida?: StringFieldUpdateOperationsInput | string

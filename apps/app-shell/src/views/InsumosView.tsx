@@ -1588,7 +1588,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     ? 'Presupuestado vs. Comprometido vs. Pagado por partida'
                     : activeTab === 'transferencias'
                     ? 'Movimientos de presupuesto entre partidas · Aprobación requerida'
-                    : 'Catálogo maestro de insumos · Materiales, M.O., Equipo'}
+                    : 'Catálogo de insumos del proyecto · Materiales, M.O., Equipo'}
                 </p>
               </div>
             </div>

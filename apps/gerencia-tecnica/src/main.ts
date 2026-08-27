@@ -94,6 +94,7 @@ app.get('/api/v1/gerencia-tecnica/insumos', async (req: Request, res: Response) 
 
     const data = insumos.map((i: any) => ({
       id: i.id,
+      proyecto_id: i.proyecto_id,
       clave: i.clave,
       descripcion: i.descripcion,
       unidad_medida: i.unidad_medida,
@@ -145,6 +146,7 @@ app.get('/api/v1/gerencia-tecnica/insumos/explosion', async (req: Request, res: 
 
     const result = insumos.map((i: any) => ({
       id: i.id,
+      proyecto_id: i.proyecto_id,
       clave: i.clave,
       descripcion: i.descripcion,
       tipo_insumo: i.tipo_insumo,
@@ -289,6 +291,7 @@ app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintende
     const insumo = await db.insumo.create({
       data: {
         tenant_id: tenantId,
+        proyecto_id: proyectoId,
         clave,
         descripcion,
         unidad_medida,
@@ -385,6 +388,7 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
       const result = await db.insumo.createMany({
         data: nuevos.map(i => ({
           tenant_id: tenantId,
+          proyecto_id: proyectoId,
           clave: i.clave,
           descripcion: i.descripcion,
           unidad_medida: i.unidad_medida,

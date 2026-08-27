@@ -58,8 +58,10 @@ model ProyectoCostosConfig {
 /// Catálogo Maestro de Insumos: Materiales, Mano de Obra, Equipo, Subcontratos.
 /// Tabla maestra con aislamiento por tenant_id (RLS).
 model Insumo {
-  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenant_id String @db.Uuid
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String  @db.Uuid
+  /// NULL = insumo legacy sin proyecto atribuible (ver aislamiento-insumos-por-proyecto-gt, Decision 1/3)
+  proyecto_id String? @db.Uuid
 
   clave         String     @db.VarChar(50)
   descripcion   String     @db.Text
@@ -79,8 +81,9 @@ model Insumo {
   concepto_insumos ConceptoInsumo[]
 
   // Índices de rendimiento Multi-Tenant
-  @@unique([tenant_id, clave], name: "uq_insumo_tenant_clave")
+  @@unique([tenant_id, proyecto_id, clave], name: "uq_insumo_tenant_proyecto_clave")
   @@index([tenant_id], name: "idx_insumo_tenant")
+  @@index([tenant_id, proyecto_id], name: "idx_insumo_tenant_proyecto")
   @@index([tenant_id, categoria_gasto_id], name: "idx_insumo_categoria")
   @@map("insumos")
 }
