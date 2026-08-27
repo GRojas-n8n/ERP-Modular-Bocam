@@ -1,5 +1,5 @@
 # BocamOS / Iretum ERP — Estado del Sistema
-**Última revisión:** 27 de Mayo 2026  
+**Última revisión:** 27 de Agosto 2026 (verificación puntual de CRUD Empleados/Proveedores/Usuarios; el resto del documento data de Mayo 2026 y puede estar desactualizado)  
 **Stack:** React 19 · Vite 7 · TypeScript · Express · Prisma · PostgreSQL · RabbitMQ · Redis  
 **Producto:** Iretum ERP (SaaS Multi-Tenant para constructoras)  
 **VPS:** `72.60.114.12` · SSH `root@72.60.114.12` · Proyecto en `/root/ERP-Modular-Bocam`  
@@ -24,7 +24,7 @@
 | **seguridad** | Express + Prisma | 3007 | 🔶 EN PROGRESO | 60% |
 | **control-obra** | Express + Prisma | 3005 | 🔶 EN PROGRESO | 60% |
 | **ventas** | Express + Prisma | 3012 | 🔶 EN PROGRESO | 50% |
-| **personal** | Express + Prisma | 3009 | 🔶 EN PROGRESO | 50% |
+| **personal** | Express + Prisma | 3009 | 🔶 EN PROGRESO | 85% (revisado 2026-08-27, ver detalle abajo) |
 | **gerencia-tecnica** | Express + Prisma | 3010 | 🔶 EN PROGRESO | 45% |
 | **common** | — | — | ⬜ ESQUELETO | 0% |
 | **database** | — | — | ⬜ ESQUELETO | 0% |
@@ -149,6 +149,7 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 - Schema: Tenant, User, Proyecto, UserProjectAccess, RefreshToken
 - Aislamiento multi-tenant con tenant_id en todas las consultas
 - **Endpoint clave:** `POST /api/v1/auth/switch-project` para cambiar proyecto activo
+- **CRUD de Usuarios (verificado 2026-08-27):** alta (`POST /admin/users`), modificación (`PATCH /admin/users/:id` — nombre, roles, límite de aprobación, password, proyectos asignados), baja lógica vía el mismo PATCH con `activo: false` (no hay endpoint dedicado de archivar/reactivar, es un solo toggle de campo). UI en `AdminView.tsx`.
 
 ### ✅ finanzas — Tesorería Completa (Puerto 3004)
 - Flujo de caja, compromisos financieros, pagos
@@ -176,6 +177,8 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 - `POST /comparativas/:id/convertir-oc` guard: requiere estado APROBADO_GT
 - Migración aplicada en VPS: `cuadro_comparativo_aprobacion_dos_etapas`
 
+**CRUD de Proveedores (verificado 2026-08-27):** alta (`POST /proveedores`, con importación en lote), modificación (`PUT /proveedores/:id`), baja/archivo (`POST /proveedores/:id/archivar`) y reactivación (`POST /proveedores/:id/activar`). UI en `ComprasView.tsx`. No existe entidad "Subcontratista" separada — se manejan como Proveedor sin distinción de tipo (ver Brechas Actuales).
+
 **Falta:** Motor de cálculo IVA configurable (actualmente hardcodeado al 16%). Flujo de devoluciones/rechazos post-OC.
 
 ### 🔶 control-obra — Bitácora y Avance Físico (Puerto 3006) — 60%
@@ -193,10 +196,17 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 
 **Falta:** Implementación de servicios (stubs vacíos), lógica de negocio, integración con contabilidad.
 
-### 🔶 personal — RRHH y Nómina (Puerto 3009) — 50%
-**Tiene:** Schema: Empleado, Cuadrilla, AsignacionFrente, PreNomina. Endpoints básicos.
+### 🔶 personal — RRHH y Nómina (Puerto 3009) — 85% (revisado 2026-08-27)
+**Tiene (bastante más avanzado de lo que indicaba la revisión de Mayo):**
+- **CRUD de Empleados:** alta (`POST /empleados`, con importación en lote), modificación (`PATCH /empleados/:id`), baja (`PATCH /empleados/:id/baja`) y reactivación (`PATCH /empleados/:id/reactivar`). UI en `PersonalView.tsx`.
+- **Motor de cálculo de nómina implementado:** `calcularISR`, `calcularSubsidio`, `calcularIMSS`, `calcularHorasExtra` (tablas fiscales en `tablas-fiscales.ts`), configuración de deducciones por empleado.
+- Cuadrillas, asignación a frentes/obra, préstamos a empleados.
+- Documentos de empleado (subida/descarga/borrado) con control de vencimiento.
+- Credenciales de empleado (generación individual y en lote).
+- Asistencia: registro individual, bulk, escaneo (QR), resumen y configuración.
+- Prenómina y complementos: cálculo, marcar revisado, autorizar, pagar.
 
-**Falta:** Motor de cálculo de nómina (IMSS, ISR), flujo prenómina → aprobación → dispersión.
+**Falta:** Flujo formal prenómina → aprobación → dispersión bancaria (hoy es autorizar/pagar sin integración de dispersión). Sin tests automatizados (ver Brechas Actuales #3).
 
 ### 🔶 gerencia-tecnica — Presupuestos y Catálogo (Puerto 3010) — 45%
 **Tiene:** Schema: Insumo, Presupuesto, ConceptoPresupuesto. Endpoints básicos.
@@ -210,8 +220,11 @@ docker compose -f docker-compose.vps.yml --profile core up -d
 ### 1. Endpoints de Almacén y EPP (Backend faltante)
 El frontend llama `/api/v1/compras/almacen/inventario`, `/api/v1/compras/almacen/movimientos` y `/api/v1/seguridad/epp` — ninguno existe en el backend todavía. En modo real los módulos de Almacén y EPP no cargarán datos.
 
-### 2. Motor de Nómina Ausente
-El módulo personal tiene el schema correcto pero cero lógica de cálculo (IMSS, ISR, partes proporcionales, deducciones).
+### 2. ~~Motor de Nómina Ausente~~ — RESUELTO (verificado 2026-08-27)
+El módulo personal ya tiene motor de cálculo completo (IMSS, ISR, subsidio, horas extra) en `apps/personal/src/tablas-fiscales.ts` y usado en `POST /prenominas/calcular`. Este punto estaba desactualizado.
+
+### 2b. Subcontratistas sin entidad propia
+No existe un modelo "Subcontratista" separado en ningún microservicio — solo aparece como comentario de campo (`beneficiario`) en el schema de finanzas. Hoy un subcontratista se da de alta como Proveedor genérico en `compras`, sin poder distinguirlo por tipo ni aplicarle campos propios (p. ej. retenciones, contratos de subcontratación). Definir si esto requiere spec nuevo o si basta con un campo `tipo` en Proveedor.
 
 ### 3. Tests incompletos
 Solo auth, finanzas y contabilidad tienen tests completos. ventas, personal, gerencia-técnica y seguridad no tienen ningún test.
@@ -331,3 +344,10 @@ docker logs bocam-vps-auth --tail 50
   - Demo mode: `DEMO_COMPARATIVAS` cubre todos los estados del flujo (5 cuadros)
   - 5 tests de integración: happy path completo, rechazo vinculante, RECHAZADO_GT, guard 400, OC parcial
   - VPS deploy: compras + app-shell rebuildeados y corriendo en producción
+
+### Sesión 2026-08-27
+- **Verificación puntual de CRUD** (alta/baja/modificación) para Empleados, Proveedores, Usuarios y "Subcontratistas" — este documento tenía desactualizado el estado de `personal` (marcaba 50% con "endpoints básicos" y motor de nómina ausente; en realidad ya tiene CRUD completo de empleados, motor IMSS/ISR, documentos, credenciales, asistencia QR y préstamos)
+- Confirmado: Empleados y Proveedores tienen ciclo completo alta/modificación/baja-archivo/reactivación con UI en `PersonalView.tsx` y `ComprasView.tsx`
+- Confirmado: Usuarios (auth) tiene alta/modificación vía `AdminView.tsx`, baja lógica por campo `activo` (sin endpoint dedicado)
+- Confirmado: "Subcontratista" no existe como entidad — se maneja como Proveedor genérico (gap documentado arriba)
+- Nota: el resto de las secciones de este documento (compras 75%, gerencia-tecnica 45%, etc.) no fue re-auditado en esta sesión y puede no reflejar trabajo reciente (ver commits de aislamiento de insumos/proyecto por módulo posteriores a Mayo 2026)
