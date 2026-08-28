@@ -57,6 +57,12 @@ interface UserModalProps {
 }
 const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved }) => {
   const isEdit = !!user;
+  const { currentProjectId } = useTenant();
+  // Ver openspec/changes/modal-confirmacion-antes-de-subir-archivos — alta
+  // de Usuario confirma el proyecto activo antes de crear (patrón
+  // confirmacion-proyecto-en-altas); editar un usuario existente no cambia.
+  const nombreProyectoActivo = proyectos.find(p => p.id_proyecto === currentProjectId)?.nombre_oficial || 'Sin proyecto';
+  const [confirmarAlta, setConfirmarAlta] = useState(false);
   const [form, setForm] = useState({
     nombre: user?.nombre ?? '', email: user?.email ?? '',
     password: '', roles: user?.roles ?? [],
@@ -76,6 +82,11 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
     if (!form.nombre.trim() || !form.email.trim()) { setError('Nombre y email son obligatorios.'); return; }
     if (!isEdit && !form.password) { setError('La contraseña es obligatoria para nuevos usuarios.'); return; }
     if (form.roles.length === 0) { setError('Asigna al menos un rol.'); return; }
+    if (!isEdit) { setConfirmarAlta(true); return; }
+    await guardarUsuario();
+  };
+
+  const guardarUsuario = async () => {
     setSaving(true); setError(null);
     try {
       if (isEdit) {
@@ -188,6 +199,16 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
           </button>
         </div>
       </div>
+
+      <ConfirmCriticalActionDialog
+        open={confirmarAlta}
+        title="¿Crear este usuario?"
+        projectName={nombreProyectoActivo}
+        confirmLabel="Crear Usuario"
+        confirmDisabled={saving}
+        onConfirm={() => { setConfirmarAlta(false); void guardarUsuario(); }}
+        onCancel={() => setConfirmarAlta(false)}
+      />
     </div>
   );
 };

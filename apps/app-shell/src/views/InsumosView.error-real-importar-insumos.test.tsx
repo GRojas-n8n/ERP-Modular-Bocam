@@ -57,6 +57,11 @@ describe('InsumosView — mensaje de error real al fallar la importación de ins
     const inputAPU = document.querySelectorAll('input[type="file"]')[1] as HTMLInputElement;
     fireEvent.change(inputAPU, { target: { files: [archivo] } });
 
+    // Ver openspec/changes/modal-confirmacion-antes-de-subir-archivos: la
+    // selección de archivo ahora pide confirmar destino antes de parsear.
+    await screen.findByText('Confirmar carga de archivo');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
     // Timeout ampliado: parsear un .xlsx real vía ExcelJS/FileReader es más
     // pesado que una espera de UI típica, y esta prueba puede quedar lenta
     // bajo carga si corre junto a todo el suite en paralelo.
