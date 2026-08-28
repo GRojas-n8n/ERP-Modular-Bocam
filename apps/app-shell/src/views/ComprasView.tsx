@@ -343,6 +343,30 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [docsLoading, setDocsLoading] = useState(false);
   const [docTipoUpload, setDocTipoUpload] = useState('OTRO');
   const docFileRef = useRef<HTMLInputElement>(null);
+  // Confirmar destino antes de subir un documento de proveedor — ver
+  // openspec/changes/modal-confirmacion-antes-de-subir-archivos.
+  const [pendingDocProveedor, setPendingDocProveedor] = useState<File | null>(null);
+  const subirDocProveedor = async () => {
+    const file = pendingDocProveedor;
+    if (!file || !docsProveedorId) return;
+    setPendingDocProveedor(null);
+    const fd = new FormData();
+    fd.append('archivo', file);
+    fd.append('tipo_doc', docTipoUpload);
+    fd.append('nombre_doc', file.name);
+    try {
+      const res = await api.post(`/api/v1/compras/proveedores/${docsProveedorId}/documentos`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setDocsProveedor(prev => ({
+        ...prev,
+        [docsProveedorId]: [res.data.data, ...(prev[docsProveedorId] ?? [])],
+      }));
+      notify({ title: 'Documento subido', type: 'success' });
+    } catch (err: any) {
+      notify({ title: err.response?.data?.message ?? 'Error al subir', type: 'error' });
+    }
+  };
   // ── Calificaciones de proveedor ───────────────────────────────────────────
   const [calHistorialId, setCalHistorialId] = useState<string | null>(null);
   const [calHistorial, setCalHistorial] = useState<Record<string, any[]>>({});
@@ -4248,32 +4272,26 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 </Select>
               </FormField>
               <input ref={docFileRef} type="file" accept=".pdf,.xml,.jpg,.jpeg,.png" className="hidden"
-                onChange={async (e) => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
+                  if (docFileRef.current) docFileRef.current.value = '';
                   if (!file || !docsProveedorId) return;
-                  const fd = new FormData();
-                  fd.append('archivo', file);
-                  fd.append('tipo_doc', docTipoUpload);
-                  fd.append('nombre_doc', file.name);
-                  try {
-                    const res = await api.post(`/api/v1/compras/proveedores/${docsProveedorId}/documentos`, fd, {
-                      headers: { 'Content-Type': 'multipart/form-data' },
-                    });
-                    setDocsProveedor(prev => ({
-                      ...prev,
-                      [docsProveedorId]: [res.data.data, ...(prev[docsProveedorId] ?? [])],
-                    }));
-                    notify({ title: 'Documento subido', type: 'success' });
-                  } catch (err: any) {
-                    notify({ title: err.response?.data?.message ?? 'Error al subir', type: 'error' });
-                  } finally {
-                    if (docFileRef.current) docFileRef.current.value = '';
-                  }
+                  setPendingDocProveedor(file);
                 }}
               />
               <Button onClick={() => docFileRef.current?.click()} className="w-full rounded-xl border-2 border-dashed !border-emerald-600 !bg-emerald-500/10 text-sm font-semibold !text-emerald-700 hover:!bg-emerald-500/20">
                 + Seleccionar archivo (PDF, XML, JPG, PNG — máx. 10 MB)
               </Button>
+
+              <ConfirmCriticalActionDialog
+                open={!!pendingDocProveedor}
+                title="Confirmar carga de archivo"
+                projectName={currentProjectName}
+                fileName={pendingDocProveedor?.name}
+                destination="Compras → Proveedores"
+                onConfirm={() => void subirDocProveedor()}
+                onCancel={() => setPendingDocProveedor(null)}
+              />
             </div>
           )}
         </div>

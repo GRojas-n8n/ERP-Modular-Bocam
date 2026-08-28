@@ -1093,9 +1093,20 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
     } catch { setExpediente([]); }
   };
 
-  const handleSubirDocumento = async () => {
+  // Confirmar destino antes de subir un documento al expediente — ver
+  // openspec/changes/modal-confirmacion-antes-de-subir-archivos.
+  const [confirmarSubidaDocumento, setConfirmarSubidaDocumento] = useState<File | null>(null);
+
+  const handleSubirDocumento = () => {
     const file = fileExpedienteRef.current?.files?.[0];
     if (!configPanel || !file) return;
+    setConfirmarSubidaDocumento(file);
+  };
+
+  const subirDocumentoReal = async () => {
+    const file = confirmarSubidaDocumento;
+    if (!configPanel || !file) return;
+    setConfirmarSubidaDocumento(null);
     setSubiendoDocumento(true);
     try {
       const fd = new FormData();
@@ -2647,6 +2658,17 @@ export const PersonalView: React.FC<{ activeSubView?: string }> = ({ activeSubVi
                   onClick={handleSubirDocumento}
                 />
               </div>
+
+              <ConfirmCriticalActionDialog
+                open={!!confirmarSubidaDocumento}
+                title="Confirmar carga de archivo"
+                projectName={currentProjectName}
+                fileName={confirmarSubidaDocumento?.name}
+                destination="Personal → Empleados (expediente)"
+                confirmDisabled={subiendoDocumento}
+                onConfirm={() => void subirDocumentoReal()}
+                onCancel={() => setConfirmarSubidaDocumento(null)}
+              />
             </div>
 
             {/* ── Residente(s) asignado(s) ── */}

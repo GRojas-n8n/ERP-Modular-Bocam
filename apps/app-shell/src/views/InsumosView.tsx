@@ -26,6 +26,7 @@ import { TableScrollShadow } from '../components/TableScrollShadow';
 import { ControlPresupuestalTabla } from '../components/ControlPresupuestalTabla';
 import { HelpButton } from '../components/HelpButton';
 import { HelpPanel } from '../components/HelpPanel';
+import { ConfirmCriticalActionDialog } from '@bocam/ui-core';
 import {
   IconBriefcase,
   IconSearch,
@@ -690,6 +691,7 @@ function leerArchivoComoRawRows(
 
 export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (sub: string) => void }> = ({ activeSubView, onSubNavigate }) => {
   const { tenant, currentProjectId, user } = useTenant();
+  const nombreProyectoActivo = user?.projects?.find(p => p.id === currentProjectId)?.name || 'Sin proyecto';
   const { notify } = useNotification();
   const rolesUsuario: string[] = user?.role ?? [];
   const puedeAprobar = rolesUsuario.some(r => ['gerencia_tecnica', 'admin'].includes(r));
@@ -700,6 +702,17 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   const [deshaciendoImportacion, setDeshaciendoImportacion] = useState(false);
 
   const activeTab: ActiveTab = (activeSubView as ActiveTab) || 'catalogo';
+
+  // Confirmación de destino antes de procesar cualquier carga de archivo —
+  // ver openspec/changes/modal-confirmacion-antes-de-subir-archivos.
+  type CargaKind = 'catalogo' | 'apu' | 'explosion' | 'ficha';
+  const [pendingUpload, setPendingUpload] = useState<{ file: File; kind: CargaKind } | null>(null);
+  const DESTINOS_CARGA: Record<CargaKind, string> = {
+    catalogo:  'Gerencia Técnica → Catálogo de Obra',
+    apu:       'Gerencia Técnica → Análisis de Precios Unitarios',
+    explosion: 'Gerencia Técnica → Explosión de Insumos',
+    ficha:     'Gerencia Técnica → Ficha Técnica',
+  };
 
   // ── Estado Tab 1: Catálogo de Obra ────────────────────────────────────────
   const fileInputRef  = useRef<HTMLInputElement>(null);
@@ -948,10 +961,15 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
     finally { setLoadingFichasIns(false); }
   };
 
-  const handleFichaInsUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFichaInsUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !insumoFichasId) return;
+    setPendingUpload({ file, kind: 'ficha' });
+  };
+
+  const procesarFichaIns = async (file: File) => {
+    if (!insumoFichasId) return;
     setUploadingFichaIns(true);
     try {
       const fd = new FormData();
@@ -1409,9 +1427,16 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   };
 
   // ── Leer Catálogo de Obra (Tab 1) ─────────────────────────────────────────
+  // Selección de archivo → confirmar destino antes de parsear. Ver
+  // openspec/changes/modal-confirmacion-antes-de-subir-archivos.
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setPendingUpload({ file, kind: 'catalogo' });
+  };
+
+  const procesarCatalogo = (file: File) => {
     setArchivoNombre(file.name);
     setParseError(null);
 
@@ -1476,7 +1501,6 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
         setPanelImport(true);
       })
       .catch((err: any) => setParseError(`Error al leer el archivo: ${err.message}`));
-    e.target.value = '';
   };
 
   // ── Confirmar Importación Catálogo (Tab 1) ────────────────────────────────
@@ -1513,7 +1537,12 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   // ── Leer archivo APU (Tab 2) ──────────────────────────────────────────────
   const handleFileAPU = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setPendingUpload({ file, kind: 'apu' });
+  };
+
+  const procesarAPU = (file: File) => {
     setArchivoNombreInsumo(file.name);
     setParseErrorInsumos(null);
     setPreviewComposiciones([]); // limpiar composiciones anteriores
@@ -1534,13 +1563,17 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
       },
       (msg) => setParseErrorInsumos(msg)
     );
-    e.target.value = '';
   };
 
   // ── Leer archivo Explosión de Insumos (Tab 2) ─────────────────────────────
   const handleFileExplosion = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setPendingUpload({ file, kind: 'explosion' });
+  };
+
+  const procesarExplosion = (file: File) => {
     setArchivoNombreInsumo(file.name);
     setParseErrorInsumos(null);
     setPreviewComposiciones([]); // Explosión no genera composiciones
@@ -1560,8 +1593,18 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
       },
       (msg) => setParseErrorInsumos(msg)
     );
-    e.target.value = '';
   };
+
+  const confirmarCargaArchivo = () => {
+    if (!pendingUpload) return;
+    const { file, kind } = pendingUpload;
+    setPendingUpload(null);
+    if (kind === 'catalogo') procesarCatalogo(file);
+    else if (kind === 'apu') procesarAPU(file);
+    else if (kind === 'explosion') procesarExplosion(file);
+    else void procesarFichaIns(file);
+  };
+  const cancelarCargaArchivo = () => setPendingUpload(null);
 
   // ── Confirmar Importación de Insumos (Tab 2) ──────────────────────────────
   const handleConfirmarInsumos = async () => {
@@ -1669,6 +1712,18 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
       <input ref={fileInputRef}       type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileChange} />
       <input ref={fileInputAPURef}    type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileAPU} />
       <input ref={fileInputExplosionRef} type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={handleFileExplosion} />
+
+      {pendingUpload && (
+        <ConfirmCriticalActionDialog
+          open
+          title="Confirmar carga de archivo"
+          projectName={nombreProyectoActivo}
+          fileName={pendingUpload.file.name}
+          destination={DESTINOS_CARGA[pendingUpload.kind]}
+          onConfirm={confirmarCargaArchivo}
+          onCancel={cancelarCargaArchivo}
+        />
+      )}
 
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
 
