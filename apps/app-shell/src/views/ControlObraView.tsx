@@ -281,6 +281,8 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [conceptosAvance, setConceptosAvance] = useState<ConceptoCatalogo[]>([]);
   const [avanceConceptoId, setAvanceConceptoId] = useState<string | null>(null);
   const [avanceConceptoSearch, setAvanceConceptoSearch] = useState('');
+  const [avanceGuardado, setAvanceGuardado] = useState<{ clave: string; cantidad: string; unidad: string } | null>(null);
+  const [bitacoraGuardada, setBitacoraGuardada] = useState<number | null>(null);
 
   // ── Estado: configuración ────────────────────────────────────────────────────
   const [insumosClasif, setInsumosClasif] = useState<InsumoClasif[]>([]);
@@ -542,30 +544,51 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     } catch { /* silencioso */ }
   };
 
+  // Limpia solo los campos de captura de una entrada de bitácora, conservando
+  // el frente de trabajo — el panel permanece abierto entre guardados
+  // (ver openspec/changes/captura-continua-avances-bitacora).
+  const clearBitacoraCaptureFields = () => {
+    setBitForm(prev => ({
+      frente_trabajo: prev.frente_trabajo,
+      turno: 'DIURNO', clima: '', temperatura_c: '',
+      actividades_realizadas: '', personal_en_sitio: '', incidencias: '',
+      material_recibido: '', observaciones: '',
+      fecha: new Date().toISOString().split('T')[0],
+    }));
+  };
+
+  const resetBitacoraForm = () => {
+    setShowBitacoraForm(false);
+    setBitForm({
+      frente_trabajo: '', turno: 'DIURNO', clima: '', temperatura_c: '',
+      actividades_realizadas: '', personal_en_sitio: '', incidencias: '',
+      material_recibido: '', observaciones: '',
+      fecha: new Date().toISOString().split('T')[0],
+    });
+    setBitacoraGuardada(null);
+  };
+
   const handleSubmitBitacora = async () => {
     if (!bitForm.frente_trabajo || !bitForm.actividades_realizadas) return;
     try {
       setFormLoading(true);
-      await api.post('/api/v1/control-proyectos/bitacoras', {
+      const res = await api.post('/api/v1/control-proyectos/bitacoras', {
         ...bitForm,
         personal_en_sitio: Number(bitForm.personal_en_sitio) || 0,
         temperatura_c: bitForm.temperatura_c ? Number(bitForm.temperatura_c) : null,
       });
-      setShowBitacoraForm(false);
-      setBitForm({
-        frente_trabajo: '', turno: 'DIURNO', clima: '', temperatura_c: '',
-        actividades_realizadas: '', personal_en_sitio: '', incidencias: '',
-        material_recibido: '', observaciones: '',
-        fecha: new Date().toISOString().split('T')[0],
-      });
+      setBitacoraGuardada(res.data?.data?.numero_entrada ?? null);
+      clearBitacoraCaptureFields();
       await fetchData();
     } catch (err: any) {
       alert(`Error: ${err.response?.data?.error?.message || err.message}`);
     } finally { setFormLoading(false); }
   };
 
-  const resetAvanceForm = () => {
-    setShowAvanceForm(false);
+  // Limpia solo los campos de captura de un avance (concepto, cantidad,
+  // periodo) — el panel permanece abierto entre guardados (ver
+  // openspec/changes/captura-continua-avances-bitacora).
+  const clearAvanceCaptureFields = () => {
     setAvanceConceptoId(null);
     setAvanceConceptoSearch('');
     setAvForm({
@@ -573,6 +596,12 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
       periodo_inicio: new Date().toISOString().split('T')[0],
       periodo_fin: new Date().toISOString().split('T')[0],
     });
+  };
+
+  const resetAvanceForm = () => {
+    setShowAvanceForm(false);
+    clearAvanceCaptureFields();
+    setAvanceGuardado(null);
   };
 
   const handleSubmitAvance = async () => {
@@ -587,11 +616,30 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
       });
       const nuevo = res.data?.data;
       if (nuevo) setAvances(prev => [...prev, nuevo]);
-      resetAvanceForm();
+      setAvanceGuardado({
+        clave: conceptoAvanceSeleccionado?.clave ?? '',
+        cantidad: avForm.cantidad_periodo,
+        unidad: conceptoAvanceSeleccionado?.unidad_medida ?? '',
+      });
+      clearAvanceCaptureFields();
     } catch (err: any) {
       alert(`Error: ${err.response?.data?.error?.message || err.message}`);
     } finally { setFormLoading(false); }
   };
+
+  // Las confirmaciones inline de guardado se ocultan solas tras unos segundos
+  // (ver openspec/changes/captura-continua-avances-bitacora, design.md).
+  useEffect(() => {
+    if (!avanceGuardado) return undefined;
+    const t = setTimeout(() => setAvanceGuardado(null), 4000);
+    return () => clearTimeout(t);
+  }, [avanceGuardado]);
+
+  useEffect(() => {
+    if (bitacoraGuardada === null) return undefined;
+    const t = setTimeout(() => setBitacoraGuardada(null), 4000);
+    return () => clearTimeout(t);
+  }, [bitacoraGuardada]);
 
   // ── Acciones EVM ─────────────────────────────────────────────────────────────
   async function accionarAlerta() {
@@ -1445,8 +1493,14 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
       )}
 
       {/* ── Formularios (Slide Panels) ───────────────────────────────────────── */}
-      <SlidePanel isOpen={showBitacoraForm} onClose={() => setShowBitacoraForm(false)} title="Nueva Bitácora" subtitle="Registro diario de actividades en campo" accentColor="sky">
+      <SlidePanel isOpen={showBitacoraForm} onClose={resetBitacoraForm} title="Nueva Bitácora" subtitle="Registro diario de actividades en campo" accentColor="sky">
         <div className="space-y-5">
+          {bitacoraGuardada !== null && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+              <IconCheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <p className="text-xs font-bold text-emerald-700">Entrada #{bitacoraGuardada} guardada</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Fecha" required>
               <Input type="date" value={bitForm.fecha} onChange={e => setBitForm({ ...bitForm, fecha: e.target.value })} />
@@ -1499,6 +1553,14 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
 
       <SlidePanel isOpen={showAvanceForm} onClose={resetAvanceForm} title="Registrar Avance Físico" subtitle="Captura de avance por concepto del presupuesto base" accentColor="sky">
         <div className="space-y-5">
+          {avanceGuardado && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+              <IconCheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <p className="text-xs font-bold text-emerald-700">
+                Avance guardado: {avanceGuardado.clave} — {avanceGuardado.cantidad} {avanceGuardado.unidad}
+              </p>
+            </div>
+          )}
           {(() => {
             const filtrados = avanceConceptoSearch.trim()
               ? conceptosAvance.filter(c => `${c.clave} ${c.descripcion}`.toLowerCase().includes(avanceConceptoSearch.toLowerCase()))
@@ -1543,7 +1605,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                         <button
                           key={c.id}
                           type="button"
-                          onClick={() => { setAvanceConceptoId(c.id); setAvanceConceptoSearch(''); }}
+                          onClick={() => { setAvanceConceptoId(c.id); setAvanceConceptoSearch(''); setAvanceGuardado(null); }}
                           className="w-full flex items-center gap-3 rounded-lg border border-border/30 px-3 py-2 text-left hover:border-sky-400/40 hover:bg-sky-500/5 transition-all"
                         >
                           <span className="text-[10px] font-mono text-sky-600 shrink-0">{c.clave}</span>

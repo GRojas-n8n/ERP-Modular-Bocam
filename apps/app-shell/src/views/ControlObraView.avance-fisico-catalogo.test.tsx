@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ControlObraView } from './ControlObraView';
 
 /**
@@ -111,6 +111,9 @@ describe('ControlObraView — Registrar Avance Físico usa el catálogo (6.2-6.6
     expect(sentBody).not.toHaveProperty('concepto_presupuesto');
 
     // No hace falta un GET de recarga completa — el avance ya viene en la respuesta del POST.
-    expect(await screen.findByText('CIM-001')).toBeInTheDocument();
+    // El panel permanece abierto tras guardar (ver captura-continua-avances-bitacora), así que
+    // "CIM-001" también sigue visible en el selector de concepto — se acota la búsqueda a la tabla.
+    const tabla = await screen.findByRole('table');
+    expect(within(tabla).getByText('CIM-001')).toBeInTheDocument();
   });
 });
