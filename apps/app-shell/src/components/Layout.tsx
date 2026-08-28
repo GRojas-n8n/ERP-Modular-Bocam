@@ -76,6 +76,14 @@ export type SubItem = {
   label: string;
   icon: React.FC<{ className?: string }>;
   roles?: string[];
+  /**
+   * Si el subItem vive en un grupo distinto al que realmente lo renderiza
+   * (ej. "Proyectos" bajo Gerencia Técnica navegando a Administración),
+   * `targetView` indica el NavItem.id real al que hay que saltar. El
+   * sidebar termina resaltando ese grupo destino, no el de origen — ver
+   * openspec/changes/acceso-proyectos-gt-control-obra.
+   */
+  targetView?: string;
 };
 
 export type NavItem = {
@@ -101,6 +109,8 @@ export const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'control-presupuestal', label: 'Control Presupuestal', icon: IconWallet },
       { id: 'transferencias',       label: 'Transferencias',       icon: IconArrowRight },
       { id: 'trazabilidad',         label: 'Trazabilidad',         icon: IconActivity },
+      // Ver openspec/changes/acceso-proyectos-gt-control-obra.
+      { id: 'proyectos',      label: 'Proyectos',         icon: IconBriefcase, targetView: 'admin' },
     ],
   },
   {
@@ -145,6 +155,10 @@ export const ALL_NAV_ITEMS: NavItem[] = [
       { id: 'presupuesto-partida', label: 'Presupuesto por Partida', icon: IconWallet },
       { id: 'programacion',  label: 'Programación',      icon: IconFileText },
       { id: 'configuracion', label: 'Configuración',     icon: IconBriefcase },
+      // Solo control_obra/control_proyectos/admin ven este salto — 'director'
+      // (también roles del grupo padre) queda fuera a propósito, no estaba
+      // en el pedido original. Ver openspec/changes/acceso-proyectos-gt-control-obra.
+      { id: 'proyectos', label: 'Proyectos', icon: IconBriefcase, targetView: 'admin', roles: ['admin', 'control_proyectos', 'control_obra'] },
     ],
   },
   {
@@ -198,7 +212,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     roles: ['admin', 'gerencia_tecnica', 'control_proyectos'],
     subItems: [
       { id: 'usuarios',   label: 'Usuarios',           icon: IconUsers,       roles: ['admin'] },
-      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase,  roles: ['admin', 'gerencia_tecnica', 'control_proyectos'] },
+      { id: 'proyectos',  label: 'Proyectos',           icon: IconBriefcase,  roles: ['admin', 'gerencia_tecnica', 'control_proyectos', 'control_obra'] },
       { id: 'categorias', label: 'Categorías de Gasto', icon: IconTrendingUp, roles: ['admin'] },
     ],
   },
@@ -426,7 +440,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                       return (
                         <button
                           key={sub.id}
-                          onClick={() => onSubNavigate(sub.id)}
+                          onClick={() => { if (sub.targetView) onNavigate(sub.targetView); onSubNavigate(sub.id); }}
                           className={cn(
                             'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
                             subActive

@@ -571,6 +571,10 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const currentProjectName = user?.projects?.find(p => p.id === currentProjectId)?.name || 'proyecto activo';
   const currentProjectColor = getProjectColor(currentProjectId);
   const activeTab = (activeSubView as 'usuarios' | 'proyectos' | 'categorias') || 'usuarios';
+  // Alta/edición de Proyectos: mismos roles que ROLES_ALTA_CENTRO_COSTOS en
+  // apps/auth. control_obra puede ver esta pestaña (menú) pero no crear ni
+  // editar. Ver openspec/changes/acceso-proyectos-gt-control-obra.
+  const puedeEditarProyectos = (user?.role ?? []).some(r => ['admin', 'gerencia_tecnica', 'control_proyectos'].includes(r));
   const [helpOpen, setHelpOpen] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -715,7 +719,7 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <HelpButton onClick={() => setHelpOpen(true)} />
-          {activeTab !== 'categorias' && (
+          {activeTab !== 'categorias' && !(activeTab === 'proyectos' && !puedeEditarProyectos) && (
             <button
               onClick={() => activeTab === 'usuarios' ? (setEditingUser(undefined), setShowUserModal(true)) : (setEditingProyecto(undefined), setShowProyectoModal(true))}
               className="rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
@@ -929,10 +933,12 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                       {p.tipo_contrato} · {p.moneda_base} · {p.estatus}
                     </p>
                   </div>
-                  <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
-                    className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
-                    Editar
-                  </button>
+                  {puedeEditarProyectos && (
+                    <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
+                      className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
+                      Editar
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
