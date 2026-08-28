@@ -765,15 +765,12 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     pct_economico: number | null;
     pct_fisico: number | null;
     semaforo: 'verde' | 'amarillo' | 'rojo' | 'sin_dato';
-    categorias: { nombre: string; comprometido: number; pagado: number }[];
     requisiciones: { folio: string; estado: string; monto: number }[];
   }
   const [costosWbs, setCostosWbs] = useState<CostosWbsRow[]>([]);
   const [costosLoading, setCostosLoading] = useState(false);
   const [costosExpandedId, setCostosExpandedId] = useState<string | null>(null);
-  const [costosFiltroCategoria, setCostosFiltroCategoria] = useState('');
   const [costosFiltroDes, setCostosFiltroDes] = useState(false);
-  const [costosCategoriasDisp, setCostosCategoriasDisp] = useState<string[]>([]);
 
   // ── Estado Tab 4: Control Presupuestal ───────────────────────────────────
   interface PartidaCP {
@@ -861,11 +858,9 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         pct_economico: c.pct_economico ?? null,
         pct_fisico: null,
         semaforo: c.semaforo === 'ambar' ? 'amarillo' : (c.semaforo ?? 'sin_dato'),
-        categorias: [],
         requisiciones: [],
       }));
       setCostosWbs(rows);
-      setCostosCategoriasDisp([]);
     } catch { /* silencioso */ }
     finally { setCostosLoading(false); }
   };
@@ -2148,14 +2143,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
 
                 {/* Filtros */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <select
-                    className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
-                    value={costosFiltroCategoria}
-                    onChange={e => setCostosFiltroCategoria(e.target.value)}
-                  >
-                    <option value="">Todas las categorías</option>
-                    {costosCategoriasDisp.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
                   <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground cursor-pointer">
                     <input
                       type="checkbox"
@@ -2190,7 +2177,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                     <tbody className="divide-y divide-border/20">
                       {costosWbs
                         .filter(r => {
-                          if (costosFiltroCategoria && !r.categorias.some(c => c.nombre === costosFiltroCategoria)) return false;
                           if (costosFiltroDes && r.semaforo !== 'rojo' && r.semaforo !== 'amarillo') return false;
                           return true;
                         })
@@ -2228,22 +2214,6 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 <tr key={`${row.concepto_id}-exp`} className="bg-muted/10">
                                   <td colSpan={7} className="px-8 py-4">
                                     <div className="space-y-3">
-                                      {row.categorias.length > 0 && (
-                                        <div>
-                                          <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Desglose por categoría</p>
-                                          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                                            {row.categorias.map(cat => (
-                                              <div key={cat.nombre} className="flex items-center justify-between rounded-xl border border-border/30 bg-card px-3 py-2">
-                                                <span className="text-[10px] font-bold text-foreground">{cat.nombre}</span>
-                                                <div className="flex gap-3 text-[10px]">
-                                                  <span className="text-amber-700">{fmt(cat.comprometido)}</span>
-                                                  <span className="text-emerald-700">{fmt(cat.pagado)}</span>
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
                                       {row.requisiciones.length > 0 && (
                                         <div>
                                           <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Requisiciones vinculadas</p>
@@ -2258,7 +2228,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                           </div>
                                         </div>
                                       )}
-                                      {row.categorias.length === 0 && row.requisiciones.length === 0 && (
+                                      {row.requisiciones.length === 0 && (
                                         <p className="text-[10px] text-muted-foreground">Sin requisiciones vinculadas a esta partida.</p>
                                       )}
                                     </div>
