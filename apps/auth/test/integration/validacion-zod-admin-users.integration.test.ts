@@ -158,6 +158,77 @@ async function testActualizarUsuarioRechazaActivoComoString() {
   }
 }
 
+async function testActualizarUsuarioCambiaEmail() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  const userId = randomUUID();
+  await prisma.user.create({
+    data: { id_usuario: userId, tenant_id: tenantId, email: `patch-email-${Date.now()}@bocam.test`, password_hash: 'x', nombre: 'Original', rol_global: ['resident'] },
+  });
+  try {
+    const nuevoEmail = `patch-email-nuevo-${Date.now()}@bocam.test`;
+    const r = await patch(`/api/v1/auth/admin/users/${userId}`, adminToken(tenantId), { email: nuevoEmail });
+    assert.equal(r.status, 200, 'un email válido y no usado por otro usuario debe aceptarse');
+    const body = (await r.json()) as any;
+    assert.equal(body.data.email, nuevoEmail);
+
+    const enBd = await prisma.user.findUniqueOrThrow({ where: { id_usuario: userId } });
+    assert.equal(enBd.email, nuevoEmail);
+    console.log('ok - admin/users PATCH: email se actualiza correctamente');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
+async function testActualizarUsuarioRechazaEmailFormatoInvalido() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  const userId = randomUUID();
+  const emailOriginal = `patch-email-invalido-${Date.now()}@bocam.test`;
+  await prisma.user.create({
+    data: { id_usuario: userId, tenant_id: tenantId, email: emailOriginal, password_hash: 'x', nombre: 'Original', rol_global: ['resident'] },
+  });
+  try {
+    const r = await patch(`/api/v1/auth/admin/users/${userId}`, adminToken(tenantId), { email: 'esto-no-es-un-email' });
+    assert.equal(r.status, 400, 'un email con formato inválido debe rechazarse con 400');
+    const body = (await r.json()) as any;
+    assert.equal(body.error.code, 'VALIDATION_ERROR');
+    assert.ok(body.error.details.some((d: any) => d.field === 'email'));
+
+    const enBd = await prisma.user.findUniqueOrThrow({ where: { id_usuario: userId } });
+    assert.equal(enBd.email, emailOriginal, 'el update NO debe haberse ejecutado contra Prisma');
+    console.log('ok - admin/users PATCH: email con formato inválido responde 400 VALIDATION_ERROR sin tocar Prisma');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
+async function testActualizarUsuarioRechazaEmailDuplicado() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  const emailExistente = `patch-email-duplicado-existente-${Date.now()}@bocam.test`;
+  await prisma.user.create({
+    data: { id_usuario: randomUUID(), tenant_id: tenantId, email: emailExistente, password_hash: 'x', nombre: 'Otro Usuario', rol_global: ['resident'] },
+  });
+  const userId = randomUUID();
+  const emailOriginal = `patch-email-duplicado-propio-${Date.now()}@bocam.test`;
+  await prisma.user.create({
+    data: { id_usuario: userId, tenant_id: tenantId, email: emailOriginal, password_hash: 'x', nombre: 'Original', rol_global: ['resident'] },
+  });
+  try {
+    const r = await patch(`/api/v1/auth/admin/users/${userId}`, adminToken(tenantId), { email: emailExistente });
+    assert.equal(r.status, 409, 'un email ya usado por otro usuario del mismo tenant debe rechazarse con 409');
+    const body = (await r.json()) as any;
+    assert.equal(body.error.code, 'ADMIN_EMAIL_DUPLICADO');
+
+    const enBd = await prisma.user.findUniqueOrThrow({ where: { id_usuario: userId } });
+    assert.equal(enBd.email, emailOriginal, 'el update NO debe haberse aplicado');
+    console.log('ok - admin/users PATCH: email duplicado en el mismo tenant responde 409 ADMIN_EMAIL_DUPLICADO');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
 async function main() {
   await setup();
   try {
@@ -166,6 +237,9 @@ async function main() {
     await testCrearUsuarioRechazaEmailFaltante();
     await testActualizarUsuarioPayloadValidoSigueFuncionando();
     await testActualizarUsuarioRechazaActivoComoString();
+    await testActualizarUsuarioCambiaEmail();
+    await testActualizarUsuarioRechazaEmailFormatoInvalido();
+    await testActualizarUsuarioRechazaEmailDuplicado();
   } finally {
     await teardown();
   }
