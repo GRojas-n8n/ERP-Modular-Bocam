@@ -579,6 +579,7 @@ export function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoP
   let colDescripcion   = 1;
   let colUnidad        = 2;
   let colCostoUnitario = 4;
+  let colImporte       = -1; // -1 = columna no detectada en este archivo
 
   for (const fila of rawRows) {
     const celdas = fila.map(c => String(c ?? '').trim());
@@ -607,6 +608,12 @@ export function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoP
           /costo\s*unit/i.test(c) || /precio\s*unit/i.test(c) || /costo\s*dir/i.test(c)
         );
         if (iCosto >= 0) colCostoUnitario = iCosto;
+        // Filas HH/HS (mano de obra e indirectos reportados como % de m.o.)
+        // no traen un costo por unidad real en COSTO UNITARIO — el monto
+        // correcto está en IMPORTE. Ver
+        // openspec/changes/fix-explosion-insumos-costo-vs-importe.
+        const iImporte = celdas.findIndex(c => /^importe$/i.test(c));
+        if (iImporte >= 0) colImporte = iImporte;
         headerDetectado = true;
       }
       // Saltear cualquier fila antes de que aparezca el encabezado
@@ -626,7 +633,13 @@ export function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoP
     const clave  = celdas[colClave]         ?? '';
     const desc   = celdas[colDescripcion]   ?? '';
     const unidad = celdas[colUnidad]        ?? '';
-    const precio = parsearNumero(celdas[colCostoUnitario]);
+    // HH (Herramienta Menor) y HS (indirectos de seguridad) se reportan en
+    // OPUS como % de mano de obra: COSTO UNITARIO no es un precio por
+    // unidad real para estas filas — el monto correcto está en IMPORTE.
+    const esIndirectoPorcentual = /^(HH|HS)/i.test(clave.trim());
+    const precio = (esIndirectoPorcentual && colImporte >= 0)
+      ? parsearNumero(celdas[colImporte])
+      : parsearNumero(celdas[colCostoUnitario]);
 
     // Saltear filas sin clave, con clave numérica pura o de totales/resumen
     if (!clave) continue;

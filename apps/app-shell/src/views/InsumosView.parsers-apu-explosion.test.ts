@@ -109,4 +109,67 @@ describe('parsearArchivoExplosion', () => {
       expect.objectContaining({ clave: 'MATG-001', unidad_medida: 'KG', costo_base: 32.23 }),
     ]);
   });
+
+  /**
+   * Ver openspec/changes/fix-explosion-insumos-costo-vs-importe/.
+   *
+   * En filas de indirectos reportados como porcentaje (HH = Herramienta Menor,
+   * HS = Equipo de Seguridad Básico Industrial), OPUS pone un valor en COSTO
+   * UNITARIO que no es el monto real del insumo — el monto real está en la
+   * columna IMPORTE. El parser tomaba siempre COSTO UNITARIO sin distinguir
+   * estas filas, produciendo un costo_base erróneo.
+   */
+  const HEADER_ROW_CON_IMPORTE = ['', 'CLAVE', 'DESCRIPCION', 'UNIDAD', 'CANTIDAD', 'COSTO UNITARIO', 'IMPORTE'];
+
+  it('toma el Importe (no el Costo Unitario) para una fila HH de Herramienta Menor', () => {
+    const rows: (string | number)[][] = [
+      HEADER_ROW_CON_IMPORTE,
+      ['', 'HH', 'HERRAMIENTA MENOR', '(%)mo', '', 5, 3527.82],
+    ];
+
+    const insumos = parsearArchivoExplosion(rows);
+
+    expect(insumos).toEqual([
+      expect.objectContaining({ clave: 'HH', costo_base: 3527.82 }),
+    ]);
+  });
+
+  it('toma el Importe (no el Costo Unitario) para una fila HS de Equipo de Seguridad Básico Industrial', () => {
+    const rows: (string | number)[][] = [
+      HEADER_ROW_CON_IMPORTE,
+      ['', 'HS-002', 'EQUIPO DE SEGURIDAD BASICO INDUSTRIAL', '(%)mo', '', 3, 1200.5],
+    ];
+
+    const insumos = parsearArchivoExplosion(rows);
+
+    expect(insumos).toEqual([
+      expect.objectContaining({ clave: 'HS-002', costo_base: 1200.5 }),
+    ]);
+  });
+
+  it('sigue tomando el Costo Unitario (no el Importe) para una fila de material normal', () => {
+    const rows: (string | number)[][] = [
+      HEADER_ROW_CON_IMPORTE,
+      ['', 'MATG-001', 'ACERO ESTRUCTURAL HABILITADO EN MOLDE', 'KG', '6867.7268', 32.23, 221364.87],
+    ];
+
+    const insumos = parsearArchivoExplosion(rows);
+
+    expect(insumos).toEqual([
+      expect.objectContaining({ clave: 'MATG-001', costo_base: 32.23 }),
+    ]);
+  });
+
+  it('sin columna IMPORTE en el archivo, cae de vuelta a Costo Unitario incluso para HH/HS', () => {
+    const rows: (string | number)[][] = [
+      HEADER_ROW, // sin columna IMPORTE
+      ['', 'HH', 'HERRAMIENTA MENOR', '(%)mo', '', 5],
+    ];
+
+    const insumos = parsearArchivoExplosion(rows);
+
+    expect(insumos).toEqual([
+      expect.objectContaining({ clave: 'HH', costo_base: 5 }),
+    ]);
+  });
 });
