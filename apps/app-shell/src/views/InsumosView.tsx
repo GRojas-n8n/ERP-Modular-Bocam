@@ -660,7 +660,7 @@ function leerArchivoComoRawRows(
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
-export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubView }) => {
+export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (sub: string) => void }> = ({ activeSubView, onSubNavigate }) => {
   const { tenant, currentProjectId, user } = useTenant();
   const { notify } = useNotification();
   const rolesUsuario: string[] = user?.role ?? [];
@@ -721,6 +721,15 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   const [loadingTraz, setLoadingTraz]   = useState(false);
   const [trazParcial, setTrazParcial]   = useState(false);
   const [trazExpanded, setTrazExpanded] = useState<Set<string>>(new Set());
+  const [trazPendingExpand, setTrazPendingExpand] = useState<string | null>(null);
+
+  // Salto directo desde Control Presupuestal / Control de Costos a la pestaña
+  // Trazabilidad con la misma partida expandida (ver
+  // openspec/changes/enlace-trazabilidad-control-presupuestal).
+  const handleVerTrazabilidad = (conceptoId: string) => {
+    setTrazPendingExpand(conceptoId);
+    onSubNavigate?.('trazabilidad');
+  };
 
   // ── Estado Tab 2: Insumos ─────────────────────────────────────────────────
   const fileInputAPURef       = useRef<HTMLInputElement>(null);
@@ -1320,8 +1329,18 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
     setLoadingTraz(true);
     try {
       const r = await api.get('/api/v1/gerencia-tecnica/trazabilidad/resumen');
-      setTrazabilidad(r.data?.data ?? []);
+      const data: TrazabilidadConcepto[] = r.data?.data ?? [];
+      setTrazabilidad(data);
       setTrazParcial(r.data?.parcial ?? false);
+      // Salto directo desde Control Presupuestal / Control de Costos: expande
+      // la partida objetivo si llegó en este reporte (ver
+      // openspec/changes/enlace-trazabilidad-control-presupuestal).
+      if (trazPendingExpand) {
+        if (data.some(c => c.concepto_id === trazPendingExpand)) {
+          setTrazExpanded(prev => new Set(prev).add(trazPendingExpand));
+        }
+        setTrazPendingExpand(null);
+      }
     } catch {
       setTrazabilidad([]);
     } finally {
@@ -2196,7 +2215,19 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                                 className="cursor-pointer hover:bg-muted/20 transition-colors"
                                 onClick={() => setCostosExpandedId(isExp ? null : row.concepto_id)}
                               >
-                                <td className="px-5 py-3 font-mono text-[10px] font-black text-indigo-700">{row.clave}</td>
+                                <td className="px-5 py-3 font-mono text-[10px] font-black text-indigo-700">
+                                  <div className="flex items-center gap-2">
+                                    {row.clave}
+                                    <button
+                                      type="button"
+                                      onClick={e => { e.stopPropagation(); handleVerTrazabilidad(row.concepto_id); }}
+                                      className="rounded-md border border-border/40 px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wide text-indigo-600 hover:bg-indigo-500/10"
+                                      title="Ver en Trazabilidad"
+                                    >
+                                      Ver en Trazabilidad
+                                    </button>
+                                  </div>
+                                </td>
                                 <td className="max-w-[250px] truncate px-5 py-3 text-xs font-medium">{row.descripcion}</td>
                                 <td className="px-5 py-3 text-right font-mono text-xs font-bold">{fmt(row.presupuesto)}</td>
                                 <td className="px-5 py-3 text-right font-mono text-xs font-bold text-amber-700">{fmt(row.comprometido)}</td>
@@ -2345,6 +2376,7 @@ export const InsumosView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   partidas={cpData.partidas}
                   sinPartidaComprometido={cpData.sin_partida_comprometido}
                   sinPartidaPagado={cpData.sin_partida_pagado}
+                  onVerTrazabilidad={handleVerTrazabilidad}
                 />
               </>
             )}
