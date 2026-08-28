@@ -832,6 +832,10 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   const [cpData, setCpData] = useState<ReporteCP | null>(null);
   const [cpLoading, setCpLoading] = useState(false);
   const [cpError, setCpError] = useState<string | null>(null);
+  // Presupuesto existe pero no está aprobado — distinto de "no hay nada".
+  // Ver openspec/changes/control-presupuestal-estado-presupuesto-visible.
+  const [cpPresupuestoPendiente, setCpPresupuestoPendiente] = useState<{ id: string; estado: string } | null>(null);
+  const [cpAprobando, setCpAprobando] = useState(false);
   const [cpCategoria, setCpCategoria] = useState('');
   const [cpExporting, setCpExporting] = useState<'PDF' | 'XLSX' | null>(null);
 
@@ -850,15 +854,36 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
     if (!currentProjectId) return;
     setCpLoading(true);
     setCpError(null);
+    setCpPresupuestoPendiente(null);
     try {
       const params = cpCategoria ? `?categoria=${cpCategoria}` : '';
       const res = await api.get(`/api/v1/gerencia-tecnica/reportes/control-presupuestal${params}`);
       setCpData(res.data.data ?? res.data);
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al cargar reporte.';
-      setCpError(msg);
+      if (err.response?.data?.error?.code === 'GT_PRESUPUESTO_PENDIENTE_APROBACION') {
+        const details = err.response.data.error.details;
+        setCpPresupuestoPendiente({ id: details.presupuesto_id, estado: details.estado });
+      } else {
+        const msg = err.response?.data?.message || err.response?.data?.error?.message || 'Error al cargar reporte.';
+        setCpError(msg);
+      }
     } finally {
       setCpLoading(false);
+    }
+  };
+
+  const handleAprobarDesdeControlPresupuestal = async () => {
+    if (!cpPresupuestoPendiente) return;
+    setCpAprobando(true);
+    try {
+      await api.patch(`/api/v1/gerencia-tecnica/presupuestos/${cpPresupuestoPendiente.id}/aprobar`);
+      notify({ title: 'Presupuesto aprobado — la composición APU queda bloqueada.', type: 'success' });
+      void fetchPresupuesto();
+      void loadControlPresupuestal();
+    } catch (err: any) {
+      notify({ title: err.response?.data?.message || 'Error al aprobar presupuesto.', type: 'error' });
+    } finally {
+      setCpAprobando(false);
     }
   };
 
@@ -2461,6 +2486,29 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
             {cpError && !cpLoading && (
               <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6 text-center">
                 <p className="text-sm font-bold text-destructive">{cpError}</p>
+              </div>
+            )}
+
+            {cpPresupuestoPendiente && !cpLoading && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-center space-y-3">
+                <p className="text-sm font-bold text-amber-700">
+                  Presupuesto pendiente de aprobación
+                  <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700">
+                    {cpPresupuestoPendiente.estado}
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Este proyecto ya tiene un presupuesto importado, pero Control Presupuestal solo muestra datos de presupuestos aprobados.
+                </p>
+                {puedeAprobar && (
+                  <button
+                    onClick={handleAprobarDesdeControlPresupuestal}
+                    disabled={cpAprobando}
+                    className="rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-amber-500 disabled:opacity-50"
+                  >
+                    {cpAprobando ? 'Aprobando…' : 'Aprobar presupuesto'}
+                  </button>
+                )}
               </div>
             )}
 

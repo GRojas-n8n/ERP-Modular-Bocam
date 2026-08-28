@@ -2059,11 +2059,21 @@ async function buildControlPresupuestal(
   partidas: PartidaCP[];
   sin_partida_comprometido: number;
   sin_partida_pagado: number;
+  // Presente solo cuando no hay presupuesto en estado aprobado pero SÍ existe
+  // uno en BORRADOR/EN_REVISION — permite distinguir "no hay nada" de "hay
+  // algo pendiente de aprobar". Ver
+  // openspec/changes/control-presupuestal-estado-presupuesto-visible.
+  presupuesto_pendiente?: { id: string; estado: string } | null;
 }> {
   // 1. Obtener presupuesto activo y sus conceptos desde BD local
+  // Filtro explícito de tenant_id/proyecto_id además de RLS (defensa en
+  // profundidad — un rol de DB con bypass de RLS, ej. el superusuario usado
+  // en desarrollo local, no debe poder devolver datos cruzados entre
+  // proyectos). Mismo criterio ya aplicado en control-proyectos, ver
+  // openspec/changes/fix-avance-mock-mis-proyectos.
   const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
   const presupuestoData = await db.presupuestoBase.findFirst({
-    where: { estado: { in: ['APROBADO', 'LIBERADO', 'CONGELADO'] } },
+    where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: { in: ['APROBADO', 'LIBERADO', 'CONGELADO'] } },
     include: {
       conceptos: {
         where: { importe: { gt: 0 } },
@@ -2076,12 +2086,18 @@ async function buildControlPresupuestal(
   });
 
   if (!presupuestoData) {
+    const pendiente = await db.presupuestoBase.findFirst({
+      where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: { in: ['BORRADOR', 'EN_REVISION'] } },
+      orderBy: { created_at: 'desc' },
+      select: { id: true, estado: true },
+    });
     return {
       proyectoId, presupuesto_id: null,
       total_presupuestado: 0, total_comprometido: 0, total_pagado: 0,
       total_disponible: 0, pct_ejercido: 0, parcial: false,
       advertencias: ['Sin presupuesto activo para este proyecto'],
       partidas: [], sin_partida_comprometido: 0, sin_partida_pagado: 0,
+      presupuesto_pendiente: pendiente,
     };
   }
 
@@ -2202,6 +2218,14 @@ app.get('/api/v1/gerencia-tecnica/reportes/control-presupuestal', async (req: Re
     const data = await buildControlPresupuestal(tenantId, proyectoId, userId, authHeader, categoria);
 
     if (data.advertencias.some((a) => a.includes('Sin presupuesto activo'))) {
+      if (data.presupuesto_pendiente) {
+        res.status(404).json(createApiError(
+          'GT_PRESUPUESTO_PENDIENTE_APROBACION',
+          'El presupuesto de este proyecto existe pero aún no ha sido aprobado.',
+          { presupuesto_id: data.presupuesto_pendiente.id, estado: data.presupuesto_pendiente.estado },
+        ));
+        return;
+      }
       res.status(404).json(createApiError('GT_NO_PRESUPUESTO', data.advertencias[0]));
       return;
     }

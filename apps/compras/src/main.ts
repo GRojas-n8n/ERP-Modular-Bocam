@@ -4467,6 +4467,15 @@ app.get('/api/v1/compras/reportes/control-presupuestal',
       });
       res.json(resp.data);
     } catch (error: any) {
+      // Reenviar el error real de GT (ej. 404 GT_NO_PRESUPUESTO /
+      // GT_PRESUPUESTO_PENDIENTE_APROBACION) en vez de colapsarlo siempre a
+      // un 502 genérico — el frontend necesita el código para diferenciar
+      // el mensaje. Ver
+      // openspec/changes/control-presupuestal-estado-presupuesto-visible.
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+        return;
+      }
       res.status(502).json({ success: false, data: null, parcial: true });
     }
   }

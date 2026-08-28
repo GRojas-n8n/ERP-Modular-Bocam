@@ -417,11 +417,17 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
   }
   const [cpResumen, setCpResumen] = useState<ResumenCP | null>(null);
   const [cpResumenLoading, setCpResumenLoading] = useState(false);
+  // Mensaje informativo cuando no hay resumen por estado del presupuesto en
+  // GT (no confundir con errores de conexión, que siguen silenciosos — el
+  // widget es opcional). Ver
+  // openspec/changes/control-presupuestal-estado-presupuesto-visible.
+  const [cpResumenMensaje, setCpResumenMensaje] = useState<string | null>(null);
 
   const loadCpResumen = async () => {
     const proyectoId = currentProjectId || user?.projects?.[0]?.id;
     if (!proyectoId) return;
     setCpResumenLoading(true);
+    setCpResumenMensaje(null);
     try {
       const res = await api.get(`/api/v1/compras/reportes/control-presupuestal?proyectoId=${proyectoId}`);
       const d = res.data.data ?? res.data;
@@ -433,7 +439,13 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
         pct_ejercido:        d.pct_ejercido,
         parcial:             d.parcial,
       });
-    } catch { /* silencioso — widget opcional */ }
+    } catch (err: any) {
+      setCpResumen(null);
+      const code = err.response?.data?.error?.code;
+      if (code === 'GT_NO_PRESUPUESTO') setCpResumenMensaje('Sin presupuesto activo para este proyecto.');
+      else if (code === 'GT_PRESUPUESTO_PENDIENTE_APROBACION') setCpResumenMensaje('Presupuesto del proyecto pendiente de aprobación en Gerencia Técnica.');
+      // otros errores (conexión, timeout, 500): silencioso, como antes — widget opcional
+    }
     finally { setCpResumenLoading(false); }
   };
 
@@ -2925,6 +2937,11 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 {cpResumenLoading && !cpResumen && (
                   <div className="rounded-2xl border border-border/30 bg-card p-4 text-center text-[10px] text-muted-foreground">
                     Cargando resumen presupuestal…
+                  </div>
+                )}
+                {!cpResumenLoading && !cpResumen && cpResumenMensaje && (
+                  <div className="rounded-2xl border border-border/30 bg-card p-4 text-center text-[10px] text-muted-foreground">
+                    {cpResumenMensaje}
                   </div>
                 )}
 
