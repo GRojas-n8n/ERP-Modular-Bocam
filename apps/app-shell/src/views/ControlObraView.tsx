@@ -313,7 +313,10 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [loadingCurvaS, setLoadingCurvaS] = useState(false);
   const [modalAlerta, setModalAlerta] = useState<{ alerta: Alerta; accion: 'reconocer' | 'ignorar' } | null>(null);
   const [notaCP, setNotaCP] = useState('');
-  const [enviandoAlerta, setEnviandoAlerta] = useState(false);
+  // IDs de alerta con una petición en curso — permite que "Reconocer" directo
+  // en una alerta no bloquee las acciones de las demás (ver
+  // openspec/changes/accion-directa-reconocer-alerta).
+  const [alertasEnviando, setAlertasEnviando] = useState<Set<string>>(new Set());
 
   // ── Fetch: campo ─────────────────────────────────────────────────────────────
   const fetchData = async () => {
@@ -593,13 +596,28 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   // ── Acciones EVM ─────────────────────────────────────────────────────────────
   async function accionarAlerta() {
     if (!modalAlerta) return;
-    setEnviandoAlerta(true);
+    const id = modalAlerta.alerta.id;
+    setAlertasEnviando(prev => new Set(prev).add(id));
     try {
-      await api.patch(`/api/v1/control-proyectos/alertas/${modalAlerta.alerta.id}/${modalAlerta.accion}`, { nota_cp: notaCP });
+      await api.patch(`/api/v1/control-proyectos/alertas/${id}/${modalAlerta.accion}`, { nota_cp: notaCP });
       setModalAlerta(null);
       setNotaCP('');
       void fetchAlertas();
-    } catch { /* silencio */ } finally { setEnviandoAlerta(false); }
+    } catch { /* silencio */ } finally {
+      setAlertasEnviando(prev => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  }
+
+  // "Reconocer" en un clic, sin modal ni nota (ver
+  // openspec/changes/accion-directa-reconocer-alerta).
+  async function reconocerDirecto(alerta: Alerta) {
+    setAlertasEnviando(prev => new Set(prev).add(alerta.id));
+    try {
+      await api.patch(`/api/v1/control-proyectos/alertas/${alerta.id}/reconocer`, { nota_cp: '' });
+      void fetchAlertas();
+    } catch { /* silencio */ } finally {
+      setAlertasEnviando(prev => { const n = new Set(prev); n.delete(alerta.id); return n; });
+    }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────────
@@ -1164,20 +1182,30 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                         </div>
                       </div>
                       {a.estado === 'ACTIVA' && (
-                        <div className="flex gap-2 shrink-0">
-                          <Button
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => void reconocerDirecto(a)}
+                              disabled={alertasEnviando.has(a.id)}
+                              className="h-8 bg-sky-600 px-3 text-[10px] font-black text-white hover:bg-sky-500 disabled:opacity-50"
+                            >
+                              {alertasEnviando.has(a.id) ? 'Guardando...' : 'Reconocer'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => { setModalAlerta({ alerta: a, accion: 'ignorar' }); setNotaCP(''); }}
+                              className="h-8 px-3 text-[10px] font-black"
+                            >
+                              Ignorar
+                            </Button>
+                          </div>
+                          <button
+                            type="button"
                             onClick={() => { setModalAlerta({ alerta: a, accion: 'reconocer' }); setNotaCP(''); }}
-                            className="h-8 bg-sky-600 px-3 text-[10px] font-black text-white hover:bg-sky-500"
+                            className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-sky-600"
                           >
-                            Reconocer
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => { setModalAlerta({ alerta: a, accion: 'ignorar' }); setNotaCP(''); }}
-                            className="h-8 px-3 text-[10px] font-black"
-                          >
-                            Ignorar
-                          </Button>
+                            Agregar nota
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1599,10 +1627,10 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                 <Button variant="outline" onClick={() => { setModalAlerta(null); setNotaCP(''); }}>Cancelar</Button>
                 <Button
                   onClick={() => void accionarAlerta()}
-                  disabled={enviandoAlerta || (modalAlerta.accion === 'ignorar' && notaCP.length < 20)}
+                  disabled={alertasEnviando.has(modalAlerta.alerta.id) || (modalAlerta.accion === 'ignorar' && notaCP.length < 20)}
                   className="bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50"
                 >
-                  {enviandoAlerta ? 'Guardando...' : modalAlerta.accion === 'reconocer' ? 'Reconocer' : 'Ignorar'}
+                  {alertasEnviando.has(modalAlerta.alerta.id) ? 'Guardando...' : modalAlerta.accion === 'reconocer' ? 'Reconocer' : 'Ignorar'}
                 </Button>
               </div>
             </CardContent>
