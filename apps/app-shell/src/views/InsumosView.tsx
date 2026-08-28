@@ -114,6 +114,8 @@ interface InsumoData {
   tipo_insumo: TipoInsumo;
   costo_base: number;
   activo: boolean;
+  /** Suma de (concepto.cantidad × composición.cantidad) del presupuesto activo. */
+  cantidad_presupuestada?: number;
 }
 
 interface InsumoPreview {
@@ -1215,7 +1217,9 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
     setErrorInsumos(null);
     try {
       if (tenant?.id === 'iretum-demo') { setInsumos([]); return; }
-      const res = await api.get('/api/v1/gerencia-tecnica/insumos');
+      // /insumos/explosion (no el endpoint plano /insumos) trae también
+      // cantidad_presupuestada — ver openspec/changes/explosion-insumos-mostrar-cantidades.
+      const res = await api.get('/api/v1/gerencia-tecnica/insumos/explosion');
       setInsumos(res.data.data || []);
     } catch (err: any) {
       setErrorInsumos(err.response?.data?.message || 'Error al obtener catálogo de insumos.');
@@ -2172,6 +2176,7 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Descripción</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Unidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tipo</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Cantidad</th>
                         <th className="px-6 py-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Costo Base</th>
                       </tr>
                     </thead>
@@ -2192,6 +2197,9 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
                               {TIPO_LABEL[ins.tipo_insumo]}
                             </span>
                           </td>
+                          <td className="px-6 py-3.5 text-right font-mono text-sm text-foreground">
+                            {Number(ins.cantidad_presupuestada ?? 0).toLocaleString('es-MX', { maximumFractionDigits: 4 })} {ins.unidad_medida}
+                          </td>
                           <td className="px-6 py-3.5 text-right font-mono font-black text-sm text-primary">
                             {formatMXN(Number(ins.costo_base))}
                           </td>
@@ -2209,7 +2217,7 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-border/60 bg-muted/20">
-                        <td colSpan={4} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
+                        <td colSpan={5} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">
                           {filtroTipo || searchInsumos ? `Filtrado: ${insumosFiltrados.length}` : `Total: ${insumos.length} insumos`}
                         </td>
                         <td className="px-6 py-4 text-right">
