@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, cn, getProjectColor } from '@bocam/ui-core';
 import { CambiarPasswordDialog } from './CambiarPasswordDialog';
 import {
@@ -221,6 +222,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
   );
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const projectTriggerRef = useRef<HTMLButtonElement>(null);
+  const [projectDropdownPos, setProjectDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined;
@@ -231,14 +234,30 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
   }, [isMobileNavOpen]);
 
-  // Cerrar dropdown al hacer clic fuera
+  // Cerrar dropdown al hacer clic fuera; recalcular posición del panel
+  // portal (createPortal a document.body — ver
+  // openspec/changes/fix-dropdown-proyecto-transparente) al abrirlo, y
+  // cerrarlo en scroll/resize en vez de reposicionarlo (más simple y
+  // suficiente para este patrón de overlay).
   useEffect(() => {
-    if (!isProjectDropdownOpen) return undefined;
+    if (!isProjectDropdownOpen) { setProjectDropdownPos(null); return undefined; }
+    if (projectTriggerRef.current) {
+      const rect = projectTriggerRef.current.getBoundingClientRect();
+      setProjectDropdownPos({ top: rect.bottom + 8, left: rect.left, width: Math.max(rect.width, 240) });
+    }
     const onClickOutside = () => setIsProjectDropdownOpen(false);
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsProjectDropdownOpen(false); };
+    const onScrollOrResize = () => setIsProjectDropdownOpen(false);
     setTimeout(() => window.addEventListener('click', onClickOutside), 0);
     window.addEventListener('keydown', onEsc);
-    return () => { window.removeEventListener('click', onClickOutside); window.removeEventListener('keydown', onEsc); };
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('click', onClickOutside);
+      window.removeEventListener('keydown', onEsc);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
   }, [isProjectDropdownOpen]);
 
   const handleNavigate = (view: string) => {
@@ -544,6 +563,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
               {/* ── Selector de proyecto ── */}
               <div className="relative min-w-0 flex-1">
                 <button
+                  ref={projectTriggerRef}
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
                   className={cn(
@@ -570,11 +590,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                   )}
                 </button>
 
-                {/* Dropdown */}
-                {isProjectDropdownOpen && projects.length > 1 && (
+                {/* Dropdown — portal a document.body: el panel no debe ser
+                    descendiente del <header> (glass-elevated / backdrop-filter),
+                    o Chromium lo recompone como transparente al sobresalir del
+                    header. Ver openspec/changes/fix-dropdown-proyecto-transparente. */}
+                {isProjectDropdownOpen && projects.length > 1 && projectDropdownPos && createPortal(
                   <div
-                    className="absolute top-full left-0 mt-2 z-50 min-w-[240px] rounded-xl border shadow-xl overflow-hidden"
-                    style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+                    className="fixed z-50 rounded-xl border shadow-xl overflow-hidden"
+                    style={{
+                      top: projectDropdownPos.top,
+                      left: projectDropdownPos.left,
+                      width: projectDropdownPos.width,
+                      background: 'hsl(var(--card))',
+                      borderColor: 'hsl(var(--border))',
+                    }}
                     onClick={e => e.stopPropagation()}
                   >
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -612,7 +641,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                         </button>
                       );
                     })}
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
