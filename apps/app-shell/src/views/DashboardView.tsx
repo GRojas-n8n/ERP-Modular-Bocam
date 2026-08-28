@@ -651,6 +651,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const ocCount = dashboard.ordenesCompra.length;
   const ocPendientes = dashboard.ordenesCompra.filter((oc) => oc.estado === 'EMITIDA' || oc.estado === 'PENDIENTE').length;
 
+  // Avance real por proyecto para "Mis Proyectos" — antes mostraba un valor
+  // sintético (35 + index*20) sin relación con datos reales. Ver
+  // openspec/changes/fix-avance-mock-mis-proyectos.
+  const [avanceProyectos, setAvanceProyectos] = useState<Record<string, { avance_pct: number; tiene_avances: boolean }>>({});
+  const [avanceLoading, setAvanceLoading] = useState(true);
+  const [avanceError, setAvanceError] = useState(false);
+  const projectIdsKey = (user?.projects || []).map(p => p.id).join(',');
+
+  useEffect(() => {
+    if (isDemo || !projectIdsKey) { setAvanceLoading(false); return; }
+    setAvanceLoading(true);
+    setAvanceError(false);
+    api.get(`/api/v1/control-proyectos/avance-resumen-multi?proyecto_ids=${projectIdsKey}`)
+      .then(resp => {
+        const rows = (resp.data?.data ?? []) as Array<{ proyecto_id: string; avance_pct: number; tiene_avances: boolean }>;
+        const map: Record<string, { avance_pct: number; tiene_avances: boolean }> = {};
+        rows.forEach(r => { map[r.proyecto_id] = { avance_pct: r.avance_pct, tiene_avances: r.tiene_avances }; });
+        setAvanceProyectos(map);
+      })
+      .catch(() => setAvanceError(true))
+      .finally(() => setAvanceLoading(false));
+  }, [isDemo, projectIdsKey]);
+
   const animProyectos = useAnimatedNumber(user?.projects?.length || 0);
   const animPresupuesto = useAnimatedNumber(totalAutorizado, 1800);
   const animOC = useAnimatedNumber(ocCount, 900);
@@ -974,8 +997,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               />
             </div>
           ) : (
-            (user?.projects || []).map((project, index) => {
-              const progress = Math.min(35 + index * 20, 100);
+            (user?.projects || []).map((project) => {
+              const avance = avanceProyectos[project.id];
+              const progress = avance?.tiene_avances ? avance.avance_pct : 0;
+              const progressLabel = avanceLoading
+                ? '…'
+                : avanceError
+                ? 'Avance no disponible'
+                : avance?.tiene_avances
+                ? `${progress}%`
+                : 'Sin avances registrados';
               return (
                 <Card key={project.id} className="group cursor-pointer rounded-2xl border-border/30 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg" onClick={() => onNavigate('insumos')}>
                   <CardContent className="p-0">
@@ -989,12 +1020,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                     <div className="mb-3">
                       <div className="mb-1.5 flex items-center justify-between">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Avance General</span>
-                        <span className="text-[10px] font-black text-foreground">{progress}%</span>
+                        <span className={cn('text-[10px] font-black', avanceLoading ? 'text-muted-foreground animate-pulse' : 'text-foreground')}>
+                          {progressLabel}
+                        </span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-out"
-                          style={{ width: visibleItems >= 10 ? `${progress}%` : '0%' }}
+                          style={{ width: visibleItems >= 10 && !avanceLoading ? `${progress}%` : '0%' }}
                         />
                       </div>
                     </div>
