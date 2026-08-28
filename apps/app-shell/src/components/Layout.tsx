@@ -274,6 +274,30 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
     };
   }, [isProjectDropdownOpen]);
 
+  // Submenú lateral (flyout en escritorio, acordeón sin cambios en mobile —
+  // ver openspec/changes/sidebar-submenu-flyout-lateral). Se abre
+  // automáticamente para el módulo activo (cubre navegación normal y saltos
+  // cross-grupo vía SubItem.targetView); clic-fuera/Escape solo lo oculta
+  // (no cambia currentView) y solo tiene efecto visual en md+, ver
+  // data-submenu-flyout.
+  const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null);
+
+  useEffect(() => { setOpenSubmenuId(currentView); }, [currentView]);
+
+  useEffect(() => {
+    if (!openSubmenuId) return undefined;
+    const onClickOutside = (e: MouseEvent) => {
+      if (!(e.target as Element).closest('[data-submenu-flyout]')) setOpenSubmenuId(null);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenSubmenuId(null); };
+    setTimeout(() => window.addEventListener('click', onClickOutside), 0);
+    window.addEventListener('keydown', onEsc);
+    return () => {
+      window.removeEventListener('click', onClickOutside);
+      window.removeEventListener('keydown', onEsc);
+    };
+  }, [openSubmenuId]);
+
   const handleNavigate = (view: string) => {
     const item = ALL_NAV_ITEMS.find(i => i.id === view);
     const firstSub = item?.subItems?.find(s =>
@@ -405,9 +429,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
           const hasSubItems = visibleSubItems.length > 0;
 
           return (
-            <div key={item.id}>
+            <div key={item.id} className="relative">
               <button
-                onClick={() => handleNavigate(item.id)}
+                onClick={() => { handleNavigate(item.id); setOpenSubmenuId(item.id); }}
                 className={cn(
                   'group relative flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200',
                   active
@@ -426,12 +450,22 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                 )}
               </button>
 
-              {/* Sub-items: visibles cuando el módulo padre está activo */}
+              {/* Sub-items: visibles cuando el módulo padre está activo. En
+                  escritorio (md+) se muestran como panel flotante lateral en
+                  vez de acordeón vertical; en mobile no cambia — ver
+                  openspec/changes/sidebar-submenu-flyout-lateral. */}
               {active && hasSubItems && (
-                <div className="relative mt-0.5 mb-1 ml-4">
-                  {/* Línea vertical conectora */}
+                <div
+                  data-submenu-flyout
+                  className={cn(
+                    'relative mt-0.5 mb-1 ml-4',
+                    'md:absolute md:left-full md:top-0 md:mt-0 md:mb-0 md:ml-2 md:z-30 md:w-56 md:rounded-xl md:border md:border-border/40 md:bg-[hsl(var(--card))] md:p-1.5 md:shadow-xl',
+                    openSubmenuId !== item.id && 'md:hidden'
+                  )}
+                >
+                  {/* Línea vertical conectora — solo en el acordeón mobile */}
                   <div
-                    className="absolute left-3 top-1 bottom-1 w-px"
+                    className="absolute left-3 top-1 bottom-1 w-px md:hidden"
                     style={{ background: 'hsl(var(--border))' }}
                   />
                   <div className="flex flex-col gap-0.5">
@@ -440,7 +474,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                       return (
                         <button
                           key={sub.id}
-                          onClick={() => { if (sub.targetView) onNavigate(sub.targetView); onSubNavigate(sub.id); }}
+                          onClick={() => {
+                            if (sub.targetView) onNavigate(sub.targetView);
+                            else setOpenSubmenuId(null);
+                            onSubNavigate(sub.id);
+                          }}
                           className={cn(
                             'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
                             subActive
