@@ -33,6 +33,13 @@ export type ProyectoCostosConfig = $Result.DefaultSelection<Prisma.$ProyectoCost
  */
 export type Insumo = $Result.DefaultSelection<Prisma.$InsumoPayload>
 /**
+ * Model LoteImportacion
+ * Lote de Explosión de Insumos importado de una sola llamada a
+ * POST /insumos/importar-lote. Permite identificar y revertir ese lote como
+ * unidad. Ver eliminacion-admin-archivos-importaciones-gt.
+ */
+export type LoteImportacion = $Result.DefaultSelection<Prisma.$LoteImportacionPayload>
+/**
  * Model PresupuestoBase
  * Presupuesto Base de un proyecto/centro de costos.
  * Tabla transaccional: requiere OBLIGATORIAMENTE tenant_id + proyecto_id.
@@ -290,6 +297,16 @@ export class PrismaClient<
     * ```
     */
   get insumo(): Prisma.InsumoDelegate<ExtArgs>;
+
+  /**
+   * `prisma.loteImportacion`: Exposes CRUD operations for the **LoteImportacion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LoteImportacions
+    * const loteImportacions = await prisma.loteImportacion.findMany()
+    * ```
+    */
+  get loteImportacion(): Prisma.LoteImportacionDelegate<ExtArgs>;
 
   /**
    * `prisma.presupuestoBase`: Exposes CRUD operations for the **PresupuestoBase** model.
@@ -844,6 +861,7 @@ export namespace Prisma {
     CategoriaGasto: 'CategoriaGasto',
     ProyectoCostosConfig: 'ProyectoCostosConfig',
     Insumo: 'Insumo',
+    LoteImportacion: 'LoteImportacion',
     PresupuestoBase: 'PresupuestoBase',
     Capitulo: 'Capitulo',
     ConceptoCatalogo: 'ConceptoCatalogo',
@@ -870,7 +888,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "presupuestoBase" | "capitulo" | "conceptoCatalogo" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "transferenciaPartida" | "compraProyectada" | "fichaTecnicaInsumo" | "proyectoObraVinculado"
+      modelProps: "categoriaGasto" | "proyectoCostosConfig" | "insumo" | "loteImportacion" | "presupuestoBase" | "capitulo" | "conceptoCatalogo" | "concepto" | "conceptoInsumo" | "saldoPartida" | "saldoMovimiento" | "transferenciaPartida" | "compraProyectada" | "fichaTecnicaInsumo" | "proyectoObraVinculado"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1081,6 +1099,76 @@ export namespace Prisma {
           count: {
             args: Prisma.InsumoCountArgs<ExtArgs>
             result: $Utils.Optional<InsumoCountAggregateOutputType> | number
+          }
+        }
+      }
+      LoteImportacion: {
+        payload: Prisma.$LoteImportacionPayload<ExtArgs>
+        fields: Prisma.LoteImportacionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LoteImportacionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LoteImportacionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>
+          }
+          findFirst: {
+            args: Prisma.LoteImportacionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LoteImportacionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>
+          }
+          findMany: {
+            args: Prisma.LoteImportacionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>[]
+          }
+          create: {
+            args: Prisma.LoteImportacionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>
+          }
+          createMany: {
+            args: Prisma.LoteImportacionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LoteImportacionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>[]
+          }
+          delete: {
+            args: Prisma.LoteImportacionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>
+          }
+          update: {
+            args: Prisma.LoteImportacionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>
+          }
+          deleteMany: {
+            args: Prisma.LoteImportacionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LoteImportacionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LoteImportacionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoteImportacionPayload>
+          }
+          aggregate: {
+            args: Prisma.LoteImportacionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLoteImportacion>
+          }
+          groupBy: {
+            args: Prisma.LoteImportacionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LoteImportacionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LoteImportacionCountArgs<ExtArgs>
+            result: $Utils.Optional<LoteImportacionCountAggregateOutputType> | number
           }
         }
       }
@@ -2069,6 +2157,37 @@ export namespace Prisma {
    */
   export type InsumoCountOutputTypeCountConcepto_insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ConceptoInsumoWhereInput
+  }
+
+
+  /**
+   * Count Type LoteImportacionCountOutputType
+   */
+
+  export type LoteImportacionCountOutputType = {
+    insumos: number
+  }
+
+  export type LoteImportacionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    insumos?: boolean | LoteImportacionCountOutputTypeCountInsumosArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * LoteImportacionCountOutputType without action
+   */
+  export type LoteImportacionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacionCountOutputType
+     */
+    select?: LoteImportacionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * LoteImportacionCountOutputType without action
+   */
+  export type LoteImportacionCountOutputTypeCountInsumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InsumoWhereInput
   }
 
 
@@ -4125,6 +4244,7 @@ export namespace Prisma {
     tipo_insumo: $Enums.TipoInsumo | null
     costo_base: Decimal | null
     categoria_gasto_id: string | null
+    lote_importacion_id: string | null
     activo: boolean | null
     created_at: Date | null
     updated_at: Date | null
@@ -4140,6 +4260,7 @@ export namespace Prisma {
     tipo_insumo: $Enums.TipoInsumo | null
     costo_base: Decimal | null
     categoria_gasto_id: string | null
+    lote_importacion_id: string | null
     activo: boolean | null
     created_at: Date | null
     updated_at: Date | null
@@ -4155,6 +4276,7 @@ export namespace Prisma {
     tipo_insumo: number
     costo_base: number
     categoria_gasto_id: number
+    lote_importacion_id: number
     activo: number
     created_at: number
     updated_at: number
@@ -4180,6 +4302,7 @@ export namespace Prisma {
     tipo_insumo?: true
     costo_base?: true
     categoria_gasto_id?: true
+    lote_importacion_id?: true
     activo?: true
     created_at?: true
     updated_at?: true
@@ -4195,6 +4318,7 @@ export namespace Prisma {
     tipo_insumo?: true
     costo_base?: true
     categoria_gasto_id?: true
+    lote_importacion_id?: true
     activo?: true
     created_at?: true
     updated_at?: true
@@ -4210,6 +4334,7 @@ export namespace Prisma {
     tipo_insumo?: true
     costo_base?: true
     categoria_gasto_id?: true
+    lote_importacion_id?: true
     activo?: true
     created_at?: true
     updated_at?: true
@@ -4312,6 +4437,7 @@ export namespace Prisma {
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal
     categoria_gasto_id: string | null
+    lote_importacion_id: string | null
     activo: boolean
     created_at: Date
     updated_at: Date
@@ -4346,10 +4472,12 @@ export namespace Prisma {
     tipo_insumo?: boolean
     costo_base?: boolean
     categoria_gasto_id?: boolean
+    lote_importacion_id?: boolean
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
     categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
+    lote_importacion?: boolean | Insumo$lote_importacionArgs<ExtArgs>
     concepto_insumos?: boolean | Insumo$concepto_insumosArgs<ExtArgs>
     _count?: boolean | InsumoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["insumo"]>
@@ -4364,10 +4492,12 @@ export namespace Prisma {
     tipo_insumo?: boolean
     costo_base?: boolean
     categoria_gasto_id?: boolean
+    lote_importacion_id?: boolean
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
     categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
+    lote_importacion?: boolean | Insumo$lote_importacionArgs<ExtArgs>
   }, ExtArgs["result"]["insumo"]>
 
   export type InsumoSelectScalar = {
@@ -4380,6 +4510,7 @@ export namespace Prisma {
     tipo_insumo?: boolean
     costo_base?: boolean
     categoria_gasto_id?: boolean
+    lote_importacion_id?: boolean
     activo?: boolean
     created_at?: boolean
     updated_at?: boolean
@@ -4387,17 +4518,20 @@ export namespace Prisma {
 
   export type InsumoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
+    lote_importacion?: boolean | Insumo$lote_importacionArgs<ExtArgs>
     concepto_insumos?: boolean | Insumo$concepto_insumosArgs<ExtArgs>
     _count?: boolean | InsumoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InsumoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     categoria_gasto?: boolean | Insumo$categoria_gastoArgs<ExtArgs>
+    lote_importacion?: boolean | Insumo$lote_importacionArgs<ExtArgs>
   }
 
   export type $InsumoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Insumo"
     objects: {
       categoria_gasto: Prisma.$CategoriaGastoPayload<ExtArgs> | null
+      lote_importacion: Prisma.$LoteImportacionPayload<ExtArgs> | null
       concepto_insumos: Prisma.$ConceptoInsumoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -4416,6 +4550,12 @@ export namespace Prisma {
        * Categoría de gasto asignada por Control de Proyectos (nullable hasta clasificar)
        */
       categoria_gasto_id: string | null
+      /**
+       * Lote de Explosión de Insumos que creó/tocó por última vez este insumo.
+       * NULL = insumo legacy o creado antes de este campo (ver
+       * eliminacion-admin-archivos-importaciones-gt, Decision 1).
+       */
+      lote_importacion_id: string | null
       activo: boolean
       created_at: Date
       updated_at: Date
@@ -4784,6 +4924,7 @@ export namespace Prisma {
   export interface Prisma__InsumoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     categoria_gasto<T extends Insumo$categoria_gastoArgs<ExtArgs> = {}>(args?: Subset<T, Insumo$categoria_gastoArgs<ExtArgs>>): Prisma__CategoriaGastoClient<$Result.GetResult<Prisma.$CategoriaGastoPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    lote_importacion<T extends Insumo$lote_importacionArgs<ExtArgs> = {}>(args?: Subset<T, Insumo$lote_importacionArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     concepto_insumos<T extends Insumo$concepto_insumosArgs<ExtArgs> = {}>(args?: Subset<T, Insumo$concepto_insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConceptoInsumoPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4823,6 +4964,7 @@ export namespace Prisma {
     readonly tipo_insumo: FieldRef<"Insumo", 'TipoInsumo'>
     readonly costo_base: FieldRef<"Insumo", 'Decimal'>
     readonly categoria_gasto_id: FieldRef<"Insumo", 'String'>
+    readonly lote_importacion_id: FieldRef<"Insumo", 'String'>
     readonly activo: FieldRef<"Insumo", 'Boolean'>
     readonly created_at: FieldRef<"Insumo", 'DateTime'>
     readonly updated_at: FieldRef<"Insumo", 'DateTime'>
@@ -5159,6 +5301,21 @@ export namespace Prisma {
   }
 
   /**
+   * Insumo.lote_importacion
+   */
+  export type Insumo$lote_importacionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    where?: LoteImportacionWhereInput
+  }
+
+  /**
    * Insumo.concepto_insumos
    */
   export type Insumo$concepto_insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5190,6 +5347,1000 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: InsumoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LoteImportacion
+   */
+
+  export type AggregateLoteImportacion = {
+    _count: LoteImportacionCountAggregateOutputType | null
+    _avg: LoteImportacionAvgAggregateOutputType | null
+    _sum: LoteImportacionSumAggregateOutputType | null
+    _min: LoteImportacionMinAggregateOutputType | null
+    _max: LoteImportacionMaxAggregateOutputType | null
+  }
+
+  export type LoteImportacionAvgAggregateOutputType = {
+    cantidad_registros: number | null
+  }
+
+  export type LoteImportacionSumAggregateOutputType = {
+    cantidad_registros: number | null
+  }
+
+  export type LoteImportacionMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    importado_por: string | null
+    cantidad_registros: number | null
+    estado: string | null
+    created_at: Date | null
+  }
+
+  export type LoteImportacionMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    importado_por: string | null
+    cantidad_registros: number | null
+    estado: string | null
+    created_at: Date | null
+  }
+
+  export type LoteImportacionCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    importado_por: number
+    cantidad_registros: number
+    estado: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type LoteImportacionAvgAggregateInputType = {
+    cantidad_registros?: true
+  }
+
+  export type LoteImportacionSumAggregateInputType = {
+    cantidad_registros?: true
+  }
+
+  export type LoteImportacionMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    importado_por?: true
+    cantidad_registros?: true
+    estado?: true
+    created_at?: true
+  }
+
+  export type LoteImportacionMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    importado_por?: true
+    cantidad_registros?: true
+    estado?: true
+    created_at?: true
+  }
+
+  export type LoteImportacionCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    importado_por?: true
+    cantidad_registros?: true
+    estado?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type LoteImportacionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoteImportacion to aggregate.
+     */
+    where?: LoteImportacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoteImportacions to fetch.
+     */
+    orderBy?: LoteImportacionOrderByWithRelationInput | LoteImportacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LoteImportacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoteImportacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoteImportacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LoteImportacions
+    **/
+    _count?: true | LoteImportacionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LoteImportacionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LoteImportacionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LoteImportacionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LoteImportacionMaxAggregateInputType
+  }
+
+  export type GetLoteImportacionAggregateType<T extends LoteImportacionAggregateArgs> = {
+        [P in keyof T & keyof AggregateLoteImportacion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLoteImportacion[P]>
+      : GetScalarType<T[P], AggregateLoteImportacion[P]>
+  }
+
+
+
+
+  export type LoteImportacionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoteImportacionWhereInput
+    orderBy?: LoteImportacionOrderByWithAggregationInput | LoteImportacionOrderByWithAggregationInput[]
+    by: LoteImportacionScalarFieldEnum[] | LoteImportacionScalarFieldEnum
+    having?: LoteImportacionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LoteImportacionCountAggregateInputType | true
+    _avg?: LoteImportacionAvgAggregateInputType
+    _sum?: LoteImportacionSumAggregateInputType
+    _min?: LoteImportacionMinAggregateInputType
+    _max?: LoteImportacionMaxAggregateInputType
+  }
+
+  export type LoteImportacionGroupByOutputType = {
+    id: string
+    tenant_id: string
+    importado_por: string
+    cantidad_registros: number
+    estado: string
+    created_at: Date
+    _count: LoteImportacionCountAggregateOutputType | null
+    _avg: LoteImportacionAvgAggregateOutputType | null
+    _sum: LoteImportacionSumAggregateOutputType | null
+    _min: LoteImportacionMinAggregateOutputType | null
+    _max: LoteImportacionMaxAggregateOutputType | null
+  }
+
+  type GetLoteImportacionGroupByPayload<T extends LoteImportacionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LoteImportacionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LoteImportacionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LoteImportacionGroupByOutputType[P]>
+            : GetScalarType<T[P], LoteImportacionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LoteImportacionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    importado_por?: boolean
+    cantidad_registros?: boolean
+    estado?: boolean
+    created_at?: boolean
+    insumos?: boolean | LoteImportacion$insumosArgs<ExtArgs>
+    _count?: boolean | LoteImportacionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loteImportacion"]>
+
+  export type LoteImportacionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    importado_por?: boolean
+    cantidad_registros?: boolean
+    estado?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["loteImportacion"]>
+
+  export type LoteImportacionSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    importado_por?: boolean
+    cantidad_registros?: boolean
+    estado?: boolean
+    created_at?: boolean
+  }
+
+  export type LoteImportacionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    insumos?: boolean | LoteImportacion$insumosArgs<ExtArgs>
+    _count?: boolean | LoteImportacionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type LoteImportacionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $LoteImportacionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LoteImportacion"
+    objects: {
+      insumos: Prisma.$InsumoPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      importado_por: string
+      cantidad_registros: number
+      estado: string
+      created_at: Date
+    }, ExtArgs["result"]["loteImportacion"]>
+    composites: {}
+  }
+
+  type LoteImportacionGetPayload<S extends boolean | null | undefined | LoteImportacionDefaultArgs> = $Result.GetResult<Prisma.$LoteImportacionPayload, S>
+
+  type LoteImportacionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LoteImportacionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LoteImportacionCountAggregateInputType | true
+    }
+
+  export interface LoteImportacionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LoteImportacion'], meta: { name: 'LoteImportacion' } }
+    /**
+     * Find zero or one LoteImportacion that matches the filter.
+     * @param {LoteImportacionFindUniqueArgs} args - Arguments to find a LoteImportacion
+     * @example
+     * // Get one LoteImportacion
+     * const loteImportacion = await prisma.loteImportacion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LoteImportacionFindUniqueArgs>(args: SelectSubset<T, LoteImportacionFindUniqueArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one LoteImportacion that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LoteImportacionFindUniqueOrThrowArgs} args - Arguments to find a LoteImportacion
+     * @example
+     * // Get one LoteImportacion
+     * const loteImportacion = await prisma.loteImportacion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LoteImportacionFindUniqueOrThrowArgs>(args: SelectSubset<T, LoteImportacionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first LoteImportacion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionFindFirstArgs} args - Arguments to find a LoteImportacion
+     * @example
+     * // Get one LoteImportacion
+     * const loteImportacion = await prisma.loteImportacion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LoteImportacionFindFirstArgs>(args?: SelectSubset<T, LoteImportacionFindFirstArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first LoteImportacion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionFindFirstOrThrowArgs} args - Arguments to find a LoteImportacion
+     * @example
+     * // Get one LoteImportacion
+     * const loteImportacion = await prisma.loteImportacion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LoteImportacionFindFirstOrThrowArgs>(args?: SelectSubset<T, LoteImportacionFindFirstOrThrowArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more LoteImportacions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LoteImportacions
+     * const loteImportacions = await prisma.loteImportacion.findMany()
+     * 
+     * // Get first 10 LoteImportacions
+     * const loteImportacions = await prisma.loteImportacion.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const loteImportacionWithIdOnly = await prisma.loteImportacion.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LoteImportacionFindManyArgs>(args?: SelectSubset<T, LoteImportacionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a LoteImportacion.
+     * @param {LoteImportacionCreateArgs} args - Arguments to create a LoteImportacion.
+     * @example
+     * // Create one LoteImportacion
+     * const LoteImportacion = await prisma.loteImportacion.create({
+     *   data: {
+     *     // ... data to create a LoteImportacion
+     *   }
+     * })
+     * 
+     */
+    create<T extends LoteImportacionCreateArgs>(args: SelectSubset<T, LoteImportacionCreateArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many LoteImportacions.
+     * @param {LoteImportacionCreateManyArgs} args - Arguments to create many LoteImportacions.
+     * @example
+     * // Create many LoteImportacions
+     * const loteImportacion = await prisma.loteImportacion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LoteImportacionCreateManyArgs>(args?: SelectSubset<T, LoteImportacionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LoteImportacions and returns the data saved in the database.
+     * @param {LoteImportacionCreateManyAndReturnArgs} args - Arguments to create many LoteImportacions.
+     * @example
+     * // Create many LoteImportacions
+     * const loteImportacion = await prisma.loteImportacion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LoteImportacions and only return the `id`
+     * const loteImportacionWithIdOnly = await prisma.loteImportacion.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LoteImportacionCreateManyAndReturnArgs>(args?: SelectSubset<T, LoteImportacionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a LoteImportacion.
+     * @param {LoteImportacionDeleteArgs} args - Arguments to delete one LoteImportacion.
+     * @example
+     * // Delete one LoteImportacion
+     * const LoteImportacion = await prisma.loteImportacion.delete({
+     *   where: {
+     *     // ... filter to delete one LoteImportacion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LoteImportacionDeleteArgs>(args: SelectSubset<T, LoteImportacionDeleteArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one LoteImportacion.
+     * @param {LoteImportacionUpdateArgs} args - Arguments to update one LoteImportacion.
+     * @example
+     * // Update one LoteImportacion
+     * const loteImportacion = await prisma.loteImportacion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LoteImportacionUpdateArgs>(args: SelectSubset<T, LoteImportacionUpdateArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more LoteImportacions.
+     * @param {LoteImportacionDeleteManyArgs} args - Arguments to filter LoteImportacions to delete.
+     * @example
+     * // Delete a few LoteImportacions
+     * const { count } = await prisma.loteImportacion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LoteImportacionDeleteManyArgs>(args?: SelectSubset<T, LoteImportacionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LoteImportacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LoteImportacions
+     * const loteImportacion = await prisma.loteImportacion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LoteImportacionUpdateManyArgs>(args: SelectSubset<T, LoteImportacionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one LoteImportacion.
+     * @param {LoteImportacionUpsertArgs} args - Arguments to update or create a LoteImportacion.
+     * @example
+     * // Update or create a LoteImportacion
+     * const loteImportacion = await prisma.loteImportacion.upsert({
+     *   create: {
+     *     // ... data to create a LoteImportacion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LoteImportacion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LoteImportacionUpsertArgs>(args: SelectSubset<T, LoteImportacionUpsertArgs<ExtArgs>>): Prisma__LoteImportacionClient<$Result.GetResult<Prisma.$LoteImportacionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of LoteImportacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionCountArgs} args - Arguments to filter LoteImportacions to count.
+     * @example
+     * // Count the number of LoteImportacions
+     * const count = await prisma.loteImportacion.count({
+     *   where: {
+     *     // ... the filter for the LoteImportacions we want to count
+     *   }
+     * })
+    **/
+    count<T extends LoteImportacionCountArgs>(
+      args?: Subset<T, LoteImportacionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LoteImportacionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LoteImportacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LoteImportacionAggregateArgs>(args: Subset<T, LoteImportacionAggregateArgs>): Prisma.PrismaPromise<GetLoteImportacionAggregateType<T>>
+
+    /**
+     * Group by LoteImportacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoteImportacionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LoteImportacionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LoteImportacionGroupByArgs['orderBy'] }
+        : { orderBy?: LoteImportacionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LoteImportacionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLoteImportacionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LoteImportacion model
+   */
+  readonly fields: LoteImportacionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LoteImportacion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LoteImportacionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    insumos<T extends LoteImportacion$insumosArgs<ExtArgs> = {}>(args?: Subset<T, LoteImportacion$insumosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InsumoPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LoteImportacion model
+   */ 
+  interface LoteImportacionFieldRefs {
+    readonly id: FieldRef<"LoteImportacion", 'String'>
+    readonly tenant_id: FieldRef<"LoteImportacion", 'String'>
+    readonly importado_por: FieldRef<"LoteImportacion", 'String'>
+    readonly cantidad_registros: FieldRef<"LoteImportacion", 'Int'>
+    readonly estado: FieldRef<"LoteImportacion", 'String'>
+    readonly created_at: FieldRef<"LoteImportacion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LoteImportacion findUnique
+   */
+  export type LoteImportacionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * Filter, which LoteImportacion to fetch.
+     */
+    where: LoteImportacionWhereUniqueInput
+  }
+
+  /**
+   * LoteImportacion findUniqueOrThrow
+   */
+  export type LoteImportacionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * Filter, which LoteImportacion to fetch.
+     */
+    where: LoteImportacionWhereUniqueInput
+  }
+
+  /**
+   * LoteImportacion findFirst
+   */
+  export type LoteImportacionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * Filter, which LoteImportacion to fetch.
+     */
+    where?: LoteImportacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoteImportacions to fetch.
+     */
+    orderBy?: LoteImportacionOrderByWithRelationInput | LoteImportacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoteImportacions.
+     */
+    cursor?: LoteImportacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoteImportacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoteImportacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoteImportacions.
+     */
+    distinct?: LoteImportacionScalarFieldEnum | LoteImportacionScalarFieldEnum[]
+  }
+
+  /**
+   * LoteImportacion findFirstOrThrow
+   */
+  export type LoteImportacionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * Filter, which LoteImportacion to fetch.
+     */
+    where?: LoteImportacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoteImportacions to fetch.
+     */
+    orderBy?: LoteImportacionOrderByWithRelationInput | LoteImportacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoteImportacions.
+     */
+    cursor?: LoteImportacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoteImportacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoteImportacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoteImportacions.
+     */
+    distinct?: LoteImportacionScalarFieldEnum | LoteImportacionScalarFieldEnum[]
+  }
+
+  /**
+   * LoteImportacion findMany
+   */
+  export type LoteImportacionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * Filter, which LoteImportacions to fetch.
+     */
+    where?: LoteImportacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoteImportacions to fetch.
+     */
+    orderBy?: LoteImportacionOrderByWithRelationInput | LoteImportacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LoteImportacions.
+     */
+    cursor?: LoteImportacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoteImportacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoteImportacions.
+     */
+    skip?: number
+    distinct?: LoteImportacionScalarFieldEnum | LoteImportacionScalarFieldEnum[]
+  }
+
+  /**
+   * LoteImportacion create
+   */
+  export type LoteImportacionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LoteImportacion.
+     */
+    data: XOR<LoteImportacionCreateInput, LoteImportacionUncheckedCreateInput>
+  }
+
+  /**
+   * LoteImportacion createMany
+   */
+  export type LoteImportacionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LoteImportacions.
+     */
+    data: LoteImportacionCreateManyInput | LoteImportacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LoteImportacion createManyAndReturn
+   */
+  export type LoteImportacionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many LoteImportacions.
+     */
+    data: LoteImportacionCreateManyInput | LoteImportacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LoteImportacion update
+   */
+  export type LoteImportacionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LoteImportacion.
+     */
+    data: XOR<LoteImportacionUpdateInput, LoteImportacionUncheckedUpdateInput>
+    /**
+     * Choose, which LoteImportacion to update.
+     */
+    where: LoteImportacionWhereUniqueInput
+  }
+
+  /**
+   * LoteImportacion updateMany
+   */
+  export type LoteImportacionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LoteImportacions.
+     */
+    data: XOR<LoteImportacionUpdateManyMutationInput, LoteImportacionUncheckedUpdateManyInput>
+    /**
+     * Filter which LoteImportacions to update
+     */
+    where?: LoteImportacionWhereInput
+  }
+
+  /**
+   * LoteImportacion upsert
+   */
+  export type LoteImportacionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LoteImportacion to update in case it exists.
+     */
+    where: LoteImportacionWhereUniqueInput
+    /**
+     * In case the LoteImportacion found by the `where` argument doesn't exist, create a new LoteImportacion with this data.
+     */
+    create: XOR<LoteImportacionCreateInput, LoteImportacionUncheckedCreateInput>
+    /**
+     * In case the LoteImportacion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LoteImportacionUpdateInput, LoteImportacionUncheckedUpdateInput>
+  }
+
+  /**
+   * LoteImportacion delete
+   */
+  export type LoteImportacionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
+    /**
+     * Filter which LoteImportacion to delete.
+     */
+    where: LoteImportacionWhereUniqueInput
+  }
+
+  /**
+   * LoteImportacion deleteMany
+   */
+  export type LoteImportacionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoteImportacions to delete
+     */
+    where?: LoteImportacionWhereInput
+  }
+
+  /**
+   * LoteImportacion.insumos
+   */
+  export type LoteImportacion$insumosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Insumo
+     */
+    select?: InsumoSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InsumoInclude<ExtArgs> | null
+    where?: InsumoWhereInput
+    orderBy?: InsumoOrderByWithRelationInput | InsumoOrderByWithRelationInput[]
+    cursor?: InsumoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InsumoScalarFieldEnum | InsumoScalarFieldEnum[]
+  }
+
+  /**
+   * LoteImportacion without action
+   */
+  export type LoteImportacionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoteImportacion
+     */
+    select?: LoteImportacionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoteImportacionInclude<ExtArgs> | null
   }
 
 
@@ -16703,12 +17854,25 @@ export namespace Prisma {
     tipo_insumo: 'tipo_insumo',
     costo_base: 'costo_base',
     categoria_gasto_id: 'categoria_gasto_id',
+    lote_importacion_id: 'lote_importacion_id',
     activo: 'activo',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
 
   export type InsumoScalarFieldEnum = (typeof InsumoScalarFieldEnum)[keyof typeof InsumoScalarFieldEnum]
+
+
+  export const LoteImportacionScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    importado_por: 'importado_por',
+    cantidad_registros: 'cantidad_registros',
+    estado: 'estado',
+    created_at: 'created_at'
+  };
+
+  export type LoteImportacionScalarFieldEnum = (typeof LoteImportacionScalarFieldEnum)[keyof typeof LoteImportacionScalarFieldEnum]
 
 
   export const PresupuestoBaseScalarFieldEnum: {
@@ -17193,10 +18357,12 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: UuidNullableFilter<"Insumo"> | string | null
+    lote_importacion_id?: UuidNullableFilter<"Insumo"> | string | null
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
     categoria_gasto?: XOR<CategoriaGastoNullableRelationFilter, CategoriaGastoWhereInput> | null
+    lote_importacion?: XOR<LoteImportacionNullableRelationFilter, LoteImportacionWhereInput> | null
     concepto_insumos?: ConceptoInsumoListRelationFilter
   }
 
@@ -17210,10 +18376,12 @@ export namespace Prisma {
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
     categoria_gasto_id?: SortOrderInput | SortOrder
+    lote_importacion_id?: SortOrderInput | SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     categoria_gasto?: CategoriaGastoOrderByWithRelationInput
+    lote_importacion?: LoteImportacionOrderByWithRelationInput
     concepto_insumos?: ConceptoInsumoOrderByRelationAggregateInput
   }
 
@@ -17231,10 +18399,12 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: UuidNullableFilter<"Insumo"> | string | null
+    lote_importacion_id?: UuidNullableFilter<"Insumo"> | string | null
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
     categoria_gasto?: XOR<CategoriaGastoNullableRelationFilter, CategoriaGastoWhereInput> | null
+    lote_importacion?: XOR<LoteImportacionNullableRelationFilter, LoteImportacionWhereInput> | null
     concepto_insumos?: ConceptoInsumoListRelationFilter
   }, "id" | "uq_insumo_tenant_proyecto_clave">
 
@@ -17248,6 +18418,7 @@ export namespace Prisma {
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
     categoria_gasto_id?: SortOrderInput | SortOrder
+    lote_importacion_id?: SortOrderInput | SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -17271,9 +18442,72 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoWithAggregatesFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalWithAggregatesFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: UuidNullableWithAggregatesFilter<"Insumo"> | string | null
+    lote_importacion_id?: UuidNullableWithAggregatesFilter<"Insumo"> | string | null
     activo?: BoolWithAggregatesFilter<"Insumo"> | boolean
     created_at?: DateTimeWithAggregatesFilter<"Insumo"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Insumo"> | Date | string
+  }
+
+  export type LoteImportacionWhereInput = {
+    AND?: LoteImportacionWhereInput | LoteImportacionWhereInput[]
+    OR?: LoteImportacionWhereInput[]
+    NOT?: LoteImportacionWhereInput | LoteImportacionWhereInput[]
+    id?: UuidFilter<"LoteImportacion"> | string
+    tenant_id?: UuidFilter<"LoteImportacion"> | string
+    importado_por?: UuidFilter<"LoteImportacion"> | string
+    cantidad_registros?: IntFilter<"LoteImportacion"> | number
+    estado?: StringFilter<"LoteImportacion"> | string
+    created_at?: DateTimeFilter<"LoteImportacion"> | Date | string
+    insumos?: InsumoListRelationFilter
+  }
+
+  export type LoteImportacionOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    importado_por?: SortOrder
+    cantidad_registros?: SortOrder
+    estado?: SortOrder
+    created_at?: SortOrder
+    insumos?: InsumoOrderByRelationAggregateInput
+  }
+
+  export type LoteImportacionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LoteImportacionWhereInput | LoteImportacionWhereInput[]
+    OR?: LoteImportacionWhereInput[]
+    NOT?: LoteImportacionWhereInput | LoteImportacionWhereInput[]
+    tenant_id?: UuidFilter<"LoteImportacion"> | string
+    importado_por?: UuidFilter<"LoteImportacion"> | string
+    cantidad_registros?: IntFilter<"LoteImportacion"> | number
+    estado?: StringFilter<"LoteImportacion"> | string
+    created_at?: DateTimeFilter<"LoteImportacion"> | Date | string
+    insumos?: InsumoListRelationFilter
+  }, "id">
+
+  export type LoteImportacionOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    importado_por?: SortOrder
+    cantidad_registros?: SortOrder
+    estado?: SortOrder
+    created_at?: SortOrder
+    _count?: LoteImportacionCountOrderByAggregateInput
+    _avg?: LoteImportacionAvgOrderByAggregateInput
+    _max?: LoteImportacionMaxOrderByAggregateInput
+    _min?: LoteImportacionMinOrderByAggregateInput
+    _sum?: LoteImportacionSumOrderByAggregateInput
+  }
+
+  export type LoteImportacionScalarWhereWithAggregatesInput = {
+    AND?: LoteImportacionScalarWhereWithAggregatesInput | LoteImportacionScalarWhereWithAggregatesInput[]
+    OR?: LoteImportacionScalarWhereWithAggregatesInput[]
+    NOT?: LoteImportacionScalarWhereWithAggregatesInput | LoteImportacionScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"LoteImportacion"> | string
+    tenant_id?: UuidWithAggregatesFilter<"LoteImportacion"> | string
+    importado_por?: UuidWithAggregatesFilter<"LoteImportacion"> | string
+    cantidad_registros?: IntWithAggregatesFilter<"LoteImportacion"> | number
+    estado?: StringWithAggregatesFilter<"LoteImportacion"> | string
+    created_at?: DateTimeWithAggregatesFilter<"LoteImportacion"> | Date | string
   }
 
   export type PresupuestoBaseWhereInput = {
@@ -18463,6 +19697,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     categoria_gasto?: CategoriaGastoCreateNestedOneWithoutInsumosInput
+    lote_importacion?: LoteImportacionCreateNestedOneWithoutInsumosInput
     concepto_insumos?: ConceptoInsumoCreateNestedManyWithoutInsumoInput
   }
 
@@ -18476,6 +19711,7 @@ export namespace Prisma {
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: string | null
+    lote_importacion_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -18495,6 +19731,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     categoria_gasto?: CategoriaGastoUpdateOneWithoutInsumosNestedInput
+    lote_importacion?: LoteImportacionUpdateOneWithoutInsumosNestedInput
     concepto_insumos?: ConceptoInsumoUpdateManyWithoutInsumoNestedInput
   }
 
@@ -18508,6 +19745,7 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    lote_importacion_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18524,6 +19762,7 @@ export namespace Prisma {
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: string | null
+    lote_importacion_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -18553,9 +19792,77 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    lote_importacion_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoteImportacionCreateInput = {
+    id?: string
+    tenant_id: string
+    importado_por: string
+    cantidad_registros?: number
+    estado?: string
+    created_at?: Date | string
+    insumos?: InsumoCreateNestedManyWithoutLote_importacionInput
+  }
+
+  export type LoteImportacionUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    importado_por: string
+    cantidad_registros?: number
+    estado?: string
+    created_at?: Date | string
+    insumos?: InsumoUncheckedCreateNestedManyWithoutLote_importacionInput
+  }
+
+  export type LoteImportacionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    importado_por?: StringFieldUpdateOperationsInput | string
+    cantidad_registros?: IntFieldUpdateOperationsInput | number
+    estado?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: InsumoUpdateManyWithoutLote_importacionNestedInput
+  }
+
+  export type LoteImportacionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    importado_por?: StringFieldUpdateOperationsInput | string
+    cantidad_registros?: IntFieldUpdateOperationsInput | number
+    estado?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    insumos?: InsumoUncheckedUpdateManyWithoutLote_importacionNestedInput
+  }
+
+  export type LoteImportacionCreateManyInput = {
+    id?: string
+    tenant_id: string
+    importado_por: string
+    cantidad_registros?: number
+    estado?: string
+    created_at?: Date | string
+  }
+
+  export type LoteImportacionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    importado_por?: StringFieldUpdateOperationsInput | string
+    cantidad_registros?: IntFieldUpdateOperationsInput | number
+    estado?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoteImportacionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    importado_por?: StringFieldUpdateOperationsInput | string
+    cantidad_registros?: IntFieldUpdateOperationsInput | number
+    estado?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PresupuestoBaseCreateInput = {
@@ -19990,6 +21297,11 @@ export namespace Prisma {
     isNot?: CategoriaGastoWhereInput | null
   }
 
+  export type LoteImportacionNullableRelationFilter = {
+    is?: LoteImportacionWhereInput | null
+    isNot?: LoteImportacionWhereInput | null
+  }
+
   export type ConceptoInsumoListRelationFilter = {
     every?: ConceptoInsumoWhereInput
     some?: ConceptoInsumoWhereInput
@@ -20016,6 +21328,7 @@ export namespace Prisma {
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
     categoria_gasto_id?: SortOrder
+    lote_importacion_id?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -20035,6 +21348,7 @@ export namespace Prisma {
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
     categoria_gasto_id?: SortOrder
+    lote_importacion_id?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -20050,6 +21364,7 @@ export namespace Prisma {
     tipo_insumo?: SortOrder
     costo_base?: SortOrder
     categoria_gasto_id?: SortOrder
+    lote_importacion_id?: SortOrder
     activo?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
@@ -20094,6 +21409,57 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type LoteImportacionCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    importado_por?: SortOrder
+    cantidad_registros?: SortOrder
+    estado?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type LoteImportacionAvgOrderByAggregateInput = {
+    cantidad_registros?: SortOrder
+  }
+
+  export type LoteImportacionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    importado_por?: SortOrder
+    cantidad_registros?: SortOrder
+    estado?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type LoteImportacionMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    importado_por?: SortOrder
+    cantidad_registros?: SortOrder
+    estado?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type LoteImportacionSumOrderByAggregateInput = {
+    cantidad_registros?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type EnumEstadoPresupuestoFilter<$PrismaModel = never> = {
@@ -20170,22 +21536,6 @@ export namespace Prisma {
   export type PresupuestoBaseSumOrderByAggregateInput = {
     version?: SortOrder
     importe_total?: SortOrder
-  }
-
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type EnumEstadoPresupuestoWithAggregatesFilter<$PrismaModel = never> = {
@@ -20929,6 +22279,12 @@ export namespace Prisma {
     connect?: CategoriaGastoWhereUniqueInput
   }
 
+  export type LoteImportacionCreateNestedOneWithoutInsumosInput = {
+    create?: XOR<LoteImportacionCreateWithoutInsumosInput, LoteImportacionUncheckedCreateWithoutInsumosInput>
+    connectOrCreate?: LoteImportacionCreateOrConnectWithoutInsumosInput
+    connect?: LoteImportacionWhereUniqueInput
+  }
+
   export type ConceptoInsumoCreateNestedManyWithoutInsumoInput = {
     create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
     connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
@@ -20965,6 +22321,16 @@ export namespace Prisma {
     update?: XOR<XOR<CategoriaGastoUpdateToOneWithWhereWithoutInsumosInput, CategoriaGastoUpdateWithoutInsumosInput>, CategoriaGastoUncheckedUpdateWithoutInsumosInput>
   }
 
+  export type LoteImportacionUpdateOneWithoutInsumosNestedInput = {
+    create?: XOR<LoteImportacionCreateWithoutInsumosInput, LoteImportacionUncheckedCreateWithoutInsumosInput>
+    connectOrCreate?: LoteImportacionCreateOrConnectWithoutInsumosInput
+    upsert?: LoteImportacionUpsertWithoutInsumosInput
+    disconnect?: LoteImportacionWhereInput | boolean
+    delete?: LoteImportacionWhereInput | boolean
+    connect?: LoteImportacionWhereUniqueInput
+    update?: XOR<XOR<LoteImportacionUpdateToOneWithWhereWithoutInsumosInput, LoteImportacionUpdateWithoutInsumosInput>, LoteImportacionUncheckedUpdateWithoutInsumosInput>
+  }
+
   export type ConceptoInsumoUpdateManyWithoutInsumoNestedInput = {
     create?: XOR<ConceptoInsumoCreateWithoutInsumoInput, ConceptoInsumoUncheckedCreateWithoutInsumoInput> | ConceptoInsumoCreateWithoutInsumoInput[] | ConceptoInsumoUncheckedCreateWithoutInsumoInput[]
     connectOrCreate?: ConceptoInsumoCreateOrConnectWithoutInsumoInput | ConceptoInsumoCreateOrConnectWithoutInsumoInput[]
@@ -20993,6 +22359,56 @@ export namespace Prisma {
     deleteMany?: ConceptoInsumoScalarWhereInput | ConceptoInsumoScalarWhereInput[]
   }
 
+  export type InsumoCreateNestedManyWithoutLote_importacionInput = {
+    create?: XOR<InsumoCreateWithoutLote_importacionInput, InsumoUncheckedCreateWithoutLote_importacionInput> | InsumoCreateWithoutLote_importacionInput[] | InsumoUncheckedCreateWithoutLote_importacionInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutLote_importacionInput | InsumoCreateOrConnectWithoutLote_importacionInput[]
+    createMany?: InsumoCreateManyLote_importacionInputEnvelope
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+  }
+
+  export type InsumoUncheckedCreateNestedManyWithoutLote_importacionInput = {
+    create?: XOR<InsumoCreateWithoutLote_importacionInput, InsumoUncheckedCreateWithoutLote_importacionInput> | InsumoCreateWithoutLote_importacionInput[] | InsumoUncheckedCreateWithoutLote_importacionInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutLote_importacionInput | InsumoCreateOrConnectWithoutLote_importacionInput[]
+    createMany?: InsumoCreateManyLote_importacionInputEnvelope
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type InsumoUpdateManyWithoutLote_importacionNestedInput = {
+    create?: XOR<InsumoCreateWithoutLote_importacionInput, InsumoUncheckedCreateWithoutLote_importacionInput> | InsumoCreateWithoutLote_importacionInput[] | InsumoUncheckedCreateWithoutLote_importacionInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutLote_importacionInput | InsumoCreateOrConnectWithoutLote_importacionInput[]
+    upsert?: InsumoUpsertWithWhereUniqueWithoutLote_importacionInput | InsumoUpsertWithWhereUniqueWithoutLote_importacionInput[]
+    createMany?: InsumoCreateManyLote_importacionInputEnvelope
+    set?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    disconnect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    delete?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    update?: InsumoUpdateWithWhereUniqueWithoutLote_importacionInput | InsumoUpdateWithWhereUniqueWithoutLote_importacionInput[]
+    updateMany?: InsumoUpdateManyWithWhereWithoutLote_importacionInput | InsumoUpdateManyWithWhereWithoutLote_importacionInput[]
+    deleteMany?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
+  }
+
+  export type InsumoUncheckedUpdateManyWithoutLote_importacionNestedInput = {
+    create?: XOR<InsumoCreateWithoutLote_importacionInput, InsumoUncheckedCreateWithoutLote_importacionInput> | InsumoCreateWithoutLote_importacionInput[] | InsumoUncheckedCreateWithoutLote_importacionInput[]
+    connectOrCreate?: InsumoCreateOrConnectWithoutLote_importacionInput | InsumoCreateOrConnectWithoutLote_importacionInput[]
+    upsert?: InsumoUpsertWithWhereUniqueWithoutLote_importacionInput | InsumoUpsertWithWhereUniqueWithoutLote_importacionInput[]
+    createMany?: InsumoCreateManyLote_importacionInputEnvelope
+    set?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    disconnect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    delete?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    connect?: InsumoWhereUniqueInput | InsumoWhereUniqueInput[]
+    update?: InsumoUpdateWithWhereUniqueWithoutLote_importacionInput | InsumoUpdateWithWhereUniqueWithoutLote_importacionInput[]
+    updateMany?: InsumoUpdateManyWithWhereWithoutLote_importacionInput | InsumoUpdateManyWithWhereWithoutLote_importacionInput[]
+    deleteMany?: InsumoScalarWhereInput | InsumoScalarWhereInput[]
+  }
+
   export type ConceptoCreateNestedManyWithoutPresupuestoInput = {
     create?: XOR<ConceptoCreateWithoutPresupuestoInput, ConceptoUncheckedCreateWithoutPresupuestoInput> | ConceptoCreateWithoutPresupuestoInput[] | ConceptoUncheckedCreateWithoutPresupuestoInput[]
     connectOrCreate?: ConceptoCreateOrConnectWithoutPresupuestoInput | ConceptoCreateOrConnectWithoutPresupuestoInput[]
@@ -21019,14 +22435,6 @@ export namespace Prisma {
     connectOrCreate?: CapituloCreateOrConnectWithoutPresupuestoInput | CapituloCreateOrConnectWithoutPresupuestoInput[]
     createMany?: CapituloCreateManyPresupuestoInputEnvelope
     connect?: CapituloWhereUniqueInput | CapituloWhereUniqueInput[]
-  }
-
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
   }
 
   export type EnumEstadoPresupuestoFieldUpdateOperationsInput = {
@@ -21525,13 +22933,6 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
-  export type NestedEnumEstadoPresupuestoFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoPresupuesto | EnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    in?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
-    not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
-  }
-
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -21557,6 +22958,13 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumEstadoPresupuestoFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPresupuesto | EnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPresupuesto[] | ListEnumEstadoPresupuestoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPresupuestoFilter<$PrismaModel> | $Enums.EstadoPresupuesto
   }
 
   export type NestedEnumEstadoPresupuestoWithAggregatesFilter<$PrismaModel = never> = {
@@ -21598,6 +23006,7 @@ export namespace Prisma {
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
+    lote_importacion?: LoteImportacionCreateNestedOneWithoutInsumosInput
     concepto_insumos?: ConceptoInsumoCreateNestedManyWithoutInsumoInput
   }
 
@@ -21610,6 +23019,7 @@ export namespace Prisma {
     unidad_medida: string
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
+    lote_importacion_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -21655,6 +23065,7 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoFilter<"Insumo"> | $Enums.TipoInsumo
     costo_base?: DecimalFilter<"Insumo"> | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: UuidNullableFilter<"Insumo"> | string | null
+    lote_importacion_id?: UuidNullableFilter<"Insumo"> | string | null
     activo?: BoolFilter<"Insumo"> | boolean
     created_at?: DateTimeFilter<"Insumo"> | Date | string
     updated_at?: DateTimeFilter<"Insumo"> | Date | string
@@ -21683,6 +23094,29 @@ export namespace Prisma {
   export type CategoriaGastoCreateOrConnectWithoutInsumosInput = {
     where: CategoriaGastoWhereUniqueInput
     create: XOR<CategoriaGastoCreateWithoutInsumosInput, CategoriaGastoUncheckedCreateWithoutInsumosInput>
+  }
+
+  export type LoteImportacionCreateWithoutInsumosInput = {
+    id?: string
+    tenant_id: string
+    importado_por: string
+    cantidad_registros?: number
+    estado?: string
+    created_at?: Date | string
+  }
+
+  export type LoteImportacionUncheckedCreateWithoutInsumosInput = {
+    id?: string
+    tenant_id: string
+    importado_por: string
+    cantidad_registros?: number
+    estado?: string
+    created_at?: Date | string
+  }
+
+  export type LoteImportacionCreateOrConnectWithoutInsumosInput = {
+    where: LoteImportacionWhereUniqueInput
+    create: XOR<LoteImportacionCreateWithoutInsumosInput, LoteImportacionUncheckedCreateWithoutInsumosInput>
   }
 
   export type ConceptoInsumoCreateWithoutInsumoInput = {
@@ -21752,6 +23186,35 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type LoteImportacionUpsertWithoutInsumosInput = {
+    update: XOR<LoteImportacionUpdateWithoutInsumosInput, LoteImportacionUncheckedUpdateWithoutInsumosInput>
+    create: XOR<LoteImportacionCreateWithoutInsumosInput, LoteImportacionUncheckedCreateWithoutInsumosInput>
+    where?: LoteImportacionWhereInput
+  }
+
+  export type LoteImportacionUpdateToOneWithWhereWithoutInsumosInput = {
+    where?: LoteImportacionWhereInput
+    data: XOR<LoteImportacionUpdateWithoutInsumosInput, LoteImportacionUncheckedUpdateWithoutInsumosInput>
+  }
+
+  export type LoteImportacionUpdateWithoutInsumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    importado_por?: StringFieldUpdateOperationsInput | string
+    cantidad_registros?: IntFieldUpdateOperationsInput | number
+    estado?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoteImportacionUncheckedUpdateWithoutInsumosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    importado_por?: StringFieldUpdateOperationsInput | string
+    cantidad_registros?: IntFieldUpdateOperationsInput | number
+    estado?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ConceptoInsumoUpsertWithWhereUniqueWithoutInsumoInput = {
     where: ConceptoInsumoWhereUniqueInput
     update: XOR<ConceptoInsumoUpdateWithoutInsumoInput, ConceptoInsumoUncheckedUpdateWithoutInsumoInput>
@@ -21783,6 +23246,64 @@ export namespace Prisma {
     costo_unitario?: DecimalFilter<"ConceptoInsumo"> | Decimal | DecimalJsLike | number | string
     created_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
     updated_at?: DateTimeFilter<"ConceptoInsumo"> | Date | string
+  }
+
+  export type InsumoCreateWithoutLote_importacionInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    categoria_gasto?: CategoriaGastoCreateNestedOneWithoutInsumosInput
+    concepto_insumos?: ConceptoInsumoCreateNestedManyWithoutInsumoInput
+  }
+
+  export type InsumoUncheckedCreateWithoutLote_importacionInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: string | null
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+    concepto_insumos?: ConceptoInsumoUncheckedCreateNestedManyWithoutInsumoInput
+  }
+
+  export type InsumoCreateOrConnectWithoutLote_importacionInput = {
+    where: InsumoWhereUniqueInput
+    create: XOR<InsumoCreateWithoutLote_importacionInput, InsumoUncheckedCreateWithoutLote_importacionInput>
+  }
+
+  export type InsumoCreateManyLote_importacionInputEnvelope = {
+    data: InsumoCreateManyLote_importacionInput | InsumoCreateManyLote_importacionInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type InsumoUpsertWithWhereUniqueWithoutLote_importacionInput = {
+    where: InsumoWhereUniqueInput
+    update: XOR<InsumoUpdateWithoutLote_importacionInput, InsumoUncheckedUpdateWithoutLote_importacionInput>
+    create: XOR<InsumoCreateWithoutLote_importacionInput, InsumoUncheckedCreateWithoutLote_importacionInput>
+  }
+
+  export type InsumoUpdateWithWhereUniqueWithoutLote_importacionInput = {
+    where: InsumoWhereUniqueInput
+    data: XOR<InsumoUpdateWithoutLote_importacionInput, InsumoUncheckedUpdateWithoutLote_importacionInput>
+  }
+
+  export type InsumoUpdateManyWithWhereWithoutLote_importacionInput = {
+    where: InsumoScalarWhereInput
+    data: XOR<InsumoUpdateManyMutationInput, InsumoUncheckedUpdateManyWithoutLote_importacionInput>
   }
 
   export type ConceptoCreateWithoutPresupuestoInput = {
@@ -22295,6 +23816,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     categoria_gasto?: CategoriaGastoCreateNestedOneWithoutInsumosInput
+    lote_importacion?: LoteImportacionCreateNestedOneWithoutInsumosInput
   }
 
   export type InsumoUncheckedCreateWithoutConcepto_insumosInput = {
@@ -22307,6 +23829,7 @@ export namespace Prisma {
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: string | null
+    lote_importacion_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -22384,6 +23907,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     categoria_gasto?: CategoriaGastoUpdateOneWithoutInsumosNestedInput
+    lote_importacion?: LoteImportacionUpdateOneWithoutInsumosNestedInput
   }
 
   export type InsumoUncheckedUpdateWithoutConcepto_insumosInput = {
@@ -22396,6 +23920,7 @@ export namespace Prisma {
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    lote_importacion_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22568,6 +24093,7 @@ export namespace Prisma {
     unidad_medida: string
     tipo_insumo: $Enums.TipoInsumo
     costo_base: Decimal | DecimalJsLike | number | string
+    lote_importacion_id?: string | null
     activo?: boolean
     created_at?: Date | string
     updated_at?: Date | string
@@ -22585,6 +24111,7 @@ export namespace Prisma {
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    lote_importacion?: LoteImportacionUpdateOneWithoutInsumosNestedInput
     concepto_insumos?: ConceptoInsumoUpdateManyWithoutInsumoNestedInput
   }
 
@@ -22597,6 +24124,7 @@ export namespace Prisma {
     unidad_medida?: StringFieldUpdateOperationsInput | string
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    lote_importacion_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22612,6 +24140,7 @@ export namespace Prisma {
     unidad_medida?: StringFieldUpdateOperationsInput | string
     tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
     costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    lote_importacion_id?: NullableStringFieldUpdateOperationsInput | string | null
     activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22665,6 +24194,68 @@ export namespace Prisma {
     cantidad?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     rendimiento?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     costo_unitario?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InsumoCreateManyLote_importacionInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id?: string | null
+    clave: string
+    descripcion: string
+    unidad_medida: string
+    tipo_insumo: $Enums.TipoInsumo
+    costo_base: Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: string | null
+    activo?: boolean
+    created_at?: Date | string
+    updated_at?: Date | string
+  }
+
+  export type InsumoUpdateWithoutLote_importacionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria_gasto?: CategoriaGastoUpdateOneWithoutInsumosNestedInput
+    concepto_insumos?: ConceptoInsumoUpdateManyWithoutInsumoNestedInput
+  }
+
+  export type InsumoUncheckedUpdateWithoutLote_importacionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    concepto_insumos?: ConceptoInsumoUncheckedUpdateManyWithoutInsumoNestedInput
+  }
+
+  export type InsumoUncheckedUpdateManyWithoutLote_importacionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    clave?: StringFieldUpdateOperationsInput | string
+    descripcion?: StringFieldUpdateOperationsInput | string
+    unidad_medida?: StringFieldUpdateOperationsInput | string
+    tipo_insumo?: EnumTipoInsumoFieldUpdateOperationsInput | $Enums.TipoInsumo
+    costo_base?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    categoria_gasto_id?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22953,6 +24544,10 @@ export namespace Prisma {
      */
     export type InsumoCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InsumoCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use LoteImportacionCountOutputTypeDefaultArgs instead
+     */
+    export type LoteImportacionCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoteImportacionCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use PresupuestoBaseCountOutputTypeDefaultArgs instead
      */
     export type PresupuestoBaseCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PresupuestoBaseCountOutputTypeDefaultArgs<ExtArgs>
@@ -22980,6 +24575,10 @@ export namespace Prisma {
      * @deprecated Use InsumoDefaultArgs instead
      */
     export type InsumoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = InsumoDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoteImportacionDefaultArgs instead
+     */
+    export type LoteImportacionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoteImportacionDefaultArgs<ExtArgs>
     /**
      * @deprecated Use PresupuestoBaseDefaultArgs instead
      */

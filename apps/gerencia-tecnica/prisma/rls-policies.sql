@@ -255,3 +255,21 @@ COMMENT ON POLICY rls_capitulos_context ON capitulos IS
     'Aislamiento Multi-Tenant + Multi-Proyecto (hereda de presupuesto). Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_conceptos_catalogo_tenant ON conceptos_catalogo IS
     'Aislamiento Multi-Tenant. Catálogo maestro reutilizable entre proyectos del tenant. Módulo: Gerencia Técnica.';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 7. TABLA AGREGADA POR eliminacion-admin-archivos-importaciones-gt (2026-08-28)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─── LOTES DE IMPORTACIÓN (solo tenant — un lote de Explosión de Insumos
+-- puede tocar insumos de distintos proyecto_id legacy sin proyecto atribuible;
+-- el propio Insumo ya aplica su aislamiento tenant+proyecto vía rls_insumos_context) ──
+ALTER TABLE lotes_importacion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lotes_importacion FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_lotes_importacion_tenant ON lotes_importacion;
+CREATE POLICY rls_lotes_importacion_tenant ON lotes_importacion
+    FOR ALL
+    USING (tenant_id = get_current_tenant_id())
+    WITH CHECK (tenant_id = get_current_tenant_id());
+
+COMMENT ON POLICY rls_lotes_importacion_tenant ON lotes_importacion IS
+    'Aislamiento Multi-Tenant. Módulo: Gerencia Técnica.';

@@ -16,7 +16,11 @@
     "test:integration:presupuestos-capitulos": "node -r ts-node/register/transpile-only test/integration/presupuestos-capitulos.integration.test.ts",
     "test:integration:aislamiento-insumos-por-proyecto": "node -r ts-node/register/transpile-only test/integration/aislamiento-insumos-por-proyecto.integration.test.ts",
     "test:integration:backfill-proyecto-id-insumos": "node -r ts-node/register/transpile-only test/integration/backfill-proyecto-id-insumos.integration.test.ts",
-    "test:integration:importar-lote-insumos-longitud-invalida": "node -r ts-node/register/transpile-only test/integration/importar-lote-insumos-longitud-invalida.integration.test.ts"
+    "test:integration:importar-lote-insumos-longitud-invalida": "node -r ts-node/register/transpile-only test/integration/importar-lote-insumos-longitud-invalida.integration.test.ts",
+    "test:integration:eliminar-fichas-tecnicas-admin": "node -r ts-node/register/transpile-only test/integration/eliminar-fichas-tecnicas-admin.integration.test.ts",
+    "test:integration:eliminar-presupuesto-admin": "node -r ts-node/register/transpile-only test/integration/eliminar-presupuesto-admin.integration.test.ts",
+    "test:integration:revertir-lote-insumos": "node -r ts-node/register/transpile-only test/integration/revertir-lote-insumos.integration.test.ts",
+    "test:integration:eliminar-composicion-apu": "node -r ts-node/register/transpile-only test/integration/eliminar-composicion-apu.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

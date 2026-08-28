@@ -73,6 +73,12 @@ model Insumo {
   categoria_gasto_id String?         @db.Uuid
   categoria_gasto    CategoriaGasto? @relation(fields: [categoria_gasto_id], references: [id_categoria])
 
+  /// Lote de Explosión de Insumos que creó/tocó por última vez este insumo.
+  /// NULL = insumo legacy o creado antes de este campo (ver
+  /// eliminacion-admin-archivos-importaciones-gt, Decision 1).
+  lote_importacion_id String?          @db.Uuid
+  lote_importacion    LoteImportacion? @relation(fields: [lote_importacion_id], references: [id])
+
   activo     Boolean  @default(true)
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
@@ -85,7 +91,25 @@ model Insumo {
   @@index([tenant_id], name: "idx_insumo_tenant")
   @@index([tenant_id, proyecto_id], name: "idx_insumo_tenant_proyecto")
   @@index([tenant_id, categoria_gasto_id], name: "idx_insumo_categoria")
+  @@index([tenant_id, lote_importacion_id], name: "idx_insumo_lote_importacion")
   @@map("insumos")
+}
+
+/// Lote de Explosión de Insumos importado de una sola llamada a
+/// POST /insumos/importar-lote. Permite identificar y revertir ese lote como
+/// unidad. Ver eliminacion-admin-archivos-importaciones-gt.
+model LoteImportacion {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id          String   @db.Uuid
+  importado_por      String   @db.Uuid
+  cantidad_registros Int      @default(0)
+  estado             String   @default("activo") @db.VarChar(20)
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  insumos Insumo[]
+
+  @@index([tenant_id], name: "idx_lote_importacion_tenant")
+  @@map("lotes_importacion")
 }
 
 /// Presupuesto Base de un proyecto/centro de costos.
