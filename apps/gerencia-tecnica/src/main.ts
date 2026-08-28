@@ -378,6 +378,15 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
 
     const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
 
+    // ── Registrar el lote de importación (permite revertirlo como unidad —
+    //    ver eliminacion-admin-archivos-importaciones-gt) ───────────────────────
+    const lote = await db.loteImportacion.create({
+      data: {
+        tenant_id: tenantId,
+        importado_por: req.securityContext.userId,
+      },
+    });
+
     // ── Obtener existentes en una sola consulta ─────────────────────────────────
     const existentes = await db.insumo.findMany({
       select: { id: true, clave: true },
@@ -400,6 +409,7 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
           tipo_insumo: i.tipo_insumo as any,
           costo_base: i.costo_base,
           activo: true,
+          lote_importacion_id: lote.id,
         })),
         skipDuplicates: true,
       });
@@ -419,6 +429,7 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
             tipo_insumo: item.tipo_insumo as any,
             costo_base: item.costo_base,
             activo: true,
+            lote_importacion_id: lote.id,
           },
         });
         actualizados++;
@@ -427,8 +438,13 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
       }
     }
 
-    console.log(`[Gerencia Técnica] Importación lote: +${creados} nuevos, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
-    res.json(createApiResponse({ creados, actualizados, omitidos }, tenantId, proyectoId));
+    await db.loteImportacion.update({
+      where: { id: lote.id },
+      data: { cantidad_registros: creados + actualizados },
+    });
+
+    console.log(`[Gerencia Técnica] Importación lote ${lote.id}: +${creados} nuevos, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
+    res.json(createApiResponse({ creados, actualizados, omitidos, lote_importacion_id: lote.id }, tenantId, proyectoId));
   } catch (error: any) {
     console.error('[Gerencia Técnica] Error en POST /insumos/importar-lote:', error.message);
     res.status(500).json(
@@ -436,6 +452,71 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
     );
   }
 });
+
+/**
+ * DELETE /api/v1/gerencia-tecnica/insumos/importar-lote/:loteId
+ * Revierte (desactiva) todos los insumos creados/actualizados por un lote de
+ * Explosión de Insumos importado por error, para poder volver a importarlo.
+ * Ver openspec/changes/eliminacion-admin-archivos-importaciones-gt.
+ */
+app.delete(
+  '/api/v1/gerencia-tecnica/insumos/importar-lote/:loteId',
+  requireRoles('admin', 'gerencia_tecnica', 'control_proyectos'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { loteId } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const lote = await db.loteImportacion.findFirst({
+        where: { id: loteId, tenant_id: tenantId },
+      });
+      if (!lote || lote.estado === 'revertido') {
+        return res.status(404).json(
+          createApiError('NOT_FOUND', 'Lote de importación no encontrado o ya revertido.')
+        );
+      }
+
+      const insumosDelLote = await db.insumo.findMany({
+        where: { tenant_id: tenantId, lote_importacion_id: loteId },
+        select: { id: true },
+      });
+      const insumoIds = insumosDelLote.map(i => i.id);
+
+      if (insumoIds.length > 0) {
+        const [enComposicion, enCompra] = await Promise.all([
+          db.conceptoInsumo.count({ where: { insumo_id: { in: insumoIds } } }),
+          db.compraProyectada.count({ where: { insumo_id: { in: insumoIds } } }),
+        ]);
+        if (enComposicion > 0 || enCompra > 0) {
+          return res.status(409).json(
+            createApiError(
+              'LOTE_EN_USO',
+              'El lote tiene insumos ya usados en una composición APU o una compra proyectada; no se puede revertir.'
+            )
+          );
+        }
+      }
+
+      await db.insumo.updateMany({
+        where: { tenant_id: tenantId, lote_importacion_id: loteId },
+        data: { activo: false },
+      });
+      await db.loteImportacion.update({
+        where: { id: loteId },
+        data: { estado: 'revertido' },
+      });
+
+      res.json(createApiResponse({ desactivados: insumoIds.length }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[Gerencia Técnica] Error en DELETE /insumos/importar-lote/:loteId:', error.message);
+      res.status(500).json(
+        createApiError('INTERNAL_ERROR', 'Error al revertir el lote de insumos.', error.message)
+      );
+    }
+  }
+);
 
 /**
  * PATCH /api/v1/gerencia-tecnica/insumos/:id
@@ -694,6 +775,65 @@ app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superin
   }
 });
 
+/**
+ * DELETE /api/v1/gerencia-tecnica/presupuestos/:id
+ * Elimina en cascada un Catálogo de Conceptos (PresupuestoBase) importado por
+ * error, junto con sus Capitulo/Concepto/ConceptoInsumo, para poder
+ * re-importarlo. Ver openspec/changes/eliminacion-admin-archivos-importaciones-gt.
+ */
+app.delete(
+  '/api/v1/gerencia-tecnica/presupuestos/:id',
+  requireRoles('admin', 'gerencia_tecnica', 'control_proyectos'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { id } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const presupuesto = await db.presupuestoBase.findFirst({
+        where: { id, tenant_id: tenantId },
+        select: { id: true, conceptos: { select: { id: true } } },
+      });
+      if (!presupuesto) {
+        return res.status(404).json(
+          createApiError('NOT_FOUND', 'Presupuesto no encontrado.')
+        );
+      }
+
+      const conceptoIds = presupuesto.conceptos.map(c => c.id);
+      if (conceptoIds.length > 0) {
+        const [comprometido, proyectado] = await Promise.all([
+          db.saldoPartida.count({
+            where: {
+              concepto_id: { in: conceptoIds },
+              OR: [{ monto_comprometido: { gt: 0 } }, { monto_ejercido: { gt: 0 } }],
+            },
+          }),
+          db.compraProyectada.count({ where: { concepto_id: { in: conceptoIds } } }),
+        ]);
+        if (comprometido > 0 || proyectado > 0) {
+          return res.status(409).json(
+            createApiError(
+              'PRESUPUESTO_EN_USO',
+              'El presupuesto tiene partidas con compromiso financiero (OC o pago) registrado; no se puede eliminar.'
+            )
+          );
+        }
+      }
+
+      await db.presupuestoBase.delete({ where: { id } });
+
+      res.json(createApiResponse({ id }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[Gerencia Técnica] Error en DELETE /presupuestos/:id:', error.message);
+      res.status(500).json(
+        createApiError('INTERNAL_ERROR', 'Error al eliminar presupuesto.', error.message)
+      );
+    }
+  }
+);
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // COMPOSICIÓN APU — Relación Concepto ↔ Insumos
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -756,6 +896,7 @@ app.post(
       let vinculados = 0;
       let actualizados = 0;
       let omitidos = 0;
+      const conceptosAfectados = new Set<string>();
 
       for (const comp of composiciones) {
         const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
@@ -799,14 +940,16 @@ app.post(
               });
               vinculados++;
             }
+            conceptosAfectados.add(conceptoId);
           } catch (_) {
             omitidos++;
           }
         }
       }
 
+      const conceptos_afectados = [...conceptosAfectados];
       console.log(`[Gerencia Técnica] Composición APU (presupuesto ${presupuesto_id}): +${vinculados} vinculados, ~${actualizados} actualizados, ✗${omitidos} omitidos`);
-      res.json(createApiResponse({ presupuesto_id, vinculados, actualizados, omitidos }, tenantId, proyectoId));
+      res.json(createApiResponse({ presupuesto_id, vinculados, actualizados, omitidos, conceptos_afectados }, tenantId, proyectoId));
     } catch (error: any) {
       console.error('[Gerencia Técnica] Error en POST /composicion-apu:', error.message);
       res.status(500).json(
@@ -854,6 +997,7 @@ app.post(
       const claveAInsumoId = new Map(insumos.map(i => [i.clave.toUpperCase(), i.id]));
       const TIPOS_VALIDOS = ['MATERIAL', 'MANO_DE_OBRA', 'EQUIPO', 'SUBCONTRATO', 'INDIRECTO'];
       let vinculados = 0; let actualizados = 0; let omitidos = 0;
+      const conceptosAfectados = new Set<string>();
 
       for (const comp of composiciones) {
         const claveConcepto = String(comp.concepto_clave ?? '').trim().toUpperCase();
@@ -883,12 +1027,52 @@ app.post(
               });
               vinculados++;
             }
+            conceptosAfectados.add(conceptoId);
           } catch (_) { omitidos++; }
         }
       }
-      res.json(createApiResponse({ presupuesto_id: presupuesto.id, vinculados, actualizados, omitidos }, tenantId, proyectoId));
+      res.json(createApiResponse({ presupuesto_id: presupuesto.id, vinculados, actualizados, omitidos, conceptos_afectados: [...conceptosAfectados] }, tenantId, proyectoId));
     } catch (error: any) {
       res.status(500).json(createApiError('INTERNAL_ERROR', 'Error al importar composición APU.', error.message));
+    }
+  }
+);
+
+/**
+ * DELETE /api/v1/gerencia-tecnica/composicion-apu/:conceptoId
+ * Elimina la composición APU (todos los ConceptoInsumo) de un concepto
+ * importada por error, sin tocar el Concepto ni los Insumo del catálogo.
+ * Ver openspec/changes/eliminacion-admin-archivos-importaciones-gt.
+ */
+app.delete(
+  '/api/v1/gerencia-tecnica/composicion-apu/:conceptoId',
+  requireRoles('admin', 'gerencia_tecnica', 'control_proyectos'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId } = req.securityContext;
+      const { conceptoId } = req.params;
+
+      const db = createTenantContext({ tenant_id: tenantId, proyecto_id: proyectoId });
+
+      const existentes = await db.conceptoInsumo.count({
+        where: { tenant_id: tenantId, concepto_id: conceptoId },
+      });
+      if (existentes === 0) {
+        return res.status(404).json(
+          createApiError('NOT_FOUND', 'El concepto no tiene composición APU cargada.')
+        );
+      }
+
+      const { count } = await db.conceptoInsumo.deleteMany({
+        where: { tenant_id: tenantId, concepto_id: conceptoId },
+      });
+
+      res.json(createApiResponse({ concepto_id: conceptoId, eliminados: count }, tenantId, proyectoId));
+    } catch (error: any) {
+      console.error('[Gerencia Técnica] Error en DELETE /composicion-apu/:conceptoId:', error.message);
+      res.status(500).json(
+        createApiError('INTERNAL_ERROR', 'Error al eliminar la composición APU.', error.message)
+      );
     }
   }
 );
@@ -1182,9 +1366,11 @@ app.get(
 );
 
 // DELETE /api/v1/gerencia-tecnica/insumos/:id/fichas/:fid
+// Restringido a admin: eliminar una ficha técnica es una corrección de carga errónea,
+// no una operación de subida normal (ver change eliminacion-admin-archivos-importaciones-gt).
 app.delete(
   '/api/v1/gerencia-tecnica/insumos/:id/fichas/:fid',
-  requireRoles(...ROLES_FICHAS_UPLOAD),
+  requireRoles('admin'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId } = req.securityContext;

@@ -153,9 +153,19 @@ exports.Prisma.InsumoScalarFieldEnum = {
   tipo_insumo: 'tipo_insumo',
   costo_base: 'costo_base',
   categoria_gasto_id: 'categoria_gasto_id',
+  lote_importacion_id: 'lote_importacion_id',
   activo: 'activo',
   created_at: 'created_at',
   updated_at: 'updated_at'
+};
+
+exports.Prisma.LoteImportacionScalarFieldEnum = {
+  id: 'id',
+  tenant_id: 'tenant_id',
+  importado_por: 'importado_por',
+  cantidad_registros: 'cantidad_registros',
+  estado: 'estado',
+  created_at: 'created_at'
 };
 
 exports.Prisma.PresupuestoBaseScalarFieldEnum = {
@@ -358,6 +368,7 @@ exports.Prisma.ModelName = {
   CategoriaGasto: 'CategoriaGasto',
   ProyectoCostosConfig: 'ProyectoCostosConfig',
   Insumo: 'Insumo',
+  LoteImportacion: 'LoteImportacion',
   PresupuestoBase: 'PresupuestoBase',
   Capitulo: 'Capitulo',
   ConceptoCatalogo: 'ConceptoCatalogo',

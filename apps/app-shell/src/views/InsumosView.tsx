@@ -678,6 +678,11 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   const { notify } = useNotification();
   const rolesUsuario: string[] = user?.role ?? [];
   const puedeAprobar = rolesUsuario.some(r => ['gerencia_tecnica', 'admin'].includes(r));
+  // Deshacer una importación por error — ver eliminacion-admin-archivos-importaciones-gt
+  const puedeDeshacerImportacion = rolesUsuario.some(r => ['admin', 'gerencia_tecnica', 'control_proyectos'].includes(r));
+  const [ultimoPresupuestoImportadoId, setUltimoPresupuestoImportadoId] = useState<string | null>(null);
+  const [ultimoLoteInsumosId, setUltimoLoteInsumosId] = useState<string | null>(null);
+  const [deshaciendoImportacion, setDeshaciendoImportacion] = useState(false);
 
   const activeTab: ActiveTab = (activeSubView as ActiveTab) || 'catalogo';
 
@@ -1449,8 +1454,9 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
           cantidad: c.cantidad, precio_unitario: c.precio_unitario,
         })),
       };
-      await api.post('/api/v1/gerencia-tecnica/presupuestos', payload);
+      const resImport = await api.post('/api/v1/gerencia-tecnica/presupuestos', payload);
       notify({ type: 'success', title: 'Catálogo importado', message: `${validRows.length} conceptos importados.`, duration: 5000 });
+      setUltimoPresupuestoImportadoId(resImport.data?.data?.id ?? null);
       setPanelImport(false);
       setPreview([]);
       setArchivoNombre('');
@@ -1530,7 +1536,8 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
           costo_base: i.costo_base,
         })),
       });
-      const { creados, actualizados, omitidos } = res.data.data;
+      const { creados, actualizados, omitidos, lote_importacion_id } = res.data.data;
+      setUltimoLoteInsumosId(lote_importacion_id ?? null);
 
       // 2. Importar composiciones APU (solo si el parser extrajo composiciones)
       // El backend resuelve el presupuesto del proyecto activo (del JWT)
@@ -1578,6 +1585,38 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
       });
     } finally {
       setImportandoInsumos(false);
+    }
+  };
+
+  // ── Deshacer la última importación del Catálogo de Conceptos ─────────────
+  const handleDeshacerImportacionCatalogo = async () => {
+    if (!ultimoPresupuestoImportadoId) return;
+    setDeshaciendoImportacion(true);
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/presupuestos/${ultimoPresupuestoImportadoId}`);
+      notify({ type: 'success', title: 'Importación revertida', message: 'El Catálogo de Conceptos importado se eliminó. Ya puedes volver a importarlo.', duration: 5000 });
+      setUltimoPresupuestoImportadoId(null);
+      void fetchPresupuesto();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'No se pudo deshacer la importación', message: err.response?.data?.error?.message || err.message, duration: 6000 });
+    } finally {
+      setDeshaciendoImportacion(false);
+    }
+  };
+
+  // ── Deshacer el último lote de Explosión de Insumos importado ────────────
+  const handleDeshacerLoteInsumos = async () => {
+    if (!ultimoLoteInsumosId) return;
+    setDeshaciendoImportacion(true);
+    try {
+      await api.delete(`/api/v1/gerencia-tecnica/insumos/importar-lote/${ultimoLoteInsumosId}`);
+      notify({ type: 'success', title: 'Lote revertido', message: 'Los insumos del último lote importado se desactivaron. Ya puedes volver a importarlos.', duration: 5000 });
+      setUltimoLoteInsumosId(null);
+      void fetchInsumos();
+    } catch (err: any) {
+      notify({ type: 'error', title: 'No se pudo revertir el lote', message: err.response?.data?.error?.message || err.message, duration: 6000 });
+    } finally {
+      setDeshaciendoImportacion(false);
     }
   };
 
@@ -1779,6 +1818,26 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
               </div>
             )}
 
+            {ultimoPresupuestoImportadoId && puedeDeshacerImportacion && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-5 py-3">
+                <p className="text-xs text-rose-700 font-semibold">
+                  Catálogo de Conceptos recién importado. Si fue un error, puedes deshacerlo antes de seguir trabajando.
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleDeshacerImportacionCatalogo}
+                    disabled={deshaciendoImportacion}
+                    className="px-4 py-2 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-700 disabled:opacity-50 active:scale-95 transition-all"
+                  >
+                    {deshaciendoImportacion ? 'Deshaciendo...' : 'Deshacer importación'}
+                  </button>
+                  <button onClick={() => setUltimoPresupuestoImportadoId(null)} className="text-rose-700/70 hover:text-rose-700">
+                    <IconX className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {presupuesto && (
               <div className="flex flex-col sm:flex-row gap-3 bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
                 <div className="relative flex-1 group">
@@ -1969,6 +2028,26 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
         {/* ════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'insumos' && (
           <>
+            {ultimoLoteInsumosId && puedeDeshacerImportacion && (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-5 py-3">
+                <p className="text-xs text-rose-700 font-semibold">
+                  Lote de Explosión de Insumos / APU recién importado. Si fue un error, puedes deshacerlo antes de seguir trabajando.
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleDeshacerLoteInsumos}
+                    disabled={deshaciendoImportacion}
+                    className="px-4 py-2 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-700 disabled:opacity-50 active:scale-95 transition-all"
+                  >
+                    {deshaciendoImportacion ? 'Deshaciendo...' : 'Deshacer importación'}
+                  </button>
+                  <button onClick={() => setUltimoLoteInsumosId(null)} className="text-rose-700/70 hover:text-rose-700">
+                    <IconX className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Stats por tipo */}
             {insumos.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -3444,13 +3523,15 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
                     >
                       ⬇
                     </a>
-                    <button
-                      onClick={() => handleFichaInsDelete(f.id_ficha)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                      title="Eliminar"
-                    >
-                      ✕
-                    </button>
+                    {rolesUsuario.includes('admin') && (
+                      <button
+                        onClick={() => handleFichaInsDelete(f.id_ficha)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                        title="Eliminar (solo Administrador)"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
