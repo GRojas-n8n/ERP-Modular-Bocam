@@ -48,9 +48,10 @@ interface Props {
   partidas: PartidaCP[];
   sinPartidaComprometido?: number;
   sinPartidaPagado?: number;
+  onVerTrazabilidad?: (conceptoId: string) => void;
 }
 
-export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0, sinPartidaPagado = 0 }: Props) {
+export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0, sinPartidaPagado = 0, onVerTrazabilidad }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [drillDown, setDrillDown] = useState<Record<string, DrillDownState>>({});
 
@@ -137,7 +138,21 @@ export function ControlPresupuestalTabla({ partidas, sinPartidaComprometido = 0,
                   onClick={() => void toggleExpand(p.concepto_id)}
                 >
                   <td className="px-4 py-2.5 text-muted-foreground">{expanded ? '▾' : '▸'}</td>
-                  <td className="px-4 py-2.5 font-mono font-bold text-foreground">{p.clave}</td>
+                  <td className="px-4 py-2.5 font-mono font-bold text-foreground">
+                    <div className="flex items-center gap-2">
+                      {p.clave}
+                      {onVerTrazabilidad && (
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); onVerTrazabilidad(p.concepto_id); }}
+                          className="rounded-md border border-border/40 px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wide text-indigo-600 hover:bg-indigo-500/10"
+                          title="Ver en Trazabilidad"
+                        >
+                          Ver en Trazabilidad
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-2.5 text-foreground max-w-[220px] truncate">{p.descripcion}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{p.categoria_predominante ?? '—'}</td>
                   <td className="px-4 py-2.5 text-right font-mono font-bold text-foreground">{formatMXN(p.presupuestado)}</td>

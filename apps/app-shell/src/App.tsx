@@ -86,7 +86,7 @@ const AuthenticatedApp: React.FC = () => {
       case 'dashboard':
         return <DashboardView onNavigate={setCurrentView} />;
       case 'insumos':
-        return <InsumosView activeSubView={currentSubView} />;
+        return <InsumosView activeSubView={currentSubView} onSubNavigate={setCurrentSubView} />;
       case 'compras':
         return <ComprasView activeSubView={currentSubView} />;
       case 'comparativa':
