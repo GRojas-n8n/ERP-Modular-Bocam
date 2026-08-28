@@ -964,9 +964,10 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
     const { id } = req.params;
     const parsed = parseOrRespond(actualizarUsuarioSchema, req.body, res);
     if (!parsed) return;
-    const { nombre, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = parsed;
+    const { nombre, email, roles: userRoles, activo, limite_aprobacion, password, proyecto_ids } = parsed;
     const updateData: Record<string, unknown> = {};
     if (nombre !== undefined) updateData.nombre = nombre;
+    if (email !== undefined) updateData.email = email;
     if (userRoles !== undefined) updateData.rol_global = userRoles;
     if (activo !== undefined) updateData.activo = activo;
     if (limite_aprobacion !== undefined) updateData.limite_aprobacion_financiera = limite_aprobacion;
@@ -990,7 +991,11 @@ app.patch('/api/v1/auth/admin/users/:id', requireAdminRole as express.RequestHan
       return updated;
     });
     res.json({ success: true, data: { id: user.id_usuario, email: user.email, nombre: user.nombre, roles: user.rol_global, activo: user.activo } });
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.code === 'P2002') {
+      res.status(409).json({ success: false, error: { code: 'ADMIN_EMAIL_DUPLICADO', message: 'Ese email ya está en uso por otro usuario.' } });
+      return;
+    }
     res.status(500).json({ success: false, error: { code: 'ADMIN_ERROR', message: 'Error al actualizar el usuario.' } });
   }
 });

@@ -50,6 +50,7 @@ export const crearUsuarioSchema = z.object({
 
 export const actualizarUsuarioSchema = z.object({
   nombre: z.string().trim().min(1).max(150, 'nombre no puede tener más de 150 caracteres.').optional(),
+  email: z.string().trim().email('email no tiene un formato válido.').max(255, 'email no puede tener más de 255 caracteres.').optional(),
   roles: rolesAlEditar,
   activo: z.boolean().optional(),
   limite_aprobacion: z.number().optional(),

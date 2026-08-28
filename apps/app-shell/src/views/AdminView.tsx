@@ -73,7 +73,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
     setForm(f => ({ ...f, proyecto_ids: f.proyecto_ids.includes(id) ? f.proyecto_ids.filter(x => x !== id) : [...f.proyecto_ids, id] }));
 
   const handleSubmit = async () => {
-    if (!form.nombre.trim() || (!isEdit && !form.email.trim())) { setError('Nombre y email son obligatorios.'); return; }
+    if (!form.nombre.trim() || !form.email.trim()) { setError('Nombre y email son obligatorios.'); return; }
     if (!isEdit && !form.password) { setError('La contraseña es obligatoria para nuevos usuarios.'); return; }
     if (form.roles.length === 0) { setError('Asigna al menos un rol.'); return; }
     setSaving(true); setError(null);
@@ -81,6 +81,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
       if (isEdit) {
         const body: Record<string, unknown> = {
           nombre: form.nombre,
+          email: form.email,
           roles: form.roles,
           activo: form.activo,
           limite_aprobacion: form.limite_aprobacion,
@@ -112,11 +113,11 @@ const UserModal: React.FC<UserModalProps> = ({ user, proyectos, onClose, onSaved
               <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
                 maxLength={150} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Juan Pérez" />
             </div>
-            {!isEdit && <div className="col-span-2">
+            <div className="col-span-2">
               <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email *</label>
               <input type="email" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
                 maxLength={255} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="usuario@empresa.com" />
-            </div>}
+            </div>
             <div className="col-span-2">
               <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 {isEdit ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}
@@ -579,6 +580,9 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | undefined>();
   const [editingProyecto, setEditingProyecto] = useState<Proyecto | undefined>();
+  const [confirmArchivarUsuario, setConfirmArchivarUsuario] = useState<AdminUser | null>(null);
+  const [confirmReactivarUsuario, setConfirmReactivarUsuario] = useState<AdminUser | null>(null);
+  const [savingUserActivo, setSavingUserActivo] = useState(false);
 
   // ── Categorías de gasto ───────────────────────────────────────────────────
   const [categorias, setCategorias] = useState<CategoriaAdmin[]>([]);
@@ -657,6 +661,32 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
     finally { setActivandoProyecto(false); }
   };
 
+  const handleArchivarUsuario = async (id: string) => {
+    setSavingUserActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/users/${id}`, { activo: false });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al archivar el usuario' });
+    } finally {
+      setSavingUserActivo(false);
+      setConfirmArchivarUsuario(null);
+    }
+  };
+
+  const handleReactivarUsuario = async (id: string) => {
+    setSavingUserActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/users/${id}`, { activo: true });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al reactivar el usuario' });
+    } finally {
+      setSavingUserActivo(false);
+      setConfirmReactivarUsuario(null);
+    }
+  };
+
   const loadAll = useCallback(async () => {
     setLoading(true); setError(null);
     try {
@@ -730,10 +760,25 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                       </p>
                     )}
                   </div>
-                  <button onClick={() => { setEditingUser(u); setShowUserModal(true); }}
-                    className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
-                    Editar
-                  </button>
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <button onClick={() => { setEditingUser(u); setShowUserModal(true); }}
+                      className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
+                      Editar
+                    </button>
+                    {u.activo ? (
+                      <button onClick={() => setConfirmArchivarUsuario(u)}
+                        disabled={u.id === user?.id}
+                        title={u.id === user?.id ? 'No puedes archivar tu propia cuenta.' : undefined}
+                        className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-30">
+                        Archivar
+                      </button>
+                    ) : (
+                      <button onClick={() => setConfirmReactivarUsuario(u)}
+                        className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-500/10">
+                        Reactivar
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -938,6 +983,29 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
         confirmDisabled={savingCat}
         onConfirm={() => confirmEliminarCategoria && handleEliminarCategoria(confirmEliminarCategoria.id_categoria)}
         onCancel={() => setConfirmEliminarCategoria(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmArchivarUsuario}
+        title={`¿Archivar a "${confirmArchivarUsuario?.nombre ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Archivar usuario"
+        variant="destructive"
+        confirmDisabled={savingUserActivo}
+        onConfirm={() => confirmArchivarUsuario && handleArchivarUsuario(confirmArchivarUsuario.id)}
+        onCancel={() => setConfirmArchivarUsuario(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmReactivarUsuario}
+        title={`¿Reactivar a "${confirmReactivarUsuario?.nombre ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Reactivar usuario"
+        confirmDisabled={savingUserActivo}
+        onConfirm={() => confirmReactivarUsuario && handleReactivarUsuario(confirmReactivarUsuario.id)}
+        onCancel={() => setConfirmReactivarUsuario(null)}
       />
 
       {showUserModal && (
