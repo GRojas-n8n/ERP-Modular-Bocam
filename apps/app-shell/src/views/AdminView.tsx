@@ -712,17 +712,22 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
     }
   };
 
+  // Independiente por endpoint: GET /admin/users exige rol admin
+  // exclusivamente, pero /admin/proyectos también acepta gerencia_tecnica/
+  // control_proyectos/control_obra (ROLES_VER_CENTRO_COSTOS) — un 403 en
+  // usuarios no debe tumbar la carga de proyectos para esos roles.
   const loadAll = useCallback(async () => {
     setLoading(true); setError(null);
-    try {
-      const [ur, pr] = await Promise.all([
-        api.get('/api/v1/auth/admin/users'),
-        api.get('/api/v1/auth/admin/proyectos'),
-      ]);
-      setUsers((ur.data as { data: AdminUser[] }).data);
-      setProyectos((pr.data as { data: Proyecto[] }).data);
-    } catch { setError('Error al cargar datos de administración.'); }
-    finally { setLoading(false); }
+    const [ur, pr] = await Promise.allSettled([
+      api.get('/api/v1/auth/admin/users'),
+      api.get('/api/v1/auth/admin/proyectos'),
+    ]);
+    if (ur.status === 'fulfilled') setUsers((ur.value.data as { data: AdminUser[] }).data);
+    if (pr.status === 'fulfilled') setProyectos((pr.value.data as { data: Proyecto[] }).data);
+    if (ur.status === 'rejected' && pr.status === 'rejected') {
+      setError('Error al cargar datos de administración.');
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => { void loadAll(); }, [loadAll]);
