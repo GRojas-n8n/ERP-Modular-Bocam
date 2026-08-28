@@ -43,6 +43,10 @@ import { crearTenantSchema, actualizarTenantSchema } from './validation/schemas/
 
 const TIPOS_ESPECIALES = ['OFICINA', 'TALLER', 'ALMACÉN'] as const;
 const ROLES_ALTA_CENTRO_COSTOS = ['admin', 'gerencia_tecnica', 'control_proyectos'];
+// Lectura de Proyectos: además de quien puede dar de alta/editar, control_obra
+// puede ver el listado (acceso desde su propio menú), pero no crear/editar.
+// Ver openspec/changes/acceso-proyectos-gt-control-obra.
+const ROLES_VER_CENTRO_COSTOS = [...ROLES_ALTA_CENTRO_COSTOS, 'control_obra'];
 
 export const eventBus = createEventBus(process.env.AUTH_EVENT_BUS_NAME || 'auth');
 
@@ -1022,7 +1026,7 @@ app.get('/api/v1/auth/usuarios', requireRoles('personal_rh', 'admin') as express
 });
 
 // ─── GET /api/v1/auth/admin/proyectos ────────────────────────────────────────
-app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_ALTA_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
+app.get('/api/v1/auth/admin/proyectos', requireRoles(...ROLES_VER_CENTRO_COSTOS) as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.securityContext;
     const proyectos = await createTenantContext({ tenantId }, async (prisma) =>
