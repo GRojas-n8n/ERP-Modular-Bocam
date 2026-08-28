@@ -557,7 +557,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
 
             <div className="flex flex-1 items-center gap-1.5 text-xs font-semibold text-muted-foreground min-w-0">
               <IconBriefcase className="h-3.5 w-3.5 shrink-0 opacity-50" />
-              <span className="hidden sm:inline opacity-60 shrink-0">Proyectos</span>
+              <span className="hidden sm:inline opacity-80 shrink-0">Proyectos</span>
               <IconChevronRight className="h-3 w-3 opacity-30 shrink-0" />
 
               {/* ── Selector de proyecto ── */}
@@ -567,7 +567,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                   type="button"
                   onClick={e => { e.stopPropagation(); setIsProjectDropdownOpen(o => !o); }}
                   className={cn(
-                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full transition-all hover:opacity-80 text-foreground',
+                    'flex w-full items-center gap-1.5 rounded-md border-l-4 px-2 py-1 max-w-full transition-all hover:opacity-80 text-foreground glow-primary',
                     currentProjectColor.border,
                     currentProjectColor.bgSoft
                   )}
