@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { DEMO_BITACORAS, DEMO_AVANCES, DEMO_ESTIMACIONES } from '../lib/demoData';
@@ -283,6 +283,9 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
   const [avanceConceptoSearch, setAvanceConceptoSearch] = useState('');
   const [avanceGuardado, setAvanceGuardado] = useState<{ clave: string; cantidad: string; unidad: string } | null>(null);
   const [bitacoraGuardada, setBitacoraGuardada] = useState<number | null>(null);
+  const [avanceHighlightedIndex, setAvanceHighlightedIndex] = useState(0);
+  const [conceptosRecientes, setConceptosRecientes] = useState<ConceptoCatalogo[]>([]);
+  const avanceSearchInputRef = useRef<HTMLInputElement>(null);
 
   // ── Estado: configuración ────────────────────────────────────────────────────
   const [insumosClasif, setInsumosClasif] = useState<InsumoClasif[]>([]);
@@ -602,6 +605,7 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     setShowAvanceForm(false);
     clearAvanceCaptureFields();
     setAvanceGuardado(null);
+    setConceptosRecientes([]);
   };
 
   const handleSubmitAvance = async () => {
@@ -621,6 +625,10 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
         cantidad: avForm.cantidad_periodo,
         unidad: conceptoAvanceSeleccionado?.unidad_medida ?? '',
       });
+      if (conceptoAvanceSeleccionado) {
+        const usado = conceptoAvanceSeleccionado;
+        setConceptosRecientes(prev => [usado, ...prev.filter(c => c.id !== usado.id)].slice(0, 5));
+      }
       clearAvanceCaptureFields();
     } catch (err: any) {
       alert(`Error: ${err.response?.data?.error?.message || err.message}`);
@@ -640,6 +648,18 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
     const t = setTimeout(() => setBitacoraGuardada(null), 4000);
     return () => clearTimeout(t);
   }, [bitacoraGuardada]);
+
+  // El resaltado del selector de concepto se reinicia cada vez que cambia el
+  // texto de búsqueda (ver openspec/changes/navegacion-selector-concepto-avance).
+  useEffect(() => { setAvanceHighlightedIndex(0); }, [avanceConceptoSearch]);
+  // El buscador recibe el foco automáticamente al mostrarse, para que las
+  // flechas de navegación funcionen sin que el usuario tenga que hacer clic
+  // primero (de lo contrario el foco se queda en el botón "Registrar Avance").
+  useEffect(() => {
+    if (showAvanceForm && !avanceConceptoId) {
+      avanceSearchInputRef.current?.focus();
+    }
+  }, [showAvanceForm, avanceConceptoId]);
 
   // ── Acciones EVM ─────────────────────────────────────────────────────────────
   async function accionarAlerta() {
@@ -1565,6 +1585,29 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
             const filtrados = avanceConceptoSearch.trim()
               ? conceptosAvance.filter(c => `${c.clave} ${c.descripcion}`.toLowerCase().includes(avanceConceptoSearch.toLowerCase()))
               : conceptosAvance;
+            const mostrarRecientes = !avanceConceptoSearch.trim() && conceptosRecientes.length > 0;
+            const listaPrincipal = mostrarRecientes
+              ? filtrados.filter(c => !conceptosRecientes.some(r => r.id === c.id))
+              : filtrados;
+            const opciones = mostrarRecientes ? [...conceptosRecientes, ...listaPrincipal] : listaPrincipal;
+            const seleccionarConcepto = (c: ConceptoCatalogo) => {
+              setAvanceConceptoId(c.id);
+              setAvanceConceptoSearch('');
+              setAvanceGuardado(null);
+            };
+            const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setAvanceHighlightedIndex(i => Math.min(i + 1, opciones.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setAvanceHighlightedIndex(i => Math.max(i - 1, 0));
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const opt = opciones[avanceHighlightedIndex];
+                if (opt) seleccionarConcepto(opt);
+              }
+            };
             return (
               <div className="space-y-1.5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -1589,28 +1632,42 @@ export const ControlObraView: React.FC<{ activeSubView?: string }> = ({ activeSu
                     <div className="relative">
                       <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                       <input
+                        ref={avanceSearchInputRef}
                         type="text"
                         placeholder="Buscar concepto por clave o descripción..."
                         value={avanceConceptoSearch}
                         onChange={e => setAvanceConceptoSearch(e.target.value)}
+                        onKeyDown={onSearchKeyDown}
                         className="w-full pl-9 pr-3 py-2 text-xs bg-background border border-border/60 rounded-lg focus:border-sky-400 outline-none"
                       />
                     </div>
                     <div className="max-h-40 overflow-y-auto space-y-0.5">
-                      {filtrados.length === 0 ? (
+                      {opciones.length === 0 ? (
                         <p className="text-[10px] text-muted-foreground py-2 text-center">
                           {conceptosAvance.length === 0 ? 'Sin catálogo de obra — importa en Gerencia Técnica' : 'Sin coincidencias'}
                         </p>
-                      ) : filtrados.map(c => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => { setAvanceConceptoId(c.id); setAvanceConceptoSearch(''); setAvanceGuardado(null); }}
-                          className="w-full flex items-center gap-3 rounded-lg border border-border/30 px-3 py-2 text-left hover:border-sky-400/40 hover:bg-sky-500/5 transition-all"
-                        >
-                          <span className="text-[10px] font-mono text-sky-600 shrink-0">{c.clave}</span>
-                          <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
-                        </button>
+                      ) : opciones.map((c, i) => (
+                        <React.Fragment key={c.id}>
+                          {mostrarRecientes && i === 0 && (
+                            <p className="px-1 pb-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Recientes</p>
+                          )}
+                          {mostrarRecientes && i === conceptosRecientes.length && listaPrincipal.length > 0 && (
+                            <p className="px-1 pb-0.5 pt-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Catálogo completo</p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => seleccionarConcepto(c)}
+                            onMouseEnter={() => setAvanceHighlightedIndex(i)}
+                            aria-selected={i === avanceHighlightedIndex}
+                            className={cn(
+                              'w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all',
+                              i === avanceHighlightedIndex ? 'border-sky-400 bg-sky-500/10' : 'border-border/30 hover:border-sky-400/40 hover:bg-sky-500/5'
+                            )}
+                          >
+                            <span className="text-[10px] font-mono text-sky-600 shrink-0">{c.clave}</span>
+                            <span className="text-xs truncate text-foreground/80">{c.descripcion}</span>
+                          </button>
+                        </React.Fragment>
                       ))}
                     </div>
                   </div>
