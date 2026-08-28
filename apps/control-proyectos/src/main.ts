@@ -1576,6 +1576,51 @@ controlObraRouter.get('/dashboard-obra', async (req: Request, res: Response) => 
   }
 });
 
+/**
+ * GET /avance-resumen-multi?proyecto_ids=id1,id2,...
+ * Avance físico real (misma query que /resumen-dashboard: promedio de
+ * avanceFisico.porcentaje_avance con estado VALIDADO) para varios proyectos
+ * a la vez, sin restringir a superintendent/admin — lo usa el Dashboard
+ * estándar ("Mis Proyectos") para reemplazar el avance sintético que
+ * mostraba antes. Ver openspec/changes/fix-avance-mock-mis-proyectos.
+ *
+ * Cada proyecto_id se valida contra `authorizedProjects` del JWT del
+ * usuario — cualquiera fuera de esa lista se excluye de la respuesta sin
+ * filtrar su avance.
+ */
+controlObraRouter.get('/avance-resumen-multi', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, userId, authorizedProjects } = req.securityContext;
+    const solicitados = String(req.query.proyecto_ids || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    const proyectoIds = solicitados.filter(id => authorizedProjects.includes(id));
+
+    const data = await Promise.all(proyectoIds.map(async (proyectoId) => {
+      // Filtro explícito de tenant_id/proyecto_id además de RLS (defensa en
+      // profundidad — un rol de DB con bypass de RLS, ej. el superusuario
+      // usado en desarrollo local, no debe poder devolver datos cruzados).
+      const avgAvance = await createTenantContext({ tenantId, proyectoId, userId }, (prisma) =>
+        prisma.avanceFisico.aggregate({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, estado: 'VALIDADO' },
+          _avg: { porcentaje_avance: true },
+          _count: true,
+        })
+      );
+      return {
+        proyecto_id:   proyectoId,
+        avance_pct:    Math.round(Number(avgAvance._avg.porcentaje_avance) || 0),
+        tiene_avances: avgAvance._count > 0,
+      };
+    }));
+
+    res.json({ success: true, data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 controlObraRouter.get('/resumen-dashboard',
   requireRoles('superintendent', 'admin'),
   async (req: Request, res: Response) => {
