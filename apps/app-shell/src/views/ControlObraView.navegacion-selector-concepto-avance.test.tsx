@@ -125,7 +125,7 @@ describe('ControlObraView — conceptos recientes en el selector de concepto (2.
   });
 
   it('un concepto recién usado aparece en "Recientes" al reabrir el selector con búsqueda vacía', async () => {
-    const buscador = await abrirPanel();
+    await abrirPanel();
 
     fireEvent.click(screen.getByRole('button', { name: /CIM-001/i }));
     fireEvent.change(await screen.findByLabelText(/Cant\. periodo/i), { target: { value: '8' } });
@@ -136,7 +136,7 @@ describe('ControlObraView — conceptos recientes en el selector de concepto (2.
   });
 
   it('escribir en la búsqueda oculta la sección "Recientes"', async () => {
-    const buscador = await abrirPanel();
+    await abrirPanel();
 
     fireEvent.click(screen.getByRole('button', { name: /CIM-001/i }));
     fireEvent.change(await screen.findByLabelText(/Cant\. periodo/i), { target: { value: '8' } });
