@@ -347,11 +347,16 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
 
     for (const item of insumos) {
       const { clave, descripcion, unidad_medida, tipo_insumo, costo_base } = item ?? {};
+      const costoNormalizado = Math.max(0, parseFloat(String(costo_base ?? 0)) || 0);
       if (
-        !clave || typeof clave !== 'string' ||
+        !clave || typeof clave !== 'string' || clave.trim().length > 50 ||
         !descripcion || typeof descripcion !== 'string' ||
-        !unidad_medida || typeof unidad_medida !== 'string' ||
-        !TIPOS_VALIDOS.includes(tipo_insumo)
+        !unidad_medida || typeof unidad_medida !== 'string' || unidad_medida.trim().length > 20 ||
+        !TIPOS_VALIDOS.includes(tipo_insumo) ||
+        // costo_base es Decimal(12,4) — protege contra desbordamiento igual
+        // que los checks de longitud de arriba (ver
+        // openspec/changes/fix-500-importar-apu-explosion-filas-boilerplate).
+        costoNormalizado > 99999999.9999
       ) {
         omitidos++;
         continue;
@@ -361,7 +366,7 @@ app.post('/api/v1/gerencia-tecnica/insumos/importar-lote', requireRoles('admin',
         descripcion: String(descripcion).trim(),
         unidad_medida: String(unidad_medida).trim().toUpperCase(),
         tipo_insumo,
-        costo_base: Math.max(0, parseFloat(String(costo_base ?? 0)) || 0),
+        costo_base: costoNormalizado,
       });
     }
 

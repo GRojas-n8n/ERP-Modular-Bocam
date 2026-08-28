@@ -310,7 +310,7 @@ function esCapituloNormalizado(c: ConceptoPreview): boolean {
 //
 // Extrae insumos únicos (por clave) de todas las secciones.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
+export function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
   // Infiere tipo de insumo desde prefijo de clave OPUS (sección "Auxiliar")
   function inferirTipoAPU(clave: string): TipoInsumo {
     const c = clave.toUpperCase();
@@ -334,9 +334,13 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
       const m = cell.match(/clave\s*:\s*(.+)/i);
       if (m && m[1].trim()) return m[1].trim();
       // Caso 2: la celda dice sólo "Clave:" (con dos puntos, sin valor tras él)
-      // → el valor está en la siguiente celda no vacía de la misma fila
+      // → el valor está en la siguiente celda no vacía de la misma fila.
+      // Las celdas combinadas de OPUS repiten la etiqueta "Clave:"/"Clave" en
+      // varias columnas antes de la celda con el valor real — se ignoran esas
+      // repeticiones en vez de tomar la primera no vacía (que sería otra
+      // copia de la etiqueta, no el valor).
       if (/^clave\s*:\s*$/i.test(cell)) {
-        const nextVal = celdas.slice(i + 1).find(c => c.trim() !== '');
+        const nextVal = celdas.slice(i + 1).find(c => c.trim() !== '' && !/^clave\s*:?\s*$/i.test(c.trim()));
         if (nextVal?.trim()) return nextVal.trim();
       }
     }
@@ -447,6 +451,12 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
     if (!clave || clave.length < 2) continue;
     if (/^\d+(\.\d+)*$/.test(clave)) continue;
     if (/^(total|suma|sub)/i.test(clave)) continue;
+    // Boilerplate no previsto (firma, título de página repetido, etc.): OPUS
+    // repite el mismo texto en todas las columnas de la fila por celdas
+    // combinadas, produciendo una "clave"/"unidad" implausiblemente larga que
+    // supera VarChar(50)/VarChar(20) y tumbaba el import con 500 (ver
+    // openspec/changes/fix-500-importar-apu-explosion-filas-boilerplate).
+    if (clave.length > 50 || unidad.length > 20) continue;
 
     const tipo: TipoInsumo = enAuxiliar ? inferirTipoAPU(clave) : (tipoActual ?? 'MATERIAL');
 
@@ -558,7 +568,7 @@ function parsearArchivoAPU(rawRows: (string | number)[][]): APUParseResult {
 //     ante desplazamientos de columna en distintas versiones de OPUS).
 //   - Herramienta → INDIRECTO  /  Equipo → EQUIPO.
 // ─────────────────────────────────────────────────────────────────────────────
-function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[] {
+export function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[] {
   const insumoMap = new Map<string, InsumoPreview>();
   let tipoActual: TipoInsumo = 'MATERIAL';
   let headerDetectado = false; // una vez true, nunca regresa
@@ -622,6 +632,9 @@ function parsearArchivoExplosion(rawRows: (string | number)[][]): InsumoPreview[
     if (!clave) continue;
     if (/^\d+(\.\d+)*$/.test(clave)) continue;
     if (/^(total|suma|importe|resumen|listado)/i.test(clave)) continue;
+    // Boilerplate no previsto (firma, título repetido, etc.) — ver
+    // openspec/changes/fix-500-importar-apu-explosion-filas-boilerplate.
+    if (clave.length > 50 || unidad.length > 20) continue;
 
     const claveNorm = clave.toUpperCase().trim();
 
@@ -1560,7 +1573,7 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
       notify({
         type: 'error',
         title: 'Error al importar insumos',
-        message: err.response?.data?.message || err.message,
+        message: err.response?.data?.error?.message || err.message,
         duration: 6000,
       });
     } finally {
