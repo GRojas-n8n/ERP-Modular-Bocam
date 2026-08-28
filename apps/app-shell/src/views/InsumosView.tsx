@@ -1643,7 +1643,7 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
                   className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all"
                 >
                   <IconDownload className="h-4 w-4" />
-                  Importar OPUS
+                  Importar Catálogo de Conceptos
                 </button>
               </>
             )}
@@ -1821,7 +1821,7 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
                       className="px-6 py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
                     >
                       <IconDownload className="h-4 w-4" />
-                      Importar desde OPUS
+                      Importar Catálogo de Conceptos
                     </button>
                     <button
                       onClick={() => setPanelGuia(true)}
