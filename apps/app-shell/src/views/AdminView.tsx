@@ -608,6 +608,9 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
   const [confirmArchivarUsuario, setConfirmArchivarUsuario] = useState<AdminUser | null>(null);
   const [confirmReactivarUsuario, setConfirmReactivarUsuario] = useState<AdminUser | null>(null);
   const [savingUserActivo, setSavingUserActivo] = useState(false);
+  const [confirmArchivarProyecto, setConfirmArchivarProyecto] = useState<Proyecto | null>(null);
+  const [confirmReactivarProyecto, setConfirmReactivarProyecto] = useState<Proyecto | null>(null);
+  const [savingProyectoActivo, setSavingProyectoActivo] = useState(false);
 
   // ── Categorías de gasto ───────────────────────────────────────────────────
   const [categorias, setCategorias] = useState<CategoriaAdmin[]>([]);
@@ -709,6 +712,32 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
     } finally {
       setSavingUserActivo(false);
       setConfirmReactivarUsuario(null);
+    }
+  };
+
+  const handleArchivarProyecto = async (id: string) => {
+    setSavingProyectoActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/proyectos/${id}`, { activo: false });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al archivar el proyecto' });
+    } finally {
+      setSavingProyectoActivo(false);
+      setConfirmArchivarProyecto(null);
+    }
+  };
+
+  const handleReactivarProyecto = async (id: string) => {
+    setSavingProyectoActivo(true);
+    try {
+      await api.patch(`/api/v1/auth/admin/proyectos/${id}`, { activo: true });
+      await loadAll();
+    } catch (e: any) {
+      notify({ type: 'error', title: e.response?.data?.error?.message || 'Error al reactivar el proyecto' });
+    } finally {
+      setSavingProyectoActivo(false);
+      setConfirmReactivarProyecto(null);
     }
   };
 
@@ -960,10 +989,23 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
                     </p>
                   </div>
                   {puedeEditarProyectos && (
-                    <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
-                      className="flex-shrink-0 rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
-                      Editar
-                    </button>
+                    <div className="flex flex-shrink-0 gap-2">
+                      <button onClick={() => { setEditingProyecto(p); setShowProyectoModal(true); }}
+                        className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-muted/50">
+                        Editar
+                      </button>
+                      {p.activo ? (
+                        <button onClick={() => setConfirmArchivarProyecto(p)}
+                          className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-destructive hover:bg-destructive/10">
+                          Archivar
+                        </button>
+                      ) : (
+                        <button onClick={() => setConfirmReactivarProyecto(p)}
+                          className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-500/10">
+                          Reactivar
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
@@ -1038,6 +1080,29 @@ export const AdminView: React.FC<{ activeSubView?: string }> = ({ activeSubView 
         confirmDisabled={savingUserActivo}
         onConfirm={() => confirmReactivarUsuario && handleReactivarUsuario(confirmReactivarUsuario.id)}
         onCancel={() => setConfirmReactivarUsuario(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmArchivarProyecto}
+        title={`¿Archivar el proyecto "${confirmArchivarProyecto?.nombre_oficial ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Archivar proyecto"
+        variant="destructive"
+        confirmDisabled={savingProyectoActivo}
+        onConfirm={() => confirmArchivarProyecto && handleArchivarProyecto(confirmArchivarProyecto.id_proyecto)}
+        onCancel={() => setConfirmArchivarProyecto(null)}
+      />
+
+      <ConfirmCriticalActionDialog
+        open={!!confirmReactivarProyecto}
+        title={`¿Reactivar el proyecto "${confirmReactivarProyecto?.nombre_oficial ?? ''}"?`}
+        projectName={currentProjectName}
+        projectColorDot={currentProjectColor.dot}
+        confirmLabel="Reactivar proyecto"
+        confirmDisabled={savingProyectoActivo}
+        onConfirm={() => confirmReactivarProyecto && handleReactivarProyecto(confirmReactivarProyecto.id_proyecto)}
+        onCancel={() => setConfirmReactivarProyecto(null)}
       />
 
       {showUserModal && (
