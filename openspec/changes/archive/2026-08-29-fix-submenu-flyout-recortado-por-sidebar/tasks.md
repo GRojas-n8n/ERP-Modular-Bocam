@@ -17,4 +17,4 @@
 - [x] 3.2 `Layout.acceso-proyectos-gt-control-obra.test.tsx` ajustado (viewport forzado a mobile — esos tests cubren navegación cross-grupo, no posicionamiento) y sigue en verde.
 - [x] 3.3 Suite completa de `Layout.*.test.tsx` + guard de ayuda contextual sin regresiones (9 archivos / 20 tests).
 - [x] 3.4 `tsc -b` limpio.
-- [ ] 3.5 Verificación visual manual en escritorio real (Chrome) — pendiente, queda para QA/revisión humana.
+- [x] 3.5 Verificación visual manual en escritorio real (Chrome) — confirmado por el usuario: funciona bien.
