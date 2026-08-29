@@ -278,11 +278,35 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
   // ver openspec/changes/sidebar-submenu-flyout-lateral). Se abre
   // automáticamente para el módulo activo (cubre navegación normal y saltos
   // cross-grupo vía SubItem.targetView); clic-fuera/Escape solo lo oculta
-  // (no cambia currentView) y solo tiene efecto visual en md+, ver
-  // data-submenu-flyout.
+  // (no cambia currentView).
+  //
+  // El flyout se renderiza vía portal a document.body (igual que el
+  // dropdown de proyecto — ver openspec/changes/fix-dropdown-proyecto-transparente):
+  // <nav> tiene overflow-y-auto y el <aside> desktop tiene overflow-hidden,
+  // así que un simple `position: absolute` quedaba recortado dentro del
+  // ancho del sidebar en vez de flotar sobre el contenido. Ver
+  // openspec/changes/fix-submenu-flyout-recortado-por-sidebar.
   const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null);
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+  const [submenuPos, setSubmenuPos] = useState<{ top: number; left: number } | null>(null);
+  const submenuTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => { setOpenSubmenuId(currentView); }, [currentView]);
+
+  useEffect(() => {
+    if (!openSubmenuId || !isDesktop) { setSubmenuPos(null); return; }
+    const el = submenuTriggerRefs.current[openSubmenuId];
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setSubmenuPos({ top: rect.top, left: rect.right + 8 });
+    }
+  }, [openSubmenuId, isDesktop]);
 
   useEffect(() => {
     if (!openSubmenuId) return undefined;
@@ -290,13 +314,47 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
       if (!(e.target as Element).closest('[data-submenu-flyout]')) setOpenSubmenuId(null);
     };
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenSubmenuId(null); };
+    const onScrollOrResize = () => setOpenSubmenuId(null);
     setTimeout(() => window.addEventListener('click', onClickOutside), 0);
     window.addEventListener('keydown', onEsc);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
     return () => {
       window.removeEventListener('click', onClickOutside);
       window.removeEventListener('keydown', onEsc);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
     };
   }, [openSubmenuId]);
+
+  const renderSubItemButtons = (items: SubItem[]) => items.map(sub => {
+    const subActive = currentSubView === sub.id;
+    return (
+      <button
+        key={sub.id}
+        onClick={() => {
+          if (sub.targetView) onNavigate(sub.targetView);
+          else setOpenSubmenuId(null);
+          onSubNavigate(sub.id);
+        }}
+        className={cn(
+          'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
+          subActive
+            ? 'bg-muted/80 text-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+        )}
+      >
+        {subActive && (
+          <div
+            className="absolute left-[10px] top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full"
+            style={{ background: 'hsl(var(--primary))' }}
+          />
+        )}
+        <sub.icon className={cn('h-3.5 w-3.5 shrink-0', subActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-80')} />
+        <span className="truncate">{sub.label}</span>
+      </button>
+    );
+  });
 
   const handleNavigate = (view: string) => {
     const item = ALL_NAV_ITEMS.find(i => i.id === view);
@@ -431,6 +489,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
           return (
             <div key={item.id} className="relative">
               <button
+                ref={el => { submenuTriggerRefs.current[item.id] = el; }}
                 onClick={() => { handleNavigate(item.id); setOpenSubmenuId(item.id); }}
                 className={cn(
                   'group relative flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200',
@@ -450,55 +509,36 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate, currentVie
                 )}
               </button>
 
-              {/* Sub-items: visibles cuando el módulo padre está activo. En
-                  escritorio (md+) se muestran como panel flotante lateral en
-                  vez de acordeón vertical; en mobile no cambia — ver
-                  openspec/changes/sidebar-submenu-flyout-lateral. */}
-              {active && hasSubItems && (
-                <div
-                  data-submenu-flyout
-                  className={cn(
-                    'relative mt-0.5 mb-1 ml-4',
-                    'md:absolute md:left-full md:top-0 md:mt-0 md:mb-0 md:ml-2 md:z-30 md:w-56 md:rounded-xl md:border md:border-border/40 md:bg-[hsl(var(--card))] md:p-1.5 md:shadow-xl',
-                    openSubmenuId !== item.id && 'md:hidden'
-                  )}
-                >
-                  {/* Línea vertical conectora — solo en el acordeón mobile */}
+              {/* Sub-items — acordeón vertical, solo en mobile (sin cambios).
+                  En escritorio se renderizan como panel flotante vía portal,
+                  más abajo. */}
+              {active && hasSubItems && !isDesktop && (
+                <div className="relative mt-0.5 mb-1 ml-4">
                   <div
-                    className="absolute left-3 top-1 bottom-1 w-px md:hidden"
+                    className="absolute left-3 top-1 bottom-1 w-px"
                     style={{ background: 'hsl(var(--border))' }}
                   />
                   <div className="flex flex-col gap-0.5">
-                    {visibleSubItems.map(sub => {
-                      const subActive = currentSubView === sub.id;
-                      return (
-                        <button
-                          key={sub.id}
-                          onClick={() => {
-                            if (sub.targetView) onNavigate(sub.targetView);
-                            else setOpenSubmenuId(null);
-                            onSubNavigate(sub.id);
-                          }}
-                          className={cn(
-                            'group relative flex w-full items-center gap-2 rounded-lg pl-7 pr-3 py-2 text-xs font-medium transition-all duration-150',
-                            subActive
-                              ? 'bg-muted/80 text-primary'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                          )}
-                        >
-                          {subActive && (
-                            <div
-                              className="absolute left-[10px] top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full"
-                              style={{ background: 'hsl(var(--primary))' }}
-                            />
-                          )}
-                          <sub.icon className={cn('h-3.5 w-3.5 shrink-0', subActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-80')} />
-                          <span className="truncate">{sub.label}</span>
-                        </button>
-                      );
-                    })}
+                    {renderSubItemButtons(visibleSubItems)}
                   </div>
                 </div>
+              )}
+
+              {/* Sub-items — panel flotante en escritorio, vía portal a
+                  document.body (no debe ser descendiente de <nav>/<aside>,
+                  que recortan con overflow — ver
+                  openspec/changes/fix-submenu-flyout-recortado-por-sidebar). */}
+              {isDesktop && hasSubItems && openSubmenuId === item.id && submenuPos && createPortal(
+                <div
+                  data-submenu-flyout
+                  className="fixed z-30 w-56 rounded-xl border border-border/40 bg-[hsl(var(--card))] p-1.5 shadow-xl"
+                  style={{ top: submenuPos.top, left: submenuPos.left }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    {renderSubItemButtons(visibleSubItems)}
+                  </div>
+                </div>,
+                document.body
               )}
             </div>
           );
