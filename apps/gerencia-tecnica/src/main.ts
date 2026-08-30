@@ -268,7 +268,7 @@ app.get('/api/v1/gerencia-tecnica/presupuesto/activo', async (req: Request, res:
  * POST /api/v1/gerencia-tecnica/insumos
  * Crea un nuevo insumo en el catálogo SSOT del tenant.
  */
-app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
+app.post('/api/v1/gerencia-tecnica/insumos', requireRoles('admin', 'superintendent', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { clave, descripcion, unidad_medida, costo_base, tipo_insumo } = req.body;
@@ -522,7 +522,7 @@ app.delete(
  * PATCH /api/v1/gerencia-tecnica/insumos/:id
  * Actualiza un insumo existente (precio, descripción, unidad).
  */
-app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
+app.patch('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin', 'superintendent', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { id } = req.params;
@@ -606,7 +606,7 @@ app.delete('/api/v1/gerencia-tecnica/insumos/:id', requireRoles('admin'), async 
  *   asocia `capitulo_id`. Conceptos sin esa referencia quedan con
  *   `capitulo_id = null` (no se rechaza la importación).
  */
-app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'technical', 'gerencia_tecnica'), async (req: Request, res: Response) => {
+app.post('/api/v1/gerencia-tecnica/presupuestos', requireRoles('admin', 'superintendent', 'gerencia_tecnica'), async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId } = req.securityContext;
     const { proyecto_id, version, conceptos } = req.body;
@@ -1245,8 +1245,8 @@ app.patch(
 // FICHAS TÉCNICAS DE INSUMO
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const ROLES_FICHAS_UPLOAD  = ['procurement', 'gerencia_tecnica', 'admin', 'resident', 'residencia'] as const;
-const ROLES_FICHAS_LECTURA = ['resident', 'residencia', 'control_obra', 'gerencia_tecnica', 'superintendent', 'procurement', 'admin'] as const;
+const ROLES_FICHAS_UPLOAD  = ['procurement', 'gerencia_tecnica', 'admin', 'residencia'] as const;
+const ROLES_FICHAS_LECTURA = ['residencia', 'control_obra', 'gerencia_tecnica', 'superintendent', 'procurement', 'admin'] as const;
 
 // POST /api/v1/gerencia-tecnica/insumos/:id/fichas
 app.post(
@@ -1910,7 +1910,7 @@ app.get(
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get(
   '/api/v1/gerencia-tecnica/dashboard',
-  requireRoles('superintendent', 'admin', 'technical', 'gerencia_tecnica'),
+  requireRoles('superintendent', 'admin', 'gerencia_tecnica'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId } = req.securityContext;

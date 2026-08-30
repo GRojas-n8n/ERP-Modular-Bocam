@@ -101,31 +101,6 @@ export const ROLES: readonly DefinicionRol[] = [
     estado: 'sin-backend',
     nota: 'El servicio de Ventas solo comprueba admin por ahora.',
   },
-
-  // ── Alias históricos ─────────────────────────────────────────────────────
-  // Siguen apareciendo en requireRoles de algunos servicios, así que un JWT que
-  // los traiga debe seguir funcionando. No se ofrecen para usuarios nuevos.
-  {
-    id: 'resident',
-    label: 'Residencia de Obra (heredado)',
-    estado: 'alias',
-    canonico: 'residencia',
-    nota: 'Compras lo acepta; Personal y Control de Proyectos no. Usar residencia.',
-  },
-  {
-    id: 'compras',
-    label: 'Compras (heredado)',
-    estado: 'alias',
-    canonico: 'procurement',
-    nota: 'Solo lo reconoce el menú del app-shell; ningún backend lo exige. Usar procurement.',
-  },
-  {
-    id: 'technical',
-    label: 'Gerencia Técnica (heredado)',
-    estado: 'alias',
-    canonico: 'gerencia_tecnica',
-    nota: 'Aparece en dos endpoints de Gerencia Técnica. Usar gerencia_tecnica.',
-  },
 ] as const;
 
 /** Todos los ids reconocidos, incluidos alias y los que aún no abren nada. */

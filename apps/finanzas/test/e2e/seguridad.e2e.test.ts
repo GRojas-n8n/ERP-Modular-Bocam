@@ -19,7 +19,7 @@ async function testRoleForbiddenPresupuesto() {
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-finanzas',
     proyectoId: 'proyecto-seguridad-finanzas',
-    roles: ['resident'],
+    roles: ['residencia'],
     projects: ['proyecto-seguridad-finanzas'],
     limiteAprobacion: 100000,
   });
@@ -112,7 +112,7 @@ async function postSaga(path: string, token: string, body: unknown) {
 }
 
 async function testRoleForbiddenComprometerFondos() {
-  const response = await postSaga('comprometer-fondos', tokenConRoles('user-resident', ['resident']), {
+  const response = await postSaga('comprometer-fondos', tokenConRoles('user-resident', ['residencia']), {
     presupuesto_id: 'presupuesto-saga-001',
     monto: 250000,
     oc_id: 'oc-saga-001',

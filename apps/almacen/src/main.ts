@@ -213,7 +213,7 @@ app.get('/api/v1/almacen/movimientos', async (req: Request, res: Response) => {
 });
 
 app.post('/api/v1/almacen/movimientos',
-  requireRoles('admin', 'superintendent', 'procurement', 'warehouse', 'resident', 'residencia', 'control_obra'),
+  requireRoles('admin', 'superintendent', 'procurement', 'warehouse', 'residencia', 'control_obra'),
   async (req: Request, res: Response) => {
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;

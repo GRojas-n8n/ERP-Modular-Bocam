@@ -92,7 +92,7 @@ async function seedCuadroConDuda() {
 async function testCreaRevisionYClona() {
   const s = await seedCuadroConDuda();
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/revision-con-preguntas`, {
       method: 'POST',
@@ -128,7 +128,7 @@ async function testSinDudasNoCreaRevision() {
     data: { tenant_id: tenantId, proyecto_id: proyectoId, requisicion_id: randomUUID(), codigo: `CC-NODUDA-${Date.now()}`, estado: 'EN_EVALUACION_TECNICA' },
   });
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${cuadro.id_cuadro}/revision-con-preguntas`, {
       method: 'POST',
@@ -148,7 +148,7 @@ async function testSinDudasNoCreaRevision() {
 async function testResponderPreguntaPorCaracteristica() {
   const s = await seedCuadroConDuda();
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const crearRevision = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/revision-con-preguntas`, {
       method: 'POST',

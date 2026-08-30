@@ -19,7 +19,7 @@ async function testRoleForbidden() {
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-control',
     proyectoId: 'proyecto-seguridad-control',
-    roles: ['resident'],
+    roles: ['residencia'],
     projects: ['proyecto-seguridad-control'],
   });
 
@@ -43,7 +43,7 @@ async function testProjectForbidden() {
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-control',
     proyectoId: 'proyecto-no-autorizado',
-    roles: ['resident'],
+    roles: ['residencia'],
     projects: ['otro-proyecto'],
   });
 
@@ -65,7 +65,7 @@ async function testAliasTemporalRetirado() {
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-control',
     proyectoId: 'proyecto-seguridad-control',
-    roles: ['resident'],
+    roles: ['residencia'],
     projects: ['proyecto-seguridad-control'],
   });
 

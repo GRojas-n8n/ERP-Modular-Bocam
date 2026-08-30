@@ -95,7 +95,7 @@ async function test91() {
   const proyectoId = randomUUID();
   await cleanupTenant(tenantId);
 
-  const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['resident'] });
+  const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['residencia'] });
   const res = await fetch(`${comprasBaseUrl}/api/v1/compras/requisiciones`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -130,7 +130,7 @@ async function test92() {
   await cleanupTenant(tenantId);
 
   const insumoId = randomUUID();
-  const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['resident'] });
+  const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['residencia'] });
   const res = await fetch(`${comprasBaseUrl}/api/v1/compras/requisiciones`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -250,7 +250,7 @@ async function test95() {
     },
   });
 
-  const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['resident'] });
+  const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['residencia'] });
   const res = await fetch(
     `${comprasBaseUrl}/api/v1/compras/requisiciones/${req.id_requisicion}/aprobar`,
     { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }
