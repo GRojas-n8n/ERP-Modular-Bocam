@@ -49,7 +49,7 @@
     "@babel/core": "^7.29.6",
     "@opentelemetry/core": "^2.8.0",
     "postcss": "^8.5.12",
-    "fast-uri": "^3.1.5",
+    "fast-uri": "^3.1.7",
     "body-parser": "^1.20.6",
     "@hono/node-server": "^2.0.5",
     "brace-expansion": "^5.0.9",
