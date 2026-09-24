@@ -14,17 +14,18 @@ openspec validate --all --strict --json
 | Specs canónicas | 155 | 28 | 127 |
 | Total | 177 | 49 | 128 |
 
-## Estado después de la primera corrección
+## Estado actual después de la primera corrección
 
 | Tipo | Total | Válidos | Inválidos |
 |---|---:|---:|---:|
-| Changes activos | 22 | 22 | 0 |
+| Changes activos | 23 | 23 | 0 |
 | Specs canónicas | 155 | 29 | 126 |
-| Total | 177 | 51 | 126 |
+| Total | 178 | 52 | 126 |
 
 Se corrigió el delta de Centro de Costos conservando los dos escenarios
-canónicos omitidos y se reemplazó el propósito placeholder de
-`centro-costos-alta`.
+canónicos omitidos, se reemplazó el propósito placeholder de
+`centro-costos-alta` y se agregó el change válido
+`migrar-catalogo-openspec-vigente`.
 
 ## Clasificación
 
