@@ -39,7 +39,7 @@
 - [x] 4.1 Ejecutar suites unitarias, integración, aislamiento RLS con rol sin `BYPASSRLS`, typecheck y build.
 - [x] 4.2 Validar OpenSpec en modo estricto y revisar que no se alteren contratos globales intencionales.
 - [x] 4.3 Ensayar con una cuenta sin proyectos y otra con dos proyectos en un entorno no productivo.
-- [ ] 4.4 Desplegar por el flujo normal, verificar logs y repetir smoke autenticado de solo lectura en producción.
+- [x] 4.4 Desplegar por el flujo normal, verificar logs y repetir smoke autenticado de solo lectura en producción.
 
 ### Evidencia de validación previa al despliegue
 
@@ -49,6 +49,15 @@
 - Compras y Control de Proyectos: los intentos IDOR entre proyectos del mismo tenant responden `404` bajo RLS real.
 - Finanzas y Contabilidad conservan sus modos globales autorizados, trazables por `proyecto_id`, sin cruzar tenants.
 - Auth Middleware: 13/13 pruebas pasan. App Shell: 340/340 pruebas pasan. Los diez componentes afectados compilan y OpenSpec estricto es válido.
+
+### Evidencia de producción
+
+- El cambio se fusionó por el PR `#146`; los despliegues Docker de frontend y backend finalizaron correctamente y todos los contenedores con healthcheck quedaron saludables.
+- El workflow administrativo `Aplicar RLS al VPS (manual)` terminó correctamente para Gerencia Técnica en la ejecución `36071054557`. `insumos`, `presupuestos_base` y `conceptos` exigen tenant y proyecto sin fallback para proyecto nulo.
+- El barrido posterior de logs no encontró errores fatales, excepciones ni fallos no controlados. El dominio respondió `200` y las rutas protegidas sin autenticación respondieron `401`.
+- Se creó una cuenta técnica dedicada con cero roles, cero proyectos y límite financiero cero. El login directo fue verificado y su sesión de comprobación se cerró.
+- El smoke autenticado oficial terminó correctamente en el intento 3 de la ejecución `36071736514`, sin generar artefactos persistentes.
+- Los PR `#147` y `#148` blindaron el smoke: no conserva trazas, capturas, videos ni reportes que puedan serializar credenciales. Los artefactos inseguros detectados durante el despliegue fueron eliminados.
 
 ## 5. Cierre
 
