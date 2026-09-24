@@ -1,5 +1,15 @@
 ## Context
 
+> **Topología corregida tras verificar producción (2026-09-24):** PostgreSQL
+> contiene bases separadas `bocam_auth`, `bocam_compras`, etc.; cada una usa
+> `public`. Además, `max_prepared_transactions=0`, por lo que no es posible una
+> transacción distribuida atómica. La implementación de producción es
+> `purga-proyecto-multidb.sh` + `purga-base.sql`: congela escrituras, exige un
+> dump reciente por base y globals, hace dry-run en todas las bases, usa una
+> transacción verificable por base y procesa `bocam_auth` al final. Ante fallo
+> parcial se restaura el conjunto completo antes de reabrir servicios. El diseño
+> monobase descrito debajo se conserva como historial y para sus tests legacy.
+
 Verificado sobre la base de desarrollo local (mismo esquema Prisma que producción), 2026-09-24:
 
 | Esquema | Tablas con `proyecto_id` | Tablas totales |
