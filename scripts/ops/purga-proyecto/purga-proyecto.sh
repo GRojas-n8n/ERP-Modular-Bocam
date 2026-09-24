@@ -59,17 +59,14 @@ done
 [ -n "$CODIGOS" ] || die "Falta --codigos COD1,COD2 (códigos de Centro de Costos)."
 [ -f "$SQL" ]     || die "No se encuentra $SQL"
 
-# ─── Conexión a la base ──────────────────────────────────────────────────────
+# Producción real usa una base por servicio, no diez esquemas en una sola base.
+# Se conserva este wrapper únicamente para tests/entornos legacy que pasan
+# PSQL_CMD explícitamente. Esto impide usarlo por accidente en la VPS.
 if [ -z "${PSQL_CMD:-}" ]; then
-  ENV_FILE=${ENV_FILE:-.env.vps}
-  [ -f "$ENV_FILE" ] || die "Falta $ENV_FILE (o define PSQL_CMD)."
-  DB_USER=$(grep -E '^DB_USER=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"')
-  DB_NAME=$(grep -E '^DB_NAME=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"')
-  [ -n "$DB_USER" ] && [ -n "$DB_NAME" ] || die "No se pudo leer DB_USER/DB_NAME de $ENV_FILE."
-  CONTENEDOR=${CONTENEDOR_PG:-bocam-vps-postgres}
-  PSQL_CMD="docker exec -i $CONTENEDOR psql -U $DB_USER -d $DB_NAME"
-  PGRESTORE_LIST_CMD=${PGRESTORE_LIST_CMD:-"docker exec -i $CONTENEDOR pg_restore --list"}
+  die "Herramienta legacy deshabilitada para producción. Usa purga-proyecto-multidb.sh y el runbook actualizado."
 fi
+
+# ─── Conexión a la base ──────────────────────────────────────────────────────
 : "${PGRESTORE_LIST_CMD:=pg_restore --list}"
 
 sha256() {

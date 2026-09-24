@@ -44,3 +44,13 @@
 
 - [ ] 7.1 Archivar el change (`/opsx:archive`).
 - [ ] 7.2 Anotar en memoria: fecha de la purga, códigos eliminados, ubicación y SHA-256 del respaldo, y que la herramienta queda disponible para futuras purgas.
+
+## 8. Corrección por topología real de producción
+
+- [x] 8.1 Verificar directamente que producción usa una base `bocam_*` por servicio y tablas en `public`.
+- [x] 8.2 Bloquear el wrapper monobase para ejecución directa en producción.
+- [x] 8.3 Implementar resolución exacta en `bocam_auth` y purga transaccional por base, con auth al final.
+- [x] 8.4 Exigir dump verificado por base, globals, copia externa confirmada y mantenimiento confirmado.
+- [x] 8.5 Añadir pruebas multidatabase con proyecto objetivo, otro proyecto del tenant y otro tenant.
+- [x] 8.6 Actualizar el runbook con respaldo y ensayo del clúster completo.
+- [ ] 8.7 Publicar la corrección, ejecutar dry-run y ensayo aislado en producción.

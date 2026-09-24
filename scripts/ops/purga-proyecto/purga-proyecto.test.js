@@ -21,6 +21,7 @@ const DB_TEMPLATE = process.env.PURGA_TEST_TEMPLATE || 'bocam_erp';
 const DB = 'purga_test';
 const SQL_FILE = path.join(__dirname, 'purga-proyecto.sql');
 const SH_FILE = path.join(__dirname, 'purga-proyecto.sh');
+const SH = process.platform === 'win32' ? 'C:\\Program Files\\Git\\bin\\sh.exe' : 'sh';
 
 // UUIDs fijos para poder razonar sobre los datos.
 const T1 = '11111111-1111-4111-8111-111111111111';
@@ -280,7 +281,7 @@ test('aborta ante un ciclo de FKs antes de borrar nada', opts, () => {
 
 function wrapper(args, env = {}) {
   const psqlCmd = `docker exec -i ${CONTENEDOR} psql -U postgres -d ${DB}`;
-  const r = spawnSync('sh', [SH_FILE, ...args], {
+  const r = spawnSync(SH, [SH_FILE, ...args], {
     encoding: 'utf8',
     env: {
       ...process.env,

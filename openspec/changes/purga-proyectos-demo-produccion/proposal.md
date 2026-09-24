@@ -1,5 +1,12 @@
 ## Why
 
+> **Corrección 2026-09-24:** una comprobación directa de producción demostró que
+> la topología no es una base con diez esquemas. Es una base `bocam_*` por
+> servicio, con tablas en `public`. Las afirmaciones posteriores sobre una única
+> transacción global quedan sustituidas por `design.md` y el runbook corregidos:
+> transacción por base, escrituras detenidas, respaldo de todas las bases,
+> preflight total, ensayo del clúster completo y `bocam_auth` al final.
+
 En producción (iretum.com) existen proyectos que se crearon como ejemplo y práctica durante la capacitación. El titular decidió **eliminarlos definitivamente** (no solo archivarlos) para dejar el sistema limpio antes de operar con datos reales, y aceptó que esto exige un respaldo previo.
 
 Eliminar un proyecto no es un `DELETE` simple, por cómo está construido el sistema (verificado sobre la base de desarrollo, que tiene el mismo esquema):
