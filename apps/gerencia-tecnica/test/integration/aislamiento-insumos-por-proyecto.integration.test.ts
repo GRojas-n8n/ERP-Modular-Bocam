@@ -5,7 +5,7 @@
  *
  * Confirma contra Postgres real (RLS `rls_insumos_context` aplicada) que:
  *  - Un rol de nivel-proyecto solo ve/edita los insumos de su proyecto activo.
- *  - Un rol de nivel-tenant sin proyecto activo ve el catálogo consolidado.
+ *  - Ningún rol puede consultar el catálogo operativo sin proyecto activo.
  *  - La unicidad de `clave` pasa a ser por proyecto, no por tenant.
  *
  * Runner: node -r ts-node/register/transpile-only <este-archivo>
@@ -165,9 +165,9 @@ async function testGetExplosionAcotaAProyectoYCalculaCantidad() {
   }
 }
 
-// ── Test 8.3: GET /insumos con rol admin sin proyecto activo consolida el tenant ──
+// ── Test 8.3: GET /insumos con rol admin sin proyecto activo es rechazado ──
 
-async function testGetInsumosSinProyectoActivoConsolidaTenant() {
+async function testGetInsumosSinProyectoActivoEsRechazado() {
   const tenantId = randomUUID();
   const proyectoA = randomUUID();
   const proyectoB = randomUUID();
@@ -181,14 +181,13 @@ async function testGetInsumosSinProyectoActivoConsolidaTenant() {
 
     const t = token(tenantId, '', ['admin']);
     const r = await get('/api/v1/gerencia-tecnica/insumos', t);
-    assert.equal(r.status, 200, 'GET /insumos sin proyecto activo debe responder 200 para un rol de nivel-tenant');
+    assert.equal(r.status, 403, 'GET /insumos sin proyecto activo debe responder 403 incluso para admin');
     const body = await r.json() as any;
 
-    assert.equal(body.data.length, 2, 'debe retornar los insumos de ambos proyectos consolidados');
-    const proyectosVistos = body.data.map((i: any) => i.proyecto_id).sort();
-    assert.deepEqual(proyectosVistos, [proyectoA, proyectoB].sort(), 'cada insumo debe traer su propio proyecto_id');
+    assert.equal(body.error?.code, 'AUTH_PROJECT_REQUIRED');
+    assert.equal(body.data, undefined, 'la respuesta de rechazo no debe incluir datos de ningún proyecto');
 
-    console.log('ok - 8.3 GET /insumos con rol admin sin proyecto activo consolida ambos proyectos, cada uno trazable');
+    console.log('ok - 8.3 GET /insumos con rol admin sin proyecto activo es rechazado sin exponer datos');
   } finally {
     await cleanupTenant(tenantId);
   }
@@ -287,7 +286,7 @@ async function main() {
   try {
     await testGetInsumosAcotaAProyectoActivo();                 // 8.1
     await testGetExplosionAcotaAProyectoYCalculaCantidad();      // 8.2
-    await testGetInsumosSinProyectoActivoConsolidaTenant();      // 8.3
+    await testGetInsumosSinProyectoActivoEsRechazado();          // 8.3
     await testPostInsumoClaveDuplicadaEnOtroProyectoNoColisiona(); // 8.4
     await testImportarLoteEstampaProyectoActivo();               // 8.5
     await testPatchDeleteInsumoDeOtroProyectoFalla404();         // 8.6

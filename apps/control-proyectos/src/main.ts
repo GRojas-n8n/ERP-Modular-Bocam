@@ -15,7 +15,7 @@
  * ---------------------------------------------------------------------------
  */
 
-import express, { Request, Response, Router } from 'express';
+import express, { NextFunction, Request, Response, Router } from 'express';
 import axios from 'axios';
 import basePrisma, { createTenantContext } from './db';
 import type { PrismaClient } from './generated/prisma';
@@ -26,7 +26,7 @@ import {
   EstadoAvance,
   EstadoEstimacion,
 } from './types';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
@@ -593,6 +593,13 @@ export async function handleCentroCostosCreadoEvent(event: BocamEvent<{ codigo_c
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'control-proyectos' }));
 app.use(requireProjectAccess());
+const requireControlProject = requireActiveProject();
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path === '/api/v1/control-proyectos/avance-resumen-multi') {
+    return next();
+  }
+  return requireControlProject(req, res, next);
+});
 
 // ─── Helpers EVM/Alertas ─────────────────────────────────────────────────────
 

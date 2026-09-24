@@ -1122,6 +1122,11 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
 
   // ── Fetch Tab 1 ───────────────────────────────────────────────────────────
   const fetchPresupuesto = async () => {
+    if (!currentProjectId) {
+      setPresupuesto(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -1137,6 +1142,10 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   };
 
   const fetchSaldoPartidas = async () => {
+    if (!currentProjectId) {
+      setSaldoMap({});
+      return;
+    }
     try {
       if (tenant?.id === 'iretum-demo') return;
       const res = await api.get('/api/v1/gerencia-tecnica/partidas/resumen');
@@ -1150,6 +1159,10 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   };
 
   const fetchTransferencias = async (estado?: string) => {
+    if (!currentProjectId) {
+      setTransferencias([]);
+      return;
+    }
     if (tenant?.id === 'iretum-demo') { setTransferencias([]); return; }
     setLoadingTrans(true);
     try {
@@ -1256,6 +1269,11 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
 
   // ── Fetch Tab 2 ───────────────────────────────────────────────────────────
   const fetchInsumos = async () => {
+    if (!currentProjectId) {
+      setInsumos([]);
+      setLoadingInsumos(false);
+      return;
+    }
     setLoadingInsumos(true);
     setErrorInsumos(null);
     try {
@@ -1271,19 +1289,34 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
     }
   };
 
-  useEffect(() => { void fetchPresupuesto(); }, [currentProjectId]);
+  useEffect(() => {
+    if (!currentProjectId) {
+      setPresupuesto(null);
+      setInsumos([]);
+      setSaldoMap({});
+      setTransferencias([]);
+      setTrazabilidad([]);
+      setCostosWbs([]);
+      setCpData(null);
+      setCpPresupuestoPendiente(null);
+      setGtDash(null);
+      setLoading(false);
+      return;
+    }
+    void fetchPresupuesto();
+  }, [currentProjectId]);
   useEffect(() => {
     if (presupuesto?.estado === 'APROBADO' || presupuesto?.estado === 'LIBERADO' || presupuesto?.estado === 'CONGELADO') {
       void fetchSaldoPartidas();
     }
   }, [presupuesto?.id, presupuesto?.estado]);
-  useEffect(() => { if (activeTab === 'insumos') void fetchInsumos(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'transferencias') void fetchTransferencias(); }, [activeTab, currentProjectId]);
-  useEffect(() => { if (activeTab === 'trazabilidad') void fetchTrazabilidad(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'insumos') void fetchInsumos(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'control-costos') void loadCostosWbs(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'control-presupuestal') void loadControlPresupuestal(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'transferencias') void fetchTransferencias(); }, [activeTab, currentProjectId]);
+  useEffect(() => { if (currentProjectId && activeTab === 'trazabilidad') void fetchTrazabilidad(); }, [activeTab, currentProjectId]);
   useEffect(() => {
-    if (tenant?.id === 'iretum-demo') return;
+    if (!currentProjectId || tenant?.id === 'iretum-demo') return;
     api.get('/api/v1/gerencia-tecnica/dashboard').then(r => setGtDash(r.data?.data ?? null)).catch(() => {});
   }, [tenant?.id, currentProjectId]);
 
@@ -1706,6 +1739,21 @@ export const InsumosView: React.FC<{ activeSubView?: string; onSubNavigate?: (su
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
+  if (!currentProjectId) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center p-6">
+        <div className="w-full max-w-lg rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
+            Proyecto activo requerido
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Elige una obra desde la barra superior para consultar su catálogo, presupuesto y controles técnicos.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Inputs ocultos */}

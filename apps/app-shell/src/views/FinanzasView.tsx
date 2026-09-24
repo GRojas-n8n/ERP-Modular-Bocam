@@ -263,6 +263,7 @@ export const FinanzasView: React.FC = () => {
   };
 
   const crearPresupuesto = async () => {
+    if (!currentProjectId) return;
     setConfirmCrearPresupuesto(false);
     const monto = parseFloat(form.monto_autorizado);
     setGuardando(true);
@@ -291,10 +292,13 @@ export const FinanzasView: React.FC = () => {
     try {
       setLoading(true);
       if (tenant?.id === 'iretum-demo') { setResumen(DEMO_RESUMEN_FINANCIERO); setPagos(DEMO_PAGOS as PagoProgramado[]); return; }
+      const presupuestoRequest = currentProjectId
+        ? api.get('/api/v1/finanzas/presupuestos')
+        : Promise.resolve(null);
       const [dashRes, pagosRes, presRes, pagosOCRes, cuentasRes] = await Promise.allSettled([
         api.get('/api/v1/finanzas/dashboard'),
         api.get('/api/v1/finanzas/pagos'),
-        api.get('/api/v1/finanzas/presupuestos'),
+        presupuestoRequest,
         api.get('/api/v1/finanzas/pagos-oc'),
         api.get('/api/v1/finanzas/cuentas-bancarias'),
       ]);
@@ -303,7 +307,11 @@ export const FinanzasView: React.FC = () => {
         setDashAlertas(dashRes.value.data.data.alertas ?? []);
       }
       if (pagosRes.status === 'fulfilled') setPagos(pagosRes.value.data.data);
-      if (presRes.status === 'fulfilled') setPresupuestos(presRes.value.data.data ?? []);
+      if (presRes.status === 'fulfilled' && presRes.value) {
+        setPresupuestos(presRes.value.data.data ?? []);
+      } else if (!currentProjectId) {
+        setPresupuestos([]);
+      }
       if (pagosOCRes.status === 'fulfilled') setPagosOC(pagosOCRes.value.data.data ?? []);
       if (cuentasRes.status === 'fulfilled') setCuentasBancarias(cuentasRes.value.data.data ?? []);
     } catch (err: any) {
@@ -511,13 +519,15 @@ export const FinanzasView: React.FC = () => {
             <IconCalendar className="h-4 w-4" />
             Programar Egreso
           </Button>
-          <Button
-            className="rounded-2xl bg-emerald-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-700"
-            onClick={() => { resetForm(); setPanelOpen(true); }}
-          >
-            <IconPlus className="h-4 w-4" />
-            Nuevo Presupuesto
-          </Button>
+          {currentProjectId && (
+            <Button
+              className="rounded-2xl bg-emerald-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-700"
+              onClick={() => { resetForm(); setPanelOpen(true); }}
+            >
+              <IconPlus className="h-4 w-4" />
+              Nuevo Presupuesto
+            </Button>
+          )}
         </div>
       </div>
 

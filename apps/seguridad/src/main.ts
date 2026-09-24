@@ -4,7 +4,7 @@ import {
   createApiResponse, createApiError,
   SeguridadEvents, EstadoIncidente, ResultadoInspeccion, EstadoPermiso,
 } from './types';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, type BocamEvent } from '../../../packages/event-bus/src';
 import { initSentry, logWarn, setupSentryExpressHandler } from '../../../packages/observability/src';
@@ -60,6 +60,7 @@ app.use(createAuthMiddleware({
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'seguridad' }));
 app.use(requireProjectAccess());
+app.use(requireActiveProject());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // INCIDENTES

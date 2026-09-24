@@ -5,5 +5,11 @@
  * ---------------------------------------------------------------------------
  */
 
-export { createAuthMiddleware, requireRoles, requireProjectAccess, requireEnv } from './middleware';
+export {
+  createAuthMiddleware,
+  requireRoles,
+  requireProjectAccess,
+  requireActiveProject,
+  requireEnv,
+} from './middleware';
 export type { JwtPayload, SecurityContext, AuthMiddlewareOptions } from './types';

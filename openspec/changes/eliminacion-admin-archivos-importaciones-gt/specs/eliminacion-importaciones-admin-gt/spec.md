@@ -104,7 +104,7 @@ catálogo.
 - **THEN** el sistema responde `403`
 
 ### Requirement: Las respuestas de importación SHALL incluir el identificador necesario para deshacerlas
-`POST /api/v1/gerencia-tecnica/presupuestos` (ya incluye `id` del `PresupuestoBase`
+El sistema SHALL asegurar que `POST /api/v1/gerencia-tecnica/presupuestos` (ya incluye `id` del `PresupuestoBase`
 creado), `POST /api/v1/gerencia-tecnica/insumos/importar-lote` (SHALL incluir
 `lote_importacion_id`) y `POST /api/v1/gerencia-tecnica/composicion-apu` (SHALL incluir
 `conceptos_afectados`, el array de `concepto_id` tocados por esa llamada) SHALL exponer en

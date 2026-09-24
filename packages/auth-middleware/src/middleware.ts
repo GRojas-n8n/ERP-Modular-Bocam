@@ -282,3 +282,30 @@ export function requireProjectAccess() {
     next();
   };
 }
+
+/**
+ * Exige un proyecto activo para rutas cuya información pertenece a un centro
+ * de costos concreto. Se monta después de `createAuthMiddleware()` y de
+ * `requireProjectAccess()` para conservar tanto la autorización por proyecto
+ * de los roles operativos como los modos tenant-level de rutas corporativas.
+ */
+export function requireActiveProject() {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.securityContext) {
+      return next();
+    }
+
+    if (!req.securityContext.proyectoId) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTH_PROJECT_REQUIRED',
+          message: 'Se requiere un proyecto activo para esta operación.',
+        },
+      });
+      return;
+    }
+
+    next();
+  };
+}

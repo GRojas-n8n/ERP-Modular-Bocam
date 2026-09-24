@@ -39,7 +39,7 @@ import {
 import type { PrismaClient } from './generated/prisma';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
@@ -86,6 +86,16 @@ app.use(createAuthMiddleware({
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'finanzas' }));
 app.use(requireProjectAccess());
+app.use([
+  '/api/v1/finanzas/suficiencia',
+  '/api/v1/finanzas/presupuestos',
+  '/api/v1/finanzas/movimientos',
+  '/api/v1/finanzas/transferencias-presupuestales',
+  '/api/v1/finanzas/comprometer-fondos',
+  '/api/v1/finanzas/liberar-fondos',
+  '/api/v1/finanzas/proyectos',
+  '/api/v1/finanzas/reportes/pagado-por-concepto',
+], requireActiveProject());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ENDPOINT CRÍTICO: GET /api/v1/finanzas/suficiencia

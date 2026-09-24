@@ -31,6 +31,19 @@ const ViewLoader: React.FC = () => (
   </div>
 );
 
+const ProjectRequiredState: React.FC = () => (
+  <div className="flex min-h-[400px] items-center justify-center p-6">
+    <div className="w-full max-w-lg rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
+        Proyecto activo requerido
+      </p>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Selecciona un proyecto para consultar y operar la información de este módulo.
+      </p>
+    </div>
+  </div>
+);
+
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 interface EBState { hasError: boolean; }
 class AppErrorBoundary extends Component<{ children: React.ReactNode }, EBState> {
@@ -78,10 +91,30 @@ class AppErrorBoundary extends Component<{ children: React.ReactNode }, EBState>
  */
 
 const AuthenticatedApp: React.FC = () => {
+  const { currentProjectId } = useTenant();
   const [currentView, setCurrentView] = useState<string>('dashboard');
   const [currentSubView, setCurrentSubView] = useState<string>('');
 
   const renderView = () => {
+    const projectScopedViews = new Set([
+      'dashboard',
+      'insumos',
+      'comparativa',
+      'residencia',
+      'control-obra',
+      'seguridad',
+      'ventas',
+    ]);
+
+    const projectScopedMixedView =
+      (currentView === 'compras' && currentSubView !== 'proveedores') ||
+      (currentView === 'almacen' && currentSubView !== 'activos') ||
+      (currentView === 'personal' && !['empleados', 'pases'].includes(currentSubView || 'empleados'));
+
+    if (!currentProjectId && (projectScopedViews.has(currentView) || projectScopedMixedView)) {
+      return <ProjectRequiredState />;
+    }
+
     switch (currentView) {
       case 'dashboard':
         return <DashboardView onNavigate={setCurrentView} />;
