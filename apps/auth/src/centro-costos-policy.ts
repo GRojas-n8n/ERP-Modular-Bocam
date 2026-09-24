@@ -50,6 +50,33 @@ export function siguienteConsecutivo(countExistente: number): number {
   return countExistente + 1;
 }
 
+/** El consecutivo ocupa 3 dígitos en la máscara de 13 posiciones. */
+export const CONSECUTIVO_MAXIMO = 999;
+
+/**
+ * Siguiente consecutivo a partir del MÁXIMO existente para el mismo
+ * (tenant, empresa, año, cliente). A diferencia de `siguienteConsecutivo`
+ * (conteo + 1), tolera huecos: con 001, 002 y 005 devuelve 006 y no 004, que
+ * luego chocaría con el 005 elegido a mano. `null` = no hay ninguno todavía.
+ * Lanza CONSECUTIVO_AGOTADO si el máximo ya es 999 (no cabe un cuarto dígito).
+ * Ver openspec/changes/centro-costos-confirmar-y-editar-consecutivo.
+ */
+export function siguienteConsecutivoDesdeMaximo(maximoExistente: number | null): number {
+  const siguiente = (maximoExistente ?? 0) + 1;
+  if (siguiente > CONSECUTIVO_MAXIMO) {
+    throw new Error('CONSECUTIVO_AGOTADO: el consecutivo máximo (999) ya está asignado para esta empresa, año y cliente.');
+  }
+  return siguiente;
+}
+
+/** Consecutivo válido: entero entre 1 y 999. */
+export function validarConsecutivo(valor: unknown): valor is number {
+  return typeof valor === 'number'
+    && Number.isInteger(valor)
+    && valor >= 1
+    && valor <= CONSECUTIVO_MAXIMO;
+}
+
 /**
  * Remapea un valor de estatus legacy al vocabulario vigente. Si el valor ya
  * pertenece al vocabulario vigente, lo retorna sin cambios. Lanza

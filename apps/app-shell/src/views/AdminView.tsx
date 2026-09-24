@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api, { ventasApi } from '../lib/api';
 import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
@@ -305,42 +305,119 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
   const [clientes, setClientes] = useState<ClienteVentas[]>([]);
   const [showAgregarCliente, setShowAgregarCliente] = useState(false);
 
+  // Consecutivo del código (openspec/changes/centro-costos-confirmar-y-editar-consecutivo):
+  // el sistema lo sugiere, el usuario lo acepta o lo cambia y confirma ANTES de guardar.
+  const [consecutivo, setConsecutivo] = useState('');
+  const [avisoConsecutivo, setAvisoConsecutivo] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
+  const [enfocarConsecutivo, setEnfocarConsecutivo] = useState(false);
+  const consecutivoRef = useRef<HTMLInputElement>(null);
+  const consecutivoEditadoRef = useRef(false);
+
   useEffect(() => {
     if (isEdit) return; // el cliente/empresa/año ya no son editables tras crear
     ventasApi.getClientes().then(res => setClientes((res.data.data ?? []) as ClienteVentas[])).catch(() => {});
   }, [isEdit]);
 
   const clienteSeleccionado = clientes.find(c => c.id_cliente === form.cliente_id);
-  const codigoPreview = form.es_especial
-    ? (form.codigo_especial || '—')
-    : (form.empresa_grupo && form.anio_centro_costos && clienteSeleccionado?.codigo_cliente)
-      ? `${form.empresa_grupo}${form.anio_centro_costos}${clienteSeleccionado.codigo_cliente.padStart(3, '0')}···`
-      : '—';
+  const codigoClienteSel = clienteSeleccionado?.codigo_cliente ?? null;
+
+  // Prefijo fijo del código: EMPRESA + AÑO + CLIENTE (los 10 primeros caracteres).
+  const prefijoCodigo = (form.empresa_grupo && form.anio_centro_costos >= 1900 && codigoClienteSel)
+    ? `${form.empresa_grupo}${form.anio_centro_costos}${codigoClienteSel.padStart(3, '0')}`
+    : '';
+  const consecutivoNumero = consecutivo === '' ? NaN : Number(consecutivo);
+  const consecutivoValido = Number.isInteger(consecutivoNumero) && consecutivoNumero >= 1 && consecutivoNumero <= 999;
+  const codigoCompleto = prefijoCodigo && consecutivoValido
+    ? `${prefijoCodigo}${String(consecutivoNumero).padStart(3, '0')}`
+    : '';
+
+  // Sugerencia del siguiente consecutivo al cambiar empresa, año o cliente (con debounce;
+  // una respuesta que llega después de otro cambio se descarta).
+  useEffect(() => {
+    if (isEdit || form.es_especial) return undefined;
+    if (!form.empresa_grupo || !(form.anio_centro_costos >= 1900) || !form.cliente_id || !codigoClienteSel) {
+      setConsecutivo('');
+      return undefined;
+    }
+    let vigente = true;
+    const timer = setTimeout(() => {
+      api.get('/api/v1/auth/admin/proyectos/siguiente-consecutivo', {
+        params: {
+          empresa_grupo: form.empresa_grupo,
+          anio_centro_costos: form.anio_centro_costos,
+          cliente_id: form.cliente_id,
+          codigo_cliente: codigoClienteSel,
+        },
+      }).then(res => {
+        if (!vigente) return;
+        setConsecutivo(String(res.data.data.consecutivo));
+        if (consecutivoEditadoRef.current) {
+          setAvisoConsecutivo('El consecutivo que habías escrito se descartó porque cambió la empresa, el año o el cliente. Revisa el nuevo sugerido.');
+        }
+        consecutivoEditadoRef.current = false;
+      }).catch((e: unknown) => {
+        if (!vigente) return;
+        const msg = (e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+        setConsecutivo('');
+        setAvisoConsecutivo(msg ?? 'No se pudo obtener el consecutivo sugerido. Captúralo manualmente (1–999).');
+      });
+    }, 300);
+    return () => { vigente = false; clearTimeout(timer); };
+  }, [isEdit, form.es_especial, form.empresa_grupo, form.anio_centro_costos, form.cliente_id, codigoClienteSel]);
+
+  // "Modificar" en la confirmación: al cerrarla, el foco vuelve al consecutivo.
+  useEffect(() => {
+    if (enfocarConsecutivo && !confirmando) {
+      consecutivoRef.current?.focus();
+      setEnfocarConsecutivo(false);
+    }
+  }, [enfocarConsecutivo, confirmando]);
 
   const fechasInvalidas = !!(form.fecha_programada_inicio && form.fecha_programada_fin
     && form.fecha_programada_fin < form.fecha_programada_inicio);
 
-  const handleSubmit = async () => {
-    if (!form.nombre_oficial.trim()) { setError('El nombre oficial es obligatorio.'); return; }
-    if (fechasInvalidas) { setError('La fecha programada de fin no puede ser anterior a la de inicio.'); return; }
+  const validar = (): boolean => {
+    if (!form.nombre_oficial.trim()) { setError('El nombre oficial es obligatorio.'); return false; }
+    if (fechasInvalidas) { setError('La fecha programada de fin no puede ser anterior a la de inicio.'); return false; }
     if (!isEdit) {
       if (form.es_especial) {
         if (!form.tipo_especial || !form.codigo_especial.trim()) {
           setError('Tipo especial y código son obligatorios para un Centro de Costos especial.');
-          return;
+          return false;
         }
       } else {
         if (!form.empresa_grupo || !form.anio_centro_costos || !form.cliente_id) {
           setError('Empresa, año y cliente son obligatorios.');
-          return;
+          return false;
         }
         if (!clienteSeleccionado?.codigo_cliente) {
           setError('El cliente seleccionado no tiene código asignado — edítalo desde "+ Agregar Cliente" o el catálogo de Ventas.');
-          return;
+          return false;
+        }
+        if (!consecutivoValido) {
+          setError('El consecutivo debe ser un número entero entre 1 y 999.');
+          return false;
         }
       }
     }
+    return true;
+  };
 
+  // Alta normal: primero se muestra el código final y se pide confirmación
+  // ("Aceptar y guardar" / "Modificar"); nada se envía hasta aceptar. Los
+  // Centros de Costos especiales y la edición se envían directo, como antes.
+  const handleSubmit = () => {
+    if (!validar()) return;
+    if (!isEdit && !form.es_especial) {
+      setError(null);
+      setConfirmando(true);
+      return;
+    }
+    void enviar();
+  };
+
+  const enviar = async () => {
     setSaving(true); setError(null);
     try {
       const body: Record<string, unknown> = {
@@ -368,14 +445,30 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
           body.anio_centro_costos = Number(form.anio_centro_costos);
           body.cliente_id = form.cliente_id;
           body.codigo_cliente = clienteSeleccionado!.codigo_cliente;
+          // Siempre el consecutivo confirmado: lo que el usuario ve es lo que se guarda.
+          body.consecutivo_centro_costos = consecutivoNumero;
         }
       }
       if (isEdit) await api.patch(`/api/v1/auth/admin/proyectos/${proyecto!.id_proyecto}`, body);
       else await api.post('/api/v1/auth/admin/proyectos', body);
+      setConfirmando(false);
       onSaved(); onClose();
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-      setError(msg ?? 'Error al guardar.');
+      const err = (e as { response?: { data?: { error?: { code?: string; message?: string; consecutivo_sugerido?: number | null } } } })?.response?.data?.error;
+      if (err?.code === 'ADMIN_CODIGO_DUPLICADO') {
+        // Otro usuario tomó ese consecutivo entre la vista previa y el guardado:
+        // NO se guarda otro valor en silencio; se actualiza el sugerido y se pide confirmar de nuevo.
+        const sugerido = err.consecutivo_sugerido ?? null;
+        consecutivoEditadoRef.current = false;
+        if (sugerido !== null) setConsecutivo(String(sugerido));
+        setAvisoConsecutivo(sugerido !== null
+          ? `El consecutivo ${String(consecutivoNumero).padStart(3, '0')} ya fue tomado por otro Centro de Costos. Se sugiere ${String(sugerido).padStart(3, '0')}; revisa y confirma de nuevo.`
+          : `El consecutivo ${String(consecutivoNumero).padStart(3, '0')} ya fue tomado y no quedan consecutivos libres para esta empresa, año y cliente.`);
+        setConfirmando(sugerido !== null);
+      } else {
+        setConfirmando(false);
+        setError(err?.message ?? 'Error al guardar.');
+      }
     } finally { setSaving(false); }
   };
 
@@ -429,7 +522,7 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Año *</label>
-                      <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
+                      <input type="number" aria-label="Año" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none"
                         value={form.anio_centro_costos} onChange={e => setForm(f => ({ ...f, anio_centro_costos: Number(e.target.value) }))} />
                     </div>
                   </div>
@@ -452,9 +545,28 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código (vista previa)</label>
-                    <div className="w-full rounded-xl border border-dashed border-border/40 bg-muted/30 px-3 py-2 text-sm font-mono tracking-widest">{codigoPreview}</div>
-                    <p className="mt-1 text-[10px] text-muted-foreground">El consecutivo (últimos 3 dígitos) lo asigna el sistema al guardar.</p>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código del Centro de Costos</label>
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1 rounded-xl border border-dashed border-border/40 bg-muted/30 px-3 py-2 text-sm font-mono tracking-widest">{prefijoCodigo || '—'}</span>
+                      <input
+                        ref={consecutivoRef}
+                        aria-label="Consecutivo"
+                        type="number" min={1} max={999} step={1}
+                        disabled={!prefijoCodigo}
+                        className="w-24 rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono focus:border-primary/50 focus:outline-none disabled:opacity-50"
+                        value={consecutivo}
+                        onChange={e => { consecutivoEditadoRef.current = true; setAvisoConsecutivo(null); setConsecutivo(e.target.value); }}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      Consecutivo sugerido por el sistema (1–999). Puedes aceptarlo o cambiarlo; se te pedirá confirmar el código antes de guardar.
+                    </p>
+                    {codigoCompleto && (
+                      <p className="mt-1 text-xs">Código final: <span data-testid="codigo-vista-previa" className="font-mono font-bold tracking-widest">{codigoCompleto}</span></p>
+                    )}
+                    {avisoConsecutivo && !confirmando && (
+                      <p role="status" className="mt-1 text-[10px] font-semibold text-amber-500">{avisoConsecutivo}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -563,6 +675,33 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
           </button>
         </div>
       </div>
+
+      {confirmando && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirmar-cc-titulo">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-border/40 bg-card p-6 shadow-2xl">
+            <h3 id="confirmar-cc-titulo" className="text-sm font-black uppercase tracking-widest">¿Crear este Centro de Costos?</h3>
+            <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código final</p>
+            <p data-testid="codigo-final" className="mt-1 rounded-xl border border-border/40 bg-muted/40 px-3 py-2 text-center font-mono text-lg font-bold tracking-widest">{codigoCompleto}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{form.nombre_oficial.trim()}</p>
+            {avisoConsecutivo ? (
+              <p role="status" className="mt-3 text-xs font-semibold text-amber-500">{avisoConsecutivo}</p>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">Revisa el código. Puedes aceptarlo tal cual o modificar el consecutivo antes de guardar; una vez creado no se puede cambiar.</p>
+            )}
+            <div className="mt-5 flex gap-3">
+              <button type="button" disabled={saving}
+                onClick={() => { setConfirmando(false); setEnfocarConsecutivo(true); }}
+                className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50 disabled:opacity-50">
+                Modificar
+              </button>
+              <button type="button" disabled={saving} onClick={() => void enviar()}
+                className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700 disabled:opacity-50">
+                {saving ? 'Guardando...' : 'Aceptar y guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAgregarCliente && (
         <AgregarClienteModal
