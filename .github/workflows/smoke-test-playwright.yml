@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: smoke-report-playwright
-          path: |
-            apps/app-shell/smoke-report/
-            apps/app-shell/test-results/
+          # No subir test-results: las trazas/snapshots de un login real pueden
+          # conservar los valores de los campos aunque los logs los enmascaren.
+          path: apps/app-shell/smoke-report/
           retention-days: 7

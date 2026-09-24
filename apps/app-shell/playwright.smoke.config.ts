@@ -20,8 +20,12 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'smoke-report' }]],
   use: {
     baseURL: process.env.SMOKE_BASE_URL || 'https://iretum.com',
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    // Este smoke escribe credenciales reales en el formulario. Las trazas,
+    // capturas y videos de Playwright conservan snapshots del DOM y pueden
+    // incluir esos valores aun cuando GitHub enmascare los logs.
+    trace: 'off',
+    screenshot: 'off',
+    video: 'off',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
