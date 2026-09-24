@@ -1,43 +1,8 @@
--- Gerencia Técnica es una interfaz operativa por centro de costos.
--- La ausencia de proyecto deja de ampliar las lecturas a todo el tenant.
-
-SET search_path TO gerencia_tecnica, public;
-
-DROP POLICY IF EXISTS rls_insumos_context ON insumos;
-CREATE POLICY rls_insumos_context ON insumos
-    FOR ALL
-    USING (
-        tenant_id = get_current_tenant_id()
-        AND proyecto_id = get_current_proyecto_id()
-    )
-    WITH CHECK (
-        tenant_id = get_current_tenant_id()
-        AND proyecto_id = get_current_proyecto_id()
-    );
-
-DROP POLICY IF EXISTS rls_presupuestos_tenant ON presupuestos_base;
-CREATE POLICY rls_presupuestos_tenant ON presupuestos_base
-    FOR ALL
-    USING (
-        tenant_id = get_current_tenant_id()
-        AND proyecto_id = get_current_proyecto_id()
-    )
-    WITH CHECK (
-        tenant_id = get_current_tenant_id()
-        AND proyecto_id = get_current_proyecto_id()
-    );
-
-DROP POLICY IF EXISTS rls_conceptos_tenant ON conceptos;
-CREATE POLICY rls_conceptos_tenant ON conceptos
-    FOR ALL
-    USING (
-        tenant_id = get_current_tenant_id()
-        AND proyecto_id = get_current_proyecto_id()
-    )
-    WITH CHECK (
-        tenant_id = get_current_tenant_id()
-        AND proyecto_id = get_current_proyecto_id()
-    );
-
-COMMENT ON POLICY rls_insumos_context ON insumos IS
-    'Aislamiento Multi-Tenant + Multi-Proyecto estricto. Módulo: Gerencia Técnica.';
+-- Marcador de versión intencionalmente sin DDL de políticas.
+--
+-- El usuario de runtime que ejecuta `prisma migrate deploy` no es propietario
+-- de las funciones ni de las políticas RLS de producción. La fuente canónica
+-- de estas políticas es ../rls-policies.sql y se aplica, de forma deliberada,
+-- con el workflow manual `deploy-vps-rls-apply.yml` usando el rol administrativo.
+-- Mantener el cambio fuera de la migración evita un despliegue parcial: primero
+-- se publica el guard HTTP y después se endurece RLS mediante ese flujo.
