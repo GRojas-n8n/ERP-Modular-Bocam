@@ -39,7 +39,8 @@
 - [ ] 6.5 Verificación posterior completa.
   - [x] Base de datos: cero proyectos objetivo y cero filas con sus identificadores en las 12 bases.
   - [x] Operación: todos los contenedores saludables, cero reinicios, HTTPS 200 y sin errores críticos recientes.
-  - [ ] Sesión autenticada: confirmar selector de proyectos, Administración y dashboards de proyectos conservados.
+  - [x] Sesión autenticada: selector indica `Sin Proyecto` y Administración confirma que no quedan proyectos registrados.
+  - [ ] Dashboards project-scoped: Gerencia Técnica expone datos con proyecto vacío; cierre bloqueado por `bloquear-datos-sin-proyecto-activo`.
 - [ ] 6.6 **Titular:** revisar el manifiesto de archivos y decidir si borra los archivos huérfanos de los volúmenes.
 - [ ] 6.7 Conservar el respaldo previo hasta que el titular confirme la normalidad, como mínimo hasta 2026-10-24.
 
@@ -66,4 +67,4 @@
 - Ensayo: restauración completa y purga real en contenedor `--network none`.
 - Producción: transacción verificable por base, `bocam_auth` al final; resultado exitoso en las 12 bases.
 - Postcondición: cero registros objetivo; servicios saludables y `https://iretum.com/` con HTTP 200.
-- Pendientes: validación autenticada, decisión sobre 15 archivos potencialmente huérfanos y retención del respaldo hasta 2026-10-24.
+- Pendientes: corregir el hallazgo autenticado de aislamiento sin proyecto, decidir sobre 15 archivos potencialmente huérfanos y conservar el respaldo hasta 2026-10-24.

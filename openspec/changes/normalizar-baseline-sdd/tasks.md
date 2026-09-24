@@ -15,6 +15,7 @@
 - [x] 2.5 Validar estrictamente `normalizar-baseline-sdd` y `purga-proyectos-demo-produccion` con el CLI oficial de OpenSpec.
 - [x] 2.6 Ejecutar la validación integral y documentar la deuda histórica: 49 válidos y 128 inválidos (`validation-debt.md`).
 - [x] 2.7 Crear el change separado `migrar-catalogo-openspec-vigente` para corregir la deuda por lotes sin alterar contratos.
+- [x] 2.8 Revalidar tras el smoke autenticado: 24/24 changes activos válidos; deuda canónica reducida a 103 specs (96 de formato y 7 con 10 requisitos sin lenguaje normativo).
 
 ## 3. Conciliación
 
@@ -27,6 +28,9 @@
 
 - [x] 4.1 Registrar respaldo, dry-run, ensayo aislado, ejecución, verificación de base y salud de servicios.
 - [ ] 4.2 Validar con sesión autenticada que selector, Administración y dashboards operan normalmente.
+  - [x] Selector y Administración confirman `Sin Proyecto` / `SIN PROYECTOS REGISTRADOS` después de la purga.
+  - [x] Control de Obra aplica un estado seguro `SIN DATOS DE PROYECTO`.
+  - [ ] Resolver el bloqueo: Gerencia Técnica expone 72 conceptos sin proyecto activo; documentado en `bloquear-datos-sin-proyecto-activo`.
 - [ ] 4.3 Decidir si se eliminan los 15 archivos potencialmente huérfanos.
 - [ ] 4.4 Conservar el respaldo hasta al menos 2026-10-24 y confirmar normalidad antes de archivarlo.
 

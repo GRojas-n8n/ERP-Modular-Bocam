@@ -14,26 +14,30 @@ openspec validate --all --strict --json
 | Specs canónicas | 155 | 28 | 127 |
 | Total | 177 | 49 | 128 |
 
-## Estado actual después de la primera corrección
+## Estado actual
 
 | Tipo | Total | Válidos | Inválidos |
 |---|---:|---:|---:|
-| Changes activos | 23 | 23 | 0 |
-| Specs canónicas | 155 | 29 | 126 |
-| Total | 178 | 52 | 126 |
+| Changes activos | 24 | 24 | 0 |
+| Specs canónicas | 155 | 52 | 103 |
+| Total | 179 | 76 | 103 |
 
 Se corrigió el delta de Centro de Costos conservando los dos escenarios
 canónicos omitidos, se reemplazó el propósito placeholder de
 `centro-costos-alta` y se agregó el change válido
-`migrar-catalogo-openspec-vigente`.
+`migrar-catalogo-openspec-vigente`. El smoke autenticado agregó el change válido
+`bloquear-datos-sin-proyecto-activo`. La conciliación y archivo del primer lote
+actualizó además las especificaciones canónicas correspondientes. Finalmente se
+reparó el último delta activo inválido,
+`eliminacion-admin-archivos-importaciones-gt`, sin cambiar su contrato.
 
 ## Clasificación
 
 | Categoría | Elementos | Tratamiento |
 |---|---:|---|
 | Spec sin `Purpose`/`Requirements` canónicos | 96 | migración estructural conservando literalmente requisitos y escenarios |
-| Spec con `Purpose` placeholder | 30 pendientes (31 iniciales) | redactar propósito desde requisitos existentes y someterlo a revisión humana |
-| Delta que omite escenarios existentes | 0 pendientes (1 inicial) | corrección completada sin eliminar escenarios |
+| Spec con requisitos sin `SHALL`/`MUST` | 7 specs / 10 requisitos | normalizar lenguaje normativo sin alterar el comportamiento |
+| Delta activo inválido | 0 pendientes | correcciones mínimas completadas sin eliminar escenarios ni cambiar contratos |
 
 Todos los changes activos validan en modo estricto. La deuda restante está
 concentrada en specs canónicas históricas.
@@ -43,7 +47,7 @@ concentrada en specs canónicas históricas.
 1. La migración SHALL ser documental; no cambia código ni comportamiento.
 2. Los 96 archivos de formato antiguo se migran mecánicamente solo cuando el
    diff demuestra que los textos de requisitos y escenarios son idénticos.
-3. Los 31 propósitos no se autogeneran y aceptan sin revisión: se redactan por
+3. Los propósitos no se autogeneran y aceptan sin revisión: se redactan por
    dominio y se aprueban en PRs pequeños.
 4. El delta de Centro de Costos se corrige antes de intentar archivarlo.
 5. Cada lote ejecuta validación estricta del dominio y después la validación
