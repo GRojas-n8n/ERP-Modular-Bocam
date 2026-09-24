@@ -16,8 +16,8 @@
 ## 3. Verificación
 
 - [x] 3.1 Tests de 1.1–1.3 en verde. Suite completa `Layout.*.test.tsx` + guard de ayuda contextual sin regresiones (9 archivos/19 tests). `tsc -b` limpio.
-- [ ] 3.2 Verificación visual manual en escritorio (Gerencia Técnica con varios subItems) — pendiente, requiere ambiente corriendo; queda para QA/revisión humana.
-- [ ] 3.3 Verificación visual manual en el rango 768px-900px y en mobile (drawer) — pendiente, ídem.
+- [x] 3.2 Verificación visual manual sobre `iretum.com` a 1280 px: Gerencia Técnica abre siete subitems en flyout lateral sin desplazar los módulos (2026-09-24).
+- [x] 3.3 Verificación visual sobre `iretum.com` a 850 px y en viewport móvil: flyout lateral correcto en rango intermedio y drawer móvil funcional (2026-09-24).
 
 ## Decisión sobre la Open Question del design.md
 

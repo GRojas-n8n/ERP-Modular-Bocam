@@ -13,11 +13,13 @@
 - [x] 2.3 Registrar la ejecución real y separar verificaciones completadas de pendientes.
 - [x] 2.4 Generar la matriz completa de changes activos con evidencia de merge y siguiente acción (`inventory.md`).
 - [x] 2.5 Validar estrictamente `normalizar-baseline-sdd` y `purga-proyectos-demo-produccion` con el CLI oficial de OpenSpec.
+- [x] 2.6 Ejecutar la validación integral y documentar la deuda histórica: 49 válidos y 128 inválidos (`validation-debt.md`).
+- [x] 2.7 Crear el change separado `migrar-catalogo-openspec-vigente` para corregir la deuda por lotes sin alterar contratos.
 
 ## 3. Conciliación
 
 - [ ] 3.1 Revisar los changes con cero tareas pendientes contra `main` y producción.
-- [ ] 3.2 Preparar un lote documental de archivo únicamente para los changes con evidencia completa.
+- [x] 3.2 Archivar el primer lote documental con evidencia completa: `fix-dropdown-proyecto-transparente`, `resaltar-selector-proyecto` y `sidebar-submenu-flyout-lateral`; especificaciones canónicas actualizadas.
 - [x] 3.3 Preservar cada borrador local en su rama independiente `codex/draft-*`, sin publicarla ni mezclar implementaciones.
 - [x] 3.4 Actualizar el checkout principal por avance rápido a `a7697f2`, conservando intactos los archivos originales y con los borradores ya respaldados en ramas.
 

@@ -8,7 +8,7 @@
 
 ## 2. Validación visual
 
-- [ ] 2.1 Verificación visual en tema claro/oscuro en navegador real — pendiente, requiere ambiente
+- [x] 2.1 Verificación visual en tema claro/oscuro sobre `iretum.com` en navegador Chromium real: borde, indicador y contraste correctos (2026-09-24).
       corriendo; queda para QA/revisión humana.
 - [x] 2.2 No se tocó el `truncate`/`max-w` del nombre del proyecto — el cambio es solo `box-shadow`
       (glow) y opacidad del label, sin alterar el layout del texto. Suite completa de

@@ -26,11 +26,11 @@ evidencia escrita en cada change.
 | `control-presupuestal-estado-presupuesto-visible` | `ec0246d`, PR #135; 14/15 | mergeado; QA pendiente | flujo real GT/Compras |
 | `explosion-insumos-mostrar-cantidades` | `d62f14b`, PR #130; 8/9 | mergeado; QA pendiente | comparar cantidades con proyecto real |
 | `fix-avance-mock-mis-proyectos` | `144c8b5`, PR #132; 14/15 | mergeado; QA pendiente | comprobar avance real en navegador |
-| `fix-dropdown-proyecto-transparente` | `e60ca42`, PR #131; 10/12 | mergeado; QA pendiente | Chrome real y anchos soportados |
+| `fix-dropdown-proyecto-transparente` | `e60ca42`, PR #131; 12/12; QA producción 2026-09-24 | archivado | `archive/2026-09-24-fix-dropdown-proyecto-transparente` |
 | `fix-explosion-insumos-costo-vs-importe` | `d7fa762`, PR #129; 8/9 | mergeado; QA pendiente | importar archivo HH/HS real |
 | `modal-confirmacion-antes-de-subir-archivos` | `715a529`, PR #137; 14/15 | mergeado; QA pendiente | segundo proyecto en siete flujos |
-| `resaltar-selector-proyecto` | `cb27b16`, PR #133; 3/4 | mergeado; QA pendiente | temas claro/oscuro |
-| `sidebar-submenu-flyout-lateral` | `68746c2`, PR #136; 10/12 | mergeado; QA pendiente | escritorio, 768–900 px y móvil |
+| `resaltar-selector-proyecto` | `cb27b16`, PR #133; 4/4; QA producción 2026-09-24 | archivado | `archive/2026-09-24-resaltar-selector-proyecto` |
+| `sidebar-submenu-flyout-lateral` | `68746c2`, PR #136; 12/12; QA producción 2026-09-24 | archivado | `archive/2026-09-24-sidebar-submenu-flyout-lateral` |
 | `purga-proyectos-demo-produccion` | PR #144 + corrección #145 (`a7697f2`); ejecución 2026-09-24 | observando | smoke autenticado, archivos huérfanos y retención hasta 2026-10-24 |
 | `normalizar-baseline-sdd` | rama local aislada | implementando | validar OpenSpec y completar conciliación |
 

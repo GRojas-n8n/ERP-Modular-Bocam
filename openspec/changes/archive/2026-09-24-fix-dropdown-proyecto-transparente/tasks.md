@@ -18,14 +18,14 @@
       posición real en el DOM).
 - [x] 2.4 Se optó por **cerrar** el dropdown en scroll/resize (opción recomendada en el design, sin
       pregunta abierta bloqueante) en vez de reposicionar.
-- [ ] 2.5 Verificación visual real en Chromium (backdrop-filter) — pendiente, requiere ambiente
+- [x] 2.5 Verificación visual real en Chromium sobre `iretum.com` (modo demo de producción), en tema claro y oscuro: panel opaco, texto legible y fondo sin interferencia (2026-09-24).
       corriendo; el test de componente cubre la causa raíz (posición en el árbol DOM) pero no el
       compositing real del navegador.
 
 ## 3. Validar
 
 - [x] 3.1 Test de 1.1 pasa tras el fix.
-- [ ] 3.2 Verificación visual en Chrome real — pendiente (ver 2.5).
+- [x] 3.2 Verificación visual en navegador Chromium real completada junto con 2.5 (2026-09-24).
 - [x] 3.3 Test adicional confirma que seleccionar un proyecto en el panel portal cambia de proyecto
       (`setCurrentProjectId`) y cierra el dropdown, igual que antes.
 - [x] 3.4 Revisado `apps/app-shell/test` (Playwright) — sin matches para el dropdown de proyecto,
