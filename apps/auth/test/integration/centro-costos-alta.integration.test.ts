@@ -151,6 +151,192 @@ async function testTipoEspecialInvalidoRechazado() {
   }
 }
 
+// ── centro-costos-confirmar-y-editar-consecutivo ─────────────────────────────
+// Spec: openspec/changes/centro-costos-confirmar-y-editar-consecutivo/
+// Vista previa sin efectos, consecutivo explícito, max+1 con huecos, 409 y rango.
+
+const BASE_HCO = { empresa_grupo: 'HCO', anio_centro_costos: 2026, cliente_id: clienteIdTest, codigo_cliente: '004' };
+
+async function get(path: string, token: string) {
+  return fetch(`${authBaseUrl}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+function qsSiguiente(extra: Record<string, string | number> = {}) {
+  const p = new URLSearchParams({
+    empresa_grupo: 'HCO', anio_centro_costos: '2026', cliente_id: clienteIdTest, codigo_cliente: '004',
+    ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])),
+  });
+  return `/api/v1/auth/admin/proyectos/siguiente-consecutivo?${p.toString()}`;
+}
+
+async function crearConConsecutivo(token: string, consecutivo: number | undefined, nombre: string) {
+  return post('/api/v1/auth/admin/proyectos', token, {
+    ...BASE_HCO, nombre_oficial: nombre,
+    ...(consecutivo === undefined ? {} : { consecutivo_centro_costos: consecutivo }),
+  });
+}
+
+async function testSiguienteConsecutivoPrimerContratoEsUno() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    const r = await get(qsSiguiente(), token);
+    assert.equal(r.status, 200);
+    const b = (await r.json()) as any;
+    assert.equal(b.data.consecutivo, 1);
+    assert.equal(b.data.codigo_centro_costos, 'HCO2026004001');
+    console.log('ok - siguiente-consecutivo: primer contrato del año/cliente sugiere 001 con el código completo');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testSiguienteConsecutivoNoTieneEfectosSecundarios() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    const a = (await (await get(qsSiguiente(), token)).json()) as any;
+    const b = (await (await get(qsSiguiente(), token)).json()) as any;
+    assert.equal(a.data.consecutivo, b.data.consecutivo, 'dos consultas seguidas devuelven el mismo consecutivo');
+    const enBd = await prisma.proyecto.count({ where: { tenant_id: tenantId } });
+    assert.equal(enBd, 0, 'la vista previa no debe crear ni reservar nada');
+    console.log('ok - siguiente-consecutivo no reserva ni escribe');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testSiguienteConsecutivoToleraHuecosMaxMasUno() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    for (const c of [1, 2, 5]) {
+      const r = await crearConConsecutivo(token, c, `Contrato ${c}`);
+      assert.equal(r.status, 201, `crear con consecutivo explícito ${c}`);
+    }
+    const s = (await (await get(qsSiguiente(), token)).json()) as any;
+    assert.equal(s.data.consecutivo, 6, 'con 001, 002 y 005 el sugerido es 006 (no 004)');
+    // el alta automática (sin consecutivo) tampoco debe chocar con el 005
+    const auto = await crearConConsecutivo(token, undefined, 'Automático tras huecos');
+    assert.equal(auto.status, 201);
+    assert.equal(((await auto.json()) as any).data.codigo_centro_costos, 'HCO2026004006');
+    console.log('ok - consecutivo max+1 tolera huecos (sugerido y alta automática dan 006)');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testSiguienteConsecutivoRolNoAutorizado() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['resident'] });
+    const r = await get(qsSiguiente(), token);
+    assert.equal(r.status, 403);
+    console.log('ok - siguiente-consecutivo: rol no autorizado recibe 403');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testSiguienteConsecutivoParametrosInvalidos() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    const sinCliente = await get(qsSiguiente({ cliente_id: '' }), token);
+    assert.equal(sinCliente.status, 400);
+    const empresaMala = await get(qsSiguiente({ empresa_grupo: 'XXX' }), token);
+    assert.equal(empresaMala.status, 400);
+    console.log('ok - siguiente-consecutivo valida parámetros (400)');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testConsecutivoExplicitoLibreSeUsaExactamente() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['gerencia_tecnica'] });
+    await crearConConsecutivo(token, 1, 'Uno');
+    await crearConConsecutivo(token, 2, 'Dos');
+    const r = await crearConConsecutivo(token, 10, 'Contrato con numeración externa');
+    assert.equal(r.status, 201);
+    const b = (await r.json()) as any;
+    assert.equal(b.data.codigo_centro_costos, 'HCO2026004010');
+    assert.equal(b.data.consecutivo_centro_costos, 10);
+    const s = (await (await get(qsSiguiente(), token)).json()) as any;
+    assert.equal(s.data.consecutivo, 11, 'tras el 010 manual el siguiente sugerido es 011');
+    console.log('ok - consecutivo explícito libre se usa exactamente (010) y el siguiente sugerido es 011');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testConsecutivoExplicitoOcupadoResponde409ConSugerido() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    await crearConConsecutivo(token, 1, 'Uno');
+    await crearConConsecutivo(token, 2, 'Dos');
+    await crearConConsecutivo(token, 3, 'Tres');
+    const r = await crearConConsecutivo(token, 3, 'Duplicado');
+    assert.equal(r.status, 409);
+    const b = (await r.json()) as any;
+    assert.equal(b.error.code, 'ADMIN_CODIGO_DUPLICADO');
+    assert.equal(b.error.consecutivo_sugerido, 4);
+    const enBd = await prisma.proyecto.count({ where: { tenant_id: tenantId } });
+    assert.equal(enBd, 3, 'el duplicado no debe crearse ni reasignarse en silencio');
+    console.log('ok - consecutivo explícito ocupado responde 409 ADMIN_CODIGO_DUPLICADO con sugerido y sin crear nada');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testConsecutivoFueraDeRangoRespondeValidationError() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    for (const invalido of [0, 1000, -1, 1.5]) {
+      const r = await crearConConsecutivo(token, invalido, `Inválido ${invalido}`);
+      assert.equal(r.status, 400, `consecutivo ${invalido} debe rechazarse con 400`);
+      assert.equal(((await r.json()) as any).error.code, 'VALIDATION_ERROR');
+    }
+    const enBd = await prisma.proyecto.count({ where: { tenant_id: tenantId } });
+    assert.equal(enBd, 0);
+    console.log('ok - consecutivo fuera de rango (0, 1000, -1, 1.5) rechazado con 400 sin persistir');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testConsecutivosAgotados() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    const r999 = await crearConConsecutivo(token, 999, 'Último posible');
+    assert.equal(r999.status, 201);
+    assert.equal(((await r999.json()) as any).data.codigo_centro_costos, 'HCO2026004999');
+
+    const consulta = await get(qsSiguiente(), token);
+    assert.equal(consulta.status, 409);
+    assert.equal(((await consulta.json()) as any).error.code, 'ADMIN_CONSECUTIVO_AGOTADO');
+
+    const auto = await crearConConsecutivo(token, undefined, 'Sin lugar');
+    assert.equal(auto.status, 409);
+    assert.equal(((await auto.json()) as any).error.code, 'ADMIN_CONSECUTIVO_AGOTADO');
+    console.log('ok - con consecutivo 999 ocupado, la consulta y el alta automática responden 409 ADMIN_CONSECUTIVO_AGOTADO');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testAltasConcurrentesSinConsecutivoNoDuplican() {
+  const tenantId = randomUUID();
+  await seedTenant(tenantId);
+  try {
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId: randomUUID(), roles: ['admin'] });
+    const respuestas = await Promise.all(
+      [1, 2, 3, 4].map((n) => crearConConsecutivo(token, undefined, `Concurrente ${n}`)),
+    );
+    const cuerpos = await Promise.all(respuestas.map(async (r) => ({ status: r.status, body: (await r.json()) as any })));
+    for (const c of cuerpos) assert.equal(c.status, 201, `alta concurrente debe crearse (recibió ${c.status})`);
+    const codigos = cuerpos.map((c) => c.body.data.codigo_centro_costos).sort();
+    assert.equal(new Set(codigos).size, 4, 'los 4 códigos deben ser distintos');
+    assert.deepEqual(codigos, ['HCO2026004001', 'HCO2026004002', 'HCO2026004003', 'HCO2026004004']);
+    console.log('ok - 4 altas concurrentes sin consecutivo crean 001..004 sin duplicar (reintento de la transacción completa)');
+  } finally { await cleanupTenant(tenantId); }
+}
+
 async function main() {
   await setup();
   try {
@@ -158,6 +344,16 @@ async function main() {
     await testAltaConGerenciaTecnicaYConsecutivoIncremental();   // 5.1/5.2
     await testCentroCostosEspecialOmiteMascara();                // 5.4
     await testTipoEspecialInvalidoRechazado();
+    await testSiguienteConsecutivoPrimerContratoEsUno();
+    await testSiguienteConsecutivoNoTieneEfectosSecundarios();
+    await testSiguienteConsecutivoToleraHuecosMaxMasUno();
+    await testSiguienteConsecutivoRolNoAutorizado();
+    await testSiguienteConsecutivoParametrosInvalidos();
+    await testConsecutivoExplicitoLibreSeUsaExactamente();
+    await testConsecutivoExplicitoOcupadoResponde409ConSugerido();
+    await testConsecutivoFueraDeRangoRespondeValidationError();
+    await testConsecutivosAgotados();
+    await testAltasConcurrentesSinConsecutivoNoDuplican();
   } finally {
     await teardown();
   }

@@ -35,7 +35,7 @@ export const admin: ModuleHelp = {
       titulo: 'Proyectos',
       proposito: 'Dar de alta y administrar Centros de Costos.',
       bloques: [
-        { tipo: 'parrafo', texto: 'El código de Centro de Costos se ensambla automáticamente (empresa + año + cliente + consecutivo) y es de solo lectura, salvo en centros "especiales" (Oficina, Taller, Almacén) que aceptan código libre.' },
+        { tipo: 'parrafo', texto: 'El código de Centro de Costos se ensambla a partir de empresa + año + cliente + consecutivo. El sistema sugiere el consecutivo y muestra el código completo: puedes aceptarlo o cambiar solo el consecutivo (1–999), y antes de guardar se te pide confirmar el código con "Aceptar y guardar" o "Modificar". Una vez creado el código ya no se puede cambiar. Los centros "especiales" (Oficina, Taller, Almacén) aceptan código libre.' },
         {
           tipo: 'estados', titulo: 'Estatus del proyecto', items: [
             { estado: 'ABIERTO', color: 'gris', desc: 'Recién creado.' },

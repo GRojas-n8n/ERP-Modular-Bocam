@@ -29,6 +29,9 @@ export const crearProyectoSchema = z.object({
   anio_centro_costos: z.number().optional(),
   cliente_id: z.string().optional(),
   codigo_cliente: z.string().optional(),
+  // Consecutivo confirmado por el usuario (openspec/changes/centro-costos-confirmar-y-editar-consecutivo).
+  // Opcional: sin él se asigna el siguiente disponible (compatibilidad con clientes de la API).
+  consecutivo_centro_costos: z.number().int().min(1).max(999).optional(),
   monto_total_vendido: z.number().optional(),
   periodo_ejecucion: z.number().optional(),
   periodo_ejecucion_unidad: z.string().optional(),
@@ -39,6 +42,15 @@ export const crearProyectoSchema = z.object({
   fecha_programada_inicio: fechaSchema,
   fecha_programada_fin: fechaSchema,
 });
+
+/** GET /api/v1/auth/admin/proyectos/siguiente-consecutivo (query string). */
+export const siguienteConsecutivoQuerySchema = z.object({
+  empresa_grupo: z.string().min(1, 'empresa_grupo es obligatorio'),
+  anio_centro_costos: z.coerce.number().int().min(1900).max(9999),
+  cliente_id: z.string().min(1, 'cliente_id es obligatorio'),
+  codigo_cliente: z.string().min(1, 'codigo_cliente es obligatorio'),
+});
+export type SiguienteConsecutivoQuery = z.infer<typeof siguienteConsecutivoQuerySchema>;
 
 export const actualizarProyectoSchema = z.object({
   nombre_oficial: z.string().trim().min(1).optional(),
