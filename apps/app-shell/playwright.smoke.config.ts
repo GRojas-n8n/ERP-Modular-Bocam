@@ -17,7 +17,10 @@ export default defineConfig({
   timeout: 30_000,
   fullyParallel: false,
   retries: 1,
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'smoke-report' }]],
+  // El reporte de consola queda enmascarado por GitHub Actions. No generar
+  // reportes persistentes: aun sin trazas ni capturas, el HTML puede serializar
+  // el estado del formulario y conservar credenciales reales.
+  reporter: 'list',
   use: {
     baseURL: process.env.SMOKE_BASE_URL || 'https://iretum.com',
     // Este smoke escribe credenciales reales en el formulario. Las trazas,

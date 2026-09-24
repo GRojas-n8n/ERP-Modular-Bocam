@@ -68,12 +68,6 @@ jobs:
           SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
         run: npm run test:smoke
 
-      - name: Subir reporte de Playwright (si falló)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoke-report-playwright
-          # No subir test-results: las trazas/snapshots de un login real pueden
-          # conservar los valores de los campos aunque los logs los enmascaren.
-          path: apps/app-shell/smoke-report/
-          retention-days: 7
+      # Deliberadamente no se publican artefactos en este job. Playwright puede
+      # serializar valores de inputs en reportes de error aunque GitHub enmascare
+      # correctamente las mismas credenciales en los logs.
