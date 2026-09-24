@@ -21,10 +21,18 @@
 
 ## 3. Implementación
 
-- [ ] 3.1 Implementar el guard reutilizable de proyecto obligatorio sin alterar el contrato de `requireProjectAccess()` para rutas tenant-level.
-- [ ] 3.2 Aplicar el guard y el filtro obligatorio a todas las rutas project-scoped confirmadas de Gerencia Técnica.
-- [ ] 3.3 Corregir `InsumosView` y las demás vistas project-scoped afectadas con estado seguro y limpieza de datos.
-- [ ] 3.4 Corregir los hallazgos equivalentes de otros módulos según la matriz aprobada.
+- [x] 3.1 Implementar el guard reutilizable de proyecto obligatorio sin alterar el contrato de `requireProjectAccess()` para rutas tenant-level.
+- [x] 3.2 Aplicar el guard y el filtro obligatorio a todas las rutas project-scoped confirmadas de Gerencia Técnica. Se eliminó además el fallback RLS que convertía proyecto nulo en acceso consolidado.
+- [x] 3.3 Corregir `InsumosView` y las demás vistas project-scoped afectadas con estado seguro y limpieza de datos. El App Shell evita montar vistas estrictas sin proyecto y conserva únicamente submódulos globales explícitos.
+- [x] 3.4 Corregir los hallazgos equivalentes de otros módulos según la matriz aprobada. Control de Proyectos, Seguridad y Ventas usan guard estricto; Compras, Almacén, Finanzas y Personal lo montan por rutas y preservan sus catálogos/capacidades tenant-level documentados.
+
+### Evidencia de implementación verde
+
+- `npm test -w @bocam/auth-middleware`: 13/13 pruebas pasan; incluye el guard estricto y la regresión del modo global de Finanzas.
+- `npm run test:integration:presupuestos-requieren-proyecto -w @bocam/gerencia-tecnica`: aislamiento A/B y rechazo sin proyecto pasan.
+- `npm exec vitest run src/views/InsumosView.sin-proyecto.test.tsx`: no hay solicitudes ni acciones mutantes sin proyecto.
+- `npm test -w app-shell`: 102 archivos y 340 pruebas pasan.
+- Compilan Auth Middleware, Gerencia Técnica, Compras, Almacén, Finanzas, Personal, Control de Proyectos, Seguridad, Ventas y App Shell.
 
 ## 4. Validación
 

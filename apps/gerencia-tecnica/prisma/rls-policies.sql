@@ -35,9 +35,7 @@ $$ LANGUAGE plpgsql STABLE;
 -- 2. HABILITAR RLS EN TABLAS DEL MÓDULO
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Tabla: insumos (Maestra — aislamiento por tenant_id + proyecto_id, con
--- fallback de consolidación tenant-wide para roles sin proyecto activo —
--- ver aislamiento-insumos-por-proyecto-gt)
+-- Tabla: insumos (Maestra operativa — aislamiento por tenant_id + proyecto_id)
 ALTER TABLE insumos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE insumos FORCE ROW LEVEL SECURITY;
 
@@ -54,47 +52,33 @@ ALTER TABLE conceptos FORCE ROW LEVEL SECURITY;
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── INSUMOS ────────────────────────────────────────────────────────────────
--- Aislamiento por tenant. Si hay proyecto en contexto, también filtra por
--- proyecto (roles de nivel-proyecto siempre lo tienen). Sin proyecto en
--- contexto (admin/superintendent), consolida todo el tenant — mismo patrón
--- que presupuestos_base/conceptos.
+-- Aislamiento estricto por tenant y proyecto. La ausencia de proyecto nunca
+-- se interpreta como acceso consolidado.
 DROP POLICY IF EXISTS rls_insumos_tenant ON insumos;
 DROP POLICY IF EXISTS rls_insumos_context ON insumos;
 CREATE POLICY rls_insumos_context ON insumos
     FOR ALL
     USING (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     )
     WITH CHECK (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     );
 
 -- ─── PRESUPUESTOS BASE ─────────────────────────────────────────────────────
--- Aislamiento por tenant. Si hay proyecto en contexto, también filtra por proyecto.
+-- Aislamiento estricto por tenant y proyecto.
 DROP POLICY IF EXISTS rls_presupuestos_tenant ON presupuestos_base;
 CREATE POLICY rls_presupuestos_tenant ON presupuestos_base
     FOR ALL
     USING (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     )
     WITH CHECK (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     );
 
 -- ─── CONCEPTOS ──────────────────────────────────────────────────────────────
@@ -104,17 +88,11 @@ CREATE POLICY rls_conceptos_tenant ON conceptos
     FOR ALL
     USING (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     )
     WITH CHECK (
         tenant_id = get_current_tenant_id()
-        AND (
-            get_current_proyecto_id() IS NULL
-            OR proyecto_id = get_current_proyecto_id()
-        )
+        AND proyecto_id = get_current_proyecto_id()
     );
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -122,7 +100,7 @@ CREATE POLICY rls_conceptos_tenant ON conceptos
 -- ═══════════════════════════════════════════════════════════════════════════
 
 COMMENT ON POLICY rls_insumos_context ON insumos IS
-    'Aislamiento Multi-Tenant + Multi-Proyecto, con fallback de consolidación para roles sin proyecto activo. Módulo: Gerencia Técnica.';
+    'Aislamiento Multi-Tenant + Multi-Proyecto estricto. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_presupuestos_tenant ON presupuestos_base IS
     'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Gerencia Técnica.';
 COMMENT ON POLICY rls_conceptos_tenant ON conceptos IS

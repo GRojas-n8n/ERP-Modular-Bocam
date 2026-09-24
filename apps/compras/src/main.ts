@@ -6,7 +6,7 @@ import path from 'path';
 import { createTenantContext } from './db';
 import type { PrismaClient } from './generated/prisma';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import {
   buildEventContext,
@@ -251,6 +251,13 @@ app.use(createAuthMiddleware({
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'compras' }));
 app.use(requireProjectAccess());
+const requireComprasProject = requireActiveProject();
+app.use('/api/v1/compras', (req: Request, res: Response, next: NextFunction) => {
+  const path = req.originalUrl.split('?')[0].replace('/api/v1/compras', '');
+  const isTenantCatalog = path.startsWith('/proveedores') || path.startsWith('/catalog/insumos');
+  if (isTenantCatalog) return next();
+  return requireComprasProject(req, res, next);
+});
 
 app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {

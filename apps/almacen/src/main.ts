@@ -14,7 +14,7 @@
 
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
 import {
@@ -38,6 +38,13 @@ const JWT_SECRET = requireEnv('JWT_SECRET');
 app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'almacen' }));
 app.use(requireProjectAccess());
+app.use([
+  '/api/v1/almacen/inventario',
+  '/api/v1/almacen/stock',
+  '/api/v1/almacen/movimientos',
+  '/api/v1/almacen/salidas-obra',
+  '/api/v1/almacen/dashboard',
+], requireActiveProject());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // INVENTARIO

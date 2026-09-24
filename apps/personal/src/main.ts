@@ -9,7 +9,7 @@ import {
   TIPOS_DOCUMENTO_EMPLEADO, MAX_FILE_SIZE_EXPEDIENTE, EXTENSIONES_PERMITIDAS_EXPEDIENTE,
   DIAS_VENCIMIENTO_DEFAULT, ASISTENCIA_COOLDOWN_MINUTOS,
 } from './types';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import { createEventBus } from '../../../packages/event-bus/src';
@@ -50,6 +50,18 @@ app.use(createAuthMiddleware({
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'personal' }));
 app.use(requireProjectAccess());
+app.use([
+  '/api/v1/personal/cuadrillas',
+  '/api/v1/personal/asignaciones',
+  '/api/v1/personal/config-nomina',
+  '/api/v1/personal/prenominas',
+  '/api/v1/personal/asistencia',
+  '/api/v1/personal/config-asistencia',
+  '/api/v1/personal/mis-empleados',
+  '/api/v1/personal/complementos',
+  '/api/v1/personal/dashboard',
+  '/api/v1/personal/resumen-dashboard',
+], requireActiveProject());
 
 // ── Expediente digital: almacenamiento en volumen propio (mismo patrón que Calidad) ──
 const UPLOAD_DIR = process.env.PERSONAL_UPLOAD_DIR || '/tmp/personal-uploads';

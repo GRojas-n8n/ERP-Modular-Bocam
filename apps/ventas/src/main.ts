@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createEventBus } from '../../../packages/event-bus/src';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import {
   buildEventContext,
@@ -31,6 +31,7 @@ app.use(
 );
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'ventas' }));
 app.use(requireProjectAccess());
+app.use(requireActiveProject());
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'ventas', timestamp: new Date().toISOString() });
