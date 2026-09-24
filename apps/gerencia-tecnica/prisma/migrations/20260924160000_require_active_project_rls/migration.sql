@@ -1,6 +1,8 @@
 -- Gerencia Técnica es una interfaz operativa por centro de costos.
 -- La ausencia de proyecto deja de ampliar las lecturas a todo el tenant.
 
+SET search_path TO gerencia_tecnica, public;
+
 DROP POLICY IF EXISTS rls_insumos_context ON insumos;
 CREATE POLICY rls_insumos_context ON insumos
     FOR ALL

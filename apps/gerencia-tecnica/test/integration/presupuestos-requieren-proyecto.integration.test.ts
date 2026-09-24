@@ -51,9 +51,9 @@ async function cleanup(tenantId: string) {
   await prisma.presupuestoBase.deleteMany({ where: { tenant_id: tenantId } });
 }
 
-function token(tenantId: string, proyectoId: string, projects: string[]) {
+function token(tenantId: string, proyectoId: string, projects: string[], userId = randomUUID()) {
   return signTenantToken({
-    userId: randomUUID(),
+    userId,
     tenantId,
     proyectoId,
     projects,
@@ -76,7 +76,8 @@ async function testProyectoVacioEsRechazadoAntesDeConsultar() {
     await seedPresupuesto(tenantId, proyectoA, 1);
     await seedPresupuesto(tenantId, proyectoB, 2);
 
-    const response = await getPresupuestos(token(tenantId, '', []));
+    const cuentaSinProyectos = randomUUID();
+    const response = await getPresupuestos(token(tenantId, '', [], cuentaSinProyectos));
     assert.equal(response.status, 403, 'admin sin proyecto debe recibir 403, no un listado global');
 
     const body = await response.json() as any;
@@ -86,21 +87,33 @@ async function testProyectoVacioEsRechazadoAntesDeConsultar() {
   }
 }
 
-async function testProyectoValidoSoloDevuelveSuPresupuesto() {
+async function testCuentaConDosProyectosPuedeAlternarSinMezclarDatos() {
   const tenantId = randomUUID();
   const proyectoA = randomUUID();
   const proyectoB = randomUUID();
 
   try {
     const presupuestoA = await seedPresupuesto(tenantId, proyectoA, 1);
-    await seedPresupuesto(tenantId, proyectoB, 2);
+    const presupuestoB = await seedPresupuesto(tenantId, proyectoB, 2);
+    const cuentaDosProyectos = randomUUID();
 
-    const response = await getPresupuestos(token(tenantId, proyectoA, [proyectoA, proyectoB]));
-    assert.equal(response.status, 200);
+    const responseA = await getPresupuestos(token(
+      tenantId, proyectoA, [proyectoA, proyectoB], cuentaDosProyectos
+    ));
+    assert.equal(responseA.status, 200);
 
-    const body = await response.json() as any;
-    assert.deepEqual(body.data.map((p: any) => p.id), [presupuestoA.id]);
-    assert.ok(body.data.every((p: any) => p.proyecto_id === proyectoA));
+    const bodyA = await responseA.json() as any;
+    assert.deepEqual(bodyA.data.map((p: any) => p.id), [presupuestoA.id]);
+    assert.ok(bodyA.data.every((p: any) => p.proyecto_id === proyectoA));
+
+    const responseB = await getPresupuestos(token(
+      tenantId, proyectoB, [proyectoA, proyectoB], cuentaDosProyectos
+    ));
+    assert.equal(responseB.status, 200);
+
+    const bodyB = await responseB.json() as any;
+    assert.deepEqual(bodyB.data.map((p: any) => p.id), [presupuestoB.id]);
+    assert.ok(bodyB.data.every((p: any) => p.proyecto_id === proyectoB));
   } finally {
     await cleanup(tenantId);
   }
@@ -109,9 +122,10 @@ async function testProyectoValidoSoloDevuelveSuPresupuesto() {
 async function main() {
   await setup();
   try {
-    await testProyectoValidoSoloDevuelveSuPresupuesto();
-    console.log('ok - proyecto válido solo devuelve su presupuesto');
+    await testCuentaConDosProyectosPuedeAlternarSinMezclarDatos();
+    console.log('ok - cuenta con dos proyectos alterna A/B sin mezclar presupuestos');
     await testProyectoVacioEsRechazadoAntesDeConsultar();
+    console.log('ok - cuenta sin proyectos recibe 403 sin datos');
   } finally {
     await teardown();
   }

@@ -36,10 +36,19 @@
 
 ## 4. Validación
 
-- [ ] 4.1 Ejecutar suites unitarias, integración, aislamiento RLS con rol sin `BYPASSRLS`, typecheck y build.
-- [ ] 4.2 Validar OpenSpec en modo estricto y revisar que no se alteren contratos globales intencionales.
-- [ ] 4.3 Ensayar con una cuenta sin proyectos y otra con dos proyectos en un entorno no productivo.
+- [x] 4.1 Ejecutar suites unitarias, integración, aislamiento RLS con rol sin `BYPASSRLS`, typecheck y build.
+- [x] 4.2 Validar OpenSpec en modo estricto y revisar que no se alteren contratos globales intencionales.
+- [x] 4.3 Ensayar con una cuenta sin proyectos y otra con dos proyectos en un entorno no productivo.
 - [ ] 4.4 Desplegar por el flujo normal, verificar logs y repetir smoke autenticado de solo lectura en producción.
+
+### Evidencia de validación previa al despliegue
+
+- PostgreSQL local confirmó `local_app` con `rolsuper=false` y `rolbypassrls=false`.
+- Se aplicó la migración únicamente en `bocam_erp` local y se verificaron políticas estrictas para `insumos`, `presupuestos_base` y `conceptos`.
+- Gerencia Técnica: 6/6 escenarios RLS pasan; una cuenta sin proyecto recibe `403` y una cuenta con proyectos A/B alterna sin mezclar presupuestos.
+- Compras y Control de Proyectos: los intentos IDOR entre proyectos del mismo tenant responden `404` bajo RLS real.
+- Finanzas y Contabilidad conservan sus modos globales autorizados, trazables por `proyecto_id`, sin cruzar tenants.
+- Auth Middleware: 13/13 pruebas pasan. App Shell: 340/340 pruebas pasan. Los diez componentes afectados compilan y OpenSpec estricto es válido.
 
 ## 5. Cierre
 
