@@ -1,7 +1,7 @@
 ## 1. Prerrequisitos (Titular)
 
 - [x] 1.1 **Titular:** entregar la **lista exacta de proyectos a eliminar** (código de Centro de Costos y nombre de cada uno) y confirmar el tenant. Se anexa al PR; ningún proyecto fuera de esa lista se toca.
-- [ ] 1.2 **Titular:** confirmar que ninguno de esos proyectos tiene datos reales que deban conservarse (revisar el dry-run de la tarea 6.2).
+- [x] 1.2 **Titular:** confirmar que ninguno de esos proyectos tiene datos reales que deban conservarse (revisar el dry-run de la tarea 6.2). **Confirmado el 2026-09-24 tras revisar 1,926 filas objetivo.**
 - [x] 1.3 Crear rama `chore/purga-proyectos-demo-produccion` desde `main` actualizado.
 
 ## 2. Tests primero (rojo) — sobre PostgreSQL desechable
@@ -27,18 +27,21 @@
 
 ## 5. PR
 
-- [ ] 5.1 PR contra `main` con CI verde. El test de PostgreSQL desechable corre en CI solo si se cablea (opcional; si no, se adjunta la salida local al PR).
-- [ ] 5.2 Merge. **No ejecuta nada en producción**: solo publica la herramienta y el runbook.
+- [x] 5.1 PR contra `main` con CI verde. PR inicial #144 y corrección multidatabase #145; ambos con gates requeridos en verde.
+- [x] 5.2 Merge. La herramienta inicial y su corrección se publicaron en `main`; el merge no ejecutó la purga.
 
 ## 6. Ejecución en producción (Titular, con asistencia)
 
-- [ ] 6.1 **Titular:** tomar el respaldo completo en la VPS y verificarlo (`pg_restore --list`, SHA-256); copiarlo fuera de la VPS.
-- [ ] 6.2 **Titular:** ejecutar el **dry-run** en producción con la lista de 1.1 y compartir el resumen (filas por esquema); confirmar que son proyectos de práctica.
-- [ ] 6.3 **Titular:** ensayo — restaurar el respaldo en un contenedor sin red y ejecutar la purga real allí; compartir el resumen y confirmar que la aplicación abre contra la copia.
-- [ ] 6.4 **Titular:** ejecución real en producción con `--ejecutar --confirmar <códigos> --respaldo <ruta>`; guardar la bitácora generada.
-- [ ] 6.5 Verificación posterior: los proyectos ya no aparecen en el selector ni en Administración; los demás proyectos y sus dashboards responden igual; sin errores nuevos en los registros de los servicios.
+- [x] 6.1 **Titular:** respaldo completo de las 12 bases y roles globales, validado con `pg_restore --list` y SHA-256, y copiado fuera de la VPS. Identificador: `pre-purga-20260924-195212`.
+- [x] 6.2 **Titular:** dry-run ejecutado en producción con la lista confirmada: 1,926 filas y 15 referencias potenciales a archivos; sin cambios.
+- [x] 6.3 **Titular:** ensayo completado sobre la restauración de las 12 bases en un contenedor sin red; purga y verificaciones en verde.
+- [x] 6.4 **Titular:** ejecución real completada el 2026-09-24 20:05 UTC; bitácora y manifiesto copiados fuera de la VPS.
+- [ ] 6.5 Verificación posterior completa.
+  - [x] Base de datos: cero proyectos objetivo y cero filas con sus identificadores en las 12 bases.
+  - [x] Operación: todos los contenedores saludables, cero reinicios, HTTPS 200 y sin errores críticos recientes.
+  - [ ] Sesión autenticada: confirmar selector de proyectos, Administración y dashboards de proyectos conservados.
 - [ ] 6.6 **Titular:** revisar el manifiesto de archivos y decidir si borra los archivos huérfanos de los volúmenes.
-- [ ] 6.7 Conservar el respaldo previo hasta que el titular confirme la normalidad (mínimo 30 días).
+- [ ] 6.7 Conservar el respaldo previo hasta que el titular confirme la normalidad, como mínimo hasta 2026-10-24.
 
 ## 7. Cierre
 
@@ -53,4 +56,14 @@
 - [x] 8.4 Exigir dump verificado por base, globals, copia externa confirmada y mantenimiento confirmado.
 - [x] 8.5 Añadir pruebas multidatabase con proyecto objetivo, otro proyecto del tenant y otro tenant.
 - [x] 8.6 Actualizar el runbook con respaldo y ensayo del clúster completo.
-- [ ] 8.7 Publicar la corrección, ejecutar dry-run y ensayo aislado en producción.
+- [x] 8.7 Publicar la corrección, ejecutar dry-run y ensayo aislado en producción. PR #145, merge `a7697f2`; ejecución validada el 2026-09-24.
+
+## 9. Evidencia de ejecución
+
+- Ventana de mantenimiento iniciada con escrituras de aplicación detenidas.
+- Respaldo: 12 dumps en formato custom + roles globales + manifiesto SHA-256; copia externa verificada byte a byte.
+- Dry-run: 1,926 filas distribuidas entre autenticación, compras, control de proyectos, finanzas, gerencia técnica y personal.
+- Ensayo: restauración completa y purga real en contenedor `--network none`.
+- Producción: transacción verificable por base, `bocam_auth` al final; resultado exitoso en las 12 bases.
+- Postcondición: cero registros objetivo; servicios saludables y `https://iretum.com/` con HTTP 200.
+- Pendientes: validación autenticada, decisión sobre 15 archivos potencialmente huérfanos y retención del respaldo hasta 2026-10-24.
