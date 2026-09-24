@@ -1,7 +1,7 @@
 # centro-costos-alta Specification
 
 ## Purpose
-TBD - created by archiving change centro-costos-alta-formal. Update Purpose after archive.
+Define el alta y edición de Centros de Costos (proyectos), incluyendo su código estructurado, asignación segura de consecutivos, excepciones para centros especiales, roles autorizados, línea base contractual y relación con clientes.
 ## Requirements
 ### Requirement: El código de Centro de Costos SHALL ensamblarse a partir de 4 componentes estructurados
 El sistema SHALL construir `codigo_centro_costos` concatenando, en orden, `empresa_grupo` (3 letras), `anio_centro_costos` (4 dígitos), el `codigo_cliente` del cliente seleccionado (3 dígitos) y `consecutivo_centro_costos` (3 dígitos), para un total de exactamente 13 caracteres. El usuario NO SHALL capturar este código como texto libre en el caso normal — se ensambla y se muestra de solo lectura.

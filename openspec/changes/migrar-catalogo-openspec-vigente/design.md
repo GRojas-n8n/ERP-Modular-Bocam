@@ -1,9 +1,10 @@
 ## Context
 
-Baseline estricto del 2026-09-24: 155 specs canónicas, 28 válidas y 127
-inválidas; 22 changes activos, 21 válidos y uno inválido. Las fallas se agrupan
-en 96 specs sin secciones canónicas, 31 propósitos placeholder y un delta que
-omite escenarios.
+Baseline estricto inicial del 2026-09-24: 155 specs canónicas, 28 válidas y 127
+inválidas; 22 changes activos, 21 válidos y uno inválido. Tras la primera
+corrección: 29 specs válidas, 126 inválidas y los 22 changes válidos. La deuda
+restante se agrupa en 96 specs sin secciones canónicas y 30 propósitos
+placeholder.
 
 ## Decisions
 

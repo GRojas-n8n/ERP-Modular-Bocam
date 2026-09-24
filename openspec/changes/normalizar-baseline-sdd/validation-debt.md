@@ -6,7 +6,7 @@ Comando de línea base:
 openspec validate --all --strict --json
 ```
 
-## Resultado
+## Línea base inicial
 
 | Tipo | Total | Válidos | Inválidos |
 |---|---:|---:|---:|
@@ -14,17 +14,28 @@ openspec validate --all --strict --json
 | Specs canónicas | 155 | 28 | 127 |
 | Total | 177 | 49 | 128 |
 
+## Estado después de la primera corrección
+
+| Tipo | Total | Válidos | Inválidos |
+|---|---:|---:|---:|
+| Changes activos | 22 | 22 | 0 |
+| Specs canónicas | 155 | 29 | 126 |
+| Total | 177 | 51 | 126 |
+
+Se corrigió el delta de Centro de Costos conservando los dos escenarios
+canónicos omitidos y se reemplazó el propósito placeholder de
+`centro-costos-alta`.
+
 ## Clasificación
 
 | Categoría | Elementos | Tratamiento |
 |---|---:|---|
 | Spec sin `Purpose`/`Requirements` canónicos | 96 | migración estructural conservando literalmente requisitos y escenarios |
-| Spec con `Purpose` placeholder | 31 | redactar propósito desde requisitos existentes y someterlo a revisión humana |
-| Delta que omite escenarios existentes | 1 | incorporar los escenarios omitidos antes de archivar; no sobrescribir la spec canónica |
+| Spec con `Purpose` placeholder | 30 pendientes (31 iniciales) | redactar propósito desde requisitos existentes y someterlo a revisión humana |
+| Delta que omite escenarios existentes | 0 pendientes (1 inicial) | corrección completada sin eliminar escenarios |
 
-El único change activo inválido es
-`centro-costos-confirmar-y-editar-consecutivo`: sus dos bloques `MODIFIED`
-omiten escenarios que siguen presentes en `centro-costos-alta`.
+Todos los changes activos validan en modo estricto. La deuda restante está
+concentrada en specs canónicas históricas.
 
 ## Reglas de migración
 

@@ -3,6 +3,10 @@
 ### Requirement: El código de Centro de Costos SHALL ensamblarse a partir de 4 componentes estructurados
 El sistema SHALL construir `codigo_centro_costos` concatenando, en orden, `empresa_grupo` (3 letras), `anio_centro_costos` (4 dígitos), el `codigo_cliente` del cliente seleccionado (3 dígitos) y `consecutivo_centro_costos` (3 dígitos), para un total de exactamente 13 caracteres. El usuario NO SHALL capturar el código completo como texto libre en el caso normal: `empresa_grupo`, `anio_centro_costos` y el cliente SHALL provenir de sus campos del formulario, y el usuario SHALL poder aceptar o modificar únicamente el consecutivo (3 dígitos, entero de 1 a 999) antes de guardar. El sistema SHALL mostrar el código completo, con su consecutivo, y exigir una confirmación explícita antes de crear el registro.
 
+#### Scenario: Alta de un centro de costos normal
+- **WHEN** un usuario con rol autorizado selecciona empresa `HCO`, año `2018`, cliente con `codigo_cliente = "004"` (SERSSINSA), y no marca la casilla de especial
+- **THEN** el sistema calcula el consecutivo (siguiente disponible para ese año+cliente), ensambla el código `HCO2018004{consecutivo}` y lo muestra de solo lectura antes de guardar
+
 #### Scenario: Alta de un centro de costos normal con código completo visible
 - **WHEN** un usuario con rol autorizado selecciona empresa `HCO`, año `2018`, cliente con `codigo_cliente = "004"` (SERSSINSA), y no marca la casilla de especial
 - **THEN** el sistema consulta el siguiente consecutivo disponible para ese año y cliente, muestra el código completo `HCO2018004{consecutivo}` con el consecutivo prellenado y editable, y no lo guarda hasta que el usuario confirme
@@ -52,6 +56,10 @@ El sistema SHALL calcular el consecutivo sugerido como el máximo `consecutivo_c
 
 #### Scenario: Colisión por creación concurrente sin consecutivo explícito
 - **WHEN** dos solicitudes de creación sin `consecutivo_centro_costos` calculan el mismo consecutivo casi simultáneamente para el mismo `(anio, cliente_id)`
+- **THEN** la segunda solicitud detecta el conflicto de unicidad, recalcula el consecutivo y persiste con el siguiente valor disponible, sin crear un duplicado
+
+#### Scenario: Colisión por creación concurrente
+- **WHEN** dos solicitudes de creación calculan el mismo consecutivo casi simultáneamente para el mismo `(anio, cliente_id)`
 - **THEN** la segunda solicitud detecta el conflicto de unicidad, recalcula el consecutivo y persiste con el siguiente valor disponible, sin crear un duplicado
 
 #### Scenario: Consecutivo explícito ya ocupado

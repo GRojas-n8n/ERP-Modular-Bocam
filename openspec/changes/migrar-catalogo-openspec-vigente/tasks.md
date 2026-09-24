@@ -6,7 +6,7 @@
 
 ## 2. Corrección bloqueante
 
-- [ ] 2.1 Corregir el delta de `centro-costos-confirmar-y-editar-consecutivo` conservando todos los escenarios canónicos.
+- [x] 2.1 Corregir el delta de `centro-costos-confirmar-y-editar-consecutivo` conservando todos los escenarios canónicos y reemplazar el propósito placeholder de la spec canónica.
 - [ ] 2.2 Validar el change y completar su QA antes de archivarlo.
 
 ## 3. Migración estructural
