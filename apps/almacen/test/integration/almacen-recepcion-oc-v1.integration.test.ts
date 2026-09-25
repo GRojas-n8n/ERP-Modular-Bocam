@@ -246,6 +246,41 @@ async function testFormatoAntiguoVersionYContextoNoSoportadosSonNoReintentables(
   } finally { await cleanupTenant(tenantId); }
 }
 
+async function testInventarioInexistenteSeCreaSoloConElSnapshotDelEvento() {
+  const tenantId = randomUUID(); const proyectoId = randomUUID(); const insumo = randomUUID();
+  try {
+    assert.equal(await prisma.itemInventario.count({ where: { tenant_id: tenantId } }), 0, 'el inventario no existe de antemano');
+    await handleRecepcionOcRegistrada(buildEvent({ tenantId, proyectoId, items: [
+      { insumoId: insumo, cantidad: 14, clave: 'SNAP-CLAVE', descripcion: 'Descripción del snapshot' },
+    ] }));
+    const item = await prisma.itemInventario.findFirst({ where: { tenant_id: tenantId, insumo_id: insumo } });
+    assert.ok(item, 'el ItemInventario se crea a partir del evento, sin consultar a nadie');
+    assert.deepEqual([item!.clave, item!.descripcion, item!.unidad, item!.categoria], ['SNAP-CLAVE', 'Descripción del snapshot', 'PZA', 'MATERIAL']);
+    assert.equal(Number(item!.stock_actual), 14);
+    console.log('[OK] testInventarioInexistenteSeCreaSoloConElSnapshotDelEvento');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testSnapshotIncompletoSeRechazaAunqueElInventarioExista() {
+  const tenantId = randomUUID(); const proyectoId = randomUUID(); const insumo = randomUUID();
+  try {
+    // El inventario ya existe: un evento sin snapshot NO debe procesarse "porque total ya existe el ítem".
+    await handleRecepcionOcRegistrada(buildEvent({ tenantId, proyectoId, items: [{ insumoId: insumo, cantidad: 5 }] }));
+    for (const campo of ['clave', 'descripcion', 'unidad', 'categoria']) {
+      const evento = buildEvent({ tenantId, proyectoId, items: [{ insumoId: insumo, cantidad: 7 }] });
+      delete ((evento.payload as any).items[0] as any)[campo];
+      let error: any;
+      await handleRecepcionOcRegistrada(evento).catch((e) => { error = e; });
+      assert.ok(error, `sin ${campo} el evento es inválido aunque el inventario exista`);
+      assert.equal(error.nonRetryable, true, `sin ${campo}: no reintentable`);
+      assert.match(String(error.message), /SNAPSHOT_INCOMPLETO/);
+    }
+    assert.equal(await stockDe(tenantId, proyectoId, insumo), 5, 'ningún evento incompleto cambia el stock');
+    assert.equal((await ingresos(tenantId)).length, 1);
+    console.log('[OK] testSnapshotIncompletoSeRechazaAunqueElInventarioExista');
+  } finally { await cleanupTenant(tenantId); }
+}
+
 async function testEventosConcurrentesDelMismoInsumoNoDuplicanElItem() {
   const tenantId = randomUUID(); const proyectoId = randomUUID(); const insumo = randomUUID();
   try {
@@ -283,6 +318,8 @@ async function main() {
     ['item sin insumo no es error ni movimiento', testItemSinInsumoNoEsErrorNiMovimiento],
     ['fallo en un item revierte el evento', testFalloEnUnItemRevierteElEventoCompleto],
     ['formato/version/contexto no soportados son no reintentables', testFormatoAntiguoVersionYContextoNoSoportadosSonNoReintentables],
+    ['inventario inexistente se crea solo con el snapshot del evento', testInventarioInexistenteSeCreaSoloConElSnapshotDelEvento],
+    ['snapshot incompleto se rechaza aunque el inventario exista', testSnapshotIncompletoSeRechazaAunqueElInventarioExista],
     ['eventos concurrentes no duplican el item', testEventosConcurrentesDelMismoInsumoNoDuplicanElItem],
     ['/health vida y /ready dependencias', testHealthEsPruebaDeVidaYReadyInformaDependencias],
   ];

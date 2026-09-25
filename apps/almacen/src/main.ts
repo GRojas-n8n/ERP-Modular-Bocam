@@ -919,6 +919,16 @@ function validarRecepcionOc(event: BocamEvent): RecepcionOcPayload {
     if (typeof item.cantidad_recibida !== 'number' || !Number.isFinite(item.cantidad_recibida) || item.cantidad_recibida <= 0) {
       throw new NonRetryableError('FORMATO_NO_SOPORTADO: cantidad_recibida debe ser un número mayor a 0.');
     }
+    // Contrato v1: todo ítem inventariable (con insumo_id) viaja con su snapshot completo. Se exige SIEMPRE,
+    // exista o no ya el ítem en el inventario: el resultado no debe depender del estado de Almacén. Un evento
+    // así solo puede venir de un publicador defectuoso; el publicador (Compras) nunca lo emite como procesable.
+    if (item.insumo_id) {
+      const faltantes = (['clave', 'descripcion', 'unidad', 'categoria'] as const)
+        .filter((campo) => typeof item[campo] !== 'string' || !String(item[campo]).trim());
+      if (faltantes.length > 0) {
+        throw new NonRetryableError(`SNAPSHOT_INCOMPLETO: el ítem ${item.recepcion_item_id} (insumo ${item.insumo_id}) no trae ${faltantes.join(', ')}.`);
+      }
+    }
   }
   return p as RecepcionOcPayload;
 }
