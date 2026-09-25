@@ -1,53 +1,50 @@
-## 1. Confirmación previa (solo lectura)
+## 1. Evidencia previa (solo lectura)
 
-- [ ] 1.1 **Titular:** con la llave autorizada y comandos limitados a lectura, contar en los logs de Almacén los `almacen.event.oc_recibida.skip_no_items` y `almacen.event.oc_recibida.applied` desde el último despliegue, para confirmar por evidencia el hallazgo del análisis estático.
-- [ ] 1.2 **Titular:** cuantificar en modo solo lectura las recepciones de OC sin INGRESO correspondiente (recepciones, ítems y cantidades). No se modifica ningún dato.
-- [ ] 1.3 Resolver las preguntas abiertas 1 a 5 de `design.md` y actualizar el diseño.
+- [x] 1.1 Logs de Almacén y Compras: cobertura de ~4 h sin recepciones; todos los contadores en 0. Ver `evidence-2026-09-25.md`.
+- [x] 1.2 Cuantificación: producción sin datos vivos; a lo sumo 2 recepciones (3 renglones) desde 2026-07-21, ya purgadas; Almacén sin movimientos. Ver el informe.
+- [x] 1.3 Preguntas abiertas resueltas por el titular: ítems sin insumo no inventariables, snapshot autosuficiente publicado por Compras, colas `.v2` solo para las suscripciones nuevas, outbox incluido en este change, y conciliación bloqueada sin autorización.
+- [ ] 1.4 **Titular (opcional):** autorizar el dry-run del respaldo `pre-purga-20260924-195212` en un contenedor sin red para identificar esas dos recepciones (sección 9 del informe).
 
-## 2. Tests primero (rojo)
+## 2. Bus de eventos (`packages/event-bus`) — PR 1
 
-- [ ] 2.1 Contrato: un test que toma el payload real que publica hoy Compras y verifica que Almacén registra los INGRESOS. Debe fallar contra el código actual.
-- [ ] 2.2 Almacén: un fallo en un ítem no confirma el mensaje y no deja INGRESOS parciales del evento.
-- [ ] 2.3 Almacén: dos recepciones parciales del mismo insumo en la misma OC suman el stock.
-- [ ] 2.4 Almacén: un redelivery de la misma recepción no duplica stock.
-- [ ] 2.5 Almacén: ítems con `insumo_id` nulo no generan error ni reintento.
-- [ ] 2.6 Bus: reintento con éxito en el segundo intento, envío a `<cola>.dlq` al agotar intentos, mensaje ininterpretable directo a la DLQ, y suscripción sin opciones con comportamiento idéntico al actual.
-- [ ] 2.7 Compras: cada recepción publica el evento correcto (total o parcial) con los ítems de esa recepción; un bus caído no revierte la recepción y deja un log de error.
-- [ ] 2.8 Almacén: `/health` responde `200` con el bus caído y `/ready` responde `503` con el detalle.
-- [ ] 2.9 Confirmar que todos fallan por la razón esperada y guardar la evidencia.
+- [ ] 2.1 Tests en rojo: publicación confirmada (confirma, devuelve por no tener cola, sin canal, timeout); `event_id` asignado; reintento con éxito, DLQ al agotar intentos, mensaje ininterpretable a la DLQ; y suscripción sin opciones idéntica a la actual.
+- [ ] 2.2 Confirmar que fallan por la razón esperada y guardar la evidencia.
+- [ ] 2.3 Implementar `publishConfirmed`, `event_id`/`event_version`, `retry` y `deadLetter`.
+- [ ] 2.4 Probar contra RabbitMQ real que las suscripciones existentes no cambian.
+- [ ] 2.5 Documentar el procedimiento de reproceso de una DLQ.
 
-## 3. Bus de eventos
+## 3. Almacén (consumidor) — PR 2
 
-- [ ] 3.1 Añadir `retry` y `deadLetter` opcionales a `SubscriptionOptions` con la cola de espera, el contador de intentos, la DLQ y el log de envío.
-- [ ] 3.2 Probar contra RabbitMQ real que las suscripciones existentes no cambian.
-- [ ] 3.3 Documentar el procedimiento de reproceso de una DLQ.
+- [ ] 3.1 Tests en rojo: contrato con el payload de `compras.recepcion_oc_registrada.v1`; fallo de un ítem revierte y propaga sin ack; dos recepciones parciales suman; redelivery por `event_id`; misma recepción con otro `event_id`; ítem sin `insumo_id`; formato antiguo y versión no soportada a la DLQ; `/health` con el bus caído y `/ready` con `503`.
+- [ ] 3.2 Migración: `recepcion_id` y `recepcion_item_id` en `movimientos_almacen`, índice único parcial y tabla `eventos_procesados`; RLS y cobertura estática.
+- [ ] 3.3 Reescribir el handler: una transacción por evento, propagación de errores, doble idempotencia y tratamiento de ítems sin insumo.
+- [ ] 3.4 Suscripción con cola `.v2`, reintentos y DLQ; añadir `/ready`.
+- [ ] 3.5 Hacer pasar los tests y la suite de Almacén.
 
-## 4. Compras (publicador)
+## 4. Compras (publicador y outbox) — PR 3
 
-- [ ] 4.1 Publicar `compras.oc_recibida_parcial` y `compras.oc_recibida_total` con el contrato definido, según la decisión de las preguntas 1 y 2.
-- [ ] 4.2 Registrar el fallo de publicación y añadir el endpoint de reemisión restringido a `admin` y `procurement`.
+- [ ] 4.1 Tests en rojo: recepción y fila del outbox en la misma transacción; falla del outbox revierte la recepción; bus caído deja `PENDIENTE`; publicación tras falla transitoria; máximo de intentos a `ERROR`; dos instancias no duplican; marcado solo tras confirmación; mensaje devuelto no se marca; recuperación tras reinicio; caída entre confirmación y marcado republica con el mismo `event_id`; aislamiento por tenant y proyecto; reemisión restringida.
+- [ ] 4.2 Migración: tabla `outbox_eventos` con RLS (política única con la variable de sesión interna del despachador) y cobertura estática.
+- [ ] 4.3 Escribir la fila del outbox dentro de la transacción de la recepción, con el contrato v1.
+- [ ] 4.4 Despachador: `FOR UPDATE SKIP LOCKED`, snapshot congelado desde Gerencia Técnica con reintentos, publicación confirmada, espera exponencial y estado `ERROR`.
+- [ ] 4.5 Endpoint de reemisión (`admin`, `procurement`) y registros de error.
+- [ ] 4.6 Hacer pasar los tests y la suite de Compras.
 
-## 5. Almacén (consumidor)
+## 5. Conciliación de datos históricos
 
-- [ ] 5.1 Migración: columna `recepcion_id` en `movimientos_almacen` e índice único parcial de idempotencia; actualizar `rls-policies.sql` si aplica.
-- [ ] 5.2 Reescribir `handleOcRecibida`: transacción por evento, propagación de errores, idempotencia por recepción e ítem y tratamiento de ítems sin insumo.
-- [ ] 5.3 Suscribir con las colas nuevas y las opciones `retry` y `deadLetter`.
-- [ ] 5.4 Añadir `/ready` y conservar `/health` como prueba de vida.
-- [ ] 5.5 Hacer pasar los tests de la sección 2 y ejecutar la suite de Almacén, Compras y del bus.
+- [x] 5.1 Cuantificada: sin datos vivos afectados.
+- [ ] 5.2 Reporte de conciliación de solo lectura (recepciones de Compras frente a ingresos de Almacén por `recepcion_item_id`) como herramienta, sin ejecutar en producción.
+- [ ] 5.3 **Titular:** cualquier ejecución productiva de conciliación o reemisión histórica requiere autorización expresa adicional, con alcance exacto y ensayo previo.
 
-## 6. Conciliación de datos históricos
+## 6. Despliegue y verificación (bloqueado hasta autorización expresa)
 
-- [ ] 6.1 Con los resultados de 1.2, presentar al titular el alcance exacto de la conciliación y el procedimiento propuesto.
-- [ ] 6.2 **Titular:** autorizar por escrito. Sin esa autorización no se modifica ningún dato.
-- [ ] 6.3 Ensayar en una copia, con dry-run y verificación posterior, y ejecutar solo el alcance autorizado.
+- [ ] 6.1 PR por servicio con CI verde. **No fusionar** hasta que el titular autorice el despliegue: fusionar a `main` despliega y aplica migraciones.
+- [ ] 6.2 Orden: bus, Almacén y Compras. El consumidor debe existir antes de que el publicador emita.
+- [ ] 6.3 Verificación en producción por lectura de logs, profundidad de la DLQ y `/ready`, sin crear datos de prueba.
+- [ ] 6.4 Decidir aparte el retiro de las colas `almacen.compras_oc_recibida_*` actuales, con evidencia de que no reciben tráfico.
 
-## 7. Despliegue y verificación
+## 7. Cierre
 
-- [ ] 7.1 PR por servicio (bus, Almacén, Compras) con CI verde y validación estricta de OpenSpec.
-- [ ] 7.2 Desplegar en orden: Almacén, Compras y, por último, el retiro de las colas antiguas.
-- [ ] 7.3 Verificar en producción con lectura de logs, la profundidad de la DLQ y `/ready`, sin crear datos de prueba.
-- [ ] 7.4 Registrar un hallazgo separado sobre los demás consumidores del bus que descartan mensajes al fallar.
-
-## 8. Cierre
-
-- [ ] 8.1 Sincronizar la spec canónica `almacen-eventos-oc` (aún en formato anterior a la migración) con los deltas, y archivar el change.
+- [ ] 7.1 Verificar las garantías del outbox: atomicidad, reintento, marcado solo tras confirmación del broker y recuperación tras reinicios. Sin ellas el change no se considera completo.
+- [ ] 7.2 Sincronizar la spec canónica `almacen-eventos-oc` (aún en formato anterior a la migración) con los deltas y archivar el change.
+- [ ] 7.3 Los demás consumidores del bus se tratan en `auditar-consumidores-eventbus-sin-perdida-silenciosa`.
