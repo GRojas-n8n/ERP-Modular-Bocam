@@ -62,3 +62,22 @@ La tabla del outbox SHALL llevar `tenant_id` y `proyecto_id` y estar protegida p
 #### Scenario: Reemisión manual
 - **WHEN** un usuario `admin` o `procurement` solicita reemitir una recepción de su tenant
 - **THEN** la fila vuelve a `PENDIENTE` y se publica con el mismo `event_id`; un usuario de otro tenant recibe `404`
+
+### Requirement: El despachador SHALL estar apagado por defecto y encenderse solo con el valor explícito
+El despachador del outbox SHALL iniciarse únicamente cuando `COMPRAS_OUTBOX_DISPATCHER` valga exactamente `on`. Con el valor ausente, vacío, `off` o inválido SHALL permanecer apagado, el arranque SHALL registrar `dispatcher disabled` con el motivo, y el outbox SHALL seguir guardando los eventos en la transacción de la recepción sin publicarlos ni marcarlos como publicados. `GET /ready` SHALL distinguir el estado `disabled` (apagado intencional, no es un fallo) del estado `error` (encendido con la última tanda fallida).
+
+#### Scenario: Variable ausente, vacía o inválida
+- **WHEN** Compras arranca con `COMPRAS_OUTBOX_DISPATCHER` ausente, vacía o con un valor distinto de `on` (por ejemplo `ON`, `true`, `1`)
+- **THEN** no se crea el despachador, el log contiene `dispatcher disabled`, ninguna fila pasa a `PUBLICADO` y no se publica ningún mensaje
+
+#### Scenario: Apagado que sigue guardando
+- **WHEN** se registra una recepción con el despachador apagado
+- **THEN** el evento queda en `outbox_eventos` como `PENDIENTE`, sin intentos de publicación
+
+#### Scenario: Encendido explícito
+- **WHEN** `COMPRAS_OUTBOX_DISPATCHER` vale exactamente `on`
+- **THEN** el despachador publica con confirmación del broker, marca `PUBLICADO` solo tras la confirmación y `/ready` informa `ok`
+
+#### Scenario: Apagado intencional frente a fallo
+- **WHEN** el despachador está apagado por configuración
+- **THEN** `GET /ready` responde `200` con `outbox_dispatcher: disabled`, mientras que un despachador encendido con la última tanda fallida responde `503` con `outbox_dispatcher: error`

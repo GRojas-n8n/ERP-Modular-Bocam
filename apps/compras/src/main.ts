@@ -3,7 +3,7 @@ import axios from 'axios';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { createTenantContext } from './db';
+import basePrisma, { createTenantContext } from './db';
 import type { PrismaClient } from './generated/prisma';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
 import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
@@ -30,7 +30,7 @@ import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
 import { randomUUID } from 'node:crypto';
 import {
-  registrarEventoRecepcion, iniciarDespachadorOutbox, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
+  registrarEventoRecepcion, configurarDespachadorOutbox, estadoDespachadorOutbox, VARIABLE_DESPACHADOR, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
   SnapshotIncompletoError, SnapshotInsumo,
 } from './outbox';
 
@@ -252,7 +252,7 @@ async function calcularEstadoOC(orderId: string, prisma: any): Promise<string> {
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
-  excludePaths: ['/health'],
+  excludePaths: ['/health', '/ready'],
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'compras' }));
 app.use(requireProjectAccess());
@@ -4621,6 +4621,29 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'compras', timestamp: new Date().toISOString() });
 });
 
+// /ready informa si las dependencias responden. No se usa como healthcheck de reinicio.
+// `outbox_dispatcher: 'disabled'` es un estado intencional (COMPRAS_OUTBOX_DISPATCHER no es `on`) y NO vuelve el servicio
+// no listo; `error` (despachador encendido cuya última tanda falló) sí.
+app.get('/ready', async (_req: Request, res: Response) => {
+  const despachador = estadoDespachadorOutbox();
+  const checks: { database: 'ok' | 'error'; event_bus: 'ok' | 'error'; outbox_dispatcher: 'ok' | 'starting' | 'disabled' | 'error' } =
+    { database: 'ok', event_bus: 'ok', outbox_dispatcher: despachador.estado };
+  try {
+    await basePrisma.$queryRaw`SELECT 1`;
+  } catch {
+    checks.database = 'error';
+  }
+  if (!eventBus.isReady()) checks.event_bus = 'error';
+  const ready = checks.database === 'ok' && checks.event_bus === 'ok' && despachador.estado !== 'error';
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not_ready',
+    service: 'compras',
+    checks,
+    outbox_dispatcher: despachador,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.post('/api/v1/compras/ordenes-compra/:id/cancelar', requireRoles('admin', 'superintendent', 'procurement'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -5540,13 +5563,14 @@ export async function startServer() {
   await eventBus.subscribe('finanzas.oc_pagada_parcial', handleOcPagadaParcialEvent);
   await eventBus.subscribe('gerencia_tecnica.transferencia_partida_aprobada', handleTransferenciaPartidaAprobadaEvent);
   await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
-  // Despachador del outbox: publica con confirmación del broker y, al arrancar, retoma lo pendiente tras un reinicio.
-  if (process.env.COMPRAS_OUTBOX_DISPATCHER !== 'off') {
-    iniciarDespachadorOutbox(eventBus, {
-      intervaloMs: Number(process.env.COMPRAS_OUTBOX_INTERVALO_MS ?? 5000),
-      maxAttempts: Number(process.env.COMPRAS_OUTBOX_MAX_INTENTOS ?? 10),
-    });
-  }
+  // Despachador del outbox: APAGADO por defecto. Solo COMPRAS_OUTBOX_DISPATCHER=on (valor exacto) lo enciende; ausente,
+  // vacío, `off` o inválido registran `dispatcher disabled`. El outbox sigue guardando eventos, pero no se publican.
+  // Encendido, publica con confirmación del broker y, al arrancar, retoma lo pendiente tras un reinicio.
+  configurarDespachadorOutbox(eventBus, {
+    valor: process.env[VARIABLE_DESPACHADOR],
+    intervaloMs: Number(process.env.COMPRAS_OUTBOX_INTERVALO_MS ?? 5000),
+    maxAttempts: Number(process.env.COMPRAS_OUTBOX_MAX_INTENTOS ?? 10),
+  });
   console.log('[Compras] Eventos: finanzas.fondos_*, finanzas.oc_pagada_*, gerencia_tecnica.transferencia_partida_aprobada, auth.centro_costos_creado');
   });
 }

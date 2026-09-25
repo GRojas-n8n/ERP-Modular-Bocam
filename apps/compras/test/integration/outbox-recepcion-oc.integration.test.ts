@@ -580,6 +580,165 @@ async function testRlsAislaPorTenantYProyectoYElDespachadorVeTodo() {
   }
 }
 
+// ── Activación del despachador: apagado por defecto ──────────────────────────
+
+const VALORES_QUE_NO_ENCIENDEN: Array<string | undefined> = [undefined, '', '   ', 'off', 'OFF', 'ON', 'On', 'true', '1', 'yes', 'enabled', 'on ', ' on', 'onn'];
+
+async function testSoloElValorExactoOnEnciendeElDespachador() {
+  const { resolverModoDespachador } = await import('../../src/outbox');
+  for (const valor of VALORES_QUE_NO_ENCIENDEN) {
+    assert.equal(resolverModoDespachador(valor).activo, false, `${JSON.stringify(valor)} no debe encender el despachador`);
+  }
+  assert.equal(resolverModoDespachador('on').activo, true, 'solo el valor exacto "on" lo enciende');
+  assert.match(resolverModoDespachador(undefined).motivo, /no está definida/);
+  assert.match(resolverModoDespachador('').motivo, /vacía/);
+  assert.match(resolverModoDespachador('true').motivo, /no reconocido/);
+  console.log('[OK] testSoloElValorExactoOnEnciendeElDespachador');
+}
+
+async function conConsolaCapturada<T>(fn: (logs: string[]) => Promise<T>): Promise<T> {
+  const logs: string[] = [];
+  const original = { log: console.log, warn: console.warn, error: console.error };
+  console.log = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); };
+  console.warn = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); };
+  console.error = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); };
+  try { return await fn(logs); } finally { Object.assign(console, original); }
+}
+
+async function testDespachadorApagadoGuardaPeroNoPublicaNiMarcaPublicado() {
+  const { configurarDespachadorOutbox, estadoDespachadorOutbox } = await import('../../src/outbox');
+  for (const valor of VALORES_QUE_NO_ENCIENDEN) {
+    const tenantId = randomUUID(); const proyectoId = randomUUID();
+    try {
+      // La recepción real sigue guardando el evento en el outbox con el despachador apagado.
+      const fila = await sembrarEventoPendiente(tenantId, proyectoId);
+      assert.equal(fila.estado, 'PENDIENTE', 'la recepción guardó el evento');
+      const pub = publisherQue(async () => undefined);
+      let handle: unknown;
+      const logs = await conConsolaCapturada(async (capturados) => {
+        handle = configurarDespachadorOutbox(pub, { valor, intervaloMs: 40 });
+        await delay(500); // varias tandas si estuviera encendido
+        return capturados;
+      });
+      assert.equal(handle, null, `${JSON.stringify(valor)}: no se crea despachador`);
+      assert.equal(pub.eventos.length, 0, `${JSON.stringify(valor)}: no se publica nada`);
+      const [despues] = await outboxDe(tenantId);
+      assert.equal(despues.estado, 'PENDIENTE', 'la fila sigue pendiente');
+      assert.equal(despues.intentos, 0, 'sin intentos de publicación');
+      assert.equal(despues.publicado_en, null, 'no se marcó como publicada');
+      assert.ok(logs.some((l) => l.includes('dispatcher disabled')), 'el arranque registra "dispatcher disabled"');
+      assert.equal(estadoDespachadorOutbox().estado, 'disabled');
+    } finally { await cleanupTenant(tenantId); }
+  }
+  console.log('[OK] testDespachadorApagadoGuardaPeroNoPublicaNiMarcaPublicado');
+}
+
+async function testValorInvalidoAvisaConWarnYElValorAusenteNo() {
+  const { configurarDespachadorOutbox } = await import('../../src/outbox');
+  const pub = publisherQue(async () => undefined);
+  const avisos: string[] = [];
+  const originalWarn = console.warn; const originalLog = console.log;
+  console.warn = (...a: unknown[]) => { avisos.push(a.map(String).join(' ')); };
+  console.log = () => undefined;
+  try {
+    configurarDespachadorOutbox(pub, { valor: 'true' });
+    assert.equal(avisos.length, 1, 'un valor mal escrito genera un aviso');
+    assert.match(avisos[0], /dispatcher disabled/);
+    configurarDespachadorOutbox(pub, { valor: undefined });
+    configurarDespachadorOutbox(pub, { valor: 'off' });
+    assert.equal(avisos.length, 1, 'ausente u `off` explícito no generan aviso');
+  } finally { console.warn = originalWarn; console.log = originalLog; }
+  console.log('[OK] testValorInvalidoAvisaConWarnYElValorAusenteNo');
+}
+
+async function testValorOnPublicaMarcaPublicadoYReportaEstado() {
+  const { configurarDespachadorOutbox, estadoDespachadorOutbox } = await import('../../src/outbox');
+  const tenantId = randomUUID(); const proyectoId = randomUUID();
+  try {
+    await sembrarEventoPendiente(tenantId, proyectoId);
+    const pub = publisherQue(async () => undefined);
+    let handle: { detener(): void } | null = null;
+    const logs = await conConsolaCapturada(async (capturados) => {
+      handle = configurarDespachadorOutbox(pub, { valor: 'on', intervaloMs: 40 });
+      const inicio = Date.now();
+      while (Date.now() - inicio < 5000 && (await outboxDe(tenantId))[0].estado !== 'PUBLICADO') await delay(50);
+      return capturados;
+    });
+    handle!.detener();
+    assert.ok(handle, 'con `on` se crea el despachador');
+    const [fila] = await outboxDe(tenantId);
+    assert.equal(fila.estado, 'PUBLICADO');
+    assert.equal(pub.eventos.length, 1);
+    assert.ok(logs.some((l) => l.includes('dispatcher enabled')));
+    assert.equal(estadoDespachadorOutbox().estado, 'ok');
+    console.log('[OK] testValorOnPublicaMarcaPublicadoYReportaEstado');
+  } finally { await cleanupTenant(tenantId); }
+}
+
+async function testReadyDistingueApagadoIntencionalDeFallo() {
+  const { EventBus } = await import('../../../../packages/event-bus/src');
+  const { configurarDespachadorOutbox, estadoDespachadorOutbox } = await import('../../src/outbox');
+  const isReadyOriginal = EventBus.prototype.isReady;
+  EventBus.prototype.isReady = () => true; // el bus de esta prueba no se conecta: se aísla lo que se comprueba
+  const tenantId = randomUUID(); const proyectoId = randomUUID();
+  const originalError = console.error; const originalLog = console.log;
+  let handle: { detener(): void } | null = null;
+  try {
+    console.log = () => undefined;
+    // 1. Apagado a propósito: listo (200), con el estado explícito.
+    configurarDespachadorOutbox(publisherQue(async () => undefined), { valor: undefined });
+    let r = await fetch(`${baseUrl}/ready`);
+    let body: any = await r.json();
+    assert.equal(r.status, 200, 'apagado intencionalmente NO es un fallo');
+    assert.equal(body.status, 'ready');
+    assert.equal(body.checks.outbox_dispatcher, 'disabled');
+    assert.equal(body.checks.database, 'ok');
+    assert.match(body.outbox_dispatcher.motivo, /no está definida/);
+    assert.equal((await fetch(`${baseUrl}/health`)).status, 200, '/health sigue siendo solo liveness');
+
+    // 2. Encendido y sano: listo.
+    await sembrarEventoPendiente(tenantId, proyectoId);
+    handle = configurarDespachadorOutbox(publisherQue(async () => undefined), { valor: 'on', intervaloMs: 40 });
+    const inicio = Date.now();
+    while (Date.now() - inicio < 5000 && estadoDespachadorOutbox().estado !== 'ok') await delay(50);
+    r = await fetch(`${baseUrl}/ready`); body = await r.json();
+    assert.equal(r.status, 200);
+    assert.equal(body.checks.outbox_dispatcher, 'ok');
+    handle!.detener();
+
+    // 3. Encendido pero con la tanda fallando: no listo (503) y distinto de "disabled".
+    console.error = () => undefined;
+    await prisma.$executeRawUnsafe(`
+      CREATE OR REPLACE FUNCTION test_outbox_update_falla() RETURNS trigger AS $$
+      BEGIN IF NEW.estado = 'PUBLICADO' THEN RAISE EXCEPTION 'caida_simulada'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER trg_test_outbox_update_falla BEFORE UPDATE ON outbox_eventos FOR EACH ROW EXECUTE FUNCTION test_outbox_update_falla()`);
+    const tenantFalla = randomUUID();
+    try {
+      await sembrarEventoPendiente(tenantFalla, randomUUID());
+      handle = configurarDespachadorOutbox(publisherQue(async () => undefined), { valor: 'on', intervaloMs: 40 });
+      const t0 = Date.now();
+      while (Date.now() - t0 < 5000 && estadoDespachadorOutbox().estado !== 'error') await delay(50);
+      r = await fetch(`${baseUrl}/ready`); body = await r.json();
+      assert.equal(r.status, 503, 'un despachador encendido que falla vuelve no listo al servicio');
+      assert.equal(body.checks.outbox_dispatcher, 'error');
+      assert.match(body.outbox_dispatcher.ultimo_error, /caida_simulada/);
+      handle!.detener();
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS trg_test_outbox_update_falla ON outbox_eventos`);
+      await cleanupTenant(tenantFalla);
+    }
+    console.log = originalLog;
+    console.log('[OK] testReadyDistingueApagadoIntencionalDeFallo');
+  } finally {
+    handle?.detener();
+    EventBus.prototype.isReady = isReadyOriginal;
+    console.error = originalError; console.log = originalLog;
+    await cleanupTenant(tenantId);
+    // Deja el estado como en el arranque por defecto.
+    configurarDespachadorOutbox(publisherQue(async () => undefined), { valor: undefined });
+  }
+}
+
 // ── La migración por sí sola deja la tabla protegida ─────────────────────────
 
 /** Sentencias de un SQL sin comentarios de línea, separadas por `;`. Ninguna migración de este servicio usa `;` en literales. */
@@ -709,6 +868,11 @@ async function main() {
     ['reemision no republica un payload que sigue incompleto', testReemisionNoRepublicaUnPayloadQueSigueIncompleto],
     ['RLS aisla por tenant y proyecto', testRlsAislaPorTenantYProyectoYElDespachadorVeTodo],
     ['la migracion habilita y fuerza RLS sin depender del workflow', testLaMigracionDelOutboxHabilitaYForzaRlsSinElWorkflow],
+    ['solo el valor exacto on enciende el despachador', testSoloElValorExactoOnEnciendeElDespachador],
+    ['despachador apagado guarda pero no publica ni marca', testDespachadorApagadoGuardaPeroNoPublicaNiMarcaPublicado],
+    ['valor invalido avisa con warn y ausente no', testValorInvalidoAvisaConWarnYElValorAusenteNo],
+    ['valor on publica, marca y reporta estado', testValorOnPublicaMarcaPublicadoYReportaEstado],
+    ['ready distingue apagado intencional de fallo', testReadyDistingueApagadoIntencionalDeFallo],
     ['reemision restringida y aislada', testReemisionRestringidaYAislada],
   ];
   try {

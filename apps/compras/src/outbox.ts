@@ -330,7 +330,11 @@ export interface DespachadorActivo {
 /** Arranca el despachador periódico. Al iniciar, corre de inmediato para retomar lo pendiente tras un reinicio. */
 export function iniciarDespachadorOutbox(
   publisher: OutboxPublisher,
-  opciones: { intervaloMs?: number; batchSize?: number; maxAttempts?: number } = {},
+  opciones: {
+    intervaloMs?: number; batchSize?: number; maxAttempts?: number;
+    /** Se invoca al terminar cada tanda: sin argumento si salió bien, con el mensaje si la tanda falló. */
+    alFinalizarTanda?: (error?: string) => void;
+  } = {},
 ): DespachadorActivo {
   let ejecutando = false;
   let detenido = false;
@@ -343,8 +347,10 @@ export function iniciarDespachadorOutbox(
       if (r.publicados || r.fallidos || r.errores) {
         console.log(JSON.stringify({ action: 'compras.outbox.tanda', ...r }));
       }
+      opciones.alFinalizarTanda?.();
     } catch (error: any) {
       console.error(JSON.stringify({ action: 'compras.outbox.tanda_fallida', error: error?.message ?? String(error) }));
+      opciones.alFinalizarTanda?.(error?.message ?? String(error));
     } finally {
       ejecutando = false;
     }
@@ -358,4 +364,79 @@ export function iniciarDespachadorOutbox(
     detener() { detenido = true; clearInterval(timer); },
     ejecutarAhora: tick,
   };
+}
+
+// ── Activación del despachador ────────────────────────────────────────────────────────────────────────────
+// El despachador está APAGADO por defecto. El outbox siempre guarda los eventos (en la transacción de la recepción),
+// pero solo un despachador encendido los publica y los marca PUBLICADO. Solo el valor exacto `on` lo enciende:
+// ausente, vacío, `off` o cualquier otro valor lo dejan apagado.
+
+export const VARIABLE_DESPACHADOR = 'COMPRAS_OUTBOX_DISPATCHER';
+
+export interface ModoDespachador {
+  activo: boolean;
+  motivo: string;
+}
+
+export function resolverModoDespachador(valor: string | undefined): ModoDespachador {
+  if (valor === undefined) return { activo: false, motivo: `${VARIABLE_DESPACHADOR} no está definida` };
+  if (valor === 'on') return { activo: true, motivo: `${VARIABLE_DESPACHADOR}=on` };
+  if (valor === 'off') return { activo: false, motivo: `${VARIABLE_DESPACHADOR}=off` };
+  if (valor.trim() === '') return { activo: false, motivo: `${VARIABLE_DESPACHADOR} está vacía` };
+  return { activo: false, motivo: `${VARIABLE_DESPACHADOR} tiene un valor no reconocido (${JSON.stringify(valor.slice(0, 20))}); solo "on" lo enciende` };
+}
+
+/** `disabled` = apagado a propósito (no es un fallo). `error` = encendido pero la última tanda falló. */
+export type EstadoDespachador = 'disabled' | 'starting' | 'ok' | 'error';
+
+export interface InformeDespachador {
+  estado: EstadoDespachador;
+  motivo: string;
+  ultima_tanda_en: string | null;
+  ultimo_error: string | null;
+}
+
+let informeActual: InformeDespachador = { estado: 'disabled', motivo: 'el despachador aún no se configuró', ultima_tanda_en: null, ultimo_error: null };
+
+export function estadoDespachadorOutbox(): InformeDespachador {
+  return { ...informeActual };
+}
+
+/**
+ * Arranca el despachador solo si `valor` es exactamente `on`; en cualquier otro caso registra `dispatcher disabled`,
+ * no publica ni marca nada y devuelve `null`.
+ */
+export function configurarDespachadorOutbox(
+  publisher: OutboxPublisher,
+  config: { valor: string | undefined; intervaloMs?: number; batchSize?: number; maxAttempts?: number },
+): DespachadorActivo | null {
+  const modo = resolverModoDespachador(config.valor);
+  if (!modo.activo) {
+    informeActual = { estado: 'disabled', motivo: modo.motivo, ultima_tanda_en: null, ultimo_error: null };
+    const registro = {
+      action: 'compras.outbox.dispatcher_disabled',
+      message: 'dispatcher disabled',
+      motivo: modo.motivo,
+      detalle: 'Las recepciones siguen guardando su evento en outbox_eventos (PENDIENTE); no se publica ni se marca ninguno.',
+    };
+    // Un valor presente pero mal escrito merece un aviso, porque casi siempre es un error de configuración.
+    if (config.valor !== undefined && config.valor !== 'off' && config.valor.trim() !== '') console.warn(JSON.stringify(registro));
+    else console.log(JSON.stringify(registro));
+    return null;
+  }
+  informeActual = { estado: 'starting', motivo: modo.motivo, ultima_tanda_en: null, ultimo_error: null };
+  console.log(JSON.stringify({ action: 'compras.outbox.dispatcher_enabled', message: 'dispatcher enabled', motivo: modo.motivo }));
+  return iniciarDespachadorOutbox(publisher, {
+    intervaloMs: config.intervaloMs,
+    batchSize: config.batchSize,
+    maxAttempts: config.maxAttempts,
+    alFinalizarTanda: (error) => {
+      informeActual = {
+        estado: error ? 'error' : 'ok',
+        motivo: modo.motivo,
+        ultima_tanda_en: new Date().toISOString(),
+        ultimo_error: error ?? null,
+      };
+    },
+  });
 }
