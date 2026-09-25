@@ -83,6 +83,7 @@ jobs:
           npx prisma generate --schema apps/finanzas/prisma/schema.prisma
           npx prisma generate --schema apps/control-proyectos/prisma/schema.prisma
           npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
+          npx prisma generate --schema apps/almacen/prisma/schema.prisma
 
       # ── Aplicar schemas al DB ─────────────────────────────────────────────────
       # Cada modulo usa su propio PostgreSQL schema para evitar que db push
@@ -95,6 +96,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"          npx prisma db push --schema apps/finanzas/prisma/schema.prisma          --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npx prisma db push --schema apps/control-proyectos/prisma/schema.prisma --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"      npx prisma db push --schema apps/contabilidad/prisma/schema.prisma      --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen"           npx prisma db push --schema apps/almacen/prisma/schema.prisma           --skip-generate --accept-data-loss
 
       # ── Seed del catálogo de cuentas contables ────────────────────────────────
       # Sin esto, resolveCuentaId (apps/contabilidad/src/mapper.ts) nunca
@@ -113,10 +115,19 @@ jobs:
           npx tsc --noEmit -p apps/finanzas/tsconfig.json
           npx tsc --noEmit -p apps/control-proyectos/tsconfig.json
           npx tsc --noEmit -p apps/contabilidad/tsconfig.json
+          npx tsc --noEmit -p apps/almacen/tsconfig.json
 
       # ── Tests ─────────────────────────────────────────────────────────────────
       - name: Run RabbitMQ integration
         run: npm run test:integration:event-bus
+
+      # ── Almacén: consumo de recepciones de OC (change fix-ingresos-almacen-por-recepcion-oc) ──
+      # Requiere PostgreSQL (schema almacen) y RabbitMQ reales.
+      - name: Run Almacén reception events integration
+        run: |
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-eventos-oc
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-v1
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-suscripcion
 
       # ── Tests inter-modulo ────────────────────────────────────────────────────
       # Cada test recibe DATABASE_URL apuntando al schema de SU modulo.
