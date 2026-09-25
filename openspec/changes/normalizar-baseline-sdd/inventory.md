@@ -32,7 +32,7 @@ evidencia escrita en cada change.
 | `resaltar-selector-proyecto` | `cb27b16`, PR #133; 4/4; QA producción 2026-09-24 | archivado | `archive/2026-09-24-resaltar-selector-proyecto` |
 | `sidebar-submenu-flyout-lateral` | `68746c2`, PR #136; 12/12; QA producción 2026-09-24 | archivado | `archive/2026-09-24-sidebar-submenu-flyout-lateral` |
 | `purga-proyectos-demo-produccion` | PR #144 + corrección #145 (`a7697f2`); ejecución 2026-09-24 | observando | smoke autenticado, archivos huérfanos y retención hasta 2026-10-24 |
-| `bloquear-datos-sin-proyecto-activo` | hallazgo de smoke autenticado 2026-09-24; causa confirmada en frontend, middleware y endpoint GT | especificado, sin implementar | auditar alcance, escribir tests rojos y corregir antes de cerrar la purga |
+| `bloquear-datos-sin-proyecto-activo` | PR #146 (`ecc7d12`), #147, #148, #150; smoke productivo `36075808520`; 18/18 tareas | archivado | `archive/2026-09-25-bloquear-datos-sin-proyecto-activo`; specs canónicas conciliadas |
 | `normalizar-baseline-sdd` | rama local aislada | implementando | validar OpenSpec y completar conciliación |
 
 ## Borradores locales preservados

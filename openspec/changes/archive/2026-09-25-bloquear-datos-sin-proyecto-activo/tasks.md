@@ -62,4 +62,13 @@
 ## 5. Cierre
 
 - [x] 5.1 Reanudar y completar la tarea 6.5 de `purga-proyectos-demo-produccion`. El smoke productivo manual `36075808520` recorrió Dashboard, Gerencia Técnica, Compras, Almacén, Control de Obra, Residencia, Seguridad HSE y Ventas con una cuenta sin proyectos: todos mostraron `Proyecto activo requerido` y no emitieron solicitudes project-scoped.
-- [ ] 5.2 Archivar este change tras evidencia de producción y actualizar la especificación canónica.
+- [x] 5.2 Archivar este change tras evidencia de producción y actualizar la especificación canónica.
+
+### Evidencia de cierre
+
+- Merge y despliegue: PR `#146` (`ecc7d12`), smoke blindado en `#147`/`#148`, smoke de aislamiento en `#150` (`260d3c0`); ejecuciones `36071736514`, `36075808520` y, tras la cuarentena de archivos, `36077434849`, todas en verde.
+- Conciliación canónica: la capacidad nueva `datos-operativos-requieren-proyecto-activo` se incorporó a `openspec/specs/`. La conciliación detectó además tres contratos vigentes que el código fusionado ya contradecía o dejaba incompletos, y se corrigieron con deltas incluidos en este change:
+  - `aislamiento-insumos-por-proyecto-gt`: el requisito "catálogo consolidado sin proyecto activo" pasó a rechazo `403 AUTH_PROJECT_REQUIRED` (coincide con el test 8.3 actualizado en #146).
+  - `aislamiento-proyecto-por-modulo`: nuevo requisito de rutas project-scoped de Finanzas y Personal (la propuesta ya lo declaraba como capacidad modificada, pero faltaba el delta).
+  - `control-acceso-rol-personal-nivel-tenant`: `GET /personal/dashboard` deja de describirse como global.
+- Deuda conocida: `aislamiento-insumos-por-proyecto-gt` conserva el formato legacy sin `Purpose` y sigue fuera del modo estricto; su migración corresponde a `migrar-catalogo-openspec-vigente`.
