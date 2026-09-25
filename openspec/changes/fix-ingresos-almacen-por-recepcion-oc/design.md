@@ -1,84 +1,100 @@
 ## Context
 
-Situación observada el 2026-09-25 por lectura de código; falta confirmarla con los logs de producción (tarea 1.1).
+Observado el 2026-09-25 por lectura de código y evidencia de solo lectura (`evidence-2026-09-25.md`).
 
-- **Publicador.** `POST /api/v1/compras/ordenes-compra/:id/recepciones` (`apps/compras/src/main.ts`) registra la recepción y, solo si el estado calculado es `RECIBIDA`, publica `compras.oc_recibida_total` con `{ id_orden, codigo, proveedor_id, total, proyecto_id }`. La publicación es best-effort: si el bus está caído se descarta sin registro. Una recepción parcial no publica nada.
-- **Consumidor.** `handleOcRecibida` (`apps/almacen/src/main.ts`) exige `orden_compra_id` e `items[]` con `insumo_id`, `clave`, `descripcion`, `unidad`, `categoria` y `cantidad_recibida` (o `cantidad_recibida_parcial`). Sin ellos registra `skip_no_items` y retorna. Su prueba de integración usa ese payload ideal, que ningún publicador emite.
-- **Errores.** El handler captura la excepción de cada ítem y sigue; nunca propaga. Aunque propagara, `EventBus.bindAndConsume` responde `nack(msg, false, false)` y la cola solo declara `x-message-ttl` de 24 h, sin exchange de mensajes muertos: el mensaje se descarta.
-- **Idempotencia.** Clave actual: `referencia = orden_compra_id`, `tipo = INGRESO` e insumo. Dos recepciones parciales del mismo insumo en la misma OC colisionan y la segunda se ignora.
-- **Datos disponibles en Compras.** `OrdenCompraItem` guarda `insumo_id` (nulo en ítems de texto libre) y solo `descripcion_libre`/`unidad_libre` para esos; la clave, descripción, unidad y categoría de un insumo de catálogo viven en Gerencia Técnica.
-- **Health.** `GET /health` responde siempre `200`. Docker lo usa como healthcheck.
+- **Publicador.** `POST /api/v1/compras/ordenes-compra/:id/recepciones` registra la recepción y, solo si la OC queda `RECIBIDA`, publica `compras.oc_recibida_total` con `{ id_orden, codigo, proveedor_id, total, proyecto_id }`. Una recepción parcial no publica nada. La publicación ocurre después de la transacción, dentro de un `try` que ignora el resultado.
+- **Bus.** `EventBus.publish` usa un canal normal: devuelve `true` al encolar en el socket, `false` sin lanzar si no hay canal, y descarta en silencio un mensaje sin cola enlazada. No hay confirmación del broker ni `mandatory`. Ante una excepción del handler hace `nack(msg, false, false)` y las colas solo declaran `x-message-ttl`.
+- **Consumidor.** `handleOcRecibida` exige `orden_compra_id` e `items[]` y registra `skip_no_items` si faltan. Captura la excepción de cada ítem y sigue. Su prueba usa un payload que ningún publicador emite.
+- **Idempotencia actual.** OC + insumo + `INGRESO`: ignoraría una segunda recepción parcial legítima.
+- **Datos en Compras.** `OrdenCompraItem` guarda `insumo_id` (nulo en texto libre) y `descripcion_libre`/`unidad_libre` solo para esos. Clave, descripción, unidad y categoría de un insumo de catálogo viven en Gerencia Técnica, que Compras ya consulta por HTTP.
+- **RLS.** El rol de ejecución no tiene `BYPASSRLS`: un proceso sin contexto de sesión ve cero filas de una tabla con RLS.
 
 ## Goals / Non-Goals
 
 **Goals**
 
-- Que toda recepción de OC produzca, una sola vez, los INGRESOS correspondientes en Almacén.
-- Que ningún fallo de procesamiento se confirme en silencio: debe reintentarse y, agotados los intentos, quedar en una cola inspeccionable con su payload.
-- Que la idempotencia distinga recepciones distintas de la misma OC.
+- Que toda recepción produzca, una sola vez, los INGRESOS correspondientes, incluso ante caídas del bus, del consumidor o reinicios.
+- Que ningún fallo se confirme en silencio: reintento con espera y, agotados, una cola de mensajes fallidos con el payload original.
+- Idempotencia que distinga recepciones y renglones distintos.
 - Separar prueba de vida de disponibilidad de dependencias.
 
 **Non-Goals**
 
-- Cambiar el comportamiento de los demás consumidores del bus (registrado como hallazgo separado).
+- Cambiar a los demás consumidores del bus.
 - Rediseñar el inventario o los movimientos manuales.
-- Corregir por código, sin autorización expresa, datos históricos de producción.
+- Corregir datos históricos de producción sin autorización expresa.
 
 ## Decisions
 
-### 1. Un contrato de evento por recepción
+### 1. Contrato versionado `compras.recepcion_oc_registrada.v1`
 
-Compras publica `compras.oc_recibida_parcial` o `compras.oc_recibida_total` en cada recepción, según el estado resultante de la OC. Ambos llevan el mismo payload: `recepcion_id`, `orden_compra_id`, `codigo`, `proveedor_id` e `items[]` con **solo lo recibido en esa recepción** (no acumulado): `orden_item_id`, `insumo_id` y `cantidad_recibida`. Se conserva `id_orden` durante la transición para no romper a otros lectores. Ambos eventos usan `cantidad_recibida`; el campo `cantidad_recibida_parcial` desaparece.
+Un solo evento por recepción, sin tipos "parcial" y "total" incompatibles. El estado de la OC es un dato del evento. El `event_type` y la routing key son `compras.recepcion_oc_registrada.v1`; una versión nueva usa otra clave.
 
-### 2. Ítems sin insumo de catálogo
+Payload mínimo:
 
-Los ítems con `insumo_id` nulo (texto libre o imprevisto) no tienen `ItemInventario` asociado. Propuesta: el evento los incluye con `insumo_id: null` y Almacén los registra como no inventariables (log informativo, sin error ni reintento). Pregunta abierta 1.
+- `event_id` (UUID), `event_version` (1) y `occurred_at`.
+- `tenant_id` y `proyecto_id`, iguales a los del contexto del bus, que se valida.
+- `orden_compra_id`, `orden_compra_codigo`, `proveedor_id`, `recepcion_id`, `fecha_recepcion` y `estado_oc_resultante` (`PARCIALMENTE_RECIBIDA` o `RECIBIDA`).
+- `items[]`, solo lo recibido en esa recepción: `recepcion_item_id` (identificador estable del renglón), `orden_item_id`, `insumo_id` (nulo si no hay catálogo), `cantidad_recibida` y el snapshot `descripcion`, `unidad`, y para insumos de catálogo también `clave` y `categoria`.
 
-### 3. Datos descriptivos del ítem
+El envoltorio del bus gana `event_id` y `event_version` opcionales; `publish` asigna un `event_id` si falta.
 
-Almacén crea un `ItemInventario` nuevo con `clave`, `descripcion`, `unidad` y `categoria`. Opciones: (A) Compras resuelve el snapshot desde el catálogo de Gerencia Técnica al publicar; (B) Almacén lo consulta a Gerencia Técnica al procesar. Recomendada A, para que el evento sea autosuficiente y Almacén no dependa de Gerencia Técnica en línea; si Compras no logra resolverlo, el evento no se publica y queda registrado como error. Pregunta abierta 2.
+### 2. Snapshot autosuficiente
 
-### 4. Idempotencia por recepción e ítem
+Almacén no consulta a Compras ni a Gerencia Técnica al procesar. El snapshot lo resuelve Compras al armar el evento: para insumos de catálogo, consulta a Gerencia Técnica; para texto libre, copia `descripcion_libre` y `unidad_libre`. El despachador del outbox resuelve y congela el snapshot en el registro del outbox antes de publicar, con reintentos si Gerencia Técnica no responde, de modo que una falla de Gerencia Técnica no bloquea ni revierte la recepción. Una vez congelado, el snapshot no cambia aunque se reintente la publicación.
 
-Se agregan a `movimientos_almacen` las columnas `recepcion_id` y (ya existente) `oc_item_id`, con índice único parcial `(tenant_id, proyecto_id, recepcion_id, oc_item_id)` para `tipo = 'INGRESO'` y `recepcion_id` no nulo. Un redelivery del mismo evento choca con el índice y se trata como ya aplicado. La comprobación por OC e insumo se elimina.
+### 3. Ítems sin `insumo_id`
+
+No son inventariables. El evento los incluye para trazabilidad de la recepción y Almacén registra un evento informativo por ítem. No se crean registros artificiales ni altas automáticas, y no se considera un error ni provoca reintento.
+
+### 4. Idempotencia
+
+Doble clave, en el orden en que se evalúan:
+
+1. `event_id`: tabla `eventos_procesados` con clave única `(tenant_id, event_id)`, insertada en la misma transacción que los movimientos.
+2. `recepcion_id` + `recepcion_item_id`: columnas en `movimientos_almacen` e índice único parcial `(tenant_id, proyecto_id, recepcion_id, recepcion_item_id)` para `tipo = 'INGRESO'`.
+
+La comprobación por OC e insumo desaparece. Reemitir un evento con el mismo `event_id` o reenviar la misma recepción no duplica stock; dos recepciones distintas se suman.
 
 ### 5. Procesamiento atómico
 
-Cada evento se procesa en una sola transacción: o se aplican todos sus ítems o ninguno. Un error revierte la transacción y se propaga al bus. Ya no se captura ítem por ítem.
+Un evento se procesa en una sola transacción: se registran el `event_id`, los movimientos y el stock de todos sus ítems, o nada. Un error revierte y se propaga al bus.
 
-### 6. Reintentos y cola de mensajes fallidos en el bus
+### 6. Reintentos y cola de mensajes fallidos
 
-`SubscriptionOptions` gana `retry?: { maxAttempts, delayMs }` y `deadLetter?: boolean`, ambos opcionales. Con `retry`, un fallo republica el mensaje a una cola de espera con TTL que vuelve a la cola principal, con el contador de intentos en un header; al agotar los intentos pasa a `<cola>.dlq` con el motivo y el payload original. Un mensaje que no se puede interpretar (JSON o contexto inválidos) va directo a la DLQ sin reintentos. Sin las opciones, `nack` sin reencolar sigue igual.
+`SubscriptionOptions` gana `retry?: { maxAttempts, delayMs }` y `deadLetter?: boolean`. Con `retry`, un fallo republica el mensaje a `<cola>.retry` (TTL igual a `delayMs`, con dead-letter de regreso a la cola principal) y cuenta los intentos en el header `x-attempt`. Agotados, va a `<cola>.dlq` con el payload original y el motivo. Un mensaje ininterpretable va directo a la DLQ. Sin las opciones, el comportamiento actual no cambia. Solo las suscripciones nuevas de Almacén las activan.
 
-**Restricción de RabbitMQ:** una cola durable existente no admite redeclararse con argumentos distintos (`PRECONDITION_FAILED`). Por eso Almacén usa nombres de cola nuevos (sufijo `.v2`); las colas anteriores se vacían y se retiran tras el despliegue. Pregunta abierta 3.
+### 7. Colas `.v2`
 
-### 7. `/health` y `/ready`
+RabbitMQ no permite redeclarar una cola durable con argumentos distintos (`PRECONDITION_FAILED`). Se declaran colas nuevas `almacen.compras_recepcion_oc_registrada.v1.v2`, o el nombre que resulte del convenio, con sus `.retry` y `.dlq`; no se usan políticas globales ni se modifican las colas existentes. Las colas `almacen.compras_oc_recibida_*` actuales no se tocan en este change; su retiro se decide aparte con evidencia de que no reciben tráfico.
 
-`/health` sigue siendo prueba de vida: `200` mientras el proceso responde, sin consultar dependencias, para que Docker no reinicie el contenedor por una caída transitoria de RabbitMQ o de la base. `/ready` responde `200` solo si la base responde y el bus está conectado con las suscripciones activas; en otro caso `503` con el detalle de la dependencia. `/ready` no se usa como healthcheck de reinicio.
+### 8. Outbox transaccional en Compras
 
-### 8. Publicación fiable desde Compras
+Tabla `outbox_eventos` en la base de Compras con: `event_id`, `tenant_id`, `proyecto_id`, `event_type`, `payload` (JSON), `estado` (`PENDIENTE`, `PUBLICADO`, `ERROR`), `intentos`, `proximo_intento_en`, `ultimo_error`, `created_at` y `publicado_en`.
 
-Hoy la publicación es best-effort y silenciosa. Fase 1: la falla se registra a nivel de error con `recepcion_id` y el evento se puede reemitir con un endpoint interno restringido. Fase 2 (fuera de este change): outbox transaccional. Pregunta abierta 4.
+- **Atomicidad.** La recepción, sus ítems, el nuevo estado de la OC y la fila del outbox se escriben en la misma transacción. Si algo falla, no queda evento huérfano ni recepción sin evento.
+- **Despachador.** Un proceso interno de Compras toma filas `PENDIENTE` cuyo `proximo_intento_en` ya venció, con bloqueo `FOR UPDATE SKIP LOCKED` para que varias instancias no dupliquen trabajo, resuelve y congela el snapshot, publica con confirmación y solo entonces marca `PUBLICADO`. Un fallo incrementa `intentos` y reprograma con espera exponencial; superado un umbral pasa a `ERROR` y queda visible.
+- **Publicación confirmada.** Se añade `publishConfirmed` al bus: canal de confirmación, `mandatory`, y una promesa que se rechaza si el broker no confirma, si devuelve el mensaje por no tener cola enlazada o si vence un tiempo de espera. Solo su resolución permite marcar `PUBLICADO`.
+- **Recuperación tras reinicios.** El estado vive en la base, no en memoria: al arrancar, el despachador retoma lo `PENDIENTE`. Una fila ya publicada pero no marcada se republica con el mismo `event_id`, y el consumidor la trata como reentrega (semántica al menos una vez).
+- **RLS.** La tabla lleva `tenant_id` y `proyecto_id`. Como el despachador corre sin contexto de tenant, la política acepta además una variable de sesión interna reservada al despachador (`app.internal_worker = 'outbox'`), en la misma política única, para que el proceso liste filas de todos los tenants y luego publique cada una con su contexto. Se cubre con pruebas de aislamiento entre tenants y proyectos.
+- **Observabilidad.** Log de error por cada fila en `ERROR` y por cada fallo de publicación; contadores de pendientes y errores en el log periódico del despachador. Un endpoint interno de reemisión, restringido a `admin` y `procurement`, vuelve a poner en `PENDIENTE` una recepción concreta.
 
-### 9. Conciliación de datos históricos
+### 9. `/health` y `/ready`
 
-Antes de decidir nada se cuantifican, en modo solo lectura, las recepciones sin ingreso correspondiente. Cualquier corrección de datos de producción se presenta con su alcance exacto (recepciones, ítems, cantidades), se ensaya en una copia y requiere autorización expresa del titular.
+`/health` sigue siendo prueba de vida: `200` mientras el proceso responde, sin consultar dependencias, para que Docker no reinicie el contenedor por una caída transitoria de RabbitMQ o de la base. `/ready` responde `200` solo si la base responde y el bus está conectado con sus suscripciones activas; en otro caso `503` con el detalle de la dependencia. `/ready` no se usa como healthcheck de reinicio.
 
-### 10. Orden de despliegue
+### 10. Conciliación histórica
 
-1) Almacén (consumidor con contrato nuevo, `/ready`, colas `.v2`); acepta el contrato nuevo y sigue ignorando el antiguo. 2) Compras (publicador). 3) Retiro de las colas antiguas. Se verifica con una recepción de prueba identificable y reversible solo en un entorno no productivo; en producción, con la lectura de logs.
+Cuantificada en `evidence-2026-09-25.md`: a lo sumo 2 recepciones, ambas purgadas. Se recomienda no conciliar y cerrar el histórico. La herramienta de reporte de solo lectura y la reemisión (idempotente) forman parte del change, pero **ninguna ejecución productiva se hace sin autorización expresa adicional**.
 
-## Preguntas abiertas
+### 11. Orden de despliegue
 
-1. ¿Cómo deben tratarse los ítems sin `insumo_id`: no inventariables o con alta manual?
-2. ¿Quién resuelve el snapshot de insumo: Compras (A) o Almacén (B)?
-3. ¿Se acepta renombrar las colas de Almacén (`.v2`) o se prefiere una política de RabbitMQ?
-4. ¿Se difiere el outbox transaccional a un change posterior?
-5. ¿Cuántas recepciones históricas quedaron sin ingreso y cuáles se concilian?
+Fusionar a `main` despliega y aplica migraciones, por lo que los PR de código quedan abiertos hasta autorización expresa. Orden previsto una vez autorizado: `@bocam/event-bus`; Almacén (consumidor, migración, colas `.v2`, `/ready`); Compras (outbox y contrato). Así el consumidor existe antes de que el publicador emita. El change no se considera completo hasta que se cumplan las garantías del outbox: atomicidad, reintento, marcado tras confirmación del broker y recuperación tras reinicios.
 
 ## Risks / Trade-offs
 
-- Cambiar el contrato entre dos servicios exige orden de despliegue; el consumidor debe tolerar ambos formatos durante la transición.
-- Los reintentos pueden duplicar trabajo si la transacción no es idempotente; la clave única del punto 4 lo evita.
-- Una DLQ sin vigilancia solo cambia dónde se pierde la información: se define su monitoreo y el procedimiento de reproceso en las tareas.
-- El `EventBus` es compartido: el cambio es opt-in y se prueba que los consumidores existentes se comportan igual.
+- Semántica al menos una vez: duplicados posibles, absorbidos por la doble clave de idempotencia.
+- Cambiar el contrato entre dos servicios y el bus exige el orden de despliegue del punto 11.
+- El despachador con una política de RLS especial es un punto sensible: se limita a esta tabla y se prueba explícitamente.
+- Una DLQ sin vigilancia solo cambia dónde se pierde la información: se define su monitoreo y el procedimiento de reproceso.
+- `@bocam/event-bus` es compartido: los cambios son opt-in y se prueba que los consumidores existentes se comportan igual.
