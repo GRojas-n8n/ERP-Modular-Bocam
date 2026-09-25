@@ -2,7 +2,7 @@
  * Test de Integración (extremo a extremo): Almacén suscrito a compras.recepcion_oc_registrada.v1
  * Change: fix-ingresos-almacen-por-recepcion-oc (sección 3.4)
  *
- * Verifica con RabbitMQ real que la suscripción usa una cola nueva con sufijo .v2, con cola de reintento
+ * Verifica con RabbitMQ real que la suscripción usa la cola vigente con sufijo .v3 (sin TTL), con cola de reintento
  * y de mensajes fallidos; que un evento válido se aplica; que un evento de formato antiguo va a la DLQ
  * sin reintentos; y que /ready pasa a 200 cuando el bus está listo.
  *
@@ -22,6 +22,7 @@ import { randomUUID } from 'node:crypto';
 import * as amqplib from 'amqplib';
 import { PrismaClient } from '../../src/generated/prisma';
 import { createEventBus, type BocamEvent } from '../../../../packages/event-bus/src';
+import { RECEPCION_OC_COLA, RECEPCION_OC_EVENT } from '../../src/recepcion-oc-cola';
 
 const dbUrl =
   process.env.ALMACEN_DATABASE_URL ||
@@ -30,8 +31,8 @@ const dbUrl =
 process.env.ALMACEN_DATABASE_URL = dbUrl;
 const prisma = new PrismaClient({ datasources: { db: { url: dbUrl } } });
 
-const QUEUE = 'almacen.compras_recepcion_oc_registrada_v1.v2';
-const EVENT = 'compras.recepcion_oc_registrada.v1';
+const QUEUE = RECEPCION_OC_COLA;
+const EVENT = RECEPCION_OC_EVENT;
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function waitFor(condition: () => Promise<boolean>, timeoutMs: number, what: string) {
@@ -105,9 +106,9 @@ async function main() {
     const baseUrl = `http://127.0.0.1:${process.env.PORT}`;
     await publisher.connect();
 
-    await waitFor(async () => (await messageCount(QUEUE)) >= 0, 10000, 'la cola .v2 declarada');
+    await waitFor(async () => (await messageCount(QUEUE)) >= 0, 10000, 'la cola .v3 declarada');
     await waitFor(async () => (await fetch(`${baseUrl}/ready`)).status === 200, 10000, '/ready en 200');
-    console.log('[OK] la suscripción declara la cola .v2 y /ready pasa a 200 con el bus listo');
+    console.log('[OK] la suscripción declara la cola .v3 y /ready pasa a 200 con el bus listo');
 
     assert.ok(await messageCount(`${QUEUE}.retry`) >= 0, 'la cola de reintento existe');
     assert.ok(await messageCount(`${QUEUE}.dlq`) >= 0, 'la cola de mensajes fallidos existe');
