@@ -71,8 +71,7 @@ cliente.
   importación no SHALL abortar el lote completo por una fila inválida
 
 ### Requirement: El alta exitosa SHALL crear el empleado y refrescar la lista
-Cuando todos los campos obligatorios son válidos y el backend responde
-201, el sistema SHALL cerrar el panel, refrescar la lista de empleados
+Cuando todos los campos obligatorios son válidos y el backend responde 201, el sistema SHALL cerrar el panel, refrescar la lista de empleados
 mostrada, y mostrar confirmación al usuario.
 
 #### Scenario: Alta exitosa con solo los campos obligatorios

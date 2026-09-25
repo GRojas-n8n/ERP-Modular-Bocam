@@ -495,8 +495,7 @@ la creación del cuadro, sin cambios en ese flujo existente.
 
 
 ### Requirement: El Cuadro Comparativo SHALL registrar la fecha de entrega estimada por partida y proveedor
-Al capturar los precios de una cotización en el Cuadro Comparativo,
-Compras SHALL poder registrar una fecha de entrega estimada estructurada
+Al capturar los precios de una cotización en el Cuadro Comparativo, Compras SHALL poder registrar una fecha de entrega estimada estructurada
 (no texto libre) para cada combinación de partida (línea/insumo) y
 proveedor. El sistema SHALL persistir esta fecha junto con el precio
 ofertado de esa misma línea.
@@ -602,9 +601,7 @@ financiera y partida presupuestal que los renglones de catálogo.
   catálogo"
 
 ### Requirement: Agregar un proveedor o una línea manualmente SHALL preservar el estado del cuadro
-
-Agregar un proveedor desde el catálogo o una línea/ítem manualmente al
-Cuadro Comparativo, mientras está en `BORRADOR`, SHALL preservar
+Agregar un proveedor desde el catálogo o una línea/ítem manualmente al Cuadro Comparativo, mientras está en `BORRADOR`, SHALL preservar
 `estado: 'BORRADOR'` en la actualización local — NO SHALL introducir un
 estado distinto que el backend no reconozca.
 

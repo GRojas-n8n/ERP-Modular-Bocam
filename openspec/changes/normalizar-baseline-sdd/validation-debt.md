@@ -19,12 +19,13 @@ openspec validate --all --strict --json
 | Tipo | Total | Válidos | Inválidos |
 |---|---:|---:|---:|
 | Changes activos versionados | 11 | 11 | 0 |
-| Specs canónicas | 163 | 64 | 99 |
-| Total | 174 | 75 | 99 |
+| Specs canónicas | 163 | 71 | 92 |
+| Total | 174 | 82 | 92 |
 
-Cifras al 2026-09-25 tras el lote de archivo 3.1 (medidas sobre el árbol versionado;
+Cifras al 2026-09-25 tras el lote de archivo 3.1 y la normalización `SHALL`/`MUST` (medidas sobre el árbol versionado;
 los borradores locales sin seguimiento no se cuentan). Ese lote agregó siete
 specs canónicas válidas y normalizó la estructura mínima de cuatro históricas.
+La deuda restante son las 92 specs sin `Purpose`/`Requirements` canónicos.
 
 Se corrigió el delta de Centro de Costos conservando los dos escenarios
 canónicos omitidos, se reemplazó el propósito placeholder de
@@ -40,7 +41,7 @@ reparó el último delta activo inválido,
 | Categoría | Elementos | Tratamiento |
 |---|---:|---|
 | Spec sin `Purpose`/`Requirements` canónicos | 92 | migración estructural conservando literalmente requisitos y escenarios |
-| Spec con requisitos sin `SHALL`/`MUST` | 7 specs / 10 requisitos | normalizar lenguaje normativo sin alterar el comportamiento |
+| Spec con requisitos sin `SHALL`/`MUST` | 0 pendientes (7 specs / 10 requisitos corregidos) | unión de líneas partidas por el ajuste de texto; palabras idénticas, verificado contra `HEAD` |
 | Delta activo inválido | 0 pendientes | correcciones mínimas completadas sin eliminar escenarios ni cambiar contratos |
 
 Todos los changes activos validan en modo estricto. La deuda restante está

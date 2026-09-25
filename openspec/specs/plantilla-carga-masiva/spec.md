@@ -10,8 +10,7 @@ antes de intentar subir un archivo, sin tener que adivinarla o preguntarla.
 ## Requirements
 
 ### Requirement: Cada pantalla de carga masiva SHALL ofrecer una plantilla descargable
-Las pantallas de carga masiva de Proveedores (`ComprasView.tsx`), Empleados
-(`PersonalView.tsx`) y Clientes (`VentasView.tsx`) SHALL mostrar un botón
+Las pantallas de carga masiva de Proveedores (`ComprasView.tsx`), Empleados (`PersonalView.tsx`) y Clientes (`VentasView.tsx`) SHALL mostrar un botón
 "Descargar plantilla" junto al botón "Importar CSV/Excel" existente,
 visible para los mismos usuarios que ya pueden ver el botón de importar
 (mismo gate de rol).

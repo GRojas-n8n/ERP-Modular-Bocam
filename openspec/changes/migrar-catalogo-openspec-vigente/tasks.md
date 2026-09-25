@@ -9,6 +9,8 @@
 - [x] 2.1 Corregir el delta de `centro-costos-confirmar-y-editar-consecutivo` conservando todos los escenarios canónicos y reemplazar el propósito placeholder de la spec canónica.
 - [ ] 2.2 Validar el change y completar su QA antes de archivarlo.
 
+- [x] 2.3 Normalizar los 10 requisitos de 7 specs que la validación marcaba sin `SHALL`/`MUST`: el validador solo lee la primera línea del cuerpo y la palabra normativa quedaba en una línea posterior. Solo se unieron líneas partidas; el texto palabra por palabra es idéntico al de `HEAD`. Specs válidas 64 → 71.
+
 ## 3. Migración estructural
 
 - [ ] 3.1–3.10 Migrar los diez lotes de specs con formato anterior; un PR por dominio.
