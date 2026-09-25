@@ -41,7 +41,12 @@
   - [x] Operación: todos los contenedores saludables, cero reinicios, HTTPS 200 y sin errores críticos recientes.
   - [x] Sesión autenticada: selector indica `Sin Proyecto` y Administración confirma que no quedan proyectos registrados.
   - [x] Dashboards project-scoped: el smoke productivo de solo lectura verificó que Dashboard, Gerencia Técnica, Compras, Almacén, Control de Obra, Residencia, Seguridad HSE y Ventas muestran `Proyecto activo requerido` y no emiten solicitudes project-scoped cuando la cuenta no tiene proyecto. Evidencia: PR `#150`, merge `260d3c0` y ejecución `36075808520` en verde.
-- [ ] 6.6 **Titular:** revisar el manifiesto de archivos y decidir si borra los archivos huérfanos de los volúmenes.
+- [x] 6.6 **Titular:** revisar el manifiesto de archivos y decidir si borra los archivos huérfanos de los volúmenes.
+  - Revisión de solo lectura completada: las 15 rutas existen y están agrupadas en 5 directorios con 3 PDF cada uno; ocupan 2,603,280 bytes de contenido (2,623,760 bytes contabilizando directorios), no contienen enlaces simbólicos y representan solo 3 contenidos únicos repetidos 5 veces.
+  - PostgreSQL confirma 0 cuadros objetivo, 0 filas de archivo y 0 referencias a esas rutas tanto en `comparativas_proveedores_archivos` como en `solicitudes_cotizacion_proveedores`.
+  - Decisión autorizada y ejecutada: no se borraron directamente. Se creó el resguardo `archivos-huerfanos-20260924-200535.tar.gz` con 5 directorios y 15 PDF, validado con SHA-256 `abe181a002aad001ef9af30ff2e81ba3c0b230349698b83bbd723869c9958610`, y los directorios se movieron a una cuarentena reversible dentro del mismo volumen.
+  - Verificación posterior: 15 archivos en cuarentena, 0 directorios en sus rutas originales, 2,603,280 bytes y 3 contenidos únicos; respaldo válido, contenedores saludables, HTTPS 200, logs de Compras sin errores y smoke autenticado `36077434849` en verde.
+  - La cuarentena se conserva hasta al menos 2026-10-24. La eliminación definitiva requerirá una autorización posterior.
 - [ ] 6.7 Conservar el respaldo previo hasta que el titular confirme la normalidad, como mínimo hasta 2026-10-24.
 
 ## 7. Cierre
@@ -68,4 +73,4 @@
 - Producción: transacción verificable por base, `bocam_auth` al final; resultado exitoso en las 12 bases.
 - Postcondición: cero registros objetivo; servicios saludables y `https://iretum.com/` con HTTP 200.
 - La verificación autenticada posterior quedó completa con la corrección de aislamiento sin proyecto y el smoke manual `36075808520` en verde.
-- Pendientes: decidir sobre 15 archivos potencialmente huérfanos y conservar el respaldo hasta 2026-10-24.
+- Pendientes: conservar el respaldo y la cuarentena hasta 2026-10-24; después, confirmar normalidad y autorizar o descartar la eliminación definitiva.
