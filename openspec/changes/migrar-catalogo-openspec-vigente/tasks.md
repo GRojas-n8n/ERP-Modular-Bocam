@@ -2,7 +2,7 @@
 
 - [x] 1.1 Ejecutar validación integral estricta y guardar conteos por tipo.
 - [x] 1.2 Clasificar las 128 fallas sin modificar las specs.
-- [ ] 1.3 Generar inventario de archivos por los diez dominios definidos.
+- [x] 1.3 Generar inventario de archivos por los diez dominios definidos (`inventory.md`): 92 specs, 52 estructurales (T1/T2), 11 con requisitos por reubicar (T3a) y 29 de prosa que exigen redactar requisitos (T3b).
 
 ## 2. Corrección bloqueante
 
@@ -13,7 +13,7 @@
 
 ## 3. Migración estructural
 
-- [ ] 3.1–3.10 Migrar los diez lotes de specs con formato anterior; un PR por dominio.
+- [ ] 3.1–3.10 Migrar los diez lotes de specs con formato anterior, siguiendo el orden y las reglas de lote de `inventory.md`. Los PR se dividen por nivel (T1/T2, T3a, T3b) y nunca los mezclan; las T3b no son migración mecánica y requieren revisión funcional.
 - [ ] 3.11 Demostrar por script que ningún requisito ni escenario cambió durante la transformación.
 
 ## 4. Propósitos
