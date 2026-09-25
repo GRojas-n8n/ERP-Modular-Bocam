@@ -1,8 +1,13 @@
-## ADDED Requirements
+# permisos-catalogo-gerencia-tecnica Specification
+
+## Purpose
+
+Define qué acciones del catálogo de Gerencia Técnica puede ejecutar el rol `gerencia_tecnica` (crear y editar insumos, crear presupuestos) y el tamaño de payload que admite la importación de composición APU de catálogos reales.
+
+## Requirements
 
 ### Requirement: El rol gerencia_tecnica SHALL poder crear y editar insumos del catálogo
-`POST /api/v1/gerencia-tecnica/insumos` y `PATCH /api/v1/gerencia-tecnica/insumos/:id`
-SHALL aceptar peticiones de usuarios con rol `gerencia_tecnica`, además de `admin` y
+`POST /api/v1/gerencia-tecnica/insumos` y `PATCH /api/v1/gerencia-tecnica/insumos/:id` SHALL aceptar peticiones de usuarios con rol `gerencia_tecnica`, además de `admin` y
 `superintendent`.
 
 #### Scenario: Usuario con rol gerencia_tecnica crea un insumo
