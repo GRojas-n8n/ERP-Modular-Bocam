@@ -1,4 +1,10 @@
-## ADDED Requirements
+# aislamiento-insumos-por-proyecto-gt Specification
+
+## Purpose
+
+Define cómo el catálogo de Insumos de Gerencia Técnica se aísla por proyecto: lecturas y escrituras acotadas al proyecto activo, clave única por tenant y proyecto, rechazo 403 AUTH_PROJECT_REQUIRED sin proyecto activo incluso para roles de nivel tenant, y conservación archivada de los insumos históricos cuyo proyecto no puede determinarse.
+
+## Requirements
 
 ### Requirement: El catálogo de Insumos SHALL aislarse por proyecto para roles de nivel-proyecto
 `GET /api/v1/gerencia-tecnica/insumos` y `GET /api/v1/gerencia-tecnica/insumos/explosion` SHALL retornar únicamente los insumos cuyo `proyecto_id` coincide con el proyecto activo de la sesión, cuando el usuario autenticado tiene un rol de nivel-proyecto (`gerencia_tecnica`, `technical`).

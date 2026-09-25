@@ -1,3 +1,9 @@
+# especificacion-tecnica-ofrecida-proveedor Specification
+
+## Purpose
+
+Define cómo Compras captura, por renglón y proveedor, la especificación técnica que cada proveedor ofrece en el Cuadro Comparativo, y cómo la ve el Residente por separado durante la evaluación técnica.
+
 ## Requirements
 
 ### Requirement: Compras SHALL poder capturar la especificación técnica que cada proveedor ofrece por renglón del Cuadro Comparativo

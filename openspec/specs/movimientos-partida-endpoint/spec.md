@@ -1,4 +1,10 @@
-## ADDED Requirements
+# movimientos-partida-endpoint Specification
+
+## Purpose
+
+Define los endpoints que exponen el historial de movimientos de una partida presupuestal: el de Gerencia Técnica por concepto_id y el filtro por concepto_id en los movimientos presupuestales de Finanzas.
+
+## Requirements
 
 ### Requirement: GT expone el historial de movimientos de una partida
 El sistema SHALL exponer `GET /api/v1/gerencia-tecnica/partidas/:concepto_id/movimientos`, que retorna el historial completo de `SaldoMovimiento` para la `SaldoPartida` del `concepto_id` dado, ordenado del más reciente al más antiguo. Disponible para los roles `admin`, `superintendent`, `gerencia_tecnica`, `control_proyectos`, `control_obra` (mismo guard que `GET /partidas/:concepto_id/saldo`).
