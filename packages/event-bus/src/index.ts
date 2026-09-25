@@ -48,6 +48,20 @@ export interface EventBusConfig {
 
 export type EventHandler<T = unknown> = (event: BocamEvent<T>) => Promise<void>;
 
+/**
+ * Un handler de una suscripción con `retry`/`deadLetter` lanza este error cuando reintentar no puede
+ * ayudar (formato o versión no soportados, datos inconsistentes): el mensaje va directo a `<cola>.dlq`,
+ * sin reintentos, con el mensaje del error como motivo.
+ */
+export class NonRetryableError extends Error {
+  readonly nonRetryable = true;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'NonRetryableError';
+  }
+}
+
 export interface PublishOptions {
   routingKey?: string;
   headers?: Record<string, unknown>;
@@ -96,6 +110,8 @@ export class EventBus {
   private confirmChannel: amqplib.ConfirmChannel | null = null;
   /** messageId de mensajes `mandatory` devueltos por el broker por no tener cola enlazada. */
   private returnedMessageIds = new Set<string>();
+  /** Consumidores efectivamente activos en la conexión vigente (se reinicia al cerrarse la conexión). */
+  private activeConsumers = 0;
   private reconnectAttempts = 0;
   private isShuttingDown = false;
   private subscriptions: Array<{
@@ -162,6 +178,7 @@ export class EventBus {
           this.subscribeChannel = null;
           this.confirmChannel = null;
           this.connection = null;
+          this.activeConsumers = 0;
           this.scheduleReconnect();
         }
       });
@@ -227,6 +244,17 @@ export class EventBus {
       console.error(`[EventBus:${this.config.sourceModule}] ❌ Error publicando ${event.event_type}:`, error.message);
       return false;
     }
+  }
+
+  /**
+   * Disponibilidad para un `/ready`: hay conexión vigente y todas las suscripciones registradas tienen
+   * un consumidor activo. Sin RABBITMQ_URL (bus deshabilitado) devuelve false.
+   */
+  isReady(): boolean {
+    return !this.isShuttingDown
+      && this.connection !== null
+      && this.subscribeChannel !== null
+      && this.activeConsumers >= this.subscriptions.length;
   }
 
   private withEventId<T>(event: BocamEvent<T>): BocamEvent<T> & { event_id: string } {
@@ -378,6 +406,7 @@ export class EventBus {
         }
       });
 
+      this.activeConsumers++;
       console.log(`[EventBus:${this.config.sourceModule}] 📥 Suscrito: ${pattern} → cola: ${queueName}`);
     } catch (error: any) {
       console.error(`[EventBus:${this.config.sourceModule}] ❌ Error suscribiendo a ${pattern}:`, error.message);
@@ -512,6 +541,11 @@ export class EventBus {
     } catch (error: any) {
       const reason = error?.message ?? String(error);
       console.error(`[EventBus:${this.config.sourceModule}] ❌ Error procesando evento (intento ${attempt}):`, reason);
+
+      if (error?.nonRetryable === true) {
+        await this.sendToDeadLetter(queueName, msg, event, reason, attempt);
+        return;
+      }
 
       if (options.retry && attempt < options.retry.maxAttempts) {
         try {

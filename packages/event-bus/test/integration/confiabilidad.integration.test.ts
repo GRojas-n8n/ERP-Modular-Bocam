@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import * as amqplib from 'amqplib';
-import { createEventBus, type BocamEvent } from '../../src/index';
+import { createEventBus, NonRetryableError, type BocamEvent } from '../../src/index';
 
 const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://user:password@127.0.0.1:5672';
 process.env.RABBITMQ_URL = rabbitUrl;
@@ -302,8 +302,65 @@ async function testSuscripcionSinOpcionesSeComportaComoAntes() {
   }
 }
 
+async function testErrorNoReintentableVaDirectoALaDlq() {
+  const runId = randomUUID();
+  const eventType = `confiabilidad.no_reintentable.${runId}`;
+  const queue = `conf-q-${runId}`;
+  const bus = createEventBus(`pub-${runId}`);
+  const consumer = createEventBus(`sub-${runId}`);
+  const raw = await rawChannel();
+  const originalError = console.error;
+  console.error = () => undefined;
+  try {
+    await bus.connect();
+    await consumer.connect();
+    let llamadas = 0;
+    await consumer.subscribe(eventType, async () => {
+      llamadas++;
+      throw new NonRetryableError('FORMATO_NO_SOPORTADO: evento sin recepcion_id');
+    }, { queueName: queue, retry: { maxAttempts: 4, delayMs: 200 }, deadLetter: true });
+    await delay(300);
+    await bus.publishConfirmed(buildEvent(eventType));
+    await waitFor(async () => (await messageCount(`${queue}.dlq`)) === 1, 8000, 'mensaje en la DLQ');
+    await delay(600);
+    assert.equal(llamadas, 1, 'un error no reintentable no se reintenta');
+    assert.equal(await messageCount(`${queue}.retry`), 0, 'no debe pasar por la cola de reintento');
+    const [msg] = await drain(raw, `${queue}.dlq`);
+    assert.match(String(msg.properties.headers?.['x-failure-reason']), /FORMATO_NO_SOPORTADO/);
+    console.log('ok - un NonRetryableError va directo a la DLQ sin reintentos');
+  } finally {
+    console.error = originalError;
+    await bus.close(); await consumer.close();
+    await cleanupQueues(raw, [queue, `${queue}.retry`, `${queue}.dlq`]);
+    await raw.connection.close();
+  }
+}
+
+async function testIsReadyReflejaConexionYSuscripciones() {
+  const runId = randomUUID();
+  const bus = createEventBus(`ready-${runId}`);
+  const queue = `conf-q-${runId}`;
+  const raw = await rawChannel();
+  try {
+    assert.equal(bus.isReady(), false, 'sin conexión no está listo');
+    await bus.connect();
+    assert.equal(bus.isReady(), true, 'conectado y sin suscripciones pendientes está listo');
+    await bus.subscribe(`confiabilidad.ready.${runId}`, async () => undefined, { queueName: queue });
+    assert.equal(bus.isReady(), true, 'conectado con la suscripción activa está listo');
+    await bus.close();
+    assert.equal(bus.isReady(), false, 'tras cerrar ya no está listo');
+    console.log('ok - isReady refleja la conexión y las suscripciones activas');
+  } finally {
+    await bus.close().catch(() => undefined);
+    await cleanupQueues(raw, [queue]);
+    await raw.connection.close();
+  }
+}
+
 async function main() {
   const pruebas: Array<[string, () => Promise<void>]> = [
+    ['error no reintentable va directo a la DLQ', testErrorNoReintentableVaDirectoALaDlq],
+    ['isReady refleja conexion y suscripciones', testIsReadyReflejaConexionYSuscripciones],
     ['publishConfirmed resuelve con cola enlazada', testPublishConfirmedResuelveConCola],
     ['publishConfirmed rechaza sin cola', testPublishConfirmedRechazaSinCola],
     ['publishConfirmed rechaza sin canal', testPublishConfirmedRechazaSinCanal],
