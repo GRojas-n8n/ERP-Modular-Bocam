@@ -35,6 +35,14 @@ async function hijo() {
 `); };
   const original = { log: console.log, warn: console.warn, error: console.error };
   // Si algo se cuelga, el hijo lo reporta con lo último que registró en vez de quedar mudo hasta el tiempo límite del padre.
+  const terminarConError = (motivo: string) => {
+    process.stdout.write(`
+${MARCA}${JSON.stringify({ errorDelHijo: `${motivo}; últimos registros: ${JSON.stringify(logs.slice(-12))}` })}
+`);
+    process.exit(0);
+  };
+  process.on('uncaughtException', (error) => terminarConError(`excepción no controlada: ${String(error?.stack ?? error)}`));
+  process.on('unhandledRejection', (razon: any) => terminarConError(`promesa rechazada sin manejar: ${String(razon?.stack ?? razon)}`));
   const vigilante = setTimeout(() => {
     process.stdout.write(`
 ${MARCA}${JSON.stringify({ errorDelHijo: `sin terminar tras 60 s; últimos registros: ${JSON.stringify(logs.slice(-12))}` })}
@@ -120,12 +128,18 @@ ${MARCA}${JSON.stringify({ errorDelHijo: `sin terminar tras 60 s; últimos regis
 }
 
 // ── Proceso padre: un hijo por valor de la variable ───────────────────────────────────────────────────────────
-function ejecutarCaso(valor: string | undefined): any {
+function ejecutarCaso(valor: string | undefined, intento = 1): any {
   const env: NodeJS.ProcessEnv = { ...process.env };
   delete env.COMPRAS_OUTBOX_DISPATCHER;
   if (valor !== undefined) env.COMPRAS_OUTBOX_DISPATCHER = valor;
   const r = spawnSync(process.execPath, ['-r', 'ts-node/register/transpile-only', __filename, '--hijo'], { env, encoding: 'utf8', timeout: 90_000 });
   const linea = String(r.stdout).split('\n').reverse().find((l) => l.startsWith(MARCA));
+  // Un proceso que muere sin dejar marcador ni salida (señal, falta de recursos del runner) no dice nada del producto:
+  // se reintenta UNA vez y el reintento queda a la vista. Cualquier fallo con marcador, o un segundo silencio, sí falla.
+  if (!linea && intento === 1 && !String(r.stderr).trim() && !String(r.stdout).trim()) {
+    console.warn(`[aviso] el proceso hijo (valor ${JSON.stringify(valor)}) terminó sin reportar nada (estado ${r.status}, señal ${r.signal}, error ${r.error?.message}); se reintenta una vez`);
+    return ejecutarCaso(valor, 2);
+  }
   if (!linea) throw new Error(`el proceso hijo no reportó resultado (valor ${JSON.stringify(valor)}; estado ${r.status}, señal ${r.signal}, error ${r.error?.message}): stderr=${String(r.stderr).slice(-1200)} stdout=${String(r.stdout).slice(-400)}`);
   const resultado = JSON.parse(linea.slice(MARCA.length));
   if (resultado.errorDelHijo) throw new Error(`fallo en el hijo (valor ${JSON.stringify(valor)}): ${resultado.errorDelHijo}`.slice(0, 900));
