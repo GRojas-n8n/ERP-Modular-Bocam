@@ -32,13 +32,15 @@ on:
   workflow_dispatch:
     inputs:
       service:
-        description: "Servicio (finanzas, contabilidad o gerencia-tecnica)"
+        description: "Servicio (finanzas, contabilidad, gerencia-tecnica, almacen o compras)"
         required: true
         type: choice
         options:
           - finanzas
           - contabilidad
           - gerencia-tecnica
+          - almacen
+          - compras
 
 env:
   VPS_REPO_PATH: /root/ERP-Modular-Bocam
