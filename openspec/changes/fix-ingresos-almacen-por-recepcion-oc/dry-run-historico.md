@@ -4,7 +4,7 @@ Autorizado por el titular el 2026-09-25 **exclusivamente** sobre una restauraci�
 
 ## Estado
 
-Pendiente de ejecución: la copia fuera de la VPS no está en la máquina de trabajo, y el único lugar conocido es el directorio de respaldos de la VPS. Copiar los volcados de la VPS o restaurarlos allí no está cubierto por la autorización; se necesita la ubicación de la copia externa o una autorización explícita adicional.
+**Ejecutado el 2026-09-25**, solo lectura. La copia externa del respaldo estaba en la máquina de trabajo; no se copió nada desde la VPS.
 
 ## Qué se restaura
 
@@ -62,3 +62,26 @@ Se espera, según las estadísticas de PostgreSQL: como máximo 2 recepciones co
 ## Entrega
 
 Informe con: integridad verificada, cantidades por consulta, recepciones sin ingreso correspondiente, filas sin correlación suficiente y las limitaciones (el respaldo no incluye Redis ni mensajes en RabbitMQ).
+
+## Resultado (2026-09-25)
+
+Ejecución conforme al procedimiento: SHA-256 de ambos volcados coincidente con el manifiesto; contenedor `postgres:15-alpine` con red `none`; solo se restauraron `bocam_compras` y `bocam_almacen`; sesión con `default_transaction_read_only = on`; contenedor y datos destruidos al terminar.
+
+| Consulta | Resultado |
+|---|---|
+| Recepciones de OC en el respaldo | **0** (0 renglones de recepción) |
+| OC en el respaldo | 2: una `EMITIDA` con 1 renglón de texto libre y una `ERROR_FINANZAS` con 1 renglón de catálogo |
+| Movimientos de Almacén | **0**; inventario 0; activos 0 |
+| INGRESOS cuya referencia coincide con las OC del respaldo | 0 |
+| Estadísticas `n_tup_ins`/`n_tup_del` de recepciones en el respaldo | 0 / 0 (las estadísticas no se incluyen en el volcado) |
+
+### Interpretación
+
+- El respaldo previo a la purga **no contiene ninguna recepción**: las 2 recepciones (3 renglones) que las estadísticas de producción registran desde el 2026-07-21 ya habían sido eliminadas antes del 2026-09-24. No se pueden identificar con esta fuente.
+- No hay recepciones sin ingreso correspondiente, ni filas sin correlación que examinar: no existen ni recepciones ni movimientos.
+- **Clasificación:** ninguna recepción de dato real identificable; nada que conciliar. Se confirma la recomendación de **no ejecutar conciliación histórica**.
+
+### Limitaciones
+
+- Las 2 recepciones eliminadas antes del respaldo no son recuperables con esta fuente; solo se sabe que existieron por las estadísticas.
+- El respaldo no incluye Redis ni mensajes de RabbitMQ.
