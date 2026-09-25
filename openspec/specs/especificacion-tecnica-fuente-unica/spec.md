@@ -1,4 +1,10 @@
-## ADDED Requirements
+# especificacion-tecnica-fuente-unica Specification
+
+## Purpose
+
+Define que la especificación técnica requerida de un renglón del Cuadro Comparativo se resuelve siempre desde el ítem de la Requisición de origen, quién puede corregirla y hasta cuándo, y cuándo se conserva el valor almacenado como respaldo.
+
+## Requirements
 
 ### Requirement: El sistema SHALL resolver la especificación técnica del renglón desde el RequisicionItem de origen
 El sistema SHALL devolver `marca_modelo_ref` y `especificaciones_requeridas` resolviendo en vivo los campos `especificacion_marca_modelo`/`especificacion_detalle` del `RequisicionItem` referenciado por `detalle_req_id`, en vez de un valor copiado al momento de crear el cuadro. Para renglones sin `detalle_req_id` (cuadros creados antes de esta capability, o líneas de ítems imprevisto sin ítem de origen resoluble), el sistema SHALL usar el valor almacenado en `ComparativaLinea` como respaldo.
