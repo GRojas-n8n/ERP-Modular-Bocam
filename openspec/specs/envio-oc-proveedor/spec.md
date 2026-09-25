@@ -1,3 +1,9 @@
+# envio-oc-proveedor Specification
+
+## Purpose
+
+Define el envío por correo de las Órdenes de Compra a sus proveedores: listado de las OC del proyecto activo, selección múltiple, un correo por proveedor con un PDF por OC generado en el servidor, envío best-effort por proveedor y registro de la fecha del último envío.
+
 ## Requirements
 
 ### Requirement: Compras SHALL ver un listado de todas las Órdenes de Compra del proyecto activo

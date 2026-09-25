@@ -1,3 +1,9 @@
+# seleccion-proveedor-recomendado-firma Specification
+
+## Purpose
+
+Define las reglas de selección del proveedor recomendado y de firma del Cuadro Comparativo: validación de la primera y la segunda opción, rechazo de opciones con renglones NC o pendientes, habilitación del botón de firma y disponibilidad del envío al Gerente Técnico tras firmar.
+
 ## Requirements
 
 ### Requirement: La segunda opción de proveedor SHALL pertenecer al cuadro comparativo
@@ -58,9 +64,7 @@ validación.
 
 
 ### Requirement: Un cuadro firmado SHALL exponer la acción de envío al Gerente Técnico
-
-Inmediatamente después de que la firma se complete exitosamente (`CuadroComparativo.estado
-= FIRMADO_BLOQUEADO`), la acción "Enviar al Gerente Técnico" SHALL estar disponible para
+Inmediatamente después de que la firma se complete exitosamente (`CuadroComparativo.estado = FIRMADO_BLOQUEADO`), la acción "Enviar al Gerente Técnico" SHALL estar disponible para
 el Residente, Compras y Superintendent — sin depender de ningún estado intermedio
 adicional.
 
