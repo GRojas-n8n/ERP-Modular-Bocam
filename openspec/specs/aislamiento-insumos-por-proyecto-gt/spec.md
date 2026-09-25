@@ -11,12 +11,12 @@
 - **WHEN** un Residente con proyecto activo `A` hace `GET /api/v1/gerencia-tecnica/insumos/explosion` para armar una requisición "Por Insumo"
 - **THEN** la respuesta SHALL incluir únicamente insumos con `proyecto_id = A`
 
-### Requirement: Los roles de nivel-tenant sin proyecto activo SHALL ver el catálogo consolidado con trazabilidad por proyecto
-Cuando un usuario con rol de nivel-tenant (`admin`, `superintendent`) no tiene un proyecto activo en el contexto de sesión, `GET /api/v1/gerencia-tecnica/insumos` SHALL retornar los insumos de todos los proyectos del tenant, y cada insumo en la respuesta SHALL incluir su `proyecto_id` de origen.
+### Requirement: Los roles de nivel-tenant sin proyecto activo SHALL ser rechazados en el catálogo de Insumos
+Cuando un usuario con rol de nivel-tenant (`admin`, `superintendent`) no tiene un proyecto activo en el contexto de sesión, `GET /api/v1/gerencia-tecnica/insumos` SHALL responder `403 AUTH_PROJECT_REQUIRED` antes de consultar datos y NO SHALL retornar insumos de ningún proyecto. El catálogo de Insumos es una capacidad project-scoped y no existe modo consolidado del tenant.
 
-#### Scenario: Admin sin proyecto activo ve el catálogo consolidado
+#### Scenario: Admin sin proyecto activo es rechazado
 - **WHEN** un usuario con rol `admin` sin proyecto activo hace `GET /api/v1/gerencia-tecnica/insumos`
-- **THEN** la respuesta SHALL incluir insumos de todos los proyectos del tenant, cada uno con su campo `proyecto_id`
+- **THEN** la respuesta SHALL ser `403` con código `AUTH_PROJECT_REQUIRED` y NO SHALL incluir datos de ningún proyecto
 
 #### Scenario: Admin con proyecto activo ve solo ese proyecto
 - **WHEN** un usuario con rol `admin` con proyecto activo `A` hace `GET /api/v1/gerencia-tecnica/insumos`
