@@ -18,9 +18,13 @@ openspec validate --all --strict --json
 
 | Tipo | Total | Válidos | Inválidos |
 |---|---:|---:|---:|
-| Changes activos | 24 | 24 | 0 |
-| Specs canónicas | 155 | 52 | 103 |
-| Total | 179 | 76 | 103 |
+| Changes activos versionados | 11 | 11 | 0 |
+| Specs canónicas | 163 | 64 | 99 |
+| Total | 174 | 75 | 99 |
+
+Cifras al 2026-09-25 tras el lote de archivo 3.1 (medidas sobre el árbol versionado;
+los borradores locales sin seguimiento no se cuentan). Ese lote agregó siete
+specs canónicas válidas y normalizó la estructura mínima de cuatro históricas.
 
 Se corrigió el delta de Centro de Costos conservando los dos escenarios
 canónicos omitidos, se reemplazó el propósito placeholder de
@@ -35,7 +39,7 @@ reparó el último delta activo inválido,
 
 | Categoría | Elementos | Tratamiento |
 |---|---:|---|
-| Spec sin `Purpose`/`Requirements` canónicos | 96 | migración estructural conservando literalmente requisitos y escenarios |
+| Spec sin `Purpose`/`Requirements` canónicos | 92 | migración estructural conservando literalmente requisitos y escenarios |
 | Spec con requisitos sin `SHALL`/`MUST` | 7 specs / 10 requisitos | normalizar lenguaje normativo sin alterar el comportamiento |
 | Delta activo inválido | 0 pendientes | correcciones mínimas completadas sin eliminar escenarios ni cambiar contratos |
 

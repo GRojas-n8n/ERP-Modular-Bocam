@@ -19,7 +19,8 @@
 
 ## 3. Conciliación
 
-- [ ] 3.1 Revisar los changes con cero tareas pendientes contra `main` y producción.
+- [x] 3.1 Revisar los changes con cero tareas pendientes contra `main` y producción. Los 12 candidatos tenían merge, despliegue exitoso y código presente en el bundle productivo (solo lectura); se archivaron en un lote documental (ver `inventory.md`, sección "Conciliación 3.1").
+  - Fuera del lote, por tener tareas pendientes: los changes con QA o smoke abiertos siguen su propio gate (`acceso-proyectos-gt-control-obra`, `bump-dependencias-cve-multer-nodemailer-express`, `centro-costos-confirmar-y-editar-consecutivo` y los demás listados en el inventario).
 - [x] 3.2 Archivar el primer lote documental con evidencia completa: `fix-dropdown-proyecto-transparente`, `resaltar-selector-proyecto` y `sidebar-submenu-flyout-lateral`; especificaciones canónicas actualizadas.
 - [x] 3.3 Preservar cada borrador local en su rama independiente `codex/draft-*`, sin publicarla ni mezclar implementaciones.
 - [x] 3.4 Actualizar el checkout principal por avance rápido a `a7697f2`, conservando intactos los archivos originales y con los borradores ya respaldados en ramas.
