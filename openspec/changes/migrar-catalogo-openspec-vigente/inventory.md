@@ -221,6 +221,7 @@ Treinta specs validan pero conservan `TBD - created by archiving change …` com
 | 3 | Hecho | `aislamiento-insumos-por-proyecto-gt`, `movimientos-partida-endpoint`, `especificacion-tecnica-fuente-unica`, `especificacion-tecnica-ofrecida-proveedor`, `ficha-tecnica-carga-unica`, `cobertura-saldo-partida-limitado` (dominio 3, T1/T2) | 83 / 80 |
 | 4a | Hecho | `carga-masiva-proveedores`, `validacion-longitud-proveedor`, `seleccion-proveedores-unificada`, `validacion-stock-cotizacion-externa` (dominio 5: proveedores y solicitud de cotización, T1/T2) | 87 / 76 |
 | 4b | Hecho | `envio-oc-proveedor`, `multi-oc-generacion`, `presupuesto-resolucion-oc`, `evaluacion-tecnica-por-especificacion`, `seleccion-proveedor-recomendado-firma`, `panel-purga-datos-prueba-compras` (dominio 5: comparativas, órdenes y evaluación, T1/T2) | 93 / 70 |
+| 5a | Hecho | `baja-reactivar-empleado`, `calculo-nomina-por-horas`, `carga-masiva-empleados`, `config-jornada-empleado`, `expediente-empleado`, `registro-asistencia-por-horas` (dominio 8: Personal, nómina y asistencia ordinaria, T1) | 99 / 64 |
 
 ## Hallazgos semánticos detectados durante la migración
 
