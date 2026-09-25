@@ -1,10 +1,9 @@
 # ============================================================
 # smoke-test-playwright.yml — BocamOS ERP
-# Workflow reusable (workflow_call): smoke test de Playwright
-# contra producción real (login + carga de dashboard), invocado
-# como job final tanto por deploy-vps.yml (frontend) como por
-# deploy-vps-backend.yml (backend) — ambos deploys terminan
-# afectando la misma app real y el mismo dominio.
+# Workflow reusable y ejecutable manualmente: smoke test de Playwright
+# contra producción real (login + carga de dashboard), invocado como job final
+# tanto por deploy-vps.yml (frontend) como por deploy-vps-backend.yml (backend),
+# o bajo demanda para comprobaciones operativas sin desplegar.
 #
 # No reemplaza el smoke test HTTP (curl) existente en deploy-vps.yml,
 # lo complementa: curl solo prueba que el servidor responde 200,
@@ -18,13 +17,20 @@
 #
 # SECRETS requeridos (del caller, vía `secrets: inherit`):
 #   SMOKE_TEST_EMAIL, SMOKE_TEST_PASSWORD → credenciales de un
-#   usuario real de producción (ver tasks.md, grupo 4 — elegido y
-#   configurado a mano por el usuario, no por este workflow).
+#   cuenta técnica dedicada de producción, sin roles ni proyectos
+#   (configurada fuera del workflow y almacenada solo como secrets).
 # ============================================================
 
 name: Smoke Test Playwright (reusable)
 
 on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL de producción contra la que corre el smoke test"
+        required: false
+        type: string
+        default: "https://iretum.com"
   workflow_call:
     inputs:
       base_url:
