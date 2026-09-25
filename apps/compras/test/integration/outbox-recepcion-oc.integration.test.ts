@@ -491,6 +491,37 @@ async function testReemisionNoRepublicaUnPayloadQueSigueIncompleto() {
   } finally { console.error = originalError; gtDisponible = true; await cleanupTenant(tenantId); }
 }
 
+async function testElAltaDelOutboxRechazaUnPayloadIncompleto() {
+  const tenantId = randomUUID(); const proyectoId = randomUUID();
+  try {
+    const { registrarEventoRecepcion } = await import('../../src/outbox');
+    const base = (snapshot: any) => ({
+      eventId: randomUUID(), tenantId, proyectoId, ordenId: randomUUID(), ordenCodigo: 'OC-ALTA', proveedorId: randomUUID(),
+      recepcionId: randomUUID(), fechaRecepcion: new Date(), estadoOc: 'RECIBIDA', recibidoPor: randomUUID(),
+      items: [{ recepcionItemId: randomUUID(), ordenItemId: randomUUID(), insumoId: randomUUID(), cantidadRecibida: 3, snapshot }],
+    });
+    const casos: Array<[string, any]> = [
+      ['sin snapshot', null],
+      ['campo vacío', { clave: 'K', descripcion: '', unidad: 'PZA', categoria: 'MATERIAL' }],
+      ['campo en blanco', { clave: 'K', descripcion: 'D', unidad: '   ', categoria: 'MATERIAL' }],
+      ['sin categoría', { clave: 'K', descripcion: 'D', unidad: 'PZA', categoria: '' }],
+    ];
+    for (const [nombre, snapshot] of casos) {
+      let error: any;
+      await prisma.$transaction(async (tx) => { await registrarEventoRecepcion(tx as any, base(snapshot) as any); }).catch((e) => { error = e; });
+      assert.ok(error, `${nombre}: el alta debe rechazarse`);
+      assert.equal(error.code, 'SNAPSHOT_INCOMPLETO', `${nombre}: causa explícita`);
+    }
+    assert.equal(await (prisma as any).outboxEvento.count({ where: { tenant_id: tenantId } }), 0, 'ningún evento incompleto llega a escribirse');
+    // Y con un snapshot completo sí se escribe.
+    await prisma.$transaction(async (tx) => {
+      await registrarEventoRecepcion(tx as any, base({ clave: 'K', descripcion: 'D', unidad: 'PZA', categoria: 'MATERIAL' }) as any);
+    });
+    assert.equal(await (prisma as any).outboxEvento.count({ where: { tenant_id: tenantId } }), 1);
+    console.log('[OK] testElAltaDelOutboxRechazaUnPayloadIncompleto');
+  } finally { await cleanupTenant(tenantId); }
+}
+
 // ── Aislamiento y reemisión ──────────────────────────────────────────────────
 
 async function testRlsAislaPorTenantYProyectoYElDespachadorVeTodo() {
@@ -590,6 +621,7 @@ async function main() {
     ['recuperacion tras reinicio', testRecuperacionTrasReinicioRetomaLoPendiente],
     ['caida entre confirmacion y marcado republica con el mismo event_id', testCaidaEntreConfirmacionYMarcadoRepublicaConElMismoEventId],
     ['evento completo tras reinicio sin consultar GT', testEventoCompletoTrasReinicioSinConsultarGerenciaTecnica],
+    ['el alta del outbox rechaza un payload incompleto', testElAltaDelOutboxRechazaUnPayloadIncompleto],
     ['evento incompleto nunca se publica y se repara', testEventoIncompletoNuncaSePublicaNiSeMarcaPublicadoYSeRepara],
     ['reemision no republica un payload que sigue incompleto', testReemisionNoRepublicaUnPayloadQueSigueIncompleto],
     ['RLS aisla por tenant y proyecto', testRlsAislaPorTenantYProyectoYElDespachadorVeTodo],
