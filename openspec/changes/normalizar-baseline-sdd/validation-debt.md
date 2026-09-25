@@ -19,13 +19,13 @@ openspec validate --all --strict --json
 | Tipo | Total | Válidos | Inválidos |
 |---|---:|---:|---:|
 | Changes activos versionados | 11 | 11 | 0 |
-| Specs canónicas | 163 | 99 | 64 |
-| Total | 174 | 110 | 64 |
+| Specs canónicas | 163 | 100 | 63 |
+| Total | 174 | 111 | 63 |
 
-Cifras al 2026-09-25 tras el lote de archivo 3.1, la normalización `SHALL`/`MUST` y los lotes 1 a 5a de migración (medidas sobre el árbol versionado;
+Cifras al 2026-09-25 tras el lote de archivo 3.1, la normalización `SHALL`/`MUST` y los lotes 1 a 5b de migración (medidas sobre el árbol versionado;
 los borradores locales sin seguimiento no se cuentan). Ese lote agregó siete
 specs canónicas válidas y normalizó la estructura mínima de cuatro históricas.
-La deuda restante son las 64 specs sin `Purpose`/`Requirements` canónicos.
+La deuda restante son las 63 specs sin `Purpose`/`Requirements` canónicos.
 
 Se corrigió el delta de Centro de Costos conservando los dos escenarios
 canónicos omitidos, se reemplazó el propósito placeholder de
@@ -40,7 +40,7 @@ reparó el último delta activo inválido,
 
 | Categoría | Elementos | Tratamiento |
 |---|---:|---|
-| Spec sin `Purpose`/`Requirements` canónicos | 64 | migración estructural conservando literalmente requisitos y escenarios |
+| Spec sin `Purpose`/`Requirements` canónicos | 63 | migración estructural conservando literalmente requisitos y escenarios |
 | Spec con requisitos sin `SHALL`/`MUST` | 0 pendientes (7 specs / 10 requisitos corregidos) | unión de líneas partidas por el ajuste de texto; palabras idénticas, verificado contra `HEAD` |
 | Delta activo inválido | 0 pendientes | correcciones mínimas completadas sin eliminar escenarios ni cambiar contratos |
 

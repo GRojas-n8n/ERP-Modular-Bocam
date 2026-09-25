@@ -212,6 +212,22 @@ Treinta specs validan pero conservan `TBD - created by archiving change …` com
 | 9 | Seguridad, calidad, ventas y asistente | `asistente-auditoria-consultas`, `asistente-conversacion-multi-servicio`, `asistente-degradacion-parcial-cross-servicio`, `progreso-en-vivo-chat-asistente`, `control-acceso-modulo-seguridad` |
 | 10 | CI, despliegue, archivos e infraestructura transversal | `ci-app-shell-build-check`, `ci-rls-coverage-check`, `motor-archivos-exceljs` |
 
+## Trazabilidad de seguridad — lote 5b
+
+Cada requisito de `asistencia-qr-segura` se trazó contra el código y las pruebas antes de migrarla. Ninguna diferencia en caducidad, reutilización, doble lectura, autorización o aislamiento.
+
+| Requisito | Código (`apps/personal`) | Prueba |
+|---|---|---|
+| Sesión y rol de checador (`401` sin sesión, `403` sin rol) | `main.ts:1500`, `requireRoles('residencia','control_obra','personal_rh','admin')` | `testEscanearSinAuth`, `testEscanearRolSinPermiso` |
+| Token resuelve a empleado (`404`, `410`) | `main.ts:1510-1512`; el mensaje añade un punto final respecto al texto de la spec (observación, sin efecto de contrato) | `testEscanearTokenInexistente`, `testEscanearCredencialRevocada` |
+| Empleado del proyecto activo (`403`) | `main.ts:1515` con `obtenerEmpleadoIdsDelProyecto` (asignación de frente activa o cuadrilla del proyecto, `main.ts:613`) | `testEscanearEmpleadoDeOtroProyecto` |
+| Cooldown anti-rescaneo (`429`) | `main.ts:1520-1531`, `ASISTENCIA_COOLDOWN_MINUTOS` con valor por defecto 2 (`types.ts:54`) | `testCooldownYPosteriorProcesa` |
+| Geolocalización opcional (`400` sin coordenadas, `403` fuera del radio, sin configuración no exige) | `main.ts:1451-1490` y `:1533-1543`, distancia Haversine | `testGeofencingSinConfigNoExige`, `testGeofencingDentroYFueraDelRadio` |
+| Motor de doble-scan con `tipo_registro = 'QR'` y `registrado_por` | `main.ts:1545-1550` y `aplicarDobleScan` (`:1108`) | `testCooldownYPosteriorProcesa` (segundo escaneo) |
+| RLS de `config_asistencia_proyecto` (habilitada, forzada, política única con `AND`) | `prisma/rls-policies.sql:21`, `:36` y `:171` | `rls-personal-tablas-nuevas.integration.test.ts` (lectura y escritura entre proyectos) |
+
+Supuestos verificados: el modelo `CredencialEmpleado` no tiene fecha de caducidad y la spec tampoco la promete; los contenedores no fijan `TZ`, por lo que el cálculo de "hoy" del cooldown usa UTC.
+
 ## Avance por lote
 
 | Lote | Estado | Specs | Válidas / inválidas tras el lote |
@@ -222,6 +238,7 @@ Treinta specs validan pero conservan `TBD - created by archiving change …` com
 | 4a | Hecho | `carga-masiva-proveedores`, `validacion-longitud-proveedor`, `seleccion-proveedores-unificada`, `validacion-stock-cotizacion-externa` (dominio 5: proveedores y solicitud de cotización, T1/T2) | 87 / 76 |
 | 4b | Hecho | `envio-oc-proveedor`, `multi-oc-generacion`, `presupuesto-resolucion-oc`, `evaluacion-tecnica-por-especificacion`, `seleccion-proveedor-recomendado-firma`, `panel-purga-datos-prueba-compras` (dominio 5: comparativas, órdenes y evaluación, T1/T2) | 93 / 70 |
 | 5a | Hecho | `baja-reactivar-empleado`, `calculo-nomina-por-horas`, `carga-masiva-empleados`, `config-jornada-empleado`, `expediente-empleado`, `registro-asistencia-por-horas` (dominio 8: Personal, nómina y asistencia ordinaria, T1) | 99 / 64 |
+| 5b | Parcial | `asistencia-qr-segura` migrada. **`qr-doble-scan` detenida** por una diferencia en doble lectura (ver hallazgos) y pendiente de decisión. | 100 / 63 |
 
 ## Hallazgos semánticos detectados durante la migración
 
@@ -235,6 +252,7 @@ Se registran sin corregir: la migración no cambia contratos. Cada hallazgo requ
 | `despliegue-completo-microservicios` | El segundo requisito exige una `location /api/v1/<servicio>` en `docker/nginx.qnap.conf`. En producción el tráfico entra por Caddy hacia `app-shell:80` y el enrutado a los servicios lo define `apps/app-shell/nginx.conf`; el archivo QNAP corresponde a otra topología. El requisito nombra el archivo equivocado para el VPS. **Decisión:** abrir un change independiente que separe explícitamente las topologías: VPS (`docker/Caddyfile` → `app-shell:80` → `apps/app-shell/nginx.conf`) y QNAP (`docker/nginx.qnap.conf`). No basta sustituir un archivo por otro, porque ambas topologías pueden seguir siendo válidas. | `docker/Caddyfile`, `apps/app-shell/nginx.conf`, `docker/nginx.qnap.conf` |
 | `especificacion-tecnica-fuente-unica` | El segundo requisito remite a la capability `cotizar-items-texto-libre-comparativa`, que no existe en `openspec/specs/`; solo consta el change archivado `2026-07-14-cotizar-items-texto-libre-comparativa`. La referencia queda colgante y hay que decidir si esa capability debe incorporarse al catálogo canónico o si la referencia se reescribe. **Decisión:** no reescribir la referencia todavía. Revisar el delta del change archivado, contrastar sus requisitos con el código y las pruebas actuales de Compras y buscar si otra capability canónica ya cubre ese comportamiento. Si sigue vigente y no está duplicada, abrir un change documental independiente para incorporarla al catálogo; si fue sustituida, corregir la referencia hacia la capability vigente, también en un change separado. | `openspec/changes/archive/2026-07-14-cotizar-items-texto-libre-comparativa` |
 | `seleccion-proveedores-unificada` | El tercer requisito pide mostrar la marca "agregado sin invitación"; la interfaz (`ComparativaDetail.tsx`) muestra la etiqueta "Sin invitación". Diferencia menor de literal: decidir si se ajusta la spec o la interfaz. | `apps/app-shell/src/components/ComparativaDetail.tsx:2062` |
+| `qr-doble-scan` | **Detenida, no migrada.** El primer requisito exige que el tercer escaneo del día, cuando el registro ya tiene entrada y salida, devuelva el registro sin cambios con `200 OK`. `POST /asistencia/escanear` responde siempre `201` al pasar todas las validaciones (`status: 201` en el handler), incluido ese caso idempotente, y ninguna prueba cubre el tercer escaneo. Además el requisito no distingue modos: para empleados `JORNADA_COMPLETA` el motor hace `upsert` de estado y no hay noción de entrada/salida. Diferencia de contrato en doble lectura: se trata como change funcional separado y la spec no se corrige durante la migración. Decisión pendiente: alinear el código a `200` o la spec a `201`, y acotar el requisito a `POR_HORAS`. | `apps/personal/src/main.ts:1551` y `:1194`, `apps/personal/test/integration/credenciales-asistencia-qr-segura.integration.test.ts` |
 
 ## Reglas de lote
 
