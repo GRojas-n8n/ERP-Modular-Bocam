@@ -14,7 +14,8 @@
     "test:integration:activos-crud": "node -r ts-node/register/transpile-only test/integration/activos-crud.integration.test.ts",
     "test:integration:activos-traspasos": "node -r ts-node/register/transpile-only test/integration/activos-traspasos.integration.test.ts",
     "test:integration:recepcion-oc-v1": "node -r ts-node/register/transpile-only test/integration/almacen-recepcion-oc-v1.integration.test.ts",
-    "test:integration:recepcion-oc-suscripcion": "node -r ts-node/register/transpile-only test/integration/almacen-recepcion-oc-suscripcion.integration.test.ts"
+    "test:integration:recepcion-oc-suscripcion": "node -r ts-node/register/transpile-only test/integration/almacen-recepcion-oc-suscripcion.integration.test.ts",
+    "test:integration:recepcion-oc-retencion": "node -r ts-node/register/transpile-only test/integration/almacen-recepcion-oc-retencion.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

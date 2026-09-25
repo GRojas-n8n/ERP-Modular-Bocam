@@ -128,6 +128,7 @@ jobs:
           ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-eventos-oc
           ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-v1
           ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-suscripcion
+          ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-retencion
 
       # ── Compras: outbox transaccional de recepciones de OC ──
       - name: Run Compras outbox integration

@@ -6,7 +6,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Subscriber de recepciones de OC registradas
-El servicio Almacén SHALL suscribirse al evento `compras.recepcion_oc_registrada.v1` en el topic exchange `bocam.events`, mediante una cola nueva con sufijo `.v2` y con reintentos y cola de mensajes fallidos activados, y SHALL crear un `MovimientoAlmacen` de tipo INGRESO por cada ítem recibido con `insumo_id`. El evento SHALL ser autosuficiente: Almacén NO SHALL consultar a otros servicios para procesarlo. Todo ítem con `insumo_id` SHALL traer `clave`, `descripcion`, `unidad` y `categoria`, exista o no el `ItemInventario`; cuando no exista, Almacén SHALL crearlo con ese snapshot.
+El servicio Almacén SHALL suscribirse al evento `compras.recepcion_oc_registrada.v1` en el topic exchange `bocam.events`, mediante la cola `.v3` (sin TTL y con dead-letter a su cola de mensajes fallidos) y con reintentos y cola de mensajes fallidos activados, y SHALL crear un `MovimientoAlmacen` de tipo INGRESO por cada ítem recibido con `insumo_id`. El evento SHALL ser autosuficiente: Almacén NO SHALL consultar a otros servicios para procesarlo. Todo ítem con `insumo_id` SHALL traer `clave`, `descripcion`, `unidad` y `categoria`, exista o no el `ItemInventario`; cuando no exista, Almacén SHALL crearlo con ese snapshot.
 
 #### Scenario: Recepción procesada exitosamente
 - **WHEN** Compras publica `compras.recepcion_oc_registrada.v1` con un payload válido
@@ -84,3 +84,37 @@ El servicio SHALL exponer `GET /ready`, que retorna `200` solo cuando la base de
 #### Scenario: Servicio arrancando
 - **WHEN** el servicio aún no conectó a la base o al bus
 - **THEN** `GET /ready` retorna `503` indicando qué dependencia falta
+
+### Requirement: La cola de recepciones SHALL retener los mensajes sin expirarlos ni perderlos
+Compras marca un evento como publicado cuando el broker confirma. Por eso la cola principal de `compras.recepcion_oc_registrada.v1` en Almacén NO SHALL tener `x-message-ttl`, y SHALL enviar a su cola de mensajes fallidos, por dead-letter de la propia cola, todo mensaje que deje de poder permanecer en ella. Un mensaje confirmado por el broker NO SHALL desaparecer sin quedar en la cola principal, en la de reintento o en la de mensajes fallidos. La cola `.v2` (TTL de 24 h sin dead-letter) SHALL dejar de consumirse y conservarse sin modificar.
+
+#### Scenario: Almacén detenido más allá de la retención anterior
+- **WHEN** Almacén permanece detenido más de 24 horas con eventos ya confirmados por el broker
+- **THEN** los mensajes siguen en la cola `.v3` y se aplican una sola vez cuando Almacén arranca
+
+#### Scenario: Mensaje que no puede permanecer en la cola
+- **WHEN** un mensaje de la cola principal se rechaza sin reencolar o expira por una política futura
+- **THEN** llega a la cola de mensajes fallidos con su payload original y el registro de su causa
+
+#### Scenario: Rechazo reintentable
+- **WHEN** el procesamiento falla por una causa transitoria
+- **THEN** el mensaje pasa por la cola de reintento, vuelve a la cola `.v3` y se aplica sin duplicar el INGRESO
+
+#### Scenario: Rechazo definitivo
+- **WHEN** el evento no cumple el contrato
+- **THEN** llega a la cola de mensajes fallidos en el primer intento, sin pasar por la cola de reintento
+
+### Requirement: Solo una cola de Almacén SHALL recibir el evento cuando el publicador emita
+Antes de que Compras publique `compras.recepcion_oc_registrada.v1`, la cola `.v2` SHALL estar vacía y desvinculada del exchange, y la cola `.v3` SHALL tener consumidor activo con su cola de reintento y su cola de mensajes fallidos. La desvinculación SHALL quitar únicamente el binding: NO SHALL borrar colas ni mensajes, y SHALL negarse si la `.v3` no está operativa o si la `.v2` tiene mensajes.
+
+#### Scenario: Cola vieja con mensajes
+- **WHEN** se pide desvincular la `.v2` y contiene mensajes
+- **THEN** la operación se rechaza y el binding permanece
+
+#### Scenario: Cola nueva no operativa
+- **WHEN** la `.v3` no existe, no tiene consumidor activo o no tiene los argumentos esperados
+- **THEN** la desvinculación se rechaza
+
+#### Scenario: Desvinculación
+- **WHEN** la `.v3` está operativa y la `.v2` está vacía
+- **THEN** los eventos nuevos llegan solo a la `.v3`, cada uno se procesa una sola vez y la `.v2` sigue existiendo para un eventual rollback

@@ -17,6 +17,7 @@ import basePrisma, { createTenantContext } from './db';
 import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { createEventBus, BocamEvent, NonRetryableError } from '../../../packages/event-bus/src';
+import { RECEPCION_OC_EVENT, RECEPCION_OC_COLA, argumentosColaRecepcionOc } from './recepcion-oc-cola';
 import {
   createObservabilityMiddleware,
   initSentry,
@@ -862,7 +863,6 @@ export const handleOcRecibidaParcial = (e: BocamEvent) => handleOcRecibida(e, 'c
 // Ver openspec/changes/fix-ingresos-almacen-por-recepcion-oc
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const RECEPCION_OC_EVENT = 'compras.recepcion_oc_registrada.v1';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface RecepcionOcItem {
@@ -1057,9 +1057,12 @@ export async function startServer() {
     await eventBus.subscribe('compras.oc_recibida_total',   handleOcRecibidaTotal);
     await eventBus.subscribe('compras.oc_recibida_parcial', handleOcRecibidaParcial);
     await eventBus.subscribe('auth.centro_costos_creado',   handleCentroCostosCreadoEvent);
-    // Cola nueva (.v2) con reintentos y cola de mensajes fallidos. Las colas anteriores no se modifican.
+    // Cola vigente (.v3): sin TTL, con dead-letter a su DLQ, reintentos y cola de mensajes fallidos. La .v2 (TTL de
+    // 24 h sin dead-letter) ya no se consume y se conserva sin modificar para un eventual rollback; ver
+    // docs/operacion/almacen-cola-recepcion-oc-v3.md.
     await eventBus.subscribe(RECEPCION_OC_EVENT, handleRecepcionOcRegistrada, {
-      queueName: 'almacen.compras_recepcion_oc_registrada_v1.v2',
+      queueName: RECEPCION_OC_COLA,
+      queueArguments: argumentosColaRecepcionOc(),
       retry: {
         maxAttempts: Number(process.env.ALMACEN_RECEPCION_MAX_INTENTOS ?? 5),
         delayMs: Number(process.env.ALMACEN_RECEPCION_ESPERA_MS ?? 30000),

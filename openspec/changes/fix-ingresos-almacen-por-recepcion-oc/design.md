@@ -71,9 +71,18 @@ Un evento se procesa en una sola transacción: se registran el `event_id`, los m
 
 `SubscriptionOptions` gana `retry?: { maxAttempts, delayMs }` y `deadLetter?: boolean`. Con `retry`, un fallo republica el mensaje a `<cola>.retry` (TTL igual a `delayMs`, con dead-letter de regreso a la cola principal) y cuenta los intentos en el header `x-attempt`. Agotados, va a `<cola>.dlq` con el payload original y el motivo. Un mensaje ininterpretable va directo a la DLQ. Sin las opciones, el comportamiento actual no cambia. Solo las suscripciones nuevas de Almacén las activan.
 
-### 7. Colas `.v2`
+### 7. Colas `.v2` y `.v3`
 
 RabbitMQ no permite redeclarar una cola durable con argumentos distintos (`PRECONDITION_FAILED`). Se declaran colas nuevas `almacen.compras_recepcion_oc_registrada.v1.v2`, o el nombre que resulte del convenio, con sus `.retry` y `.dlq`; no se usan políticas globales ni se modifican las colas existentes. Las colas `almacen.compras_oc_recibida_*` actuales no se tocan en este change; su retiro se decide aparte con evidencia de que no reciben tráfico.
+
+**Corrección tras el despliegue de la `.v2` (la `.v3`).** El EventBus declara toda cola principal con `x-message-ttl: 86400000` y la `.v2` lo heredó, sin dead-letter. Con el outbox el defecto es grave: Compras marca `PUBLICADO` cuando el broker confirma, y un mensaje que expirara con Almacén detenido más de 24 h se perdía sin pasar por la DLQ. Como los argumentos son inmutables, se declara la `.v3`:
+
+- Sin `x-message-ttl`. Se logra con `queueArguments: { 'x-message-ttl': undefined }`, porque el EventBus mezcla `queueArguments` sobre su TTL por defecto y amqplib omite las claves `undefined`. No se modifica `@bocam/event-bus` (no se reconstruyen los otros 12 servicios). Una prueba con RabbitMQ real declara la cola con los argumentos esperados y falla si reaparece el TTL.
+- Con `x-dead-letter-exchange: ''` y `x-dead-letter-routing-key: <cola>.dlq`: red de seguridad para cualquier mensaje que deje de poder permanecer en la cola principal. El manejo del EventBus nunca rechaza sin reencolar (siempre confirma a retry/DLQ o reencola), así que no hay envíos duplicados.
+- `.retry` (espera controlada) y `.dlq` (durable, sin TTL) se conservan.
+- La `.v2` y sus `.retry`/`.dlq` **no se borran**: se conservan para rollback. Almacén deja de consumirla. Deja de recibir eventos cuando se le quita el binding con `scripts/ops/almacen-recepcion-oc/topologia.js`, que solo lo hace con la `.v3` operativa y la `.v2` vacía.
+
+Orden: `.v3` desplegada y verificada → `.v2` vacía → desvincular `.v2` → solo entonces se despliega el publicador. Nunca reciben el evento a la vez `.v2` y `.v3` cuando Compras publica. Procedimiento, verificación y rollback en `docs/operacion/almacen-cola-recepcion-oc-v3.md`.
 
 ### 8. Outbox transaccional en Compras
 
@@ -98,7 +107,7 @@ Cuantificada en `evidence-2026-09-25.md`: a lo sumo 2 recepciones, ambas purgada
 
 ### 11. Orden de despliegue
 
-Fusionar a `main` despliega y aplica migraciones, por lo que los PR de código quedan abiertos hasta autorización expresa. Orden previsto una vez autorizado: `@bocam/event-bus`; Almacén (consumidor, migración, colas `.v2`, `/ready`); Compras (outbox y contrato). Así el consumidor existe antes de que el publicador emita. El change no se considera completo hasta que se cumplan las garantías del outbox: atomicidad, reintento, marcado tras confirmación del broker y recuperación tras reinicios.
+Fusionar a `main` despliega y aplica migraciones, por lo que los PR de código quedan abiertos hasta autorización expresa. Orden previsto una vez autorizado: `@bocam/event-bus`; Almacén (consumidor, migración, cola `.v3`, `/ready`, desvinculación de la `.v2`); Compras (outbox y contrato). Así el consumidor existe antes de que el publicador emita. El change no se considera completo hasta que se cumplan las garantías del outbox: atomicidad, reintento, marcado tras confirmación del broker y recuperación tras reinicios.
 
 ## Risks / Trade-offs
 
