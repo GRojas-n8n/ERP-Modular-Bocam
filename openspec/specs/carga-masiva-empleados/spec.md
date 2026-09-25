@@ -1,3 +1,9 @@
+# carga-masiva-empleados Specification
+
+## Purpose
+
+Define la importación masiva de Empleados desde CSV o Excel para los roles personal_rh y admin: validación por registro con las reglas del alta individual, numeración autoincremental sin colisiones y reporte de errores por fila sin abortar el lote.
+
 ## Requirements
 
 ### Requirement: Un usuario personal_rh/admin SHALL poder importar Empleados en lote desde CSV/Excel

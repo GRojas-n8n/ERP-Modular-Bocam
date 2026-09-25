@@ -1,4 +1,10 @@
-## ADDED Requirements
+# config-jornada-empleado Specification
+
+## Purpose
+
+Define cómo RH configura el modo de asistencia y la jornada de cada empleado, ya sea jornada completa o por horas, sus validaciones y los campos que muestra la ficha en Personal.
+
+## Requirements
 
 ### Requirement: RH configura modo de asistencia por empleado
 El sistema SHALL permitir que un usuario con rol `personal_rh` o `admin` configure el campo `modo_asistencia` en la ficha de cada empleado. Los valores válidos son `JORNADA_COMPLETA` y `POR_HORAS`. El valor por defecto SHALL ser `JORNADA_COMPLETA`.
