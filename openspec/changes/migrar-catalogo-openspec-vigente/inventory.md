@@ -212,6 +212,20 @@ Treinta specs validan pero conservan `TBD - created by archiving change …` com
 | 9 | Seguridad, calidad, ventas y asistente | `asistente-auditoria-consultas`, `asistente-conversacion-multi-servicio`, `asistente-degradacion-parcial-cross-servicio`, `progreso-en-vivo-chat-asistente`, `control-acceso-modulo-seguridad` |
 | 10 | CI, despliegue, archivos e infraestructura transversal | `ci-app-shell-build-check`, `ci-rls-coverage-check`, `motor-archivos-exceljs` |
 
+## Avance por lote
+
+| Lote | Estado | Specs | Válidas / inválidas tras el lote |
+|---|---|---|---|
+| 1 | Hecho | `permisos-catalogo-gerencia-tecnica` (dominio 1) | 72 / 91 |
+
+## Hallazgos semánticos detectados durante la migración
+
+Se registran sin corregir: la migración no cambia contratos. Cada hallazgo requiere su propio change o decisión.
+
+| Spec | Hallazgo | Evidencia |
+|---|---|---|
+| `permisos-catalogo-gerencia-tecnica` | El tercer requisito afirma que el proxy nginx permite hasta 20 MB en la ruta de Gerencia Técnica. El bloque de esa ruta en `apps/app-shell/nginx.conf` no fija `client_max_body_size`; el valor de 20 MB solo aparece en `docker/nginx.qnap.conf` (topología QNAP). Producción usa Caddy y `docker/Caddyfile` no declara un límite de cuerpo. El límite de 15 MB de Express (`express.json({ limit: '15mb' })`) sí coincide. | `apps/app-shell/nginx.conf`, `docker/nginx.qnap.conf`, `docker/Caddyfile`, `apps/gerencia-tecnica/src/main.ts:55` |
+
 ## Reglas de lote
 
 1. Un PR por lote, exclusivamente documental, con validación estricta del lote y validación integral antes de abrirlo.
