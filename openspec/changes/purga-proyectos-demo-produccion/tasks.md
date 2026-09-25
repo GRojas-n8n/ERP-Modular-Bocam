@@ -36,11 +36,11 @@
 - [x] 6.2 **Titular:** dry-run ejecutado en producción con la lista confirmada: 1,926 filas y 15 referencias potenciales a archivos; sin cambios.
 - [x] 6.3 **Titular:** ensayo completado sobre la restauración de las 12 bases en un contenedor sin red; purga y verificaciones en verde.
 - [x] 6.4 **Titular:** ejecución real completada el 2026-09-24 20:05 UTC; bitácora y manifiesto copiados fuera de la VPS.
-- [ ] 6.5 Verificación posterior completa.
+- [x] 6.5 Verificación posterior completa.
   - [x] Base de datos: cero proyectos objetivo y cero filas con sus identificadores en las 12 bases.
   - [x] Operación: todos los contenedores saludables, cero reinicios, HTTPS 200 y sin errores críticos recientes.
   - [x] Sesión autenticada: selector indica `Sin Proyecto` y Administración confirma que no quedan proyectos registrados.
-  - [ ] Dashboards project-scoped: Gerencia Técnica expone datos con proyecto vacío; cierre bloqueado por `bloquear-datos-sin-proyecto-activo`.
+  - [x] Dashboards project-scoped: el smoke productivo de solo lectura verificó que Dashboard, Gerencia Técnica, Compras, Almacén, Control de Obra, Residencia, Seguridad HSE y Ventas muestran `Proyecto activo requerido` y no emiten solicitudes project-scoped cuando la cuenta no tiene proyecto. Evidencia: PR `#150`, merge `260d3c0` y ejecución `36075808520` en verde.
 - [ ] 6.6 **Titular:** revisar el manifiesto de archivos y decidir si borra los archivos huérfanos de los volúmenes.
 - [ ] 6.7 Conservar el respaldo previo hasta que el titular confirme la normalidad, como mínimo hasta 2026-10-24.
 
@@ -67,4 +67,5 @@
 - Ensayo: restauración completa y purga real en contenedor `--network none`.
 - Producción: transacción verificable por base, `bocam_auth` al final; resultado exitoso en las 12 bases.
 - Postcondición: cero registros objetivo; servicios saludables y `https://iretum.com/` con HTTP 200.
-- Pendientes: corregir el hallazgo autenticado de aislamiento sin proyecto, decidir sobre 15 archivos potencialmente huérfanos y conservar el respaldo hasta 2026-10-24.
+- La verificación autenticada posterior quedó completa con la corrección de aislamiento sin proyecto y el smoke manual `36075808520` en verde.
+- Pendientes: decidir sobre 15 archivos potencialmente huérfanos y conservar el respaldo hasta 2026-10-24.

@@ -61,5 +61,5 @@
 
 ## 5. Cierre
 
-- [ ] 5.1 Reanudar la tarea 6.5 de `purga-proyectos-demo-produccion` solo cuando ningún módulo project-scoped exponga datos sin proyecto.
+- [x] 5.1 Reanudar y completar la tarea 6.5 de `purga-proyectos-demo-produccion`. El smoke productivo manual `36075808520` recorrió Dashboard, Gerencia Técnica, Compras, Almacén, Control de Obra, Residencia, Seguridad HSE y Ventas con una cuenta sin proyectos: todos mostraron `Proyecto activo requerido` y no emitieron solicitudes project-scoped.
 - [ ] 5.2 Archivar este change tras evidencia de producción y actualizar la especificación canónica.
