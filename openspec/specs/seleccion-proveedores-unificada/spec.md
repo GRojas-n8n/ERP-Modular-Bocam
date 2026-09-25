@@ -1,4 +1,10 @@
-## ADDED Requirements
+# seleccion-proveedores-unificada Specification
+
+## Purpose
+
+Define que la invitación a cotizar y el alta de proveedores en el Cuadro Comparativo comparten el mismo componente y catálogo de proveedores, sin tope fijo de proveedores, y que los proveedores agregados sin invitación formal quedan marcados.
+
+## Requirements
 
 ### Requirement: El sistema SHALL usar el mismo componente de selección de proveedores para invitar a cotizar y para dar de alta proveedores en el Cuadro Comparativo
 El panel de Solicitud de Cotización y el alta de proveedores dentro del Cuadro Comparativo SHALL compartir el mismo componente de selección y la misma fuente de datos del catálogo de proveedores del proyecto/tenant.

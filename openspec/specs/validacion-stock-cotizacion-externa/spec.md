@@ -1,3 +1,9 @@
+# validacion-stock-cotizacion-externa Specification
+
+## Purpose
+
+Define la validación de stock en Almacén antes de solicitar una cotización externa: consulta batch por insumo, exclusión de ítems imprevistos, advertencia con confirmación explícita cuando hay stock disponible y degradación silenciosa si Almacén no responde.
+
 ## Requirements
 
 ### Requirement: Consulta batch de stock por insumo en Almacén
