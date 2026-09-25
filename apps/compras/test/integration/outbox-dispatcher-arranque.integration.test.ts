@@ -31,7 +31,16 @@ async function hijo() {
   process.env.DATABASE_URL = dbUrl;
 
   const logs: string[] = [];
+  const paso = (texto: string) => { process.stderr.write(`[hijo ${new Date().toISOString()}] ${texto}
+`); };
   const original = { log: console.log, warn: console.warn, error: console.error };
+  // Si algo se cuelga, el hijo lo reporta con lo último que registró en vez de quedar mudo hasta el tiempo límite del padre.
+  const vigilante = setTimeout(() => {
+    process.stdout.write(`
+${MARCA}${JSON.stringify({ errorDelHijo: `sin terminar tras 60 s; últimos registros: ${JSON.stringify(logs.slice(-12))}` })}
+`);
+    process.exit(0);
+  }, 60_000);
   for (const nivel of ['log', 'warn', 'error'] as const) {
     console[nivel] = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); };
   }
@@ -49,8 +58,11 @@ async function hijo() {
     await canal.assertQueue(cola, { durable: false, autoDelete: true });
     await canal.bindQueue(cola, 'bocam.events', EVENTO);
 
+    paso('importando main');
     const mod = await import('../../src/main');
+    paso('arrancando startServer');
     const server = await (mod as any).startServer();
+    paso('startServer devolvió el servidor');
     const base = `http://127.0.0.1:${process.env.PORT}`;
     let ready: { status: number; body: any } | undefined;
     for (let i = 0; i < 100; i++) { // el bus se conecta después de abrir el puerto
@@ -62,6 +74,7 @@ async function hijo() {
       await delay(100);
     }
 
+    paso(`/ready inicial: ${ready?.status} ${JSON.stringify(ready?.body?.checks)}`);
     // La recepción guarda su evento en el outbox (lo que hace registrarEventoRecepcion dentro de la transacción).
     await (prisma as any).outboxEvento.create({
       data: {
@@ -73,9 +86,11 @@ async function hijo() {
         },
       },
     });
+    paso('evento sembrado; esperando tandas');
     await delay(1800); // más de diez tandas de 150 ms si el despachador estuviera encendido
 
     const fila = await (prisma as any).outboxEvento.findUnique({ where: { id_evento: eventId } });
+    paso(`fila leída: ${fila?.estado}`);
     const r = await fetch(`${base}/ready`);
     resultado = {
       valorVisto: process.env.COMPRAS_OUTBOX_DISPATCHER === undefined ? '(ausente)' : process.env.COMPRAS_OUTBOX_DISPATCHER,
@@ -87,13 +102,17 @@ async function hijo() {
       logEnabled: logs.some((l) => l.includes('dispatcher enabled')),
     };
     server.close();
+    paso('servidor cerrado');
   } catch (error: any) {
     resultado = { errorDelHijo: String(error?.stack ?? error) };
   } finally {
+    clearTimeout(vigilante);
+    paso('limpiando');
     await (prisma as any).outboxEvento.deleteMany({ where: { tenant_id: tenantId } }).catch(() => undefined);
     await canal.deleteQueue(cola).catch(() => undefined);
     await conexion.close().catch(() => undefined);
     await prisma.$disconnect().catch(() => undefined);
+    paso('limpio');
     Object.assign(console, original);
     process.stdout.write(`\n${MARCA}${JSON.stringify(resultado)}\n`);
     process.exit(0);
@@ -107,7 +126,7 @@ function ejecutarCaso(valor: string | undefined): any {
   if (valor !== undefined) env.COMPRAS_OUTBOX_DISPATCHER = valor;
   const r = spawnSync(process.execPath, ['-r', 'ts-node/register/transpile-only', __filename, '--hijo'], { env, encoding: 'utf8', timeout: 90_000 });
   const linea = String(r.stdout).split('\n').reverse().find((l) => l.startsWith(MARCA));
-  if (!linea) throw new Error(`el proceso hijo no reportó resultado (valor ${JSON.stringify(valor)}): ${r.stderr || r.stdout}`.slice(0, 800));
+  if (!linea) throw new Error(`el proceso hijo no reportó resultado (valor ${JSON.stringify(valor)}; estado ${r.status}, señal ${r.signal}, error ${r.error?.message}): stderr=${String(r.stderr).slice(-1200)} stdout=${String(r.stdout).slice(-400)}`);
   const resultado = JSON.parse(linea.slice(MARCA.length));
   if (resultado.errorDelHijo) throw new Error(`fallo en el hijo (valor ${JSON.stringify(valor)}): ${resultado.errorDelHijo}`.slice(0, 900));
   return resultado;
@@ -117,7 +136,8 @@ async function padre() {
   const assert = (await import('node:assert/strict')).default;
   let failed = false;
   try {
-    for (const valor of [undefined, '', 'true', 'ON', 'off', '1']) {
+    const solo = process.argv.find((x) => x.startsWith('--solo='))?.slice(7); // depuración: --solo=on
+    for (const valor of solo ? [] : [undefined, '', 'true', 'ON', 'off', '1']) {
       const r = ejecutarCaso(valor);
       const etiqueta = JSON.stringify(valor);
       assert.equal(r.fila.estado, 'PENDIENTE', `${etiqueta}: el evento sigue pendiente`);
