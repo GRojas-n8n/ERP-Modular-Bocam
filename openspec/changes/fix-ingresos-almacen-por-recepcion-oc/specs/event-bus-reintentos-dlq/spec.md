@@ -41,6 +41,24 @@ Las opciones de una suscripción SHALL aceptar `retry` (máximo de intentos y es
 - **WHEN** una suscripción existente no declara `retry` ni `deadLetter`
 - **THEN** ante un error del handler el bus se comporta exactamente como antes
 
+### Requirement: Un handler SHALL poder marcar un error como no reintentable
+El bus SHALL exportar un error `NonRetryableError`. Cuando el handler de una suscripción con `retry` o `deadLetter` lo lance, el mensaje SHALL enviarse directamente a `<cola>.dlq`, sin reintentos, con el mensaje del error como motivo. Cualquier otro error SHALL seguir la política de reintentos.
+
+#### Scenario: Formato o versión no soportados
+- **WHEN** el handler lanza `NonRetryableError`
+- **THEN** el mensaje llega a `<cola>.dlq` tras un solo intento y no pasa por `<cola>.retry`
+
+### Requirement: El bus SHALL informar su disponibilidad
+El bus SHALL exponer `isReady()`, verdadero solo cuando hay una conexión vigente y todas las suscripciones registradas tienen un consumidor activo, para que un servicio construya su `/ready`.
+
+#### Scenario: Sin conexión
+- **WHEN** el bus no se ha conectado o ya se cerró
+- **THEN** `isReady()` es falso
+
+#### Scenario: Suscripciones activas
+- **WHEN** el bus está conectado y todas sus suscripciones tienen consumidor
+- **THEN** `isReady()` es verdadero
+
 ### Requirement: Las colas nuevas SHALL declararse sin alterar las existentes
 Las colas de reintento y de mensajes fallidos SHALL declararse solo para las suscripciones que las activan, con nombres nuevos. El bus NO SHALL redeclarar una cola durable existente con argumentos distintos ni aplicar políticas globales.
 
