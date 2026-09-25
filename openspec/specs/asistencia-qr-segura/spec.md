@@ -1,4 +1,10 @@
-## ADDED Requirements
+# asistencia-qr-segura Specification
+
+## Purpose
+
+Define el escaneo seguro de credenciales QR para registrar asistencia: exige sesión autenticada con rol de checador, resuelve el token contra credenciales activas, valida que el empleado pertenezca al proyecto activo, aplica un cooldown anti-rescaneo, geolocalización opcional por proyecto y aislamiento por RLS de la configuración de asistencia.
+
+## Requirements
 
 ### Requirement: Escanear una credencial requiere sesión autenticada con rol de checador
 El sistema SHALL exponer `POST /api/v1/personal/asistencia/escanear`, restringido a roles `residencia`, `control_obra`, `personal_rh` o `admin` (mismos roles que `POST /asistencia/registro`). El cuerpo de la petición SHALL incluir el `token` decodificado del QR. Sin una sesión válida con uno de estos roles, ningún request a este endpoint SHALL registrar asistencia — el contenido del QR por sí solo NUNCA SHALL ser suficiente para marcar asistencia.
