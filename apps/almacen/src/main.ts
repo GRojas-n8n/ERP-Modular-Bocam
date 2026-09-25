@@ -13,10 +13,10 @@
  */
 
 import express, { Request, Response } from 'express';
-import { createTenantContext } from './db';
+import basePrisma, { createTenantContext } from './db';
 import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
-import { createEventBus, BocamEvent } from '../../../packages/event-bus/src';
+import { createEventBus, BocamEvent, NonRetryableError } from '../../../packages/event-bus/src';
 import {
   createObservabilityMiddleware,
   initSentry,
@@ -35,7 +35,7 @@ app.use(createObservabilityMiddleware('almacen'));
 const PORT = process.env.PORT || 3012;
 const JWT_SECRET = requireEnv('JWT_SECRET');
 
-app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health'] }));
+app.use(createAuthMiddleware({ jwtSecret: JWT_SECRET, excludePaths: ['/health', '/ready'] }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'almacen' }));
 app.use(requireProjectAccess());
 app.use([
@@ -858,11 +858,166 @@ export const handleOcRecibidaTotal   = (e: BocamEvent) => handleOcRecibida(e, 'c
 export const handleOcRecibidaParcial = (e: BocamEvent) => handleOcRecibida(e, 'cantidad_recibida_parcial');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HEALTH CHECK
+// SUBSCRIBER RabbitMQ — compras.recepcion_oc_registrada.v1
+// Ver openspec/changes/fix-ingresos-almacen-por-recepcion-oc
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+const RECEPCION_OC_EVENT = 'compras.recepcion_oc_registrada.v1';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface RecepcionOcItem {
+  recepcion_item_id: string;
+  orden_item_id?: string | null;
+  insumo_id: string | null;
+  cantidad_recibida: number;
+  clave?: string;
+  descripcion?: string;
+  unidad?: string;
+  categoria?: string;
+}
+
+interface RecepcionOcPayload {
+  event_id: string;
+  event_version: number;
+  tenant_id: string;
+  proyecto_id: string;
+  orden_compra_id: string;
+  recepcion_id: string;
+  items: RecepcionOcItem[];
+}
+
+/** Valida el contrato antes de tocar la base. Todo defecto aquí es no reintentable: reintentar no lo arregla. */
+function validarRecepcionOc(event: BocamEvent): RecepcionOcPayload {
+  const p = event.payload as Partial<RecepcionOcPayload> | undefined;
+  if (!p || typeof p !== 'object') {
+    throw new NonRetryableError('FORMATO_NO_SOPORTADO: el evento no trae payload.');
+  }
+  if (p.event_version === undefined) {
+    throw new NonRetryableError('FORMATO_NO_SOPORTADO: el evento no declara event_version (formato antiguo).');
+  }
+  if (p.event_version !== 1) {
+    throw new NonRetryableError(`VERSION_NO_SOPORTADA: event_version=${String(p.event_version)}.`);
+  }
+  for (const campo of ['event_id', 'recepcion_id', 'orden_compra_id'] as const) {
+    if (!UUID_RE.test(String(p[campo]))) {
+      throw new NonRetryableError(`FORMATO_NO_SOPORTADO: ${campo} ausente o no es un UUID.`);
+    }
+  }
+  if (p.tenant_id !== event.context?.tenant_id || p.proyecto_id !== event.context?.proyecto_id) {
+    throw new NonRetryableError('CONTEXTO_INCONSISTENTE: tenant_id o proyecto_id del payload no coinciden con el contexto del evento.');
+  }
+  if (!Array.isArray(p.items) || p.items.length === 0) {
+    throw new NonRetryableError('FORMATO_NO_SOPORTADO: el evento no trae ítems.');
+  }
+  for (const item of p.items) {
+    if (!item || !UUID_RE.test(String(item.recepcion_item_id))) {
+      throw new NonRetryableError('FORMATO_NO_SOPORTADO: un ítem no trae recepcion_item_id válido.');
+    }
+    if (item.insumo_id !== null && !UUID_RE.test(String(item.insumo_id))) {
+      throw new NonRetryableError('FORMATO_NO_SOPORTADO: insumo_id no es un UUID ni es nulo.');
+    }
+    if (typeof item.cantidad_recibida !== 'number' || !Number.isFinite(item.cantidad_recibida) || item.cantidad_recibida <= 0) {
+      throw new NonRetryableError('FORMATO_NO_SOPORTADO: cantidad_recibida debe ser un número mayor a 0.');
+    }
+  }
+  return p as RecepcionOcPayload;
+}
+
+/**
+ * Procesa una recepción de OC: una sola transacción por evento (todos los ítems o ninguno), idempotencia por
+ * event_id y por recepcion_id + recepcion_item_id, y ningún error se traga: se propaga al bus para reintento.
+ * Los ítems sin insumo_id no son inventariables: solo dejan un registro informativo.
+ */
+export async function handleRecepcionOcRegistrada(event: BocamEvent): Promise<void> {
+  const p = validarRecepcionOc(event);
+  const ctx = { tenantId: p.tenant_id, proyectoId: p.proyecto_id, userId: event.context.user_id };
+
+  await createTenantContext(ctx, async (prisma) => {
+    const registrado = await prisma.eventoProcesado.createMany({
+      data: [{ tenant_id: p.tenant_id, proyecto_id: p.proyecto_id, event_id: p.event_id, event_type: event.event_type }],
+      skipDuplicates: true,
+    });
+    if (registrado.count === 0) {
+      console.log(JSON.stringify({ action: 'almacen.event.recepcion_oc.idempotent', event_id: p.event_id, recepcion_id: p.recepcion_id }));
+      return;
+    }
+
+    for (const item of p.items) {
+      if (!item.insumo_id) {
+        console.log(JSON.stringify({
+          action: 'almacen.event.recepcion_oc.item_no_inventariable',
+          recepcion_id: p.recepcion_id,
+          recepcion_item_id: item.recepcion_item_id,
+          orden_compra_id: p.orden_compra_id,
+        }));
+        continue;
+      }
+
+      // Serializa los eventos concurrentes del mismo insumo: sin esto, dos eventos podrían crear dos
+      // ItemInventario para el mismo insumo (no hay clave única sobre insumo_id).
+      await prisma.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${p.tenant_id}:${p.proyecto_id}:${item.insumo_id}`}))`;
+
+      const yaAplicado = await prisma.movimientoAlmacen.findFirst({
+        where: { tenant_id: p.tenant_id, proyecto_id: p.proyecto_id, recepcion_id: p.recepcion_id, recepcion_item_id: item.recepcion_item_id },
+        select: { id: true },
+      });
+      if (yaAplicado) {
+        console.log(JSON.stringify({ action: 'almacen.event.recepcion_oc.item_idempotent', recepcion_id: p.recepcion_id, recepcion_item_id: item.recepcion_item_id }));
+        continue;
+      }
+
+      let inventario = await prisma.itemInventario.findFirst({
+        where: { tenant_id: p.tenant_id, proyecto_id: p.proyecto_id, insumo_id: item.insumo_id },
+      });
+      if (!inventario) {
+        if (!item.clave || !item.descripcion || !item.unidad || !item.categoria) {
+          throw new NonRetryableError(`SNAPSHOT_INCOMPLETO: el insumo ${item.insumo_id} no existe en inventario y el evento no trae clave, descripcion, unidad y categoria.`);
+        }
+        inventario = await prisma.itemInventario.create({
+          data: {
+            tenant_id: p.tenant_id, proyecto_id: p.proyecto_id, insumo_id: item.insumo_id,
+            clave: item.clave, descripcion: item.descripcion, unidad: item.unidad, categoria: item.categoria,
+            stock_actual: 0, stock_minimo: 0,
+          },
+        });
+      }
+
+      await prisma.itemInventario.update({ where: { id: inventario.id }, data: { stock_actual: { increment: item.cantidad_recibida } } });
+      await prisma.movimientoAlmacen.create({
+        data: {
+          tenant_id: p.tenant_id, proyecto_id: p.proyecto_id, item_id: inventario.id,
+          tipo: 'INGRESO', cantidad: item.cantidad_recibida, unidad: inventario.unidad,
+          origen: 'OC', referencia: p.orden_compra_id,
+          recepcion_id: p.recepcion_id, recepcion_item_id: item.recepcion_item_id,
+          oc_item_id: item.orden_item_id ?? null,
+        },
+      });
+      console.log(JSON.stringify({ action: 'almacen.event.recepcion_oc.applied', recepcion_id: p.recepcion_id, recepcion_item_id: item.recepcion_item_id, cantidad: item.cantidad_recibida }));
+    }
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// HEALTH CHECK (prueba de vida) y READY (dependencias)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// /health NO consulta dependencias: Docker lo usa para decidir reinicios y no debe reiniciar el
+// contenedor por una caída transitoria de RabbitMQ o de la base.
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', service: 'almacen', version: '1.0.0', timestamp: new Date().toISOString() });
+});
+
+// /ready informa si las dependencias responden. No se usa como healthcheck de reinicio.
+app.get('/ready', async (_req: Request, res: Response) => {
+  const checks: { database: 'ok' | 'error'; event_bus: 'ok' | 'error' } = { database: 'ok', event_bus: 'ok' };
+  try {
+    await basePrisma.$queryRaw`SELECT 1`;
+  } catch {
+    checks.database = 'error';
+  }
+  if (!eventBus.isReady()) checks.event_bus = 'error';
+  const ready = checks.database === 'ok' && checks.event_bus === 'ok';
+  res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : 'not_ready', service: 'almacen', checks, timestamp: new Date().toISOString() });
 });
 
 setupSentryExpressHandler(app);
@@ -892,7 +1047,16 @@ export async function startServer() {
     await eventBus.subscribe('compras.oc_recibida_total',   handleOcRecibidaTotal);
     await eventBus.subscribe('compras.oc_recibida_parcial', handleOcRecibidaParcial);
     await eventBus.subscribe('auth.centro_costos_creado',   handleCentroCostosCreadoEvent);
-    console.log('[Almacén] Suscrito a: compras.oc_recibida_total, compras.oc_recibida_parcial, auth.centro_costos_creado');
+    // Cola nueva (.v2) con reintentos y cola de mensajes fallidos. Las colas anteriores no se modifican.
+    await eventBus.subscribe(RECEPCION_OC_EVENT, handleRecepcionOcRegistrada, {
+      queueName: 'almacen.compras_recepcion_oc_registrada_v1.v2',
+      retry: {
+        maxAttempts: Number(process.env.ALMACEN_RECEPCION_MAX_INTENTOS ?? 5),
+        delayMs: Number(process.env.ALMACEN_RECEPCION_ESPERA_MS ?? 30000),
+      },
+      deadLetter: true,
+    });
+    console.log('[Almacén] Suscrito a: compras.oc_recibida_total, compras.oc_recibida_parcial, auth.centro_costos_creado, compras.recepcion_oc_registrada.v1');
   });
 }
 

@@ -15,11 +15,11 @@
 
 ## 3. Almacén (consumidor) — PR 2
 
-- [ ] 3.1 Tests en rojo: contrato con el payload de `compras.recepcion_oc_registrada.v1`; fallo de un ítem revierte y propaga sin ack; dos recepciones parciales suman; redelivery por `event_id`; misma recepción con otro `event_id`; ítem sin `insumo_id`; formato antiguo y versión no soportada a la DLQ; `/health` con el bus caído y `/ready` con `503`.
-- [ ] 3.2 Migración: `recepcion_id` y `recepcion_item_id` en `movimientos_almacen`, índice único parcial y tabla `eventos_procesados`; RLS y cobertura estática.
-- [ ] 3.3 Reescribir el handler: una transacción por evento, propagación de errores, doble idempotencia y tratamiento de ítems sin insumo.
-- [ ] 3.4 Suscripción con cola `.v2`, reintentos y DLQ; añadir `/ready`.
-- [ ] 3.5 Hacer pasar los tests y la suite de Almacén.
+- [x] 3.1 Tests en rojo: contrato con el payload de `compras.recepcion_oc_registrada.v1`; fallo de un ítem revierte y propaga sin ack; dos recepciones parciales suman; redelivery por `event_id`; misma recepción con otro `event_id`; ítem sin `insumo_id`; formato antiguo y versión no soportada a la DLQ; `/health` con el bus caído y `/ready` con `503`.
+- [x] 3.2 Migración: `recepcion_id` y `recepcion_item_id` en `movimientos_almacen`, índice único parcial y tabla `eventos_procesados`; RLS y cobertura estática.
+- [x] 3.3 Reescribir el handler: una transacción por evento, propagación de errores, doble idempotencia y tratamiento de ítems sin insumo.
+- [x] 3.4 Suscripción con cola `.v2`, reintentos y DLQ; añadir `/ready`.
+- [x] 3.5 Hacer pasar los tests y la suite de Almacén. Las 9 pruebas de comportamiento y la prueba extremo a extremo con RabbitMQ real pasan; las suites existentes de eventos, salida de obra y activos siguen en verde. Dos pruebas de `almacen-api` ya fallaban antes (`item_id` frente a `insumo_id`, umbral `<` frente a `<=`): coinciden con las diferencias registradas para `almacen-movimientos` y `almacen-dashboard` y pertenecen a esos changes. Almacén no se probaba en CI; ahora `backend-e2e` aplica su esquema, compila y ejecuta las pruebas de recepciones.
 
 ## 4. Compras (publicador y outbox) — PR 3
 
@@ -40,6 +40,7 @@
 
 - [ ] 6.1 PR por servicio con CI verde. **No fusionar** hasta que el titular autorice el despliegue: fusionar a `main` despliega y aplica migraciones.
 - [ ] 6.2 Orden: bus, Almacén y Compras. El consumidor debe existir antes de que el publicador emita.
+- [ ] 6.2b Tras desplegar Almacén, aplicar `apps/almacen/prisma/rls-policies.sql` con el workflow manual de RLS: la política de `eventos_procesados` no se crea con la migración.
 - [ ] 6.3 Verificación en producción por lectura de logs, profundidad de la DLQ y `/ready`, sin crear datos de prueba.
 - [ ] 6.4 Decidir aparte el retiro de las colas `almacen.compras_oc_recibida_*` actuales, con evidencia de que no reciben tráfico.
 

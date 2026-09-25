@@ -24,6 +24,11 @@ export type ItemInventario = $Result.DefaultSelection<Prisma.$ItemInventarioPayl
  */
 export type MovimientoAlmacen = $Result.DefaultSelection<Prisma.$MovimientoAlmacenPayload>
 /**
+ * Model EventoProcesado
+ * 
+ */
+export type EventoProcesado = $Result.DefaultSelection<Prisma.$EventoProcesadoPayload>
+/**
  * Model Activo
  * 
  */
@@ -176,6 +181,16 @@ export class PrismaClient<
     * ```
     */
   get movimientoAlmacen(): Prisma.MovimientoAlmacenDelegate<ExtArgs>;
+
+  /**
+   * `prisma.eventoProcesado`: Exposes CRUD operations for the **EventoProcesado** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EventoProcesados
+    * const eventoProcesados = await prisma.eventoProcesado.findMany()
+    * ```
+    */
+  get eventoProcesado(): Prisma.EventoProcesadoDelegate<ExtArgs>;
 
   /**
    * `prisma.activo`: Exposes CRUD operations for the **Activo** model.
@@ -639,6 +654,7 @@ export namespace Prisma {
   export const ModelName: {
     ItemInventario: 'ItemInventario',
     MovimientoAlmacen: 'MovimientoAlmacen',
+    EventoProcesado: 'EventoProcesado',
     Activo: 'Activo',
     TraspasoActivo: 'TraspasoActivo'
   };
@@ -656,7 +672,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "itemInventario" | "movimientoAlmacen" | "activo" | "traspasoActivo"
+      modelProps: "itemInventario" | "movimientoAlmacen" | "eventoProcesado" | "activo" | "traspasoActivo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -797,6 +813,76 @@ export namespace Prisma {
           count: {
             args: Prisma.MovimientoAlmacenCountArgs<ExtArgs>
             result: $Utils.Optional<MovimientoAlmacenCountAggregateOutputType> | number
+          }
+        }
+      }
+      EventoProcesado: {
+        payload: Prisma.$EventoProcesadoPayload<ExtArgs>
+        fields: Prisma.EventoProcesadoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EventoProcesadoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EventoProcesadoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>
+          }
+          findFirst: {
+            args: Prisma.EventoProcesadoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EventoProcesadoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>
+          }
+          findMany: {
+            args: Prisma.EventoProcesadoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>[]
+          }
+          create: {
+            args: Prisma.EventoProcesadoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>
+          }
+          createMany: {
+            args: Prisma.EventoProcesadoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EventoProcesadoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>[]
+          }
+          delete: {
+            args: Prisma.EventoProcesadoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>
+          }
+          update: {
+            args: Prisma.EventoProcesadoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>
+          }
+          deleteMany: {
+            args: Prisma.EventoProcesadoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EventoProcesadoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.EventoProcesadoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoProcesadoPayload>
+          }
+          aggregate: {
+            args: Prisma.EventoProcesadoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEventoProcesado>
+          }
+          groupBy: {
+            args: Prisma.EventoProcesadoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EventoProcesadoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EventoProcesadoCountArgs<ExtArgs>
+            result: $Utils.Optional<EventoProcesadoCountAggregateOutputType> | number
           }
         }
       }
@@ -2281,6 +2367,8 @@ export namespace Prisma {
     concepto_clave: string | null
     frente_trabajo: string | null
     oc_item_id: string | null
+    recepcion_id: string | null
+    recepcion_item_id: string | null
   }
 
   export type MovimientoAlmacenMaxAggregateOutputType = {
@@ -2300,6 +2388,8 @@ export namespace Prisma {
     concepto_clave: string | null
     frente_trabajo: string | null
     oc_item_id: string | null
+    recepcion_id: string | null
+    recepcion_item_id: string | null
   }
 
   export type MovimientoAlmacenCountAggregateOutputType = {
@@ -2319,6 +2409,8 @@ export namespace Prisma {
     concepto_clave: number
     frente_trabajo: number
     oc_item_id: number
+    recepcion_id: number
+    recepcion_item_id: number
     _all: number
   }
 
@@ -2348,6 +2440,8 @@ export namespace Prisma {
     concepto_clave?: true
     frente_trabajo?: true
     oc_item_id?: true
+    recepcion_id?: true
+    recepcion_item_id?: true
   }
 
   export type MovimientoAlmacenMaxAggregateInputType = {
@@ -2367,6 +2461,8 @@ export namespace Prisma {
     concepto_clave?: true
     frente_trabajo?: true
     oc_item_id?: true
+    recepcion_id?: true
+    recepcion_item_id?: true
   }
 
   export type MovimientoAlmacenCountAggregateInputType = {
@@ -2386,6 +2482,8 @@ export namespace Prisma {
     concepto_clave?: true
     frente_trabajo?: true
     oc_item_id?: true
+    recepcion_id?: true
+    recepcion_item_id?: true
     _all?: true
   }
 
@@ -2492,6 +2590,8 @@ export namespace Prisma {
     concepto_clave: string | null
     frente_trabajo: string | null
     oc_item_id: string | null
+    recepcion_id: string | null
+    recepcion_item_id: string | null
     _count: MovimientoAlmacenCountAggregateOutputType | null
     _avg: MovimientoAlmacenAvgAggregateOutputType | null
     _sum: MovimientoAlmacenSumAggregateOutputType | null
@@ -2530,6 +2630,8 @@ export namespace Prisma {
     concepto_clave?: boolean
     frente_trabajo?: boolean
     oc_item_id?: boolean
+    recepcion_id?: boolean
+    recepcion_item_id?: boolean
     item?: boolean | ItemInventarioDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["movimientoAlmacen"]>
 
@@ -2550,6 +2652,8 @@ export namespace Prisma {
     concepto_clave?: boolean
     frente_trabajo?: boolean
     oc_item_id?: boolean
+    recepcion_id?: boolean
+    recepcion_item_id?: boolean
     item?: boolean | ItemInventarioDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["movimientoAlmacen"]>
 
@@ -2570,6 +2674,8 @@ export namespace Prisma {
     concepto_clave?: boolean
     frente_trabajo?: boolean
     oc_item_id?: boolean
+    recepcion_id?: boolean
+    recepcion_item_id?: boolean
   }
 
   export type MovimientoAlmacenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2601,6 +2707,8 @@ export namespace Prisma {
       concepto_clave: string | null
       frente_trabajo: string | null
       oc_item_id: string | null
+      recepcion_id: string | null
+      recepcion_item_id: string | null
     }, ExtArgs["result"]["movimientoAlmacen"]>
     composites: {}
   }
@@ -3011,6 +3119,8 @@ export namespace Prisma {
     readonly concepto_clave: FieldRef<"MovimientoAlmacen", 'String'>
     readonly frente_trabajo: FieldRef<"MovimientoAlmacen", 'String'>
     readonly oc_item_id: FieldRef<"MovimientoAlmacen", 'String'>
+    readonly recepcion_id: FieldRef<"MovimientoAlmacen", 'String'>
+    readonly recepcion_item_id: FieldRef<"MovimientoAlmacen", 'String'>
   }
     
 
@@ -3340,6 +3450,896 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: MovimientoAlmacenInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EventoProcesado
+   */
+
+  export type AggregateEventoProcesado = {
+    _count: EventoProcesadoCountAggregateOutputType | null
+    _min: EventoProcesadoMinAggregateOutputType | null
+    _max: EventoProcesadoMaxAggregateOutputType | null
+  }
+
+  export type EventoProcesadoMinAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    event_id: string | null
+    event_type: string | null
+    procesado_en: Date | null
+  }
+
+  export type EventoProcesadoMaxAggregateOutputType = {
+    id: string | null
+    tenant_id: string | null
+    proyecto_id: string | null
+    event_id: string | null
+    event_type: string | null
+    procesado_en: Date | null
+  }
+
+  export type EventoProcesadoCountAggregateOutputType = {
+    id: number
+    tenant_id: number
+    proyecto_id: number
+    event_id: number
+    event_type: number
+    procesado_en: number
+    _all: number
+  }
+
+
+  export type EventoProcesadoMinAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    event_id?: true
+    event_type?: true
+    procesado_en?: true
+  }
+
+  export type EventoProcesadoMaxAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    event_id?: true
+    event_type?: true
+    procesado_en?: true
+  }
+
+  export type EventoProcesadoCountAggregateInputType = {
+    id?: true
+    tenant_id?: true
+    proyecto_id?: true
+    event_id?: true
+    event_type?: true
+    procesado_en?: true
+    _all?: true
+  }
+
+  export type EventoProcesadoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventoProcesado to aggregate.
+     */
+    where?: EventoProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoProcesados to fetch.
+     */
+    orderBy?: EventoProcesadoOrderByWithRelationInput | EventoProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EventoProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoProcesados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EventoProcesados
+    **/
+    _count?: true | EventoProcesadoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EventoProcesadoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EventoProcesadoMaxAggregateInputType
+  }
+
+  export type GetEventoProcesadoAggregateType<T extends EventoProcesadoAggregateArgs> = {
+        [P in keyof T & keyof AggregateEventoProcesado]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEventoProcesado[P]>
+      : GetScalarType<T[P], AggregateEventoProcesado[P]>
+  }
+
+
+
+
+  export type EventoProcesadoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventoProcesadoWhereInput
+    orderBy?: EventoProcesadoOrderByWithAggregationInput | EventoProcesadoOrderByWithAggregationInput[]
+    by: EventoProcesadoScalarFieldEnum[] | EventoProcesadoScalarFieldEnum
+    having?: EventoProcesadoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EventoProcesadoCountAggregateInputType | true
+    _min?: EventoProcesadoMinAggregateInputType
+    _max?: EventoProcesadoMaxAggregateInputType
+  }
+
+  export type EventoProcesadoGroupByOutputType = {
+    id: string
+    tenant_id: string
+    proyecto_id: string
+    event_id: string
+    event_type: string
+    procesado_en: Date
+    _count: EventoProcesadoCountAggregateOutputType | null
+    _min: EventoProcesadoMinAggregateOutputType | null
+    _max: EventoProcesadoMaxAggregateOutputType | null
+  }
+
+  type GetEventoProcesadoGroupByPayload<T extends EventoProcesadoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EventoProcesadoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EventoProcesadoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EventoProcesadoGroupByOutputType[P]>
+            : GetScalarType<T[P], EventoProcesadoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EventoProcesadoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    event_id?: boolean
+    event_type?: boolean
+    procesado_en?: boolean
+  }, ExtArgs["result"]["eventoProcesado"]>
+
+  export type EventoProcesadoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    event_id?: boolean
+    event_type?: boolean
+    procesado_en?: boolean
+  }, ExtArgs["result"]["eventoProcesado"]>
+
+  export type EventoProcesadoSelectScalar = {
+    id?: boolean
+    tenant_id?: boolean
+    proyecto_id?: boolean
+    event_id?: boolean
+    event_type?: boolean
+    procesado_en?: boolean
+  }
+
+
+  export type $EventoProcesadoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EventoProcesado"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenant_id: string
+      proyecto_id: string
+      event_id: string
+      event_type: string
+      procesado_en: Date
+    }, ExtArgs["result"]["eventoProcesado"]>
+    composites: {}
+  }
+
+  type EventoProcesadoGetPayload<S extends boolean | null | undefined | EventoProcesadoDefaultArgs> = $Result.GetResult<Prisma.$EventoProcesadoPayload, S>
+
+  type EventoProcesadoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<EventoProcesadoFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: EventoProcesadoCountAggregateInputType | true
+    }
+
+  export interface EventoProcesadoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EventoProcesado'], meta: { name: 'EventoProcesado' } }
+    /**
+     * Find zero or one EventoProcesado that matches the filter.
+     * @param {EventoProcesadoFindUniqueArgs} args - Arguments to find a EventoProcesado
+     * @example
+     * // Get one EventoProcesado
+     * const eventoProcesado = await prisma.eventoProcesado.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EventoProcesadoFindUniqueArgs>(args: SelectSubset<T, EventoProcesadoFindUniqueArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one EventoProcesado that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {EventoProcesadoFindUniqueOrThrowArgs} args - Arguments to find a EventoProcesado
+     * @example
+     * // Get one EventoProcesado
+     * const eventoProcesado = await prisma.eventoProcesado.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EventoProcesadoFindUniqueOrThrowArgs>(args: SelectSubset<T, EventoProcesadoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first EventoProcesado that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoFindFirstArgs} args - Arguments to find a EventoProcesado
+     * @example
+     * // Get one EventoProcesado
+     * const eventoProcesado = await prisma.eventoProcesado.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EventoProcesadoFindFirstArgs>(args?: SelectSubset<T, EventoProcesadoFindFirstArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first EventoProcesado that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoFindFirstOrThrowArgs} args - Arguments to find a EventoProcesado
+     * @example
+     * // Get one EventoProcesado
+     * const eventoProcesado = await prisma.eventoProcesado.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EventoProcesadoFindFirstOrThrowArgs>(args?: SelectSubset<T, EventoProcesadoFindFirstOrThrowArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more EventoProcesados that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EventoProcesados
+     * const eventoProcesados = await prisma.eventoProcesado.findMany()
+     * 
+     * // Get first 10 EventoProcesados
+     * const eventoProcesados = await prisma.eventoProcesado.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const eventoProcesadoWithIdOnly = await prisma.eventoProcesado.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EventoProcesadoFindManyArgs>(args?: SelectSubset<T, EventoProcesadoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a EventoProcesado.
+     * @param {EventoProcesadoCreateArgs} args - Arguments to create a EventoProcesado.
+     * @example
+     * // Create one EventoProcesado
+     * const EventoProcesado = await prisma.eventoProcesado.create({
+     *   data: {
+     *     // ... data to create a EventoProcesado
+     *   }
+     * })
+     * 
+     */
+    create<T extends EventoProcesadoCreateArgs>(args: SelectSubset<T, EventoProcesadoCreateArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many EventoProcesados.
+     * @param {EventoProcesadoCreateManyArgs} args - Arguments to create many EventoProcesados.
+     * @example
+     * // Create many EventoProcesados
+     * const eventoProcesado = await prisma.eventoProcesado.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EventoProcesadoCreateManyArgs>(args?: SelectSubset<T, EventoProcesadoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EventoProcesados and returns the data saved in the database.
+     * @param {EventoProcesadoCreateManyAndReturnArgs} args - Arguments to create many EventoProcesados.
+     * @example
+     * // Create many EventoProcesados
+     * const eventoProcesado = await prisma.eventoProcesado.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EventoProcesados and only return the `id`
+     * const eventoProcesadoWithIdOnly = await prisma.eventoProcesado.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EventoProcesadoCreateManyAndReturnArgs>(args?: SelectSubset<T, EventoProcesadoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a EventoProcesado.
+     * @param {EventoProcesadoDeleteArgs} args - Arguments to delete one EventoProcesado.
+     * @example
+     * // Delete one EventoProcesado
+     * const EventoProcesado = await prisma.eventoProcesado.delete({
+     *   where: {
+     *     // ... filter to delete one EventoProcesado
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EventoProcesadoDeleteArgs>(args: SelectSubset<T, EventoProcesadoDeleteArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one EventoProcesado.
+     * @param {EventoProcesadoUpdateArgs} args - Arguments to update one EventoProcesado.
+     * @example
+     * // Update one EventoProcesado
+     * const eventoProcesado = await prisma.eventoProcesado.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EventoProcesadoUpdateArgs>(args: SelectSubset<T, EventoProcesadoUpdateArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more EventoProcesados.
+     * @param {EventoProcesadoDeleteManyArgs} args - Arguments to filter EventoProcesados to delete.
+     * @example
+     * // Delete a few EventoProcesados
+     * const { count } = await prisma.eventoProcesado.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EventoProcesadoDeleteManyArgs>(args?: SelectSubset<T, EventoProcesadoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventoProcesados.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EventoProcesados
+     * const eventoProcesado = await prisma.eventoProcesado.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EventoProcesadoUpdateManyArgs>(args: SelectSubset<T, EventoProcesadoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one EventoProcesado.
+     * @param {EventoProcesadoUpsertArgs} args - Arguments to update or create a EventoProcesado.
+     * @example
+     * // Update or create a EventoProcesado
+     * const eventoProcesado = await prisma.eventoProcesado.upsert({
+     *   create: {
+     *     // ... data to create a EventoProcesado
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EventoProcesado we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EventoProcesadoUpsertArgs>(args: SelectSubset<T, EventoProcesadoUpsertArgs<ExtArgs>>): Prisma__EventoProcesadoClient<$Result.GetResult<Prisma.$EventoProcesadoPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of EventoProcesados.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoCountArgs} args - Arguments to filter EventoProcesados to count.
+     * @example
+     * // Count the number of EventoProcesados
+     * const count = await prisma.eventoProcesado.count({
+     *   where: {
+     *     // ... the filter for the EventoProcesados we want to count
+     *   }
+     * })
+    **/
+    count<T extends EventoProcesadoCountArgs>(
+      args?: Subset<T, EventoProcesadoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EventoProcesadoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EventoProcesado.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EventoProcesadoAggregateArgs>(args: Subset<T, EventoProcesadoAggregateArgs>): Prisma.PrismaPromise<GetEventoProcesadoAggregateType<T>>
+
+    /**
+     * Group by EventoProcesado.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoProcesadoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EventoProcesadoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EventoProcesadoGroupByArgs['orderBy'] }
+        : { orderBy?: EventoProcesadoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EventoProcesadoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEventoProcesadoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EventoProcesado model
+   */
+  readonly fields: EventoProcesadoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EventoProcesado.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EventoProcesadoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EventoProcesado model
+   */ 
+  interface EventoProcesadoFieldRefs {
+    readonly id: FieldRef<"EventoProcesado", 'String'>
+    readonly tenant_id: FieldRef<"EventoProcesado", 'String'>
+    readonly proyecto_id: FieldRef<"EventoProcesado", 'String'>
+    readonly event_id: FieldRef<"EventoProcesado", 'String'>
+    readonly event_type: FieldRef<"EventoProcesado", 'String'>
+    readonly procesado_en: FieldRef<"EventoProcesado", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EventoProcesado findUnique
+   */
+  export type EventoProcesadoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which EventoProcesado to fetch.
+     */
+    where: EventoProcesadoWhereUniqueInput
+  }
+
+  /**
+   * EventoProcesado findUniqueOrThrow
+   */
+  export type EventoProcesadoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which EventoProcesado to fetch.
+     */
+    where: EventoProcesadoWhereUniqueInput
+  }
+
+  /**
+   * EventoProcesado findFirst
+   */
+  export type EventoProcesadoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which EventoProcesado to fetch.
+     */
+    where?: EventoProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoProcesados to fetch.
+     */
+    orderBy?: EventoProcesadoOrderByWithRelationInput | EventoProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventoProcesados.
+     */
+    cursor?: EventoProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoProcesados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventoProcesados.
+     */
+    distinct?: EventoProcesadoScalarFieldEnum | EventoProcesadoScalarFieldEnum[]
+  }
+
+  /**
+   * EventoProcesado findFirstOrThrow
+   */
+  export type EventoProcesadoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which EventoProcesado to fetch.
+     */
+    where?: EventoProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoProcesados to fetch.
+     */
+    orderBy?: EventoProcesadoOrderByWithRelationInput | EventoProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventoProcesados.
+     */
+    cursor?: EventoProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoProcesados.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventoProcesados.
+     */
+    distinct?: EventoProcesadoScalarFieldEnum | EventoProcesadoScalarFieldEnum[]
+  }
+
+  /**
+   * EventoProcesado findMany
+   */
+  export type EventoProcesadoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter, which EventoProcesados to fetch.
+     */
+    where?: EventoProcesadoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoProcesados to fetch.
+     */
+    orderBy?: EventoProcesadoOrderByWithRelationInput | EventoProcesadoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EventoProcesados.
+     */
+    cursor?: EventoProcesadoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoProcesados from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoProcesados.
+     */
+    skip?: number
+    distinct?: EventoProcesadoScalarFieldEnum | EventoProcesadoScalarFieldEnum[]
+  }
+
+  /**
+   * EventoProcesado create
+   */
+  export type EventoProcesadoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * The data needed to create a EventoProcesado.
+     */
+    data: XOR<EventoProcesadoCreateInput, EventoProcesadoUncheckedCreateInput>
+  }
+
+  /**
+   * EventoProcesado createMany
+   */
+  export type EventoProcesadoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EventoProcesados.
+     */
+    data: EventoProcesadoCreateManyInput | EventoProcesadoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventoProcesado createManyAndReturn
+   */
+  export type EventoProcesadoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many EventoProcesados.
+     */
+    data: EventoProcesadoCreateManyInput | EventoProcesadoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventoProcesado update
+   */
+  export type EventoProcesadoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * The data needed to update a EventoProcesado.
+     */
+    data: XOR<EventoProcesadoUpdateInput, EventoProcesadoUncheckedUpdateInput>
+    /**
+     * Choose, which EventoProcesado to update.
+     */
+    where: EventoProcesadoWhereUniqueInput
+  }
+
+  /**
+   * EventoProcesado updateMany
+   */
+  export type EventoProcesadoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EventoProcesados.
+     */
+    data: XOR<EventoProcesadoUpdateManyMutationInput, EventoProcesadoUncheckedUpdateManyInput>
+    /**
+     * Filter which EventoProcesados to update
+     */
+    where?: EventoProcesadoWhereInput
+  }
+
+  /**
+   * EventoProcesado upsert
+   */
+  export type EventoProcesadoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * The filter to search for the EventoProcesado to update in case it exists.
+     */
+    where: EventoProcesadoWhereUniqueInput
+    /**
+     * In case the EventoProcesado found by the `where` argument doesn't exist, create a new EventoProcesado with this data.
+     */
+    create: XOR<EventoProcesadoCreateInput, EventoProcesadoUncheckedCreateInput>
+    /**
+     * In case the EventoProcesado was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EventoProcesadoUpdateInput, EventoProcesadoUncheckedUpdateInput>
+  }
+
+  /**
+   * EventoProcesado delete
+   */
+  export type EventoProcesadoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
+    /**
+     * Filter which EventoProcesado to delete.
+     */
+    where: EventoProcesadoWhereUniqueInput
+  }
+
+  /**
+   * EventoProcesado deleteMany
+   */
+  export type EventoProcesadoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventoProcesados to delete
+     */
+    where?: EventoProcesadoWhereInput
+  }
+
+  /**
+   * EventoProcesado without action
+   */
+  export type EventoProcesadoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoProcesado
+     */
+    select?: EventoProcesadoSelect<ExtArgs> | null
   }
 
 
@@ -5595,10 +6595,24 @@ export namespace Prisma {
     concepto_id: 'concepto_id',
     concepto_clave: 'concepto_clave',
     frente_trabajo: 'frente_trabajo',
-    oc_item_id: 'oc_item_id'
+    oc_item_id: 'oc_item_id',
+    recepcion_id: 'recepcion_id',
+    recepcion_item_id: 'recepcion_item_id'
   };
 
   export type MovimientoAlmacenScalarFieldEnum = (typeof MovimientoAlmacenScalarFieldEnum)[keyof typeof MovimientoAlmacenScalarFieldEnum]
+
+
+  export const EventoProcesadoScalarFieldEnum: {
+    id: 'id',
+    tenant_id: 'tenant_id',
+    proyecto_id: 'proyecto_id',
+    event_id: 'event_id',
+    event_type: 'event_type',
+    procesado_en: 'procesado_en'
+  };
+
+  export type EventoProcesadoScalarFieldEnum = (typeof EventoProcesadoScalarFieldEnum)[keyof typeof EventoProcesadoScalarFieldEnum]
 
 
   export const ActivoScalarFieldEnum: {
@@ -5852,6 +6866,8 @@ export namespace Prisma {
     concepto_clave?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     frente_trabajo?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     oc_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    recepcion_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    recepcion_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
     item?: XOR<ItemInventarioRelationFilter, ItemInventarioWhereInput>
   }
 
@@ -5872,11 +6888,14 @@ export namespace Prisma {
     concepto_clave?: SortOrderInput | SortOrder
     frente_trabajo?: SortOrderInput | SortOrder
     oc_item_id?: SortOrderInput | SortOrder
+    recepcion_id?: SortOrderInput | SortOrder
+    recepcion_item_id?: SortOrderInput | SortOrder
     item?: ItemInventarioOrderByWithRelationInput
   }
 
   export type MovimientoAlmacenWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    uq_mov_recepcion_item?: MovimientoAlmacenUq_mov_recepcion_itemCompoundUniqueInput
     AND?: MovimientoAlmacenWhereInput | MovimientoAlmacenWhereInput[]
     OR?: MovimientoAlmacenWhereInput[]
     NOT?: MovimientoAlmacenWhereInput | MovimientoAlmacenWhereInput[]
@@ -5895,8 +6914,10 @@ export namespace Prisma {
     concepto_clave?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     frente_trabajo?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     oc_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    recepcion_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    recepcion_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
     item?: XOR<ItemInventarioRelationFilter, ItemInventarioWhereInput>
-  }, "id">
+  }, "id" | "uq_mov_recepcion_item">
 
   export type MovimientoAlmacenOrderByWithAggregationInput = {
     id?: SortOrder
@@ -5915,6 +6936,8 @@ export namespace Prisma {
     concepto_clave?: SortOrderInput | SortOrder
     frente_trabajo?: SortOrderInput | SortOrder
     oc_item_id?: SortOrderInput | SortOrder
+    recepcion_id?: SortOrderInput | SortOrder
+    recepcion_item_id?: SortOrderInput | SortOrder
     _count?: MovimientoAlmacenCountOrderByAggregateInput
     _avg?: MovimientoAlmacenAvgOrderByAggregateInput
     _max?: MovimientoAlmacenMaxOrderByAggregateInput
@@ -5942,6 +6965,66 @@ export namespace Prisma {
     concepto_clave?: StringNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
     frente_trabajo?: StringNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
     oc_item_id?: UuidNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
+    recepcion_id?: UuidNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
+    recepcion_item_id?: UuidNullableWithAggregatesFilter<"MovimientoAlmacen"> | string | null
+  }
+
+  export type EventoProcesadoWhereInput = {
+    AND?: EventoProcesadoWhereInput | EventoProcesadoWhereInput[]
+    OR?: EventoProcesadoWhereInput[]
+    NOT?: EventoProcesadoWhereInput | EventoProcesadoWhereInput[]
+    id?: UuidFilter<"EventoProcesado"> | string
+    tenant_id?: UuidFilter<"EventoProcesado"> | string
+    proyecto_id?: UuidFilter<"EventoProcesado"> | string
+    event_id?: UuidFilter<"EventoProcesado"> | string
+    event_type?: StringFilter<"EventoProcesado"> | string
+    procesado_en?: DateTimeFilter<"EventoProcesado"> | Date | string
+  }
+
+  export type EventoProcesadoOrderByWithRelationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    procesado_en?: SortOrder
+  }
+
+  export type EventoProcesadoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    uq_evento_procesado?: EventoProcesadoUq_evento_procesadoCompoundUniqueInput
+    AND?: EventoProcesadoWhereInput | EventoProcesadoWhereInput[]
+    OR?: EventoProcesadoWhereInput[]
+    NOT?: EventoProcesadoWhereInput | EventoProcesadoWhereInput[]
+    tenant_id?: UuidFilter<"EventoProcesado"> | string
+    proyecto_id?: UuidFilter<"EventoProcesado"> | string
+    event_id?: UuidFilter<"EventoProcesado"> | string
+    event_type?: StringFilter<"EventoProcesado"> | string
+    procesado_en?: DateTimeFilter<"EventoProcesado"> | Date | string
+  }, "id" | "uq_evento_procesado">
+
+  export type EventoProcesadoOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    procesado_en?: SortOrder
+    _count?: EventoProcesadoCountOrderByAggregateInput
+    _max?: EventoProcesadoMaxOrderByAggregateInput
+    _min?: EventoProcesadoMinOrderByAggregateInput
+  }
+
+  export type EventoProcesadoScalarWhereWithAggregatesInput = {
+    AND?: EventoProcesadoScalarWhereWithAggregatesInput | EventoProcesadoScalarWhereWithAggregatesInput[]
+    OR?: EventoProcesadoScalarWhereWithAggregatesInput[]
+    NOT?: EventoProcesadoScalarWhereWithAggregatesInput | EventoProcesadoScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"EventoProcesado"> | string
+    tenant_id?: UuidWithAggregatesFilter<"EventoProcesado"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"EventoProcesado"> | string
+    event_id?: UuidWithAggregatesFilter<"EventoProcesado"> | string
+    event_type?: StringWithAggregatesFilter<"EventoProcesado"> | string
+    procesado_en?: DateTimeWithAggregatesFilter<"EventoProcesado"> | Date | string
   }
 
   export type ActivoWhereInput = {
@@ -6309,6 +7392,8 @@ export namespace Prisma {
     concepto_clave?: string | null
     frente_trabajo?: string | null
     oc_item_id?: string | null
+    recepcion_id?: string | null
+    recepcion_item_id?: string | null
     item: ItemInventarioCreateNestedOneWithoutMovimientosInput
   }
 
@@ -6329,6 +7414,8 @@ export namespace Prisma {
     concepto_clave?: string | null
     frente_trabajo?: string | null
     oc_item_id?: string | null
+    recepcion_id?: string | null
+    recepcion_item_id?: string | null
   }
 
   export type MovimientoAlmacenUpdateInput = {
@@ -6347,6 +7434,8 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
     item?: ItemInventarioUpdateOneRequiredWithoutMovimientosNestedInput
   }
 
@@ -6367,6 +7456,8 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenCreateManyInput = {
@@ -6386,6 +7477,8 @@ export namespace Prisma {
     concepto_clave?: string | null
     frente_trabajo?: string | null
     oc_item_id?: string | null
+    recepcion_id?: string | null
+    recepcion_item_id?: string | null
   }
 
   export type MovimientoAlmacenUpdateManyMutationInput = {
@@ -6404,6 +7497,8 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenUncheckedUpdateManyInput = {
@@ -6423,6 +7518,71 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EventoProcesadoCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    event_id: string
+    event_type: string
+    procesado_en?: Date | string
+  }
+
+  export type EventoProcesadoUncheckedCreateInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    event_id: string
+    event_type: string
+    procesado_en?: Date | string
+  }
+
+  export type EventoProcesadoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    procesado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoProcesadoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    procesado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoProcesadoCreateManyInput = {
+    id?: string
+    tenant_id: string
+    proyecto_id: string
+    event_id: string
+    event_type: string
+    procesado_en?: Date | string
+  }
+
+  export type EventoProcesadoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    procesado_en?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoProcesadoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    event_id?: StringFieldUpdateOperationsInput | string
+    event_type?: StringFieldUpdateOperationsInput | string
+    procesado_en?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ActivoCreateInput = {
@@ -6958,6 +8118,13 @@ export namespace Prisma {
     isNot?: ItemInventarioWhereInput
   }
 
+  export type MovimientoAlmacenUq_mov_recepcion_itemCompoundUniqueInput = {
+    tenant_id: string
+    proyecto_id: string
+    recepcion_id: string
+    recepcion_item_id: string
+  }
+
   export type MovimientoAlmacenCountOrderByAggregateInput = {
     id?: SortOrder
     tenant_id?: SortOrder
@@ -6975,6 +8142,8 @@ export namespace Prisma {
     concepto_clave?: SortOrder
     frente_trabajo?: SortOrder
     oc_item_id?: SortOrder
+    recepcion_id?: SortOrder
+    recepcion_item_id?: SortOrder
   }
 
   export type MovimientoAlmacenAvgOrderByAggregateInput = {
@@ -6998,6 +8167,8 @@ export namespace Prisma {
     concepto_clave?: SortOrder
     frente_trabajo?: SortOrder
     oc_item_id?: SortOrder
+    recepcion_id?: SortOrder
+    recepcion_item_id?: SortOrder
   }
 
   export type MovimientoAlmacenMinOrderByAggregateInput = {
@@ -7017,10 +8188,44 @@ export namespace Prisma {
     concepto_clave?: SortOrder
     frente_trabajo?: SortOrder
     oc_item_id?: SortOrder
+    recepcion_id?: SortOrder
+    recepcion_item_id?: SortOrder
   }
 
   export type MovimientoAlmacenSumOrderByAggregateInput = {
     cantidad?: SortOrder
+  }
+
+  export type EventoProcesadoUq_evento_procesadoCompoundUniqueInput = {
+    tenant_id: string
+    event_id: string
+  }
+
+  export type EventoProcesadoCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    procesado_en?: SortOrder
+  }
+
+  export type EventoProcesadoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    procesado_en?: SortOrder
+  }
+
+  export type EventoProcesadoMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenant_id?: SortOrder
+    proyecto_id?: SortOrder
+    event_id?: SortOrder
+    event_type?: SortOrder
+    procesado_en?: SortOrder
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -7621,6 +8826,8 @@ export namespace Prisma {
     concepto_clave?: string | null
     frente_trabajo?: string | null
     oc_item_id?: string | null
+    recepcion_id?: string | null
+    recepcion_item_id?: string | null
   }
 
   export type MovimientoAlmacenUncheckedCreateWithoutItemInput = {
@@ -7639,6 +8846,8 @@ export namespace Prisma {
     concepto_clave?: string | null
     frente_trabajo?: string | null
     oc_item_id?: string | null
+    recepcion_id?: string | null
+    recepcion_item_id?: string | null
   }
 
   export type MovimientoAlmacenCreateOrConnectWithoutItemInput = {
@@ -7687,6 +8896,8 @@ export namespace Prisma {
     concepto_clave?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     frente_trabajo?: StringNullableFilter<"MovimientoAlmacen"> | string | null
     oc_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    recepcion_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
+    recepcion_item_id?: UuidNullableFilter<"MovimientoAlmacen"> | string | null
   }
 
   export type ItemInventarioCreateWithoutMovimientosInput = {
@@ -7968,6 +9179,8 @@ export namespace Prisma {
     concepto_clave?: string | null
     frente_trabajo?: string | null
     oc_item_id?: string | null
+    recepcion_id?: string | null
+    recepcion_item_id?: string | null
   }
 
   export type MovimientoAlmacenUpdateWithoutItemInput = {
@@ -7986,6 +9199,8 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenUncheckedUpdateWithoutItemInput = {
@@ -8004,6 +9219,8 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MovimientoAlmacenUncheckedUpdateManyWithoutItemInput = {
@@ -8022,6 +9239,8 @@ export namespace Prisma {
     concepto_clave?: NullableStringFieldUpdateOperationsInput | string | null
     frente_trabajo?: NullableStringFieldUpdateOperationsInput | string | null
     oc_item_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    recepcion_item_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TraspasoActivoCreateManyActivoInput = {
@@ -8121,6 +9340,10 @@ export namespace Prisma {
      * @deprecated Use MovimientoAlmacenDefaultArgs instead
      */
     export type MovimientoAlmacenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MovimientoAlmacenDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use EventoProcesadoDefaultArgs instead
+     */
+    export type EventoProcesadoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = EventoProcesadoDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ActivoDefaultArgs instead
      */

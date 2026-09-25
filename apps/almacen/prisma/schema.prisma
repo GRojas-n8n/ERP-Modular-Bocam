@@ -57,12 +57,32 @@ model MovimientoAlmacen {
   concepto_clave  String?  @db.VarChar(100)
   frente_trabajo  String?  @db.VarChar(100)
   oc_item_id      String?  @db.Uuid
+  // Idempotencia de los INGRESOS por recepción de OC (compras.recepcion_oc_registrada.v1).
+  // NULL en los movimientos manuales y de obra: Postgres no considera iguales dos NULL,
+  // por lo que la restricción única solo aplica a los INGRESOS que vienen de una recepción.
+  recepcion_id      String?  @db.Uuid
+  recepcion_item_id String?  @db.Uuid
 
   item            ItemInventario @relation(fields: [item_id], references: [id], onDelete: Cascade)
 
+  @@unique([tenant_id, proyecto_id, recepcion_id, recepcion_item_id], name: "uq_mov_recepcion_item")
   @@index([tenant_id, proyecto_id, fecha])
   @@index([tenant_id, proyecto_id, concepto_id])
   @@map("movimientos_almacen")
+}
+
+// Eventos del bus ya procesados por Almacén (idempotencia por event_id). Se inserta en la misma
+// transacción que los movimientos: si el evento falla, el registro se revierte con ellos.
+model EventoProcesado {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenant_id    String   @db.Uuid
+  proyecto_id  String   @db.Uuid
+  event_id     String   @db.Uuid
+  event_type   String   @db.VarChar(100)
+  procesado_en DateTime @default(now())
+
+  @@unique([tenant_id, event_id], name: "uq_evento_procesado")
+  @@map("eventos_procesados")
 }
 
 // -----------------------------------------------------------------------------
