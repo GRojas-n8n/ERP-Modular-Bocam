@@ -22,6 +22,8 @@
     "test:integration:almacen-eventos-oc": "npm run test:integration:eventos-oc -w @bocam/almacen",
     "test:integration:almacen-recepcion-oc-v1": "npm run test:integration:recepcion-oc-v1 -w @bocam/almacen",
     "test:integration:almacen-recepcion-oc-suscripcion": "npm run test:integration:recepcion-oc-suscripcion -w @bocam/almacen",
+    "test:integration:compras-outbox-recepcion-oc": "npm run test:integration:outbox-recepcion-oc -w @bocam/compras",
+    "test:integration:compras-outbox-recepcion-oc-rabbitmq": "npm run test:integration:outbox-recepcion-oc-rabbitmq -w @bocam/compras",
     "test:integration:control-proyectos": "npm run test:integration -w @bocam/control-proyectos",
     "test:e2e:criticas": "npm run test:e2e:reconciliacion && npm run test:e2e:seguridad && npm run test:e2e:idempotencia",
     "test:e2e:reconciliacion": "npm run test:e2e:reconciliacion -w @bocam/compras && npm run test:e2e:reconciliacion -w @bocam/control-proyectos",

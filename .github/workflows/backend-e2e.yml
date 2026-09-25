@@ -129,6 +129,12 @@ jobs:
           ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-v1
           ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:almacen-recepcion-oc-suscripcion
 
+      # ── Compras: outbox transaccional de recepciones de OC ──
+      - name: Run Compras outbox integration
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-recepcion-oc
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-recepcion-oc-rabbitmq
+
       # ── Tests inter-modulo ────────────────────────────────────────────────────
       # Cada test recibe DATABASE_URL apuntando al schema de SU modulo.
       # Los tests derivan el schema del modulo peer via string-replace:

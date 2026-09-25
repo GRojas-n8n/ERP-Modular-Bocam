@@ -28,6 +28,8 @@ import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
 import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from './purga-bloqueos';
 import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
+import { randomUUID } from 'node:crypto';
+import { registrarEventoRecepcion, iniciarDespachadorOutbox, SnapshotInsumo } from './outbox';
 
 const eventBus = createEventBus('compras');
 
@@ -1738,6 +1740,30 @@ app.get('/api/v1/compras/ordenes-compra/:id/recepciones',
   }
 );
 
+/**
+ * Snapshot de insumos de catálogo para el evento de recepción (autosuficiente: Almacén no consulta a nadie al
+ * procesarlo). Se resuelve en la petición, con el token del usuario, y se congela en el outbox. Si Gerencia
+ * Técnica no responde, la recepción NO se bloquea: el evento sale sin snapshot y Almacén decide según su inventario.
+ */
+async function resolverSnapshotInsumos(req: Request): Promise<Map<string, SnapshotInsumo>> {
+  try {
+    const resp = await axios.get(`${GT_URL}/insumos`, {
+      headers: buildForwardHeaders(req, { Authorization: req.headers.authorization || '' }),
+      timeout: 3000,
+    });
+    const mapa = new Map<string, SnapshotInsumo>();
+    for (const i of ((resp.data?.data ?? []) as any[])) {
+      if (i?.id && i.clave && i.descripcion && i.unidad_medida) {
+        mapa.set(i.id, { clave: i.clave, descripcion: i.descripcion, unidad: i.unidad_medida, ...(i.tipo_insumo ? { categoria: String(i.tipo_insumo) } : {}) });
+      }
+    }
+    return mapa;
+  } catch (error: any) {
+    console.warn(JSON.stringify({ action: 'compras.recepcion.snapshot_no_disponible', error: error?.message ?? String(error) }));
+    return new Map();
+  }
+}
+
 app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
   requireRoles('procurement', 'admin'),
   async (req: Request, res: Response) => {
@@ -1749,6 +1775,9 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
       if (!Array.isArray(itemsBody) || itemsBody.length === 0) {
         return void res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la recepción.' });
       }
+
+      // Antes de la transacción: la llamada a Gerencia Técnica no debe mantener abierta la transacción.
+      const snapshots = await resolverSnapshotInsumos(req);
 
       const result = await createTenantContext(
         { tenantId, proyectoId, userId },
@@ -1822,6 +1851,34 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
             data: { estado: nuevoEstado },
           });
 
+          // Outbox transaccional: el evento de la recepción se escribe en ESTA misma transacción. Si falla,
+          // la recepción no queda registrada; si se confirma, el evento no se pierde aunque el bus esté caído.
+          const itemsOrden = new Map(orden.items.map((i: any) => [i.id_item, i]));
+          await registrarEventoRecepcion(prisma, {
+            eventId: randomUUID(),
+            tenantId,
+            proyectoId,
+            ordenId: id,
+            ordenCodigo: orden.codigo,
+            proveedorId: orden.proveedor_id,
+            recepcionId: recepcion.id_recepcion,
+            fechaRecepcion: recepcion.fecha_recepcion,
+            estadoOc: nuevoEstado,
+            recibidoPor: userId,
+            items: recepcion.items.map((ri: any) => {
+              const itemOc: any = itemsOrden.get(ri.orden_item_id);
+              return {
+                recepcionItemId: ri.id_recepcion_item,
+                ordenItemId: ri.orden_item_id,
+                insumoId: itemOc?.insumo_id ?? null,
+                cantidadRecibida: Number(ri.cantidad_recibida),
+                descripcionLibre: itemOc?.descripcion_libre ?? null,
+                unidadLibre: itemOc?.unidad_libre ?? null,
+              };
+            }),
+            snapshots,
+          });
+
           return { recepcion, nuevoEstado, orden };
         }
       );
@@ -1835,25 +1892,7 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
         nuevo_estado: result.nuevoEstado,
       });
 
-      // Publicar evento si la OC quedó completamente recibida (best-effort)
-      if (result.nuevoEstado === OC_STATUS.RECIBIDA) {
-        try {
-          await eventBus.publish({
-            event_type: 'compras.oc_recibida_total',
-            timestamp: new Date().toISOString(),
-            context: buildEventContext(req),
-            payload: {
-              id_orden: id,
-              codigo: result.orden.codigo,
-              proveedor_id: result.orden.proveedor_id,
-              total: Number(result.orden.total),
-              proyecto_id: result.orden.proyecto_id,
-            },
-          });
-        } catch (_) {
-          /* EventBus offline — degradación elegante. La OC ya fue marcada RECIBIDA. */
-        }
-      }
+      // El evento compras.recepcion_oc_registrada.v1 ya quedó en el outbox y lo publica el despachador.
 
       res.status(201).json({
         success: true,
@@ -1864,6 +1903,34 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
       });
     } catch (error: any) {
       logError(req, 'compras', 'compras.recepcion.create.error', 'Error al registrar recepción', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// Reemite el evento de una recepción: la fila vuelve a PENDIENTE con el mismo event_id, de modo que Almacén la
+// trata como reentrega idempotente. Solo admin y procurement; una recepción de otro tenant responde 404.
+app.post('/api/v1/compras/ordenes-compra/:id/recepciones/:recepcionId/reemitir-evento',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id, recepcionId } = req.params;
+      const fila = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const existente = await prisma.outboxEvento.findFirst({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, orden_id: id, recepcion_id: recepcionId },
+        });
+        if (!existente) return null;
+        return prisma.outboxEvento.update({
+          where: { id_evento: existente.id_evento },
+          data: { estado: 'PENDIENTE', intentos: 0, proximo_intento_en: new Date(), ultimo_error: null, publicado_en: null },
+        });
+      });
+      if (!fila) return void res.status(404).json({ success: false, message: 'Evento de la recepción no encontrado.' });
+      logInfo(req, 'compras', 'compras.outbox.reemision', 'Evento de recepción reemitido', { event_id: fila.id_evento, recepcion_id: recepcionId });
+      res.json({ success: true, data: { event_id: fila.id_evento, estado: fila.estado } });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.outbox.reemision.error', 'Error al reemitir evento', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }
@@ -5411,6 +5478,13 @@ export async function startServer() {
   await eventBus.subscribe('finanzas.oc_pagada_parcial', handleOcPagadaParcialEvent);
   await eventBus.subscribe('gerencia_tecnica.transferencia_partida_aprobada', handleTransferenciaPartidaAprobadaEvent);
   await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+  // Despachador del outbox: publica con confirmación del broker y, al arrancar, retoma lo pendiente tras un reinicio.
+  if (process.env.COMPRAS_OUTBOX_DISPATCHER !== 'off') {
+    iniciarDespachadorOutbox(eventBus, {
+      intervaloMs: Number(process.env.COMPRAS_OUTBOX_INTERVALO_MS ?? 5000),
+      maxAttempts: Number(process.env.COMPRAS_OUTBOX_MAX_INTENTOS ?? 10),
+    });
+  }
   console.log('[Compras] Eventos: finanzas.fondos_*, finanzas.oc_pagada_*, gerencia_tecnica.transferencia_partida_aprobada, auth.centro_costos_creado');
   });
 }
