@@ -1,4 +1,10 @@
-## ADDED Requirements
+# http-security-headers Specification
+
+## Purpose
+
+Define los headers de seguridad HTTP que Caddy agrega a todo el tráfico público de iretum.com, incluida la política de cámara que necesita el lector QR de asistencia.
+
+## Requirements
 
 ### Requirement: Toda respuesta HTTP pública SHALL incluir headers de seguridad estándar
 `docker/Caddyfile` SHALL agregar, para todo el tráfico de `iretum.com` y `www.iretum.com`, los headers `Strict-Transport-Security` (con `includeSubDomains`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, y `Permissions-Policy` restrictiva por defecto, sin depender de que cada microservicio los agregue individualmente.

@@ -217,6 +217,7 @@ Treinta specs validan pero conservan `TBD - created by archiving change …` com
 | Lote | Estado | Specs | Válidas / inválidas tras el lote |
 |---|---|---|---|
 | 1 | Hecho | `permisos-catalogo-gerencia-tecnica` (dominio 1) | 72 / 91 |
+| 2 | Hecho | `carga-archivos-multer`, `carga-masiva-archivos`, `ci-playwright-smoke-post-deploy`, `despliegue-completo-microservicios`, `http-security-headers` (dominio 10, T1/T2) | 77 / 86 |
 
 ## Hallazgos semánticos detectados durante la migración
 
@@ -225,6 +226,9 @@ Se registran sin corregir: la migración no cambia contratos. Cada hallazgo requ
 | Spec | Hallazgo | Evidencia |
 |---|---|---|
 | `permisos-catalogo-gerencia-tecnica` | El tercer requisito afirma que el proxy nginx permite hasta 20 MB en la ruta de Gerencia Técnica. El bloque de esa ruta en `apps/app-shell/nginx.conf` no fija `client_max_body_size`; el valor de 20 MB solo aparece en `docker/nginx.qnap.conf` (topología QNAP). Producción usa Caddy y `docker/Caddyfile` no declara un límite de cuerpo. El límite de 15 MB de Express (`express.json({ limit: '15mb' })`) sí coincide. | `apps/app-shell/nginx.conf`, `docker/nginx.qnap.conf`, `docker/Caddyfile`, `apps/gerencia-tecnica/src/main.ts:55` |
+| `permisos-catalogo-gerencia-tecnica` | (Enlace) El hallazgo del límite de 20 MB se trata en un change independiente, futuro: `alinear-limite-carga-gerencia-tecnica-produccion`. Criterios acordados: no modificar esta spec durante la migración; no fijar un límite global de 20 MB en Caddy (podría romper módulos con archivos mayores); auditar primero los límites reales de multer, JSON, frontend, Caddy y los endpoints de Gerencia Técnica (el límite de `express.json` no aplica necesariamente a cargas multipart); decidir después el valor correcto y, si se conserva 20 MB, aplicarlo solo a las rutas correspondientes y probar archivo bajo el límite aceptado, archivo sobre el límite rechazado con mensaje claro y resto de módulos sin cambios. | — |
+| `carga-archivos-multer` | El primer requisito lista los endpoints de subida de `gerencia-tecnica`, `compras`, `calidad` y `asistente`, pero `personal` también recibe archivos con multer (`uploadExpediente`). La spec está incompleta respecto del código; hay que decidir si el contrato debe incluirlo. | `apps/personal/src/main.ts:70` |
+| `despliegue-completo-microservicios` | El segundo requisito exige una `location /api/v1/<servicio>` en `docker/nginx.qnap.conf`. En producción el tráfico entra por Caddy hacia `app-shell:80` y el enrutado a los servicios lo define `apps/app-shell/nginx.conf`; el archivo QNAP corresponde a otra topología. El requisito nombra el archivo equivocado para el VPS. | `docker/Caddyfile`, `apps/app-shell/nginx.conf`, `docker/nginx.qnap.conf` |
 
 ## Reglas de lote
 

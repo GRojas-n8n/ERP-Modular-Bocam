@@ -1,8 +1,13 @@
-## ADDED Requirements
+# despliegue-completo-microservicios Specification
+
+## Purpose
+
+Define las condiciones que un microservicio debe cumplir para considerarse desplegado de forma completa y segura en producción: contenedor, ruta de entrada, base de datos con RLS efectiva, aislamiento verificado en el código, URLs internas entre servicios y rate limiting.
+
+## Requirements
 
 ### Requirement: Todo microservicio con código listo SHALL tener contenedor desplegado
-Un microservicio que tiene código, tests y (si aplica) migraciones de Prisma listos en
-el repositorio SHALL tener un service block correspondiente en
+Un microservicio que tiene código, tests y (si aplica) migraciones de Prisma listos en el repositorio SHALL tener un service block correspondiente en
 `docker-compose.vps.yml`, desplegado y corriendo en el VPS de producción.
 
 #### Scenario: Microservicio con código pero sin service block
@@ -117,8 +122,7 @@ Al decidir el alcance de una política RLS para una tabla tenant-scoped, la pres
 - **THEN** la política RLS SHALL ser combinada `tenant_id AND proyecto_id`, igual que el resto de tablas de ese tipo en el mismo servicio
 
 ### Requirement: Las integraciones backend-to-backend SHALL usar URLs de contenedor, no localhost
-Cuando un microservicio llama a otro vía HTTP interno (ej. `compras` → GT para
-catálogo de insumos), la variable de entorno de esa URL SHALL apuntar al nombre de
+Cuando un microservicio llama a otro vía HTTP interno (ej. `compras` → GT para catálogo de insumos), la variable de entorno de esa URL SHALL apuntar al nombre de
 contenedor Docker del servicio destino, nunca depender del valor por defecto
 hardcodeado en el código fuente.
 

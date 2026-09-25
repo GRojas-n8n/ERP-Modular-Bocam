@@ -1,9 +1,13 @@
+# carga-archivos-multer Specification
+
+## Purpose
+
+Define cómo los endpoints que reciben archivos validan el tipo y el tamaño, responden con errores explícitos cuando se superan y eligen entre almacenamiento temporal en disco o en memoria.
+
 ## Requirements
 
 ### Requirement: Los endpoints de subida de archivos SHALL aceptar solo tipos de archivo permitidos
-Cada endpoint de subida de archivo (fichas técnicas en `gerencia-tecnica`, PDFs de
-cotización y documentos de proveedor en `compras`, adjuntos en `calidad`, lectura de PDF
-de cotización por IA en `asistente`) SHALL rechazar cualquier archivo cuya extensión o
+Cada endpoint de subida de archivo (fichas técnicas en `gerencia-tecnica`, PDFs de cotización y documentos de proveedor en `compras`, adjuntos en `calidad`, lectura de PDF de cotización por IA en `asistente`) SHALL rechazar cualquier archivo cuya extensión o
 tipo MIME no esté en la lista permitida configurada para ese endpoint, sin persistir el
 archivo rechazado.
 
@@ -33,8 +37,7 @@ configurado para ese endpoint, e identificarlo como error de límite de tamaño
 - **THEN** el sistema lo acepta y procesa normalmente
 
 ### Requirement: El almacenamiento de archivos subidos SHALL seguir el modo configurado por endpoint (disco o memoria)
-Los endpoints que persisten el archivo temporalmente en disco (`gerencia-tecnica`,
-`compras` ×2, `calidad`) SHALL seguir escribiéndolo al directorio temporal configurado; el
+Los endpoints que persisten el archivo temporalmente en disco (`gerencia-tecnica`, `compras` ×2, `calidad`) SHALL seguir escribiéndolo al directorio temporal configurado; el
 endpoint que solo necesita el buffer en memoria para enviarlo a un servicio externo
 (`asistente`, lectura de PDF por IA) SHALL seguir sin escribir ningún archivo a disco.
 
