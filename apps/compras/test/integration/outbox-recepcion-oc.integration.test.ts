@@ -580,6 +580,89 @@ async function testRlsAislaPorTenantYProyectoYElDespachadorVeTodo() {
   }
 }
 
+// ── La migración por sí sola deja la tabla protegida ─────────────────────────
+
+/** Sentencias de un SQL sin comentarios de línea, separadas por `;`. Ninguna migración de este servicio usa `;` en literales. */
+function sentenciasSql(sql: string): string[] {
+  return sql.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n')
+    .split(';').map((x) => x.trim()).filter(Boolean);
+}
+
+/** Normaliza para comparar definiciones: sin comillas de identificador, espacios colapsados. */
+const normalizarSql = (sentencia: string) => sentencia.replace(/"/g, '').replace(/\s+/g, ' ').trim();
+
+async function testLaMigracionDelOutboxHabilitaYForzaRlsSinElWorkflow() {
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const migracion = readFileSync(join(__dirname, '../../prisma/migrations/20260925130000_outbox_eventos/migration.sql'), 'utf8');
+  const politicas = readFileSync(join(__dirname, '../../prisma/rls-policies.sql'), 'utf8');
+
+  // 1. La migración contiene las sentencias de RLS y son las mismas que las del bloque versionado del workflow.
+  const bloque = politicas.split('-- >>> OUTBOX_EVENTOS')[1]?.split('-- <<< OUTBOX_EVENTOS')[0];
+  assert.ok(bloque, 'rls-policies.sql debe delimitar el bloque OUTBOX_EVENTOS');
+  const deLaMigracion = sentenciasSql(migracion).map(normalizarSql).filter((x) => /ROW LEVEL SECURITY|POLICY/.test(x));
+  const delWorkflow = sentenciasSql(bloque!).map(normalizarSql);
+  assert.equal(deLaMigracion.length, 4, 'ENABLE, FORCE, DROP POLICY y CREATE POLICY');
+  assert.deepEqual(deLaMigracion, delWorkflow, 'la política de la migración coincide con la de rls-policies.sql: no hay deriva entre ambas');
+
+  // 2. Se ejecuta SOLO la migración en un esquema temporal y se comprueba el resultado. Todo se revierte.
+  const esquema = `tmp_outbox_mig_${Date.now()}`;
+  const rol = `outbox_mig_rol_${Date.now()}`;
+  const REVERTIR = new Error('revertir');
+  const resultado: Record<string, any> = {};
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRawUnsafe(`CREATE SCHEMA ${esquema}`);
+    await tx.$executeRawUnsafe(`SET LOCAL search_path = ${esquema}`);
+    for (const sentencia of sentenciasSql(migracion)) await tx.$executeRawUnsafe(sentencia);
+
+    const [meta] = await tx.$queryRawUnsafe<Array<{ rls: boolean; forzado: boolean }>>(
+      `SELECT relrowsecurity AS rls, relforcerowsecurity AS forzado FROM pg_class WHERE oid = '${esquema}.outbox_eventos'::regclass`);
+    resultado.meta = meta;
+    resultado.politicas = await tx.$queryRawUnsafe<Array<{ policyname: string }>>(
+      `SELECT policyname FROM pg_policies WHERE schemaname = '${esquema}' AND tablename = 'outbox_eventos'`);
+
+    // Comportamiento con un rol sin privilegios: la tabla recién creada ya aísla.
+    await tx.$executeRawUnsafe(`CREATE ROLE ${rol} NOLOGIN`);
+    await tx.$executeRawUnsafe(`GRANT USAGE ON SCHEMA ${esquema} TO ${rol}`);
+    await tx.$executeRawUnsafe(`GRANT SELECT, INSERT, UPDATE ON outbox_eventos TO ${rol}`);
+    const tenantA = randomUUID(); const proyectoA = randomUUID(); const tenantB = randomUUID();
+    await tx.$executeRawUnsafe(`SET LOCAL ROLE ${rol}`);
+    await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', '${tenantA}', true), set_config('app.current_proyecto_id', '${proyectoA}', true)`);
+    await tx.$executeRawUnsafe(
+      `INSERT INTO outbox_eventos (id_evento, tenant_id, proyecto_id, orden_id, recepcion_id, event_type, payload)
+       VALUES ('${randomUUID()}', '${tenantA}', '${proyectoA}', '${randomUUID()}', '${randomUUID()}', 'compras.recepcion_oc_registrada.v1', '{}'::jsonb)`);
+    const contar = async () => Number((await tx.$queryRawUnsafe<Array<{ n: bigint }>>(`SELECT count(*) AS n FROM outbox_eventos`))[0].n);
+    resultado.conSuContexto = await contar();
+    await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', '${tenantB}', true)`);
+    resultado.conOtroTenant = await contar();
+    await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', '', true), set_config('app.current_proyecto_id', '', true)`);
+    resultado.conContextoVacio = await contar();
+    await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', '${tenantB}', true), set_config('app.current_proyecto_id', '${proyectoA}', true)`);
+    // Un insert con el tenant de otra sesión debe rechazarlo el WITH CHECK; si se permitiera, el DO lanza una excepción propia.
+    await tx.$executeRawUnsafe(`
+      DO $$ BEGIN
+        INSERT INTO outbox_eventos (id_evento, tenant_id, proyecto_id, orden_id, recepcion_id, event_type, payload)
+        VALUES ('${randomUUID()}', '${tenantA}', '${proyectoA}', '${randomUUID()}', '${randomUUID()}', 'x', '{}'::jsonb);
+        RAISE EXCEPTION 'FALLO: insert de otro tenant permitido';
+      EXCEPTION WHEN insufficient_privilege THEN NULL;
+      END $$`);
+    throw REVERTIR;
+  }, { timeout: 60000 }).catch((error) => { if (error !== REVERTIR) throw error; });
+
+  assert.equal(resultado.meta.rls, true, 'la migración habilita RLS');
+  assert.equal(resultado.meta.forzado, true, 'la migración fuerza RLS (también para el dueño de la tabla)');
+  assert.deepEqual(resultado.politicas.map((p: any) => p.policyname), ['rls_outbox_eventos_context']);
+  assert.equal(resultado.conSuContexto, 1, 'con su contexto ve su fila');
+  assert.equal(resultado.conOtroTenant, 0, 'con otro tenant no ve nada');
+  assert.equal(resultado.conContextoVacio, 0, 'con el GUC vacío (conexión reutilizada del pool) no ve nada y no falla');
+  // Nada quedó fuera de la transacción.
+  const restos = await prisma.$queryRawUnsafe<Array<{ n: bigint }>>(`SELECT count(*) AS n FROM pg_namespace WHERE nspname = '${esquema}'`);
+  assert.equal(Number(restos[0].n), 0, 'el esquema temporal se revirtió');
+  const rolesRestantes = await prisma.$queryRawUnsafe<Array<{ n: bigint }>>(`SELECT count(*) AS n FROM pg_roles WHERE rolname = '${rol}'`);
+  assert.equal(Number(rolesRestantes[0].n), 0, 'el rol temporal se revirtió');
+  console.log('[OK] testLaMigracionDelOutboxHabilitaYForzaRlsSinElWorkflow');
+}
+
 async function testReemisionRestringidaYAislada() {
   const tenantId = randomUUID(); const proyectoId = randomUUID(); const otroTenant = randomUUID();
   try {
@@ -625,6 +708,7 @@ async function main() {
     ['evento incompleto nunca se publica y se repara', testEventoIncompletoNuncaSePublicaNiSeMarcaPublicadoYSeRepara],
     ['reemision no republica un payload que sigue incompleto', testReemisionNoRepublicaUnPayloadQueSigueIncompleto],
     ['RLS aisla por tenant y proyecto', testRlsAislaPorTenantYProyectoYElDespachadorVeTodo],
+    ['la migracion habilita y fuerza RLS sin depender del workflow', testLaMigracionDelOutboxHabilitaYForzaRlsSinElWorkflow],
     ['reemision restringida y aislada', testReemisionRestringidaYAislada],
   ];
   try {

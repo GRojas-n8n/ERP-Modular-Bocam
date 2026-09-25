@@ -24,7 +24,7 @@
 ## 4. Compras (publicador y outbox) — PR 3
 
 - [x] 4.1 Tests en rojo: recepción y fila del outbox en la misma transacción; falla del outbox revierte la recepción; bus caído deja `PENDIENTE`; publicación tras falla transitoria; máximo de intentos a `ERROR`; dos instancias no duplican; marcado solo tras confirmación; mensaje devuelto no se marca; recuperación tras reinicio; caída entre confirmación y marcado republica con el mismo `event_id`; aislamiento por tenant y proyecto; reemisión restringida.
-- [x] 4.2 Migración: tabla `outbox_eventos` con RLS (política única con la variable de sesión interna del despachador) y cobertura estática.
+- [x] 4.2 Migración: tabla `outbox_eventos` con RLS (política única con la variable de sesión interna del despachador) y cobertura estática. El RLS se habilita y fuerza **en la propia migración** que crea la tabla (instrucción del titular: no debe existir una ventana sin RLS entre la migración y el workflow); una prueba ejecuta solo la migración en un esquema temporal y comprueba `ENABLE`, `FORCE`, política y aislamiento con un rol sin privilegios, y que coincide con el bloque de `rls-policies.sql`.
 - [x] 4.3 Escribir la fila del outbox dentro de la transacción de la recepción, con el contrato v1.
 - [x] 4.4 Despachador: `FOR UPDATE SKIP LOCKED`, snapshot congelado desde Gerencia Técnica con reintentos, publicación confirmada, espera exponencial y estado `ERROR`.
 - [x] 4.5 Endpoint de reemisión (`admin`, `procurement`) y registros de error.
@@ -41,7 +41,7 @@
 
 - [ ] 6.1 PR por servicio con CI verde. **No fusionar** hasta que el titular autorice el despliegue: fusionar a `main` despliega y aplica migraciones.
 - [ ] 6.2 Orden: bus, Almacén y Compras. El consumidor debe existir antes de que el publicador emita.
-- [ ] 6.2c Tras desplegar Compras, aplicar `apps/compras/prisma/rls-policies.sql` con el workflow manual de RLS (política de `outbox_eventos`) antes de esperar publicaciones: sin la política la tabla no tiene RLS.
+- [ ] 6.2c Tras desplegar Compras, ejecutar el workflow manual de RLS (`service=compras`) para reaplicar y verificar la política de `outbox_eventos`. La tabla ya nace con RLS habilitado y forzado desde la migración; el workflow deja además la política registrada en `rls-policies.sql` y las verificaciones de `pg_policies`.
 - [ ] 6.2b Tras desplegar Almacén, aplicar `apps/almacen/prisma/rls-policies.sql` con el workflow manual de RLS: la política de `eventos_procesados` no se crea con la migración.
 - [ ] 6.3 Verificación en producción por lectura de logs, profundidad de la DLQ y `/ready`, sin crear datos de prueba.
 - [ ] 6.4 Decidir aparte el retiro de las colas `almacen.compras_oc_recibida_*` actuales, con evidencia de que no reciben tráfico.

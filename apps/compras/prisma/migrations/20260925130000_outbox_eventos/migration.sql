@@ -25,3 +25,27 @@ CREATE INDEX "outbox_eventos_estado_proximo_intento_en_idx" ON "outbox_eventos"(
 
 -- CreateIndex
 CREATE UNIQUE INDEX "uq_outbox_recepcion" ON "outbox_eventos"("tenant_id", "recepcion_id");
+
+-- Row Level Security en la MISMA migración que crea la tabla: no existe ventana en la que outbox_eventos sea
+-- accesible sin RLS entre la migración y el workflow manual de RLS (que solo reaplica/verifica esta política).
+-- Debe coincidir con el bloque OUTBOX_EVENTOS de rls-policies.sql (una prueba lo comprueba).
+-- Los GUC se comparan con NULLIF(..., ''): tras una transacción con set_config(..., true) el GUC queda en ''
+-- en esa conexión del pool, y ''::uuid lanzaría un error antes de evaluar la rama del despachador.
+ALTER TABLE "outbox_eventos" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "outbox_eventos" FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS rls_outbox_eventos_context ON "outbox_eventos";
+CREATE POLICY rls_outbox_eventos_context ON "outbox_eventos"
+    USING (
+        current_setting('app.internal_worker', true) = 'outbox'
+        OR (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            AND proyecto_id = NULLIF(current_setting('app.current_proyecto_id', true), '')::uuid
+        )
+    )
+    WITH CHECK (
+        current_setting('app.internal_worker', true) = 'outbox'
+        OR (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            AND proyecto_id = NULLIF(current_setting('app.current_proyecto_id', true), '')::uuid
+        )
+    );
