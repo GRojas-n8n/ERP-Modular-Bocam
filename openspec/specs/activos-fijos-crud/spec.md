@@ -1,4 +1,10 @@
-## ADDED Requirements
+# activos-fijos-crud Specification
+
+## Purpose
+
+Define el catálogo de activos fijos de Almacén (equipo, herramienta, maquinaria y vehículos): alta clasificada con numeración correlativa por tenant, filtros de consulta, edición de los datos descriptivos y baja con motivo obligatorio.
+
+## Requirements
 
 ### Requirement: Un usuario de almacén SHALL poder dar de alta un activo fijo clasificado
 El sistema SHALL permitir a un usuario con rol `admin`, `superintendent`, `procurement` o `warehouse` registrar un activo fijo con clave, descripción, clasificación (`EQUIPO`, `HERRAMIENTA`, `MAQUINARIA` o `VEHICULO`) y proyecto inicial, asignándole un `numero_activo` correlativo único por tenant.
