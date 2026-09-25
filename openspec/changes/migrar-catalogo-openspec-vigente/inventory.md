@@ -220,6 +220,7 @@ Treinta specs validan pero conservan `TBD - created by archiving change …` com
 | 2 | Hecho | `carga-archivos-multer`, `carga-masiva-archivos`, `ci-playwright-smoke-post-deploy`, `despliegue-completo-microservicios`, `http-security-headers` (dominio 10, T1/T2) | 77 / 86 |
 | 3 | Hecho | `aislamiento-insumos-por-proyecto-gt`, `movimientos-partida-endpoint`, `especificacion-tecnica-fuente-unica`, `especificacion-tecnica-ofrecida-proveedor`, `ficha-tecnica-carga-unica`, `cobertura-saldo-partida-limitado` (dominio 3, T1/T2) | 83 / 80 |
 | 4a | Hecho | `carga-masiva-proveedores`, `validacion-longitud-proveedor`, `seleccion-proveedores-unificada`, `validacion-stock-cotizacion-externa` (dominio 5: proveedores y solicitud de cotización, T1/T2) | 87 / 76 |
+| 4b | Hecho | `envio-oc-proveedor`, `multi-oc-generacion`, `presupuesto-resolucion-oc`, `evaluacion-tecnica-por-especificacion`, `seleccion-proveedor-recomendado-firma`, `panel-purga-datos-prueba-compras` (dominio 5: comparativas, órdenes y evaluación, T1/T2) | 93 / 70 |
 
 ## Hallazgos semánticos detectados durante la migración
 

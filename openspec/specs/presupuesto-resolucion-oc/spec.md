@@ -1,4 +1,10 @@
-## ADDED Requirements
+# presupuesto-resolucion-oc Specification
+
+## Purpose
+
+Define cómo se resuelve el presupuesto a comprometer al autorizar la conversión de un cuadro en Órdenes de Compra: automáticamente desde la partida de la requisición cuando existe, con selección manual solo como respaldo, y el endpoint de Finanzas que lista los presupuestos activos.
+
+## Requirements
 
 ### Requirement: Resolución de presupuesto activo antes de ejecutar la conversión a OC
 Antes de que el usuario pueda ejecutar "Autorizar" (convertir-oc) desde `ComparativaDetail`, el sistema SHALL resolver el presupuesto a comprometer sin requerir input del usuario cuando la requisición origen tiene una partida (`concepto_id`) asociada. Solo cuando la requisición NO tiene `concepto_id` SHALL el sistema recurrir a la resolución previa por lista de presupuestos activos del proyecto.

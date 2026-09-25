@@ -1,3 +1,9 @@
+# panel-purga-datos-prueba-compras Specification
+
+## Purpose
+
+Define el panel de Administrador para purgar datos de prueba de Compras (requisiciones, órdenes de compra y proveedores): acceso solo para admin, selección explícita, bloqueo por referencias no seleccionadas, transacción atómica, confirmación con palabra escrita y registro de auditoría.
+
 ## Requirements
 
 ### Requirement: El acceso a la purga SHALL estar restringido al rol Administrador
