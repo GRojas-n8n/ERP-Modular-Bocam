@@ -1,5 +1,9 @@
-## ADDED Requirements
+# trazabilidad-partida-frontend Specification
 
+## Purpose
+
+Describe cómo la pestaña Trazabilidad y la tabla de Control Presupuestal permiten inspeccionar una partida: drill-down de su historial de movimientos, acceso de solo lectura para Control de Proyectos y expansión automática de la partida al llegar por salto directo.
+## Requirements
 ### Requirement: Drill-down de movimientos en la tabla de Control Presupuestal
 La tabla de "Control Presupuestal" SHALL permitir expandir cada fila de partida para mostrar su historial de movimientos, combinando los resultados de `GET /partidas/:concepto_id/movimientos` (GT) y `GET /movimientos?concepto_id=` (Finanzas) en una sola lista ordenada por fecha, sin bloquear la carga de la tabla principal.
 
@@ -33,3 +37,18 @@ El módulo "Control de Obra" (`ControlObraView.tsx`, rol `control_proyectos`) SH
 #### Scenario: Componente compartido entre GT y CP
 - **WHEN** se implementa la tabla en ambos módulos
 - **THEN** ambos usan el mismo componente React, sin duplicar el JSX ni la lógica de fetching
+
+### Requirement: La pestaña Trazabilidad expande automáticamente una partida al recibir un salto directo
+Cuando el usuario llega a la pestaña "Trazabilidad" mediante la acción "Ver en Trazabilidad" desde Control Presupuestal o Control de Costos, el sistema SHALL expandir automáticamente la fila correspondiente a esa partida (`concepto_id`) en cuanto esté disponible en los datos cargados.
+
+#### Scenario: Partida disponible al llegar a Trazabilidad
+- **WHEN** el usuario llega a la pestaña "Trazabilidad" desde "Ver en Trazabilidad" y la partida ya está en la lista cargada
+- **THEN** la fila de esa partida aparece expandida sin acción adicional del usuario
+
+#### Scenario: Partida sin datos en Trazabilidad
+- **WHEN** el usuario llega a la pestaña "Trazabilidad" desde "Ver en Trazabilidad" pero la partida no existe en el reporte de Trazabilidad (por ejemplo, sin `CompraProyectada` asociada)
+- **THEN** el sistema muestra la pestaña normalmente sin ninguna fila expandida, sin error visible
+
+#### Scenario: Salto directo no se confunde con el drill-down de Movimientos
+- **WHEN** se documenta o implementa esta funcionalidad
+- **THEN** se mantiene la distinción de nombre ya establecida: "Trazabilidad" es esta pestaña basada en `CompraProyectada`, y "Movimientos"/"Historial" es el drill-down por fila dentro de la tabla de Control Presupuestal — ambos coexisten sin renombrarse entre sí
