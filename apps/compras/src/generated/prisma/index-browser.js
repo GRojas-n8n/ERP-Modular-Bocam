@@ -247,6 +247,10 @@ exports.Prisma.OrdenCompraItemScalarFieldEnum = {
   detalle_req_id: 'detalle_req_id',
   descripcion_libre: 'descripcion_libre',
   unidad_libre: 'unidad_libre',
+  clave_snapshot: 'clave_snapshot',
+  descripcion_snapshot: 'descripcion_snapshot',
+  unidad_snapshot: 'unidad_snapshot',
+  categoria_snapshot: 'categoria_snapshot',
   cantidad: 'cantidad',
   precio_unitario: 'precio_unitario',
   importe: 'importe'

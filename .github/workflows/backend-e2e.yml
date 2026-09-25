@@ -134,6 +134,8 @@ jobs:
         run: |
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-recepcion-oc
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-recepcion-oc-rabbitmq
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-snapshot-insumo
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:compras-recepcion-oc-compras-almacen
 
       # ── Tests inter-modulo ────────────────────────────────────────────────────
       # Cada test recibe DATABASE_URL apuntando al schema de SU modulo.

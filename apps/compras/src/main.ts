@@ -29,7 +29,10 @@ import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from 
 import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
 import { randomUUID } from 'node:crypto';
-import { registrarEventoRecepcion, iniciarDespachadorOutbox, SnapshotInsumo } from './outbox';
+import {
+  registrarEventoRecepcion, iniciarDespachadorOutbox, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
+  SnapshotIncompletoError, SnapshotInsumo,
+} from './outbox';
 
 const eventBus = createEventBus('compras');
 
@@ -1741,9 +1744,9 @@ app.get('/api/v1/compras/ordenes-compra/:id/recepciones',
 );
 
 /**
- * Snapshot de insumos de catálogo para el evento de recepción (autosuficiente: Almacén no consulta a nadie al
- * procesarlo). Se resuelve en la petición, con el token del usuario, y se congela en el outbox. Si Gerencia
- * Técnica no responde, la recepción NO se bloquea: el evento sale sin snapshot y Almacén decide según su inventario.
+ * Catálogo de insumos de Gerencia Técnica como snapshots COMPLETOS (clave, descripción, unidad y categoría a partir
+ * del tipo de insumo). Se usa únicamente dentro de una petición de usuario (crear la OC o completar una OC que aún
+ * no lo tiene), con su token. Nunca durante el despacho del outbox. Devuelve solo entradas completas.
  */
 async function resolverSnapshotInsumos(req: Request): Promise<Map<string, SnapshotInsumo>> {
   try {
@@ -1753,8 +1756,8 @@ async function resolverSnapshotInsumos(req: Request): Promise<Map<string, Snapsh
     });
     const mapa = new Map<string, SnapshotInsumo>();
     for (const i of ((resp.data?.data ?? []) as any[])) {
-      if (i?.id && i.clave && i.descripcion && i.unidad_medida) {
-        mapa.set(i.id, { clave: i.clave, descripcion: i.descripcion, unidad: i.unidad_medida, ...(i.tipo_insumo ? { categoria: String(i.tipo_insumo) } : {}) });
+      if (i?.id && i.clave && i.descripcion && i.unidad_medida && i.tipo_insumo) {
+        mapa.set(i.id, { clave: i.clave, descripcion: i.descripcion, unidad: i.unidad_medida, categoria: String(i.tipo_insumo) });
       }
     }
     return mapa;
@@ -1776,8 +1779,26 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
         return void res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la recepción.' });
       }
 
-      // Antes de la transacción: la llamada a Gerencia Técnica no debe mantener abierta la transacción.
-      const snapshots = await resolverSnapshotInsumos(req);
+      // Todo renglón de catálogo recibido debe tener su snapshot PERSISTIDO en la OC. Si algún renglón aún no lo tiene
+      // (OC anterior, o creada sin que el catálogo respondiera), se resuelve aquí, fuera de la transacción y con el
+      // token del usuario. Si no se puede resolver, la recepción se rechaza ANTES de escribir nada: nunca se registra
+      // un evento incompleto ni se deja a Almacén con un payload que seguirá siendo inválido.
+      const ocPrevia = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+        prisma.ordenCompra.findUnique({ where: { id_orden: id }, include: { items: true } }));
+      const recibidos = new Set(itemsBody.map((l: any) => l.orden_item_id));
+      const sinSnapshot = (ocPrevia?.items ?? []).filter((i: any) => recibidos.has(i.id_item) && i.insumo_id && !snapshotDeItemOc(i));
+      let catalogo = new Map<string, SnapshotInsumo>();
+      if (sinSnapshot.length > 0) {
+        catalogo = await resolverSnapshotInsumos(req);
+        const faltan = [...new Set(sinSnapshot.filter((i: any) => !catalogo.has(i.insumo_id)).map((i: any) => i.insumo_id as string))];
+        if (faltan.length > 0) {
+          return void res.status(503).json({
+            success: false,
+            error: 'SNAPSHOT_INSUMO_NO_DISPONIBLE',
+            message: `No se pudo obtener el snapshot de los insumos ${faltan.join(', ')} (clave, descripción, unidad y categoría). La recepción no se registró; reintenta cuando el catálogo esté disponible.`,
+          });
+        }
+      }
 
       const result = await createTenantContext(
         { tenantId, proyectoId, userId },
@@ -1792,6 +1813,17 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
           const estadosPermitidos = [OC_STATUS.EMITIDA, OC_STATUS.PARCIALMENTE_RECIBIDA];
           if (!estadosPermitidos.includes(orden.estado as any)) {
             return { error: 400, message: 'Solo se pueden registrar recepciones en OC con estado EMITIDA o PARCIALMENTE_RECIBIDA.' };
+          }
+
+          // Persistir el snapshot resuelto en los renglones de catálogo que aún no lo tenían.
+          for (const itemOc of orden.items as any[]) {
+            if (!recibidos.has(itemOc.id_item) || !itemOc.insumo_id || snapshotDeItemOc(itemOc)) continue;
+            const snap = catalogo.get(itemOc.insumo_id);
+            if (!snap) throw new SnapshotIncompletoError([`el insumo ${itemOc.insumo_id} no tiene snapshot`]);
+            Object.assign(itemOc, await prisma.ordenCompraItem.update({
+              where: { id_item: itemOc.id_item },
+              data: { clave_snapshot: snap.clave, descripcion_snapshot: snap.descripcion, unidad_snapshot: snap.unidad, categoria_snapshot: snap.categoria },
+            }));
           }
 
           // Calcular acumulados previos para validar cantidades
@@ -1874,9 +1906,9 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
                 cantidadRecibida: Number(ri.cantidad_recibida),
                 descripcionLibre: itemOc?.descripcion_libre ?? null,
                 unidadLibre: itemOc?.unidad_libre ?? null,
+                snapshot: itemOc ? snapshotDeItemOc(itemOc) : null,
               };
             }),
-            snapshots,
           });
 
           return { recepcion, nuevoEstado, orden };
@@ -1902,6 +1934,9 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
         },
       });
     } catch (error: any) {
+      if (error instanceof SnapshotIncompletoError) {
+        return void res.status(503).json({ success: false, error: 'SNAPSHOT_INSUMO_NO_DISPONIBLE', message: error.message });
+      }
       logError(req, 'compras', 'compras.recepcion.create.error', 'Error al registrar recepción', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
@@ -1921,12 +1956,29 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones/:recepcionId/reemitir-e
           where: { tenant_id: tenantId, proyecto_id: proyectoId, orden_id: id, recepcion_id: recepcionId },
         });
         if (!existente) return null;
+        let payload = existente.payload as Record<string, any>;
+        // Si el payload guardado está incompleto se reconstruye SOLO con datos persistidos; si aún faltan datos,
+        // no se reemite (seguiría inválido): la fila permanece retenida con su causa.
+        if (problemasDePayload(payload).length > 0) {
+          try {
+            payload = await reconstruirPayloadRecepcion(prisma, {
+              tenantId, proyectoId, ordenId: id, recepcionId, eventId: existente.id_evento,
+              occurredAt: payload?.occurred_at, estadoOc: payload?.estado_oc_resultante,
+            }) as Record<string, any>;
+          } catch (e: any) {
+            if (e instanceof SnapshotIncompletoError) return { incompleto: e.message } as const;
+            throw e;
+          }
+        }
         return prisma.outboxEvento.update({
           where: { id_evento: existente.id_evento },
-          data: { estado: 'PENDIENTE', intentos: 0, proximo_intento_en: new Date(), ultimo_error: null, publicado_en: null },
+          data: { payload: payload as any, estado: 'PENDIENTE', intentos: 0, proximo_intento_en: new Date(), ultimo_error: null, publicado_en: null },
         });
       });
       if (!fila) return void res.status(404).json({ success: false, message: 'Evento de la recepción no encontrado.' });
+      if ('incompleto' in fila) {
+        return void res.status(409).json({ success: false, error: 'SNAPSHOT_INCOMPLETO', message: fila.incompleto });
+      }
       logInfo(req, 'compras', 'compras.outbox.reemision', 'Evento de recepción reemitido', { event_id: fila.id_evento, recepcion_id: recepcionId });
       res.json({ success: true, data: { event_id: fila.id_evento, estado: fila.estado } });
     } catch (error: any) {
@@ -3076,6 +3128,12 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       advertencias.push(`Partida al límite — disponible: $${saldoPartidaGT.monto_disponible.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`);
     }
 
+    // Snapshot de los insumos de catálogo para conservarlo en cada renglón de la OC. Si el catálogo no responde, la OC
+    // se crea igual (como el resto de las integraciones B2B de este flujo) y el snapshot se completará en la primera
+    // recepción o esta se rechazará antes del commit.
+    const hayCatalogo = [...loteData.grupos.values()].some((g: any) => g.detalles.some((d: any) => d.insumo_id));
+    const catalogoOc = hayCatalogo ? await resolverSnapshotInsumos(req) : new Map<string, SnapshotInsumo>();
+
     for (const [proveedorId, grupo] of loteData.grupos) {
       idx++;
       const codigoOC = `OC-AUTO-${timestamp}-${idx}`;
@@ -3110,6 +3168,10 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
                   detalle_req_id: d.insumo_id ? null : detailReqId,
                   descripcion_libre: reqItem?.descripcion_libre ?? null,
                   unidad_libre: reqItem?.unidad_libre ?? null,
+                  ...(d.insumo_id && catalogoOc.get(d.insumo_id) ? (() => {
+                    const snap = catalogoOc.get(d.insumo_id)!;
+                    return { clave_snapshot: snap.clave, descripcion_snapshot: snap.descripcion, unidad_snapshot: snap.unidad, categoria_snapshot: snap.categoria };
+                  })() : {}),
                   cantidad,
                   precio_unitario: precioUnitario,
                   importe: cantidad * precioUnitario,

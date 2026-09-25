@@ -29,7 +29,46 @@ export interface SnapshotInsumo {
   clave: string;
   descripcion: string;
   unidad: string;
-  categoria?: string;
+  categoria: string;
+}
+
+const CAMPOS_SNAPSHOT = ['clave', 'descripcion', 'unidad', 'categoria'] as const;
+
+/**
+ * Snapshot completo del renglón de una OC, tomado de las columnas persistidas; null si falta cualquier campo.
+ * Es la ÚNICA fuente del snapshot del evento: nunca se consulta a Gerencia Técnica al armar ni al despachar.
+ */
+export function snapshotDeItemOc(item: {
+  clave_snapshot?: string | null; descripcion_snapshot?: string | null; unidad_snapshot?: string | null; categoria_snapshot?: string | null;
+}): SnapshotInsumo | null {
+  const s = { clave: item.clave_snapshot, descripcion: item.descripcion_snapshot, unidad: item.unidad_snapshot, categoria: item.categoria_snapshot };
+  return CAMPOS_SNAPSHOT.every((c) => typeof s[c] === 'string' && String(s[c]).trim())
+    ? { clave: s.clave!, descripcion: s.descripcion!, unidad: s.unidad!, categoria: s.categoria! }
+    : null;
+}
+
+export class SnapshotIncompletoError extends Error {
+  readonly code = 'SNAPSHOT_INCOMPLETO';
+
+  constructor(public readonly problemas: string[]) {
+    super(`SNAPSHOT_INCOMPLETO: ${problemas.join('; ')}`);
+    this.name = 'SnapshotIncompletoError';
+  }
+}
+
+/** Problemas que impedirían a Almacén procesar el evento; vacío si el payload es completo. */
+export function problemasDePayload(payload: Record<string, any>): string[] {
+  const problemas: string[] = [];
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  if (items.length === 0) problemas.push('el evento no trae ítems');
+  for (const item of items) {
+    if (!item?.recepcion_item_id) problemas.push('un ítem no trae recepcion_item_id');
+    if (item?.insumo_id) {
+      const faltan = CAMPOS_SNAPSHOT.filter((c) => typeof item[c] !== 'string' || !String(item[c]).trim());
+      if (faltan.length > 0) problemas.push(`el ítem ${item.recepcion_item_id} (insumo ${item.insumo_id}) no trae ${faltan.join(', ')}`);
+    }
+  }
+  return problemas;
 }
 
 export interface ItemRecibido {
@@ -39,6 +78,8 @@ export interface ItemRecibido {
   cantidadRecibida: number;
   descripcionLibre?: string | null;
   unidadLibre?: string | null;
+  /** Snapshot persistido en el renglón de la OC (obligatorio si hay insumo de catálogo). */
+  snapshot?: SnapshotInsumo | null;
 }
 
 export interface EntradaEventoRecepcion {
@@ -53,8 +94,8 @@ export interface EntradaEventoRecepcion {
   estadoOc: string;
   recibidoPor: string;
   items: ItemRecibido[];
-  /** Snapshot por insumo_id resuelto desde Gerencia Técnica; puede faltar si no respondió. */
-  snapshots: Map<string, SnapshotInsumo>;
+  /** Conserva la marca de tiempo original al reconstruir un evento (reemisión). */
+  occurredAt?: string;
 }
 
 /** Arma el payload del contrato `compras.recepcion_oc_registrada.v1`: solo lo recibido en ESA recepción. */
@@ -62,7 +103,7 @@ export function construirPayloadRecepcion(e: EntradaEventoRecepcion): Record<str
   return {
     event_id: e.eventId,
     event_version: RECEPCION_EVENT_VERSION,
-    occurred_at: new Date().toISOString(),
+    occurred_at: e.occurredAt ?? new Date().toISOString(),
     tenant_id: e.tenantId,
     proyecto_id: e.proyectoId,
     orden_compra_id: e.ordenId,
@@ -83,16 +124,22 @@ export function construirPayloadRecepcion(e: EntradaEventoRecepcion): Record<str
         // Texto libre o imprevisto: el snapshot es la descripción y unidad libres de la propia OC.
         return { ...base, descripcion: item.descripcionLibre ?? null, unidad: item.unidadLibre ?? null };
       }
-      const snap = e.snapshots.get(item.insumoId);
+      // Sin snapshot completo el ítem queda sin esos campos: el payload resultante es incompleto y NUNCA se publica
+      // (registrarEventoRecepcion y el despachador lo rechazan); no se inventan datos ni se consulta a nadie.
+      const snap = item.snapshot;
       return snap
-        ? { ...base, clave: snap.clave, descripcion: snap.descripcion, unidad: snap.unidad, ...(snap.categoria ? { categoria: snap.categoria } : {}) }
-        : base; // sin snapshot: no se inventan datos; Almacén decide según su inventario
+        ? { ...base, clave: snap.clave, descripcion: snap.descripcion, unidad: snap.unidad, categoria: snap.categoria }
+        : base;
     }),
   };
 }
 
 /** Escribe la fila del outbox. Se invoca DENTRO de la transacción de la recepción. */
 export async function registrarEventoRecepcion(tx: PrismaClient, entrada: EntradaEventoRecepcion): Promise<void> {
+  const payload = construirPayloadRecepcion(entrada);
+  const problemas = problemasDePayload(payload);
+  // Defensa final dentro de la transacción: un evento incompleto no se escribe y la recepción no se confirma.
+  if (problemas.length > 0) throw new SnapshotIncompletoError(problemas);
   await tx.outboxEvento.create({
     data: {
       id_evento: entrada.eventId,
@@ -102,9 +149,54 @@ export async function registrarEventoRecepcion(tx: PrismaClient, entrada: Entrad
       recepcion_id: entrada.recepcionId,
       event_type: RECEPCION_EVENT_TYPE,
       event_version: RECEPCION_EVENT_VERSION,
-      payload: construirPayloadRecepcion(entrada) as any,
+      payload: payload as any,
     },
   });
+}
+
+/**
+ * Reconstruye el payload de una recepción existente SOLO con datos persistidos en Compras (recepción, OC y el
+ * snapshot de sus renglones). Lanza SnapshotIncompletoError si aún falta algún dato. Lo usa la reemisión.
+ */
+export async function reconstruirPayloadRecepcion(
+  tx: PrismaClient,
+  datos: { tenantId: string; proyectoId: string; ordenId: string; recepcionId: string; eventId: string; occurredAt?: string; estadoOc?: string },
+): Promise<Record<string, unknown>> {
+  const recepcion = await tx.recepcionOC.findFirst({
+    where: { id_recepcion: datos.recepcionId, orden_id: datos.ordenId, tenant_id: datos.tenantId },
+    include: { items: true },
+  });
+  const orden = await tx.ordenCompra.findFirst({ where: { id_orden: datos.ordenId, tenant_id: datos.tenantId }, include: { items: true } });
+  if (!recepcion || !orden) throw new SnapshotIncompletoError(['no existe la recepción o la OC para reconstruir el evento']);
+  const itemsOrden = new Map(orden.items.map((i: any) => [i.id_item, i]));
+  const payload = construirPayloadRecepcion({
+    eventId: datos.eventId,
+    tenantId: datos.tenantId,
+    proyectoId: datos.proyectoId,
+    ordenId: orden.id_orden,
+    ordenCodigo: orden.codigo,
+    proveedorId: orden.proveedor_id,
+    recepcionId: recepcion.id_recepcion,
+    fechaRecepcion: recepcion.fecha_recepcion,
+    estadoOc: datos.estadoOc ?? (orden.estado === 'RECIBIDA' ? 'RECIBIDA' : 'PARCIALMENTE_RECIBIDA'),
+    recibidoPor: recepcion.recibido_por,
+    occurredAt: datos.occurredAt,
+    items: recepcion.items.map((ri: any) => {
+      const itemOc: any = itemsOrden.get(ri.orden_item_id);
+      return {
+        recepcionItemId: ri.id_recepcion_item,
+        ordenItemId: ri.orden_item_id,
+        insumoId: itemOc?.insumo_id ?? null,
+        cantidadRecibida: Number(ri.cantidad_recibida),
+        descripcionLibre: itemOc?.descripcion_libre ?? null,
+        unidadLibre: itemOc?.unidad_libre ?? null,
+        snapshot: itemOc ? snapshotDeItemOc(itemOc) : null,
+      };
+    }),
+  });
+  const problemas = problemasDePayload(payload);
+  if (problemas.length > 0) throw new SnapshotIncompletoError(problemas);
+  return payload;
 }
 
 export interface OutboxPublisher {
@@ -170,6 +262,20 @@ export async function despacharOutbox(opciones: OpcionesDespacho): Promise<Resul
           context: { tenant_id: fila.tenant_id, proyecto_id: fila.proyecto_id, user_id: payload.recibido_por ?? '' },
           payload,
         };
+
+        // Guarda final: un payload incompleto no se envía al broker (terminaría en la DLQ y seguiría inválido al
+        // reprocesarlo). Se retiene en ERROR con causa explícita; la reemisión lo reconstruye desde datos persistidos.
+        const problemas = problemasDePayload(payload);
+        if (problemas.length > 0) {
+          const causa = `PAYLOAD_INCOMPLETO: ${problemas.join('; ')}`.slice(0, 1000);
+          await tx.outboxEvento.update({ where: { id_evento: fila.id_evento }, data: { estado: 'ERROR', ultimo_error: causa } });
+          resultado.errores++;
+          console.error(JSON.stringify({
+            action: 'compras.outbox.evento_en_error',
+            event_id: fila.id_evento, recepcion_id: fila.recepcion_id, orden_id: fila.orden_id, tenant_id: fila.tenant_id, error: causa,
+          }));
+          continue;
+        }
 
         try {
           await opciones.publisher.publishConfirmed(evento);

@@ -28,7 +28,8 @@
 - [x] 4.3 Escribir la fila del outbox dentro de la transacción de la recepción, con el contrato v1.
 - [x] 4.4 Despachador: `FOR UPDATE SKIP LOCKED`, snapshot congelado desde Gerencia Técnica con reintentos, publicación confirmada, espera exponencial y estado `ERROR`.
 - [x] 4.5 Endpoint de reemisión (`admin`, `procurement`) y registros de error.
-- [x] 4.6 Hacer pasar los tests y la suite de Compras. 14 pruebas de comportamiento y 3 con RabbitMQ real; las suites de CI de Compras (`e2e:seguridad`, `e2e:reconciliacion`, `finanzas-feedback`) y el contrato de eventos siguen en verde. El snapshot se resuelve en la petición (el despachador no tiene token de usuario); ver el diseño.
+- [x] 4.5b Rediseño del snapshot (instrucción del titular): snapshot persistido en la OC (migración compatible `20260925140000_snapshot_insumo_oc_items`), `convertir-oc` lo guarda, la recepción lo completa antes del commit o se rechaza con `503 SNAPSHOT_INSUMO_NO_DISPONIBLE`, el despachador nunca consulta a Gerencia Técnica y nunca publica un payload incompleto; la reemisión reconstruye desde datos persistidos. Pruebas: Gerencia Técnica caída, inventario inexistente, evento completo tras reinicio, reproceso sin duplicados y ningún evento incompleto marcado como publicado.
+- [x] 4.6 Hacer pasar los tests y la suite de Compras. 14 pruebas de comportamiento y 3 con RabbitMQ real; las suites de CI de Compras (`e2e:seguridad`, `e2e:reconciliacion`, `finanzas-feedback`) y el contrato de eventos siguen en verde. El snapshot sale de la OC persistida; ver el diseño.
 
 ## 5. Conciliación de datos históricos
 

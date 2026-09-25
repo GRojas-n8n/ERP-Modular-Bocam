@@ -35,7 +35,10 @@ async function sembrar(tenantId: string, proyectoId: string, eventType: string) 
     data: {
       id_evento: eventId, tenant_id: tenantId, proyecto_id: proyectoId, orden_id: randomUUID(), recepcion_id: recepcionId,
       event_type: eventType, event_version: 1,
-      payload: { event_id: eventId, event_version: 1, occurred_at: new Date().toISOString(), tenant_id: tenantId, proyecto_id: proyectoId, recepcion_id: recepcionId, items: [] },
+      payload: {
+        event_id: eventId, event_version: 1, occurred_at: new Date().toISOString(), tenant_id: tenantId, proyecto_id: proyectoId, recepcion_id: recepcionId,
+        items: [{ recepcion_item_id: randomUUID(), orden_item_id: randomUUID(), insumo_id: randomUUID(), cantidad_recibida: 3, clave: 'K', descripcion: 'D', unidad: 'PZA', categoria: 'MATERIAL' }],
+      },
     },
   });
   return { eventId, recepcionId };
