@@ -4,7 +4,8 @@
   "description": "Bus de eventos compartido (RabbitMQ) para comunicación asíncrona inter-módulo",
   "main": "src/index.ts",
   "scripts": {
-    "test:integration:rabbitmq": "node -r ts-node/register/transpile-only test/integration/rabbitmq.integration.test.ts"
+    "test:integration:rabbitmq": "node -r ts-node/register/transpile-only test/integration/rabbitmq.integration.test.ts",
+    "test:integration:confiabilidad": "node -r ts-node/register/transpile-only test/integration/confiabilidad.integration.test.ts"
   },
   "dependencies": {
     "amqplib": "^0.10.3"

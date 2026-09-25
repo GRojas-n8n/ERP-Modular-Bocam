@@ -7,11 +7,11 @@
 
 ## 2. Bus de eventos (`packages/event-bus`) — PR 1
 
-- [ ] 2.1 Tests en rojo: publicación confirmada (confirma, devuelve por no tener cola, sin canal, timeout); `event_id` asignado; reintento con éxito, DLQ al agotar intentos, mensaje ininterpretable a la DLQ; y suscripción sin opciones idéntica a la actual.
-- [ ] 2.2 Confirmar que fallan por la razón esperada y guardar la evidencia.
-- [ ] 2.3 Implementar `publishConfirmed`, `event_id`/`event_version`, `retry` y `deadLetter`.
-- [ ] 2.4 Probar contra RabbitMQ real que las suscripciones existentes no cambian.
-- [ ] 2.5 Documentar el procedimiento de reproceso de una DLQ.
+- [x] 2.1 Tests en rojo: publicación confirmada (confirma, devuelve por no tener cola, sin canal, timeout); `event_id` asignado; reintento con éxito, DLQ al agotar intentos, mensaje ininterpretable a la DLQ; y suscripción sin opciones idéntica a la actual.
+- [x] 2.2 Confirmar que fallan por la razón esperada y guardar la evidencia. Antes de implementar: 7 de 8 fallaban (`publishConfirmed is not a function` y tiempo agotado en la DLQ); la de compatibilidad pasaba, como debe.
+- [x] 2.3 Implementar `publishConfirmed`, `event_id`/`event_version`, `retry` y `deadLetter`.
+- [x] 2.4 Probar contra RabbitMQ real que las suscripciones existentes no cambian. La prueba existente y la de compatibilidad pasan; los servicios que importan el bus compilan sin errores.
+- [x] 2.5 Documentar el procedimiento de reproceso de una DLQ (`docs/operacion/event-bus-dlq-reproceso.md`).
 
 ## 3. Almacén (consumidor) — PR 2
 
