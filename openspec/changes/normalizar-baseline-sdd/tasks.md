@@ -27,11 +27,11 @@
 ## 4. Cierre de la purga
 
 - [x] 4.1 Registrar respaldo, dry-run, ensayo aislado, ejecución, verificación de base y salud de servicios.
-- [ ] 4.2 Validar con sesión autenticada que selector, Administración y dashboards operan normalmente.
+- [x] 4.2 Validar con sesión autenticada que selector, Administración y dashboards operan normalmente.
   - [x] Selector y Administración confirman `Sin Proyecto` / `SIN PROYECTOS REGISTRADOS` después de la purga.
   - [x] Control de Obra aplica un estado seguro `SIN DATOS DE PROYECTO`.
-  - [ ] Resolver el bloqueo: Gerencia Técnica expone 72 conceptos sin proyecto activo; documentado en `bloquear-datos-sin-proyecto-activo`.
-- [ ] 4.3 Decidir si se eliminan los 15 archivos potencialmente huérfanos.
+  - [x] El bloqueo de Gerencia Técnica quedó corregido; el smoke productivo `36075808520` verificó ocho superficies project-scoped sin solicitudes de datos cuando no hay proyecto activo.
+- [x] 4.3 Decidir si se eliminan los 15 archivos potencialmente huérfanos. Se decidió conservarlos en cuarentena reversible hasta al menos 2026-10-24; resguardo independiente con SHA-256 y smoke posterior `36077434849` en verde.
 - [ ] 4.4 Conservar el respaldo hasta al menos 2026-10-24 y confirmar normalidad antes de archivarlo.
 
 ## 5. Entrega
