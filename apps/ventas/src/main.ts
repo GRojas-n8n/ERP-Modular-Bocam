@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { createEventBus } from '../../../packages/event-bus/src';
 import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
@@ -30,8 +30,17 @@ app.use(
   })
 );
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'ventas' }));
-app.use(requireProjectAccess());
-app.use(requireActiveProject());
+// `clientes` es catálogo por tenant (RLS solo por tenant_id, sin proyecto_id): se
+// exime de proyecto activo/acceso a proyecto para poder listarlos y darlos de alta
+// al crear un Centro de Costos (admin, gerencia_tecnica, control_proyectos), cuando
+// aún no hay proyecto seleccionado. El resto de Ventas sí lo exige.
+const requireVentasProjectAccess = requireProjectAccess();
+const requireVentasProject = requireActiveProject();
+app.use('/api/v1/ventas', (req: Request, res: Response, next: NextFunction) => {
+  const path = req.originalUrl.split('?')[0].replace('/api/v1/ventas', '');
+  if (path === '/clientes' || path.startsWith('/clientes/')) return next();
+  requireVentasProjectAccess(req, res, (err?: unknown) => (err ? next(err) : requireVentasProject(req, res, next)));
+});
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'ventas', timestamp: new Date().toISOString() });
@@ -56,6 +65,16 @@ app.get('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
 const CODIGO_CLIENTE_PATTERN = /^\d{3}$/;
 const CODIGO_CLIENTE_MAX = 50;
 
+// Límites = @db.VarChar(n) de prisma/schema.prisma (modelo Cliente).
+function validarLongitudCliente(c: { rfc_tax_id?: string; razon_social?: string; email_contacto?: string | null; telefono?: string | null }): string | null {
+  const limites: Array<[keyof typeof c, number]> = [['rfc_tax_id', 20], ['razon_social', 255], ['email_contacto', 100], ['telefono', 20]];
+  for (const [campo, max] of limites) {
+    const v = c[campo];
+    if (typeof v === 'string' && v.length > max) return `${campo} no puede tener más de ${max} caracteres.`;
+  }
+  return null;
+}
+
 app.post('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
@@ -63,9 +82,11 @@ app.post('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
       rfc_tax_id?: string; razon_social?: string; email_contacto?: string; telefono?: string; codigo_cliente?: string;
     };
 
-    if (!rfc_tax_id || !razon_social) {
+    if (!rfc_tax_id?.trim() || !razon_social?.trim()) {
       return res.status(400).json({ success: false, message: 'rfc_tax_id y razon_social son obligatorios.' });
     }
+    const errorLongitud = validarLongitudCliente({ rfc_tax_id, razon_social, email_contacto, telefono });
+    if (errorLongitud) return res.status(400).json({ success: false, message: errorLongitud });
 
     if (codigo_cliente !== undefined && codigo_cliente !== null && codigo_cliente !== '') {
       if (!CODIGO_CLIENTE_PATTERN.test(codigo_cliente) || Number(codigo_cliente) > CODIGO_CLIENTE_MAX) {
@@ -83,8 +104,8 @@ app.post('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
       const nuevo = await prisma.cliente.create({
         data: {
           tenant_id: tenantId,
-          rfc_tax_id,
-          razon_social,
+          rfc_tax_id: rfc_tax_id.trim().toUpperCase(),
+          razon_social: razon_social.trim(),
           email_contacto: email_contacto ?? null,
           telefono: telefono ?? null,
           codigo_cliente: codigo_cliente || null,
@@ -100,9 +121,65 @@ app.post('/api/v1/ventas/clientes', async (req: Request, res: Response) => {
     logInfo(req, 'ventas', 'ventas.cliente.creado', `Cliente ${data.cliente.razon_social} creado`, { cliente_id: data.cliente.id_cliente });
     res.status(201).json({ success: true, data: data.cliente });
   } catch (error: unknown) {
+    if ((error as { code?: string })?.code === 'P2002') {
+      return res.status(409).json({ success: false, message: 'Ya existe un cliente con ese RFC o código de cliente en este tenant.' });
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     logError(req, 'ventas', 'ventas.cliente.crear.error', message, {});
-    res.status(500).json({ success: false, message });
+    res.status(500).json({ success: false, message: 'Error al crear el cliente.' });
+  }
+});
+
+// Edición de datos guardados del cliente (p. ej. reemplazar un RFC provisional
+// por el real). Solo admin, igual que la importación masiva.
+app.put('/api/v1/ventas/clientes/:id', requireRoles('admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+    const { rfc_tax_id, razon_social, email_contacto, telefono, codigo_cliente, estatus } = req.body as {
+      rfc_tax_id?: string; razon_social?: string; email_contacto?: string | null; telefono?: string | null;
+      codigo_cliente?: string | null; estatus?: string;
+    };
+
+    if (rfc_tax_id !== undefined && !rfc_tax_id?.trim()) {
+      return res.status(400).json({ success: false, message: 'rfc_tax_id no puede estar vacío.' });
+    }
+    if (razon_social !== undefined && !razon_social?.trim()) {
+      return res.status(400).json({ success: false, message: 'razon_social no puede estar vacía.' });
+    }
+    const errorLongitud = validarLongitudCliente({ rfc_tax_id, razon_social, email_contacto, telefono });
+    if (errorLongitud) return res.status(400).json({ success: false, message: errorLongitud });
+    if (codigo_cliente) {
+      if (!CODIGO_CLIENTE_PATTERN.test(codigo_cliente) || Number(codigo_cliente) > CODIGO_CLIENTE_MAX) {
+        return res.status(400).json({ success: false, message: `codigo_cliente debe ser numérico de 3 dígitos entre "000" y "${String(CODIGO_CLIENTE_MAX).padStart(3, '0')}".` });
+      }
+    }
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const existe = await prisma.cliente.findUnique({ where: { id_cliente: req.params.id } });
+      if (!existe) return null;
+      return prisma.cliente.update({
+        where: { id_cliente: req.params.id },
+        data: {
+          ...(rfc_tax_id !== undefined && { rfc_tax_id: rfc_tax_id.trim().toUpperCase() }),
+          ...(razon_social !== undefined && { razon_social: razon_social.trim() }),
+          ...(email_contacto !== undefined && { email_contacto: email_contacto || null }),
+          ...(telefono !== undefined && { telefono: telefono || null }),
+          ...(codigo_cliente !== undefined && { codigo_cliente: codigo_cliente || null }),
+          ...(estatus !== undefined && { estatus }),
+        },
+      });
+    });
+
+    if (!data) return res.status(404).json({ success: false, message: 'Cliente no encontrado.' });
+    logInfo(req, 'ventas', 'ventas.cliente.actualizado', `Cliente ${data.razon_social} actualizado`, { cliente_id: data.id_cliente });
+    res.json({ success: true, data });
+  } catch (error: unknown) {
+    if ((error as { code?: string })?.code === 'P2002') {
+      return res.status(409).json({ success: false, message: 'Ya existe otro cliente con ese RFC o código de cliente en este tenant.' });
+    }
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    logError(req, 'ventas', 'ventas.cliente.actualizar.error', message, {});
+    res.status(500).json({ success: false, message: 'Error al actualizar el cliente.' });
   }
 });
 

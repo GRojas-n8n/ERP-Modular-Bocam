@@ -50,6 +50,7 @@ interface Cliente {
   email?: string;
   telefono?: string;
   tipo?: string;
+  codigo_cliente?: string;
 }
 
 interface Cotizacion {
@@ -160,7 +161,7 @@ const EstatusBadge: React.FC<{ estatus: string }> = ({ estatus }) => {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export const VentasView: React.FC = () => {
-  const { tenant, user } = useTenant();
+  const { tenant, user, currentProjectId } = useTenant();
   const [tab, setTab] = useState<TabKey>('clientes');
   const [helpOpen, setHelpOpen] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -182,10 +183,41 @@ export const VentasView: React.FC = () => {
   const [importando, setImportando] = useState(false);
   const [resultadoImport, setResultadoImport] = useState<{ creados: number; errores: { fila: number; motivo: string }[] } | null>(null);
 
+  // ── Edición de Cliente (admin) — p. ej. reemplazar un RFC provisional por el real ──
+  const [editandoCliente, setEditandoCliente] = useState<Cliente | null>(null);
+  const [formCliente, setFormCliente] = useState({ razon_social: '', rfc_tax_id: '', email_contacto: '', telefono: '', codigo_cliente: '' });
+  const [guardandoCliente, setGuardandoCliente] = useState(false);
+  const [errorCliente, setErrorCliente] = useState<string | null>(null);
+
+  const guardarCliente = async () => {
+    if (!editandoCliente) return;
+    if (!formCliente.razon_social.trim() || !formCliente.rfc_tax_id.trim()) { setErrorCliente('Razón social y RFC son obligatorios.'); return; }
+    setGuardandoCliente(true); setErrorCliente(null);
+    try {
+      await ventasApi.updateCliente(editandoCliente.id, {
+        razon_social: formCliente.razon_social.trim(),
+        rfc_tax_id: formCliente.rfc_tax_id.trim(),
+        email_contacto: formCliente.email_contacto.trim() || null,
+        telefono: formCliente.telefono.trim() || null,
+        codigo_cliente: formCliente.codigo_cliente.trim() || null,
+      });
+      setEditandoCliente(null);
+      await fetchData('clientes');
+    } catch (err: any) {
+      const d = err.response?.data;
+      setErrorCliente(d?.message ?? d?.error?.message ?? 'Error al guardar el cliente.');
+    } finally { setGuardandoCliente(false); }
+  };
+
   const fetchData = async (t: TabKey = tab) => {
     setLoading(true);
     setError(null);
     try {
+      // Clientes es catálogo por tenant; cotizaciones y facturas sí requieren proyecto activo.
+      if (t !== 'clientes' && !currentProjectId && tenant?.id !== 'iretum-demo') {
+        setError('Selecciona un proyecto activo para consultar cotizaciones y facturas.');
+        return;
+      }
       if (tenant?.id === 'iretum-demo') { setClientes(DEMO_CLIENTES as Cliente[]); setCotizaciones(DEMO_COTIZACIONES as Cotizacion[]); setFacturas(DEMO_FACTURAS as Factura[]); return; }
       if (t === 'clientes') {
         const r = await ventasApi.getClientes();
@@ -201,6 +233,7 @@ export const VentasView: React.FC = () => {
           rfc: c.rfc_tax_id,
           email: c.email_contacto,
           telefono: c.telefono,
+          codigo_cliente: c.codigo_cliente ?? '',
         })));
       } else if (t === 'cotizaciones') {
         const r = await ventasApi.getCotizaciones();
@@ -210,13 +243,13 @@ export const VentasView: React.FC = () => {
         setFacturas(r.data.data || []);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error de conexion con el modulo de Ventas.');
+      setError(err.response?.data?.message || err.response?.data?.error?.message || 'Error de conexion con el modulo de Ventas.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(tab); }, [tab]);
+  useEffect(() => { fetchData(tab); }, [tab, currentProjectId]);
 
   const handleTab = (t: TabKey) => {
     setTab(t);
@@ -448,6 +481,7 @@ export const VentasView: React.FC = () => {
                         <th className="px-8 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Email</th>
                         <th className="px-8 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Telefono</th>
                         <th className="px-8 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tipo</th>
+                        {esAdmin && <th className="px-8 py-5 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] text-right">Acciones</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/20">
@@ -462,6 +496,21 @@ export const VentasView: React.FC = () => {
                               {c.tipo || 'CLIENTE'}
                             </span>
                           </td>
+                          {esAdmin && (
+                            <td className="px-8 py-5 text-right">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditandoCliente(c);
+                                  setFormCliente({ razon_social: c.nombre ?? '', rfc_tax_id: c.rfc ?? '', email_contacto: c.email ?? '', telefono: c.telefono ?? '', codigo_cliente: c.codigo_cliente ?? '' });
+                                  setErrorCliente(null);
+                                }}
+                                className="rounded-lg border border-border/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                              >
+                                Editar
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -697,6 +746,50 @@ export const VentasView: React.FC = () => {
           )}
         </div>
       </SlidePanel>
+
+      {editandoCliente && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-border/40 bg-card shadow-2xl">
+            <div className="border-b border-border/30 px-6 py-4">
+              <h2 className="text-sm font-black uppercase tracking-widest">Editar Cliente</h2>
+            </div>
+            <div className="space-y-4 px-6 py-5">
+              {errorCliente && <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-400">{errorCliente}</div>}
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Razón Social *</label>
+              <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none" maxLength={255}
+                value={formCliente.razon_social} onChange={e => setFormCliente(f => ({ ...f, razon_social: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">RFC *</label>
+              <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none" maxLength={20}
+                value={formCliente.rfc_tax_id} onChange={e => setFormCliente(f => ({ ...f, rfc_tax_id: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email de contacto</label>
+              <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none" maxLength={100}
+                value={formCliente.email_contacto} onChange={e => setFormCliente(f => ({ ...f, email_contacto: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Teléfono</label>
+              <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none" maxLength={20}
+                value={formCliente.telefono} onChange={e => setFormCliente(f => ({ ...f, telefono: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código de cliente (000-050)</label>
+              <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm focus:border-primary/50 focus:outline-none" maxLength={3}
+                value={formCliente.codigo_cliente} onChange={e => setFormCliente(f => ({ ...f, codigo_cliente: e.target.value }))} />
+            </div>
+            </div>
+            <div className="flex gap-3 border-t border-border/30 px-6 py-4">
+              <button onClick={() => setEditandoCliente(null)} className="flex-1 rounded-xl border border-border/40 px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-muted/50">Cancelar</button>
+              <button onClick={() => void guardarCliente()} disabled={guardandoCliente} className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700 disabled:opacity-50">
+                {guardandoCliente ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <HelpPanel viewId="ventas" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
