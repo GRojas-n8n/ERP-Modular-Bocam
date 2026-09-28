@@ -261,6 +261,7 @@ exports.Prisma.AvanceFisicoScalarFieldEnum = {
   validado_por_nombre: 'validado_por_nombre',
   estado: 'estado',
   estimacion_id: 'estimacion_id',
+  estimacion_referencia_id: 'estimacion_referencia_id',
   created_at: 'created_at',
   updated_at: 'updated_at'
 };
