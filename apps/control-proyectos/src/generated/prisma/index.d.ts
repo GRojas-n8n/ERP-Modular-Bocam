@@ -8831,6 +8831,7 @@ export namespace Prisma {
     validado_por_nombre: string | null
     estado: string | null
     estimacion_id: string | null
+    estimacion_referencia_id: string | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -8859,6 +8860,7 @@ export namespace Prisma {
     validado_por_nombre: string | null
     estado: string | null
     estimacion_id: string | null
+    estimacion_referencia_id: string | null
     created_at: Date | null
     updated_at: Date | null
   }
@@ -8887,6 +8889,7 @@ export namespace Prisma {
     validado_por_nombre: number
     estado: number
     estimacion_id: number
+    estimacion_referencia_id: number
     created_at: number
     updated_at: number
     _all: number
@@ -8939,6 +8942,7 @@ export namespace Prisma {
     validado_por_nombre?: true
     estado?: true
     estimacion_id?: true
+    estimacion_referencia_id?: true
     created_at?: true
     updated_at?: true
   }
@@ -8967,6 +8971,7 @@ export namespace Prisma {
     validado_por_nombre?: true
     estado?: true
     estimacion_id?: true
+    estimacion_referencia_id?: true
     created_at?: true
     updated_at?: true
   }
@@ -8995,6 +9000,7 @@ export namespace Prisma {
     validado_por_nombre?: true
     estado?: true
     estimacion_id?: true
+    estimacion_referencia_id?: true
     created_at?: true
     updated_at?: true
     _all?: true
@@ -9110,6 +9116,7 @@ export namespace Prisma {
     validado_por_nombre: string | null
     estado: string
     estimacion_id: string | null
+    estimacion_referencia_id: string | null
     created_at: Date
     updated_at: Date
     _count: AvanceFisicoCountAggregateOutputType | null
@@ -9157,6 +9164,7 @@ export namespace Prisma {
     validado_por_nombre?: boolean
     estado?: boolean
     estimacion_id?: boolean
+    estimacion_referencia_id?: boolean
     created_at?: boolean
     updated_at?: boolean
     estimacion?: boolean | AvanceFisico$estimacionArgs<ExtArgs>
@@ -9186,6 +9194,7 @@ export namespace Prisma {
     validado_por_nombre?: boolean
     estado?: boolean
     estimacion_id?: boolean
+    estimacion_referencia_id?: boolean
     created_at?: boolean
     updated_at?: boolean
     estimacion?: boolean | AvanceFisico$estimacionArgs<ExtArgs>
@@ -9215,6 +9224,7 @@ export namespace Prisma {
     validado_por_nombre?: boolean
     estado?: boolean
     estimacion_id?: boolean
+    estimacion_referencia_id?: boolean
     created_at?: boolean
     updated_at?: boolean
   }
@@ -9255,6 +9265,7 @@ export namespace Prisma {
       validado_por_nombre: string | null
       estado: string
       estimacion_id: string | null
+      estimacion_referencia_id: string | null
       created_at: Date
       updated_at: Date
     }, ExtArgs["result"]["avanceFisico"]>
@@ -9674,6 +9685,7 @@ export namespace Prisma {
     readonly validado_por_nombre: FieldRef<"AvanceFisico", 'String'>
     readonly estado: FieldRef<"AvanceFisico", 'String'>
     readonly estimacion_id: FieldRef<"AvanceFisico", 'String'>
+    readonly estimacion_referencia_id: FieldRef<"AvanceFisico", 'String'>
     readonly created_at: FieldRef<"AvanceFisico", 'DateTime'>
     readonly updated_at: FieldRef<"AvanceFisico", 'DateTime'>
   }
@@ -12467,6 +12479,7 @@ export namespace Prisma {
     validado_por_nombre: 'validado_por_nombre',
     estado: 'estado',
     estimacion_id: 'estimacion_id',
+    estimacion_referencia_id: 'estimacion_referencia_id',
     created_at: 'created_at',
     updated_at: 'updated_at'
   };
@@ -13351,6 +13364,7 @@ export namespace Prisma {
     validado_por_nombre?: StringNullableFilter<"AvanceFisico"> | string | null
     estado?: StringFilter<"AvanceFisico"> | string
     estimacion_id?: UuidNullableFilter<"AvanceFisico"> | string | null
+    estimacion_referencia_id?: UuidNullableFilter<"AvanceFisico"> | string | null
     created_at?: DateTimeFilter<"AvanceFisico"> | Date | string
     updated_at?: DateTimeFilter<"AvanceFisico"> | Date | string
     estimacion?: XOR<EstimacionNullableRelationFilter, EstimacionWhereInput> | null
@@ -13380,6 +13394,7 @@ export namespace Prisma {
     validado_por_nombre?: SortOrderInput | SortOrder
     estado?: SortOrder
     estimacion_id?: SortOrderInput | SortOrder
+    estimacion_referencia_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     estimacion?: EstimacionOrderByWithRelationInput
@@ -13412,6 +13427,7 @@ export namespace Prisma {
     validado_por_nombre?: StringNullableFilter<"AvanceFisico"> | string | null
     estado?: StringFilter<"AvanceFisico"> | string
     estimacion_id?: UuidNullableFilter<"AvanceFisico"> | string | null
+    estimacion_referencia_id?: UuidNullableFilter<"AvanceFisico"> | string | null
     created_at?: DateTimeFilter<"AvanceFisico"> | Date | string
     updated_at?: DateTimeFilter<"AvanceFisico"> | Date | string
     estimacion?: XOR<EstimacionNullableRelationFilter, EstimacionWhereInput> | null
@@ -13441,6 +13457,7 @@ export namespace Prisma {
     validado_por_nombre?: SortOrderInput | SortOrder
     estado?: SortOrder
     estimacion_id?: SortOrderInput | SortOrder
+    estimacion_referencia_id?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
     _count?: AvanceFisicoCountOrderByAggregateInput
@@ -13477,6 +13494,7 @@ export namespace Prisma {
     validado_por_nombre?: StringNullableWithAggregatesFilter<"AvanceFisico"> | string | null
     estado?: StringWithAggregatesFilter<"AvanceFisico"> | string
     estimacion_id?: UuidNullableWithAggregatesFilter<"AvanceFisico"> | string | null
+    estimacion_referencia_id?: UuidNullableWithAggregatesFilter<"AvanceFisico"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"AvanceFisico"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"AvanceFisico"> | Date | string
   }
@@ -14567,6 +14585,7 @@ export namespace Prisma {
     validado_por_id?: string | null
     validado_por_nombre?: string | null
     estado?: string
+    estimacion_referencia_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
     estimacion?: EstimacionCreateNestedOneWithoutAvancesInput
@@ -14596,6 +14615,7 @@ export namespace Prisma {
     validado_por_nombre?: string | null
     estado?: string
     estimacion_id?: string | null
+    estimacion_referencia_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -14623,6 +14643,7 @@ export namespace Prisma {
     validado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     estimacion?: EstimacionUpdateOneWithoutAvancesNestedInput
@@ -14652,6 +14673,7 @@ export namespace Prisma {
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     estimacion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14680,6 +14702,7 @@ export namespace Prisma {
     validado_por_nombre?: string | null
     estado?: string
     estimacion_id?: string | null
+    estimacion_referencia_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -14707,6 +14730,7 @@ export namespace Prisma {
     validado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14735,6 +14759,7 @@ export namespace Prisma {
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
     estimacion_id?: NullableStringFieldUpdateOperationsInput | string | null
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15834,6 +15859,7 @@ export namespace Prisma {
     validado_por_nombre?: SortOrder
     estado?: SortOrder
     estimacion_id?: SortOrder
+    estimacion_referencia_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -15873,6 +15899,7 @@ export namespace Prisma {
     validado_por_nombre?: SortOrder
     estado?: SortOrder
     estimacion_id?: SortOrder
+    estimacion_referencia_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -15901,6 +15928,7 @@ export namespace Prisma {
     validado_por_nombre?: SortOrder
     estado?: SortOrder
     estimacion_id?: SortOrder
+    estimacion_referencia_id?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
   }
@@ -16630,6 +16658,7 @@ export namespace Prisma {
     validado_por_id?: string | null
     validado_por_nombre?: string | null
     estado?: string
+    estimacion_referencia_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -16657,6 +16686,7 @@ export namespace Prisma {
     validado_por_id?: string | null
     validado_por_nombre?: string | null
     estado?: string
+    estimacion_referencia_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -16714,6 +16744,7 @@ export namespace Prisma {
     validado_por_nombre?: StringNullableFilter<"AvanceFisico"> | string | null
     estado?: StringFilter<"AvanceFisico"> | string
     estimacion_id?: UuidNullableFilter<"AvanceFisico"> | string | null
+    estimacion_referencia_id?: UuidNullableFilter<"AvanceFisico"> | string | null
     created_at?: DateTimeFilter<"AvanceFisico"> | Date | string
     updated_at?: DateTimeFilter<"AvanceFisico"> | Date | string
   }
@@ -16741,6 +16772,7 @@ export namespace Prisma {
     validado_por_id?: string | null
     validado_por_nombre?: string | null
     estado?: string
+    estimacion_referencia_id?: string | null
     created_at?: Date | string
     updated_at?: Date | string
   }
@@ -16768,6 +16800,7 @@ export namespace Prisma {
     validado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16795,6 +16828,7 @@ export namespace Prisma {
     validado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16822,6 +16856,7 @@ export namespace Prisma {
     validado_por_id?: NullableStringFieldUpdateOperationsInput | string | null
     validado_por_nombre?: NullableStringFieldUpdateOperationsInput | string | null
     estado?: StringFieldUpdateOperationsInput | string
+    estimacion_referencia_id?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
