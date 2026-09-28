@@ -103,7 +103,6 @@ const AuthenticatedApp: React.FC = () => {
       'residencia',
       'control-obra',
       'seguridad',
-      'ventas',
     ]);
 
     const projectScopedMixedView =
