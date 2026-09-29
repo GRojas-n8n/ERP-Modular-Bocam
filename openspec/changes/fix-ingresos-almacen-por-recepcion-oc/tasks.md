@@ -42,21 +42,22 @@
 
 ## 6. Despliegue y verificación (bloqueado hasta autorización expresa)
 
-- [ ] 6.1 PR por servicio con CI verde. **No fusionar** hasta que el titular autorice el despliegue: fusionar a `main` despliega y aplica migraciones.
-- [ ] 6.2 Orden: bus, Almacén y Compras. El consumidor debe existir antes de que el publicador emita.
+- [x] 6.1 PR por servicio con CI verde y fusión solo con autorización expresa del titular. #169 fusionado el 2026-09-29 (merge `a7fff6c`) con `Backend E2E Criticas` verde (run `36645918284`); el bus y Almacén ya estaban en `main` y desplegados (ver 6.2b/6.2c). Ver `evidence-2026-09-29-despliegue-y-activacion.md`.
+- [x] 6.2 Orden respetado: bus y Almacén (2026-09-25, ver 6.2b/6.2c) y después Compras (2026-09-29, ver 6.2g). El consumidor existió antes de que el publicador emitiera.
 - [x] 6.2b (hecho 2026-09-25, workflow RLS run 36099272903, verificado) Tras desplegar Almacén, aplicar `apps/almacen/prisma/rls-policies.sql` con el workflow manual de RLS: la política de `eventos_procesados` no se crea con la migración.
 - [x] 6.2c (hecho 2026-09-25, merge 9eb0a9a, verificado) Desplegar el Almacén con la `.v3` y verificar: consumidor activo, bindings, `.retry`, `.dlq`, argumentos sin `x-message-ttl`, colas antiguas sin cambios.
-- [ ] 6.2d Verificar la `.v2` vacía y, con autorización expresa, desvincularla con `scripts/ops/almacen-recepcion-oc/topologia.js desvincular --ejecutar`. Confirmar que el único binding del evento hacia Almacén es el de la `.v3`. Las colas `.v2` no se borran.
-- [ ] 6.2e Solo después de 6.2d se despliega Compras (publicador).
-- [ ] 6.2f Pasar `COMPRAS_OUTBOX_DISPATCHER` al contenedor de Compras en el compose del VPS (default `off`), en un cambio aparte porque reconstruye los 13 servicios. Debe estar desplegado antes de poder activar el despachador.
-- [ ] 6.2g Desplegar Compras (#169) con el despachador apagado y verificar `dispatcher disabled`, `/ready` con `outbox_dispatcher: disabled`, RLS de `outbox_eventos` y outbox sin publicaciones.
-- [ ] 6.2h Activar el despachador solo con autorización expresa y con `.v2` desvinculada y `.v3` verificada (`docs/operacion/compras-outbox-despachador.md`).
-- [ ] 6.2i Tras desplegar Compras, ejecutar el workflow manual de RLS (`service=compras`) para reaplicar y verificar la política de `outbox_eventos`. La tabla ya nace con RLS habilitado y forzado desde la migración; el workflow deja además la política registrada en `rls-policies.sql` y las verificaciones de `pg_policies`.
-- [ ] 6.3 Verificación en producción por lectura de logs, profundidad de la DLQ y `/ready`, sin crear datos de prueba.
+- [x] 6.2d Estado verificado el 2026-09-29: `.v2` vacía y sin binding; el único binding de `compras.recepcion_oc_registrada.v1` hacia Almacén es el de la `.v3` (1 consumidor, 0 mensajes); `.v2`, `.v2.retry` y `.v2.dlq` intactas y vacías, no se borran. La ejecución del script `desvincular` no consta en este change: se comprobó el estado resultante directamente en RabbitMQ.
+- [x] 6.2e Compras (publicador) desplegado el 2026-09-29 (#169, merge `a7fff6c`, deploy `36645918565`) con `.v2` ya desvinculada.
+- [x] 6.2f `COMPRAS_OUTBOX_DISPATCHER` pasa al contenedor de Compras en el compose del VPS (default `off`): #172 (`b91d2a1`). Verificado en el contenedor (`off`) antes de #169.
+- [x] 6.2g Compras (#169) desplegado con el despachador apagado y verificado: `dispatcher disabled`, `/ready` con `outbox_dispatcher: disabled`, RLS de `outbox_eventos` habilitado y forzado con su política, sin publicaciones ni filas. Migraciones aplicadas: `20260925130000_outbox_eventos` y `20260925140000_snapshot_insumo_oc_items`. Ver `evidence-2026-09-29-despliegue-y-activacion.md`.
+- [x] 6.2h Despachador activado con autorización expresa el 2026-09-29 ~23:43 UTC (`COMPRAS_OUTBOX_DISPATCHER=on`), con `.v2` desvinculada y `.v3` verificada. `dispatcher enabled`, `/ready` con `outbox_dispatcher: ok`, smoke posterior `36646776085` con 2 pruebas verdes. Ver `evidence-2026-09-29-despliegue-y-activacion.md`.
+- [ ] 6.2i Ejecutar el workflow manual de RLS (`service=compras`). **Pendiente y no ejecutado**: la migración ya creó el RLS habilitado y forzado con la política `rls_outbox_eventos_context`, y se verificó directamente en `pg_class`/`pg_policies` (ver `evidence-2026-09-29-despliegue-y-activacion.md`). Solo falta dejar la política registrada por ese workflow, si el titular lo decide.
+- [x] 6.3 Verificación en producción por lectura de logs, profundidad de colas (`.v3`, retry y DLQ) y `/ready`, sin crear datos de prueba (2026-09-29, ver `evidence-2026-09-29-despliegue-y-activacion.md`).
 - [ ] 6.4 Decidir aparte el retiro de las colas `almacen.compras_oc_recibida_*` actuales, con evidencia de que no reciben tráfico.
+- [ ] 6.5 **Observar la primera recepción real** con el procedimiento `docs/operacion/compras-outbox-primera-recepcion-real.md` (fila de outbox `PENDIENTE` → `PUBLICADO`, un solo evento en `.v3`, un solo INGRESO por ítem con `recepcion_id`, sin duplicados, retry y DLQ vacías, ítems y cantidades coincidentes). Requiere una recepción real; no se crean datos de prueba.
 
 ## 7. Cierre
 
-- [ ] 7.1 Verificar las garantías del outbox en producción (en las pruebas ya se cumplen): atomicidad, reintento, marcado solo tras confirmación del broker y recuperación tras reinicios. Sin ellas el change no se considera completo.
+- [ ] 7.1 Verificar las garantías del outbox en producción (en las pruebas ya se cumplen): atomicidad, reintento, marcado solo tras confirmación del broker y recuperación tras reinicios. Sin ellas el change no se considera completo. Pendiente de 6.5 (requiere observar una recepción real).
 - [ ] 7.2 Sincronizar la spec canónica `almacen-eventos-oc` (aún en formato anterior a la migración) con los deltas y archivar el change.
 - [ ] 7.3 Los demás consumidores del bus se tratan en `auditar-consumidores-eventbus-sin-perdida-silenciosa`.
