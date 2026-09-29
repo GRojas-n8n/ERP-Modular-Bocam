@@ -1,4 +1,10 @@
 import { test, expect } from '@playwright/test';
+import {
+  AVISO_VENTAS_SIN_PROYECTO,
+  PETICION_PERMITIDA_SIN_PROYECTO,
+  peticionesProhibidasSinProyecto,
+  type PeticionObservada,
+} from './ventas-alcance';
 
 /**
  * ---------------------------------------------------------------------------
@@ -53,21 +59,14 @@ test('login y dashboard cargan sin errores tras el deploy', async ({ page }) => 
 });
 
 test('sin proyecto activo, los módulos project-scoped quedan bloqueados sin consultar datos', async ({ page }) => {
-  const projectScopedRequests: string[] = [];
-  const projectScopedPrefixes = [
-    '/api/v1/gerencia-tecnica/',
-    '/api/v1/compras/',
-    '/api/v1/almacen/',
-    '/api/v1/control-proyectos/',
-    '/api/v1/seguridad/',
-    '/api/v1/ventas/',
-  ];
+  // Ventas es mixto (change fix-clientes-sin-proyecto-y-edicion-rfc): Clientes es catálogo por
+  // tenant y se consulta sin proyecto; Cotizaciones y Facturas siguen siendo project-scoped.
+  // La única petición project-scoped permitida sin proyecto es la exacta de Clientes
+  // (ver ./ventas-alcance.ts); cualquier otra, incluidas las de Cotizaciones/Facturas, falla el smoke.
+  const peticiones: PeticionObservada[] = [];
 
   page.on('request', request => {
-    const pathname = new URL(request.url()).pathname;
-    if (projectScopedPrefixes.some(prefix => pathname.startsWith(prefix))) {
-      projectScopedRequests.push(`${request.method()} ${pathname}`);
-    }
+    peticiones.push({ method: request.method(), url: request.url() });
   });
 
   // La cuenta tecnica conserva cero roles y cero proyectos en produccion.
@@ -105,6 +104,7 @@ test('sin proyecto activo, los módulos project-scoped quedan bloqueados sin con
   const projectRequired = page.getByText('Proyecto activo requerido', { exact: true });
   await expect(projectRequired).toBeVisible();
 
+  // Módulos completamente bloqueados sin proyecto. Ventas NO está aquí: es mixto (ver más abajo).
   const projectScopedModules = [
     'Gerencia Técnica',
     'Compras',
@@ -112,7 +112,6 @@ test('sin proyecto activo, los módulos project-scoped quedan bloqueados sin con
     'Control de Obra',
     'Residencia',
     'Seguridad HSE',
-    'Ventas',
   ];
 
   for (const moduleName of projectScopedModules) {
@@ -120,7 +119,26 @@ test('sin proyecto activo, los módulos project-scoped quedan bloqueados sin con
     await expect(projectRequired, `${moduleName} debe exigir proyecto activo`).toBeVisible();
   }
 
-  await expect.poll(() => projectScopedRequests, {
-    message: `No deben salir consultas project-scoped: ${projectScopedRequests.join(' | ')}`,
-  }).toEqual([]);
+  // Ventas: Clientes (catálogo por tenant) NO se bloquea globalmente...
+  const clientesRespuesta = page.waitForResponse(
+    response => response.request().method() === PETICION_PERMITIDA_SIN_PROYECTO.method
+      && new URL(response.url()).pathname === PETICION_PERMITIDA_SIN_PROYECTO.pathname,
+    { timeout: 15_000 },
+  );
+  await page.getByRole('button', { name: 'Ventas', exact: true }).click();
+  await expect(projectRequired, 'Ventas no debe bloquearse globalmente: Clientes es catálogo por tenant').toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Clientes/ }), 'Ventas debe mostrar la pestaña Clientes').toBeVisible();
+  await clientesRespuesta; // la petición a Clientes salió (el resultado no importa: la cuenta no tiene permisos reales)
+
+  // ...pero Cotizaciones y Facturas siguen exigiendo proyecto y no consultan datos.
+  for (const pestana of [/^Cotizaciones/, /^Facturas/]) {
+    await page.getByRole('button', { name: pestana }).click();
+    await expect(
+      page.getByText(AVISO_VENTAS_SIN_PROYECTO, { exact: true }),
+      `Ventas › ${pestana} debe pedir proyecto activo`,
+    ).toBeVisible();
+  }
+
+  const prohibidas = peticionesProhibidasSinProyecto(peticiones);
+  expect(prohibidas, `No deben salir consultas project-scoped: ${prohibidas.join(' | ')}`).toEqual([]);
 });
