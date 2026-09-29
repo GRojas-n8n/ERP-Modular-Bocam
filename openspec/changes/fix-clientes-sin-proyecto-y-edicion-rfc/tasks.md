@@ -21,7 +21,8 @@
 - [x] 4.0.2 Smoke: Ventas fuera de los módulos totalmente bloqueados; comprueba Clientes sin proyecto (pestaña visible, sin "Proyecto activo requerido", petición emitida); abre Cotizaciones y Facturas y exige el aviso; prohíbe cualquier otra petición project-scoped
 - [x] 4.0.3 Pruebas herméticas: `VentasView.sin-proyecto.test.tsx` (3) y `App.ventas-sin-proyecto.test.tsx` (2)
 - [x] 4.0.4 Pruebas de mutación locales: Ventas bloqueada en `App`, guard de Cotizaciones/Facturas neutralizado, aviso eliminado, Clientes bloqueado y exclusión amplia `/api/v1/ventas/` hacen fallar las pruebas
-- [ ] 4.0.5 Ejecución real del smoke tras el deploy de este PR (plan de validación en la descripción del PR)
+- [x] 4.0.5 Ejecución real del smoke tras el deploy de este PR (plan de validación en la descripción del PR)
+  - Evidencia (2026-09-29): PR #177, merge commit `528021d`, workflow `Deploy Frontend al VPS` run `36642004793` (Build + Deploy en verde). Smoke Playwright contra producción: 2 passed — `login y dashboard cargan sin errores tras el deploy` y `sin proyecto activo, los módulos project-scoped quedan bloqueados sin consultar datos`.
 - [ ] 4.0.6 Sincronizar los deltas con `openspec/specs/` y archivar el change cuando 4.x y 5.1 estén cerrados
 
 ## 4. Verificación — PENDIENTE
