@@ -17,7 +17,7 @@ Registro de lo ejecutado con autorización expresa del titular. No se crearon pr
 ## Esquema en producción (`bocam_compras`)
 
 - `outbox_eventos`: 14 columnas; índices `outbox_eventos_pkey`, `uq_outbox_recepcion` y `outbox_eventos_estado_proximo_intento_en_idx`.
-- RLS **habilitado y forzado** (`relrowsecurity` y `relforcerowsecurity` verdaderos); política `rls_outbox_eventos_context` (ALL, con `USING` y `WITH CHECK`). Se aplicó por la propia migración: **no se ejecutó el workflow manual de RLS** (ver tarea 6.2i).
+- RLS **habilitado y forzado** (`relrowsecurity` y `relforcerowsecurity` verdaderos); política `rls_outbox_eventos_context` (ALL, con `USING` y `WITH CHECK`). Se aplicó por la propia migración: **no se ejecutó el workflow manual de RLS** (tarea 6.2i: la verificación directa sustituye al workflow por decisión del titular).
 - `ordenes_compra_items`: existen `clave_snapshot` (50), `descripcion_snapshot` (text), `unidad_snapshot` (20) y `categoria_snapshot` (50).
 
 ## Respaldos (no se borran)
