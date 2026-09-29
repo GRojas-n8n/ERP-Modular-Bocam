@@ -19,12 +19,57 @@ Cada recepción registrada con `POST /api/v1/compras/ordenes-compra/:id/recepcio
 - **WHEN** un ítem recibido es de texto libre o imprevisto
 - **THEN** el evento lo incluye con `insumo_id` nulo y el snapshot tomado de su descripción y unidad libres
 
-### Requirement: El evento SHALL ser autosuficiente
-El snapshot del evento SHALL bastar para que Almacén cree o actualice su inventario sin consultar a Compras ni a Gerencia Técnica al procesarlo. El snapshot SHALL congelarse al armar el evento y NO SHALL cambiar en los reintentos de publicación.
+### Requirement: El evento SHALL ser autosuficiente y salir de datos persistidos en Compras
+Todo ítem con `insumo_id` SHALL incluir `clave`, `descripcion`, `unidad` y `categoria`, tomados del snapshot conservado en el renglón de la OC, de modo que Almacén cree o actualice su inventario sin consultar a Compras ni a Gerencia Técnica y sin depender de que el inventario ya exista. El evento SHALL armarse dentro de la transacción de la recepción y NO SHALL consultar a Gerencia Técnica en el despacho del outbox.
 
-#### Scenario: Consumidor sin acceso a otros servicios
-- **WHEN** Almacén procesa el evento y Compras y Gerencia Técnica no están disponibles
-- **THEN** el procesamiento se completa con los datos del evento
+#### Scenario: Gerencia Técnica no disponible con snapshot persistido
+- **WHEN** la OC ya conserva el snapshot de sus renglones y Gerencia Técnica no responde al registrar la recepción
+- **THEN** la recepción se registra y el evento sale completo, sin consultar a Gerencia Técnica
+
+#### Scenario: Inventario inexistente
+- **WHEN** Almacén procesa un evento cuyo insumo no existe en su inventario
+- **THEN** crea el ítem solo con el snapshot del evento y aplica el INGRESO
+
+#### Scenario: Evento completo después de un reinicio
+- **WHEN** Compras se reinicia y Gerencia Técnica sigue caída
+- **THEN** el despachador publica el mismo evento completo desde los datos persistidos
+
+### Requirement: La OC SHALL conservar el snapshot de sus renglones de catálogo
+Al crear una OC, cada renglón de catálogo SHALL guardar `clave`, `descripcion`, `unidad` y `categoria` del insumo. Si el catálogo no responde en ese momento, la OC SHALL crearse igualmente con el snapshot pendiente.
+
+#### Scenario: Creación de la OC con el catálogo disponible
+- **WHEN** se genera una OC con renglones de catálogo y Gerencia Técnica responde
+- **THEN** cada renglón conserva el snapshot del insumo
+
+#### Scenario: Creación de la OC con el catálogo caído
+- **WHEN** Gerencia Técnica no responde al generar la OC
+- **THEN** la OC se crea con snapshot pendiente y sin error
+
+### Requirement: Una recepción SHALL rechazarse antes del commit si no puede construirse el snapshot
+Cuando un renglón de catálogo recibido no tenga snapshot persistido, Compras SHALL completarlo dentro de la petición, fuera de la transacción, y persistirlo en la OC. Si no puede obtenerlo, SHALL rechazar la recepción con `503 SNAPSHOT_INSUMO_NO_DISPONIBLE` antes de escribir nada, sin recepción, sin evento y sin cambios en la OC; el reintento posterior SHALL funcionar cuando el catálogo responda.
+
+#### Scenario: Sin snapshot y sin Gerencia Técnica
+- **WHEN** se recibe un renglón sin snapshot persistido y Gerencia Técnica no responde
+- **THEN** la respuesta es `503 SNAPSHOT_INSUMO_NO_DISPONIBLE` y no queda ninguna recepción, evento ni cambio en la OC
+
+#### Scenario: Snapshot faltante que se puede resolver
+- **WHEN** el renglón no tiene snapshot y Gerencia Técnica responde
+- **THEN** el snapshot se persiste en la OC, la recepción se registra y las siguientes recepciones no consultan al catálogo
+
+### Requirement: Un evento incompleto NO SHALL publicarse como procesable
+Ningún evento con un ítem de `insumo_id` sin snapshot completo SHALL enviarse al broker ni marcarse `PUBLICADO`. Si por un defecto llegara a existir, SHALL retenerse en `ERROR` con la causa `PAYLOAD_INCOMPLETO`, sin pasar por la cola de mensajes fallidos. La reemisión SHALL reconstruirlo solo con datos persistidos y, si aún faltan, responder `409 SNAPSHOT_INCOMPLETO` sin republicar.
+
+#### Scenario: Payload incompleto en el outbox
+- **WHEN** el despachador encuentra un evento sin el snapshot de un insumo
+- **THEN** no lo publica, la fila queda en `ERROR` con `PAYLOAD_INCOMPLETO` y se registra un log de error
+
+#### Scenario: Reemisión reparable
+- **WHEN** el snapshot ya está completo en la OC y se reemite el evento
+- **THEN** el payload se reconstruye con el mismo `event_id` y se publica completo
+
+#### Scenario: Reemisión no reparable
+- **WHEN** aún faltan datos persistidos
+- **THEN** la respuesta es `409 SNAPSHOT_INCOMPLETO` y la fila permanece retenida
 
 ### Requirement: El contrato SHALL versionarse sin romper a los consumidores
 Un cambio incompatible del contrato SHALL publicarse con una versión nueva y una routing key distinta, y NO SHALL modificar la versión vigente. El consumidor SHALL rechazar hacia la cola de mensajes fallidos un evento con una versión que no soporta.

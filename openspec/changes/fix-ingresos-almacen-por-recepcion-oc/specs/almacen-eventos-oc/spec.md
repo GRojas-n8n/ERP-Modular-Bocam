@@ -6,7 +6,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Subscriber de recepciones de OC registradas
-El servicio Almacén SHALL suscribirse al evento `compras.recepcion_oc_registrada.v1` en el topic exchange `bocam.events`, mediante la cola `.v3` (sin TTL y con dead-letter a su cola de mensajes fallidos) y con reintentos y cola de mensajes fallidos activados, y SHALL crear un `MovimientoAlmacen` de tipo INGRESO por cada ítem recibido con `insumo_id`. El evento SHALL ser autosuficiente: Almacén NO SHALL consultar a otros servicios para procesarlo. Cuando el `ItemInventario` no exista, Almacén SHALL crearlo con `clave`, `descripcion`, `unidad` y `categoria` del snapshot del evento.
+El servicio Almacén SHALL suscribirse al evento `compras.recepcion_oc_registrada.v1` en el topic exchange `bocam.events`, mediante la cola `.v3` (sin TTL y con dead-letter a su cola de mensajes fallidos) y con reintentos y cola de mensajes fallidos activados, y SHALL crear un `MovimientoAlmacen` de tipo INGRESO por cada ítem recibido con `insumo_id`. El evento SHALL ser autosuficiente: Almacén NO SHALL consultar a otros servicios para procesarlo. Todo ítem con `insumo_id` SHALL traer `clave`, `descripcion`, `unidad` y `categoria`, exista o no el `ItemInventario`; cuando no exista, Almacén SHALL crearlo con ese snapshot.
 
 #### Scenario: Recepción procesada exitosamente
 - **WHEN** Compras publica `compras.recepcion_oc_registrada.v1` con un payload válido
@@ -16,6 +16,10 @@ El servicio Almacén SHALL suscribirse al evento `compras.recepcion_oc_registrad
 #### Scenario: Ítem no existe en inventario al recibir
 - **WHEN** el `insumo_id` del evento no tiene `ItemInventario`
 - **THEN** el sistema lo crea con el snapshot del evento antes de registrar el INGRESO
+
+#### Scenario: Snapshot incompleto aunque el inventario exista
+- **WHEN** un ítem con `insumo_id` no trae alguno de `clave`, `descripcion`, `unidad` o `categoria`
+- **THEN** el evento se rechaza como `SNAPSHOT_INCOMPLETO`, no reintentable y sin efectos, exista o no el ítem en el inventario
 
 #### Scenario: Ítem sin insumo de catálogo
 - **WHEN** un ítem del evento tiene `insumo_id` nulo

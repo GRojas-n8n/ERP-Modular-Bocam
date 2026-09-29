@@ -247,6 +247,10 @@ exports.Prisma.OrdenCompraItemScalarFieldEnum = {
   detalle_req_id: 'detalle_req_id',
   descripcion_libre: 'descripcion_libre',
   unidad_libre: 'unidad_libre',
+  clave_snapshot: 'clave_snapshot',
+  descripcion_snapshot: 'descripcion_snapshot',
+  unidad_snapshot: 'unidad_snapshot',
+  categoria_snapshot: 'categoria_snapshot',
   cantidad: 'cantidad',
   precio_unitario: 'precio_unitario',
   importe: 'importe'
@@ -271,6 +275,23 @@ exports.Prisma.RecepcionOCItemScalarFieldEnum = {
   orden_item_id: 'orden_item_id',
   cantidad_recibida: 'cantidad_recibida',
   nota_discrepancia: 'nota_discrepancia'
+};
+
+exports.Prisma.OutboxEventoScalarFieldEnum = {
+  id_evento: 'id_evento',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  orden_id: 'orden_id',
+  recepcion_id: 'recepcion_id',
+  event_type: 'event_type',
+  event_version: 'event_version',
+  payload: 'payload',
+  estado: 'estado',
+  intentos: 'intentos',
+  proximo_intento_en: 'proximo_intento_en',
+  ultimo_error: 'ultimo_error',
+  created_at: 'created_at',
+  publicado_en: 'publicado_en'
 };
 
 exports.Prisma.CuadroComparativoScalarFieldEnum = {
@@ -448,6 +469,10 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -456,6 +481,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
 
@@ -470,6 +501,7 @@ exports.Prisma.ModelName = {
   OrdenCompraItem: 'OrdenCompraItem',
   RecepcionOC: 'RecepcionOC',
   RecepcionOCItem: 'RecepcionOCItem',
+  OutboxEvento: 'OutboxEvento',
   CuadroComparativo: 'CuadroComparativo',
   ComparativaProveedorArchivo: 'ComparativaProveedorArchivo',
   AuditoriaDesbloqueoComparativa: 'AuditoriaDesbloqueoComparativa',
