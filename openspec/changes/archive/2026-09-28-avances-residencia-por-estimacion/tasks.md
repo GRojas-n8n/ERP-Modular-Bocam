@@ -20,4 +20,4 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 Correr suites de control-proyectos y app-shell; PR `feat/` contra main
+- [x] 4.1 Correr suites de control-proyectos y app-shell; PR `feat/` contra main
