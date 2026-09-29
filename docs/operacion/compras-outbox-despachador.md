@@ -38,7 +38,7 @@ Al arrancar, Compras registra una línea JSON con `"message":"dispatcher disable
 
 ## Cómo llega la variable al contenedor
 
-El compose del VPS declara `COMPRAS_OUTBOX_DISPATCHER: ${COMPRAS_OUTBOX_DISPATCHER:-off}` para Compras, de modo que el valor sale de `.env.vps` y, si no está, es `off`. Sin esa línea la variable no llegaría al contenedor. Se despliega en un cambio separado, antes que el publicador.
+El compose del VPS declara `COMPRAS_OUTBOX_DISPATCHER: ${COMPRAS_OUTBOX_DISPATCHER:-off}` para Compras, de modo que el valor sale de `.env` y, si no está, es `off`. Sin esa línea la variable no llegaría al contenedor. Se despliega en un cambio separado, antes que el publicador.
 
 ## Requisitos previos para activar
 
@@ -56,9 +56,9 @@ No activar hasta que se cumpla **todo** esto:
 En el VPS, en `/root/ERP-Modular-Bocam`:
 
 ```bash
-# 1. Editar .env.vps y dejar COMPRAS_OUTBOX_DISPATCHER=on
+# 1. Editar .env y dejar COMPRAS_OUTBOX_DISPATCHER=on
 # 2. Recrear solo Compras (sin reconstruir ninguna imagen):
-docker compose -f docker-compose.vps.yml --env-file .env.vps up -d --no-deps compras
+docker compose -f docker-compose.vps.yml up -d --no-deps compras
 ```
 
 Verificar:
@@ -74,9 +74,9 @@ Verificar:
 Apagar el despachador no requiere reconstruir ni desplegar código:
 
 ```bash
-# 1. En .env.vps poner COMPRAS_OUTBOX_DISPATCHER=off (o quitar la línea)
+# 1. En .env poner COMPRAS_OUTBOX_DISPATCHER=off (o quitar la línea)
 # 2. Recrear solo Compras:
-docker compose -f docker-compose.vps.yml --env-file .env.vps up -d --no-deps compras
+docker compose -f docker-compose.vps.yml up -d --no-deps compras
 ```
 
 - Los eventos que ya estaban `PUBLICADO` no se revierten. Almacén los aplicó de forma idempotente (`event_id` y `recepcion_id` + `recepcion_item_id`), así que una reemisión posterior no duplica INGRESOS.
