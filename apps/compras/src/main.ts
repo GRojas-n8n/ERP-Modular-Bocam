@@ -1932,7 +1932,7 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
     logInfo(req, 'compras', 'compras.proveedor.creado', 'Proveedor creado', { proveedor_id: data.id_proveedor });
     res.status(201).json({ success: true, data });
   } catch (error: any) {
-    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe un proveedor con ese RFC para este tenant.' });
+    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe un proveedor con ese RFC (puede estar archivado; actívalo desde "Mostrar archivados").' });
     logError(req, 'compras', 'compras.proveedor.crear.error', 'Error al crear proveedor', { error_message: error.message });
     res.status(500).json({ success: false, message: 'Error al crear el proveedor.' });
   }
@@ -2075,7 +2075,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     const { tenantId, proyectoId, userId } = req.securityContext;
     const proveedorId = req.params.id;
     const {
-      razon_social, email_contacto, telefono, estatus,
+      rfc_tax_id, razon_social, email_contacto, telefono, estatus,
       ciudad, tipo_ubicacion, entrega_en_sitio,
       estatus_credito, limite_credito, ofrece_credito, dias_credito,
       tipo_proveedor, calificacion_desempeno,
@@ -2084,6 +2084,12 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     if (calificacion_desempeno !== undefined && calificacion_desempeno !== null &&
         (Number(calificacion_desempeno) < 0 || Number(calificacion_desempeno) > 5)) {
       return void res.status(400).json({ success: false, message: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
+    }
+    if (rfc_tax_id !== undefined && (typeof rfc_tax_id !== 'string' || !rfc_tax_id.trim())) {
+      return void res.status(400).json({ success: false, message: 'rfc_tax_id no puede estar vacío.' });
+    }
+    if (razon_social !== undefined && (typeof razon_social !== 'string' || !razon_social.trim())) {
+      return void res.status(400).json({ success: false, message: 'razon_social no puede estar vacía.' });
     }
     if (!parseOrRespond(longitudProveedorSchema, req.body, res)) return;
 
@@ -2096,6 +2102,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
         return prisma.proveedor.update({
           where: { id_proveedor: proveedorId },
           data: {
+            ...(rfc_tax_id !== undefined && { rfc_tax_id: rfc_tax_id.trim().toUpperCase() }),
             ...(razon_social !== undefined && { razon_social: razon_social.trim() }),
             ...(email_contacto !== undefined && { email_contacto }),
             ...(telefono !== undefined && { telefono }),
@@ -2117,6 +2124,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     logInfo(req, 'compras', 'compras.proveedor.actualizado', 'Proveedor actualizado', { proveedor_id: proveedorId });
     res.json({ success: true, data });
   } catch (error: any) {
+    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe otro proveedor con ese RFC (puede estar archivado).' });
     const status = error.status ?? 500;
     logError(req, 'compras', 'compras.proveedor.actualizar.error', 'Error al actualizar proveedor', { error_message: error.message });
     res.status(status).json({ success: false, message: status === 500 ? 'Error al actualizar el proveedor.' : error.message });

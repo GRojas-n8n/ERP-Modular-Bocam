@@ -232,8 +232,8 @@ const AgregarClienteModal: React.FC<AgregarClienteModalProps> = ({ onClose, onCr
       onCreated(res.data.data as ClienteVentas);
       onClose();
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg ?? 'Error al crear el cliente.');
+      const data = (e as { response?: { data?: { message?: string; error?: { message?: string } } } })?.response?.data;
+      setError(data?.message ?? data?.error?.message ?? 'Error al crear el cliente.');
     } finally { setSaving(false); }
   };
 
@@ -316,7 +316,9 @@ const ProyectoModal: React.FC<ProyectoModalProps> = ({ proyecto, onClose, onSave
 
   useEffect(() => {
     if (isEdit) return; // el cliente/empresa/año ya no son editables tras crear
-    ventasApi.getClientes().then(res => setClientes((res.data.data ?? []) as ClienteVentas[])).catch(() => {});
+    ventasApi.getClientes()
+      .then(res => setClientes((res.data.data ?? []) as ClienteVentas[]))
+      .catch((e: any) => setError(e?.response?.data?.message ?? e?.response?.data?.error?.message ?? 'No se pudieron cargar los clientes.'));
   }, [isEdit]);
 
   const clienteSeleccionado = clientes.find(c => c.id_cliente === form.cliente_id);

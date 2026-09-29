@@ -1073,6 +1073,196 @@ controlObraRouter.post('/avances', requireRoles('residencia', 'control_proyectos
   }
 });
 
+// ─── openspec avances-residencia-por-estimacion ─────────────────────────────
+
+type ConceptoCatalogo = { id: string; clave: string; descripcion: string; unidad_medida: string; precio_unitario: number; cantidad: number };
+
+// Catálogo completo del presupuesto activo de gerencia-tecnica (una llamada).
+async function obtenerCatalogoGT(authHeader: string | undefined): Promise<ConceptoCatalogo[]> {
+  const resp = await axios.get(`${GT_URL}/presupuesto/activo`, {
+    headers: authHeader ? { Authorization: authHeader } : {},
+    timeout: 5000,
+  });
+  const conceptos: any[] = resp.data?.data?.conceptos ?? [];
+  return conceptos.map((c) => ({
+    id: c.id,
+    clave: c.clave,
+    descripcion: c.descripcion,
+    unidad_medida: c.unidad_medida,
+    precio_unitario: Number(c.precio_unitario),
+    cantidad: Number(c.cantidad),
+  }));
+}
+
+class LoteAvancesError extends Error {
+  constructor(public status: number, public code: string, message: string) { super(message); }
+}
+
+// Registro de avances por estimación de referencia y por concepto, atómico
+// (design.md Decisión 2). El periodo se hereda de la estimación.
+controlObraRouter.post('/avances/lote', requireRoles('residencia', 'control_proyectos', 'control_obra', 'director', 'admin'), async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId, userName } = req.securityContext;
+    const { estimacion_referencia_id, items } = req.body ?? {};
+
+    if (!estimacion_referencia_id || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json(createApiError('CO_MISSING_FIELDS', 'estimacion_referencia_id e items (no vacío) son obligatorios.'));
+      return;
+    }
+    const vistos = new Set<string>();
+    for (const it of items) {
+      const cant = Number(it?.cantidad_periodo);
+      if (!it?.concepto_id || typeof it.concepto_id !== 'string' || !Number.isFinite(cant) || cant <= 0) {
+        res.status(400).json(createApiError('CO_ITEM_INVALIDO', 'Cada item requiere concepto_id y cantidad_periodo mayor a 0.'));
+        return;
+      }
+      if (vistos.has(it.concepto_id)) {
+        res.status(400).json(createApiError('CO_CONCEPTO_DUPLICADO', 'Un concepto no puede repetirse dentro del mismo lote.'));
+        return;
+      }
+      vistos.add(it.concepto_id);
+    }
+
+    let catalogo: ConceptoCatalogo[];
+    try {
+      catalogo = await obtenerCatalogoGT(req.headers.authorization);
+    } catch {
+      res.status(502).json(createApiError('CO_CATALOGO_NO_DISPONIBLE', 'No se pudo validar los conceptos contra el catálogo de gerencia-tecnica. Intenta de nuevo.'));
+      return;
+    }
+    const porId = new Map(catalogo.map((c) => [c.id, c]));
+    const faltantes = items.filter((it: any) => !porId.has(it.concepto_id)).map((it: any) => it.concepto_id);
+    if (faltantes.length > 0) {
+      res.status(400).json(createApiError('CO_CONCEPTO_NO_ENCONTRADO', `Concepto(s) inexistentes en el presupuesto activo: ${faltantes.join(', ')}`));
+      return;
+    }
+
+    const creados = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const estimacion = await prisma.estimacion.findFirst({
+        where: { id_estimacion: estimacion_referencia_id, tenant_id: tenantId, proyecto_id: proyectoId },
+      });
+      if (!estimacion) throw new LoteAvancesError(404, 'CO_NOT_FOUND', 'Estimación de referencia no encontrada.');
+
+      const resultado = [];
+      for (const it of items) {
+        const c = porId.get(it.concepto_id)!;
+        const cantPeriodo = Number(it.cantidad_periodo);
+        const previos = await prisma.avanceFisico.findMany({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: c.id, estado: { not: EstadoAvance.RECHAZADO } },
+          select: { cantidad_periodo: true },
+        });
+        const cantAnterior = previos.reduce((sum, a) => sum + Number(a.cantidad_periodo), 0);
+        const cantAcumulada = cantAnterior + cantPeriodo;
+        const porcentaje = c.cantidad > 0 ? (cantAcumulada / c.cantidad) * 100 : 0;
+        resultado.push(await prisma.avanceFisico.create({
+          data: {
+            tenant_id: tenantId,
+            proyecto_id: proyectoId,
+            concepto_id: c.id,
+            concepto_presupuesto: c.clave,
+            descripcion_concepto: c.descripcion,
+            cantidad_presupuestada: c.cantidad,
+            cantidad_anterior: cantAnterior,
+            cantidad_periodo: cantPeriodo,
+            cantidad_acumulada: cantAcumulada,
+            unidad: c.unidad_medida,
+            precio_unitario: c.precio_unitario,
+            importe_periodo: cantPeriodo * c.precio_unitario,
+            importe_acumulado: cantAcumulada * c.precio_unitario,
+            porcentaje_avance: Math.min(porcentaje, 100),
+            periodo_inicio: estimacion.periodo_inicio,
+            periodo_fin: estimacion.periodo_fin,
+            registrado_por_id: userId,
+            registrado_por_nombre: userName || 'Residente',
+            estado: EstadoAvance.PENDIENTE,
+            estimacion_referencia_id: estimacion.id_estimacion,
+          },
+        }));
+      }
+      return resultado;
+    });
+
+    for (const data of creados) {
+      await eventBus.publish({
+        event_type: ControlObraEvents.AVANCE_FISICO_REGISTRADO,
+        timestamp: new Date().toISOString(),
+        context: buildEventContext(req),
+        payload: { avance_id: data.id_avance, concepto: data.concepto_presupuesto, porcentaje: Number(data.porcentaje_avance).toFixed(1), importe: Number(data.importe_periodo) },
+      });
+    }
+
+    res.status(201).json(createApiResponse(creados, tenantId, proyectoId));
+  } catch (error: any) {
+    if (error instanceof LoteAvancesError) {
+      res.status(error.status).json(createApiError(error.code, error.message));
+      return;
+    }
+    res.status(500).json(createApiError('CO_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Una fila por concepto (avances no RECHAZADO) con desglose por
+// estimación de referencia/periodo — evita repetir el concepto en la vista.
+controlObraRouter.get('/avances/resumen-por-concepto', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+      const avances = await prisma.avanceFisico.findMany({
+        where: { estado: { not: EstadoAvance.RECHAZADO } },
+        orderBy: [{ periodo_inicio: 'asc' }, { created_at: 'asc' }],
+      });
+      const refIds = Array.from(new Set(avances.map((a) => a.estimacion_referencia_id).filter((v): v is string => !!v)));
+      const estimaciones = refIds.length
+        ? await prisma.estimacion.findMany({ where: { id_estimacion: { in: refIds } }, select: { id_estimacion: true, codigo: true } })
+        : [];
+      const codigoPorId = new Map(estimaciones.map((e) => [e.id_estimacion, e.codigo]));
+
+      const filas = new Map<string, any>();
+      for (const a of avances) {
+        const key = a.concepto_id ?? `clave:${a.concepto_presupuesto}`;
+        let fila = filas.get(key);
+        if (!fila) {
+          fila = {
+            concepto_id: a.concepto_id,
+            concepto_presupuesto: a.concepto_presupuesto,
+            descripcion_concepto: a.descripcion_concepto,
+            unidad: a.unidad,
+            cantidad_presupuestada: 0,
+            cantidad_acumulada: 0,
+            importe_acumulado: 0,
+            porcentaje_avance: 0,
+            desglose: [],
+          };
+          filas.set(key, fila);
+        }
+        // El avance más reciente (orden asc) fija lo presupuestado vigente.
+        fila.cantidad_presupuestada = Number(a.cantidad_presupuestada);
+        fila.cantidad_acumulada += Number(a.cantidad_periodo);
+        fila.importe_acumulado += Number(a.importe_periodo);
+        fila.desglose.push({
+          id_avance: a.id_avance,
+          estimacion_referencia_id: a.estimacion_referencia_id,
+          estimacion_codigo: a.estimacion_referencia_id ? codigoPorId.get(a.estimacion_referencia_id) ?? null : null,
+          periodo_inicio: a.periodo_inicio,
+          periodo_fin: a.periodo_fin,
+          cantidad_periodo: Number(a.cantidad_periodo),
+          importe_periodo: Number(a.importe_periodo),
+          estado: a.estado,
+        });
+      }
+      return Array.from(filas.values()).map((f) => ({
+        ...f,
+        porcentaje_avance: f.cantidad_presupuestada > 0 ? Math.min((f.cantidad_acumulada / f.cantidad_presupuestada) * 100, 100) : 0,
+      }));
+    });
+
+    res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('CO_INTERNAL_ERROR', error.message));
+  }
+});
+
 controlObraRouter.patch('/avances/:id/validar', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -1177,6 +1367,38 @@ controlObraRouter.get('/estimaciones', async (req: Request, res: Response) => {
       });
     });
     res.json(createApiResponse(data, tenantId, proyectoId));
+  } catch (error: any) {
+    res.status(500).json(createApiError('CO_INTERNAL_ERROR', error.message));
+  }
+});
+
+// Totales del proyecto (design.md Decisión 4). Declarada antes de
+// '/estimaciones/:id' para que "totales" no se interprete como un id.
+controlObraRouter.get('/estimaciones/totales', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, proyectoId, userId } = req.securityContext;
+
+    const ests = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+      prisma.estimacion.findMany({ select: { estado: true, subtotal: true } })
+    );
+    const estimado = ests.filter((e) => e.estado !== 'RECHAZADA').reduce((s, e) => s + Number(e.subtotal), 0);
+    const cobrado = ests.filter((e) => e.estado === 'FACTURADA').reduce((s, e) => s + Number(e.subtotal), 0);
+
+    let contratado: number | null = null;
+    try {
+      const catalogo = await obtenerCatalogoGT(req.headers.authorization);
+      contratado = catalogo.reduce((s, c) => s + c.cantidad * c.precio_unitario, 0);
+    } catch {
+      contratado = null;
+    }
+
+    res.json(createApiResponse({
+      contratado,
+      estimado,
+      cobrado,
+      restante: contratado === null ? null : contratado - cobrado,
+      parcial: contratado === null,
+    }, tenantId, proyectoId));
   } catch (error: any) {
     res.status(500).json(createApiError('CO_INTERNAL_ERROR', error.message));
   }
