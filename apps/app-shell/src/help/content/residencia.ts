@@ -40,6 +40,16 @@ export const residencia: ModuleHelp = {
             'Usa "Crear Estimación" para agruparlos en una nueva estimación.',
           ],
         },
+        {
+          tipo: 'pasos',
+          titulo: 'Registrar avances por estimación',
+          items: [
+            'Usa "Registrar por Estimación" y elige la estimación de referencia; el periodo se toma de ella.',
+            'Las cantidades de cada concepto vienen prellenadas con lo estimado; ajústalas a lo que mediste en campo.',
+            'Guarda: se crea un avance PENDIENTE por concepto, que sigue el flujo normal de validación.',
+          ],
+        },
+        { tipo: 'aviso', nivel: 'info', titulo: 'Totales y avances por concepto', texto: 'Las tarjetas superiores muestran contratado, estimado, cobrado (estimaciones FACTURADA) y restante por cobrar. La tabla agrupa los avances por concepto; expande la fila para ver el detalle por periodo y estimación.' },
         { tipo: 'aviso', nivel: 'info', titulo: 'Solo avances VALIDADO', texto: 'Un avance en PENDIENTE o RECHAZADO no puede incluirse en una estimación — si nadie valida el avance, el residente queda bloqueado para facturar esa parte del trabajo.' },
       ],
     },

@@ -298,6 +298,7 @@ export const asistenteApi = {
 export const ventasApi = {
   getClientes:     ()         => api.get('/api/v1/ventas/clientes'),
   createCliente:   (data: unknown) => api.post('/api/v1/ventas/clientes', data),
+  updateCliente:   (id: string, data: unknown) => api.put(`/api/v1/ventas/clientes/${id}`, data),
   importarClientesLote: (registros: unknown[]) => api.post('/api/v1/ventas/clientes/importar-lote', { registros }),
   getCotizaciones: ()         => api.get('/api/v1/ventas/cotizaciones'),
   createCotizacion:(data: unknown) => api.post('/api/v1/ventas/cotizaciones', data),
