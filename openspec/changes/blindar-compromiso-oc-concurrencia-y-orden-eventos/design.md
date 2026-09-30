@@ -140,3 +140,33 @@ Si el compromiso o la liberación ya existían, el handler NO republica un event
 - Sin A, la carrera vuelve con el primer camino nuevo; sin B, el orden creación/cancelación sigue indefinido.
 - Endurecer Finanzas antes de #182 no cambia la contabilidad: la aprobación contable sigue siendo un bloqueo independiente.
 - El change no elimina el riesgo, ya existente, de un `oc_cancelada` procesado sin compromiso previo; lo cierra (invariante de liberación) pero cambia su comportamiento: hoy devuelve `monto_liberado: 0` sin publicar; después registrará el tombstone.
+
+## Evidencia de despliegue (2026-09-30)
+
+| Hecho | Evidencia |
+|---|---|
+| #185 (Finanzas) fusionado | merge `8da1afe` (11:09 -0600) |
+| Primer intento del deploy fallido | run `36749362201`, intento 1: falló en `Configurar llave SSH` (`ssh-keyscan`, exit 1) antes de cualquier acción en producción; `Smoke Test Playwright` `skipped` |
+| Reintento | mismo run, intento 2: `Build + Deploy backend` y smoke en `success` (smoke: 2 passed) |
+| Migración | `20260930120000_blindar_compromiso_oc` aplicada; índice único parcial, CHECK, tombstone y RLS verificados |
+| #186 (Compras) fusionado | merge `e823fa0` (11:58 -0600) |
+| Deploy de #186 | run `36755222127` (`push`, sha `e823fa0`), `success`: detección de servicios, build + deploy backend y smoke |
+| Estado posterior | Compras y Finanzas healthy; dispatcher del outbox de Compras activo (`COMPRAS_OUTBOX_DISPATCHER=on`), `/ready` en `ok`; 10 colas de Finanzas y RabbitMQ vacías |
+| Datos | sin órdenes de compra, movimientos, tombstones ni filas pendientes del outbox; no se crearon datos de prueba |
+| Respaldos | conservados (incluido `pre-pr185`) |
+
+### Smoke del run `36755222127`: análisis
+
+Comando: `npm run test:smoke` → `playwright test --config=playwright.smoke.config.ts` (`testMatch: **/*.smoke.spec.ts`), ejecutado por `smoke-test-playwright.yml`, reutilizado como job final por `deploy-vps-backend.yml` y `deploy-vps.yml`. Salida: `Running 2 tests using 1 worker`; `✓ 1 login y dashboard cargan sin errores tras el deploy`; `✓ 2 sin proyecto activo, los módulos project-scoped quedan bloqueados sin consultar datos`; `2 passed (5.2s)`.
+
+Comparación (mismo workflow reutilizable, mismo comando, mismo spec):
+
+| Deploy | Run | Pruebas ejecutadas |
+|---|---|---|
+| #177 (frontend) | `36642004793` | 2 passed |
+| #169 (backend) | `36645918565` | 2 passed |
+| #185 (backend, reintento) | `36749362201` | 2 passed |
+| #186 (backend) | `36755222127` | 2 passed |
+
+Conclusión: **no se omitió ningún smoke**. El único job visible se llama «Login + dashboard (Playwright)» (nombre del job en `smoke-test-playwright.yml`), pero ejecuta las dos pruebas del spec, incluida `sin proyecto activo`. Clasificación: **reporte incompleto** (nombre de job que describe solo la primera prueba); descartados filtro accidental, prueba no descubierta, regresión de configuración y diferencia backend/frontend (ambos invocan el mismo workflow). Mejora opcional y separada (fuera de este change): renombrar el job a algo como «Smoke post-deploy (Playwright)».
+

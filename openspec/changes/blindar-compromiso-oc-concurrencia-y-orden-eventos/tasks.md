@@ -39,6 +39,30 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 prueb
 
 ## 4. Cierre
 
-- [x] 4.1 Suite completa en verde en CI para el primer PR (Finanzas): `backend-e2e` y Cobertura RLS en verde en #185 (concurrencia 14/14 y RLS 7/7 ejecutadas en el job; el `MIGRACION_ABORTADA` que aparece en el log de Postgres es el escenario deliberado de duplicados de la prueba 11). Falta el segundo PR (Compras).
-- [ ] 4.2 Confirmar que #182 puede reanudarse (junto con la aprobación contable).
+- [x] 4.1 Suite en verde en CI para los dos PRs: `backend-e2e` y Cobertura RLS en verde en #185 (run `36741105094`; concurrencia, RLS y migración ejecutadas en el job; el `MIGRACION_ABORTADA` del log de Postgres es el escenario deliberado de duplicados de la prueba 11) y en #186 (run `36754658940`; incluye las suites de #185 y las 18 pruebas de Compras). Los despliegues posteriores a cada fusión terminaron en `success`.
+- [ ] 4.2 Confirmar que #182 puede reanudarse (junto con la aprobación contable). **Parte técnica cumplida** (secciones 2, 3 y 5): el prerrequisito técnico de #182 está desplegado y verificado. **Sigue abierta por el bloqueo contable (B1/#182), ajeno a este change**; no se cierra aquí.
 - [ ] 4.3 Archivar el change.
+
+## 5. Despliegue y verificación (evidencia, 2026-09-30)
+
+Detalle en `design.md`, sección «Evidencia de despliegue».
+
+- [x] 5.1 #185 (Finanzas) fusionado: merge `8da1afe`. Primer intento del run `36749362201` falló en el paso `Configurar llave SSH` (`ssh-keyscan`) antes de tocar producción (el job de smoke quedó `skipped`); el reintento del mismo run (intento 2) terminó en `success`.
+- [x] 5.2 Migración `20260930120000_blindar_compromiso_oc` aplicada en producción; verificados índice único parcial, CHECK `chk_movimiento_oc_referencia_id`, tabla tombstone y RLS.
+- [x] 5.3 #186 (Compras) fusionado: merge `e823fa0`; deploy `36755222127` en `success`, con smoke de Playwright de 2 pruebas (2 passed).
+- [x] 5.4 Verificación posterior: Compras y Finanzas healthy; `COMPRAS_OUTBOX_DISPATCHER=on` y `/ready` en `ok`; las 10 colas de Finanzas y RabbitMQ sin mensajes pendientes; sin órdenes de compra, movimientos, tombstones ni filas pendientes del outbox; respaldos conservados.
+- [x] 5.5 Aclaración del smoke del run `36755222127`: no hubo brecha; el job se llama «Login + dashboard» pero ejecuta los 2 tests del spec (ver `design.md`).
+
+## 6. Prueba productiva con movimientos reales: NO realizada (sustituida)
+
+No se ejecutó ninguna prueba productiva con movimientos reales. Por decisión de no crear datos productivos, el comportamiento bajo concurrencia y desorden de eventos queda demostrado por las suites con **PostgreSQL real en CI** (secciones 2 y 4.1) y por las verificaciones de solo lectura en producción (sección 5); no por un ciclo real de OC en producción. Esta sustitución es deliberada y no equivale a una prueba productiva.
+
+## 7. Matriz de cierre
+
+| Estado | Tareas |
+|---|---|
+| Terminadas | 1.1, 1.2, 1.3 (VPS; QNAP y `docker-compose.prod.yml` históricos, con preflight obligatorio si se reactivan), 2.1–2.20, 3.1–3.4, 4.1, 5.1–5.5 |
+| Pendientes (propias) | 4.3 archivar (depende de 4.2) |
+| Pendientes por bloqueo ajeno | 4.2: reanudar #182, bloqueado por la aprobación contable de B1/#182, no por este change |
+| Sustituida formalmente | Prueba productiva con movimientos reales → PostgreSQL real en CI (sección 6) |
+| Transferidas a otro change | Republicación de `fondos_comprometidos` perdido: change de confiabilidad de publicadores (outbox), aún no creado, que debe cubrir `fondos_comprometidos` (riesgo registrado en `design.md`); rutas HTTP de cancelación, recepción y reconciliación de Compras con lectura previa + actualización (no tocadas); `presupuesto_insuficiente` no aplicado queda solo en el log (`…no_op_estado`) |
