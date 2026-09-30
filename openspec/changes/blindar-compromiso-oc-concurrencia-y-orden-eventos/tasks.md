@@ -40,7 +40,7 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 prueb
 ## 4. Cierre
 
 - [x] 4.1 Suite en verde en CI para los dos PRs: `backend-e2e` y Cobertura RLS en verde en #185 (run `36741105094`; concurrencia, RLS y migración ejecutadas en el job; el `MIGRACION_ABORTADA` del log de Postgres es el escenario deliberado de duplicados de la prueba 11) y en #186 (run `36754658940`; incluye las suites de #185 y las 18 pruebas de Compras). Los despliegues posteriores a cada fusión terminaron en `success`.
-- [ ] 4.2 Confirmar que #182 puede reanudarse (junto con la aprobación contable). **Parte técnica cumplida** (secciones 2, 3 y 5): el prerrequisito técnico de #182 está desplegado y verificado. **Sigue abierta por el bloqueo contable (B1/#182), ajeno a este change**; no se cierra aquí.
+- [x] 4.2 **Handoff a #182** (no la ejecución de #182). El prerrequisito técnico queda entregado y verificado; la reanudación y el despliegue de #182 pertenecen al alcance de su propio change. Evidencia: #185 (`8da1afe`) y #186 (`e823fa0`) fusionados y desplegados (sección 5); #182 continúa en draft; el bloqueo contable está documentado en el memorando fusionado por #183 (`memo-decision-b1-contabilidad.md`) y el formulario contable versionado (`formulario-decision-contable.md`), ambos en `auditar-consumidores-eventbus-sin-perdida-silenciosa`. Este change no resuelve ni marca como resuelta ninguna decisión contable.
 - [ ] 4.3 Archivar el change.
 
 ## 5. Despliegue y verificación (evidencia, 2026-09-30)
@@ -61,8 +61,8 @@ No se ejecutó ninguna prueba productiva con movimientos reales. Por decisión d
 
 | Estado | Tareas |
 |---|---|
-| Terminadas | 1.1, 1.2, 1.3 (VPS; QNAP y `docker-compose.prod.yml` históricos, con preflight obligatorio si se reactivan), 2.1–2.20, 3.1–3.4, 4.1, 5.1–5.5 |
-| Pendientes (propias) | 4.3 archivar (depende de 4.2) |
-| Pendientes por bloqueo ajeno | 4.2: reanudar #182, bloqueado por la aprobación contable de B1/#182, no por este change |
+| Terminadas | 1.1, 1.2, 1.3 (VPS; QNAP y `docker-compose.prod.yml` históricos, con preflight obligatorio si se reactivan), 2.1–2.20, 3.1–3.4, 4.1, 4.2 (handoff), 5.1–5.5 |
+| Pendientes (propias) | 4.3 archivar (corresponde al PR de archivo) |
+| Bloqueo ajeno (no de este change) | La aprobación contable de B1/#182 y la reanudación/despliegue de #182, que pertenecen a su propio change |
 | Sustituida formalmente | Prueba productiva con movimientos reales → PostgreSQL real en CI (sección 6) |
-| Transferidas a otro change | Republicación de `fondos_comprometidos` perdido: change de confiabilidad de publicadores (outbox), aún no creado, que debe cubrir `fondos_comprometidos` (riesgo registrado en `design.md`); rutas HTTP de cancelación, recepción y reconciliación de Compras con lectura previa + actualización (no tocadas); `presupuesto_insuficiente` no aplicado queda solo en el log (`…no_op_estado`) |
+| Transferidas a otro change | Todas al change `auditar-consumidores-eventbus-sin-perdida-silenciosa` (`tasks.md` 4.1): (a) republicar un `fondos_comprometidos` perdido → change separado de confiabilidad de publicadores (outbox y confirmación), aún sin crear ni responsable, que debe cubrir `fondos_comprometidos`; (b) `compras.oc_creada` con `presupuesto_id` y su consumo en Finanzas/Contabilidad → lote B2 (#182) y lotes L2/L3; (c) las rutas HTTP de cancelación, recepción y reconciliación de Compras (lectura previa + actualización, no tocadas) → lote L1 Compras; (d) `presupuesto_insuficiente` no aplicado solo en el log (`…no_op_estado`) → lote L1 Compras |
