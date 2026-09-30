@@ -60,4 +60,4 @@
 
 - [ ] 7.1 Verificar las garantías del outbox en producción (en las pruebas ya se cumplen): atomicidad, reintento, marcado solo tras confirmación del broker y recuperación tras reinicios. Sin ellas el change no se considera completo. Pendiente de 6.5 (requiere observar una recepción real).
 - [ ] 7.2 Sincronizar la spec canónica `almacen-eventos-oc` (aún en formato anterior a la migración) con los deltas y archivar el change.
-- [ ] 7.3 Los demás consumidores del bus se tratan en el change `auditar-consumidores-eventbus-sin-perdida-silenciosa` (existe en `openspec/changes/`, 0 de 10 tareas completadas; sin iniciar). Se deja abierta hasta que ese change asuma y ejecute la auditoría.
+- [x] 7.3 Los demás consumidores del bus se tratan en el change `auditar-consumidores-eventbus-sin-perdida-silenciosa`. **Transferida** (2026-09-30): ese change quedó fusionado en #180 con validación estricta, sus tareas 1.1 a 1.3 están cerradas con evidencia (`audit-2026-09-29.md`) y los lotes B1, B2 y L1–L6 con su responsable figuran en su tarea 4.1. Su ejecución ya no bloquea este change.
