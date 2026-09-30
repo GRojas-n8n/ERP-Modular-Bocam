@@ -248,9 +248,35 @@ exports.Prisma.DetallePagoOCScalarFieldEnum = {
   concepto_clave: 'concepto_clave'
 };
 
+exports.Prisma.OutboxEventoScalarFieldEnum = {
+  id_evento: 'id_evento',
+  orden_global: 'orden_global',
+  event_id: 'event_id',
+  event_type: 'event_type',
+  event_version: 'event_version',
+  tenant_id: 'tenant_id',
+  proyecto_id: 'proyecto_id',
+  aggregate_type: 'aggregate_type',
+  aggregate_id: 'aggregate_id',
+  aggregate_seq: 'aggregate_seq',
+  usuario_id: 'usuario_id',
+  correlation_id: 'correlation_id',
+  payload: 'payload',
+  estado: 'estado',
+  intentos: 'intentos',
+  proximo_intento_en: 'proximo_intento_en',
+  ultimo_error: 'ultimo_error',
+  created_at: 'created_at',
+  publicado_en: 'publicado_en'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -263,6 +289,12 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
   PresupuestoAsignado: 'PresupuestoAsignado',
@@ -272,7 +304,8 @@ exports.Prisma.ModelName = {
   CuentaBancaria: 'CuentaBancaria',
   ProyectoFinanzas: 'ProyectoFinanzas',
   PagoOC: 'PagoOC',
-  DetallePagoOC: 'DetallePagoOC'
+  DetallePagoOC: 'DetallePagoOC',
+  OutboxEvento: 'OutboxEvento'
 };
 
 /**

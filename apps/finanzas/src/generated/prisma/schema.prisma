@@ -241,3 +241,36 @@ model DetallePagoOC {
   @@index([concepto_id])
   @@map("detalles_pago_oc")
 }
+
+// ─── Outbox transaccional de eventos (lote P1) ──────────────────────────────
+// Ver openspec/changes/hacer-confiables-publicadores-eventbus-criticos. Solo se escribe con FINANZAS_EVENT_MODE=outbox.
+// Además (no expresable en Prisma): CHECK de estado, RLS con despachador interno y las restricciones únicas de la
+// migración 20260930180000_outbox_eventos_finanzas. La aplicación accede por SQL en src/outbox-eventos.ts y
+// src/outbox-dispatcher.ts, no con este modelo.
+model OutboxEvento {
+  id_evento          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orden_global       BigInt    @default(autoincrement())
+  event_id           String    @db.Uuid
+  event_type         String    @db.VarChar(100)
+  event_version      Int       @default(1)
+  tenant_id          String    @db.Uuid
+  proyecto_id        String    @db.Uuid
+  aggregate_type     String    @db.VarChar(50)
+  aggregate_id       String    @db.Uuid
+  aggregate_seq      Int
+  usuario_id         String?   @db.Uuid
+  correlation_id     String?   @db.VarChar(100)
+  payload            Json
+  estado             String    @default("PENDIENTE") @db.VarChar(20)
+  intentos           Int       @default(0)
+  proximo_intento_en DateTime  @default(now()) @db.Timestamptz(3)
+  ultimo_error       String?
+  created_at         DateTime  @default(now()) @db.Timestamptz(3)
+  publicado_en       DateTime? @db.Timestamptz(3)
+
+  @@unique([tenant_id, event_id], map: "uq_outbox_finanzas_event")
+  @@unique([tenant_id, aggregate_type, aggregate_id, aggregate_seq], map: "uq_outbox_finanzas_agregado_seq")
+  @@unique([orden_global], map: "uq_outbox_finanzas_orden_global")
+  @@index([estado, proximo_intento_en], map: "idx_outbox_finanzas_estado_proximo")
+  @@map("outbox_eventos")
+}

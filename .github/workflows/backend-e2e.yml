@@ -105,6 +105,7 @@ jobs:
       - name: Aplicar SQL de migraciones de Finanzas
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930120000_blindar_compromiso_oc/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930180000_outbox_eventos_finanzas/migration.sql
 
       # ── Seed del catálogo de cuentas contables ────────────────────────────────
       # Sin esto, resolveCuentaId (apps/contabilidad/src/mapper.ts) nunca
@@ -183,6 +184,13 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-concurrencia -w @bocam/finanzas
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-rls -w @bocam/finanzas
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-migracion -w @bocam/finanzas
+
+      # ── Finanzas: outbox transaccional de eventos (lote P1, modo direct por defecto; PostgreSQL y RabbitMQ reales) ──
+      - name: Run Finanzas outbox de eventos (flujo, RLS, /ready y migración)
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos-rls-ready -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos-migracion -w @bocam/finanzas
 
       - name: Run event contract hardening suite
         run: npm run test:integration:event-contracts
