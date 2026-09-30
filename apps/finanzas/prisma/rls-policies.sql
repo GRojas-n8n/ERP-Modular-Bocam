@@ -303,6 +303,29 @@ CREATE POLICY rls_detalles_pago_oc_insert ON "detalles_pago_oc"
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 9b. TOMBSTONE DE CANCELACIÓN DE OC (openspec: blindar-compromiso-oc-concurrencia-y-orden-eventos)
+-- Registra la cancelación de una OC cuya creación aún no se procesó. Patrón Estricto (tenant + proyecto),
+-- igual que movimientos_presupuestales. Sin políticas de UPDATE/DELETE: bajo FORCE RLS es inmutable.
+-- La tabla la crea la migración 20260930120000_blindar_compromiso_oc (que ya incluye este mismo RLS).
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "oc_cancelaciones_tombstone" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "oc_cancelaciones_tombstone" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_oc_tombstone_select ON "oc_cancelaciones_tombstone";
+CREATE POLICY rls_oc_tombstone_select ON "oc_cancelaciones_tombstone"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_oc_tombstone_insert ON "oc_cancelaciones_tombstone";
+CREATE POLICY rls_oc_tombstone_insert ON "oc_cancelaciones_tombstone"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 10. COMENTARIOS DE AUDITORÍA
 -- ─────────────────────────────────────────────────────────────────────────────
 COMMENT ON POLICY rls_presupuestos_select ON "presupuestos_asignados" IS 'Aisla presupuestos por constructora y centro de costos';

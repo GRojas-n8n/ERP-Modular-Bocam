@@ -98,6 +98,14 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"      npx prisma db push --schema apps/contabilidad/prisma/schema.prisma      --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen"           npx prisma db push --schema apps/almacen/prisma/schema.prisma           --skip-generate --accept-data-loss
 
+      # ── SQL crudo de migraciones (no expresable en schema.prisma) ─────────────
+      # db push no crea el índice único parcial ni el RLS del tombstone de Finanzas
+      # (openspec: blindar-compromiso-oc-concurrencia-y-orden-eventos). En producción los
+      # aplica `prisma migrate deploy`; aquí se aplican tras db push. Es idempotente.
+      - name: Aplicar SQL de migraciones de Finanzas
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930120000_blindar_compromiso_oc/migration.sql
+
       # ── Seed del catálogo de cuentas contables ────────────────────────────────
       # Sin esto, resolveCuentaId (apps/contabilidad/src/mapper.ts) nunca
       # encuentra ninguna clave y todas las líneas de póliza se omiten por el
@@ -167,6 +175,12 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-lote  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-archivo -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-transferencia -w @bocam/contabilidad
+
+      # ── Finanzas: compromiso/liberación de OC (concurrencia real, orden de eventos y RLS) ──
+      - name: Run Finanzas compromiso OC (concurrencia y RLS)
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-concurrencia -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-rls -w @bocam/finanzas
 
       - name: Run event contract hardening suite
         run: npm run test:integration:event-contracts

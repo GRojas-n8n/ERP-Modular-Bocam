@@ -92,6 +92,25 @@ model MovimientoPresupuestal {
   @@index([tenant_id, presupuesto_id])
   @@index([referencia_id])
   @@map("movimientos_presupuestales")
+  // Además (no expresable en Prisma): índice único PARCIAL "uq_movimiento_oc_compromiso_liberacion" sobre
+  // (tenant_id, referencia_modulo, referencia_entidad, referencia_id, tipo) para COMPROMISO/LIBERACION de
+  // compras/OrdenCompra. Se crea en la migración 20260930120000_blindar_compromiso_oc.
+}
+
+// ─── Tombstone de cancelación de OC ─────────────────────────────────────────
+// Registra la cancelación de una OC cuya creación aún no se procesó (eventos fuera de orden), para que una
+// creación tardía no comprometa fondos. Única por (tenant, OC); inmutable y sin TTL. RLS forzado (ver migración).
+model OcCancelacionTombstone {
+  tenant_id   String   @db.Uuid
+  oc_id       String   @db.Uuid
+  proyecto_id String   @db.Uuid
+  oc_codigo   String?  @db.VarChar(50)
+  origen      String   @db.VarChar(30)
+  usuario_id  String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  @@id([tenant_id, oc_id])
+  @@map("oc_cancelaciones_tombstone")
 }
 
 // ─── Transaccional: Programa de Pagos ───────────────────────────────────────

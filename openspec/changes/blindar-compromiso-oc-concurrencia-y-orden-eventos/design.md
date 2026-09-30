@@ -50,6 +50,16 @@ Hechos verificados en el repositorio y en producción (solo lectura):
 3. **E** registra la cancelación cuya creación aún no llegó (tombstone) para que una creación posterior sea un no-op definido y una liberación sin compromiso no consuma el compromiso de otra OC. Se implementa como tabla mínima `(tenant_id, oc_id)` con PK, no como una fila ficticia en `movimientos_presupuestales`, para no contaminar los totales.
 4. Se descarta **C** por el costo de reintentos y contención, y **D** como sobredimensionada mientras A+B+E cubran los invariantes; se reevalúa si aparecen más estados.
 
+**Decisión aprobada por el titular (2026-09-30):** índice único parcial para `COMPROMISO` y `LIBERACION`; inserción atómica; advisory transaction lock por tenant + OC; tombstone para cancelación anterior a creación; **sin** `SERIALIZABLE`; **sin** llamadas HTTP mientras se mantiene el lock (el llamador publica eventos después del commit); **sin** eliminación automática de tombstones en este change.
+
+Concreciones de la implementación (primer PR, Finanzas):
+
+- Alcance del índice: además de los tipos `COMPROMISO`/`LIBERACION`, se limita a `referencia_modulo='compras'` y `referencia_entidad='OrdenCompra'`, porque el endpoint genérico de movimientos y la nómina (`personal`/`PreNomina`) usan `COMPROMISO` con otras referencias y no comparten esta regla.
+- El saldo del presupuesto se actualiza con un `UPDATE` condicional atómico (`monto_disponible >= monto`) y, si no alcanza, la transacción se aborta (el movimiento insertado no persiste). Esto además evita el sobrecompromiso entre OC distintas que concurren sobre el mismo presupuesto (observado en las pruebas previas a la implementación: 2000 comprometidos sobre un presupuesto de 1000).
+- La liberación usa el monto y el presupuesto del `COMPROMISO` exacto de esa OC, no los del payload.
+- `POST comprometer-fondos` responde `409` si la OC ya fue cancelada; `POST liberar-fondos` sobre una OC sin compromiso responde `201` con `monto_liberado: 0` y registra el tombstone (antes respondía `500`).
+- `db push` (CI) no crea el índice parcial: el workflow aplica el SQL de la migración después de `db push`. En producción lo aplica `prisma migrate deploy`.
+
 Riesgos de la recomendación:
 
 - La migración del índice único falla si existen duplicados: por eso la auditoría previa es obligatoria y aborta la migración sin modificar datos (ver decisión 5). En el despliegue el fallo detiene `prisma migrate deploy`.
