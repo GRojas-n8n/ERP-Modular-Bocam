@@ -6,7 +6,7 @@
 
 ## 2. Pruebas obligatorias (PostgreSQL real, sin simular el motor; una por escenario)
 
-Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 pruebas), `compromiso-oc-rls.integration.test.ts` (7) y `compromiso-oc-migracion.integration.test.ts` (7). Antes de implementar, la suite (12 pruebas en ese momento, sin la migración) falló 11 de 12 con el código previo: duplicados reales de `COMPROMISO` y `LIBERACION`, sobrecompromiso y falta de tombstone; con la implementación pasa 16/16.
+Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 pruebas), `compromiso-oc-rls.integration.test.ts` (7) y `compromiso-oc-migracion.integration.test.ts` (8). Antes de implementar, la suite (12 pruebas en ese momento, sin la migración) falló 11 de 12 con el código previo: duplicados reales de `COMPROMISO` y `LIBERACION`, sobrecompromiso y falta de tombstone; con la implementación pasa 16/16.
 
 - [x] 2.1 HTTP `comprometer-fondos` y evento `oc_creada` concurrentes sobre la misma OC → un solo `COMPROMISO`, un solo incremento de `monto_comprometido` (pruebas 1 y 3).
 - [x] 2.2 `partida_comprometida` y `oc_creada` concurrentes → un solo `COMPROMISO` (prueba 2).
@@ -24,7 +24,7 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 prueb
 - [x] 2.14 El índice único rechaza el segundo `COMPROMISO`/`LIBERACION` aun sin lock, y no afecta a otros tipos ni entidades (prueba 10d).
 - [x] 2.15 RLS: el flujo funciona con un rol sin `BYPASSRLS` y tablas con `FORCE RLS`; los tenants y proyectos se aíslan; el tombstone es inmutable; la unicidad incluye `tenant_id` (`compromiso-oc-rls`).
 - [x] 2.16 Mutaciones (suite actual de 16 + 7): sin el índice fallan 12 de 16; sin el advisory lock falla la 10c; sin el tombstone fallan 5, 6 y 8; sin validación de UUID falla la 10e; sin el CHECK falla la 10f; sin `BEGIN`/`COMMIT` falla la prueba estática de transacción explícita.
-- [x] 2.17 Migración atómica: transacción explícita, precheck antes de cualquier DDL (también rechaza movimientos de OC sin `referencia_id`), fallo inyectado posterior al precheck sin esquema parcial (esquema descartable) y control positivo idempotente (`compromiso-oc-migracion`, 7 pruebas).
+- [x] 2.17 Migración atómica: transacción explícita, precheck antes de cualquier DDL (también rechaza movimientos de OC sin `referencia_id`), fallo inyectado posterior al precheck sin esquema parcial (esquema descartable) y control positivo idempotente (`compromiso-oc-migracion`, 8 pruebas, incluida la ejecución con un rol dueño de las tablas pero no de las funciones RLS, como el rol de runtime de producción).
 - [x] 2.18 Paridad de RLS entre la migración y `rls-policies.sql`, y uso del SQL canónico en el CI (pruebas estáticas).
 - [x] 2.19 Referencias de OC inválidas se rechazan antes del INSERT (400 / `invalid_payload`) y el CHECK cierra el NULL (pruebas 10e y 10f).
 

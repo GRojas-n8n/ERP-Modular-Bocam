@@ -91,7 +91,7 @@ async function main() {
     const q = (sql: string) => admin.$queryRawUnsafe<any[]>(sql);
     return {
       indice: (await q(`SELECT 1 FROM pg_indexes WHERE schemaname = '${schema}' AND indexname = 'uq_movimiento_oc_compromiso_liberacion'`)).length,
-      tabla: (await q(`SELECT 1 FROM information_schema.tables WHERE table_schema = '${schema}' AND table_name = 'oc_cancelaciones_tombstone'`)).length,
+      tabla: (await q(`SELECT 1 FROM information_schema.tables WHERE table_schema = '${schema}' AND table_name = 'oc_cancelaciones_tombstone' AND table_type = 'BASE TABLE'`)).length,
       check: (await q(`SELECT 1 FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE n.nspname = '${schema}' AND c.conname = 'chk_movimiento_oc_referencia_id'`)).length,
       funcion: (await q(`SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = '${schema}' AND p.proname = 'current_proyecto_id'`)).length,
     };
@@ -100,12 +100,12 @@ async function main() {
   try {
     await test('atomicidad: un fallo posterior al precheck revierte índice, CHECK, tabla y funciones (sin esquema parcial)', async () => {
       const { schema, url, db } = await nuevoEsquema();
-      // Inyección: una función con el mismo nombre y otro tipo de retorno hace fallar CREATE OR REPLACE FUNCTION,
-      // que ocurre DESPUÉS del CHECK, del índice y de la tabla.
-      await db.$executeRawUnsafe(`CREATE FUNCTION current_tenant_id() RETURNS text AS $$ SELECT 'x'::text $$ LANGUAGE sql`);
+      // Inyección: una vista con el nombre del tombstone hace que CREATE TABLE IF NOT EXISTS se omita y que el posterior
+      // ALTER TABLE ... ENABLE ROW LEVEL SECURITY falle, es decir, DESPUÉS del precheck, del CHECK, del índice y de las funciones.
+      await db.$executeRawUnsafe(`CREATE VIEW oc_cancelaciones_tombstone AS SELECT 1 AS x`);
       const r = runSqlFile(MIGRATION_SQL_PATH, url);
       assert.equal(r.ok, false, 'la migración debe fallar');
-      assert.match(r.output, /return type|current_tenant_id/i, `el fallo debe venir de la función: ${r.output.slice(0, 300)}`);
+      assert.match(r.output, /oc_cancelaciones_tombstone|not supported|not a table/i, `el fallo debe venir del paso de RLS: ${r.output.slice(0, 300)}`);
       const estado = await existe(schema);
       assert.deepEqual(estado, { indice: 0, tabla: 0, check: 0, funcion: 0 }, 'no debe quedar nada de la migración');
       await db.$disconnect();
@@ -133,6 +133,28 @@ async function main() {
       assert.equal(r.ok, false);
       assert.match(r.output, /MIGRACION_ABORTADA/);
       assert.deepEqual(await existe(schema), { indice: 0, tabla: 0, check: 0, funcion: 0 });
+      await db.$disconnect();
+    });
+
+    await test('la migración se aplica con un rol dueño de las tablas pero NO de las funciones RLS (rol de runtime de producción)', async () => {
+      const rol = 'mig_runtime_test';
+      await admin.$executeRawUnsafe(`DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${rol}') THEN CREATE ROLE ${rol} LOGIN PASSWORD 'pwd_mig' NOSUPERUSER NOBYPASSRLS; END IF; END $$`);
+      const { schema, url, db } = await nuevoEsquema();
+      // Las funciones ya existen y pertenecen al administrador, como en producción (las aplica rls-policies.sql).
+      await db.$executeRawUnsafe(`CREATE FUNCTION current_tenant_id() RETURNS uuid AS $$ SELECT NULL::uuid $$ LANGUAGE sql STABLE`);
+      await db.$executeRawUnsafe(`CREATE FUNCTION current_proyecto_id() RETURNS uuid AS $$ SELECT NULL::uuid $$ LANGUAGE sql STABLE`);
+      await admin.$executeRawUnsafe(`ALTER TABLE "${schema}".movimientos_presupuestales OWNER TO ${rol}`);
+      await admin.$executeRawUnsafe(`GRANT USAGE, CREATE ON SCHEMA "${schema}" TO ${rol}`);
+      const urlRol = new URL(url);
+      urlRol.username = rol;
+      urlRol.password = 'pwd_mig';
+      const r = runSqlFile(MIGRATION_SQL_PATH, urlRol.toString());
+      assert.ok(r.ok, `la migración debe poder correr con el rol de runtime: ${r.output.slice(0, 400)}`);
+      assert.deepEqual(await existe(schema), { indice: 1, tabla: 1, check: 1, funcion: 1 });
+      const duenios = await admin.$queryRawUnsafe<any[]>(`SELECT p.proname, pg_get_userbyid(p.proowner) AS duenio FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = '${schema}' AND p.proname IN ('current_tenant_id', 'current_proyecto_id')`);
+      assert.ok(duenios.every((d) => d.duenio !== rol), 'las funciones no se recrearon: siguen siendo del administrador');
+      const tabla = await admin.$queryRawUnsafe<any[]>(`SELECT tableowner FROM pg_tables WHERE schemaname = '${schema}' AND tablename = 'oc_cancelaciones_tombstone'`);
+      assert.equal(tabla[0].tableowner, rol);
       await db.$disconnect();
     });
 

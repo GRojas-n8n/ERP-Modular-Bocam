@@ -78,22 +78,34 @@ CREATE TABLE IF NOT EXISTS "oc_cancelaciones_tombstone" (
   CONSTRAINT "oc_cancelaciones_tombstone_pkey" PRIMARY KEY ("tenant_id", "oc_id")
 );
 
--- Funciones auxiliares de RLS (definicion identica a prisma/rls-policies.sql; idempotentes).
-CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
+-- Funciones auxiliares de RLS (definicion identica a prisma/rls-policies.sql). Solo se crean si NO existen:
+-- en produccion ya existen y pertenecen al rol administrador (las aplica rls-policies.sql como superusuario), y el
+-- rol de runtime con el que corre prisma migrate deploy no es su duenio, por lo que un CREATE OR REPLACE fallaria.
+DO $$
 BEGIN
-    RETURN current_setting('app.current_tenant_id', true)::UUID;
-EXCEPTION WHEN OTHERS THEN
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-CREATE OR REPLACE FUNCTION current_proyecto_id() RETURNS UUID AS $$
-BEGIN
-    RETURN current_setting('app.current_proyecto_id', true)::UUID;
-EXCEPTION WHEN OTHERS THEN
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql STABLE;
+  IF to_regprocedure('current_tenant_id()') IS NULL THEN
+    EXECUTE $f$
+      CREATE FUNCTION current_tenant_id() RETURNS UUID AS $b$
+      BEGIN
+          RETURN current_setting('app.current_tenant_id', true)::UUID;
+      EXCEPTION WHEN OTHERS THEN
+          RETURN NULL;
+      END;
+      $b$ LANGUAGE plpgsql STABLE
+    $f$;
+  END IF;
+  IF to_regprocedure('current_proyecto_id()') IS NULL THEN
+    EXECUTE $f$
+      CREATE FUNCTION current_proyecto_id() RETURNS UUID AS $b$
+      BEGIN
+          RETURN current_setting('app.current_proyecto_id', true)::UUID;
+      EXCEPTION WHEN OTHERS THEN
+          RETURN NULL;
+      END;
+      $b$ LANGUAGE plpgsql STABLE
+    $f$;
+  END IF;
+END $$;
 
 ALTER TABLE "oc_cancelaciones_tombstone" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "oc_cancelaciones_tombstone" FORCE ROW LEVEL SECURITY;
