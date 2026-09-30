@@ -90,10 +90,12 @@ Riesgos de la recomendación:
 
 ### 3. Compras: transiciones de estado condicionadas (implementadas en el segundo PR)
 
-Las transiciones que provocan `fondos_comprometidos` y `presupuesto_insuficiente` se ejecutan como actualización condicional atómica (`updateMany ... WHERE id AND estado IN (lista blanca)`), sin lectura previa como protección. Si el conteo actualizado es cero se registra un no-op con el estado actual, sin modificarlo:
+Las transiciones que provocan los eventos de Finanzas se ejecutan como actualización condicional atómica (`updateMany ... WHERE id_orden AND tenant_id AND proyecto_id AND estado IN (lista blanca)`), sin lectura previa como protección. El evento solo puede afectar a **su misma OC, tenant y proyecto**. Si el conteo actualizado es cero se registra un no-op con el estado actual, sin modificarlo y sin efectos secundarios:
 
-- `fondos_comprometidos` → `EMITIDA`, solo desde `PENDIENTE_CONFIRMACION_FINANZAS` o `ERROR_FINANZAS`. Desde `ERROR_FINANZAS` se conserva la auto-recuperación que ya existía (Finanzas confirma un compromiso real, p. ej. tras un timeout de la llamada HTTP) y, al aplicarse, la alerta de error de la OC se marca resuelta en la misma transacción. Sobre cualquier otro estado es un no-op (nunca regresa `CANCELADA`, `CANCELACION_PENDIENTE`, `PARCIALMENTE_RECIBIDA` ni `RECIBIDA` a `EMITIDA`). *Esta decisión amplía el borrador original, que solo permitía el estado pendiente; es un cambio de una línea en `TRANSICIONES_EVENTO_FINANZAS` si el titular prefiere la versión estricta.*
-- `presupuesto_insuficiente` → `ERROR_FINANZAS`, solo desde `PENDIENTE_CONFIRMACION_FINANZAS`. Una OC `EMITIDA` (o posterior) no vuelve a `ERROR_FINANZAS` por un evento tardío. La alerta y la publicación de `compras.oc_error_finanzas` ocurren solo cuando la transición se aplicó (antes se publicaba siempre, incluso en un no-op).
+- `fondos_comprometidos` → `EMITIDA`, desde `PENDIENTE_CONFIRMACION_FINANZAS` o `ERROR_FINANZAS`, y solo si el evento representa un compromiso confirmado por Finanzas (trae `movimiento_id` y `monto_comprometido` > 0; de lo contrario se descarta como `invalid_payload`). Desde `ERROR_FINANZAS` se conserva la auto-recuperación (decisión del titular): Finanzas confirma un compromiso real, p. ej. tras un timeout de la llamada HTTP, y la alerta de error de la OC se marca resuelta en la misma transacción. Sobre cualquier otro estado es un no-op.
+- `presupuesto_insuficiente` → `ERROR_FINANZAS`, solo desde `PENDIENTE_CONFIRMACION_FINANZAS`. La alerta y la publicación de `compras.oc_error_finanzas` ocurren solo cuando la transición se aplicó (antes se publicaba siempre, incluso en un no-op).
+- `fondos_liberados` → `CANCELADA`, solo desde `CANCELACION_PENDIENTE`. Flujo real comprobado en el código: `POST ordenes-compra/:id/cancelar` fija `CANCELACION_PENDIENTE` **antes** de llamar a `liberar-fondos`; si Finanzas responde, la ruta fija `CANCELADA` y publica `oc_cancelada`; el evento `fondos_liberados` de Finanzas puede llegar antes o después de ese último paso (en ambos casos es `applied` o idempotente). `reconciliar-finanzas` reanuda una OC que quedó en `CANCELACION_PENDIENTE`. Una OC sin `presupuesto_id` se cancela sin pasar por Finanzas. Por tanto ningún camino legítimo espera que `fondos_liberados` cancele una OC en otro estado. `CANCELADA` repetida es idempotente y sin efectos.
+
 
 ### 10. Estados de la OC y matriz de transiciones (Compras)
 
@@ -103,20 +105,22 @@ Estados que Compras asigna: `PENDIENTE_CONFIRMACION_FINANZAS`, `ERROR_FINANZAS`,
 
 **Nombre canónico:** el valor almacenado es `PENDIENTE_CONFIRMACION_FINANZAS`. `PENDIENTE_FINANZAS` es únicamente el nombre del identificador en el código (`OC_STATUS.PENDIENTE_FINANZAS`); el literal `PENDIENTE_FINANZAS` no existe como valor en ninguna parte (una prueba lo verifica). No se renombró nada.
 
-Matriz (✅ permitida · ❌ prohibida · = no-op idempotente). Las dos primeras columnas las impone este PR; las demás describen el comportamiento existente de las rutas, que no se modifica aquí:
+Matriz (✅ permitida · ❌ prohibida / no-op · = no-op idempotente). Las tres primeras columnas (eventos de Finanzas) las impone este PR con pruebas; las demás describen el comportamiento existente de las rutas HTTP, que no se modifica aquí:
 
-| Estado origen | `fondos_comprometidos` → EMITIDA | `presupuesto_insuficiente` → ERROR_FINANZAS | Cancelación (ruta) | Recepción parcial (ruta) | Recepción total (ruta) | Error de Finanzas (`convertir-oc`) |
-|---|---|---|---|---|---|---|
-| `PENDIENTE_CONFIRMACION_FINANZAS` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ → ERROR_FINANZAS |
-| `ERROR_FINANZAS` | ✅ (resuelve la alerta) | = | ✅ | ❌ | ❌ | — |
-| `EMITIDA` | = | ❌ | ✅ | ✅ → PARCIALMENTE_RECIBIDA | ✅ → RECIBIDA | — |
-| `PARCIALMENTE_RECIBIDA` | ❌ | ❌ | ✅ | ✅ | ✅ → RECIBIDA | — |
-| `RECIBIDA` | ❌ | ❌ | ❌ | ❌ | ❌ | — |
-| `CANCELACION_PENDIENTE` | ❌ | ❌ | ✅ → CANCELADA (reconciliación); repetir la cancelación ❌ | ❌ | ❌ | — |
-| `CANCELADA` | ❌ | ❌ | = | ❌ | ❌ | — |
-| `BORRADOR`, `PENDIENTE`, `APROBADA` (heredados) | ❌ | ❌ | (la ruta los admite) | ❌ | ❌ | — |
+| Estado origen | `fondos_comprometidos` → EMITIDA | `presupuesto_insuficiente` → ERROR_FINANZAS | `fondos_liberados` → CANCELADA | Cancelación (ruta) | Recepción parcial (ruta) | Recepción total (ruta) | Error de Finanzas (`convertir-oc`) |
+|---|---|---|---|---|---|---|---|
+| `PENDIENTE_CONFIRMACION_FINANZAS` | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ → ERROR_FINANZAS |
+| `ERROR_FINANZAS` | ✅ (resuelve la alerta) | = | ❌ | ✅ | ❌ | ❌ | — |
+| `EMITIDA` | = | ❌ | ❌ | ✅ | ✅ → PARCIALMENTE_RECIBIDA | ✅ → RECIBIDA | — |
+| `PARCIALMENTE_RECIBIDA` | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ → RECIBIDA | — |
+| `RECIBIDA` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | — |
+| `CANCELACION_PENDIENTE` | ❌ | ❌ | ✅ | ✅ → CANCELADA (reconciliación); repetir la cancelación ❌ | ❌ | ❌ | — |
+| `CANCELADA` | ❌ | ❌ | = | = | ❌ | ❌ | — |
+| `BORRADOR`, `PENDIENTE`, `APROBADA` (heredados) | ❌ | ❌ | ❌ | (la ruta los admite) | ❌ | ❌ | — |
 
-Riesgo pendiente: el consumidor de `finanzas.fondos_liberados` (Compras) asigna `CANCELADA` a cualquier estado distinto de `CANCELADA`, sin lista blanca. Solo se publica en flujos de cancelación, pero un `fondos_liberados` tardío o duplicado sobre una OC `RECIBIDA` la cancelaría. No se toca en este PR (fuera de las pruebas acordadas); se propone como seguimiento con la misma técnica.
+Ningún evento de Finanzas modifica una OC de otro tenant o proyecto, ni de otra OC.
+
+Riesgos pendientes (rutas HTTP, fuera de este PR): cancelación, recepción y reconciliación siguen usando lectura previa seguida de actualización; la concurrencia entre recepción y liberación queda cubierta desde el lado del evento (el evento tardío no afecta a la recepción), no desde el de la ruta.
 
 ### 4. Eventos idempotentes
 

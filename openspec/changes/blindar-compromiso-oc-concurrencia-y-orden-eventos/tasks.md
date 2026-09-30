@@ -28,13 +28,13 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 prueb
 - [x] 2.18 Paridad de RLS entre la migración y `rls-policies.sql`, y uso del SQL canónico en el CI (pruebas estáticas).
 - [x] 2.19 Referencias de OC inválidas se rechazan antes del INSERT (400 / `invalid_payload`) y el CHECK cierra el NULL (pruebas 10e y 10f).
 
-- [x] 2.20 Compras (segundo PR): eventos concurrentes (`comprometidos` + `insuficiente`) sin estados divergentes; evento duplicado idempotente; transición válida desde el pendiente canónico; cancelación concurrente vs evento tardío (11 pruebas). Mutaciones: sin la condición de estado fallan 7 de 11; con lectura previa + actualización por id falla la de cancelación concurrente; sin resolver la alerta fallan 2.
+- [x] 2.20 Compras (segundo PR, 18 pruebas en `oc-transiciones-eventos-finanzas`): matriz tabla-dirigida sobre 7 estados canónicos + 3 heredados para los tres eventos; eventos concurrentes sin estados divergentes; evento duplicado idempotente; transición válida; cancelación concurrente vs evento tardío; `ERROR_FINANZAS → EMITIDA` solo con compromiso confirmado de la misma OC, tenant y proyecto; `fondos_liberados` solo desde `CANCELACION_PENDIENTE` (repetido idempotente, tardío sobre EMITIDA/ERROR_FINANZAS/PARCIALMENTE_RECIBIDA/RECIBIDA, otro tenant/proyecto, dos liberaciones concurrentes con un solo efecto aplicado, recepción concurrente con liberación tardía). Rojo previo de lo nuevo: 6 de 7 fallaban. Mutaciones: sin la condición de estado fallan 12/18; sin filtro de tenant/proyecto fallan 2; lista blanca de `fondos_liberados` ampliada a EMITIDA/ERROR_FINANZAS fallan 3; sin exigir compromiso confirmado falla 1; lectura previa + actualización por id fallan 2; sin resolver la alerta fallan 2.
 
 ## 3. Implementación (por PR y servicio)
 
 - [x] 3.1 Migración de Finanzas: comprobación de duplicados, índice único parcial, tabla de tombstone con RLS forzado (`20260930120000_blindar_compromiso_oc`, con `rollback.sql`).
 - [x] 3.2 Finanzas: inserción atómica y advisory lock por OC en los tres caminos de compromiso y los dos de liberación (`apps/finanzas/src/compromiso-oc.ts`).
-- [x] 3.3 Compras: transiciones condicionadas de `fondos_comprometidos` y `presupuesto_insuficiente` (`oc-estados.ts`, `transicionarEstadoOc`; segundo PR).
+- [x] 3.3 Compras: transiciones condicionadas de `fondos_comprometidos`, `presupuesto_insuficiente` y `fondos_liberados` (`oc-estados.ts`, `transicionarEstadoOc`; segundo PR).
 - [x] 3.4 Finanzas: eventos idempotentes sin datos falsos (`oc_creada` ya no republica `fondos_comprometidos` cuando el compromiso existía).
 
 ## 4. Cierre

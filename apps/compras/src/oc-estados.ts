@@ -37,8 +37,12 @@ export const ESTADOS_OC_TERMINALES: readonly EstadoOc[] = [OC_STATUS.CANCELADA, 
  * estado (incluidos los terminales, PARCIALMENTE_RECIBIDA, CANCELACION_PENDIENTE y los heredados) es un no-op.
  *
  *   finanzas.fondos_comprometidos     PENDIENTE_CONFIRMACION_FINANZAS | ERROR_FINANZAS  -> EMITIDA
- *       (desde ERROR_FINANZAS: Finanzas confirma un compromiso real, p. ej. tras un timeout de la llamada HTTP)
+ *       (desde ERROR_FINANZAS: Finanzas confirma un compromiso real, p. ej. tras un timeout de la llamada HTTP;
+ *        solo aplica a la MISMA OC, tenant y proyecto, y a un evento con movimiento y monto confirmados)
  *   finanzas.presupuesto_insuficiente PENDIENTE_CONFIRMACION_FINANZAS                   -> ERROR_FINANZAS
+ *   finanzas.fondos_liberados         CANCELACION_PENDIENTE                             -> CANCELADA
+ *       (el flujo real de cancelación fija CANCELACION_PENDIENTE ANTES de pedir la liberación a Finanzas; cualquier
+ *        otro estado, incluidos EMITIDA, ERROR_FINANZAS, PARCIALMENTE_RECIBIDA y RECIBIDA, es un no-op)
  */
 export const TRANSICIONES_EVENTO_FINANZAS = {
   fondos_comprometidos: {
@@ -48,6 +52,10 @@ export const TRANSICIONES_EVENTO_FINANZAS = {
   presupuesto_insuficiente: {
     destino: OC_STATUS.ERROR_FINANZAS,
     desde: [OC_STATUS.PENDIENTE_FINANZAS],
+  },
+  fondos_liberados: {
+    destino: OC_STATUS.CANCELADA,
+    desde: [OC_STATUS.CANCELACION_PENDIENTE],
   },
 } as const;
 
@@ -59,26 +67,30 @@ export type ResultadoTransicion =
 interface PrismaOcLike {
   ordenCompra: {
     updateMany(args: { where: Record<string, unknown>; data: Record<string, unknown> }): Promise<{ count: number }>;
-    findUnique(args: { where: Record<string, unknown>; select?: Record<string, unknown> }): Promise<{ estado: string } | null>;
+    findUnique(args: { where: Record<string, unknown>; select?: Record<string, unknown> }): Promise<{ estado: string; tenant_id: string; proyecto_id: string } | null>;
   };
 }
 
 /**
- * Transición de estado atómica: UPDATE ... WHERE id AND estado IN (lista blanca). La protección es la propia
+ * Transición de estado atómica: UPDATE ... WHERE id AND tenant AND proyecto AND estado IN (lista blanca). La protección es la propia
  * cláusula WHERE evaluada por la base de datos (PostgreSQL vuelve a evaluarla tras esperar el bloqueo de la fila),
  * no una lectura previa. Si no actualiza nada, se lee el estado solo para registrar el no-op; no se modifica.
  */
 export async function transicionarEstadoOc(
   prisma: PrismaOcLike,
-  p: { ocId: string; tenantId: string; destino: string; desde: readonly string[] },
+  p: { ocId: string; tenantId: string; proyectoId: string; destino: string; desde: readonly string[] },
 ): Promise<ResultadoTransicion> {
   const r = await prisma.ordenCompra.updateMany({
-    where: { id_orden: p.ocId, tenant_id: p.tenantId, estado: { in: [...p.desde] } },
+    where: { id_orden: p.ocId, tenant_id: p.tenantId, proyecto_id: p.proyectoId, estado: { in: [...p.desde] } },
     data: { estado: p.destino },
   });
   if (r.count > 0) return { resultado: 'aplicada' };
 
-  const actual = await prisma.ordenCompra.findUnique({ where: { id_orden: p.ocId }, select: { estado: true } });
-  if (!actual) return { resultado: 'oc_no_encontrada' };
+  const actual = await prisma.ordenCompra.findUnique({
+    where: { id_orden: p.ocId },
+    select: { estado: true, tenant_id: true, proyecto_id: true },
+  });
+  // Una OC de otro tenant/proyecto se trata como no encontrada: el evento no le corresponde.
+  if (!actual || actual.tenant_id !== p.tenantId || actual.proyecto_id !== p.proyectoId) return { resultado: 'oc_no_encontrada' };
   return { resultado: 'no_op', estadoActual: actual.estado };
 }

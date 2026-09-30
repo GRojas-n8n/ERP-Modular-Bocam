@@ -7,8 +7,11 @@
  *     nunca cambia CANCELADA, CANCELACION_PENDIENTE, PARCIALMENTE_RECIBIDA, RECIBIDA ni estados heredados.
  *   - finanzas.presupuesto_insuficiente solo mueve PENDIENTE_CONFIRMACION_FINANZAS a ERROR_FINANZAS;
  *     nunca degrada una OC EMITIDA, en recepción, recibida o cancelada.
+ *   - finanzas.fondos_liberados solo mueve CANCELACION_PENDIENTE a CANCELADA (el flujo real de cancelación fija
+ *     CANCELACION_PENDIENTE antes de pedir la liberación); nunca cancela una OC emitida, en error, en recepción o recibida.
+ *   - ERROR_FINANZAS → EMITIDA solo con un compromiso confirmado (movimiento) de la MISMA OC, tenant y proyecto.
  *   - Dos eventos concurrentes no dejan estados divergentes (estado de la OC vs. alerta de error).
- *   - Un evento duplicado es idempotente.
+ *   - Un evento duplicado es idempotente y no repite efectos.
  *
  * Runner: npm run test:integration:oc-transiciones-eventos-finanzas -w @bocam/compras
  * Requiere: PostgreSQL (schema compras en DATABASE_URL). No requiere RabbitMQ.
@@ -21,6 +24,8 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Server } from 'node:http';
+import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
 import { PrismaClient } from '../../src/generated/prisma';
 import { EventBus } from '../../../../packages/event-bus/src';
 import {
@@ -47,6 +52,15 @@ const publicadosError = (ocId: string) => published.filter((e) => e.type === 'co
 
 let handleFondosComprometidosEvent: (e: any) => Promise<void>;
 let handlePresupuestoInsuficienteEvent: (e: any) => Promise<void>;
+let handleFondosLiberadosEvent: (e: any) => Promise<void>;
+let comprasServer: Server | undefined;
+let baseUrl = '';
+
+// Registro de logs estructurados (para contar efectos aplicados vs. idempotentes).
+const logs: string[] = [];
+const consoleLog = console.log.bind(console);
+console.log = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); consoleLog(...args); };
+const contarLogs = (accion: string, ocId: string) => logs.filter((l) => l.includes(`"action":"${accion}"`) && l.includes(ocId)).length;
 
 const proveedores = new Map<string, string>();
 async function proveedorDe(tenantId: string) {
@@ -72,10 +86,13 @@ const ev = (tipo: string, tenantId: string, proyectoId: string, oc: { id_orden: 
   event_type: tipo,
   timestamp: new Date().toISOString(),
   context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: randomUUID(), correlation_id: `corr-${randomUUID()}` },
-  payload: { referencia_oc_id: oc.id_orden, referencia_oc_codigo: oc.codigo, presupuesto_id: randomUUID(), movimiento_id: randomUUID(), monto_comprometido: 1160, monto_disponible_restante: 100 },
+  payload: { referencia_oc_id: oc.id_orden, referencia_oc_codigo: oc.codigo, presupuesto_id: randomUUID(), movimiento_id: randomUUID(), monto_comprometido: 1160, monto_disponible_restante: 100, monto_liberado: 1160 },
 });
 const comprometidos = (t: string, p: string, oc: any) => handleFondosComprometidosEvent(ev('finanzas.fondos_comprometidos', t, p, oc) as any);
 const insuficiente = (t: string, p: string, oc: any) => handlePresupuestoInsuficienteEvent(ev('finanzas.presupuesto_insuficiente', t, p, oc) as any);
+const liberados = (t: string, p: string, oc: any) => handleFondosLiberadosEvent(ev('finanzas.fondos_liberados', t, p, oc) as any);
+const filaCompleta = async (id: string) => JSON.stringify(await prisma.ordenCompra.findUniqueOrThrow({ where: { id_orden: id } }));
+const token = (t: string, p: string) => signTenantToken({ userId: randomUUID(), tenantId: t, proyectoId: p, roles: ['procurement'], projects: [p] });
 
 const estadoDe = async (id: string) => (await prisma.ordenCompra.findUniqueOrThrow({ where: { id_orden: id } })).estado;
 const alertaDe = (tenantId: string, ocId: string) => prisma.alertaOcError.findUnique({ where: { tenant_id_oc_id: { tenant_id: tenantId, oc_id: ocId } } });
@@ -92,6 +109,8 @@ async function main() {
   const compras = await import('../../src/main');
   handleFondosComprometidosEvent = compras.handleFondosComprometidosEvent;
   handlePresupuestoInsuficienteEvent = compras.handlePresupuestoInsuficienteEvent;
+  handleFondosLiberadosEvent = compras.handleFondosLiberadosEvent;
+  ({ server: comprasServer, baseUrl } = await startHttpApp(compras.app));
 
   await test('nombre canónico: el estado pendiente almacenado es PENDIENTE_CONFIRMACION_FINANZAS y el literal PENDIENTE_FINANZAS no existe como valor', () => {
     assert.equal(OC_STATUS.PENDIENTE_FINANZAS, 'PENDIENTE_CONFIRMACION_FINANZAS');
@@ -231,8 +250,126 @@ async function main() {
     }
   });
 
+  // ── ERROR_FINANZAS → EMITIDA: solo con compromiso confirmado de la MISMA OC, tenant y proyecto ──
+  await test('ERROR_FINANZAS → EMITIDA exige compromiso confirmado de la misma OC, tenant y proyecto', async () => {
+    const t = randomUUID(), p = randomUUID();
+    const oc = await crearOc(t, p, 'ERROR_FINANZAS');
+    await prisma.alertaOcError.create({ data: { tenant_id: t, proyecto_id: p, oc_id: oc.id_orden, oc_codigo: oc.codigo, error_message: 'x' } });
+
+    const ajeno = ev('finanzas.fondos_comprometidos', t, p, oc) as any;
+    // otro proyecto
+    await handleFondosComprometidosEvent({ ...ajeno, context: { ...ajeno.context, proyecto_id: randomUUID() } });
+    assert.equal(await estadoDe(oc.id_orden), 'ERROR_FINANZAS', 'otro proyecto no debe mover la OC');
+    // otro tenant
+    await handleFondosComprometidosEvent({ ...ajeno, context: { ...ajeno.context, tenant_id: randomUUID() } });
+    assert.equal(await estadoDe(oc.id_orden), 'ERROR_FINANZAS', 'otro tenant no debe mover la OC');
+    // otra OC (no afecta a esta)
+    const otra = await crearOc(t, p, 'ERROR_FINANZAS');
+    await handleFondosComprometidosEvent({ ...ajeno, payload: { ...ajeno.payload, referencia_oc_id: otra.id_orden } });
+    assert.equal(await estadoDe(oc.id_orden), 'ERROR_FINANZAS', 'el evento de otra OC no debe mover ésta');
+    assert.equal(await estadoDe(otra.id_orden), 'EMITIDA');
+    // sin compromiso confirmado: sin movimiento_id / monto no positivo
+    await handleFondosComprometidosEvent({ ...ajeno, payload: { ...ajeno.payload, movimiento_id: undefined } });
+    assert.equal(await estadoDe(oc.id_orden), 'ERROR_FINANZAS', 'sin movimiento_id no es un compromiso confirmado');
+    await handleFondosComprometidosEvent({ ...ajeno, payload: { ...ajeno.payload, monto_comprometido: 0 } });
+    assert.equal(await estadoDe(oc.id_orden), 'ERROR_FINANZAS', 'monto 0 no es un compromiso confirmado');
+    assert.equal((await alertaDe(t, oc.id_orden))?.resuelta, false, 'la alerta sigue activa');
+    // el evento legítimo sí la recupera
+    await handleFondosComprometidosEvent(ajeno);
+    assert.equal(await estadoDe(oc.id_orden), 'EMITIDA');
+    assert.equal((await alertaDe(t, oc.id_orden))?.resuelta, true);
+  });
+
+  // ── finanzas.fondos_liberados ──
+  await test('matriz fondos_liberados: solo CANCELACION_PENDIENTE → CANCELADA; el resto es no-op sin efectos', async () => {
+    const t = randomUUID(), p = randomUUID();
+    const fallos: string[] = [];
+    for (const estado of todosLosEstados) {
+      const oc = await crearOc(t, p, estado);
+      const antes = await filaCompleta(oc.id_orden);
+      await liberados(t, p, oc);
+      const esperado = estado === 'CANCELACION_PENDIENTE' ? 'CANCELADA' : estado;
+      const real = await estadoDe(oc.id_orden);
+      if (real !== esperado) fallos.push(`${estado}: esperado ${esperado}, quedó ${real}`);
+      if (estado !== 'CANCELACION_PENDIENTE' && (await filaCompleta(oc.id_orden)) !== antes) fallos.push(`${estado}: la fila cambió`);
+    }
+    assert.deepEqual(fallos, [], fallos.join(' | '));
+  });
+
+  await test('fondos_liberados: transición válida desde CANCELACION_PENDIENTE y evento repetido sobre CANCELADA idempotente', async () => {
+    const t = randomUUID(), p = randomUUID();
+    const oc = await crearOc(t, p, 'CANCELACION_PENDIENTE');
+    await liberados(t, p, oc);
+    assert.equal(await estadoDe(oc.id_orden), 'CANCELADA');
+    assert.equal(contarLogs('compras.event.finanzas.fondos_liberados.applied', oc.id_orden), 1);
+    const despues = await filaCompleta(oc.id_orden);
+    await liberados(t, p, oc); await liberados(t, p, oc);
+    assert.equal(await filaCompleta(oc.id_orden), despues, 'los repetidos no cambian nada');
+    assert.equal(contarLogs('compras.event.finanzas.fondos_liberados.applied', oc.id_orden), 1, 'solo un applied');
+    assert.equal(contarLogs('compras.event.finanzas.fondos_liberados.idempotent', oc.id_orden), 2, 'los repetidos son idempotentes');
+  });
+
+  await test('fondos_liberados tardío no cancela una OC EMITIDA, en ERROR_FINANZAS, PARCIALMENTE_RECIBIDA ni RECIBIDA', async () => {
+    const t = randomUUID(), p = randomUUID();
+    for (const estado of ['EMITIDA', 'ERROR_FINANZAS', 'PARCIALMENTE_RECIBIDA', 'RECIBIDA']) {
+      const oc = await crearOc(t, p, estado);
+      await liberados(t, p, oc);
+      assert.equal(await estadoDe(oc.id_orden), estado, `${estado} fue cancelada por un fondos_liberados tardío`);
+      assert.equal(contarLogs('compras.event.finanzas.fondos_liberados.applied', oc.id_orden), 0);
+    }
+  });
+
+  await test('fondos_liberados no cancela una OC de otro tenant ni de otro proyecto', async () => {
+    const t = randomUUID(), p = randomUUID();
+    const oc = await crearOc(t, p, 'CANCELACION_PENDIENTE');
+    const e = ev('finanzas.fondos_liberados', t, p, oc) as any;
+    await handleFondosLiberadosEvent({ ...e, context: { ...e.context, proyecto_id: randomUUID() } });
+    await handleFondosLiberadosEvent({ ...e, context: { ...e.context, tenant_id: randomUUID() } });
+    assert.equal(await estadoDe(oc.id_orden), 'CANCELACION_PENDIENTE');
+    await handleFondosLiberadosEvent(e);
+    assert.equal(await estadoDe(oc.id_orden), 'CANCELADA');
+  });
+
+  await test('dos fondos_liberados concurrentes → un solo efecto aplicado y el resto idempotente', async () => {
+    for (let r = 0; r < 15; r++) {
+      const t = randomUUID(), p = randomUUID();
+      const oc = await crearOc(t, p, 'CANCELACION_PENDIENTE');
+      const res = await settle([liberados(t, p, oc), liberados(t, p, oc), liberados(t, p, oc)]);
+      assert.ok(res.every((x) => x.status === 'fulfilled'), `ronda ${r}: un handler falló`);
+      assert.equal(await estadoDe(oc.id_orden), 'CANCELADA');
+      assert.equal(contarLogs('compras.event.finanzas.fondos_liberados.applied', oc.id_orden), 1, `ronda ${r}: más de un applied`);
+      assert.equal(contarLogs('compras.event.finanzas.fondos_liberados.idempotent', oc.id_orden), 2, `ronda ${r}: los otros dos deben ser idempotentes`);
+    }
+  });
+
+  await test('recepción concurrente con un fondos_liberados tardío → la OC queda recibida, nunca CANCELADA', async () => {
+    const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (let r = 0; r < 20; r++) {
+      const t = randomUUID(), p = randomUUID();
+      const oc = await prisma.ordenCompra.create({
+        data: {
+          tenant_id: t, proyecto_id: p, proveedor_id: await proveedorDe(t), codigo: `OC-TR-${randomUUID().slice(0, 8)}`, estado: 'EMITIDA',
+          subtotal: 100, iva: 16, total: 116, presupuesto_id: randomUUID(),
+          items: { create: [{ tenant_id: t, proyecto_id: p, descripcion_libre: 'Material libre', unidad_libre: 'PZA', cantidad: 10, precio_unitario: 10, importe: 100 }] },
+        } as any,
+        include: { items: true },
+      });
+      const recepcion = fetch(`${baseUrl}/api/v1/compras/ordenes-compra/${oc.id_orden}/recepciones`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token(t, p)}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ orden_item_id: oc.items[0].id_item, cantidad_recibida: 10 }] }),
+      });
+      await dormir(r % 8);
+      const liberacion = liberados(t, p, oc);
+      const [resp] = await Promise.all([recepcion, liberacion]);
+      assert.equal(resp.status, 201, `ronda ${r}: la recepción falló (${resp.status}) — ${JSON.stringify(await resp.json().catch(() => ({})))}`);
+      assert.equal(await estadoDe(oc.id_orden), 'RECIBIDA', `ronda ${r}: la OC no quedó RECIBIDA`);
+    }
+  });
+
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} pruebas en verde`);
+  await stopHttpApp(comprasServer);
   await prisma.$disconnect();
   process.exit(failed.length ? 1 : 0);
 }
