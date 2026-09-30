@@ -22,6 +22,8 @@
     "test:integration:outbox-recepcion-oc": "node -r ts-node/register/transpile-only test/integration/outbox-recepcion-oc.integration.test.ts",
     "test:integration:outbox-recepcion-oc-rabbitmq": "node -r ts-node/register/transpile-only test/integration/outbox-recepcion-oc-rabbitmq.integration.test.ts",
     "test:integration:outbox-dispatcher-arranque": "node -r ts-node/register/transpile-only test/integration/outbox-dispatcher-arranque.integration.test.ts",
+    "test:unit:oc-eventos": "node -r ts-node/register/transpile-only --test src/oc-eventos.test.ts",
+    "test:integration:oc-creada-contrato-consumidores": "node -r ts-node/register/transpile-only test/integration/oc-creada-contrato-consumidores.integration.test.ts",
     "test:integration:oc-snapshot-insumo": "node -r ts-node/register/transpile-only test/integration/oc-snapshot-insumo.integration.test.ts",
     "test:integration:recepcion-oc-compras-almacen": "node -r ts-node/register/transpile-only test/integration/recepcion-oc-compras-almacen.integration.test.ts",
     "test:integration:editar-proveedor": "node -r ts-node/register/transpile-only test/integration/editar-proveedor.integration.test.ts"

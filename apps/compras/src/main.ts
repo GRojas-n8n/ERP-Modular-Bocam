@@ -28,6 +28,7 @@ import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
 import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from './purga-bloqueos';
 import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
+import { buildOcCanceladaPayload, buildOcCreadaPayload } from './oc-eventos';
 import { randomUUID } from 'node:crypto';
 import {
   registrarEventoRecepcion, configurarDespachadorOutbox, estadoDespachadorOutbox, VARIABLE_DESPACHADOR, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
@@ -3262,20 +3263,19 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
             event_type: 'compras.oc_creada',
             timestamp: new Date().toISOString(),
             context: buildEventContext(req),
-            payload: {
-              oc_id:          oc.id_orden,
-              codigo:         oc.codigo,
-              total:          oc.total.toNumber(),
-              proveedor_id:   oc.proveedor_id,
-              proyecto_id:    proyectoId,
-              requisicion_id: loteData.requisicionId || null,
-              concepto_id:    loteData.conceptoId   || null,
+            payload: buildOcCreadaPayload({
+              oc,
+              proyectoId,
+              // Siempre definido aquí: la ruta responde 400/422 antes de crear la OC si no lo resuelve.
+              presupuestoId:  presupuesto_id as string,
+              requisicionId:  loteData.requisicionId,
+              conceptoId:     loteData.conceptoId,
               items:          grupo.detalles.map((d: any) => {
                 const reqLineId = d.detalle_req_id ?? (d.insumo_id ? loteData.lineaMap.get(d.insumo_id) ?? null : null);
                 const cantidad  = reqLineId ? (loteData.cantidadMap.get(reqLineId) ?? 1) : 1;
                 return { insumo_id: d.insumo_id, cantidad, precio_unitario: d.precio_ofertado.toNumber() };
               }),
-            },
+            }),
           });
         } catch (_) { /* best-effort */ }
       }
@@ -4740,13 +4740,7 @@ app.post('/api/v1/compras/ordenes-compra/:id/cancelar', requireRoles('admin', 's
           event_type: 'compras.oc_cancelada',
           timestamp: new Date().toISOString(),
           context: buildEventContext(req),
-          payload: {
-            oc_id:          cancelada.id_orden,
-            codigo:         cancelada.codigo,
-            total:          cancelada.total.toNumber(),
-            presupuesto_id: cancelada.presupuesto_id,
-            requisicion_id: cancelada.requisicion_id,
-          },
+          payload: buildOcCanceladaPayload(cancelada),
         });
 
         return cancelada;
@@ -4911,13 +4905,7 @@ app.post('/api/v1/compras/ordenes-compra/:id/reconciliar-finanzas', requireRoles
         event_type: 'compras.oc_cancelada',
         timestamp: new Date().toISOString(),
         context: buildEventContext(req),
-        payload: {
-          oc_id:          updated.id_orden,
-          codigo:         updated.codigo,
-          total:          updated.total.toNumber(),
-          presupuesto_id: updated.presupuesto_id,
-          requisicion_id: updated.requisicion_id,
-        },
+        payload: buildOcCanceladaPayload(updated),
       });
 
       const response = buildTerminalHttpResponse({
