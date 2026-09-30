@@ -8,7 +8,7 @@
 
 ## 2. P1 — Outbox de Finanzas (change hijo o PR propio; pruebas primero)
 
-- [ ] 2.0 Auditar la idempotencia de los consumidores de P1 (Compras y Contabilidad) y, si Contabilidad no es idempotente, corregirla en un PR previo y separado antes de activar.
+- [x] 2.0 Auditar la idempotencia de los consumidores de P1 (Compras y Contabilidad): ambos son idempotentes ante el mismo evento (secuencial, concurrente y por RabbitMQ real); no hace falta un PR previo de Contabilidad por duplicados. Ver `auditoria-idempotencia-consumidores-p1.md`; pruebas `finanzas-eventos-idempotencia-event-id` (Compras, 10) y `finanzas.fondos-idempotencia-event-id` (Contabilidad, 8).
 - [ ] 2.1 Completar el inventario de P1 con una consulta de solo lectura a producción: filas de outbox inexistentes; `movimientos_presupuestales` por OC con/sin `fondos_comprometidos` observado en Compras (estado `PENDIENTE_CONFIRMACION_FINANZAS` antiguo).
 - [ ] 2.2 Pruebas en rojo con PostgreSQL y RabbitMQ reales: caída tras el commit, sin canal, sin cola enlazada, reintento con el mismo `event_id`, duplicado, orden por OC, varias instancias, `ERROR` y reintento manual, RLS con rol sin `BYPASSRLS`, modo `direct` idéntico al actual, reversa sin pérdida.
 - [ ] 2.3 Migración de Finanzas: tabla `outbox_eventos` con RLS habilitado y forzado, índice de pendientes, único `(tenant_id, event_id)`, `rollback.sql`; ejecutable con el rol de runtime (lección de #185).
