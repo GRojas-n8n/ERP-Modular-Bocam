@@ -2,7 +2,7 @@
 
 - [x] 1.1 Trazar los caminos de compromiso y liberación en `convertir-oc`, Finanzas y GT (revisión de repositorio, 2026-09-30).
 - [x] 1.2 Consulta productiva agregada de solo lectura: duplicados de `COMPROMISO` y `LIBERACION`, compromisos sin liberación, liberaciones sin compromiso, restricciones e índices, aislamiento. Resultado: tabla vacía (0 filas); solo índices no únicos; `read committed`.
-- [ ] 1.3 **Titular:** auditar los mismos conteos en los demás entornos con datos antes de la migración.
+- [x] 1.3 **Titular:** entornos persistentes clasificados (2026-09-30): el VPS es el único entorno persistente activo demostrado (todos los workflows de despliegue apuntan a un único host); el stack QNAP y `docker-compose.prod.yml` son históricos/no verificados y no bloquean el despliegue. Preflight del VPS (solo lectura, 2026-09-30, `bocam_finanzas`): duplicados de COMPROMISO/LIBERACION = 0; referencias nulas = 0; `movimientos_presupuestales` = 0 filas; rol de runtime `bocam_app` (sin superusuario ni BYPASSRLS) es dueño de la tabla y tiene CREATE en `public`; `current_tenant_id()`/`current_proyecto_id()` existen y pertenecen a `bocam_admin`; tombstone, índice y CHECK ausentes; `_prisma_migrations` con 3 migraciones terminadas, ninguna fallida y la nueva ausente; base de 8 MB y 352 GB libres; Finanzas running/healthy, 0 reinicios, sin OOM, sin errores de conexión; respaldo `pre-pr185` verificado (ver preflight del PR). **Si el QNAP o `docker-compose.prod.yml` vuelven a utilizarse, deben ejecutar antes las consultas de duplicados y de referencias nulas de la migración (ver design, decisión de migración) y comprobar los privilegios del rol de runtime.**
 
 ## 2. Pruebas obligatorias (PostgreSQL real, sin simular el motor; una por escenario)
 
