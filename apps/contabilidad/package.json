@@ -8,6 +8,7 @@
     "dev": "ts-node-dev --transpile-only src/main.ts",
     "dev:worker-sat": "ts-node-dev --transpile-only src/sat-worker.ts",
     "test:integration:compras-oc-cancelada": "node -r ts-node/register/transpile-only test/integration/compras.oc-cancelada.integration.test.ts",
+    "test:integration:finanzas-fondos-idempotencia-event-id": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-idempotencia-event-id.integration.test.ts",
     "test:integration:finanzas-compromiso-conciliacion": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-comprometidos.conciliacion.integration.test.ts",
     "test:integration:finanzas-liberacion-conciliacion": "node -r ts-node/register/transpile-only test/integration/finanzas.fondos-liberados.conciliacion.integration.test.ts",
     "test:integration:finanzas-pago-cfdi": "node -r ts-node/register/transpile-only test/integration/finanzas.pago-cfdi.conciliacion.integration.test.ts",

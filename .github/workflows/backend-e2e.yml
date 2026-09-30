@@ -146,6 +146,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-dispatcher-arranque
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-snapshot-insumo
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-transiciones
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:finanzas-eventos-idempotencia-event-id -w @bocam/compras
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:compras-recepcion-oc-compras-almacen
 
       # ── Tests inter-modulo ────────────────────────────────────────────────────
@@ -169,6 +170,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:compras-oc-cancelada -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-compromiso-conciliacion  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-liberacion-conciliacion  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-fondos-idempotencia-event-id  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago-cfdi   -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-externo -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-worker  -w @bocam/contabilidad

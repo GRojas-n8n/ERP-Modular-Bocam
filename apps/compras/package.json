@@ -22,6 +22,7 @@
     "test:integration:outbox-recepcion-oc": "node -r ts-node/register/transpile-only test/integration/outbox-recepcion-oc.integration.test.ts",
     "test:integration:outbox-recepcion-oc-rabbitmq": "node -r ts-node/register/transpile-only test/integration/outbox-recepcion-oc-rabbitmq.integration.test.ts",
     "test:integration:outbox-dispatcher-arranque": "node -r ts-node/register/transpile-only test/integration/outbox-dispatcher-arranque.integration.test.ts",
+    "test:integration:finanzas-eventos-idempotencia-event-id": "node -r ts-node/register/transpile-only test/integration/finanzas-eventos-idempotencia-event-id.integration.test.ts",
     "test:integration:oc-transiciones-eventos-finanzas": "node -r ts-node/register/transpile-only test/integration/oc-transiciones-eventos-finanzas.integration.test.ts",
     "test:integration:oc-snapshot-insumo": "node -r ts-node/register/transpile-only test/integration/oc-snapshot-insumo.integration.test.ts",
     "test:integration:recepcion-oc-compras-almacen": "node -r ts-node/register/transpile-only test/integration/recepcion-oc-compras-almacen.integration.test.ts",
