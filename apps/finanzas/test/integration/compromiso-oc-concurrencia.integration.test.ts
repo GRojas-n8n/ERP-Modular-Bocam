@@ -23,7 +23,7 @@ import type { Server } from 'node:http';
 import { PrismaClient } from '../../src/generated/prisma';
 import { EventBus } from '../../../../packages/event-bus/src';
 import { signTenantToken, startHttpApp, stopHttpApp } from '../../../../test-support/e2e';
-import { readMigrationSql, splitSqlStatements } from '../support/sql';
+import { MIGRATION_SQL_PATH, ROLLBACK_SQL_PATH, runSqlFile } from '../support/sql';
 
 const dbUrl =
   process.env.FINANZAS_DATABASE_URL ||
@@ -47,9 +47,9 @@ const publishedFor = (tenantId: string, ocId: string, type: string) =>
 // ── utilidades ──
 async function applyMigration() {
   if (process.env.COMPROMISO_TEST_SKIP_MIGRATION === '1') return;
-  for (const stmt of splitSqlStatements(readMigrationSql('migration.sql'))) {
-    await admin.$executeRawUnsafe(stmt);
-  }
+  const r = runSqlFile(MIGRATION_SQL_PATH, dbUrl); // el archivo completo, como lo hace prisma migrate deploy
+  if (!r.ok) throw new Error(`No se pudo aplicar la migración:
+${r.output}`);
 }
 
 async function seedPresupuesto(tenantId: string, proyectoId: string, disponible: number, conceptoId?: string) {
@@ -227,7 +227,14 @@ async function main() {
     assert.equal(await countMov(t, ocB, 'COMPROMISO'), 1);
     assert.deepEqual(await readPresupuesto(pres), { comprometido: 3000, disponible: 7000 }, 'el compromiso de la OC B sigue intacto');
     const res = await http(t, p, 'liberar-fondos', { presupuesto_id: pres, monto: 3000, oc_id: ocA, oc_codigo: 'OC-A' });
-    assert.ok(res.status < 300, `liberar-fondos de una OC sin compromiso no debe fallar (status ${res.status})`);
+    assert.equal(res.status, 201, `liberar-fondos de una OC sin compromiso no debe fallar (status ${res.status})`);
+    const body: any = await res.json();
+    assert.equal(body.data.monto_liberado, 0);
+    assert.equal(body.data.no_op, true, 'la respuesta identifica el no-op');
+    assert.equal(body.data.idempotente, true);
+    assert.equal(body.data.motivo, 'SIN_COMPROMISO');
+    assert.equal(body.data.tombstone_registrado, true);
+    assert.equal(publishedFor(t, ocA, 'finanzas.fondos_liberados').length, 0, 'un no-op no publica liberación');
     assert.deepEqual(await readPresupuesto(pres), { comprometido: 3000, disponible: 7000 }, 'HTTP tampoco consume el compromiso de otra OC');
   });
 
@@ -299,6 +306,38 @@ async function main() {
     // (otro tenant con la misma OC: cubierto en la suite de RLS)
   });
 
+  await test('10e. referencia de OC inválida se rechaza antes de cualquier INSERT (HTTP 400; eventos sin efecto)', async () => {
+    const t = randomUUID(), p = randomUUID();
+    const pres = await seedPresupuesto(t, p, 10000);
+    const antes = await admin.movimientoPresupuestal.count({ where: { tenant_id: t } });
+    for (const path of ['comprometer-fondos', 'liberar-fondos']) {
+      const res = await http(t, p, path, { presupuesto_id: pres, monto: 100, oc_id: 'no-es-uuid', oc_codigo: 'OC-Z' });
+      assert.equal(res.status, 400, `${path} con oc_id inválido`);
+    }
+    const res2 = await http(t, p, 'comprometer-fondos', { presupuesto_id: 'tampoco', monto: 100, oc_id: randomUUID(), oc_codigo: 'OC-Z' });
+    assert.equal(res2.status, 400);
+    await finanzas.handleOrdenCompraCreadaEvent(evCreada(t, p, 'no-es-uuid', pres, 100) as any);
+    await finanzas.handleOrdenCompraCanceladaEvent(evCancelada(t, p, 'no-es-uuid', pres, 100) as any);
+    await finanzas.handlePartidaComprometidaEvent(evPartida(t, p, 'no-es-uuid', randomUUID(), 100) as any);
+    assert.equal(await admin.movimientoPresupuestal.count({ where: { tenant_id: t } }), antes, 'no se insertó nada');
+    const tomb = await admin.$queryRawUnsafe<Array<{ n: bigint }>>(`SELECT count(*)::bigint AS n FROM "oc_cancelaciones_tombstone" WHERE "tenant_id" = $1::uuid`, t);
+    assert.equal(Number(tomb[0].n), 0);
+    assert.deepEqual(await readPresupuesto(pres), { comprometido: 0, disponible: 10000 });
+  });
+
+  await test('10f. un COMPROMISO/LIBERACION de OC con referencia_id NULL no puede evadir el índice (CHECK de base de datos)', async () => {
+    const t = randomUUID(), p = randomUUID();
+    const pres = await seedPresupuesto(t, p, 10000);
+    const nulo = (tipo: string, modulo = 'compras', entidad = 'OrdenCompra') => admin.movimientoPresupuestal.create({
+      data: { tenant_id: t, proyecto_id: p, presupuesto_id: pres, tipo, concepto: 'nulo', monto: 10, referencia_modulo: modulo,
+        referencia_entidad: entidad, referencia_id: null, usuario_id: randomUUID() },
+    });
+    await assert.rejects(() => nulo('COMPROMISO'), /chk_movimiento_oc_referencia_id|check constraint/i);
+    await assert.rejects(() => nulo('LIBERACION'), /chk_movimiento_oc_referencia_id|check constraint/i);
+    await nulo('COMPROMISO', 'personal', 'PreNomina'); // otras referencias: sin cambio (decisión del titular)
+    await nulo('EJERCIDO'); // otros tipos: sin cambio
+  });
+
   await test('11. la migración aborta si hay duplicados (sin borrar filas) y su rollback es limpio', async () => {
     if (process.env.COMPROMISO_TEST_SKIP_MIGRATION === '1') throw new Error('omitida: requiere la migración');
     const t = randomUUID(), p = randomUUID(), oc = randomUUID();
@@ -310,15 +349,9 @@ async function main() {
           referencia_entidad: 'OrdenCompra', referencia_id: oc, usuario_id: randomUUID() },
       });
     }
-    const stmts = splitSqlStatements(readMigrationSql('migration.sql'));
-    let abortada = false;
-    for (const s of stmts) {
-      try { await admin.$executeRawUnsafe(s); } catch (e: any) {
-        if (String(e.message).includes('MIGRACION_ABORTADA')) { abortada = true; break; }
-        throw e;
-      }
-    }
-    assert.ok(abortada, 'la comprobación previa debe abortar con MIGRACION_ABORTADA');
+    const corrida = runSqlFile(MIGRATION_SQL_PATH, dbUrl);
+    assert.equal(corrida.ok, false, 'la migración debe fallar');
+    assert.match(corrida.output, /MIGRACION_ABORTADA/, 'la comprobación previa debe abortar con MIGRACION_ABORTADA');
     assert.equal(await countMov(t, oc, 'COMPROMISO'), 2, 'no se borró ni corrigió ninguna fila');
     const idx = await admin.$queryRawUnsafe<any[]>(`SELECT 1 FROM pg_indexes WHERE indexname = 'uq_movimiento_oc_compromiso_liberacion' AND schemaname = current_schema()`);
     assert.equal(idx.length, 0, 'el índice no se creó');
@@ -328,10 +361,12 @@ async function main() {
     const idx2 = await admin.$queryRawUnsafe<any[]>(`SELECT 1 FROM pg_indexes WHERE indexname = 'uq_movimiento_oc_compromiso_liberacion' AND schemaname = current_schema()`);
     assert.equal(idx2.length, 1, 'sin duplicados la migración crea el índice');
 
-    for (const s of splitSqlStatements(readMigrationSql('rollback.sql'))) await admin.$executeRawUnsafe(s);
+    const rb = runSqlFile(ROLLBACK_SQL_PATH, dbUrl);
+    assert.ok(rb.ok, `rollback: ${rb.output}`);
     const idx3 = await admin.$queryRawUnsafe<any[]>(`SELECT 1 FROM pg_indexes WHERE indexname = 'uq_movimiento_oc_compromiso_liberacion' AND schemaname = current_schema()`);
     const tab = await admin.$queryRawUnsafe<any[]>(`SELECT 1 FROM information_schema.tables WHERE table_name = 'oc_cancelaciones_tombstone' AND table_schema = current_schema()`);
-    assert.equal(idx3.length + tab.length, 0, 'el rollback elimina índice y tabla');
+    const chk = await admin.$queryRawUnsafe<any[]>(`SELECT 1 FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.conname = 'chk_movimiento_oc_referencia_id' AND n.nspname = current_schema()`);
+    assert.equal(idx3.length + tab.length + chk.length, 0, 'el rollback elimina índice, tabla y CHECK');
     await applyMigration(); // deja el esquema listo para el resto de las suites
     await admin.movimientoPresupuestal.deleteMany({ where: { tenant_id: t } });
   });

@@ -1,22 +1,34 @@
 -- Migration: blindar_compromiso_oc
 -- Ver openspec/changes/blindar-compromiso-oc-concurrencia-y-orden-eventos.
 --
--- 1. Comprobación previa: ABORTA si ya existen COMPROMISO o LIBERACION duplicados por OC.
---    No borra ni corrige filas; la limpieza de datos, si hiciera falta, se decide aparte.
--- 2. Índice único parcial: como máximo un COMPROMISO y una LIBERACION por (tenant, OC).
---    Se limita a compras/OrdenCompra porque el endpoint genérico de movimientos y la nómina
---    también usan estos tipos con otras referencias y no comparten esta regla.
---    (Sin CONCURRENTLY: prisma migrate deploy ejecuta el archivo en un solo lote y la tabla es pequeña.)
--- 3. Tombstone de cancelación: registra la cancelación de una OC cuya creación aún no se procesó.
---    Única por (tenant, OC), RLS habilitado y forzado, inmutable (sin UPDATE/DELETE) y sin TTL.
+-- ATOMICIDAD: todo el script va dentro de BEGIN/COMMIT. Cualquier fallo (incluido el precheck) revierte
+-- por completo indice, restriccion, tabla, funciones y politicas: nunca queda un esquema parcial. La
+-- transaccion explicita importa tambien para runners que ejecutan sentencia por sentencia (psql -f);
+-- prisma migrate deploy / db execute ya envian el script en un solo lote.
 --
--- Rollback: rollback.sql (mismo directorio). Prisma no ejecuta migraciones inversas.
+-- 1. Comprobacion previa (ANTES de cualquier DDL): ABORTA si ya existen COMPROMISO o LIBERACION duplicados
+--    por OC, o movimientos de OC sin referencia_id. No borra ni corrige filas; la limpieza, si hiciera
+--    falta, se decide aparte.
+-- 2. CHECK: un COMPROMISO/LIBERACION de compras/OrdenCompra debe traer referencia_id. Sin esto un NULL
+--    evadiria el indice unico (el indice solo cubre referencia_id NOT NULL).
+-- 3. Indice unico parcial: como maximo un COMPROMISO y una LIBERACION por (tenant, OC).
+--    Se limita a compras/OrdenCompra (decision del titular): el endpoint generico de movimientos y la
+--    nomina tambien usan estos tipos con otras referencias y no comparten esta regla.
+--    (Sin CONCURRENTLY: no es posible dentro de una transaccion y la tabla es pequena.)
+-- 4. Tombstone de cancelacion: registra la cancelacion de una OC cuya creacion aun no se proceso.
+--    Unica por (tenant, OC), RLS habilitado y forzado, inmutable (sin UPDATE/DELETE) y sin TTL ni limpieza.
+--
+-- Paridad: las sentencias RLS del tombstone son identicas a las de prisma/rls-policies.sql (lo verifica
+-- una prueba estatica). Rollback: rollback.sql (mismo directorio). Prisma no ejecuta migraciones inversas.
 
--- --- 1. Comprobación previa de duplicados ------------------------------------
+BEGIN;
+
+-- --- 1. Comprobacion previa (antes de cualquier DDL) --------------------------------------------
 DO $$
 DECLARE
   dup_compromiso BIGINT;
   dup_liberacion BIGINT;
+  sin_referencia BIGINT;
 BEGIN
   SELECT count(*) INTO dup_compromiso FROM (
     SELECT 1 FROM "movimientos_presupuestales"
@@ -32,12 +44,21 @@ BEGIN
     HAVING count(*) > 1
   ) d;
 
-  IF dup_compromiso > 0 OR dup_liberacion > 0 THEN
-    RAISE EXCEPTION 'MIGRACION_ABORTADA: existen OC con movimientos duplicados (COMPROMISO: % grupos, LIBERACION: % grupos). No se modificó ningún dato. Resolver los duplicados antes de aplicar esta migración.', dup_compromiso, dup_liberacion;
+  SELECT count(*) INTO sin_referencia FROM "movimientos_presupuestales"
+  WHERE "tipo" IN ('COMPROMISO', 'LIBERACION') AND "referencia_modulo" = 'compras' AND "referencia_entidad" = 'OrdenCompra'
+    AND "referencia_id" IS NULL;
+
+  IF dup_compromiso > 0 OR dup_liberacion > 0 OR sin_referencia > 0 THEN
+    RAISE EXCEPTION 'MIGRACION_ABORTADA: datos previos incompatibles (COMPROMISO duplicados: % grupos, LIBERACION duplicados: % grupos, movimientos de OC sin referencia_id: % filas). No se modifico ningun dato. Resolver antes de aplicar esta migracion.', dup_compromiso, dup_liberacion, sin_referencia;
   END IF;
 END $$;
 
--- --- 2. Índice único parcial ------------------------------------------------
+-- --- 2. CHECK: referencia_id obligatorio para COMPROMISO/LIBERACION de OC ------------------------
+ALTER TABLE "movimientos_presupuestales" DROP CONSTRAINT IF EXISTS "chk_movimiento_oc_referencia_id";
+ALTER TABLE "movimientos_presupuestales" ADD CONSTRAINT "chk_movimiento_oc_referencia_id"
+  CHECK (NOT ("tipo" IN ('COMPROMISO', 'LIBERACION') AND "referencia_modulo" = 'compras' AND "referencia_entidad" = 'OrdenCompra' AND "referencia_id" IS NULL));
+
+-- --- 3. Indice unico parcial ---------------------------------------------------------------------
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_movimiento_oc_compromiso_liberacion"
   ON "movimientos_presupuestales" ("tenant_id", "referencia_modulo", "referencia_entidad", "referencia_id", "tipo")
   WHERE "tipo" IN ('COMPROMISO', 'LIBERACION')
@@ -45,7 +66,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uq_movimiento_oc_compromiso_liberacion"
     AND "referencia_entidad" = 'OrdenCompra'
     AND "referencia_id" IS NOT NULL;
 
--- --- 3. Tombstone de cancelación de OC --------------------------------------
+-- --- 4. Tombstone de cancelacion de OC -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "oc_cancelaciones_tombstone" (
   "tenant_id"   UUID NOT NULL,
   "oc_id"       UUID NOT NULL,
@@ -57,7 +78,7 @@ CREATE TABLE IF NOT EXISTS "oc_cancelaciones_tombstone" (
   CONSTRAINT "oc_cancelaciones_tombstone_pkey" PRIMARY KEY ("tenant_id", "oc_id")
 );
 
--- Funciones auxiliares de RLS (definición idéntica a prisma/rls-policies.sql; idempotentes).
+-- Funciones auxiliares de RLS (definicion identica a prisma/rls-policies.sql; idempotentes).
 CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
 BEGIN
     RETURN current_setting('app.current_tenant_id', true)::UUID;
@@ -77,8 +98,8 @@ $$ LANGUAGE plpgsql STABLE;
 ALTER TABLE "oc_cancelaciones_tombstone" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "oc_cancelaciones_tombstone" FORCE ROW LEVEL SECURITY;
 
--- Patrón Estricto (tenant + proyecto), como movimientos_presupuestales. Sin políticas de UPDATE/DELETE:
--- bajo FORCE RLS un tombstone no se puede modificar ni borrar desde la aplicación.
+-- Patron Estricto (tenant + proyecto), como movimientos_presupuestales. Sin politicas de UPDATE/DELETE:
+-- bajo FORCE RLS un tombstone no se puede modificar ni borrar desde la aplicacion.
 DROP POLICY IF EXISTS rls_oc_tombstone_select ON "oc_cancelaciones_tombstone";
 CREATE POLICY rls_oc_tombstone_select ON "oc_cancelaciones_tombstone"
     FOR SELECT USING (
@@ -92,3 +113,5 @@ CREATE POLICY rls_oc_tombstone_insert ON "oc_cancelaciones_tombstone"
         tenant_id = current_tenant_id()
         AND proyecto_id = current_proyecto_id()
     );
+
+COMMIT;

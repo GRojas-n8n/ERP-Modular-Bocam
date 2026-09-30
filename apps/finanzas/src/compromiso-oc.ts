@@ -40,6 +40,19 @@ export type ResultadoCancelacion =
   | { estado: 'idempotente'; movimientoId: string; presupuestoId: string; monto: number }
   | { estado: 'sin_compromiso' };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** true si el valor es un UUID textual válido (una OC sin referencia válida no debe llegar al INSERT). */
+export function esUuid(valor: unknown): valor is string {
+  return typeof valor === 'string' && UUID_RE.test(valor);
+}
+
+export class ReferenciaOcInvalida extends Error {
+  constructor(campo: string) {
+    super(`REFERENCIA_OC_INVALIDA: ${campo}`);
+  }
+}
+
 class PresupuestoInsuficiente extends Error {
   constructor(readonly montoSolicitado: number, readonly montoDisponible: number) {
     super('PRESUPUESTO_INSUFICIENTE');
@@ -106,6 +119,10 @@ export async function registrarCompromisoOc(
     notas: string;
   },
 ): Promise<ResultadoCompromiso> {
+  // Defensa en profundidad: los llamadores validan antes; aquí se rechaza antes de abrir la transacción o hacer INSERT.
+  if (!esUuid(p.ocId)) throw new ReferenciaOcInvalida('oc_id');
+  if (p.presupuestoId !== undefined && !esUuid(p.presupuestoId)) throw new ReferenciaOcInvalida('presupuesto_id');
+  if (p.conceptoId !== undefined && !esUuid(p.conceptoId)) throw new ReferenciaOcInvalida('concepto_id');
   try {
     return await createTenantContext(ctx, async (tx): Promise<ResultadoCompromiso> => {
       await bloquearOc(tx, ctx.tenantId, p.ocId);
@@ -191,6 +208,7 @@ export async function registrarCancelacionOc(
   ctx: ContextoOc,
   p: { ocId: string; ocCodigo: string; origen: 'HTTP' | 'EVENTO'; concepto: string; notas: string },
 ): Promise<ResultadoCancelacion> {
+  if (!esUuid(p.ocId)) throw new ReferenciaOcInvalida('oc_id');
   return createTenantContext(ctx, async (tx): Promise<ResultadoCancelacion> => {
     await bloquearOc(tx, ctx.tenantId, p.ocId);
 

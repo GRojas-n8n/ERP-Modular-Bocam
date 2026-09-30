@@ -3,8 +3,9 @@
  * splitSqlStatements divide un script SQL en sentencias respetando bloques $$...$$, comillas simples y comentarios,
  * porque Prisma ($executeRawUnsafe) no acepta varias sentencias en una sola llamada.
  */
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 export function splitSqlStatements(sql: string): string[] {
   const out: string[] = [];
@@ -49,3 +50,25 @@ export function readMigrationSql(file: 'migration.sql' | 'rollback.sql'): string
 }
 
 export const RLS_POLICIES_PATH = join(__dirname, '..', '..', 'prisma', 'rls-policies.sql');
+
+export const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
+export const PRISMA_SCHEMA_PATH = join(__dirname, '..', '..', 'prisma', 'schema.prisma');
+export const WORKFLOW_PATH = join(REPO_ROOT, '.github', 'workflows', 'backend-e2e.yml');
+export const MIGRATION_SQL_PATH = join(MIGRATION_DIR, 'migration.sql');
+export const ROLLBACK_SQL_PATH = join(MIGRATION_DIR, 'rollback.sql');
+
+/**
+ * Ejecuta un archivo SQL COMPLETO, de una sola vez, con `prisma db execute` (mismo motor y protocolo que
+ * `prisma migrate deploy`: el script viaja en un solo lote). Prisma ($executeRawUnsafe) no acepta varias
+ * sentencias en una llamada, y ejecutarlas una por una perdería la atomicidad que se quiere probar.
+ */
+export function runSqlFile(file: string, databaseUrl: string): { ok: boolean; output: string } {
+  const r = spawnSync(`npx --no-install prisma db execute --file "${file}" --schema "${PRISMA_SCHEMA_PATH}"`, {
+    shell: true,
+    cwd: REPO_ROOT,
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+    encoding: 'utf8',
+  });
+  return { ok: r.status === 0, output: `${r.stdout || ''}
+${r.stderr || ''}` };
+}

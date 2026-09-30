@@ -177,10 +177,11 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-transferencia -w @bocam/contabilidad
 
       # ── Finanzas: compromiso/liberación de OC (concurrencia real, orden de eventos y RLS) ──
-      - name: Run Finanzas compromiso OC (concurrencia y RLS)
+      - name: Run Finanzas compromiso OC (concurrencia, RLS y migración)
         run: |
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-concurrencia -w @bocam/finanzas
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-rls -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:compromiso-oc-migracion -w @bocam/finanzas
 
       - name: Run event contract hardening suite
         run: npm run test:integration:event-contracts

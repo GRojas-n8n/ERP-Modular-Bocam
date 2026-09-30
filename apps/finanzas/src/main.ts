@@ -23,7 +23,7 @@
 
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
-import { registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
+import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
 import { v4 as uuidv4 } from 'uuid';
 import {
   createApiResponse,
@@ -771,6 +771,14 @@ app.post('/api/v1/finanzas/comprometer-fondos',
       return;
     }
 
+    if (!esUuid(oc_id) || !esUuid(presupuesto_id)) {
+      res.status(400).json(createApiError(
+        'FIN_INVALID_REFERENCE',
+        'oc_id y presupuesto_id deben ser UUID válidos.'
+      ));
+      return;
+    }
+
     // Compromiso único por OC: lock por (tenant, OC), inserción atómica sobre el índice único parcial y
     // UPDATE condicional del saldo (ver compromiso-oc.ts). Los eventos se publican después del commit.
     const resultado = await registrarCompromisoOc({ tenantId, proyectoId, userId }, {
@@ -922,6 +930,11 @@ app.post('/api/v1/finanzas/liberar-fondos',
       return;
     }
 
+    if (!esUuid(oc_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'oc_id debe ser un UUID válido.'));
+      return;
+    }
+
     // Liberación única por OC: usa el COMPROMISO exacto de esa OC (nunca saldos agregados) y deja el tombstone.
     const liberacion = await registrarCancelacionOc({ tenantId, proyectoId, userId }, {
       ocId: oc_id,
@@ -932,11 +945,13 @@ app.post('/api/v1/finanzas/liberar-fondos',
     });
 
     if (liberacion.estado === 'sin_compromiso') {
-      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.sin_compromiso', 'La OC no tiene compromiso: se registra la cancelacion sin liberar fondos', {
-        idempotent: false,
-        presupuesto_id,
-        oc_id,
-        oc_codigo,
+      // No-op idempotente: la OC no tiene compromiso que liberar. Se registró el tombstone (la creación tardía
+      // no comprometerá fondos) y no se libera nada. Se loguea sin montos ni datos de negocio sensibles.
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.no_op_sin_compromiso', 'Cancelacion sin compromiso: tombstone registrado, 0 liberado', {
+        idempotent: true,
+        no_op: true,
+        motivo: 'SIN_COMPROMISO',
+        tombstone_registrado: true,
       });
       res.status(201).json(createApiResponse({
         evento: FinanzasEvents.FONDOS_LIBERADOS,
@@ -945,8 +960,10 @@ app.post('/api/v1/finanzas/liberar-fondos',
         monto_liberado: 0,
         oc_id,
         oc_codigo,
-        idempotente: false,
-        sin_compromiso: true,
+        idempotente: true,
+        no_op: true,
+        motivo: 'SIN_COMPROMISO',
+        tombstone_registrado: true,
       }, tenantId, proyectoId, correlationId));
       return;
     }
@@ -2099,7 +2116,7 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
     presupuesto_id?: string;
   };
 
-  if (!oc_id || !codigo || !total || !presupuesto_id) {
+  if (!esUuid(oc_id) || !codigo || !total || !esUuid(presupuesto_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.orden_compra_creada.invalid_payload',
       event_type: event.event_type,
@@ -2195,7 +2212,7 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     presupuesto_id?: string;
   };
 
-  if (!oc_id || !codigo || !total || !presupuesto_id) {
+  if (!esUuid(oc_id) || !codigo || !total || !esUuid(presupuesto_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.orden_compra_cancelada.invalid_payload',
       event_type: event.event_type,
@@ -2339,7 +2356,7 @@ export async function handlePartidaComprometidaEvent(event: BocamEvent): Promise
     concepto_id: string; monto: number; referencia_id: string; referencia_codigo?: string; tipo: string;
   };
 
-  if (!concepto_id || !monto || !referencia_id) {
+  if (!esUuid(concepto_id) || !monto || !esUuid(referencia_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.partida_comprometida.invalid_payload',
       event_type: event.event_type,

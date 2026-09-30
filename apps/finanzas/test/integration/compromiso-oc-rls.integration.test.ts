@@ -15,7 +15,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { PrismaClient } from '../../src/generated/prisma';
 import { EventBus } from '../../../../packages/event-bus/src';
-import { RLS_POLICIES_PATH, readMigrationSql, splitSqlStatements } from '../support/sql';
+import { MIGRATION_SQL_PATH, RLS_POLICIES_PATH, runSqlFile, splitSqlStatements } from '../support/sql';
 
 const adminUrl =
   process.env.DATABASE_URL ||
@@ -49,7 +49,9 @@ async function test(name: string, fn: () => Promise<void>) {
 }
 
 async function bootstrap() {
-  for (const stmt of splitSqlStatements(readMigrationSql('migration.sql'))) await admin.$executeRawUnsafe(stmt);
+  const mig = runSqlFile(MIGRATION_SQL_PATH, adminUrl);
+  if (!mig.ok) throw new Error(`No se pudo aplicar la migración:
+${mig.output}`);
   for (const stmt of splitSqlStatements(readFileSync(RLS_POLICIES_PATH, 'utf8'))) {
     try { await admin.$executeRawUnsafe(stmt); } catch (e: any) {
       if (!/does not exist/.test(String(e.message))) throw e; // tablas de otras versiones del esquema
