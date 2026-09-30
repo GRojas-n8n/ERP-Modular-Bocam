@@ -34,6 +34,6 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (14 prueb
 
 ## 4. Cierre
 
-- [ ] 4.1 Suite completa en verde en CI (primer PR: pendiente de la corrida de `backend-e2e`).
+- [x] 4.1 Suite completa en verde en CI para el primer PR (Finanzas): `backend-e2e` y Cobertura RLS en verde en #185 (concurrencia 14/14 y RLS 7/7 ejecutadas en el job; el `MIGRACION_ABORTADA` que aparece en el log de Postgres es el escenario deliberado de duplicados de la prueba 11). Falta el segundo PR (Compras).
 - [ ] 4.2 Confirmar que #182 puede reanudarse (junto con la aprobación contable).
 - [ ] 4.3 Archivar el change.
