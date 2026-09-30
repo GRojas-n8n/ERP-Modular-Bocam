@@ -28,6 +28,7 @@ import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
 import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from './purga-bloqueos';
 import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
+import { OC_STATUS, TRANSICIONES_EVENTO_FINANZAS, transicionarEstadoOc } from './oc-estados';
 import { randomUUID } from 'node:crypto';
 import {
   registrarEventoRecepcion, configurarDespachadorOutbox, estadoDespachadorOutbox, VARIABLE_DESPACHADOR, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
@@ -209,15 +210,7 @@ class PurgaBloqueadaError extends Error {
   }
 }
 
-const OC_STATUS = {
-  PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
-  ERROR_FINANZAS: 'ERROR_FINANZAS',
-  EMITIDA: 'EMITIDA',
-  PARCIALMENTE_RECIBIDA: 'PARCIALMENTE_RECIBIDA',
-  RECIBIDA: 'RECIBIDA',
-  CANCELACION_PENDIENTE: 'CANCELACION_PENDIENTE',
-  CANCELADA: 'CANCELADA',
-} as const;
+// OC_STATUS y las transiciones permitidas por evento de Finanzas viven en ./oc-estados (fuente única).
 
 // Ver openspec/changes/fix-alertas-compras-procesos-atorados. Umbral de antigüedad
 // para detectar Requisiciones/CuadrosComparativos iniciados por el Residente que
@@ -4949,13 +4942,18 @@ export async function handleFondosComprometidosEvent(event: BocamEvent): Promise
     referencia_oc_id,
     referencia_oc_codigo,
     presupuesto_id,
+    movimiento_id,
+    monto_comprometido,
   } = event.payload as {
     referencia_oc_id?: string;
     referencia_oc_codigo?: string;
     presupuesto_id?: string;
+    movimiento_id?: string;
+    monto_comprometido?: number;
   };
 
-  if (!referencia_oc_id || !referencia_oc_codigo || !presupuesto_id) {
+  // Un compromiso confirmado por Finanzas siempre trae el movimiento registrado y un monto positivo.
+  if (!referencia_oc_id || !referencia_oc_codigo || !presupuesto_id || !movimiento_id || !(Number(monto_comprometido) > 0)) {
     console.error(JSON.stringify({
       action: 'compras.event.finanzas.fondos_comprometidos.invalid_payload',
       event_type: event.event_type,
@@ -4968,130 +4966,63 @@ export async function handleFondosComprometidosEvent(event: BocamEvent): Promise
     return;
   }
 
-  type FondosComprometidosLoaded = {
-    oc: Awaited<ReturnType<PrismaClient['ordenCompra']['findUnique']>>;
+  const actions = {
+    notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
+    idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
+    applied: 'compras.event.finanzas.fondos_comprometidos.applied',
+  };
+  const logContext = {
+    eventType: event.event_type,
+    correlationId: event.context.correlation_id,
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
   };
 
-  type FondosComprometidosResult =
-    | {
-        status: 'oc_not_found';
-      }
-    | {
-        status: 'idempotent';
-        oc_codigo: string;
-      }
-    | {
-        status: 'applied';
-        oc_codigo: string;
-      };
-
-  const result = await applyTerminalMutationInContext<
-    { tenantId: string; proyectoId: string; userId: string },
-    PrismaClient,
-    FondosComprometidosLoaded,
-    { status: 'oc_not_found' },
-    { status: 'idempotent'; oc_codigo: string },
-    { status: 'applied'; oc_codigo: string }
-  >({
-    context: {
+  // Transición atómica (UPDATE ... WHERE id AND estado IN lista blanca): un evento tardío nunca resucita una OC
+  // cancelada, en recepción o recibida. Ver ./oc-estados (matriz de transiciones).
+  const transicion = TRANSICIONES_EVENTO_FINANZAS.fondos_comprometidos;
+  const resultado = await createTenantContext(
+    {
       tenantId: event.context.tenant_id,
       proyectoId: event.context.proyecto_id,
       userId: event.context.user_id,
     },
-    runInContext: createTenantContext,
-    load: async (prisma) => {
-      const oc = await prisma.ordenCompra.findUnique({
-        where: { id_orden: referencia_oc_id },
-      });
-
-      return { oc };
-    },
-    notFoundResult: async (loaded) => {
-      if (loaded.oc) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'not_found',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
-          applied: 'compras.event.finanzas.fondos_comprometidos.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-        },
-      });
-
-      return { status: 'oc_not_found' };
-    },
-    idempotentResult: async (loaded) => {
-      if (!loaded.oc || loaded.oc.estado !== OC_STATUS.EMITIDA) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'idempotent',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
-          applied: 'compras.event.finanzas.fondos_comprometidos.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-          oc_codigo: loaded.oc.codigo,
-        },
-      });
-
-      return {
-        status: 'idempotent',
-        oc_codigo: loaded.oc.codigo,
-      };
-    },
-    apply: async (loaded, prisma) => {
-      await prisma.ordenCompra.update({
-        where: { id_orden: referencia_oc_id },
-        data: { estado: OC_STATUS.EMITIDA },
-      });
-
-      return {
-        status: 'applied',
-        oc_codigo: loaded.oc!.codigo,
-      };
-    },
-  });
-
-  if (result.status === 'applied') {
-    logTerminalState({
-      terminalState: 'applied',
-      actions: {
-        notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
-        idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
-        applied: 'compras.event.finanzas.fondos_comprometidos.applied',
-      },
-      context: {
-        eventType: event.event_type,
-        correlationId: event.context.correlation_id,
+    async (prisma) => {
+      const t = await transicionarEstadoOc(prisma as any, {
+        ocId: referencia_oc_id,
         tenantId: event.context.tenant_id,
         proyectoId: event.context.proyecto_id,
-      },
-      extras: {
-        referencia_oc_id,
-        oc_codigo: result.oc_codigo,
-      },
-    });
+        destino: transicion.destino,
+        desde: transicion.desde,
+      });
+      if (t.resultado === 'aplicada') {
+        // Si la OC venía de ERROR_FINANZAS, la alerta de error deja de estar vigente (misma transacción).
+        await prisma.alertaOcError.updateMany({
+          where: { tenant_id: event.context.tenant_id, oc_id: referencia_oc_id },
+          data: { resuelta: true },
+        });
+      }
+      return t;
+    }
+  );
+
+  if (resultado.resultado === 'oc_no_encontrada') {
+    logTerminalState({ terminalState: 'not_found', actions, context: logContext, extras: { referencia_oc_id } });
+  } else if (resultado.resultado === 'aplicada') {
+    logTerminalState({ terminalState: 'applied', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else if (resultado.estadoActual === transicion.destino) {
+    logTerminalState({ terminalState: 'idempotent', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else {
+    // No-op: el estado actual no admite la transición. Se registra sin modificar nada.
+    console.warn(JSON.stringify({
+      action: 'compras.event.finanzas.fondos_comprometidos.no_op_estado',
+      event_type: event.event_type,
+      correlation_id: event.context.correlation_id,
+      tenant_id: event.context.tenant_id,
+      proyecto_id: event.context.proyecto_id,
+      referencia_oc_id,
+      estado_actual: resultado.estadoActual,
+    }));
   }
 }
 
@@ -5119,130 +5050,54 @@ export async function handleFondosLiberadosEvent(event: BocamEvent): Promise<voi
     return;
   }
 
-  type FondosLiberadosLoaded = {
-    oc: Awaited<ReturnType<PrismaClient['ordenCompra']['findUnique']>>;
+  const actions = {
+    notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
+    idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
+    applied: 'compras.event.finanzas.fondos_liberados.applied',
+  };
+  const logContext = {
+    eventType: event.event_type,
+    correlationId: event.context.correlation_id,
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
   };
 
-  type FondosLiberadosResult =
-    | {
-        status: 'oc_not_found';
-      }
-    | {
-        status: 'idempotent';
-        oc_codigo: string;
-      }
-    | {
-        status: 'applied';
-        oc_codigo: string;
-      };
-
-  const result = await applyTerminalMutationInContext<
-    { tenantId: string; proyectoId: string; userId: string },
-    PrismaClient,
-    FondosLiberadosLoaded,
-    { status: 'oc_not_found' },
-    { status: 'idempotent'; oc_codigo: string },
-    { status: 'applied'; oc_codigo: string }
-  >({
-    context: {
+  // El flujo real de cancelación (POST ordenes-compra/:id/cancelar y reconciliar-finanzas) deja la OC en
+  // CANCELACION_PENDIENTE ANTES de pedir la liberación a Finanzas. Solo ese estado pasa a CANCELADA; cualquier otro
+  // (EMITIDA, ERROR_FINANZAS, en recepción, recibida...) es un no-op. La transición es una actualización condicional
+  // atómica y este handler no tiene más efectos secundarios que el cambio de estado.
+  const transicion = TRANSICIONES_EVENTO_FINANZAS.fondos_liberados;
+  const resultado = await createTenantContext(
+    {
       tenantId: event.context.tenant_id,
       proyectoId: event.context.proyecto_id,
       userId: event.context.user_id,
     },
-    runInContext: createTenantContext,
-    load: async (prisma) => {
-      const oc = await prisma.ordenCompra.findUnique({
-        where: { id_orden: referencia_oc_id },
-      });
+    async (prisma) => transicionarEstadoOc(prisma as any, {
+      ocId: referencia_oc_id,
+      tenantId: event.context.tenant_id,
+      proyectoId: event.context.proyecto_id,
+      destino: transicion.destino,
+      desde: transicion.desde,
+    })
+  );
 
-      return { oc };
-    },
-    notFoundResult: async (loaded) => {
-      if (loaded.oc) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'not_found',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
-          applied: 'compras.event.finanzas.fondos_liberados.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-        },
-      });
-
-      return { status: 'oc_not_found' };
-    },
-    idempotentResult: async (loaded) => {
-      if (!loaded.oc || loaded.oc.estado !== OC_STATUS.CANCELADA) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'idempotent',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
-          applied: 'compras.event.finanzas.fondos_liberados.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-          oc_codigo: loaded.oc.codigo,
-        },
-      });
-
-      return {
-        status: 'idempotent',
-        oc_codigo: loaded.oc.codigo,
-      };
-    },
-    apply: async (loaded, prisma) => {
-      await prisma.ordenCompra.update({
-        where: { id_orden: referencia_oc_id },
-        data: { estado: OC_STATUS.CANCELADA },
-      });
-
-      return {
-        status: 'applied',
-        oc_codigo: loaded.oc!.codigo,
-      };
-    },
-  });
-
-  if (result.status === 'applied') {
-    logTerminalState({
-      terminalState: 'applied',
-      actions: {
-        notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
-        idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
-        applied: 'compras.event.finanzas.fondos_liberados.applied',
-      },
-      context: {
-        eventType: event.event_type,
-        correlationId: event.context.correlation_id,
-        tenantId: event.context.tenant_id,
-        proyectoId: event.context.proyecto_id,
-      },
-      extras: {
-        referencia_oc_id,
-        oc_codigo: result.oc_codigo,
-      },
-    });
+  if (resultado.resultado === 'oc_no_encontrada') {
+    logTerminalState({ terminalState: 'not_found', actions, context: logContext, extras: { referencia_oc_id } });
+  } else if (resultado.resultado === 'aplicada') {
+    logTerminalState({ terminalState: 'applied', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else if (resultado.estadoActual === transicion.destino) {
+    logTerminalState({ terminalState: 'idempotent', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else {
+    console.warn(JSON.stringify({
+      action: 'compras.event.finanzas.fondos_liberados.no_op_estado',
+      event_type: event.event_type,
+      correlation_id: event.context.correlation_id,
+      tenant_id: event.context.tenant_id,
+      proyecto_id: event.context.proyecto_id,
+      referencia_oc_id,
+      estado_actual: resultado.estadoActual,
+    }));
   }
 }
 
@@ -5270,70 +5125,44 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
     return;
   }
 
-  await createTenantContext(
+  const actions = {
+    notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
+    idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
+    applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
+  };
+  const logContext = {
+    eventType:     event.event_type,
+    correlationId: event.context.correlation_id,
+    tenantId:      event.context.tenant_id,
+    proyectoId:    event.context.proyecto_id,
+  };
+
+  // Transición atómica: solo una OC pendiente de confirmación pasa a ERROR_FINANZAS. Una OC ya emitida, en
+  // recepción, recibida o cancelada NO se degrada por un evento tardío. La alerta se crea en la misma transacción
+  // y solo cuando la transición se aplicó.
+  const transicion = TRANSICIONES_EVENTO_FINANZAS.presupuesto_insuficiente;
+  const resultado = await createTenantContext(
     {
       tenantId: event.context.tenant_id,
       proyectoId: event.context.proyecto_id,
       userId: event.context.user_id,
     },
     async (prisma) => {
-      const oc = await prisma.ordenCompra.findUnique({
-        where: { id_orden: referencia_oc_id },
+      const t = await transicionarEstadoOc(prisma as any, {
+        ocId: referencia_oc_id,
+        tenantId: event.context.tenant_id,
+        proyectoId: event.context.proyecto_id,
+        destino: transicion.destino,
+        desde: transicion.desde,
       });
-
-      if (!oc) {
-        logTerminalState({
-          terminalState: 'not_found',
-          actions: {
-            notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
-            idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
-            applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
-          },
-          context: {
-            eventType: event.event_type,
-            correlationId: event.context.correlation_id,
-            tenantId: event.context.tenant_id,
-            proyectoId: event.context.proyecto_id,
-          },
-          extras: {
-            referencia_oc_id,
-          },
-        });
-        return;
-      }
-
-      if (oc.estado === OC_STATUS.ERROR_FINANZAS) {
-        logTerminalState({
-          terminalState: 'idempotent',
-          actions: {
-            notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
-            idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
-            applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
-          },
-          context: {
-            eventType: event.event_type,
-            correlationId: event.context.correlation_id,
-            tenantId: event.context.tenant_id,
-            proyectoId: event.context.proyecto_id,
-          },
-          extras: {
-            referencia_oc_id,
-            oc_codigo: oc.codigo,
-          },
-        });
-        return;
-      }
-
-      await prisma.ordenCompra.update({
-        where: { id_orden: referencia_oc_id },
-        data: { estado: OC_STATUS.ERROR_FINANZAS },
-      });
+      if (t.resultado !== 'aplicada') return t;
 
       // ── [ALERTA] 3.1 Persistir alerta en BD (mismo contexto RLS, idempotente) ──────
       await prisma.alertaOcError.upsert({
         where: { tenant_id_oc_id: { tenant_id: event.context.tenant_id, oc_id: referencia_oc_id } },
         update: {
           error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
+          resuelta: false,
           updated_at: new Date(),
         },
         create: {
@@ -5345,36 +5174,44 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
           error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
         },
       });
-      console.log(JSON.stringify({
-        action:     'compras.oc_error_finanzas.alerta_creada',
-        path:       'async',
-        oc_id:      referencia_oc_id,
-        tenant_id:  event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-      }));
-
-      logTerminalState({
-        terminalState: 'applied',
-        actions: {
-          notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
-          idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
-          applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
-        },
-        context: {
-          eventType:     event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId:      event.context.tenant_id,
-          proyectoId:    event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-          oc_codigo: oc.codigo,
-        },
-      });
+      return t;
     }
   );
 
+  if (resultado.resultado === 'oc_no_encontrada') {
+    logTerminalState({ terminalState: 'not_found', actions, context: logContext, extras: { referencia_oc_id } });
+    return;
+  }
+
+  if (resultado.resultado === 'no_op') {
+    if (resultado.estadoActual === transicion.destino) {
+      logTerminalState({ terminalState: 'idempotent', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+    } else {
+      // No-op: el estado actual no admite la transición (p. ej. OC ya EMITIDA). No se crea alerta ni se publica nada.
+      console.warn(JSON.stringify({
+        action: 'compras.event.finanzas.presupuesto_insuficiente.no_op_estado',
+        event_type: event.event_type,
+        correlation_id: event.context.correlation_id,
+        tenant_id: event.context.tenant_id,
+        proyecto_id: event.context.proyecto_id,
+        referencia_oc_id,
+        estado_actual: resultado.estadoActual,
+      }));
+    }
+    return;
+  }
+
+  console.log(JSON.stringify({
+    action:     'compras.oc_error_finanzas.alerta_creada',
+    path:       'async',
+    oc_id:      referencia_oc_id,
+    tenant_id:  event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+  }));
+  logTerminalState({ terminalState: 'applied', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+
   // ── [ALERTA] 3.2 Publicar evento al bus (best-effort, fuera del contexto prisma) ──
+  // Solo cuando la transición se aplicó: un no-op no anuncia un error que la OC no tiene.
   try {
     await eventBus.publish({
       event_type: 'compras.oc_error_finanzas',
