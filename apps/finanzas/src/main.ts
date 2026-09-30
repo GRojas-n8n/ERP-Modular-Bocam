@@ -24,6 +24,17 @@
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
+import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
+import {
+  configurarDespachadorOutbox,
+  configurarLimpiezaOutbox,
+  consultarBacklog,
+  estadoDespachadorOutbox,
+  metricasOutbox,
+  VARIABLE_DESPACHADOR,
+  VARIABLE_LIMPIEZA,
+} from './outbox-dispatcher';
+import { iniciarVerificacionConsumidores, ultimoInformeConsumidores } from './outbox-consumidores';
 import { v4 as uuidv4 } from 'uuid';
 import {
   createApiResponse,
@@ -83,7 +94,7 @@ initSentry(process.env.SENTRY_DSN || '', 'finanzas');
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
-  excludePaths: ['/health'],
+  excludePaths: ['/health', '/ready'],
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'finanzas' }));
 app.use(requireProjectAccess());
@@ -781,7 +792,7 @@ app.post('/api/v1/finanzas/comprometer-fondos',
 
     // Compromiso único por OC: lock por (tenant, OC), inserción atómica sobre el índice único parcial y
     // UPDATE condicional del saldo (ver compromiso-oc.ts). Los eventos se publican después del commit.
-    const resultado = await registrarCompromisoOc({ tenantId, proyectoId, userId }, {
+    const resultado = await registrarCompromisoOc({ tenantId, proyectoId, userId, correlationId }, {
       ocId: oc_id,
       ocCodigo: oc_codigo,
       monto: Number(monto),
@@ -789,6 +800,7 @@ app.post('/api/v1/finanzas/comprometer-fondos',
       validarSuficiencia: true,
       concepto: concepto || `Fondos comprometidos por OC ${oc_codigo}`,
       notas: 'Compromiso automatico por emision de Orden de Compra.',
+      publicaEvento: true,
     });
 
     if (resultado.estado === 'presupuesto_no_encontrado') {
@@ -836,7 +848,8 @@ app.post('/api/v1/finanzas/comprometer-fondos',
         idempotente: false,
       };
 
-      await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, {
+      // Modo outbox: el evento ya quedo escrito en la outbox; no se publica directamente.
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, {
         tenant_id: tenantId,
         proyecto_id: proyectoId,
         user_id: userId,
@@ -880,7 +893,7 @@ app.post('/api/v1/finanzas/comprometer-fondos',
     } else {
       console.log(`[Finanzas] FONDOS COMPROMETIDOS: ${resultado.monto.toLocaleString()} para OC ${oc_codigo}`);
       // Solo el procesamiento que crea el compromiso publica fondos_comprometidos (con el saldo real).
-      await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, {
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, {
         tenant_id: tenantId,
         proyecto_id: proyectoId,
         user_id: userId,
@@ -936,12 +949,13 @@ app.post('/api/v1/finanzas/liberar-fondos',
     }
 
     // Liberación única por OC: usa el COMPROMISO exacto de esa OC (nunca saldos agregados) y deja el tombstone.
-    const liberacion = await registrarCancelacionOc({ tenantId, proyectoId, userId }, {
+    const liberacion = await registrarCancelacionOc({ tenantId, proyectoId, userId, correlationId }, {
       ocId: oc_id,
       ocCodigo: oc_codigo,
       origen: 'HTTP',
       concepto: concepto || `Liberacion de fondos por OC ${oc_codigo} (Cancelacion/Ajuste)`,
       notas: 'Proceso automatico de liberacion de fondos.',
+      publicaEvento: true,
     });
 
     if (liberacion.estado === 'sin_compromiso') {
@@ -990,7 +1004,7 @@ app.post('/api/v1/finanzas/liberar-fondos',
       });
     }
 
-    await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, {
+    if (!liberacion.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, {
       tenant_id: tenantId,
       proyecto_id: proyectoId,
       user_id: userId,
@@ -1869,6 +1883,59 @@ app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
 );
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// READINESS (sin auth) — lote P1 del outbox de eventos. Distingue: base, RabbitMQ, despachador, consumidores
+// esperados (colas con consumidor) y backlog/errores de la outbox.
+//   - En modo `direct` (predeterminado) el outbox es informativo: no vuelve el servicio no listo.
+//   - En modo `outbox` el servicio NO está listo si: el despachador está apagado o falló, hay filas en ERROR, hay
+//     pendientes más antiguos que FINANZAS_OUTBOX_MAX_PENDIENTE_SEG (300 s por defecto) o falta la cola de un consumidor.
+// El healthcheck de Docker usa /health, no /ready.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get('/ready', async (_req: Request, res: Response) => {
+  const modo = modoEventos();
+  const despachador = estadoDespachadorOutbox();
+  const consumidores = ultimoInformeConsumidores();
+  const maxPendienteSeg = Number(process.env.FINANZAS_OUTBOX_MAX_PENDIENTE_SEG ?? 300);
+  const checks: Record<string, 'ok' | 'error' | 'degraded' | 'disabled' | 'starting' | 'unknown'> = {
+    database: 'ok', rabbitmq: 'ok', dispatcher: despachador.estado, bindings: 'unknown', backlog: 'ok',
+  };
+  let backlog: Awaited<ReturnType<typeof consultarBacklog>> | null = null;
+  try {
+    backlog = await consultarBacklog();
+  } catch {
+    checks.database = 'error';
+    checks.backlog = 'unknown';
+  }
+  if (!eventBus.isReady()) checks.rabbitmq = 'error';
+  checks.bindings = consumidores.estado === 'ok' ? 'ok'
+    : consumidores.estado === 'degradado' || consumidores.estado === 'error' ? 'degraded'
+    : 'unknown';
+  if (backlog) {
+    const atascado = backlog.mas_antiguo_pendiente_segundos !== null && backlog.mas_antiguo_pendiente_segundos > maxPendienteSeg;
+    checks.backlog = backlog.errores > 0 || atascado ? 'degraded' : 'ok';
+  }
+
+  const base = checks.database === 'ok' && checks.rabbitmq === 'ok';
+  const outboxOk =
+    despachador.estado !== 'error'
+    && !(modo === 'outbox' && despachador.estado === 'disabled')
+    && checks.backlog !== 'degraded'
+    && checks.bindings !== 'degraded';
+  const ready = base && (modo === 'direct' || outboxOk);
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not_ready',
+    service: 'finanzas',
+    event_mode: modo,
+    checks,
+    dispatcher: despachador,
+    consumers: consumidores,
+    outbox: backlog
+      ? { ...backlog, max_pendiente_segundos: maxPendienteSeg, metricas: { ...metricasOutbox } }
+      : null,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK (sin auth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.get('/health', (_req: Request, res: Response) => {
@@ -2140,8 +2207,9 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
   // Compromiso único por OC (lock + índice único + tombstone): ver compromiso-oc.ts. La publicación ocurre
   // después del commit y solo cuando este procesamiento fue el que creó el compromiso.
   const resultado = await registrarCompromisoOc(
-    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id, correlationId: event.context.correlation_id },
     {
+      publicaEvento: true,
       ocId: oc_id,
       ocCodigo: codigo,
       monto: Number(total),
@@ -2173,7 +2241,7 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
         monto_solicitado: resultado.montoSolicitado,
         monto_disponible: resultado.montoDisponible,
       }));
-      await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, event.context, {
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, event.context, {
         presupuesto_id,
         monto_solicitado: resultado.montoSolicitado,
         monto_disponible: resultado.montoDisponible,
@@ -2186,7 +2254,7 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
 
     case 'creado':
       console.log(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.created', ...logCtx, presupuesto_id, id_movimiento: resultado.movimientoId }));
-      await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, event.context, {
+      if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, event.context, {
         presupuesto_id,
         movimiento_id: resultado.movimientoId,
         monto_comprometido: resultado.monto,
@@ -2236,8 +2304,9 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
   // Siempre deja el tombstone; libera únicamente el compromiso exacto de esta OC (monto y presupuesto del propio
   // movimiento, no los del payload ni saldos agregados). Sin compromiso no libera nada.
   const resultado = await registrarCancelacionOc(
-    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id, correlationId: event.context.correlation_id },
     {
+      publicaEvento: true,
       ocId: oc_id,
       ocCodigo: codigo,
       origen: 'EVENTO',
@@ -2259,7 +2328,7 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     id_movimiento: resultado.movimientoId,
   }));
 
-  await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, event.context, {
+  if (!resultado.eventoEncolado) await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, event.context, {
     presupuesto_id: resultado.presupuestoId,
     movimiento_id: resultado.movimientoId,
     monto_liberado: resultado.monto,
@@ -2580,6 +2649,21 @@ export async function startServer() {
     console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Pagada`);
     await handleNominaPagadaEvent(event);
   });
+
+  // ─── OUTBOX DE EVENTOS (lote P1) ────────────────────────────────────────────────
+  // Predeterminado: FINANZAS_EVENT_MODE=direct y despachador/limpieza apagados. Solo el valor exacto `on` los enciende.
+  console.log(JSON.stringify({ action: 'finanzas.outbox.modo', event_mode: modoEventos(), variable: VARIABLE_MODO_EVENTOS }));
+  configurarDespachadorOutbox(eventBus, {
+    valor: process.env[VARIABLE_DESPACHADOR],
+    intervaloMs: Number(process.env.FINANZAS_OUTBOX_INTERVALO_MS ?? 5000),
+    maxAttempts: Number(process.env.FINANZAS_OUTBOX_MAX_INTENTOS ?? 10),
+  });
+  configurarLimpiezaOutbox({
+    valor: process.env[VARIABLE_LIMPIEZA],
+    retencionDias: Number(process.env.FINANZAS_OUTBOX_RETENCION_DIAS ?? 90),
+    lote: Number(process.env.FINANZAS_OUTBOX_LIMPIEZA_LOTE ?? 100),
+  });
+  iniciarVerificacionConsumidores(Number(process.env.FINANZAS_OUTBOX_VERIFICACION_MS ?? 60_000));
 
   console.log('[Finanzas] 📡 Suscrito a: compras.oc_creada, compras.oc_cancelada, control_obra.estimacion_aprobada, control_obra.avance_fisico_validado, control_obra.avance_fisico_registrado, auth.centro_costos_creado, gerencia_tecnica.saldo_partida_creado, personal.nomina_autorizada, personal.nomina_pagada');
 });
