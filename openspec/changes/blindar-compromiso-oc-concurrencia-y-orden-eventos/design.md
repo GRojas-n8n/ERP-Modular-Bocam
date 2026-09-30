@@ -88,12 +88,35 @@ Riesgos de la recomendación:
 - El advisory lock es a nivel de sesión de la transacción: solo protege mientras la transacción dura; no debe mantenerse durante llamadas HTTP.
 - El tombstone crece con las cancelaciones; requiere criterio de retención.
 
-### 3. Compras: transiciones de estado condicionadas
+### 3. Compras: transiciones de estado condicionadas (implementadas en el segundo PR)
 
-Las transiciones que provocan `fondos_comprometidos` y `presupuesto_insuficiente` se ejecutan como actualización condicional (`updateMany ... WHERE estado IN (...)` y comprobar el conteo), sin lectura previa:
+Las transiciones que provocan `fondos_comprometidos` y `presupuesto_insuficiente` se ejecutan como actualización condicional atómica (`updateMany ... WHERE id AND estado IN (lista blanca)`), sin lectura previa como protección. Si el conteo actualizado es cero se registra un no-op con el estado actual, sin modificarlo:
 
-- `fondos_comprometidos`: solo `PENDIENTE_CONFIRMACION_FINANZAS → EMITIDA`. Sobre cualquier otro estado es un no-op registrado (nunca regresa `CANCELADA`, `CANCELACION_PENDIENTE`, `PARCIALMENTE_RECIBIDA` ni `RECIBIDA`).
-- `presupuesto_insuficiente`: solo desde `PENDIENTE_CONFIRMACION_FINANZAS`; una OC `EMITIDA` (o posterior) no vuelve a `ERROR_FINANZAS` por un evento tardío.
+- `fondos_comprometidos` → `EMITIDA`, solo desde `PENDIENTE_CONFIRMACION_FINANZAS` o `ERROR_FINANZAS`. Desde `ERROR_FINANZAS` se conserva la auto-recuperación que ya existía (Finanzas confirma un compromiso real, p. ej. tras un timeout de la llamada HTTP) y, al aplicarse, la alerta de error de la OC se marca resuelta en la misma transacción. Sobre cualquier otro estado es un no-op (nunca regresa `CANCELADA`, `CANCELACION_PENDIENTE`, `PARCIALMENTE_RECIBIDA` ni `RECIBIDA` a `EMITIDA`). *Esta decisión amplía el borrador original, que solo permitía el estado pendiente; es un cambio de una línea en `TRANSICIONES_EVENTO_FINANZAS` si el titular prefiere la versión estricta.*
+- `presupuesto_insuficiente` → `ERROR_FINANZAS`, solo desde `PENDIENTE_CONFIRMACION_FINANZAS`. Una OC `EMITIDA` (o posterior) no vuelve a `ERROR_FINANZAS` por un evento tardío. La alerta y la publicación de `compras.oc_error_finanzas` ocurren solo cuando la transición se aplicó (antes se publicaba siempre, incluso en un no-op).
+
+### 10. Estados de la OC y matriz de transiciones (Compras)
+
+`OrdenCompra.estado` es un `String` libre (sin enum ni restricción en BD); su comentario en el esquema está desactualizado. Fuente de verdad en código: `apps/compras/src/oc-estados.ts`.
+
+Estados que Compras asigna: `PENDIENTE_CONFIRMACION_FINANZAS`, `ERROR_FINANZAS`, `EMITIDA`, `PARCIALMENTE_RECIBIDA`, `RECIBIDA`, `CANCELACION_PENDIENTE`, `CANCELADA`. Heredados sin escritor (existen en el esquema o en dashboards, ningún camino de Compras los asigna): `BORRADOR` (valor por defecto del esquema), `PENDIENTE`, `APROBADA`; `COBRADA` solo aparece como guarda en la ruta de cancelación y en la UI (viene de Ventas).
+
+**Nombre canónico:** el valor almacenado es `PENDIENTE_CONFIRMACION_FINANZAS`. `PENDIENTE_FINANZAS` es únicamente el nombre del identificador en el código (`OC_STATUS.PENDIENTE_FINANZAS`); el literal `PENDIENTE_FINANZAS` no existe como valor en ninguna parte (una prueba lo verifica). No se renombró nada.
+
+Matriz (✅ permitida · ❌ prohibida · = no-op idempotente). Las dos primeras columnas las impone este PR; las demás describen el comportamiento existente de las rutas, que no se modifica aquí:
+
+| Estado origen | `fondos_comprometidos` → EMITIDA | `presupuesto_insuficiente` → ERROR_FINANZAS | Cancelación (ruta) | Recepción parcial (ruta) | Recepción total (ruta) | Error de Finanzas (`convertir-oc`) |
+|---|---|---|---|---|---|---|
+| `PENDIENTE_CONFIRMACION_FINANZAS` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ → ERROR_FINANZAS |
+| `ERROR_FINANZAS` | ✅ (resuelve la alerta) | = | ✅ | ❌ | ❌ | — |
+| `EMITIDA` | = | ❌ | ✅ | ✅ → PARCIALMENTE_RECIBIDA | ✅ → RECIBIDA | — |
+| `PARCIALMENTE_RECIBIDA` | ❌ | ❌ | ✅ | ✅ | ✅ → RECIBIDA | — |
+| `RECIBIDA` | ❌ | ❌ | ❌ | ❌ | ❌ | — |
+| `CANCELACION_PENDIENTE` | ❌ | ❌ | ✅ → CANCELADA (reconciliación); repetir la cancelación ❌ | ❌ | ❌ | — |
+| `CANCELADA` | ❌ | ❌ | = | ❌ | ❌ | — |
+| `BORRADOR`, `PENDIENTE`, `APROBADA` (heredados) | ❌ | ❌ | (la ruta los admite) | ❌ | ❌ | — |
+
+Riesgo pendiente: el consumidor de `finanzas.fondos_liberados` (Compras) asigna `CANCELADA` a cualquier estado distinto de `CANCELADA`, sin lista blanca. Solo se publica en flujos de cancelación, pero un `fondos_liberados` tardío o duplicado sobre una OC `RECIBIDA` la cancelaría. No se toca en este PR (fuera de las pruebas acordadas); se propone como seguimiento con la misma técnica.
 
 ### 4. Eventos idempotentes
 

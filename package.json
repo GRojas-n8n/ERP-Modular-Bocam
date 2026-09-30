@@ -25,6 +25,7 @@
     "test:integration:compras-outbox-recepcion-oc": "npm run test:integration:outbox-recepcion-oc -w @bocam/compras",
     "test:integration:compras-outbox-recepcion-oc-rabbitmq": "npm run test:integration:outbox-recepcion-oc-rabbitmq -w @bocam/compras",
     "test:integration:compras-outbox-dispatcher-arranque": "npm run test:integration:outbox-dispatcher-arranque -w @bocam/compras",
+    "test:integration:compras-oc-transiciones": "npm run test:integration:oc-transiciones-eventos-finanzas -w @bocam/compras",
     "test:integration:compras-oc-snapshot-insumo": "npm run test:integration:oc-snapshot-insumo -w @bocam/compras",
     "test:integration:compras-recepcion-oc-compras-almacen": "npm run test:integration:recepcion-oc-compras-almacen -w @bocam/compras",
     "test:integration:almacen-recepcion-oc-retencion": "npm run test:integration:recepcion-oc-retencion -w @bocam/almacen",

@@ -41,18 +41,30 @@ Si la cancelación de una OC se procesa antes que su creación, la creación tar
 - **THEN** no se crea ningún compromiso
 
 ### Requirement: Una OC cancelada NO SHALL volver a EMITIDA
-Un evento `finanzas.fondos_comprometidos` tardío NO SHALL cambiar el estado de una OC que no esté en `PENDIENTE_CONFIRMACION_FINANZAS`. En particular, NO SHALL regresar `CANCELADA`, `CANCELACION_PENDIENTE`, `PARCIALMENTE_RECIBIDA` ni `RECIBIDA` a `EMITIDA`.
+Un evento `finanzas.fondos_comprometidos` tardío SHALL cambiar el estado de una OC a `EMITIDA` únicamente desde `PENDIENTE_CONFIRMACION_FINANZAS` o `ERROR_FINANZAS`, mediante una actualización condicional atómica. En particular, NO SHALL regresar `CANCELADA`, `CANCELACION_PENDIENTE`, `PARCIALMENTE_RECIBIDA` ni `RECIBIDA` a `EMITIDA`. Al aplicarse desde `ERROR_FINANZAS`, la alerta de error de la OC SHALL quedar resuelta en la misma transacción.
 
 #### Scenario: Fondos comprometidos tardíos
 - **WHEN** llega `fondos_comprometidos` de una OC ya `CANCELADA`
 - **THEN** el estado permanece `CANCELADA`
 
 ### Requirement: Una OC emitida NO SHALL regresar a ERROR_FINANZAS por un evento tardío
-Un evento `finanzas.presupuesto_insuficiente` NO SHALL cambiar el estado de una OC que no esté en `PENDIENTE_CONFIRMACION_FINANZAS`.
+Un evento `finanzas.presupuesto_insuficiente` NO SHALL cambiar el estado de una OC que no esté en `PENDIENTE_CONFIRMACION_FINANZAS`, ni crear la alerta de error ni publicar `compras.oc_error_finanzas` cuando la transición no se aplicó.
 
 #### Scenario: Presupuesto insuficiente tardío
 - **WHEN** llega `presupuesto_insuficiente` de una OC ya `EMITIDA`
 - **THEN** el estado permanece `EMITIDA`
+
+#### Scenario: Eventos concurrentes sobre la misma OC
+- **WHEN** `fondos_comprometidos` y `presupuesto_insuficiente` de la misma OC se procesan a la vez
+- **THEN** el estado final es `EMITIDA` sin alerta activa o `ERROR_FINANZAS` con alerta activa, nunca una combinación divergente
+
+#### Scenario: Cancelación concurrente con un evento tardío
+- **WHEN** una cancelación y un evento tardío de Finanzas concurren sobre la misma OC
+- **THEN** la OC queda `CANCELADA`
+
+#### Scenario: Evento duplicado
+- **WHEN** el mismo evento llega dos veces
+- **THEN** el segundo es un no-op idempotente
 
 ### Requirement: Un evento idempotente NO SHALL republicar información falsa
 Si el compromiso o la liberación ya existían, el handler NO SHALL publicar un evento con valores inventados (p. ej. `monto_disponible_restante: 0`). SHALL no publicar, o publicar con el valor real del presupuesto.

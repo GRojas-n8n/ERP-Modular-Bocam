@@ -13,8 +13,8 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 prueb
 - [x] 2.3 Duplicado del mismo evento (secuencial y concurrente) → un solo efecto (pruebas 1 y 4).
 - [x] 2.4 Cancelación antes de creación → sin compromiso residual tras procesar ambas; la creación tardía es un no-op (prueba 5; concurrente en 10c).
 - [x] 2.5 Creación después de cancelación (misma OC ya cancelada) → sin compromiso nuevo, por evento y por HTTP (`409`) (prueba 6).
-- [ ] 2.6 `fondos_comprometidos` tardío sobre una OC `CANCELADA` (y sobre `RECIBIDA`/`PARCIALMENTE_RECIBIDA`) → el estado no cambia. **Segundo PR (Compras).**
-- [ ] 2.7 `presupuesto_insuficiente` tardío sobre una OC `EMITIDA` → el estado no cambia. **Segundo PR (Compras).**
+- [x] 2.6 `fondos_comprometidos` tardío sobre una OC `CANCELADA` (y sobre `RECIBIDA`/`PARCIALMENTE_RECIBIDA`/`CANCELACION_PENDIENTE` y los estados heredados) → el estado no cambia (segundo PR, `oc-transiciones-eventos-finanzas`, incluida la matriz completa de estados).
+- [x] 2.7 `presupuesto_insuficiente` tardío sobre una OC `EMITIDA`, en recepción, recibida o cancelada → el estado no cambia, sin alerta ni publicación (segundo PR).
 - [x] 2.8 Liberación sin compromiso de esa OC → no libera; no consume el compromiso de otra OC del mismo presupuesto (pruebas 8 y 9).
 - [x] 2.9 Dos cancelaciones concurrentes (HTTP y evento) → una sola `LIBERACION` (prueba 7).
 - [x] 2.10 Evento idempotente → no republica datos falsos (prueba 4).
@@ -28,11 +28,13 @@ Primer PR (Finanzas): `compromiso-oc-concurrencia.integration.test.ts` (16 prueb
 - [x] 2.18 Paridad de RLS entre la migración y `rls-policies.sql`, y uso del SQL canónico en el CI (pruebas estáticas).
 - [x] 2.19 Referencias de OC inválidas se rechazan antes del INSERT (400 / `invalid_payload`) y el CHECK cierra el NULL (pruebas 10e y 10f).
 
+- [x] 2.20 Compras (segundo PR): eventos concurrentes (`comprometidos` + `insuficiente`) sin estados divergentes; evento duplicado idempotente; transición válida desde el pendiente canónico; cancelación concurrente vs evento tardío (11 pruebas). Mutaciones: sin la condición de estado fallan 7 de 11; con lectura previa + actualización por id falla la de cancelación concurrente; sin resolver la alerta fallan 2.
+
 ## 3. Implementación (por PR y servicio)
 
 - [x] 3.1 Migración de Finanzas: comprobación de duplicados, índice único parcial, tabla de tombstone con RLS forzado (`20260930120000_blindar_compromiso_oc`, con `rollback.sql`).
 - [x] 3.2 Finanzas: inserción atómica y advisory lock por OC en los tres caminos de compromiso y los dos de liberación (`apps/finanzas/src/compromiso-oc.ts`).
-- [ ] 3.3 Compras: transiciones condicionadas de `fondos_comprometidos` y `presupuesto_insuficiente`. **Segundo PR.**
+- [x] 3.3 Compras: transiciones condicionadas de `fondos_comprometidos` y `presupuesto_insuficiente` (`oc-estados.ts`, `transicionarEstadoOc`; segundo PR).
 - [x] 3.4 Finanzas: eventos idempotentes sin datos falsos (`oc_creada` ya no republica `fondos_comprometidos` cuando el compromiso existía).
 
 ## 4. Cierre
