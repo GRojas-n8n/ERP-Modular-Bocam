@@ -50,7 +50,7 @@ El despachador debe nacer **apagado**. Con eventos ya existentes y en uso (a dif
 - No se escriben filas en modo `direct`: así, al activar, no se republica historia.
 - La variable de modo y la del despachador se activan por servicio, en una operación explícita y auditada, **después** de cumplir las precondiciones de la sección 5.
 - **Reversa:** volver a `direct` **no borra** filas `PENDIENTE`/`ERROR`. Antes de revertir, el despachador debe vaciar lo pendiente o las filas se conservan para reanudar al reactivar. Nunca se elimina un evento pendiente.
-- Decisión pendiente del titular: aprobar el modo `direct|outbox` (recomendado) frente a mantener un único modo con ambas publicaciones (descartado: duplicaría cada evento durante la ventana).
+- **Decisión del titular (2026-09-30):** modo `direct|outbox` aprobado por servicio. Valor predeterminado al desplegar: `direct` con despachador `off`. **No** existe modo dual que publique directamente y por outbox a la vez.
 
 ### 4. Extracción del despachador
 
@@ -68,7 +68,7 @@ El despachador de Compras está acoplado a su esquema Prisma (`apps/compras/src/
 
 - `/ready` incluye `outbox_dispatcher` (como Compras): degradado si el despachador está apagado en modo `outbox`, si hay filas `ERROR` o si la más antigua `PENDIENTE` supera un umbral.
 - Métricas: pendientes, edad de la más antigua, `ERROR`, publicaciones fallidas, eventos devueltos por `mandatory` (sin routing), latencia de confirmación. Alertas sobre pendientes antiguos, `ERROR` > 0 y devoluciones por falta de cola.
-- Retención: `PUBLICADO` se conserva un periodo configurable (propuesta inicial: 30 días) y se limpia con un trabajo controlado (lotes pequeños, registro de lo borrado, desactivable). `PENDIENTE` y `ERROR` **nunca** se eliminan automáticamente.
+- Retención (decisión del titular): `PUBLICADO` se conserva **90 días** y se limpia con un trabajo controlado (lotes pequeños, observable, registro de lo borrado, desactivable; desactivado por defecto al inicio). `PENDIENTE` y `ERROR` **nunca** se eliminan automáticamente.
 - Logs estructurados sin montos ni datos de negocio (mismo criterio que #185).
 
 ### 7. Lotes
@@ -91,3 +91,12 @@ Cada lote = un change hijo o PR por servicio, pruebas primero, despliegue indepe
 - El orden por agregado puede retener eventos posteriores de una misma OC mientras uno falla; se mitiga con alerta y reintento manual.
 - `mandatory` no prueba la cola de cada consumidor (ver decisión 2).
 - Mientras un servicio esté en `direct`, su riesgo actual de pérdida persiste; se acepta, porque es el estado actual.
+
+## Decisiones del titular (2026-09-30)
+
+1. Configuración por servicio: `direct` (comportamiento actual, sin escribir outbox) u `outbox` (escritura transaccional y publicación exclusiva por despachador).
+2. Predeterminado durante el despliegue: modo `direct` y despachador `off`.
+3. Sin modo dual (publicar directo y por outbox al mismo tiempo).
+4. Retención: `PUBLICADO` 90 días; `PENDIENTE` y `ERROR` nunca se eliminan automáticamente; limpieza por lotes pequeños, observable y desactivable.
+5. Orden de trabajo: P1 Finanzas (tres eventos de compromiso) → demostrar o arreglar la idempotencia de los consumidores → activar P1 → después P1b y P2–P6.
+6. Responsables: implementación, Claude Code; aprobación y activación productiva, el titular; reglas contables, el responsable contable.

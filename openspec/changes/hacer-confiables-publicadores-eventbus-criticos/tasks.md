@@ -3,11 +3,12 @@
 - [x] 1.1 Inventariar los publicadores de Finanzas y su comportamiento (`inventario-publicadores.md`, lectura estática de `main` `750c591`).
 - [x] 1.2 Listar por servicio los eventos críticos de los lotes P2–P6 (nombres verificados en el código; el detalle por evento se completa en cada lote).
 - [x] 1.3 Registrar las deudas independientes (`deudas-independientes.md`).
-- [ ] 1.4 **Titular:** aprobar el modo de transición `direct|outbox` (diseño, decisión 3), el periodo de retención inicial de filas `PUBLICADO` y el orden de lotes.
-- [ ] 1.5 **Titular:** designar responsable del lote P1.
+- [x] 1.4 **Titular (2026-09-30):** aprobados el modo `direct|outbox` (predeterminado `direct` y despachador `off`, sin modo dual), la retención de `PUBLICADO` a 90 días y el orden de lotes (ver `design.md`, «Decisiones del titular»).
+- [x] 1.5 Responsables: implementación, Claude Code; aprobación y activación productiva, el titular; reglas contables, el responsable contable.
 
 ## 2. P1 — Outbox de Finanzas (change hijo o PR propio; pruebas primero)
 
+- [ ] 2.0 Auditar la idempotencia de los consumidores de P1 (Compras y Contabilidad) y, si Contabilidad no es idempotente, corregirla en un PR previo y separado antes de activar.
 - [ ] 2.1 Completar el inventario de P1 con una consulta de solo lectura a producción: filas de outbox inexistentes; `movimientos_presupuestales` por OC con/sin `fondos_comprometidos` observado en Compras (estado `PENDIENTE_CONFIRMACION_FINANZAS` antiguo).
 - [ ] 2.2 Pruebas en rojo con PostgreSQL y RabbitMQ reales: caída tras el commit, sin canal, sin cola enlazada, reintento con el mismo `event_id`, duplicado, orden por OC, varias instancias, `ERROR` y reintento manual, RLS con rol sin `BYPASSRLS`, modo `direct` idéntico al actual, reversa sin pérdida.
 - [ ] 2.3 Migración de Finanzas: tabla `outbox_eventos` con RLS habilitado y forzado, índice de pendientes, único `(tenant_id, event_id)`, `rollback.sql`; ejecutable con el rol de runtime (lección de #185).
