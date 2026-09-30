@@ -63,6 +63,24 @@ console.log = (...args: unknown[]) => { logs.push(args.map(String).join(' ')); c
 const contarLogs = (accion: string, ocId: string) => logs.filter((l) => l.includes(`"action":"${accion}"`) && l.includes(ocId)).length;
 
 const proveedores = new Map<string, string>();
+
+/**
+ * Limpieza de todo lo que crea esta suite. Es obligatoria: el esquema `compras` es compartido con otras pruebas del CI
+ * y, en particular, las recepciones dejan filas PENDIENTES en el outbox que la prueba siguiente
+ * (recepcion-oc-compras-almacen) despacharía completas.
+ */
+async function limpiar() {
+  for (const tenantId of proveedores.keys()) {
+    await (prisma as any).outboxEvento?.deleteMany({ where: { tenant_id: tenantId } });
+    await prisma.recepcionOCItem.deleteMany({ where: { tenant_id: tenantId } });
+    await prisma.recepcionOC.deleteMany({ where: { tenant_id: tenantId } });
+    await prisma.alertaOcError.deleteMany({ where: { tenant_id: tenantId } });
+    await prisma.ordenCompraItem.deleteMany({ where: { tenant_id: tenantId } });
+    await prisma.ordenCompra.deleteMany({ where: { tenant_id: tenantId } });
+    await prisma.proveedor.deleteMany({ where: { tenant_id: tenantId } });
+  }
+}
+
 async function proveedorDe(tenantId: string) {
   if (proveedores.has(tenantId)) return proveedores.get(tenantId)!;
   const p = await prisma.proveedor.create({
@@ -367,6 +385,7 @@ async function main() {
     }
   });
 
+  await limpiar();
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} pruebas en verde`);
   await stopHttpApp(comprasServer);
@@ -374,4 +393,4 @@ async function main() {
   process.exit(failed.length ? 1 : 0);
 }
 
-main().catch((e) => { console.error('not ok - oc-transiciones-eventos-finanzas', e); process.exit(1); });
+main().catch(async (e) => { console.error('not ok - oc-transiciones-eventos-finanzas', e); await limpiar().catch(() => undefined); process.exit(1); });
