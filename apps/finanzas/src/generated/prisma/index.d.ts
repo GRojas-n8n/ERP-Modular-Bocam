@@ -24,6 +24,11 @@ export type PresupuestoAsignado = $Result.DefaultSelection<Prisma.$PresupuestoAs
  */
 export type MovimientoPresupuestal = $Result.DefaultSelection<Prisma.$MovimientoPresupuestalPayload>
 /**
+ * Model OcCancelacionTombstone
+ * 
+ */
+export type OcCancelacionTombstone = $Result.DefaultSelection<Prisma.$OcCancelacionTombstonePayload>
+/**
  * Model ProgramaPagos
  * 
  */
@@ -191,6 +196,16 @@ export class PrismaClient<
     * ```
     */
   get movimientoPresupuestal(): Prisma.MovimientoPresupuestalDelegate<ExtArgs>;
+
+  /**
+   * `prisma.ocCancelacionTombstone`: Exposes CRUD operations for the **OcCancelacionTombstone** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OcCancelacionTombstones
+    * const ocCancelacionTombstones = await prisma.ocCancelacionTombstone.findMany()
+    * ```
+    */
+  get ocCancelacionTombstone(): Prisma.OcCancelacionTombstoneDelegate<ExtArgs>;
 
   /**
    * `prisma.programaPagos`: Exposes CRUD operations for the **ProgramaPagos** model.
@@ -684,6 +699,7 @@ export namespace Prisma {
   export const ModelName: {
     PresupuestoAsignado: 'PresupuestoAsignado',
     MovimientoPresupuestal: 'MovimientoPresupuestal',
+    OcCancelacionTombstone: 'OcCancelacionTombstone',
     ProgramaPagos: 'ProgramaPagos',
     CuentaBancaria: 'CuentaBancaria',
     ProyectoFinanzas: 'ProyectoFinanzas',
@@ -704,7 +720,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "presupuestoAsignado" | "movimientoPresupuestal" | "programaPagos" | "cuentaBancaria" | "proyectoFinanzas" | "pagoOC" | "detallePagoOC"
+      modelProps: "presupuestoAsignado" | "movimientoPresupuestal" | "ocCancelacionTombstone" | "programaPagos" | "cuentaBancaria" | "proyectoFinanzas" | "pagoOC" | "detallePagoOC"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -845,6 +861,76 @@ export namespace Prisma {
           count: {
             args: Prisma.MovimientoPresupuestalCountArgs<ExtArgs>
             result: $Utils.Optional<MovimientoPresupuestalCountAggregateOutputType> | number
+          }
+        }
+      }
+      OcCancelacionTombstone: {
+        payload: Prisma.$OcCancelacionTombstonePayload<ExtArgs>
+        fields: Prisma.OcCancelacionTombstoneFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OcCancelacionTombstoneFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OcCancelacionTombstoneFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          findFirst: {
+            args: Prisma.OcCancelacionTombstoneFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OcCancelacionTombstoneFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          findMany: {
+            args: Prisma.OcCancelacionTombstoneFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>[]
+          }
+          create: {
+            args: Prisma.OcCancelacionTombstoneCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          createMany: {
+            args: Prisma.OcCancelacionTombstoneCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OcCancelacionTombstoneCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>[]
+          }
+          delete: {
+            args: Prisma.OcCancelacionTombstoneDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          update: {
+            args: Prisma.OcCancelacionTombstoneUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          deleteMany: {
+            args: Prisma.OcCancelacionTombstoneDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OcCancelacionTombstoneUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OcCancelacionTombstoneUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OcCancelacionTombstonePayload>
+          }
+          aggregate: {
+            args: Prisma.OcCancelacionTombstoneAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOcCancelacionTombstone>
+          }
+          groupBy: {
+            args: Prisma.OcCancelacionTombstoneGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OcCancelacionTombstoneGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OcCancelacionTombstoneCountArgs<ExtArgs>
+            result: $Utils.Optional<OcCancelacionTombstoneCountAggregateOutputType> | number
           }
         }
       }
@@ -3694,6 +3780,908 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: MovimientoPresupuestalInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OcCancelacionTombstone
+   */
+
+  export type AggregateOcCancelacionTombstone = {
+    _count: OcCancelacionTombstoneCountAggregateOutputType | null
+    _min: OcCancelacionTombstoneMinAggregateOutputType | null
+    _max: OcCancelacionTombstoneMaxAggregateOutputType | null
+  }
+
+  export type OcCancelacionTombstoneMinAggregateOutputType = {
+    tenant_id: string | null
+    oc_id: string | null
+    proyecto_id: string | null
+    oc_codigo: string | null
+    origen: string | null
+    usuario_id: string | null
+    created_at: Date | null
+  }
+
+  export type OcCancelacionTombstoneMaxAggregateOutputType = {
+    tenant_id: string | null
+    oc_id: string | null
+    proyecto_id: string | null
+    oc_codigo: string | null
+    origen: string | null
+    usuario_id: string | null
+    created_at: Date | null
+  }
+
+  export type OcCancelacionTombstoneCountAggregateOutputType = {
+    tenant_id: number
+    oc_id: number
+    proyecto_id: number
+    oc_codigo: number
+    origen: number
+    usuario_id: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type OcCancelacionTombstoneMinAggregateInputType = {
+    tenant_id?: true
+    oc_id?: true
+    proyecto_id?: true
+    oc_codigo?: true
+    origen?: true
+    usuario_id?: true
+    created_at?: true
+  }
+
+  export type OcCancelacionTombstoneMaxAggregateInputType = {
+    tenant_id?: true
+    oc_id?: true
+    proyecto_id?: true
+    oc_codigo?: true
+    origen?: true
+    usuario_id?: true
+    created_at?: true
+  }
+
+  export type OcCancelacionTombstoneCountAggregateInputType = {
+    tenant_id?: true
+    oc_id?: true
+    proyecto_id?: true
+    oc_codigo?: true
+    origen?: true
+    usuario_id?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type OcCancelacionTombstoneAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OcCancelacionTombstone to aggregate.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OcCancelacionTombstones
+    **/
+    _count?: true | OcCancelacionTombstoneCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OcCancelacionTombstoneMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OcCancelacionTombstoneMaxAggregateInputType
+  }
+
+  export type GetOcCancelacionTombstoneAggregateType<T extends OcCancelacionTombstoneAggregateArgs> = {
+        [P in keyof T & keyof AggregateOcCancelacionTombstone]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOcCancelacionTombstone[P]>
+      : GetScalarType<T[P], AggregateOcCancelacionTombstone[P]>
+  }
+
+
+
+
+  export type OcCancelacionTombstoneGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OcCancelacionTombstoneWhereInput
+    orderBy?: OcCancelacionTombstoneOrderByWithAggregationInput | OcCancelacionTombstoneOrderByWithAggregationInput[]
+    by: OcCancelacionTombstoneScalarFieldEnum[] | OcCancelacionTombstoneScalarFieldEnum
+    having?: OcCancelacionTombstoneScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OcCancelacionTombstoneCountAggregateInputType | true
+    _min?: OcCancelacionTombstoneMinAggregateInputType
+    _max?: OcCancelacionTombstoneMaxAggregateInputType
+  }
+
+  export type OcCancelacionTombstoneGroupByOutputType = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo: string | null
+    origen: string
+    usuario_id: string
+    created_at: Date
+    _count: OcCancelacionTombstoneCountAggregateOutputType | null
+    _min: OcCancelacionTombstoneMinAggregateOutputType | null
+    _max: OcCancelacionTombstoneMaxAggregateOutputType | null
+  }
+
+  type GetOcCancelacionTombstoneGroupByPayload<T extends OcCancelacionTombstoneGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OcCancelacionTombstoneGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OcCancelacionTombstoneGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OcCancelacionTombstoneGroupByOutputType[P]>
+            : GetScalarType<T[P], OcCancelacionTombstoneGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OcCancelacionTombstoneSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tenant_id?: boolean
+    oc_id?: boolean
+    proyecto_id?: boolean
+    oc_codigo?: boolean
+    origen?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["ocCancelacionTombstone"]>
+
+  export type OcCancelacionTombstoneSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tenant_id?: boolean
+    oc_id?: boolean
+    proyecto_id?: boolean
+    oc_codigo?: boolean
+    origen?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }, ExtArgs["result"]["ocCancelacionTombstone"]>
+
+  export type OcCancelacionTombstoneSelectScalar = {
+    tenant_id?: boolean
+    oc_id?: boolean
+    proyecto_id?: boolean
+    oc_codigo?: boolean
+    origen?: boolean
+    usuario_id?: boolean
+    created_at?: boolean
+  }
+
+
+  export type $OcCancelacionTombstonePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OcCancelacionTombstone"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      tenant_id: string
+      oc_id: string
+      proyecto_id: string
+      oc_codigo: string | null
+      origen: string
+      usuario_id: string
+      created_at: Date
+    }, ExtArgs["result"]["ocCancelacionTombstone"]>
+    composites: {}
+  }
+
+  type OcCancelacionTombstoneGetPayload<S extends boolean | null | undefined | OcCancelacionTombstoneDefaultArgs> = $Result.GetResult<Prisma.$OcCancelacionTombstonePayload, S>
+
+  type OcCancelacionTombstoneCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OcCancelacionTombstoneFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OcCancelacionTombstoneCountAggregateInputType | true
+    }
+
+  export interface OcCancelacionTombstoneDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OcCancelacionTombstone'], meta: { name: 'OcCancelacionTombstone' } }
+    /**
+     * Find zero or one OcCancelacionTombstone that matches the filter.
+     * @param {OcCancelacionTombstoneFindUniqueArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OcCancelacionTombstoneFindUniqueArgs>(args: SelectSubset<T, OcCancelacionTombstoneFindUniqueArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one OcCancelacionTombstone that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OcCancelacionTombstoneFindUniqueOrThrowArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OcCancelacionTombstoneFindUniqueOrThrowArgs>(args: SelectSubset<T, OcCancelacionTombstoneFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first OcCancelacionTombstone that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneFindFirstArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OcCancelacionTombstoneFindFirstArgs>(args?: SelectSubset<T, OcCancelacionTombstoneFindFirstArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first OcCancelacionTombstone that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneFindFirstOrThrowArgs} args - Arguments to find a OcCancelacionTombstone
+     * @example
+     * // Get one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OcCancelacionTombstoneFindFirstOrThrowArgs>(args?: SelectSubset<T, OcCancelacionTombstoneFindFirstOrThrowArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more OcCancelacionTombstones that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OcCancelacionTombstones
+     * const ocCancelacionTombstones = await prisma.ocCancelacionTombstone.findMany()
+     * 
+     * // Get first 10 OcCancelacionTombstones
+     * const ocCancelacionTombstones = await prisma.ocCancelacionTombstone.findMany({ take: 10 })
+     * 
+     * // Only select the `tenant_id`
+     * const ocCancelacionTombstoneWithTenant_idOnly = await prisma.ocCancelacionTombstone.findMany({ select: { tenant_id: true } })
+     * 
+     */
+    findMany<T extends OcCancelacionTombstoneFindManyArgs>(args?: SelectSubset<T, OcCancelacionTombstoneFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneCreateArgs} args - Arguments to create a OcCancelacionTombstone.
+     * @example
+     * // Create one OcCancelacionTombstone
+     * const OcCancelacionTombstone = await prisma.ocCancelacionTombstone.create({
+     *   data: {
+     *     // ... data to create a OcCancelacionTombstone
+     *   }
+     * })
+     * 
+     */
+    create<T extends OcCancelacionTombstoneCreateArgs>(args: SelectSubset<T, OcCancelacionTombstoneCreateArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many OcCancelacionTombstones.
+     * @param {OcCancelacionTombstoneCreateManyArgs} args - Arguments to create many OcCancelacionTombstones.
+     * @example
+     * // Create many OcCancelacionTombstones
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OcCancelacionTombstoneCreateManyArgs>(args?: SelectSubset<T, OcCancelacionTombstoneCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OcCancelacionTombstones and returns the data saved in the database.
+     * @param {OcCancelacionTombstoneCreateManyAndReturnArgs} args - Arguments to create many OcCancelacionTombstones.
+     * @example
+     * // Create many OcCancelacionTombstones
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OcCancelacionTombstones and only return the `tenant_id`
+     * const ocCancelacionTombstoneWithTenant_idOnly = await prisma.ocCancelacionTombstone.createManyAndReturn({ 
+     *   select: { tenant_id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OcCancelacionTombstoneCreateManyAndReturnArgs>(args?: SelectSubset<T, OcCancelacionTombstoneCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneDeleteArgs} args - Arguments to delete one OcCancelacionTombstone.
+     * @example
+     * // Delete one OcCancelacionTombstone
+     * const OcCancelacionTombstone = await prisma.ocCancelacionTombstone.delete({
+     *   where: {
+     *     // ... filter to delete one OcCancelacionTombstone
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OcCancelacionTombstoneDeleteArgs>(args: SelectSubset<T, OcCancelacionTombstoneDeleteArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneUpdateArgs} args - Arguments to update one OcCancelacionTombstone.
+     * @example
+     * // Update one OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OcCancelacionTombstoneUpdateArgs>(args: SelectSubset<T, OcCancelacionTombstoneUpdateArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more OcCancelacionTombstones.
+     * @param {OcCancelacionTombstoneDeleteManyArgs} args - Arguments to filter OcCancelacionTombstones to delete.
+     * @example
+     * // Delete a few OcCancelacionTombstones
+     * const { count } = await prisma.ocCancelacionTombstone.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OcCancelacionTombstoneDeleteManyArgs>(args?: SelectSubset<T, OcCancelacionTombstoneDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OcCancelacionTombstones.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OcCancelacionTombstones
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OcCancelacionTombstoneUpdateManyArgs>(args: SelectSubset<T, OcCancelacionTombstoneUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one OcCancelacionTombstone.
+     * @param {OcCancelacionTombstoneUpsertArgs} args - Arguments to update or create a OcCancelacionTombstone.
+     * @example
+     * // Update or create a OcCancelacionTombstone
+     * const ocCancelacionTombstone = await prisma.ocCancelacionTombstone.upsert({
+     *   create: {
+     *     // ... data to create a OcCancelacionTombstone
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OcCancelacionTombstone we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OcCancelacionTombstoneUpsertArgs>(args: SelectSubset<T, OcCancelacionTombstoneUpsertArgs<ExtArgs>>): Prisma__OcCancelacionTombstoneClient<$Result.GetResult<Prisma.$OcCancelacionTombstonePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of OcCancelacionTombstones.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneCountArgs} args - Arguments to filter OcCancelacionTombstones to count.
+     * @example
+     * // Count the number of OcCancelacionTombstones
+     * const count = await prisma.ocCancelacionTombstone.count({
+     *   where: {
+     *     // ... the filter for the OcCancelacionTombstones we want to count
+     *   }
+     * })
+    **/
+    count<T extends OcCancelacionTombstoneCountArgs>(
+      args?: Subset<T, OcCancelacionTombstoneCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OcCancelacionTombstoneCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OcCancelacionTombstone.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OcCancelacionTombstoneAggregateArgs>(args: Subset<T, OcCancelacionTombstoneAggregateArgs>): Prisma.PrismaPromise<GetOcCancelacionTombstoneAggregateType<T>>
+
+    /**
+     * Group by OcCancelacionTombstone.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OcCancelacionTombstoneGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OcCancelacionTombstoneGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OcCancelacionTombstoneGroupByArgs['orderBy'] }
+        : { orderBy?: OcCancelacionTombstoneGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OcCancelacionTombstoneGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOcCancelacionTombstoneGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OcCancelacionTombstone model
+   */
+  readonly fields: OcCancelacionTombstoneFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OcCancelacionTombstone.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OcCancelacionTombstoneClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OcCancelacionTombstone model
+   */ 
+  interface OcCancelacionTombstoneFieldRefs {
+    readonly tenant_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly oc_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly proyecto_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly oc_codigo: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly origen: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly usuario_id: FieldRef<"OcCancelacionTombstone", 'String'>
+    readonly created_at: FieldRef<"OcCancelacionTombstone", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OcCancelacionTombstone findUnique
+   */
+  export type OcCancelacionTombstoneFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone findUniqueOrThrow
+   */
+  export type OcCancelacionTombstoneFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone findFirst
+   */
+  export type OcCancelacionTombstoneFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OcCancelacionTombstones.
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OcCancelacionTombstones.
+     */
+    distinct?: OcCancelacionTombstoneScalarFieldEnum | OcCancelacionTombstoneScalarFieldEnum[]
+  }
+
+  /**
+   * OcCancelacionTombstone findFirstOrThrow
+   */
+  export type OcCancelacionTombstoneFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstone to fetch.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OcCancelacionTombstones.
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OcCancelacionTombstones.
+     */
+    distinct?: OcCancelacionTombstoneScalarFieldEnum | OcCancelacionTombstoneScalarFieldEnum[]
+  }
+
+  /**
+   * OcCancelacionTombstone findMany
+   */
+  export type OcCancelacionTombstoneFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter, which OcCancelacionTombstones to fetch.
+     */
+    where?: OcCancelacionTombstoneWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OcCancelacionTombstones to fetch.
+     */
+    orderBy?: OcCancelacionTombstoneOrderByWithRelationInput | OcCancelacionTombstoneOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OcCancelacionTombstones.
+     */
+    cursor?: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OcCancelacionTombstones from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OcCancelacionTombstones.
+     */
+    skip?: number
+    distinct?: OcCancelacionTombstoneScalarFieldEnum | OcCancelacionTombstoneScalarFieldEnum[]
+  }
+
+  /**
+   * OcCancelacionTombstone create
+   */
+  export type OcCancelacionTombstoneCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * The data needed to create a OcCancelacionTombstone.
+     */
+    data: XOR<OcCancelacionTombstoneCreateInput, OcCancelacionTombstoneUncheckedCreateInput>
+  }
+
+  /**
+   * OcCancelacionTombstone createMany
+   */
+  export type OcCancelacionTombstoneCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OcCancelacionTombstones.
+     */
+    data: OcCancelacionTombstoneCreateManyInput | OcCancelacionTombstoneCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OcCancelacionTombstone createManyAndReturn
+   */
+  export type OcCancelacionTombstoneCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many OcCancelacionTombstones.
+     */
+    data: OcCancelacionTombstoneCreateManyInput | OcCancelacionTombstoneCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OcCancelacionTombstone update
+   */
+  export type OcCancelacionTombstoneUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * The data needed to update a OcCancelacionTombstone.
+     */
+    data: XOR<OcCancelacionTombstoneUpdateInput, OcCancelacionTombstoneUncheckedUpdateInput>
+    /**
+     * Choose, which OcCancelacionTombstone to update.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone updateMany
+   */
+  export type OcCancelacionTombstoneUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OcCancelacionTombstones.
+     */
+    data: XOR<OcCancelacionTombstoneUpdateManyMutationInput, OcCancelacionTombstoneUncheckedUpdateManyInput>
+    /**
+     * Filter which OcCancelacionTombstones to update
+     */
+    where?: OcCancelacionTombstoneWhereInput
+  }
+
+  /**
+   * OcCancelacionTombstone upsert
+   */
+  export type OcCancelacionTombstoneUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * The filter to search for the OcCancelacionTombstone to update in case it exists.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+    /**
+     * In case the OcCancelacionTombstone found by the `where` argument doesn't exist, create a new OcCancelacionTombstone with this data.
+     */
+    create: XOR<OcCancelacionTombstoneCreateInput, OcCancelacionTombstoneUncheckedCreateInput>
+    /**
+     * In case the OcCancelacionTombstone was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OcCancelacionTombstoneUpdateInput, OcCancelacionTombstoneUncheckedUpdateInput>
+  }
+
+  /**
+   * OcCancelacionTombstone delete
+   */
+  export type OcCancelacionTombstoneDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
+    /**
+     * Filter which OcCancelacionTombstone to delete.
+     */
+    where: OcCancelacionTombstoneWhereUniqueInput
+  }
+
+  /**
+   * OcCancelacionTombstone deleteMany
+   */
+  export type OcCancelacionTombstoneDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OcCancelacionTombstones to delete
+     */
+    where?: OcCancelacionTombstoneWhereInput
+  }
+
+  /**
+   * OcCancelacionTombstone without action
+   */
+  export type OcCancelacionTombstoneDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OcCancelacionTombstone
+     */
+    select?: OcCancelacionTombstoneSelect<ExtArgs> | null
   }
 
 
@@ -9074,6 +10062,19 @@ export namespace Prisma {
   export type MovimientoPresupuestalScalarFieldEnum = (typeof MovimientoPresupuestalScalarFieldEnum)[keyof typeof MovimientoPresupuestalScalarFieldEnum]
 
 
+  export const OcCancelacionTombstoneScalarFieldEnum: {
+    tenant_id: 'tenant_id',
+    oc_id: 'oc_id',
+    proyecto_id: 'proyecto_id',
+    oc_codigo: 'oc_codigo',
+    origen: 'origen',
+    usuario_id: 'usuario_id',
+    created_at: 'created_at'
+  };
+
+  export type OcCancelacionTombstoneScalarFieldEnum = (typeof OcCancelacionTombstoneScalarFieldEnum)[keyof typeof OcCancelacionTombstoneScalarFieldEnum]
+
+
   export const ProgramaPagosScalarFieldEnum: {
     id_pago: 'id_pago',
     tenant_id: 'tenant_id',
@@ -9485,6 +10486,69 @@ export namespace Prisma {
     usuario_id?: UuidWithAggregatesFilter<"MovimientoPresupuestal"> | string
     fecha_registro?: DateTimeWithAggregatesFilter<"MovimientoPresupuestal"> | Date | string
     notas?: StringNullableWithAggregatesFilter<"MovimientoPresupuestal"> | string | null
+  }
+
+  export type OcCancelacionTombstoneWhereInput = {
+    AND?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    OR?: OcCancelacionTombstoneWhereInput[]
+    NOT?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    tenant_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    proyecto_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_codigo?: StringNullableFilter<"OcCancelacionTombstone"> | string | null
+    origen?: StringFilter<"OcCancelacionTombstone"> | string
+    usuario_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    created_at?: DateTimeFilter<"OcCancelacionTombstone"> | Date | string
+  }
+
+  export type OcCancelacionTombstoneOrderByWithRelationInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrderInput | SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneWhereUniqueInput = Prisma.AtLeast<{
+    tenant_id_oc_id?: OcCancelacionTombstoneTenant_idOc_idCompoundUniqueInput
+    AND?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    OR?: OcCancelacionTombstoneWhereInput[]
+    NOT?: OcCancelacionTombstoneWhereInput | OcCancelacionTombstoneWhereInput[]
+    tenant_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    proyecto_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    oc_codigo?: StringNullableFilter<"OcCancelacionTombstone"> | string | null
+    origen?: StringFilter<"OcCancelacionTombstone"> | string
+    usuario_id?: UuidFilter<"OcCancelacionTombstone"> | string
+    created_at?: DateTimeFilter<"OcCancelacionTombstone"> | Date | string
+  }, "tenant_id_oc_id">
+
+  export type OcCancelacionTombstoneOrderByWithAggregationInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrderInput | SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+    _count?: OcCancelacionTombstoneCountOrderByAggregateInput
+    _max?: OcCancelacionTombstoneMaxOrderByAggregateInput
+    _min?: OcCancelacionTombstoneMinOrderByAggregateInput
+  }
+
+  export type OcCancelacionTombstoneScalarWhereWithAggregatesInput = {
+    AND?: OcCancelacionTombstoneScalarWhereWithAggregatesInput | OcCancelacionTombstoneScalarWhereWithAggregatesInput[]
+    OR?: OcCancelacionTombstoneScalarWhereWithAggregatesInput[]
+    NOT?: OcCancelacionTombstoneScalarWhereWithAggregatesInput | OcCancelacionTombstoneScalarWhereWithAggregatesInput[]
+    tenant_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    oc_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    proyecto_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    oc_codigo?: StringNullableWithAggregatesFilter<"OcCancelacionTombstone"> | string | null
+    origen?: StringWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    usuario_id?: UuidWithAggregatesFilter<"OcCancelacionTombstone"> | string
+    created_at?: DateTimeWithAggregatesFilter<"OcCancelacionTombstone"> | Date | string
   }
 
   export type ProgramaPagosWhereInput = {
@@ -10233,6 +11297,76 @@ export namespace Prisma {
     usuario_id?: StringFieldUpdateOperationsInput | string
     fecha_registro?: DateTimeFieldUpdateOperationsInput | Date | string
     notas?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OcCancelacionTombstoneCreateInput = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo?: string | null
+    origen: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type OcCancelacionTombstoneUncheckedCreateInput = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo?: string | null
+    origen: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type OcCancelacionTombstoneUpdateInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OcCancelacionTombstoneUncheckedUpdateInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OcCancelacionTombstoneCreateManyInput = {
+    tenant_id: string
+    oc_id: string
+    proyecto_id: string
+    oc_codigo?: string | null
+    origen: string
+    usuario_id: string
+    created_at?: Date | string
+  }
+
+  export type OcCancelacionTombstoneUpdateManyMutationInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OcCancelacionTombstoneUncheckedUpdateManyInput = {
+    tenant_id?: StringFieldUpdateOperationsInput | string
+    oc_id?: StringFieldUpdateOperationsInput | string
+    proyecto_id?: StringFieldUpdateOperationsInput | string
+    oc_codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    origen?: StringFieldUpdateOperationsInput | string
+    usuario_id?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProgramaPagosCreateInput = {
@@ -11138,6 +12272,41 @@ export namespace Prisma {
 
   export type MovimientoPresupuestalSumOrderByAggregateInput = {
     monto?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneTenant_idOc_idCompoundUniqueInput = {
+    tenant_id: string
+    oc_id: string
+  }
+
+  export type OcCancelacionTombstoneCountOrderByAggregateInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneMaxOrderByAggregateInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type OcCancelacionTombstoneMinOrderByAggregateInput = {
+    tenant_id?: SortOrder
+    oc_id?: SortOrder
+    proyecto_id?: SortOrder
+    oc_codigo?: SortOrder
+    origen?: SortOrder
+    usuario_id?: SortOrder
+    created_at?: SortOrder
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -12954,6 +14123,10 @@ export namespace Prisma {
      * @deprecated Use MovimientoPresupuestalDefaultArgs instead
      */
     export type MovimientoPresupuestalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MovimientoPresupuestalDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use OcCancelacionTombstoneDefaultArgs instead
+     */
+    export type OcCancelacionTombstoneArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OcCancelacionTombstoneDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ProgramaPagosDefaultArgs instead
      */

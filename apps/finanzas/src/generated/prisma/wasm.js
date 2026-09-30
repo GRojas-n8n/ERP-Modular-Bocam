@@ -159,6 +159,16 @@ exports.Prisma.MovimientoPresupuestalScalarFieldEnum = {
   notas: 'notas'
 };
 
+exports.Prisma.OcCancelacionTombstoneScalarFieldEnum = {
+  tenant_id: 'tenant_id',
+  oc_id: 'oc_id',
+  proyecto_id: 'proyecto_id',
+  oc_codigo: 'oc_codigo',
+  origen: 'origen',
+  usuario_id: 'usuario_id',
+  created_at: 'created_at'
+};
+
 exports.Prisma.ProgramaPagosScalarFieldEnum = {
   id_pago: 'id_pago',
   tenant_id: 'tenant_id',
@@ -257,6 +267,7 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   PresupuestoAsignado: 'PresupuestoAsignado',
   MovimientoPresupuestal: 'MovimientoPresupuestal',
+  OcCancelacionTombstone: 'OcCancelacionTombstone',
   ProgramaPagos: 'ProgramaPagos',
   CuentaBancaria: 'CuentaBancaria',
   ProyectoFinanzas: 'ProyectoFinanzas',

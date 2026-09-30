@@ -25,6 +25,10 @@ Una liberación SHALL exigir un `COMPROMISO` de la misma OC. NO SHALL basarse en
 - **WHEN** llega una cancelación de una OC sin `COMPROMISO` y el presupuesto tiene compromisos de otras OC
 - **THEN** no se libera nada y se registra la cancelación para ignorar una creación tardía
 
+#### Scenario: Respuesta HTTP de liberar-fondos sin compromiso
+- **WHEN** `POST liberar-fondos` recibe una OC sin `COMPROMISO`
+- **THEN** responde `201` con `monto_liberado: 0`, `idempotente: true`, `no_op: true`, `motivo: SIN_COMPROMISO` y `tombstone_registrado: true`, no publica `fondos_liberados` y registra un log estructurado sin montos
+
 ### Requirement: Creación y cancelación fuera de orden SHALL tener comportamiento definido
 Si la cancelación de una OC se procesa antes que su creación, la creación tardía SHALL ser un no-op y NO SHALL dejar un compromiso sobre una OC cancelada.
 
@@ -67,3 +71,21 @@ La migración que crea la restricción única SHALL contar duplicados por la cla
 #### Scenario: Sin duplicados
 - **WHEN** no hay duplicados
 - **THEN** crea la restricción y su reversión restituye el esquema anterior
+
+### Requirement: Un movimiento de OC SHALL tener una referencia válida
+Ningún `COMPROMISO` ni `LIBERACION` de una OC SHALL registrarse sin `referencia_id`, y ningún camino SHALL intentar el INSERT con un identificador de OC que no sea un UUID válido. La base de datos SHALL imponerlo con una restricción CHECK para que un valor NULL no evada el índice único.
+
+#### Scenario: OC sin referencia válida
+- **WHEN** un endpoint o evento recibe un `oc_id` que no es un UUID válido
+- **THEN** el endpoint responde `400` y el handler registra `invalid_payload`, sin insertar nada ni dejar tombstone
+
+#### Scenario: Movimiento de OC con referencia_id NULL
+- **WHEN** se intenta insertar un `COMPROMISO` o `LIBERACION` de `compras`/`OrdenCompra` con `referencia_id` NULL
+- **THEN** la base de datos lo rechaza
+
+### Requirement: La migración SHALL ser atómica
+La migración SHALL ejecutarse dentro de una transacción explícita, con la comprobación de datos previos antes de cualquier DDL. Cualquier fallo SHALL revertir por completo índice, restricción, tabla, funciones y políticas.
+
+#### Scenario: Fallo posterior al precheck
+- **WHEN** un paso de la migración posterior al precheck falla
+- **THEN** no queda ningún objeto de la migración en el esquema

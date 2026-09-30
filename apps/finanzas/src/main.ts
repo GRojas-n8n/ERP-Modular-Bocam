@@ -23,6 +23,7 @@
 
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
+import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
 import { v4 as uuidv4 } from 'uuid';
 import {
   createApiResponse,
@@ -770,165 +771,115 @@ app.post('/api/v1/finanzas/comprometer-fondos',
       return;
     }
 
-    type ComprometerFondosLoaded = {
-      compromisoExistente: Awaited<ReturnType<PrismaClient['movimientoPresupuestal']['findFirst']>>;
-      montoNum: number;
-      disponible: number;
-    };
+    if (!esUuid(oc_id) || !esUuid(presupuesto_id)) {
+      res.status(400).json(createApiError(
+        'FIN_INVALID_REFERENCE',
+        'oc_id y presupuesto_id deben ser UUID válidos.'
+      ));
+      return;
+    }
 
-    type ComprometerFondosResult =
-      | {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS;
-          suficiencia: true;
-          movimiento_id: string;
-          presupuesto_id: string;
-          monto_comprometido: number;
-          monto_disponible_restante: number;
-          oc_id: string;
-          oc_codigo: string;
-          idempotente: boolean;
-        }
-      | {
-          evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE;
-          suficiencia: false;
-          presupuesto_id: string;
-          monto_solicitado: number;
-          monto_disponible: number;
-          deficit: number;
-          oc_id: string;
-          oc_codigo: string;
-          idempotente: boolean;
-        };
-
-    const result = await applyIdempotentMutationInContext<
-      { tenantId: string; proyectoId: string; userId: string },
-      PrismaClient,
-      ComprometerFondosLoaded,
-      ComprometerFondosResult
-    >({
-      context: { tenantId, proyectoId, userId },
-      runInContext: createTenantContext,
-      load: async (prisma) => {
-        const compromisoExistente = await prisma.movimientoPresupuestal.findFirst({
-          where: {
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            tipo: TipoMovimiento.COMPROMISO,
-          },
-        });
-
-        const presupuesto = await prisma.presupuestoAsignado.findUnique({
-          where: { id_presupuesto: presupuesto_id },
-        });
-
-        if (!presupuesto) {
-          throw new Error('Presupuesto no encontrado.');
-        }
-
-        return {
-          compromisoExistente,
-          montoNum: Number(monto),
-          disponible: Number(presupuesto.monto_disponible),
-        };
-      },
-      idempotentResult: async (loaded) => {
-        if (!loaded.compromisoExistente) {
-          return null;
-        }
-
-        logInfo(req, 'finanzas', 'finanzas.comprometer_fondos.idempotent', 'Compromiso de fondos resuelto en modo idempotente', {
-          idempotent: true,
-          presupuesto_id,
-          oc_id,
-          oc_codigo,
-          movimiento_id: loaded.compromisoExistente.id_movimiento,
-        });
-
-        return {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-          suficiencia: true,
-          movimiento_id: loaded.compromisoExistente.id_movimiento,
-          presupuesto_id,
-          monto_comprometido: Number(loaded.compromisoExistente.monto),
-          monto_disponible_restante: 0,
-          oc_id,
-          oc_codigo,
-          idempotente: true,
-        };
-      },
-      apply: async (loaded, prisma) => {
-        if (loaded.montoNum > loaded.disponible) {
-          logWarn(req, 'finanzas', 'finanzas.comprometer_fondos.insufficient_budget', 'Presupuesto insuficiente para comprometer fondos', {
-            idempotent: false,
-            presupuesto_id,
-            oc_id,
-            oc_codigo,
-            monto_solicitado: loaded.montoNum,
-            monto_disponible: loaded.disponible,
-            deficit: loaded.montoNum - loaded.disponible,
-          });
-
-          console.log(`[Finanzas] PRESUPUESTO INSUFICIENTE para OC ${oc_codigo}`);
-          console.log(`   Disponible: ${loaded.disponible.toLocaleString()}`);
-          console.log(`   Solicitado: ${loaded.montoNum.toLocaleString()}`);
-          console.log(`   Deficit:    ${(loaded.montoNum - loaded.disponible).toLocaleString()}`);
-
-          return {
-            evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE,
-            suficiencia: false,
-            presupuesto_id,
-            monto_solicitado: loaded.montoNum,
-            monto_disponible: loaded.disponible,
-            deficit: loaded.montoNum - loaded.disponible,
-            oc_id,
-            oc_codigo,
-            idempotente: false,
-          };
-        }
-
-        const movimiento = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            tipo: TipoMovimiento.COMPROMISO,
-            concepto: concepto || `Fondos comprometidos por OC ${oc_codigo}`,
-            monto: loaded.montoNum,
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            referencia_codigo: oc_codigo,
-            usuario_id: userId,
-            notas: 'Compromiso automatico por emision de Orden de Compra.',
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_id },
-          data: {
-            monto_comprometido: { increment: loaded.montoNum },
-            monto_disponible: { decrement: loaded.montoNum },
-          },
-        });
-
-        console.log(`[Finanzas] FONDOS COMPROMETIDOS: ${loaded.montoNum.toLocaleString()} para OC ${oc_codigo}`);
-
-        return {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-          suficiencia: true,
-          movimiento_id: movimiento.id_movimiento,
-          presupuesto_id,
-          monto_comprometido: loaded.montoNum,
-          monto_disponible_restante: loaded.disponible - loaded.montoNum,
-          oc_id,
-          oc_codigo,
-          idempotente: false,
-        };
-      },
+    // Compromiso único por OC: lock por (tenant, OC), inserción atómica sobre el índice único parcial y
+    // UPDATE condicional del saldo (ver compromiso-oc.ts). Los eventos se publican después del commit.
+    const resultado = await registrarCompromisoOc({ tenantId, proyectoId, userId }, {
+      ocId: oc_id,
+      ocCodigo: oc_codigo,
+      monto: Number(monto),
+      presupuestoId: presupuesto_id,
+      validarSuficiencia: true,
+      concepto: concepto || `Fondos comprometidos por OC ${oc_codigo}`,
+      notas: 'Compromiso automatico por emision de Orden de Compra.',
     });
 
-    if (result.evento === FinanzasEvents.FONDOS_COMPROMETIDOS) {
+    if (resultado.estado === 'presupuesto_no_encontrado') {
+      throw new Error('Presupuesto no encontrado.');
+    }
+
+    if (resultado.estado === 'oc_cancelada') {
+      logWarn(req, 'finanzas', 'finanzas.comprometer_fondos.oc_cancelada', 'La OC ya fue cancelada: no se comprometen fondos', {
+        presupuesto_id, oc_id, oc_codigo,
+      });
+      res.status(409).json(createApiError(
+        'FIN_OC_CANCELADA',
+        'La OC ya fue cancelada; no se comprometen fondos.',
+        undefined,
+        correlationId
+      ));
+      return;
+    }
+
+    if (resultado.estado === 'presupuesto_insuficiente') {
+      logWarn(req, 'finanzas', 'finanzas.comprometer_fondos.insufficient_budget', 'Presupuesto insuficiente para comprometer fondos', {
+        idempotent: false,
+        presupuesto_id,
+        oc_id,
+        oc_codigo,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+        deficit: resultado.montoSolicitado - resultado.montoDisponible,
+      });
+
+      console.log(`[Finanzas] PRESUPUESTO INSUFICIENTE para OC ${oc_codigo}`);
+      console.log(`   Disponible: ${resultado.montoDisponible.toLocaleString()}`);
+      console.log(`   Solicitado: ${resultado.montoSolicitado.toLocaleString()}`);
+      console.log(`   Deficit:    ${(resultado.montoSolicitado - resultado.montoDisponible).toLocaleString()}`);
+
+      const insuficiente = {
+        evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE,
+        suficiencia: false as const,
+        presupuesto_id,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+        deficit: resultado.montoSolicitado - resultado.montoDisponible,
+        oc_id,
+        oc_codigo,
+        idempotente: false,
+      };
+
+      await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, {
+        tenant_id: tenantId,
+        proyecto_id: proyectoId,
+        user_id: userId,
+        correlation_id: correlationId,
+      }, {
+        presupuesto_id: insuficiente.presupuesto_id,
+        monto_solicitado: insuficiente.monto_solicitado,
+        monto_disponible: insuficiente.monto_disponible,
+        deficit: insuficiente.deficit,
+        referencia_oc_id: oc_id,
+        referencia_oc_codigo: oc_codigo,
+        idempotente: false,
+      });
+
+      res.status(422).json(createApiResponse(insuficiente, tenantId, proyectoId, correlationId));
+      return;
+    }
+
+    const idempotente = resultado.estado === 'idempotente';
+    const result = {
+      evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
+      suficiencia: true as const,
+      movimiento_id: resultado.movimientoId,
+      presupuesto_id: resultado.presupuestoId,
+      monto_comprometido: resultado.monto,
+      // Saldo real del presupuesto (antes se devolvía 0 en el caso idempotente).
+      monto_disponible_restante: resultado.estado === 'creado' ? resultado.montoDisponibleRestante : resultado.montoDisponibleActual,
+      oc_id,
+      oc_codigo,
+      idempotente,
+    };
+
+    if (idempotente) {
+      logInfo(req, 'finanzas', 'finanzas.comprometer_fondos.idempotent', 'Compromiso de fondos resuelto en modo idempotente', {
+        idempotent: true,
+        presupuesto_id,
+        oc_id,
+        oc_codigo,
+        movimiento_id: resultado.movimientoId,
+      });
+    } else {
+      console.log(`[Finanzas] FONDOS COMPROMETIDOS: ${resultado.monto.toLocaleString()} para OC ${oc_codigo}`);
+      // Solo el procesamiento que crea el compromiso publica fondos_comprometidos (con el saldo real).
       await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, {
         tenant_id: tenantId,
         proyecto_id: proyectoId,
@@ -941,29 +892,11 @@ app.post('/api/v1/finanzas/comprometer-fondos',
         monto_disponible_restante: result.monto_disponible_restante,
         referencia_oc_id: result.oc_id,
         referencia_oc_codigo: result.oc_codigo,
-        idempotente: result.idempotente,
-      });
-    }
-
-    if (result.evento === FinanzasEvents.PRESUPUESTO_INSUFICIENTE) {
-      await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, {
-        tenant_id: tenantId,
-        proyecto_id: proyectoId,
-        user_id: userId,
-        correlation_id: correlationId,
-      }, {
-        presupuesto_id: result.presupuesto_id,
-        monto_solicitado: result.monto_solicitado,
-        monto_disponible: result.monto_disponible,
-        deficit: result.deficit,
-        referencia_oc_id: result.oc_id,
-        referencia_oc_codigo: result.oc_codigo,
         idempotente: false,
       });
     }
 
-    const statusCode = result.suficiencia ? 201 : 422;
-    res.status(statusCode).json(createApiResponse(result, tenantId, proyectoId, correlationId));
+    res.status(201).json(createApiResponse(result, tenantId, proyectoId, correlationId));
   } catch (error: any) {
     logError(req, 'finanzas', 'finanzas.comprometer_fondos.error', 'Error al comprometer fondos', {
       error_message: error.message,
@@ -997,128 +930,65 @@ app.post('/api/v1/finanzas/liberar-fondos',
       return;
     }
 
-    type LiberarFondosLoaded = {
-      liberacionExistente: Awaited<ReturnType<PrismaClient['movimientoPresupuestal']['findFirst']>>;
-      montoNum: number;
-      montoComprometido: number;
-    };
+    if (!esUuid(oc_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'oc_id debe ser un UUID válido.'));
+      return;
+    }
 
-    type LiberarFondosResult = {
-      evento: FinanzasEvents.FONDOS_LIBERADOS;
-      movimiento_id: string;
-      presupuesto_id: string;
-      monto_liberado: number;
-      oc_id: string;
-      oc_codigo: string;
-      idempotente: boolean;
-    };
-
-    const result = await applyIdempotentMutationInContext<
-      { tenantId: string; proyectoId: string; userId: string },
-      PrismaClient,
-      LiberarFondosLoaded,
-      LiberarFondosResult
-    >({
-      context: { tenantId, proyectoId, userId },
-      runInContext: createTenantContext,
-      load: async (prisma) => {
-        const liberacionExistente = await prisma.movimientoPresupuestal.findFirst({
-          where: {
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            tipo: TipoMovimiento.LIBERACION,
-          },
-        });
-
-        const presupuesto = await prisma.presupuestoAsignado.findUnique({
-          where: { id_presupuesto: presupuesto_id },
-        });
-
-        if (!presupuesto) {
-          throw new Error('Presupuesto no encontrado.');
-        }
-
-        return {
-          liberacionExistente,
-          montoNum: Number(monto),
-          montoComprometido: Number(presupuesto.monto_comprometido),
-        };
-      },
-      idempotentResult: async (loaded) => {
-        if (!loaded.liberacionExistente) {
-          return null;
-        }
-
-        logInfo(req, 'finanzas', 'finanzas.liberar_fondos.idempotent', 'Liberacion de fondos resuelta en modo idempotente', {
-          idempotent: true,
-          presupuesto_id,
-          oc_id,
-          oc_codigo,
-          movimiento_id: loaded.liberacionExistente.id_movimiento,
-        });
-
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          movimiento_id: loaded.liberacionExistente.id_movimiento,
-          presupuesto_id,
-          monto_liberado: Number(loaded.liberacionExistente.monto),
-          oc_id,
-          oc_codigo,
-          idempotente: true,
-        };
-      },
-      apply: async (loaded, prisma) => {
-        if (loaded.montoComprometido < loaded.montoNum) {
-          throw new Error('No hay fondos comprometidos suficientes para liberar este monto.');
-        }
-
-        const movimiento = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            tipo: TipoMovimiento.LIBERACION,
-            concepto: concepto || `Liberacion de fondos por OC ${oc_codigo} (Cancelacion/Ajuste)`,
-            monto: loaded.montoNum,
-            referencia_modulo: 'compras',
-            referencia_entidad: 'OrdenCompra',
-            referencia_id: oc_id,
-            referencia_codigo: oc_codigo,
-            usuario_id: userId,
-            notas: 'Proceso automatico de liberacion de fondos.',
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_id },
-          data: {
-            monto_comprometido: { decrement: loaded.montoNum },
-            monto_disponible: { increment: loaded.montoNum },
-          },
-        });
-
-        console.log(`[Finanzas] FONDOS LIBERADOS: ${loaded.montoNum.toLocaleString()} para OC ${oc_codigo}`);
-        logInfo(req, 'finanzas', 'finanzas.liberar_fondos.created', 'Fondos liberados exitosamente', {
-          idempotent: false,
-          presupuesto_id,
-          oc_id,
-          oc_codigo,
-          movimiento_id: movimiento.id_movimiento,
-          monto_liberado: loaded.montoNum,
-        });
-
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          movimiento_id: movimiento.id_movimiento,
-          presupuesto_id,
-          monto_liberado: loaded.montoNum,
-          oc_id,
-          oc_codigo,
-          idempotente: false,
-        };
-      },
+    // Liberación única por OC: usa el COMPROMISO exacto de esa OC (nunca saldos agregados) y deja el tombstone.
+    const liberacion = await registrarCancelacionOc({ tenantId, proyectoId, userId }, {
+      ocId: oc_id,
+      ocCodigo: oc_codigo,
+      origen: 'HTTP',
+      concepto: concepto || `Liberacion de fondos por OC ${oc_codigo} (Cancelacion/Ajuste)`,
+      notas: 'Proceso automatico de liberacion de fondos.',
     });
+
+    if (liberacion.estado === 'sin_compromiso') {
+      // No-op idempotente: la OC no tiene compromiso que liberar. Se registró el tombstone (la creación tardía
+      // no comprometerá fondos) y no se libera nada. Se loguea sin montos ni datos de negocio sensibles.
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.no_op_sin_compromiso', 'Cancelacion sin compromiso: tombstone registrado, 0 liberado', {
+        idempotent: true,
+        no_op: true,
+        motivo: 'SIN_COMPROMISO',
+        tombstone_registrado: true,
+      });
+      res.status(201).json(createApiResponse({
+        evento: FinanzasEvents.FONDOS_LIBERADOS,
+        movimiento_id: '',
+        presupuesto_id,
+        monto_liberado: 0,
+        oc_id,
+        oc_codigo,
+        idempotente: true,
+        no_op: true,
+        motivo: 'SIN_COMPROMISO',
+        tombstone_registrado: true,
+      }, tenantId, proyectoId, correlationId));
+      return;
+    }
+
+    const result = {
+      evento: FinanzasEvents.FONDOS_LIBERADOS,
+      movimiento_id: liberacion.movimientoId,
+      presupuesto_id: liberacion.presupuestoId,
+      monto_liberado: liberacion.monto,
+      oc_id,
+      oc_codigo,
+      idempotente: liberacion.estado === 'idempotente',
+    };
+
+    if (result.idempotente) {
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.idempotent', 'Liberacion de fondos resuelta en modo idempotente', {
+        idempotent: true, presupuesto_id: result.presupuesto_id, oc_id, oc_codigo, movimiento_id: result.movimiento_id,
+      });
+    } else {
+      console.log(`[Finanzas] FONDOS LIBERADOS: ${result.monto_liberado.toLocaleString()} para OC ${oc_codigo}`);
+      logInfo(req, 'finanzas', 'finanzas.liberar_fondos.created', 'Fondos liberados exitosamente', {
+        idempotent: false, presupuesto_id: result.presupuesto_id, oc_id, oc_codigo,
+        movimiento_id: result.movimiento_id, monto_liberado: result.monto_liberado,
+      });
+    }
 
     await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, {
       tenant_id: tenantId,
@@ -2246,7 +2116,7 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
     presupuesto_id?: string;
   };
 
-  if (!oc_id || !codigo || !total || !presupuesto_id) {
+  if (!esUuid(oc_id) || !codigo || !total || !esUuid(presupuesto_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.orden_compra_creada.invalid_payload',
       event_type: event.event_type,
@@ -2259,134 +2129,74 @@ export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<v
     return;
   }
 
-  const result = await createTenantContext(
+  const logCtx = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    oc_id,
+  };
+
+  // Compromiso único por OC (lock + índice único + tombstone): ver compromiso-oc.ts. La publicación ocurre
+  // después del commit y solo cuando este procesamiento fue el que creó el compromiso.
+  const resultado = await registrarCompromisoOc(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
     {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
+      ocId: oc_id,
+      ocCodigo: codigo,
+      monto: Number(total),
+      presupuestoId: presupuesto_id,
+      validarSuficiencia: true,
+      concepto: `Fondos comprometidos por OC ${codigo}`,
+      notas: 'Compromiso automatico desde evento compras.oc_creada.',
     },
-    async (prisma) => {
-      const existente = await prisma.movimientoPresupuestal.findFirst({
-        where: {
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          tipo: TipoMovimiento.COMPROMISO,
-        },
-      });
-
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.orden_compra_creada.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          id_movimiento: existente.id_movimiento,
-        }));
-        return {
-          evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-          payload: {
-            presupuesto_id,
-            movimiento_id: existente.id_movimiento,
-            monto_comprometido: Number(existente.monto),
-            monto_disponible_restante: 0,
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: true,
-          } satisfies FondosComprometidosPayload,
-        };
-      }
-
-      const presupuesto = await prisma.presupuestoAsignado.findUnique({
-        where: { id_presupuesto: presupuesto_id },
-      });
-
-      if (!presupuesto) {
-        throw new Error(`Presupuesto ${presupuesto_id} no encontrado para la OC ${codigo}.`);
-      }
-
-      const montoNum = Number(total);
-
-      if (Number(presupuesto.monto_disponible) < montoNum) {
-        console.warn(JSON.stringify({
-          action: 'finanzas.event.orden_compra_creada.insufficient_budget',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          presupuesto_id,
-          monto_solicitado: montoNum,
-          monto_disponible: Number(presupuesto.monto_disponible),
-        }));
-        return {
-          evento: FinanzasEvents.PRESUPUESTO_INSUFICIENTE,
-          payload: {
-            presupuesto_id,
-            monto_solicitado: montoNum,
-            monto_disponible: Number(presupuesto.monto_disponible),
-            deficit: montoNum - Number(presupuesto.monto_disponible),
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: false,
-          } satisfies PresupuestoInsuficientePayload,
-        };
-      }
-
-      const movimiento = await prisma.movimientoPresupuestal.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          tipo: TipoMovimiento.COMPROMISO,
-          concepto: `Fondos comprometidos por OC ${codigo}`,
-          monto: montoNum,
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          referencia_codigo: codigo,
-          usuario_id: event.context.user_id,
-          notas: 'Compromiso automatico desde evento compras.oc_creada.',
-        },
-      });
-
-      await prisma.presupuestoAsignado.update({
-        where: { id_presupuesto: presupuesto_id },
-        data: {
-          monto_comprometido: { increment: montoNum },
-          monto_disponible: { decrement: montoNum },
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.orden_compra_creada.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        oc_id,
-        presupuesto_id,
-        id_movimiento: movimiento.id_movimiento,
-      }));
-
-      return {
-        evento: FinanzasEvents.FONDOS_COMPROMETIDOS,
-        payload: {
-          presupuesto_id,
-          movimiento_id: movimiento.id_movimiento,
-          monto_comprometido: montoNum,
-          monto_disponible_restante: Number(presupuesto.monto_disponible) - montoNum,
-          referencia_oc_id: oc_id,
-          referencia_oc_codigo: codigo,
-          idempotente: false,
-        } satisfies FondosComprometidosPayload,
-      };
-    }
   );
 
-  await publishFinanceDomainEvent(result.evento, event.context, result.payload);
+  switch (resultado.estado) {
+    case 'presupuesto_no_encontrado':
+      throw new Error(`Presupuesto ${presupuesto_id} no encontrado para la OC ${codigo}.`);
+
+    case 'oc_cancelada':
+      console.warn(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.oc_cancelada', ...logCtx, presupuesto_id }));
+      return;
+
+    case 'idempotente':
+      // No se republica fondos_comprometidos: el saldo que llevaría no sería el del momento del compromiso.
+      console.log(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.idempotent', ...logCtx, id_movimiento: resultado.movimientoId }));
+      return;
+
+    case 'presupuesto_insuficiente':
+      console.warn(JSON.stringify({
+        action: 'finanzas.event.orden_compra_creada.insufficient_budget',
+        ...logCtx,
+        presupuesto_id,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+      }));
+      await publishFinanceDomainEvent(FinanzasEvents.PRESUPUESTO_INSUFICIENTE, event.context, {
+        presupuesto_id,
+        monto_solicitado: resultado.montoSolicitado,
+        monto_disponible: resultado.montoDisponible,
+        deficit: resultado.montoSolicitado - resultado.montoDisponible,
+        referencia_oc_id: oc_id,
+        referencia_oc_codigo: codigo,
+        idempotente: false,
+      } satisfies PresupuestoInsuficientePayload);
+      return;
+
+    case 'creado':
+      console.log(JSON.stringify({ action: 'finanzas.event.orden_compra_creada.created', ...logCtx, presupuesto_id, id_movimiento: resultado.movimientoId }));
+      await publishFinanceDomainEvent(FinanzasEvents.FONDOS_COMPROMETIDOS, event.context, {
+        presupuesto_id,
+        movimiento_id: resultado.movimientoId,
+        monto_comprometido: resultado.monto,
+        monto_disponible_restante: resultado.montoDisponibleRestante,
+        referencia_oc_id: oc_id,
+        referencia_oc_codigo: codigo,
+        idempotente: false,
+      } satisfies FondosComprometidosPayload);
+      return;
+  }
 }
 
 export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promise<void> {
@@ -2402,7 +2212,7 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     presupuesto_id?: string;
   };
 
-  if (!oc_id || !codigo || !total || !presupuesto_id) {
+  if (!esUuid(oc_id) || !codigo || !total || !esUuid(presupuesto_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.orden_compra_cancelada.invalid_payload',
       event_type: event.event_type,
@@ -2415,134 +2225,48 @@ export async function handleOrdenCompraCanceladaEvent(event: BocamEvent): Promis
     return;
   }
 
-  const result = await createTenantContext(
+  const logCtx = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    oc_id,
+  };
+
+  // Siempre deja el tombstone; libera únicamente el compromiso exacto de esta OC (monto y presupuesto del propio
+  // movimiento, no los del payload ni saldos agregados). Sin compromiso no libera nada.
+  const resultado = await registrarCancelacionOc(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
     {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
+      ocId: oc_id,
+      ocCodigo: codigo,
+      origen: 'EVENTO',
+      concepto: `Liberacion de fondos por OC ${codigo}`,
+      notas: 'Liberacion automatica desde evento compras.oc_cancelada.',
     },
-    async (prisma) => {
-      const existente = await prisma.movimientoPresupuestal.findFirst({
-        where: {
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          tipo: TipoMovimiento.LIBERACION,
-        },
-      });
-
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.orden_compra_cancelada.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          id_movimiento: existente.id_movimiento,
-        }));
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          payload: {
-            presupuesto_id,
-            movimiento_id: existente.id_movimiento,
-            monto_liberado: Number(existente.monto),
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: true,
-          } satisfies FondosLiberadosPayload,
-        };
-      }
-
-      const presupuesto = await prisma.presupuestoAsignado.findUnique({
-        where: { id_presupuesto: presupuesto_id },
-      });
-
-      if (!presupuesto) {
-        throw new Error(`Presupuesto ${presupuesto_id} no encontrado para la cancelacion de OC ${codigo}.`);
-      }
-
-      const montoNum = Number(total);
-
-      if (Number(presupuesto.monto_comprometido) < montoNum) {
-        console.warn(JSON.stringify({
-          action: 'finanzas.event.orden_compra_cancelada.insufficient_commitment',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          oc_id,
-          presupuesto_id,
-          monto_liberar: montoNum,
-          monto_comprometido: Number(presupuesto.monto_comprometido),
-        }));
-        return {
-          evento: FinanzasEvents.FONDOS_LIBERADOS,
-          payload: {
-            presupuesto_id,
-            movimiento_id: '',
-            monto_liberado: 0,
-            referencia_oc_id: oc_id,
-            referencia_oc_codigo: codigo,
-            idempotente: false,
-          } satisfies FondosLiberadosPayload,
-          skipPublish: true,
-        };
-      }
-
-      const movimiento = await prisma.movimientoPresupuestal.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          tipo: TipoMovimiento.LIBERACION,
-          concepto: `Liberacion de fondos por OC ${codigo}`,
-          monto: montoNum,
-          referencia_modulo: 'compras',
-          referencia_entidad: 'OrdenCompra',
-          referencia_id: oc_id,
-          referencia_codigo: codigo,
-          usuario_id: event.context.user_id,
-          notas: 'Liberacion automatica desde evento compras.oc_cancelada.',
-        },
-      });
-
-      await prisma.presupuestoAsignado.update({
-        where: { id_presupuesto: presupuesto_id },
-        data: {
-          monto_comprometido: { decrement: montoNum },
-          monto_disponible: { increment: montoNum },
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.orden_compra_cancelada.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        oc_id,
-        presupuesto_id,
-        id_movimiento: movimiento.id_movimiento,
-      }));
-
-      return {
-        evento: FinanzasEvents.FONDOS_LIBERADOS,
-        payload: {
-          presupuesto_id,
-          movimiento_id: movimiento.id_movimiento,
-          monto_liberado: montoNum,
-          referencia_oc_id: oc_id,
-          referencia_oc_codigo: codigo,
-          idempotente: false,
-        } satisfies FondosLiberadosPayload,
-      };
-    }
   );
 
-  if (!result.skipPublish) {
-    await publishFinanceDomainEvent(result.evento, event.context, result.payload);
+  if (resultado.estado === 'sin_compromiso') {
+    console.warn(JSON.stringify({ action: 'finanzas.event.orden_compra_cancelada.sin_compromiso', ...logCtx, presupuesto_id }));
+    return;
   }
+
+  const idempotente = resultado.estado === 'idempotente';
+  console.log(JSON.stringify({
+    action: idempotente ? 'finanzas.event.orden_compra_cancelada.idempotent' : 'finanzas.event.orden_compra_cancelada.created',
+    ...logCtx,
+    presupuesto_id: resultado.presupuestoId,
+    id_movimiento: resultado.movimientoId,
+  }));
+
+  await publishFinanceDomainEvent(FinanzasEvents.FONDOS_LIBERADOS, event.context, {
+    presupuesto_id: resultado.presupuestoId,
+    movimiento_id: resultado.movimientoId,
+    monto_liberado: resultado.monto,
+    referencia_oc_id: oc_id,
+    referencia_oc_codigo: codigo,
+    idempotente,
+  } satisfies FondosLiberadosPayload);
 }
 
 // ─── Sincronización de presupuesto por partida (Gerencia Técnica) ─────────────
@@ -2632,7 +2356,7 @@ export async function handlePartidaComprometidaEvent(event: BocamEvent): Promise
     concepto_id: string; monto: number; referencia_id: string; referencia_codigo?: string; tipo: string;
   };
 
-  if (!concepto_id || !monto || !referencia_id) {
+  if (!esUuid(concepto_id) || !monto || !esUuid(referencia_id)) {
     console.error(JSON.stringify({
       action: 'finanzas.event.partida_comprometida.invalid_payload',
       event_type: event.event_type,
@@ -2644,41 +2368,36 @@ export async function handlePartidaComprometidaEvent(event: BocamEvent): Promise
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
-  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
-    const existente = await prisma.movimientoPresupuestal.findFirst({
-      where: { referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id, tipo: TipoMovimiento.COMPROMISO },
-    });
-    if (existente) {
-      console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.idempotent', referencia_id }));
-      return;
-    }
+  // Mismo punto de escritura que oc_creada y comprometer-fondos (lock + índice único + tombstone). Gerencia Técnica
+  // es la fuente de verdad del saldo por partida, por lo que aquí no se revalida suficiencia (como antes).
+  const resultado = await registrarCompromisoOc(
+    { tenantId, proyectoId, userId: event.context.user_id },
+    {
+      ocId: referencia_id,
+      ocCodigo: referencia_codigo || referencia_id,
+      monto: Number(monto),
+      conceptoId: concepto_id,
+      validarSuficiencia: false,
+      concepto: `Compromiso por ${tipo} ${referencia_codigo || referencia_id}`,
+      notas: 'Compromiso sincronizado desde evento gerencia_tecnica.partida_comprometida.',
+    },
+  );
 
-    const presupuesto = await prisma.presupuestoAsignado.findFirst({
-      where: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id },
-    });
-    if (!presupuesto) {
-      console.warn(JSON.stringify({
-        action: 'finanzas.event.partida_comprometida.sin_presupuesto_sincronizado',
-        tenant_id: tenantId, proyecto_id: proyectoId, concepto_id, referencia_id,
-      }));
-      return;
-    }
-
-    const montoNum = Number(monto);
-    await prisma.movimientoPresupuestal.create({
-      data: {
-        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
-        tipo: TipoMovimiento.COMPROMISO, concepto: `Compromiso por ${tipo} ${referencia_codigo || referencia_id}`, monto: montoNum,
-        referencia_modulo: 'compras', referencia_entidad: 'OrdenCompra', referencia_id, referencia_codigo: referencia_codigo || null,
-        usuario_id: event.context.user_id,
-        notas: 'Compromiso sincronizado desde evento gerencia_tecnica.partida_comprometida.',
-      },
-    });
-    await prisma.presupuestoAsignado.update({
-      where: { id_presupuesto: presupuesto.id_presupuesto },
-      data: { monto_comprometido: { increment: montoNum }, monto_disponible: { decrement: montoNum } },
-    });
-  });
+  if (resultado.estado === 'idempotente') {
+    console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.idempotent', referencia_id }));
+    return;
+  }
+  if (resultado.estado === 'oc_cancelada') {
+    console.warn(JSON.stringify({ action: 'finanzas.event.partida_comprometida.oc_cancelada', referencia_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+    return;
+  }
+  if (resultado.estado === 'presupuesto_no_encontrado') {
+    console.warn(JSON.stringify({
+      action: 'finanzas.event.partida_comprometida.sin_presupuesto_sincronizado',
+      tenant_id: tenantId, proyecto_id: proyectoId, concepto_id, referencia_id,
+    }));
+    return;
+  }
 
   console.log(JSON.stringify({ action: 'finanzas.event.partida_comprometida.processed', concepto_id, referencia_id, tenant_id: tenantId, proyecto_id: proyectoId }));
 }

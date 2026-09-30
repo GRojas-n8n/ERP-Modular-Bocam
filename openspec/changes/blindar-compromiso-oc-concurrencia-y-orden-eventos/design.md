@@ -50,6 +50,39 @@ Hechos verificados en el repositorio y en producción (solo lectura):
 3. **E** registra la cancelación cuya creación aún no llegó (tombstone) para que una creación posterior sea un no-op definido y una liberación sin compromiso no consuma el compromiso de otra OC. Se implementa como tabla mínima `(tenant_id, oc_id)` con PK, no como una fila ficticia en `movimientos_presupuestales`, para no contaminar los totales.
 4. Se descarta **C** por el costo de reintentos y contención, y **D** como sobredimensionada mientras A+B+E cubran los invariantes; se reevalúa si aparecen más estados.
 
+**Decisión aprobada por el titular (2026-09-30):** índice único parcial para `COMPROMISO` y `LIBERACION`; inserción atómica; advisory transaction lock por tenant + OC; tombstone para cancelación anterior a creación; **sin** `SERIALIZABLE`; **sin** llamadas HTTP mientras se mantiene el lock (el llamador publica eventos después del commit); **sin** eliminación automática de tombstones en este change.
+
+Concreciones de la implementación (primer PR, Finanzas):
+
+- Alcance del índice: además de los tipos `COMPROMISO`/`LIBERACION`, se limita a `referencia_modulo='compras'` y `referencia_entidad='OrdenCompra'`, porque el endpoint genérico de movimientos y la nómina (`personal`/`PreNomina`) usan `COMPROMISO` con otras referencias y no comparten esta regla.
+- El saldo del presupuesto se actualiza con un `UPDATE` condicional atómico (`monto_disponible >= monto`) y, si no alcanza, la transacción se aborta (el movimiento insertado no persiste). Esto además evita el sobrecompromiso entre OC distintas que concurren sobre el mismo presupuesto (observado en las pruebas previas a la implementación: 2000 comprometidos sobre un presupuesto de 1000).
+- La liberación usa el monto y el presupuesto del `COMPROMISO` exacto de esa OC, no los del payload.
+- `POST comprometer-fondos` responde `409` si la OC ya fue cancelada; `POST liberar-fondos` sobre una OC sin compromiso responde `201` con `monto_liberado: 0` y registra el tombstone (antes respondía `500`).
+- Alcance del índice confirmado por el titular (2026-09-30): solo `referencia_modulo='compras'`, `referencia_entidad='OrdenCompra'` y tipos `COMPROMISO`/`LIBERACION`; no se amplía a movimientos genéricos ni a nómina. Los tombstones se conservan sin limpieza automática en este change.
+- Atomicidad de la migración: el script va dentro de `BEGIN`/`COMMIT` y el precheck es lo primero, antes de cualquier DDL. `prisma migrate deploy` y `prisma db execute` envían el script en un solo lote (ya atómico de forma implícita); el `BEGIN`/`COMMIT` explícito protege a los runners sentencia por sentencia como `psql -f`, que es lo que usa el CI. Comprobado con un fallo inyectado después del precheck (una función con otro tipo de retorno hace fallar `CREATE OR REPLACE FUNCTION`): con `BEGIN`/`COMMIT` no queda índice ni tabla; sin ellos y con un runner sentencia por sentencia sí quedan (índice y tabla).
+- Ejecutable con el rol de runtime: `prisma migrate deploy` corre en el contenedor del servicio con su `FINANZAS_DATABASE_URL` (rol de runtime), que no es dueño de las funciones `current_tenant_id()` / `current_proyecto_id()` (las aplica `rls-policies.sql` como superusuario). Por eso la migración ya no usa `CREATE OR REPLACE FUNCTION`: crea esas funciones solo si no existen. Una prueba ejecuta la migración con un rol dueño de las tablas y no de las funciones; con la versión anterior falla. Sigue siendo requisito que ese rol sea dueño de `movimientos_presupuestales` y tenga `CREATE` sobre el esquema (ver el preflight de despliegue).
+- `referencia_id` NULL: el índice solo cubre `referencia_id IS NOT NULL`, así que un movimiento de OC sin referencia lo evadiría (el endpoint genérico acepta referencias arbitrarias). Se cierra con un CHECK `chk_movimiento_oc_referencia_id` (COMPROMISO/LIBERACION de compras/OrdenCompra exigen `referencia_id`) y el precheck de la migración rechaza datos previos que lo incumplan. Además, ningún camino llega al INSERT con una OC sin UUID válido: los endpoints responden `400` (`FIN_INVALID_REFERENCE`) y los handlers registran `invalid_payload` y no hacen nada.
+- Paridad: las sentencias RLS del tombstone en la migración y en `rls-policies.sql` son idénticas (lo verifica una prueba estática); el CI aplica el archivo canónico de la migración con `psql -f`, sin copia inline (también verificado por una prueba estática).
+- `db push` (CI) no crea el índice parcial: el workflow aplica el SQL de la migración después de `db push`. En producción lo aplica `prisma migrate deploy`.
+
+Entornos persistentes y preflight de la migración: el VPS es el único entorno persistente activo demostrado. El stack QNAP de preproducción (`docker-compose.qnap.yml`, `scripts/qnap`) y `docker-compose.prod.yml` se clasifican como históricos/no verificados: no se consideran bloqueantes. Si vuelven a utilizarse, antes de aplicar la migración deberán ejecutar, sobre su base de Finanzas, (a) el conteo de grupos duplicados de `COMPROMISO`/`LIBERACION` para `compras`/`OrdenCompra` (`GROUP BY tenant_id, referencia_modulo, referencia_entidad, referencia_id, tipo HAVING count(*) > 1`) y (b) el conteo de movimientos de ese alcance con `referencia_id IS NULL`, ambos con resultado 0, y comprobar que el rol de runtime es dueño de `movimientos_presupuestales`, tiene `CREATE` sobre el esquema y que existen las funciones `current_tenant_id()` / `current_proyecto_id()`. El "staging" que aparece en `docker-compose.vps.yml` es un *profile* de compose dentro del mismo VPS, no otro entorno.
+
+Comportamiento de `liberar-fondos` sin compromiso (documentado): registra el tombstone, libera 0, responde `201` con `idempotente: true`, `no_op: true`, `motivo: 'SIN_COMPROMISO'`, `tombstone_registrado: true`, `monto_liberado: 0` y `movimiento_id: ''`, no publica `fondos_liberados` y deja un log estructurado `finanzas.liberar_fondos.no_op_sin_compromiso` sin montos ni datos de negocio sensibles. Antes respondía `500` y dejaba la OC en `CANCELACION_PENDIENTE`.
+
+Caminos idempotentes y publicación de eventos (Finanzas):
+
+| Camino | Antes | Ahora |
+|---|---|---|
+| `POST comprometer-fondos`, compromiso ya existente | publicaba `fondos_comprometidos` (`idempotente: true`, saldo 0 ficticio) | **no publica**; la respuesta HTTP lleva el saldo real |
+| `oc_creada`, compromiso ya existente | ídem | **no publica** |
+| `oc_creada` / `partida_comprometida` / `comprometer-fondos` con OC ya cancelada | (no contemplado) | no publica; HTTP responde `409` |
+| `partida_comprometida`, compromiso ya existente | no publicaba | igual |
+| `POST liberar-fondos`, liberación ya existente | publicaba `fondos_liberados` (`idempotente: true`, datos reales) | igual (publica) |
+| `oc_cancelada`, liberación ya existente | publicaba `fondos_liberados` (`idempotente: true`, datos reales) | igual (publica) |
+| `liberar-fondos` / `oc_cancelada` sin compromiso | HTTP `500`; evento sin publicar | no publica |
+
+Riesgo registrado: mientras los publicadores sigan siendo fire-and-forget (change aparte), republicar ante un duplicado era una recuperación accidental de un `fondos_comprometidos` perdido. Al dejar de republicar, si el primer `fondos_comprometidos` se pierde, Contabilidad (que lo usa para conciliar el pasivo proyectado) no lo recibirá de nuevo. Se acepta porque el evento republicado llevaba un saldo ficticio; se cierra con el change de confiabilidad de publicadores (outbox), que debe cubrir `fondos_comprometidos`.
+
 Riesgos de la recomendación:
 
 - La migración del índice único falla si existen duplicados: por eso la auditoría previa es obligatoria y aborta la migración sin modificar datos (ver decisión 5). En el despliegue el fallo detiene `prisma migrate deploy`.
