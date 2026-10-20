@@ -105,7 +105,7 @@ async function seedCuadroConEspecificaciones(numEspecs: number, numProveedores =
 async function testGuardaYRecalculaRenglon() {
   const s = await seedCuadroConEspecificaciones(2, 1);
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
     const provId = s.proveedores[0].id_proveedor;
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/evaluar-especificaciones`, {
@@ -139,7 +139,7 @@ async function testGuardaYRecalculaRenglon() {
 async function testPreguntaObligatoria() {
   const s = await seedCuadroConEspecificaciones(1, 1);
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
     const provId = s.proveedores[0].id_proveedor;
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/evaluar-especificaciones`, {
@@ -163,7 +163,7 @@ async function testPreguntaObligatoria() {
 async function testCaracteristicasIndependientes() {
   const s = await seedCuadroConEspecificaciones(2, 1);
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
     const provId = s.proveedores[0].id_proveedor;
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/evaluar-especificaciones`, {
@@ -201,7 +201,7 @@ async function testCaracteristicasIndependientes() {
 async function testLegacyRechazaConEspecificaciones() {
   const s = await seedCuadroConEspecificaciones(1, 1);
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/evaluar`, {
       method: 'PATCH',
@@ -227,7 +227,7 @@ async function testLegacyRechazaConEspecificaciones() {
 async function testLegacySigueFuncionandoSinEspecificaciones() {
   const s = await seedCuadroConEspecificaciones(0, 1); // 0 especificaciones
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/evaluar`, {
       method: 'PATCH',

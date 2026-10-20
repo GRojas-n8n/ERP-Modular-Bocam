@@ -135,6 +135,29 @@ async function testRegisterPayloadValidoSigueFuncionando() {
   }
 }
 
+async function testRegisterSinRolesDefaultAResidenciaNoAlias() {
+  // rbac-migracion-alias-resident-technical-compras: el default de rol_global
+  // cuando no se envía `roles` debía ser el alias 'resident', reintroduciendo
+  // el mismo bug que el fix de packages/roles ya dejaba de ofrecer al crear un
+  // usuario explícito. Debe ser el rol canónico 'residencia'.
+  const tenantId = randomUUID();
+  await prisma.tenant.create({
+    data: { id_tenant: tenantId, nombre: 'Tenant Test Register Default Rol', rfc: `RFC${Date.now().toString().slice(-9)}` },
+  });
+  try {
+    const email = `register-default-rol-${Date.now()}@bocam.test`;
+    const r = await post('/api/v1/auth/register', {
+      email, password: 'ClaveSegura123!', nombre: 'Usuario Sin Rol Explicito', tenant_id: tenantId,
+    });
+    assert.equal(r.status, 201);
+    const body = (await r.json()) as any;
+    assert.deepEqual(body.data.roles, ['residencia'], 'el default de rol_global sin roles explícitos debe ser residencia, no el alias resident');
+    console.log('ok - register: sin roles explícitos, el default es residencia (no el alias resident)');
+  } finally {
+    await cleanupTenant(tenantId);
+  }
+}
+
 async function testRegisterRechazaEmailComoObjeto() {
   const r = await post('/api/v1/auth/register', {
     email: { nested: true }, password: 'x', nombre: 'Y', tenant_id: randomUUID(),
@@ -194,6 +217,7 @@ async function main() {
     await testLoginRechazaPasswordConFormaInesperada();
     await testLoginRechazaTenantIdFaltante();
     await testRegisterPayloadValidoSigueFuncionando();
+    await testRegisterSinRolesDefaultAResidenciaNoAlias();
     await testRegisterRechazaEmailComoObjeto();
     await testRegisterRechazaNombreFaltante();
     await testRefreshRechazaTokenComoNumero();

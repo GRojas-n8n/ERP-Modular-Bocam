@@ -19,7 +19,7 @@ async function testRoleForbidden() {
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-compras',
     proyectoId: 'proyecto-seguridad-compras',
-    roles: ['resident'],
+    roles: ['residencia'],
     projects: ['proyecto-seguridad-compras'],
   });
 
@@ -46,7 +46,7 @@ async function testProjectForbidden() {
     userId: 'user-resident',
     tenantId: 'tenant-seguridad-compras',
     proyectoId: 'proyecto-no-autorizado',
-    roles: ['resident'],
+    roles: ['residencia'],
     projects: ['otro-proyecto'],
   });
 

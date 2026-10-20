@@ -115,6 +115,27 @@ test('los alias declaran un rol canónico que existe', () => {
   }
 });
 
+test('ningún alias catalogado quedó huérfano de backend', () => {
+  // Simétrico al guardián de 'sin-backend': si un alias ya no aparece en
+  // ningún requireRoles real, dejó de ser "sinónimo histórico aún exigido" y
+  // debe retirarse del catálogo en el mismo cambio que lo retira del backend,
+  // no quedar como nota desactualizada (ver rbac-migracion-alias-resident-technical-compras).
+  const backend = rolesExigidosPorBackend();
+  const huerfanos: string[] = [];
+
+  for (const rol of ROLES) {
+    if (rol.estado !== 'alias') continue;
+    if (!backend.get(rol.id)?.length) huerfanos.push(rol.id);
+  }
+
+  assert.deepEqual(
+    huerfanos,
+    [],
+    `Alias catalogados que ningún requireRoles real exige ya:\n  ${huerfanos.join('\n  ')}\n` +
+      'Retíralos de packages/roles/src/index.ts en vez de dejarlos como alias huérfano.'
+  );
+});
+
 test('no hay ids repetidos y todos tienen etiqueta', () => {
   assert.equal(new Set(ROLES_VALIDOS).size, ROLES_VALIDOS.length, 'hay ids de rol repetidos');
   for (const rol of ROLES) {

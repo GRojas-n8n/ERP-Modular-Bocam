@@ -88,7 +88,7 @@ async function putEspecificacionSimple(reqId: string, itemId: string, token: str
 async function testAceptaEdicionEnPendiente() {
   const seeded = await seed('PENDIENTE');
   try {
-    const token = signTenantToken({ userId: seeded.userId, tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: seeded.userId, tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, roles: ['residencia'] });
     const r = await putEspecificacionSimple(seeded.requisicionId, seeded.itemId, token, {
       especificacion_marca_modelo: 'Corregida',
       especificacion_detalle: 'Detalle corregido',
@@ -105,7 +105,7 @@ async function testAceptaEdicionEnPendiente() {
 async function testAceptaEdicionEnAprobada() {
   const seeded = await seed('APROBADA');
   try {
-    const token = signTenantToken({ userId: seeded.userId, tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: seeded.userId, tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, roles: ['residencia'] });
     const r = await putEspecificacionSimple(seeded.requisicionId, seeded.itemId, token, {
       especificacion_marca_modelo: 'Corregida tras aprobar',
       especificacion_detalle: 'Detalle corregido tras aprobar',
@@ -122,7 +122,7 @@ async function testAceptaEdicionEnAprobada() {
 async function testRechazaEdicionEnComprada() {
   const seeded = await seed('COMPRADA');
   try {
-    const token = signTenantToken({ userId: seeded.userId, tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: seeded.userId, tenantId: seeded.tenantId, proyectoId: seeded.proyectoId, roles: ['residencia'] });
     const r = await putEspecificacionSimple(seeded.requisicionId, seeded.itemId, token, {
       especificacion_marca_modelo: 'No debería guardarse',
     });

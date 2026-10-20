@@ -22,16 +22,21 @@ test('acepta los roles que el backend exige y antes no eran asignables', () => {
   }
 });
 
-test('no ofrece alias históricos al crear un usuario nuevo', () => {
-  // 'resident' abre Compras pero no Personal ni Control de Proyectos: asignarlo
-  // a alguien nuevo produce accesos distintos segun el endpoint.
-  const r = crearUsuarioSchema.safeParse({ ...base, roles: ['resident'] });
-  assert.equal(r.success, false);
+test('rechaza los alias retirados del catálogo al crear un usuario nuevo', () => {
+  // resident/compras/technical se retiraron del catálogo tras migrar los
+  // usuarios existentes a su rol canónico (residencia/procurement/gerencia_tecnica)
+  // y quitarlos de todo requireRoles — ya no son alias, no existen.
+  for (const rol of ['resident', 'compras', 'technical']) {
+    const r = crearUsuarioSchema.safeParse({ ...base, roles: [rol] });
+    assert.equal(r.success, false, `${rol} ya no debería aceptarse al crear`);
+  }
 });
 
-test('sí acepta alias al editar, para no bloquear usuarios que ya los traen', () => {
-  const r = actualizarUsuarioSchema.safeParse({ nombre: 'Nuevo nombre', roles: ['resident'] });
-  assert.equal(r.success, true);
+test('rechaza los alias retirados también al editar, ya no existen en el catálogo', () => {
+  for (const rol of ['resident', 'compras', 'technical']) {
+    const r = actualizarUsuarioSchema.safeParse({ nombre: 'Nuevo nombre', roles: [rol] });
+    assert.equal(r.success, false, `${rol} ya no debería aceptarse al editar`);
+  }
 });
 
 test('roles sigue siendo opcional', () => {

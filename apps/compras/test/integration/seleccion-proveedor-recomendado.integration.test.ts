@@ -77,7 +77,7 @@ async function seedCuadroConDosProveedores() {
 async function testSegundaOpcionAjena() {
   const s = await seedCuadroConDosProveedores();
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
     const provAjeno = randomUUID();
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/seleccion`, {
@@ -101,7 +101,7 @@ async function testSegundaOpcionAjena() {
 async function testSegundaOpcionIgualPrimera() {
   const s = await seedCuadroConDosProveedores();
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/seleccion`, {
       method: 'PUT',
@@ -121,7 +121,7 @@ async function testSegundaOpcionIgualPrimera() {
 async function testSinSegundaOpcionNoRegresion() {
   const s = await seedCuadroConDosProveedores();
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/seleccion`, {
       method: 'PUT',
@@ -173,7 +173,7 @@ async function seedCuadroFirmableConSegundaOpcionMala(veredictoSegunda: 'NC' | '
 async function testFirmaConSegundaOpcionNC() {
   const s = await seedCuadroFirmableConSegundaOpcionMala('NC');
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/firmar`, {
       method: 'POST',
@@ -194,7 +194,7 @@ async function testFirmaConSegundaOpcionNC() {
 async function testFirmaConSegundaOpcionDuda() {
   const s = await seedCuadroFirmableConSegundaOpcionMala('?');
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId: s.tenantId, proyectoId: s.proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${s.cuadroId}/firmar`, {
       method: 'POST',
@@ -225,7 +225,7 @@ async function testFirmaSinSegundaOpcionNoRegresion() {
     },
   });
   try {
-    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['resident'] });
+    const token = signTenantToken({ userId: randomUUID(), tenantId, proyectoId, roles: ['residencia'] });
 
     const response = await fetch(`${comprasBaseUrl}/api/v1/compras/comparativas/${cuadro.id_cuadro}/firmar`, {
       method: 'POST',

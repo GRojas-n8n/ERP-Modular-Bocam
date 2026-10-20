@@ -239,7 +239,7 @@ async function testHappyPathCompleto() {
     });
     const tokenResidente = signTenantToken({
       userId: randomUUID(), tenantId: seeded.tenantId,
-      proyectoId: seeded.proyectoId, roles: ['resident'],
+      proyectoId: seeded.proyectoId, roles: ['residencia'],
     });
     const tokenGT = signTenantToken({
       userId: randomUUID(), tenantId: seeded.tenantId,
