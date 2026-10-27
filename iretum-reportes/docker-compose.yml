@@ -1,0 +1,31 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - NOMINA_DESTINATARIOS=${NOMINA_DESTINATARIOS}
+      - MAIL_REPLY_TO=${MAIL_REPLY_TO}
+      - PRUEBA_DESTINATARIO=${PRUEBA_DESTINATARIO}
+      - MAIL_FROM=${MAIL_FROM:-Iretum Reportes <reportes@iretum.com>}
+      - HORA_SOLICITUD_LUNES=${HORA_SOLICITUD_LUNES:-08:15}
+      - HORA_RECORDATORIO_LUNES=${HORA_RECORDATORIO_LUNES:-12:00}
+      - HORA_ENVIO_LUNES=${HORA_ENVIO_LUNES:-08:00}
+      - TURNO_INICIO=${TURNO_INICIO:-14:00}
+      - TURNO_FIN=${TURNO_FIN:-18:00}
+      - TOLERANCIA_MIN=${TOLERANCIA_MIN:-10}
+      - RETARDO_MAX_MIN=${RETARDO_MAX_MIN:-60}
+      - INFORME_DESTINATARIOS=${INFORME_DESTINATARIOS}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_MODELO=${CLAUDE_MODELO:-claude-sonnet-5-5}
+      - REPO_PRINCIPAL=${REPO_PRINCIPAL:-GRojas-n8n/ERP-Modular-Bocam}
+      - REPO_JUNIOR=${REPO_JUNIOR:-GRojas-n8n/iretum-jr-dev}
+      - HORA_INFORME_LUNES=${HORA_INFORME_LUNES:-07:00}
+    volumes:
+      - reportes-data:/data
+
+volumes:
+  reportes-data:
