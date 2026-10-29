@@ -1,0 +1,517 @@
+# ---------------------------------------------------------------------------
+# iRetum — Entorno LOCAL aislado (Windows + Docker Desktop)
+#
+# Copia de docker-compose.vps.yml SIN Caddy/Cloudflare y SIN servicios externos
+# (SMTP, SAT, Sentry, Anthropic, outbox apagados). Proyecto propio
+# "iretum-local": contenedores, red y volúmenes no se mezclan con nada más.
+#
+# No usar directamente: se opera con scripts/local/iretum-local.ps1, que antes
+# de arrancar verifica la rama y que ninguna URL de .env.local salga de la
+# máquina (scripts/local/verificar-env-local.mjs). Ver LOCAL.md.
+#
+# Puertos publicados (solo en 127.0.0.1):
+#   8080  -> app-shell (frontend + nginx que enruta /api/v1/*)
+#   5433  -> Postgres
+#   15673 -> panel de RabbitMQ
+# ---------------------------------------------------------------------------
+name: iretum-local
+
+x-backend: &backend
+  networks:
+    - iretum-local-network
+  restart: unless-stopped
+  depends_on: &backend-depends
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: iretum-local-postgres
+    environment:
+      POSTGRES_USER: ${LOCAL_DB_ADMIN_USER}
+      POSTGRES_PASSWORD: ${LOCAL_DB_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+      LOCAL_APP_DB_PASSWORD: ${LOCAL_APP_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+      - ./docker/local/postgres-init:/docker-entrypoint-initdb.d:ro
+      - ./docker/local/sql:/iretum/sql:ro
+      - ./apps:/iretum/apps:ro
+    networks:
+      - iretum-local-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LOCAL_DB_ADMIN_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: iretum-local-redis
+    volumes:
+      - local_redis_data:/data
+    networks:
+      - iretum-local-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: iretum-local-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
+    ports:
+      - "127.0.0.1:15673:15672"
+    volumes:
+      - local_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - iretum-local-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  auth:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/auth"
+        APP_PATH: "apps/auth"
+    image: iretum-local/auth
+    container_name: iretum-local-auth
+    environment:
+      PORT: 3003
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+      JWT_MAX_SESSION_HOURS: ${JWT_MAX_SESSION_HOURS}
+      MASTER_SECRET: ${MASTER_SECRET}
+      DATABASE_URL: ${AUTH_DATABASE_URL}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ""
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3003/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  gerencia-tecnica:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/gerencia-tecnica"
+        APP_PATH: "apps/gerencia-tecnica"
+    image: iretum-local/gerencia-tecnica
+    container_name: iretum-local-gerencia-tecnica
+    environment:
+      PORT: 3001
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
+      GERENCIA_TECNICA_DATABASE_URL: ${GERENCIA_TECNICA_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      FICHAS_UPLOAD_DIR: /data/gerencia-tecnica/fichas
+      CONTROL_PROYECTOS_URL: http://control-proyectos:3013/api/v1/control-proyectos
+      SENTRY_DSN: ""
+    volumes:
+      - local_fichas_uploads:/data/gerencia-tecnica/fichas
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  finanzas:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/finanzas"
+        APP_PATH: "apps/finanzas"
+    image: iretum-local/finanzas
+    container_name: iretum-local-finanzas
+    environment:
+      PORT: 3004
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${FINANZAS_DATABASE_URL}
+      FINANZAS_DATABASE_URL: ${FINANZAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ""
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3004/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  compras:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/compras"
+        APP_PATH: "apps/compras"
+    image: iretum-local/compras
+    container_name: iretum-local-compras
+    environment:
+      PORT: 3002
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${COMPRAS_DATABASE_URL}
+      COMPRAS_DATABASE_URL: ${COMPRAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+      GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
+      ALMACEN_URL: http://almacen:3012/api/v1/almacen
+      # Correo apagado: sin SMTP_HOST no se envía nada a proveedores.
+      SMTP_HOST: ""
+      SMTP_PORT: "465"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: ""
+      DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
+      COTIZACIONES_UPLOAD_DIR: /data/compras/cotizaciones
+      SENTRY_DSN: ""
+      COMPRAS_OUTBOX_DISPATCHER: "off"
+    volumes:
+      - local_docs_proveedores:/data/compras/docs-proveedores
+      - local_cotizaciones_uploads:/data/compras/cotizaciones
+    depends_on:
+      <<: *backend-depends
+      finanzas:
+        condition: service_healthy
+      gerencia-tecnica:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  personal:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/personal"
+        APP_PATH: "apps/personal"
+    image: iretum-local/personal
+    container_name: iretum-local-personal
+    environment:
+      PORT: 3006
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${PERSONAL_DATABASE_URL}
+      PERSONAL_DATABASE_URL: ${PERSONAL_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      PERSONAL_UPLOAD_DIR: /data/personal/uploads
+      SENTRY_DSN: ""
+    volumes:
+      - local_personal_uploads:/data/personal/uploads
+    depends_on:
+      <<: *backend-depends
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3006/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  seguridad:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/seguridad"
+        APP_PATH: "apps/seguridad"
+    image: iretum-local/seguridad
+    container_name: iretum-local-seguridad
+    environment:
+      PORT: 3007
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
+      SEGURIDAD_DATABASE_URL: ${SEGURIDAD_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      SENTRY_DSN: ""
+    depends_on:
+      <<: *backend-depends
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3007/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # PENDIENTE (LOCAL.md): ventas y almacen comparten el puerto 3012. En Docker
+  # no chocan (contenedores distintos), pero fuera de Docker sí.
+  ventas:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/ventas"
+        APP_PATH: "apps/ventas"
+    image: iretum-local/ventas
+    container_name: iretum-local-ventas
+    environment:
+      PORT: 3012
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${VENTAS_DATABASE_URL}
+      VENTAS_DATABASE_URL: ${VENTAS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ""
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3012/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  contabilidad:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/contabilidad"
+        APP_PATH: "apps/contabilidad"
+    image: iretum-local/contabilidad
+    container_name: iretum-local-contabilidad
+    environment:
+      PORT: 3008
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
+      CONTABILIDAD_DATABASE_URL: ${CONTABILIDAD_DATABASE_URL}
+      CONTABILIDAD_BASE_URL: http://contabilidad:3008
+      CONTABILIDAD_EVENT_BUS_NAME: contabilidad
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      # SAT apagado: sin adaptador, igual que producción hoy (sin profile "sat").
+      SAT_CALLBACK_SHARED_SECRET: ${SAT_CALLBACK_SHARED_SECRET}
+      SAT_ADAPTER_BASE_URL: ""
+      SAT_ADAPTER_API_KEY: ""
+      SAT_ADAPTER_TIMEOUT_MS: "6000"
+      SAT_WORKER_RETRY_DELAY_MS: "1500"
+      SAT_WORKER_MAX_ATTEMPTS: "3"
+      SENTRY_DSN: ""
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3008/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  calidad:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/calidad"
+        APP_PATH: "apps/calidad"
+    image: iretum-local/calidad
+    container_name: iretum-local-calidad
+    environment:
+      PORT: 3009
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${CALIDAD_DATABASE_URL}
+      CALIDAD_DATABASE_URL: ${CALIDAD_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      UPLOAD_DIR: /data/calidad/uploads
+      SENTRY_DSN: ""
+    volumes:
+      - local_calidad_uploads:/data/calidad/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3009/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  reportes:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.reportes
+      args:
+        WORKSPACE_NAME: "@bocam/reportes"
+        APP_PATH: "apps/reportes"
+    image: iretum-local/reportes
+    container_name: iretum-local-reportes
+    environment:
+      PORT: 3010
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      SENTRY_DSN: ""
+    depends_on: {}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3010/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # Perfil "ia": NO arranca por default. El código exige ANTHROPIC_API_KEY al
+  # iniciar y una key (real o falsa) haría que intentara llamar a Anthropic,
+  # rompiendo el aislamiento. Las rutas /api/v1/asistente devuelven 502.
+  asistente:
+    <<: *backend
+    profiles: ["ia"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.asistente
+      args:
+        WORKSPACE_NAME: "@bocam/asistente"
+        APP_PATH: "apps/asistente"
+    image: iretum-local/asistente
+    container_name: iretum-local-asistente
+    environment:
+      PORT: 3011
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      # IA apagada: sin API key no se llama a Anthropic.
+      ANTHROPIC_API_KEY: ""
+      ANTHROPIC_TIMEOUT_MS: 30000
+      SENTRY_DSN: ""
+      REDIS_URL: ${REDIS_URL}
+      COMPRAS_URL: http://compras:3002/api/v1/compras
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+      CONTROL_PROYECTOS_URL: http://control-proyectos:3013/api/v1/control-proyectos
+      PERSONAL_URL: http://personal:3006/api/v1/personal
+      SEGURIDAD_URL: http://seguridad:3007/api/v1/seguridad
+      CALIDAD_URL: http://calidad:3009/api/v1/calidad
+      GERENCIA_TECNICA_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3011/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  almacen:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/almacen"
+        APP_PATH: "apps/almacen"
+    image: iretum-local/almacen
+    container_name: iretum-local-almacen
+    environment:
+      PORT: 3012
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${ALMACEN_DATABASE_URL}
+      ALMACEN_DATABASE_URL: ${ALMACEN_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ""
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3012/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  control-proyectos:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      args:
+        WORKSPACE_NAME: "@bocam/control-proyectos"
+        APP_PATH: "apps/control-proyectos"
+    image: iretum-local/control-proyectos
+    container_name: iretum-local-control-proyectos
+    environment:
+      PORT: 3013
+      NODE_ENV: ${NODE_ENV}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${CONTROL_PROYECTOS_DATABASE_URL}
+      CONTROL_PROYECTOS_DATABASE_URL: ${CONTROL_PROYECTOS_DATABASE_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SENTRY_DSN: ""
+      GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
+      COMPRAS_URL: http://compras:3002/api/v1/compras
+      FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3013/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  app-shell:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app-shell
+    image: iretum-local/app-shell
+    container_name: iretum-local-app-shell
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      auth:
+        condition: service_healthy
+    networks:
+      - iretum-local-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+networks:
+  iretum-local-network:
+    name: iretum-local-network
+    driver: bridge
+
+volumes:
+  local_postgres_data:
+  local_redis_data:
+  local_rabbitmq_data:
+  local_fichas_uploads:
+  local_docs_proveedores:
+  local_cotizaciones_uploads:
+  local_personal_uploads:
+  local_calidad_uploads:

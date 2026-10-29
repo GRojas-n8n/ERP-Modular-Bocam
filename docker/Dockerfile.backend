@@ -8,13 +8,15 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-COPY apps/*/package.json ./apps/
-COPY packages/*/package.json ./packages/
-
-RUN npm ci
-
+# Mismo patrón que Dockerfile.app-shell/reportes/asistente: el glob
+# "COPY apps/*/package.json ./apps/" colapsaba todos los package.json en
+# ./apps/package.json, rompiendo la resolución de workspaces de npm ci.
+# Copiamos el repo completo (el .dockerignore excluye node_modules y dist).
 COPY . .
+
+# npm_config_production=false: instala devDependencies (typescript, prisma)
+# aunque el build reciba NODE_ENV=production.
+RUN npm_config_production=false npm ci
 
 ARG WORKSPACE_NAME
 ARG APP_PATH
