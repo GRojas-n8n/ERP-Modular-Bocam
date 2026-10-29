@@ -8,7 +8,9 @@
     "packages/*"
   ],
   "scripts": {
+    "predev": "node scripts/local/verificar-rama.mjs",
     "dev": "npm run dev --workspaces --if-present",
+    "predev:ventas": "node scripts/local/verificar-rama.mjs",
     "dev:ventas": "npm run dev -w @bocam/ventas",
     "tunnel:ventas": "npm run tunnel -w @bocam/ventas",
     "build": "npm run build --workspaces --if-present",
