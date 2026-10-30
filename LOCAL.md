@@ -288,5 +288,5 @@ Busca `centro_costos_creado.processed`, `saldo_partida_creado.processed`, `parti
   - Existen `PagoOC`, `DetallePagoOC` y `ProgramaPagos`, pero no la factura del proveedor (CFDI de egreso) ligada a la OC.
   - Lo más cercano es CFDI en Contabilidad.
 - **`Proveedor` no tiene tiempo de entrega:** solo se captura por cotización.
-- **Panel "Inteligencia financiera"** (Finanzas): muestra textos fijos que no salen de los datos, por ejemplo "Recuperación de $3,712.58 vía cancelación de OC" sin ninguna OC cancelada.
+- **Panel "Inteligencia financiera"** (Finanzas): sus textos son fijos y no salen de los datos. Desde el change `fix-encabezados-tablas-finanzas-y-panel-inteligencia` está **oculto** detrás de `VITE_FLAG_INTELIGENCIA_FINANCIERA`, apagada por defecto, hasta que use datos reales.
 - **PDF de la OC** (`reportes`): en el encabezado, el número de OC se encima con la fecha, y la descripción larga se sale de su renglón.
