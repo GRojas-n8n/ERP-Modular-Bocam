@@ -35,6 +35,7 @@ import { useTenant } from '../context/TenantContext';
 import { useNotification } from '../context/NotificationContext';
 import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { DEMO_RESUMEN_FINANCIERO, DEMO_PAGOS } from '../lib/demoData';
+import { FLAGS } from '../lib/feature-flags';
 import { HelpButton } from '../components/HelpButton';
 import { HelpPanel } from '../components/HelpPanel';
 
@@ -781,6 +782,8 @@ export const FinanzasView: React.FC = () => {
                 }
               />
 
+              {/* Textos fijos, no salen del backend: oculto hasta que use datos reales (FLAGS). */}
+              {FLAGS.inteligenciaFinanciera && (
               <Card className="relative overflow-hidden rounded-3xl border-border/40 p-8 shadow-sm">
                 <div className="absolute right-0 top-0 h-1 w-full bg-amber-500/20" />
                 <div className="space-y-6">
@@ -818,6 +821,7 @@ export const FinanzasView: React.FC = () => {
                   </Button>
                 </div>
               </Card>
+              )}
             </div>
           </div>
         {/* ── Tabla: Presupuestos Asignados ─────────────────────────────── */}
@@ -848,17 +852,17 @@ export const FinanzasView: React.FC = () => {
           ) : (
             <TableContainer>
               <Table>
-                <TableHead>
+                <TableHeader>
                   <TableRow>
-                    <TableHeader>Código</TableHeader>
-                    <TableHeader>Descripción</TableHeader>
-                    <TableHeader>Capítulo</TableHeader>
-                    <TableHeader className="text-right">Autorizado</TableHeader>
-                    <TableHeader className="text-right">Comprometido</TableHeader>
-                    <TableHeader className="text-right">Ejercido</TableHeader>
-                    <TableHeader className="text-right">Disponible</TableHeader>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Capítulo</TableHead>
+                    <TableHead className="text-right">Autorizado</TableHead>
+                    <TableHead className="text-right">Comprometido</TableHead>
+                    <TableHead className="text-right">Ejercido</TableHead>
+                    <TableHead className="text-right">Disponible</TableHead>
                   </TableRow>
-                </TableHead>
+                </TableHeader>
                 <TableBody>
                   {presupuestos.map(p => {
                     const pct = p.monto_autorizado > 0
@@ -930,15 +934,15 @@ export const FinanzasView: React.FC = () => {
         ) : (
           <TableContainer>
             <Table>
-              <TableHead>
+              <TableHeader>
                 <TableRow>
-                  <TableHeader>Fecha</TableHeader>
-                  <TableHeader>Referencia</TableHeader>
-                  <TableHeader>Fuente</TableHeader>
-                  <TableHeader>OCs cubiertas</TableHeader>
-                  <TableHeader className="text-right">Total</TableHeader>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Referencia</TableHead>
+                  <TableHead>Fuente</TableHead>
+                  <TableHead>OCs cubiertas</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {pagosOC.map(p => (
                   <TableRow key={p.id_pago}>
