@@ -2,7 +2,7 @@
 # iRetum — Entorno LOCAL aislado (Windows + Docker Desktop)
 #
 # Copia de docker-compose.vps.yml SIN Caddy/Cloudflare y SIN servicios externos
-# (SMTP, SAT, Sentry, Anthropic, outbox apagados). Proyecto propio
+# (SAT, Sentry, Anthropic y outbox apagados; el correo va solo a Mailpit). Proyecto propio
 # "iretum-local": contenedores, red y volúmenes no se mezclan con nada más.
 #
 # No usar directamente: se opera con scripts/local/iretum-local.ps1, que antes
@@ -13,6 +13,7 @@
 #   8080  -> app-shell (frontend + nginx que enruta /api/v1/*)
 #   5433  -> Postgres
 #   15673 -> panel de RabbitMQ
+#   8025  -> Mailpit (correos capturados; nunca salen de la máquina)
 # ---------------------------------------------------------------------------
 name: iretum-local
 
@@ -82,6 +83,21 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+    restart: unless-stopped
+
+  # Captura de correo local: Compras le entrega las invitaciones a cotizar y las
+  # OC; se ven en http://localhost:8025. Su SMTP (1025) no se publica al host.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: iretum-local-mailpit
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      MP_MAX_MESSAGES: "500"
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks:
+      - iretum-local-network
     restart: unless-stopped
 
   auth:
@@ -187,12 +203,13 @@ services:
       FINANZAS_URL: http://finanzas:3004/api/v1/finanzas
       GT_URL: http://gerencia-tecnica:3001/api/v1/gerencia-tecnica
       ALMACEN_URL: http://almacen:3012/api/v1/almacen
-      # Correo apagado: sin SMTP_HOST no se envía nada a proveedores.
-      SMTP_HOST: ""
-      SMTP_PORT: "465"
-      SMTP_USER: ""
-      SMTP_PASS: ""
-      SMTP_FROM: ""
+      # Correo SOLO a Mailpit (captura local, nada sale de la máquina). Usuario y
+      # contraseña son de mentira: el mailer los exige y Mailpit acepta cualquiera.
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_USER: compras-local
+      SMTP_PASS: compras-local
+      SMTP_FROM: compras@iretum.local
       DOCS_PROVEEDORES_UPLOAD_DIR: /data/compras/docs-proveedores
       COTIZACIONES_UPLOAD_DIR: /data/compras/cotizaciones
       SENTRY_DSN: ""
@@ -206,6 +223,8 @@ services:
         condition: service_healthy
       gerencia-tecnica:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/health >/dev/null || exit 1"]
       interval: 10s

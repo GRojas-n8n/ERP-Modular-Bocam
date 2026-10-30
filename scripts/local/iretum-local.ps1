@@ -7,9 +7,10 @@
 #   .\scripts\local\iretum-local.ps1 logs [servicio]
 #   .\scripts\local\iretum-local.ps1 migrate   # migraciones + RLS + dueno bocam_app (sin seeds)
 #   .\scripts\local\iretum-local.ps1 rls-test  # prueba de aislamiento entre tenants con bocam_app
+#   .\scripts\local\iretum-local.ps1 seed-compras  # datos de prueba del flujo de compras (ver LOCAL.md)
 param(
   [Parameter(Position = 0)]
-  [ValidateSet('up', 'down', 'reset', 'status', 'logs', 'migrate', 'rls-test')]
+  [ValidateSet('up', 'down', 'reset', 'status', 'logs', 'migrate', 'rls-test', 'seed-compras')]
   [string]$Comando = 'up',
   [Parameter(Position = 1)]
   [string]$Servicio
@@ -209,4 +210,9 @@ switch ($Comando) {
   'logs'    { if ($Servicio) { Invoke-Docker @Compose logs --tail 200 -f $Servicio } else { Invoke-Docker @Compose logs --tail 50 } }
   'migrate' { Verificar; Invoke-Docker @Compose up -d --wait postgres; Migrar }
   'rls-test' { Rls-Test }
+  'seed-compras' {
+    Verificar
+    node scripts/local/seed-flujo-compras.mjs
+    if ($LASTEXITCODE -ne 0) { exit 1 }
+  }
 }

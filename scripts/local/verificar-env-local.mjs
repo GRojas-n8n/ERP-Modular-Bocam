@@ -13,14 +13,16 @@ const HOSTS_LOCALES = new Set([
   'postgres', 'redis', 'rabbitmq',
   'auth', 'gerencia-tecnica', 'compras', 'finanzas', 'personal', 'seguridad',
   'ventas', 'contabilidad', 'calidad', 'reportes', 'asistente', 'almacen',
-  'control-proyectos', 'app-shell',
+  'control-proyectos', 'app-shell', 'mailpit',
 ]);
 
 // Variables que deben ir vacías o ausentes: activarlas conecta con servicios externos.
 const DEBEN_IR_VACIAS = [
-  'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SENTRY_DSN', 'ANTHROPIC_API_KEY',
-  'SAT_ADAPTER_BASE_URL', 'SAT_ADAPTER_API_KEY',
+  'SENTRY_DSN', 'ANTHROPIC_API_KEY', 'SAT_ADAPTER_BASE_URL', 'SAT_ADAPTER_API_KEY',
 ];
+
+// El correo solo puede ir a la captura local (Mailpit) o estar apagado.
+const SMTP_PERMITIDOS = new Set(['', 'mailpit']);
 
 const errores = [];
 
@@ -43,6 +45,9 @@ for (const linea of env.split(/\r?\n/)) {
   if (m && DEBEN_IR_VACIAS.includes(m[1]) && m[2].trim() !== '') {
     errores.push(`${envPath}: ${m[1]} debe ir vacía en local`);
   }
+  if (m && m[1] === 'SMTP_HOST' && !SMTP_PERMITIDOS.has(m[2].trim().replace(/^["']|["']$/g, ''))) {
+    errores.push(`${envPath}: SMTP_HOST solo puede ser "mailpit" en local`);
+  }
   if (m && m[2].includes('CAMBIAR')) {
     errores.push(`${envPath}: ${m[1]} conserva el valor de plantilla (…CAMBIAR)`);
   }
@@ -57,6 +62,11 @@ if (existsSync(composePath)) {
   for (const nombre of DEBEN_IR_VACIAS) {
     const m = compose.match(new RegExp(`^\\s*${nombre}:\\s*(.*)$`, 'm'));
     if (m && !/^(""|''|)$/.test(m[1].trim())) errores.push(`${composePath}: ${nombre} debe ir vacía en local`);
+  }
+  for (const m of compose.matchAll(/^\s*SMTP_HOST:\s*(.*)$/gm)) {
+    if (!SMTP_PERMITIDOS.has(m[1].trim().replace(/^["']|["']$/g, ''))) {
+      errores.push(`${composePath}: SMTP_HOST solo puede ser "mailpit" en local (encontrado: ${m[1].trim()})`);
+    }
   }
 }
 
