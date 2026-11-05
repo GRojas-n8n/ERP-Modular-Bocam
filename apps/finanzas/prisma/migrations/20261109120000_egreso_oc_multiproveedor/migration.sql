@@ -10,6 +10,8 @@
 --    Patrón Global con Trazabilidad (mismo que pagos_oc).
 -- 3. uq_pagos_oc_folio: un folio bancario se registra una sola vez por cuenta (o por proyecto si es anticipo).
 -- 4. uq_movimiento_nomina: como máximo un COMPROMISO y un EJERCIDO por prenómina (reentregas concurrentes).
+-- IDEMPOTENTE: en CI `prisma db push` ya crea ocs_por_pagar desde schema.prisma antes de este SQL; todo usa
+-- IF NOT EXISTS / comprobación en pg_constraint para poder re-ejecutarse sin error.
 -- Rollback: rollback.sql (mismo directorio).
 
 BEGIN;
@@ -39,7 +41,7 @@ BEGIN
   END IF;
 END $$;
 
-CREATE TABLE "ocs_por_pagar" (
+CREATE TABLE IF NOT EXISTS "ocs_por_pagar" (
   "tenant_id"        UUID           NOT NULL,
   "oc_id"            UUID           NOT NULL,
   "proyecto_id"      UUID           NOT NULL,
@@ -52,12 +54,25 @@ CREATE TABLE "ocs_por_pagar" (
   "estado"           VARCHAR(20)    NOT NULL DEFAULT 'POR_PAGAR',
   "created_at"       TIMESTAMP(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_at"       TIMESTAMP(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT "ocs_por_pagar_pkey" PRIMARY KEY ("tenant_id", "oc_id"),
-  CONSTRAINT "ck_ocs_por_pagar_montos" CHECK ("total" > 0 AND "pagado" >= 0 AND "pagado" <= "total"),
-  CONSTRAINT "ck_ocs_por_pagar_estado" CHECK ("estado" IN ('POR_PAGAR', 'PAGO_PARCIAL', 'PAGADA', 'CANCELADA'))
+  CONSTRAINT "ocs_por_pagar_pkey" PRIMARY KEY ("tenant_id", "oc_id")
 );
-CREATE INDEX "ocs_por_pagar_tenant_proyecto_estado_idx" ON "ocs_por_pagar" ("tenant_id", "proyecto_id", "estado");
-CREATE INDEX "ocs_por_pagar_tenant_proveedor_idx" ON "ocs_por_pagar" ("tenant_id", "proveedor_id");
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace
+                  WHERE c.conname = 'ck_ocs_por_pagar_montos' AND n.nspname = current_schema()) THEN
+    ALTER TABLE "ocs_por_pagar" ADD CONSTRAINT "ck_ocs_por_pagar_montos"
+      CHECK ("total" > 0 AND "pagado" >= 0 AND "pagado" <= "total");
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace
+                  WHERE c.conname = 'ck_ocs_por_pagar_estado' AND n.nspname = current_schema()) THEN
+    ALTER TABLE "ocs_por_pagar" ADD CONSTRAINT "ck_ocs_por_pagar_estado"
+      CHECK ("estado" IN ('POR_PAGAR', 'PAGO_PARCIAL', 'PAGADA', 'CANCELADA'));
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS "ocs_por_pagar_tenant_proyecto_estado_idx" ON "ocs_por_pagar" ("tenant_id", "proyecto_id", "estado");
+CREATE INDEX IF NOT EXISTS "ocs_por_pagar_tenant_proveedor_idx" ON "ocs_por_pagar" ("tenant_id", "proveedor_id");
 
 ALTER TABLE "ocs_por_pagar" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ocs_por_pagar" FORCE ROW LEVEL SECURITY;
@@ -86,10 +101,10 @@ CREATE POLICY rls_ocs_por_pagar_update ON "ocs_por_pagar"
         AND proyecto_id = current_proyecto_id()
     );
 
-CREATE UNIQUE INDEX "uq_pagos_oc_folio"
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pagos_oc_folio"
     ON "pagos_oc" ("tenant_id", "fuente", (COALESCE("cuenta_id", "proyecto_id")), "tipo_pago", "referencia");
 
-CREATE UNIQUE INDEX "uq_movimiento_nomina"
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_movimiento_nomina"
     ON "movimientos_presupuestales" ("tenant_id", "referencia_id", "tipo")
     WHERE "referencia_modulo" = 'personal' AND "referencia_entidad" = 'PreNomina'
       AND "tipo" IN ('COMPROMISO', 'EJERCIDO') AND "referencia_id" IS NOT NULL;

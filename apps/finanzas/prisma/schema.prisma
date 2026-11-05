@@ -264,7 +264,7 @@ model OcPorPagar {
   updated_at       DateTime @default(now()) @updatedAt
 
   @@id([tenant_id, oc_id])
-  @@index([tenant_id, proyecto_id, estado])
-  @@index([tenant_id, proveedor_id])
+  @@index([tenant_id, proyecto_id, estado], map: "ocs_por_pagar_tenant_proyecto_estado_idx")
+  @@index([tenant_id, proveedor_id], map: "ocs_por_pagar_tenant_proveedor_idx")
   @@map("ocs_por_pagar")
 }
