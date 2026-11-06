@@ -139,6 +139,8 @@ export interface PagoRegistradoPayload {
   referencia_id?: string;
   concepto: string;
   beneficiario: string;
+  /** Cuenta bancaria de la que salió el pago (aditivo; openspec: corregir-ejecucion-programa-pagos). */
+  cuenta_id?: string;
 }
 
 export interface TransferenciaPresupuestalPayload {
