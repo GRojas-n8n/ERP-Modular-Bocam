@@ -172,7 +172,8 @@ async function main() {
     const id = randomUUID();
     const body = { transferencia_id: id, presupuesto_origen_id: a, presupuesto_destino_id: b, monto: 400, concepto: 'Reintento' };
     const rs = await Promise.all([0, 1, 2].map(() => post(t, p, 'transferencias-presupuestales', body)));
-    assert.deepEqual(rs.map((r) => r.status).sort(), [200, 200, 201], JSON.stringify(rs.map((r) => r.body.error?.code ?? r.status)));
+    assert.deepEqual(rs.map((r) => r.status), [201, 201, 201], JSON.stringify(rs.map((r) => r.body.error?.code ?? r.status)));
+    assert.deepEqual(rs.map((r) => r.body.data.idempotente).sort(), [false, true, true]);
     assert.deepEqual(await invariante(a), { autorizado: 600, comprometido: 0, ejercido: 0, disponible: 600 });
     assert.deepEqual(await invariante(b), { autorizado: 400, comprometido: 0, ejercido: 0, disponible: 400 });
     assert.equal(await admin.movimientoPresupuestal.count({ where: { tenant_id: t, referencia_id: id } }), 2);
