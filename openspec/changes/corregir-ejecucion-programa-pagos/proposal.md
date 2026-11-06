@@ -17,13 +17,14 @@ Hallazgos de la auditoría de Finanzas (5 nov 2026):
 - `src/tesoreria.ts`: descuento atómico de cuenta compartido con el egreso de OCs. `src/errores.ts`: base común
   `ErrorFinanzas` (los endpoints la traducen a `createApiError`).
 - `finanzas.pago_registrado` agrega `cuenta_id` (aditivo) para la conciliación bancaria.
-- Pruebas de Contabilidad `finanzas-banco-lote` y `finanzas-banco-archivo`: mandan `cuenta_id` y su semilla respalda
-  el comprometido con su movimiento COMPROMISO (solo cambia la prueba).
+- Pruebas que ejecutan pagos (Contabilidad: `banco-lote`, `banco-archivo`, `pago-registrado`, `pago-cfdi`,
+  `pago-sat-banco`, `pago-sat-externo`, `pago-sat-worker`; Control de Proyectos: `finanzas.pago-registrado`): mandan
+  `cuenta_id` y su semilla respalda el comprometido con su movimiento COMPROMISO. Solo cambian las pruebas.
 
 ## Impact
 
 - Servicio: `apps/finanzas`. Ninguna pantalla ni servicio llama a `POST /pagos`, `/bulk` ni `PATCH /pagar` hoy
-  (verificado con grep); solo las dos pruebas de Contabilidad, ajustadas en este change.
+  (verificado con grep en `src/`); solo pruebas de integración, ajustadas en este change.
 - Contrato: `PATCH /pagos/:id/pagar` exige `cuenta_id` (400 `FIN_CUENTA_REQUERIDA`). Errores con códigos estables:
   `FIN_PAGO_YA_PAGADO` (409), `FIN_PAGO_CANCELADO` (409), `FIN_INSUFFICIENT_BUDGET` (422), `FIN_SALDO_INSUFICIENTE` (422).
 - Base: `blindar-movimientos-y-sincronizacion-gt` (reutiliza `montos.ts`).
