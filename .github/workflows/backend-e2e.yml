@@ -210,6 +210,11 @@ jobs:
       - name: Run Finanzas cuentas por cobrar
         run: |
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:cuentas-por-cobrar -w @bocam/finanzas
+
+      # ── Finanzas: API y dashboard (openspec: optimizar-api-y-dashboard-finanzas) ──
+      - name: Run Finanzas API y dashboard
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:api-dashboard -w @bocam/finanzas
       # ── Finanzas: outbox transaccional de eventos (lote P1, modo direct por defecto; PostgreSQL y RabbitMQ reales) ──
       - name: Run Finanzas outbox de eventos (flujo, RLS, /ready y migración)
         run: |
