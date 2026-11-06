@@ -19,8 +19,8 @@
 - [x] 3.3 HTTP contra `main.ts` sin BD: 6/6 (límite primero, body vacío, monto negativo, proyecto distinto, OC repetida, proyecto del JWT).
 - [x] 3.4 Migración en PostgreSQL 16: RLS rechaza OC de otro proyecto; CHECK rechaza sobrepago; folio duplicado rechazado; precheck aborta y revierte; idempotente tras `db push`; rollback limpio.
 - [x] 3.5 Carga inicial validada con RLS forzado y re-ejecución sin duplicados.
-- [ ] 3.6 `npm run test:integration:egreso-oc -w @bocam/finanzas` en CI (8 casos).
-- [ ] 3.7 `test:e2e:seguridad` en CI sin cambios de contrato.
+- [x] 3.6 `npm run test:integration:egreso-oc -w @bocam/finanzas` en CI: 8/8 en verde (run 42136885192, commit 2797f53).
+- [x] 3.7 `test:e2e:seguridad`, `compromiso-oc-concurrencia` (16/16), `compromiso-oc-rls` y `compromiso-oc-migracion` en verde en el mismo run, sin cambios de contrato.
 
 ## 4. Desplegar (runbook-finanzas-100, paso 2)
 
