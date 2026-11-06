@@ -107,6 +107,7 @@ jobs:
           PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930120000_blindar_compromiso_oc/migration.sql
           PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930180000_outbox_eventos_finanzas/migration.sql
           PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261109120000_egreso_oc_multiproveedor/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261110120000_unicidad_movimientos_nomina/migration.sql
 
       # ── Seed del catálogo de cuentas contables ────────────────────────────────
       # Sin esto, resolveCuentaId (apps/contabilidad/src/mapper.ts) nunca
@@ -193,6 +194,12 @@ jobs:
       - name: Run Finanzas egreso OC multiproveedor
         run: |
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:egreso-oc -w @bocam/finanzas
+
+      # ── Finanzas: consumidores con reintento y DLQ (openspec: blindar-consumidores-finanzas) ──
+      - name: Run Finanzas consumidores resilientes y nomina idempotente
+        run: |
+          npm run test:integration:consumidores-resilientes -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:nomina-idempotencia -w @bocam/finanzas
       # ── Finanzas: outbox transaccional de eventos (lote P1, modo direct por defecto; PostgreSQL y RabbitMQ reales) ──
       - name: Run Finanzas outbox de eventos (flujo, RLS, /ready y migración)
         run: |

@@ -2504,6 +2504,13 @@ async function resolvePresupuestoManoObra(tenantId: string, proyectoId: string, 
   });
 }
 
+// Reentrega concurrente del mismo evento de nómina: el índice uq_movimiento_nomina rechaza el segundo movimiento
+// (P2002) y la transacción completa se revierte. Es el mismo evento ya procesado, no un error.
+// openspec: blindar-consumidores-finanzas.
+function esMovimientoNominaDuplicado(error: any): boolean {
+  return error?.code === 'P2002' || /uq_movimiento_nomina/.test(String(error?.message ?? ''));
+}
+
 export async function handleNominaAutorizadaEvent(event: BocamEvent): Promise<void> {
   const { prenomina_id, codigo, total_neto } = event.payload as {
     prenomina_id: string; codigo: string; total_neto: number;
@@ -2511,40 +2518,46 @@ export async function handleNominaAutorizadaEvent(event: BocamEvent): Promise<vo
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
-  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
-    const existente = await prisma.movimientoPresupuestal.findFirst({
-      where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.COMPROMISO },
-    });
-    if (existente) {
-      console.log(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.idempotent', prenomina_id }));
-      return;
-    }
+  try {
+    await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
+      const existente = await prisma.movimientoPresupuestal.findFirst({
+        where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.COMPROMISO },
+      });
+      if (existente) {
+        console.log(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.idempotent', prenomina_id }));
+        return;
+      }
 
-    const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
-    if (!presupuesto) {
-      console.warn(JSON.stringify({
-        action: 'finanzas.event.nomina_autorizada.sin_presupuesto_mano_obra',
-        tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id, codigo,
-        mensaje: 'No hay presupuesto MANO_OBRA activo para este proyecto — la nómina se autorizó igual, sin afectar ningún presupuesto.',
-      }));
-      return;
-    }
+      const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
+      if (!presupuesto) {
+        console.warn(JSON.stringify({
+          action: 'finanzas.event.nomina_autorizada.sin_presupuesto_mano_obra',
+          tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id, codigo,
+          mensaje: 'No hay presupuesto MANO_OBRA activo para este proyecto — la nómina se autorizó igual, sin afectar ningún presupuesto.',
+        }));
+        return;
+      }
 
-    const monto = Number(total_neto);
-    await prisma.movimientoPresupuestal.create({
-      data: {
-        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
-        tipo: TipoMovimiento.COMPROMISO, concepto: `Nómina ${codigo}`, monto,
-        referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, referencia_codigo: codigo,
-        usuario_id: event.context.user_id,
-        notas: 'Compromiso automático desde evento personal.nomina_autorizada.',
-      },
+      const monto = Number(total_neto);
+      await prisma.movimientoPresupuestal.create({
+        data: {
+          tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
+          tipo: TipoMovimiento.COMPROMISO, concepto: `Nómina ${codigo}`, monto,
+          referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, referencia_codigo: codigo,
+          usuario_id: event.context.user_id,
+          notas: 'Compromiso automático desde evento personal.nomina_autorizada.',
+        },
+      });
+      await prisma.presupuestoAsignado.update({
+        where: { id_presupuesto: presupuesto.id_presupuesto },
+        data: { monto_comprometido: { increment: monto }, monto_disponible: { decrement: monto } },
+      });
     });
-    await prisma.presupuestoAsignado.update({
-      where: { id_presupuesto: presupuesto.id_presupuesto },
-      data: { monto_comprometido: { increment: monto }, monto_disponible: { decrement: monto } },
-    });
-  });
+  } catch (error: any) {
+    if (!esMovimientoNominaDuplicado(error)) throw error;
+    console.log(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.idempotent', prenomina_id, motivo: 'reentrega_concurrente' }));
+    return;
+  }
 
   console.log(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.processed', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
 }
@@ -2556,44 +2569,145 @@ export async function handleNominaPagadaEvent(event: BocamEvent): Promise<void> 
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
-  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
-    const existente = await prisma.movimientoPresupuestal.findFirst({
-      where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.EJERCIDO },
-    });
-    if (existente) {
-      console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.idempotent', prenomina_id }));
-      return;
-    }
+  try {
+    await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
+      const existente = await prisma.movimientoPresupuestal.findFirst({
+        where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.EJERCIDO },
+      });
+      if (existente) {
+        console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.idempotent', prenomina_id }));
+        return;
+      }
 
-    const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
-    if (!presupuesto) {
-      console.warn(JSON.stringify({
-        action: 'finanzas.event.nomina_pagada.sin_presupuesto_mano_obra',
-        tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id, codigo,
-      }));
-      return;
-    }
+      const presupuesto = await resolvePresupuestoManoObra(tenantId, proyectoId, prisma);
+      if (!presupuesto) {
+        console.warn(JSON.stringify({
+          action: 'finanzas.event.nomina_pagada.sin_presupuesto_mano_obra',
+          tenant_id: tenantId, proyecto_id: proyectoId, prenomina_id, codigo,
+        }));
+        return;
+      }
 
-    const monto = Number(total_neto);
-    await prisma.movimientoPresupuestal.create({
-      data: {
-        tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
-        tipo: TipoMovimiento.EJERCIDO, concepto: `Pago nómina ${codigo}`, monto,
-        referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, referencia_codigo: codigo,
-        usuario_id: event.context.user_id,
-        notas: 'Ejercido automático desde evento personal.nomina_pagada.',
-      },
+      const monto = Number(total_neto);
+      await prisma.movimientoPresupuestal.create({
+        data: {
+          tenant_id: tenantId, proyecto_id: proyectoId, presupuesto_id: presupuesto.id_presupuesto,
+          tipo: TipoMovimiento.EJERCIDO, concepto: `Pago nómina ${codigo}`, monto,
+          referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, referencia_codigo: codigo,
+          usuario_id: event.context.user_id,
+          notas: 'Ejercido automático desde evento personal.nomina_pagada.',
+        },
+      });
+      await prisma.presupuestoAsignado.update({
+        where: { id_presupuesto: presupuesto.id_presupuesto },
+        data: { monto_comprometido: { decrement: monto }, monto_ejercido: { increment: monto } },
+      });
     });
-    await prisma.presupuestoAsignado.update({
-      where: { id_presupuesto: presupuesto.id_presupuesto },
-      data: { monto_comprometido: { decrement: monto }, monto_ejercido: { increment: monto } },
-    });
-  });
+  } catch (error: any) {
+    if (!esMovimientoNominaDuplicado(error)) throw error;
+    console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.idempotent', prenomina_id, motivo: 'reentrega_concurrente' }));
+    return;
+  }
 
   console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.processed', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
 }
 
 setupSentryExpressHandler(app);
+
+// ─── Suscripciones de Finanzas ──────────────────────────────────────────────────
+// openspec: blindar-consumidores-finanzas (F21). Cada suscripción usa una cola versionada `.v2` con reintento y
+// DLQ: un error del handler (BD caída, deadlock, timeout) ya no descarta el evento; se reintenta y, agotados los
+// intentos, queda en `<cola>.dlq` para revisión. Las colas anteriores (`finanzas.<patrón>` sin sufijo) se drenan y
+// se eliminan al desplegar (docs/operacion/finanzas-colas-v2.md). Todos los handlers son idempotentes.
+// Sin `x-message-ttl` (el bus pone 24 h por defecto): con Finanzas detenido un evento no caduca; espera en la cola.
+// Dead-letter propio hacia `<cola>.dlq`: si un mensaje sale de la cola por cualquier otra vía, tampoco se pierde.
+// Mismo criterio que Almacén (docs/operacion/almacen-cola-recepcion-oc-v3.md).
+export function colaFinanzas(patron: string) {
+  const queueName = `finanzas.${patron.replace(/[.*#]/g, '_')}.v2`;
+  return {
+    queueName,
+    queueArguments: {
+      'x-message-ttl': undefined,
+      'x-dead-letter-exchange': '',
+      'x-dead-letter-routing-key': `${queueName}.dlq`,
+    } as Record<string, unknown>,
+    retry: {
+      maxAttempts: Number(process.env.FINANZAS_EVENTOS_MAX_INTENTOS ?? 5),
+      delayMs: Number(process.env.FINANZAS_EVENTOS_ESPERA_MS ?? 30_000),
+    },
+    deadLetter: true as const,
+  };
+}
+
+export async function registrarSuscripcionesFinanzas(bus: Pick<typeof eventBus, 'subscribe'>): Promise<void> {
+  // ─── SUSCRIPCIÓN: Eventos de Compras ──────────────────────────────────────
+  await bus.subscribe('compras.oc_creada', async (event: BocamEvent) => {
+    const { oc_id, codigo, total, proveedor_id } = event.payload as any;
+    console.log(`[Finanzas] 📥 EVENTO recibido: OC Creada`);
+    console.log(`           └─ OC: ${codigo} | Total: $${Number(total).toLocaleString()} | Proveedor: ${proveedor_id}`);
+    console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
+    await handleOcPorPagarCreadaEvent(event);
+    await handleOrdenCompraCreadaEvent(event);
+  }, colaFinanzas('compras.oc_creada'));
+
+  await bus.subscribe('compras.oc_cancelada', async (event: BocamEvent) => {
+    const { oc_id, codigo } = event.payload as any;
+    console.log(`[Finanzas] 📥 EVENTO recibido: OC Cancelada`);
+    console.log(`           └─ OC: ${codigo} | Liberando fondos comprometidos`);
+    await handleOcPorPagarCanceladaEvent(event);
+    await handleOrdenCompraCanceladaEvent(event);
+  }, colaFinanzas('compras.oc_cancelada'));
+
+  // ─── SUSCRIPCIÓN: Eventos de Control de Obra ────────────────────────────────
+  await bus.subscribe('control_obra.estimacion_aprobada', async (event: BocamEvent) => {
+    const { estimacion_id, codigo, total_neto } = event.payload as any;
+    console.log(`[Finanzas] 📥 EVENTO recibido: Estimación Aprobada`);
+    console.log(`           └─ EST: ${codigo} | Neto: $${Number(total_neto).toLocaleString()}`);
+    console.log(`           └─ Programando pago automático a 15 días...`);
+    await handleEstimacionAprobadaEvent(event);
+  }, colaFinanzas('control_obra.estimacion_aprobada'));
+
+  await bus.subscribe('control_obra.avance_fisico_validado', async (event: BocamEvent) => {
+    const { avance_id, concepto, importe } = event.payload as any;
+    console.log(`[Finanzas] EVENTO recibido: Avance Fisico Validado`);
+    console.log(`Avance: ${avance_id} | ${concepto} | $${Number(importe).toLocaleString()}`);
+    console.log(`Registrando proyeccion financiera preliminar...`);
+    await handleAvanceFisicoValidadoEvent(event);
+  }, colaFinanzas('control_obra.avance_fisico_validado'));
+
+  await bus.subscribe('control_obra.avance_fisico_registrado', async (event: BocamEvent) => {
+    const { concepto, porcentaje, importe } = event.payload as any;
+    console.log(`[Finanzas] 📥 EVENTO recibido: Avance Físico Registrado`);
+    console.log(`           └─ ${concepto} | ${porcentaje}% | $${Number(importe).toLocaleString()}`);
+  }, colaFinanzas('control_obra.avance_fisico_registrado'));
+
+  // ─── SUSCRIPCIÓN: Eventos de Auth (Administración) ──────────────────────────
+  await bus.subscribe('auth.centro_costos_creado', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Centro de Costos Creado`);
+    console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
+    await handleCentroCostosCreadoEvent(event);
+  }, colaFinanzas('auth.centro_costos_creado'));
+
+  // ─── SUSCRIPCIÓN: Sincronización de presupuesto por partida (Gerencia Técnica) ──
+  await bus.subscribe('gerencia_tecnica.saldo_partida_creado', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Saldo Partida Creado (sincronizando presupuesto por partida)`);
+    await handleSaldoPartidaCreadoEvent(event);
+  }, colaFinanzas('gerencia_tecnica.saldo_partida_creado'));
+  await bus.subscribe('gerencia_tecnica.partida_comprometida', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Partida Comprometida (GT)`);
+    await handlePartidaComprometidaEvent(event);
+  }, colaFinanzas('gerencia_tecnica.partida_comprometida'));
+
+  // ─── SUSCRIPCIÓN: Nómina compromete/ejerce el presupuesto de Mano de Obra ──────
+  await bus.subscribe('personal.nomina_autorizada', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Autorizada`);
+    await handleNominaAutorizadaEvent(event);
+  }, colaFinanzas('personal.nomina_autorizada'));
+  await bus.subscribe('personal.nomina_pagada', async (event: BocamEvent) => {
+    console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Pagada`);
+    await handleNominaPagadaEvent(event);
+  }, colaFinanzas('personal.nomina_pagada'));
+}
 
 export async function startServer() {
   return app.listen(PORT, async () => {
@@ -2607,73 +2721,7 @@ export async function startServer() {
   // Inicializar EventBus y suscribirse a eventos
   await eventBus.connect();
 
-  // ─── SUSCRIPCIÓN: Eventos de Compras ──────────────────────────────────────
-  await eventBus.subscribe('compras.oc_creada', async (event: BocamEvent) => {
-    const { oc_id, codigo, total, proveedor_id } = event.payload as any;
-    console.log(`[Finanzas] 📥 EVENTO recibido: OC Creada`);
-    console.log(`           └─ OC: ${codigo} | Total: $${Number(total).toLocaleString()} | Proveedor: ${proveedor_id}`);
-    console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
-    await handleOcPorPagarCreadaEvent(event);
-    await handleOrdenCompraCreadaEvent(event);
-  });
-
-  await eventBus.subscribe('compras.oc_cancelada', async (event: BocamEvent) => {
-    const { oc_id, codigo } = event.payload as any;
-    console.log(`[Finanzas] 📥 EVENTO recibido: OC Cancelada`);
-    console.log(`           └─ OC: ${codigo} | Liberando fondos comprometidos`);
-    await handleOcPorPagarCanceladaEvent(event);
-    await handleOrdenCompraCanceladaEvent(event);
-  });
-
-  // ─── SUSCRIPCIÓN: Eventos de Control de Obra ────────────────────────────────
-  await eventBus.subscribe('control_obra.estimacion_aprobada', async (event: BocamEvent) => {
-    const { estimacion_id, codigo, total_neto } = event.payload as any;
-    console.log(`[Finanzas] 📥 EVENTO recibido: Estimación Aprobada`);
-    console.log(`           └─ EST: ${codigo} | Neto: $${Number(total_neto).toLocaleString()}`);
-    console.log(`           └─ Programando pago automático a 15 días...`);
-    await handleEstimacionAprobadaEvent(event);
-  });
-
-  await eventBus.subscribe('control_obra.avance_fisico_validado', async (event: BocamEvent) => {
-    const { avance_id, concepto, importe } = event.payload as any;
-    console.log(`[Finanzas] EVENTO recibido: Avance Fisico Validado`);
-    console.log(`Avance: ${avance_id} | ${concepto} | $${Number(importe).toLocaleString()}`);
-    console.log(`Registrando proyeccion financiera preliminar...`);
-    await handleAvanceFisicoValidadoEvent(event);
-  });
-
-  await eventBus.subscribe('control_obra.avance_fisico_registrado', async (event: BocamEvent) => {
-    const { concepto, porcentaje, importe } = event.payload as any;
-    console.log(`[Finanzas] 📥 EVENTO recibido: Avance Físico Registrado`);
-    console.log(`           └─ ${concepto} | ${porcentaje}% | $${Number(importe).toLocaleString()}`);
-  });
-
-  // ─── SUSCRIPCIÓN: Eventos de Auth (Administración) ──────────────────────────
-  await eventBus.subscribe('auth.centro_costos_creado', async (event: BocamEvent) => {
-    console.log(`[Finanzas] 📥 EVENTO recibido: Centro de Costos Creado`);
-    console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
-    await handleCentroCostosCreadoEvent(event);
-  });
-
-  // ─── SUSCRIPCIÓN: Sincronización de presupuesto por partida (Gerencia Técnica) ──
-  await eventBus.subscribe('gerencia_tecnica.saldo_partida_creado', async (event: BocamEvent) => {
-    console.log(`[Finanzas] 📥 EVENTO recibido: Saldo Partida Creado (sincronizando presupuesto por partida)`);
-    await handleSaldoPartidaCreadoEvent(event);
-  });
-  await eventBus.subscribe('gerencia_tecnica.partida_comprometida', async (event: BocamEvent) => {
-    console.log(`[Finanzas] 📥 EVENTO recibido: Partida Comprometida (GT)`);
-    await handlePartidaComprometidaEvent(event);
-  });
-
-  // ─── SUSCRIPCIÓN: Nómina compromete/ejerce el presupuesto de Mano de Obra ──────
-  await eventBus.subscribe('personal.nomina_autorizada', async (event: BocamEvent) => {
-    console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Autorizada`);
-    await handleNominaAutorizadaEvent(event);
-  });
-  await eventBus.subscribe('personal.nomina_pagada', async (event: BocamEvent) => {
-    console.log(`[Finanzas] 📥 EVENTO recibido: Nómina Pagada`);
-    await handleNominaPagadaEvent(event);
-  });
+  await registrarSuscripcionesFinanzas(eventBus);
 
   // ─── OUTBOX DE EVENTOS (lote P1) ────────────────────────────────────────────────
   // Predeterminado: FINANZAS_EVENT_MODE=direct y despachador/limpieza apagados. Solo el valor exacto `on` los enciende.
