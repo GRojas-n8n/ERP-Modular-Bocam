@@ -199,6 +199,11 @@ jobs:
       - name: Run Finanzas presupuesto blindado
         run: |
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:presupuesto-blindado -w @bocam/finanzas
+
+      # ── Finanzas: programa de pagos (openspec: corregir-ejecucion-programa-pagos) ──
+      - name: Run Finanzas programa de pagos
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:programa-pagos -w @bocam/finanzas
       # ── Finanzas: outbox transaccional de eventos (lote P1, modo direct por defecto; PostgreSQL y RabbitMQ reales) ──
       - name: Run Finanzas outbox de eventos (flujo, RLS, /ready y migración)
         run: |

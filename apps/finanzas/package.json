@@ -22,7 +22,8 @@
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
     "test:e2e:idempotencia": "node -r ts-node/register/transpile-only test/e2e/idempotencia.e2e.test.ts",
     "test:integration:egreso-oc": "node -r ts-node/register/transpile-only test/integration/egreso-oc.integration.test.ts",
-    "test:integration:presupuesto-blindado": "node -r ts-node/register/transpile-only test/integration/presupuesto-blindado.integration.test.ts"
+    "test:integration:presupuesto-blindado": "node -r ts-node/register/transpile-only test/integration/presupuesto-blindado.integration.test.ts",
+    "test:integration:programa-pagos": "node -r ts-node/register/transpile-only test/integration/programa-pagos.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

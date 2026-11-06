@@ -106,12 +106,39 @@ async function seedScenario() {
     },
   });
 
+  // El comprometido de la semilla se respalda con su COMPROMISO (misma referencia) y el pago sale de una cuenta
+  // de la empresa: Finanzas devenga contra el compromiso y descuenta la cuenta (openspec: corregir-ejecucion-programa-pagos).
+  await finanzasPrisma.movimientoPresupuestal.create({
+    data: {
+      tenant_id: pago.tenant_id,
+      proyecto_id: pago.proyecto_id,
+      presupuesto_id: pago.presupuesto_id,
+      tipo: 'COMPROMISO',
+      concepto: `Compromiso ${pago.concepto}`,
+      monto: pago.monto_programado,
+      referencia_modulo: pago.referencia_modulo,
+      referencia_entidad: pago.referencia_entidad,
+      referencia_id: pago.referencia_id,
+      usuario_id: randomUUID(),
+    },
+  });
+  await finanzasPrisma.cuentaBancaria.create({
+    data: { tenant_id: pago.tenant_id, proyecto_id: null, banco: 'BBVA', numero_cuenta: pago.id_pago, alias: 'Pruebas', saldo: 10_000_000 },
+  });
+
   return {
     tenantId,
     proyectoId,
     userId,
     pagoId: pago.id_pago,
   };
+}
+
+
+// Cuenta sembrada para el pago (numero_cuenta = id del pago).
+async function cuentaDelPago(pagoId: string): Promise<string> {
+  const cuenta = await finanzasPrisma.cuentaBancaria.findFirstOrThrow({ where: { numero_cuenta: pagoId } });
+  return cuenta.id_cuenta;
 }
 
 async function main() {
@@ -169,6 +196,7 @@ async function main() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        cuenta_id: await cuentaDelPago(seeded.pagoId),
         referencia_bancaria: 'TRX-CFDI-123456',
         metodo_pago: 'TRANSFERENCIA',
         banco: 'BBVA',

@@ -26,6 +26,8 @@ import { createTenantContext } from './db';
 import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
 import { cancelarOcPorPagar, ErrorEgreso, parsearEgresoOc, registrarEgresoOc, registrarOcPorPagar } from './egreso-oc';
 import { parsearMontoPositivo } from './montos';
+import { ErrorFinanzas } from './errores';
+import { ejecutarPago, parsearEjecucion, parsearLote, parsearPagoProgramado, programarLote, programarPago } from './programa-pagos';
 import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
 import {
@@ -67,7 +69,6 @@ import {
   logWarn,
   setupSentryExpressHandler,
 } from '../../../packages/observability/src';
-import { applyIdempotentMutationInContext } from '../../../packages/tenant-idempotency/src';
 
 // ─── EventBus (RabbitMQ) ─────────────────────────────────────────────────────
 const eventBus = createEventBus('finanzas');
@@ -476,7 +477,7 @@ app.post('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => 
     console.log(`[Finanzas] ✅ Movimiento registrado: ${tipo} → $${montoValidado.monto!.toFixed(2)}`);
     res.status(201).json(createApiResponse(data, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    if (error instanceof ErrorPresupuesto) {
+    if (error instanceof ErrorFinanzas) {
       res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
       return;
     }
@@ -548,7 +549,7 @@ app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, 
     res.status(201).json(createApiResponse(
       { evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, ...result }, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    if (error instanceof ErrorPresupuesto) {
+    if (error instanceof ErrorFinanzas) {
       res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
       return;
     }
@@ -864,288 +865,90 @@ app.get('/api/v1/finanzas/pagos',
 // planear el pago pero no ejecutarlo — segregación de funciones deliberada.
 // Ver openspec/changes/limite-autoridad-pagos-oc.
 app.post('/api/v1/finanzas/pagos', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
-    const correlationId = getCorrelationId(req);
-    const {
-      presupuesto_id, concepto, beneficiario, beneficiario_id,
-      monto_programado, fecha_programada, metodo_pago, banco,
-      referencia_modulo, referencia_entidad, referencia_id,
-    } = req.body;
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para programar pagos.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para programar pagos.', undefined, correlationId));
       return;
     }
 
-    if (!presupuesto_id || !concepto || !beneficiario || !monto_programado || !fecha_programada) {
-      res.status(400).json(createApiError(
-        'FIN_MISSING_FIELDS',
-        'Los campos presupuesto_id, concepto, beneficiario, monto_programado y fecha_programada son obligatorios.'
-      ));
-      return;
-    }
+    const pago = parsearPagoProgramado(req.body);
+    const data = await programarPago({ tenantId, proyectoId, userId }, pago);
 
-    type PagoRecord = Awaited<ReturnType<PrismaClient['programaPagos']['create']>>;
-    type PagosLoaded = {
-      existente: PagoRecord | null;
-    };
-    type PagosResult = {
-      pago: PagoRecord;
-      idempotente: boolean;
-    };
-
-    const data = await applyIdempotentMutationInContext<
-      { tenantId: string; proyectoId: string; userId: string },
-      PrismaClient,
-      PagosLoaded,
-      PagosResult
-    >({
-      context: { tenantId, proyectoId, userId },
-      runInContext: createTenantContext,
-      load: async (prisma) => {
-        let existente: PagoRecord | null = null;
-
-        if (referencia_modulo && referencia_entidad && referencia_id) {
-          existente = await prisma.programaPagos.findFirst({
-            where: {
-              referencia_modulo,
-              referencia_entidad,
-              referencia_id,
-            },
-          });
-        }
-
-        return { existente };
-      },
-      idempotentResult: async (loaded) => {
-        if (!loaded.existente) {
-          return null;
-        }
-
-        logInfo(req, 'finanzas', 'finanzas.pagos.idempotent', 'Pago programado resuelto en modo idempotente', {
-          idempotent: true,
-          presupuesto_id,
-          referencia_modulo,
-          referencia_entidad,
-          referencia_id,
-          id_pago: loaded.existente.id_pago,
-        });
-
-        return {
-          pago: loaded.existente,
-          idempotente: true,
-        };
-      },
-      apply: async (_loaded, prisma) => {
-        const pago = await prisma.programaPagos.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            concepto,
-            beneficiario,
-            beneficiario_id,
-            monto_programado: Number(monto_programado),
-            fecha_programada: new Date(fecha_programada),
-            estado: 'PENDIENTE',
-            metodo_pago,
-            banco,
-            referencia_modulo,
-            referencia_entidad,
-            referencia_id,
-          },
-        });
-
-        logInfo(req, 'finanzas', 'finanzas.pagos.created', 'Pago programado exitosamente', {
-          idempotent: false,
-          presupuesto_id,
-          referencia_modulo,
-          referencia_entidad,
-          referencia_id,
-          id_pago: pago.id_pago,
-          monto_programado: Number(monto_programado),
-        });
-
-        return {
-          pago,
-          idempotente: false,
-        };
-      },
-    });
-
-    console.log(`[Finanzas] ✅ Pago programado: $${monto_programado} → ${beneficiario}`);
-    res.status(201).json(createApiResponse({
-      ...data.pago,
-      idempotente: data.idempotente,
-    }, tenantId, proyectoId, correlationId));
+    logInfo(req, 'finanzas', data.idempotente ? 'finanzas.pagos.idempotent' : 'finanzas.pagos.created',
+      data.idempotente ? 'Pago programado resuelto en modo idempotente' : 'Pago programado exitosamente', {
+        idempotent: data.idempotente, presupuesto_id: pago.presupuesto_id, id_pago: data.pago.id_pago,
+        referencia_modulo: pago.referencia_modulo, referencia_entidad: pago.referencia_entidad, referencia_id: pago.referencia_id,
+      });
+    res.status(201).json(createApiResponse({ ...data.pago, idempotente: data.idempotente }, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    logError(req, 'finanzas', 'finanzas.pagos.error', 'Error al programar pago', {
-      error_message: error.message,
-    });
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al programar pago.', undefined, getCorrelationId(req)));
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+      return;
+    }
+    logError(req, 'finanzas', 'finanzas.pagos.error', 'Error al programar pago', { error_message: error.message });
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al programar pago.', undefined, correlationId));
   }
 });
 
-// Crear programación de pagos masiva
+// Crear programación de pagos masiva: todo o nada (un renglón inválido o un presupuesto inexistente rechaza el lote).
 // El Límite de Autoridad Financiera NO se valida aquí a propósito: programar un
 // pago no mueve dinero. El límite se ejerce al ejecutarlo
 // (PATCH /pagos/:id/pagar) y al registrarlo contra una OC (POST /pagos-oc).
 // Los roles tampoco coinciden con esos dos por diseño: 'superintendent' puede
 // planear el pago pero no ejecutarlo — segregación de funciones deliberada.
-// Ver openspec/changes/limite-autoridad-pagos-oc.
+// Ver openspec/changes/limite-autoridad-pagos-oc y corregir-ejecucion-programa-pagos.
 app.post('/api/v1/finanzas/pagos/bulk', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles } = req.securityContext;
-    const { pagos } = req.body; // Array de pagos
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para programar pagos.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para programar pagos.', undefined, correlationId));
       return;
     }
 
-    if (!pagos || !Array.isArray(pagos) || pagos.length === 0) {
-      res.status(400).json(createApiError(
-        'FIN_INVALID_PAYLOAD',
-        'Se requiere un array de pagos no vacío.'
-      ));
-      return;
-    }
+    const pagos = parsearLote(req.body?.pagos);
+    const data = await programarLote({ tenantId, proyectoId, userId }, pagos);
 
-    const data = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const payload = pagos.map((p: any) => ({
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
-          presupuesto_id: p.presupuesto_id,
-          concepto: p.concepto,
-          beneficiario: p.beneficiario,
-          beneficiario_id: p.beneficiario_id,
-          monto_programado: Number(p.monto_programado),
-          fecha_programada: new Date(p.fecha_programada),
-          estado: 'PENDIENTE',
-          metodo_pago: p.metodo_pago,
-          banco: p.banco,
-          referencia_modulo: p.referencia_modulo,
-          referencia_entidad: p.referencia_entidad,
-          referencia_id: p.referencia_id,
-        }));
-
-        return await prisma.programaPagos.createMany({
-          data: payload,
-        });
-      }
-    );
-
-    console.log(`[Finanzas] ✅ Carga masiva completada: ${pagos.length} pagos registrados.`);
-    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+    console.log(`[Finanzas] ✅ Carga masiva completada: ${data.count} pagos registrados.`);
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId, correlationId));
   } catch (error: any) {
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+      return;
+    }
     console.error('[Finanzas] Error en carga masiva de pagos:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar carga masiva.'));
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar carga masiva.', undefined, correlationId));
   }
 });
 
 
-// Registrar pago realizado (cambiar estado a PAGADO)
+// Registrar pago realizado: descuenta la cuenta bancaria (obligatoria) y aplica el presupuesto correctamente
+// (DEVENGADO contra su compromiso; EJERCIDO directo solo si el disponible alcanza). Ver programa-pagos.ts.
 app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { id } = req.params;
     const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
-    const { referencia_bancaria, metodo_pago, banco } = req.body;
-    const correlationId = getCorrelationId(req);
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'Solo admin o finanzas pueden registrar pagos.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'Solo admin o finanzas pueden registrar pagos.', undefined, correlationId));
+      return;
+    }
+    if (!esUuid(id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id del pago debe ser un UUID válido.', undefined, correlationId));
       return;
     }
 
-    const data = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const pago = await prisma.programaPagos.findUnique({
-          where: { id_pago: id },
-        });
-
-        if (!pago) {
-          throw new Error('Pago no encontrado.');
-        }
-
-        if (pago.estado === 'PAGADO') {
-          throw new Error('Este pago ya fue procesado.');
-        }
-
-        if (pago.estado === 'CANCELADO') {
-          throw new Error('No se puede pagar un registro cancelado.');
-        }
-
-        const montoPago = Number(pago.monto_programado);
-
-        // Validar Límite de Autoridad Financiera
-        if (montoPago > limiteAprobacion) {
-          throw new Error(
-            `LIMITE_EXCEDIDO: El monto $${montoPago.toLocaleString()} excede tu límite ($${limiteAprobacion.toLocaleString()}).`
-          );
-        }
-
-        // 1. Actualizar el pago
-        const pagoActualizado = await prisma.programaPagos.update({
-          where: { id_pago: id },
-          data: {
-            estado: 'PAGADO',
-            monto_pagado: montoPago,
-            fecha_pago_real: new Date(),
-            referencia_bancaria,
-            metodo_pago: metodo_pago || pago.metodo_pago,
-            banco: banco || pago.banco,
-          },
-        });
-
-        // 2. Registrar movimiento de tipo EJERCIDO
-        await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id: pago.presupuesto_id,
-            tipo: TipoMovimiento.EJERCIDO,
-            concepto: `Pago procesado: ${pago.concepto}`,
-            monto: montoPago,
-            referencia_modulo: pago.referencia_modulo,
-            referencia_entidad: pago.referencia_entidad,
-            referencia_id: pago.referencia_id,
-            usuario_id: userId,
-            notas: `Ref. bancaria: ${referencia_bancaria || 'N/A'}`,
-          },
-        });
-
-        // 3. Actualizar saldos del presupuesto
-        // El pago mueve de comprometido a ejercido
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: pago.presupuesto_id },
-          data: {
-            monto_comprometido: { decrement: montoPago },
-            monto_ejercido: { increment: montoPago },
-          },
-        });
-
-        return pagoActualizado;
-      }
-    );
+    const ejecucion = parsearEjecucion(req.body);
+    const resultado = await ejecutarPago({ tenantId, proyectoId, userId }, id, ejecucion, limiteAprobacion);
+    const data = resultado.pago;
 
     await publishFinanceDomainEvent(FinanzasEvents.PAGO_REGISTRADO, {
       tenant_id: tenantId,
@@ -1166,19 +969,19 @@ app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response
       referencia_id: data.referencia_id || undefined,
       concepto: data.concepto,
       beneficiario: data.beneficiario,
+      cuenta_id: ejecucion.cuenta_id,
     });
 
     console.log(`[Finanzas] ✅ Pago procesado: ${id}`);
-    res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    res.json(createApiResponse({ ...data, devengado: resultado.devengado, ejercido_directo: resultado.ejercido_directo },
+      tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    console.error('[Finanzas] Error procesando pago:', error.message);
-
-    if (error.message.includes('LIMITE_EXCEDIDO')) {
-      res.status(403).json(createApiError('FIN_LIMIT_EXCEEDED', error.message));
+    if (error instanceof ErrorFinanzas) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
       return;
     }
-
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', error.message));
+    console.error('[Finanzas] Error procesando pago:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al procesar el pago.', undefined, correlationId));
   }
 });
 
@@ -1608,7 +1411,7 @@ app.post('/api/v1/finanzas/pagos-oc',
       });
       res.status(resultado.idempotente ? 200 : 201).json(createApiResponse(resultado, tenantId, resultado.proyecto_id, correlationId));
     } catch (error: any) {
-      if (error instanceof ErrorEgreso) {
+      if (error instanceof ErrorFinanzas) {
         res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
         return;
       }
