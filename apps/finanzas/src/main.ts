@@ -28,6 +28,7 @@ import { cancelarOcPorPagar, ErrorEgreso, parsearEgresoOc, registrarEgresoOc, re
 import { parsearMontoPositivo } from './montos';
 import { ErrorFinanzas } from './errores';
 import { ejecutarPago, parsearEjecucion, parsearLote, parsearPagoProgramado, programarLote, programarPago } from './programa-pagos';
+import { listarCuentasPorCobrar, parsearCobro, parsearFiltroCxc, registrarCobro, registrarCuentaPorCobrar } from './cuentas-por-cobrar';
 import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
 import {
@@ -48,6 +49,7 @@ import {
   FondosLiberadosPayload,
   PagoRegistradoPayload,
   EgresoOcRegistradoPayload,
+  CobroRegistradoPayload,
   TransferenciaPresupuestalPayload,
   TipoMovimiento,
   FinanzasEvents,
@@ -76,7 +78,7 @@ const eventBus = createEventBus('finanzas');
 async function publishFinanceDomainEvent(
   eventType: FinanzasEvents,
   context: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string },
-  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload | EgresoOcRegistradoPayload
+  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload | EgresoOcRegistradoPayload | CobroRegistradoPayload
 ) {
   await eventBus.publish({
     event_type: eventType,
@@ -1335,6 +1337,72 @@ app.get('/api/v1/finanzas/ocs-por-pagar',
   }
 );
 
+// Cuentas por cobrar (estimaciones aprobadas). Ver cuentas-por-cobrar.ts y openspec/changes/cuentas-por-cobrar-estimaciones.
+// Por defecto lista las abiertas (POR_COBRAR y COBRO_PARCIAL); ?estado= filtra uno.
+app.get('/api/v1/finanzas/cuentas-por-cobrar',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const filtro = parsearFiltroCxc(req.query);
+      const data = await listarCuentasPorCobrar({ tenantId, proyectoId, userId }, filtro);
+      res.json(createApiResponse(data, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      if (error instanceof ErrorFinanzas) {
+        res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+        return;
+      }
+      logError(req, 'finanzas', 'finanzas.cxc.error', 'Error al listar cuentas por cobrar', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar cuentas por cobrar.', undefined, correlationId));
+    }
+  }
+);
+
+// Cobro de una cuenta por cobrar: abona la cuenta bancaria e incrementa lo cobrado. Idempotente por folio (200 en
+// reintento con el mismo contenido; 409 con otro). Exige proyecto activo: el cobro entra a los fondos de ese proyecto.
+// Sin límite de autoridad: registrar dinero que entra no compromete recursos de la empresa.
+app.post('/api/v1/finanzas/cuentas-por-cobrar/:id/cobros',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      if (!proyectoId) {
+        res.status(400).json(createApiError('FIN_PROYECTO_REQUERIDO', 'El cobro requiere un proyecto activo en la sesión.', undefined, correlationId));
+        return;
+      }
+      const cobro = parsearCobro(req.body);
+      const r = await registrarCobro({ tenantId, proyectoId, userId }, req.params.id, cobro);
+
+      if (!r.idempotente) {
+        await publishFinanceDomainEvent(FinanzasEvents.COBRO_REGISTRADO,
+          { tenant_id: tenantId, proyecto_id: r.proyecto_id, user_id: userId, correlation_id: correlationId },
+          {
+            id_cobro: r.id_cobro, cxc_id: r.cxc_id, proyecto_id: r.proyecto_id, origen: r.origen, origen_id: r.origen_id,
+            codigo: r.codigo, cuenta_id: r.cuenta_id, folio: r.folio, monto: r.monto, moneda: r.moneda,
+            fecha_cobro: r.fecha_cobro, cobrado_total: r.cobrado_total, saldo: r.saldo, estado: r.estado,
+          });
+      }
+      logInfo(req, 'finanzas', r.idempotente ? 'finanzas.cobro.idempotent' : 'finanzas.cobro.created', 'Cobro registrado', {
+        id_cobro: r.id_cobro, cxc_id: r.cxc_id, monto: r.monto, estado: r.estado, idempotent: r.idempotente,
+      });
+      res.status(r.idempotente ? 200 : 201).json(createApiResponse(r, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      if (error instanceof ErrorFinanzas) {
+        res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+        return;
+      }
+      if (error?.code === 'P2002') {
+        res.status(409).json(createApiError('FIN_COBRO_DUPLICADO', 'El folio ya fue registrado en otro cobro.', undefined, correlationId));
+        return;
+      }
+      logError(req, 'finanzas', 'finanzas.cobro.error', 'Error al registrar cobro', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar el cobro.', undefined, correlationId));
+    }
+  }
+);
+
 // Egreso contra N OCs: un cheque, transferencia o SPEI liquida OCs de varios proveedores (cualquier giro) del
 // MISMO proyecto. Proyecto, proveedor, código y saldo de cada OC los resuelve el servidor desde ocs_por_pagar;
 // el cliente solo envía oc_id y monto_aplicado. Ver egreso-oc.ts y openspec/changes/corregir-egreso-oc-multiproveedor.
@@ -1554,184 +1622,81 @@ app.get('/health', (_req: Request, res: Response) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ARRANQUE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Una estimación aprobada es una CUENTA POR COBRAR al cliente, no un egreso (F20; openspec
+// cuentas-por-cobrar-estimaciones). Alta idempotente por estimación. Si la estimación ya existe como pago programado
+// (registro previo a este change), no se duplica: la mueve el script migrar-estimaciones-a-cxc.sql.
 export async function handleEstimacionAprobadaEvent(event: BocamEvent): Promise<void> {
-  const {
-    estimacion_id,
-    codigo,
-    total_neto,
-    presupuesto_id,
-    total_conceptos,
-  } = event.payload as {
+  const { estimacion_id, codigo, total_neto, presupuesto_id, total_conceptos } = event.payload as {
     estimacion_id: string;
     codigo: string;
     total_neto: number;
     presupuesto_id?: string;
     total_conceptos?: number;
   };
+  const base = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    estimacion_id,
+    presupuesto_id,
+  };
 
-  if (!estimacion_id || !codigo || !total_neto || !presupuesto_id) {
-    console.error(JSON.stringify({
-      action: 'finanzas.event.estimacion_aprobada.invalid_payload',
-      event_type: event.event_type,
-      correlation_id: event.context.correlation_id,
-      tenant_id: event.context.tenant_id,
-      proyecto_id: event.context.proyecto_id,
-      estimacion_id,
-      presupuesto_id,
-    }));
+  const monto = parsearMontoPositivo(total_neto, 'total_neto');
+  if (!esUuid(estimacion_id) || !codigo || monto.motivo !== undefined || !esUuid(presupuesto_id)) {
+    console.error(JSON.stringify({ action: 'finanzas.event.estimacion_aprobada.invalid_payload', ...base }));
     return;
   }
 
-  const result = await createTenantContext(
-    {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
-    },
-    async (prisma) => {
-      const existente = await prisma.programaPagos.findFirst({
-        where: {
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'Estimacion',
-          referencia_id: estimacion_id,
-        },
-      });
+  const ctx = { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id };
+  const legado = await createTenantContext(ctx, async (prisma) => prisma.programaPagos.findFirst({
+    where: { referencia_modulo: 'control-obra', referencia_entidad: 'Estimacion', referencia_id: estimacion_id },
+    select: { id_pago: true },
+  }));
+  if (legado) {
+    console.log(JSON.stringify({ action: 'finanzas.event.estimacion_aprobada.legado', ...base, id_pago: legado.id_pago }));
+    return;
+  }
 
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.estimacion_aprobada.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          estimacion_id,
-          id_pago: existente.id_pago,
-        }));
-        return;
-      }
-
-      const pago = await prisma.programaPagos.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          concepto: `Estimacion ${codigo} - ${total_conceptos || 0} conceptos`,
-          beneficiario: 'Constructora (Self)',
-          monto_programado: Number(total_neto),
-          fecha_programada: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-          estado: 'PENDIENTE',
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'Estimacion',
-          referencia_id: estimacion_id,
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.estimacion_aprobada.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        estimacion_id,
-        presupuesto_id,
-        id_pago: pago.id_pago,
-      }));
-    }
-  );
+  const r = await registrarCuentaPorCobrar(ctx, {
+    origen: 'ESTIMACION',
+    origen_id: estimacion_id,
+    codigo: String(codigo).slice(0, 60),
+    concepto: `Estimacion ${codigo} - ${total_conceptos || 0} conceptos`.slice(0, 255),
+    monto: monto.monto,
+    presupuesto_id,
+  });
+  console.log(JSON.stringify({
+    action: r.idempotente ? 'finanzas.event.estimacion_aprobada.idempotent' : 'finanzas.event.estimacion_aprobada.created',
+    ...base,
+    id_cxc: r.id_cxc,
+  }));
 }
 
+// El avance físico validado certifica obra ejecutada; el documento cobrable es la estimación. Antes este handler
+// creaba un pago programado por el importe del avance (dinero duplicado con la estimación y con signo invertido).
+// Ahora no tiene efecto financiero: valida el contrato del evento y lo registra (openspec cuentas-por-cobrar-estimaciones).
 export async function handleAvanceFisicoValidadoEvent(event: BocamEvent): Promise<void> {
-  const {
-    avance_id,
-    concepto,
-    importe,
-    porcentaje,
-    presupuesto_id,
-  } = event.payload as {
+  const { avance_id, concepto, importe, presupuesto_id } = event.payload as {
     avance_id: string;
     concepto: string;
     importe: number;
     porcentaje?: number;
     presupuesto_id?: string;
   };
-
+  const base = {
+    event_type: event.event_type,
+    correlation_id: event.context.correlation_id,
+    tenant_id: event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+    avance_id,
+    presupuesto_id,
+  };
   if (!avance_id || !concepto || !importe || !presupuesto_id) {
-    console.error(JSON.stringify({
-      action: 'finanzas.event.avance_fisico_validado.invalid_payload',
-      event_type: event.event_type,
-      correlation_id: event.context.correlation_id,
-      tenant_id: event.context.tenant_id,
-      proyecto_id: event.context.proyecto_id,
-      avance_id,
-      presupuesto_id,
-    }));
+    console.error(JSON.stringify({ action: 'finanzas.event.avance_fisico_validado.invalid_payload', ...base }));
     return;
   }
-
-  const result = await createTenantContext(
-    {
-      tenantId: event.context.tenant_id,
-      proyectoId: event.context.proyecto_id,
-      userId: event.context.user_id,
-    },
-    async (prisma) => {
-      const existente = await prisma.programaPagos.findFirst({
-        where: {
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'AvanceFisicoValidado',
-          referencia_id: avance_id,
-        },
-      });
-
-      if (existente) {
-        console.log(JSON.stringify({
-          action: 'finanzas.event.avance_fisico_validado.idempotent',
-          event_type: event.event_type,
-          correlation_id: event.context.correlation_id,
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          avance_id,
-          id_pago: existente.id_pago,
-        }));
-        return;
-      }
-
-      const presupuesto = await prisma.presupuestoAsignado.findUnique({
-        where: { id_presupuesto: presupuesto_id },
-      });
-
-      if (!presupuesto) {
-        throw new Error(`Presupuesto ${presupuesto_id} no encontrado para el avance ${avance_id}.`);
-      }
-
-      const pago = await prisma.programaPagos.create({
-        data: {
-          tenant_id: event.context.tenant_id,
-          proyecto_id: event.context.proyecto_id,
-          presupuesto_id,
-          concepto: `Proyeccion por avance validado ${concepto}${porcentaje ? ` (${Number(porcentaje).toFixed(2)}%)` : ''}`,
-          beneficiario: 'Pendiente de estimacion',
-          monto_programado: Number(importe),
-          fecha_programada: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          estado: 'PENDIENTE',
-          referencia_modulo: 'control-obra',
-          referencia_entidad: 'AvanceFisicoValidado',
-          referencia_id: avance_id,
-        },
-      });
-
-      console.log(JSON.stringify({
-        action: 'finanzas.event.avance_fisico_validado.created',
-        event_type: event.event_type,
-        correlation_id: event.context.correlation_id,
-        tenant_id: event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-        avance_id,
-        presupuesto_id,
-        id_pago: pago.id_pago,
-      }));
-    }
-  );
+  console.log(JSON.stringify({ action: 'finanzas.event.avance_fisico_validado.sin_efecto_financiero', ...base, importe: Number(importe) }));
 }
 
 export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<void> {

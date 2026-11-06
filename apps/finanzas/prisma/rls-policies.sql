@@ -399,6 +399,55 @@ CREATE POLICY rls_ocs_por_pagar_update ON "ocs_por_pagar"
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 9e. CUENTAS POR COBRAR Y COBROS (openspec: cuentas-por-cobrar-estimaciones)
+-- Patrón Global con Trazabilidad, igual que ocs_por_pagar. Sin DELETE: el historial de cobro se conserva.
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "cuentas_por_cobrar" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "cuentas_por_cobrar" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_cxc_select ON "cuentas_por_cobrar";
+CREATE POLICY rls_cxc_select ON "cuentas_por_cobrar"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_cxc_insert ON "cuentas_por_cobrar";
+CREATE POLICY rls_cxc_insert ON "cuentas_por_cobrar"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_cxc_update ON "cuentas_por_cobrar";
+CREATE POLICY rls_cxc_update ON "cuentas_por_cobrar"
+    FOR UPDATE USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    ) WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+ALTER TABLE "cobros_cxc" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "cobros_cxc" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_cobros_cxc_select ON "cobros_cxc";
+CREATE POLICY rls_cobros_cxc_select ON "cobros_cxc"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_cobros_cxc_insert ON "cobros_cxc";
+CREATE POLICY rls_cobros_cxc_insert ON "cobros_cxc"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 10. COMENTARIOS DE AUDITORÍA
 -- ─────────────────────────────────────────────────────────────────────────────
 COMMENT ON POLICY rls_presupuestos_select ON "presupuestos_asignados" IS 'Aisla presupuestos por constructora y centro de costos';
