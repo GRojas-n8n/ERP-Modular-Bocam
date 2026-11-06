@@ -3179,7 +3179,8 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
                 };
               })
             }
-          }
+          },
+          include: { proveedor: { select: { razon_social: true } } },
         })
       );
 
@@ -3260,6 +3261,8 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
               codigo:         oc.codigo,
               total:          oc.total.toNumber(),
               proveedor_id:   oc.proveedor_id,
+              // Aditivo (openspec: oc-creada-con-nombre-proveedor): Finanzas lo guarda en ocs_por_pagar.
+              proveedor_nombre: oc.proveedor?.razon_social ?? null,
               proyecto_id:    proyectoId,
               requisicion_id: loteData.requisicionId || null,
               concepto_id:    loteData.conceptoId   || null,

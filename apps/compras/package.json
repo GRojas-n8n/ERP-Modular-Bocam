@@ -26,7 +26,8 @@
     "test:integration:oc-transiciones-eventos-finanzas": "node -r ts-node/register/transpile-only test/integration/oc-transiciones-eventos-finanzas.integration.test.ts",
     "test:integration:oc-snapshot-insumo": "node -r ts-node/register/transpile-only test/integration/oc-snapshot-insumo.integration.test.ts",
     "test:integration:recepcion-oc-compras-almacen": "node -r ts-node/register/transpile-only test/integration/recepcion-oc-compras-almacen.integration.test.ts",
-    "test:integration:editar-proveedor": "node -r ts-node/register/transpile-only test/integration/editar-proveedor.integration.test.ts"
+    "test:integration:editar-proveedor": "node -r ts-node/register/transpile-only test/integration/editar-proveedor.integration.test.ts",
+    "test:integration:oc-creada-proveedor-nombre": "node -r ts-node/register/transpile-only test/integration/oc-creada-proveedor-nombre.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
