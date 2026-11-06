@@ -282,7 +282,14 @@ export async function registrarCancelacionOc(
     const compromiso = await tx.movimientoPresupuestal.findFirst({ where: claveMovimiento(ctx.tenantId, p.ocId, 'COMPROMISO') });
     if (!compromiso) return { estado: 'sin_compromiso' };
 
-    const monto = Number(compromiso.monto);
+    // Solo se libera lo que aún no se pagó: los egresos ya pasaron su parte de comprometido a ejercido (DEVENGADO,
+    // ver egreso-oc.ts). Liberar el compromiso completo de una OC con abonos dejaría el comprometido por debajo de lo
+    // real. El lock por OC (bloquearOc) también lo toma el egreso, así que no hay carrera con un pago en curso.
+    const devengado = await tx.movimientoPresupuestal.aggregate({
+      where: { referencia_modulo: 'finanzas', referencia_entidad: 'OrdenCompra', referencia_id: p.ocId, tipo: 'DEVENGADO' },
+      _sum: { monto: true },
+    });
+    const monto = Math.max(0, Number((Number(compromiso.monto) - Number(devengado._sum.monto ?? 0)).toFixed(2)));
     const movimientoId = await insertarMovimiento(tx, ctx, {
       presupuestoId: compromiso.presupuesto_id, tipo: 'LIBERACION', concepto: p.concepto, monto,
       ocId: p.ocId, ocCodigo: p.ocCodigo, notas: p.notas,

@@ -24,6 +24,7 @@
 import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
+import { cancelarOcPorPagar, ErrorEgreso, parsearEgresoOc, registrarEgresoOc, registrarOcPorPagar } from './egreso-oc';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
 import {
   configurarDespachadorOutbox,
@@ -42,6 +43,7 @@ import {
   FondosComprometidosPayload,
   FondosLiberadosPayload,
   PagoRegistradoPayload,
+  EgresoOcRegistradoPayload,
   TransferenciaPresupuestalPayload,
   TipoMovimiento,
   FinanzasEvents,
@@ -71,7 +73,7 @@ const eventBus = createEventBus('finanzas');
 async function publishFinanceDomainEvent(
   eventType: FinanzasEvents,
   context: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string },
-  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload
+  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload | EgresoOcRegistradoPayload
 ) {
   await eventBus.publish({
     event_type: eventType,
@@ -1699,124 +1701,125 @@ app.get('/api/v1/finanzas/pagos-oc/:id',
   }
 );
 
+// OCs por pagar del proyecto (proyección local alimentada por compras.oc_creada/oc_cancelada).
+// Fuente del selector multi-OC de la pantalla de pagos: cumple "una vista, un servicio".
+app.get('/api/v1/finanzas/ocs-por-pagar',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const pId = (req.query.proyectoId ?? req.query.proyecto_id) as string | undefined;
+      const proveedorId = req.query.proveedorId as string | undefined;
+      if ((pId && !esUuid(pId)) || (proveedorId && !esUuid(proveedorId))) {
+        res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId y proveedorId deben ser UUID válidos.'));
+        return;
+      }
+      const filtroProyecto = pId ?? proyectoId ?? null;
+      const filtroProveedor = proveedorId ?? null;
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => prisma.$queryRaw<any[]>`
+        SELECT "oc_id", "proyecto_id", "oc_codigo", "proveedor_id", "proveedor_nombre", "concepto_id",
+               "total"::float8 AS "total", "pagado"::float8 AS "pagado", ("total" - "pagado")::float8 AS "saldo", "estado"
+          FROM "ocs_por_pagar"
+         WHERE "tenant_id" = ${tenantId}::uuid
+           AND "estado" IN ('POR_PAGAR', 'PAGO_PARCIAL')
+           AND (${filtroProyecto}::uuid IS NULL OR "proyecto_id" = ${filtroProyecto}::uuid)
+           AND (${filtroProveedor}::uuid IS NULL OR "proveedor_id" = ${filtroProveedor}::uuid)
+         ORDER BY "proveedor_nombre", "oc_codigo"
+         LIMIT 500`);
+      res.json(createApiResponse(data, tenantId, proyectoId));
+    } catch (error: any) {
+      logError(req, 'finanzas', 'finanzas.ocs_por_pagar.error', 'Error al listar OCs por pagar', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar OCs por pagar.', undefined, getCorrelationId(req)));
+    }
+  }
+);
+
+// Egreso contra N OCs: un cheque, transferencia o SPEI liquida OCs de varios proveedores (cualquier giro) del
+// MISMO proyecto. Proyecto, proveedor, código y saldo de cada OC los resuelve el servidor desde ocs_por_pagar;
+// el cliente solo envía oc_id y monto_aplicado. Ver egreso-oc.ts y openspec/changes/corregir-egreso-oc-multiproveedor.
 app.post('/api/v1/finanzas/pagos-oc',
   requireRoles('finanzas', 'admin'),
   async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
     try {
       const { tenantId, proyectoId: ctxPid, userId, limiteAprobacion } = req.securityContext;
-      const { fuente, cuenta_id, tipo_pago, referencia, concepto, fecha_pago, proyecto_id, detalles } = req.body;
-
-      if (!fuente || !tipo_pago || !referencia || !concepto || !fecha_pago || !proyecto_id || !Array.isArray(detalles) || detalles.length === 0) {
-        return res.status(400).json({ success: false, message: 'Faltan campos obligatorios.' });
-      }
-      if (!['ANTICIPO', 'CUENTA_BANCARIA'].includes(fuente)) {
-        return res.status(400).json({ success: false, message: 'fuente debe ser ANTICIPO o CUENTA_BANCARIA.' });
-      }
-      if (fuente === 'CUENTA_BANCARIA' && !cuenta_id) {
-        return res.status(400).json({ success: false, message: 'cuenta_id es requerido para fuente CUENTA_BANCARIA.' });
-      }
-
-      const montoTotal = (detalles as any[]).reduce((sum: number, d: any) => sum + Number(d.monto_aplicado), 0);
-
-      // Validar Límite de Autoridad Financiera ANTES de descontar saldo o anticipo.
-      // Sin esto, este endpoint era un bypass del límite: el mismo pago rechazado
-      // por PATCH /pagos/:id/pagar se podía registrar aquí contra una OC sin que
-      // nadie mirara el límite del usuario.
-      // Ver openspec/changes/limite-autoridad-pagos-oc.
-      if (montoTotal > limiteAprobacion) {
-        return res.status(403).json(createApiError(
+      // Límite de Autoridad Financiera PRIMERO, antes de cualquier validación de negocio o acceso a BD
+      // (openspec/changes/limite-autoridad-pagos-oc). Suma tolerante: los montos inválidos los rechaza el parser.
+      const detallesBody: any[] = Array.isArray(req.body?.detalles) ? req.body.detalles : [];
+      const totalSolicitado = detallesBody.reduce((acc, d) => acc + Math.max(0, Number(d?.monto_aplicado) || 0), 0);
+      if (totalSolicitado > limiteAprobacion) {
+        res.status(403).json(createApiError(
           'FIN_LIMIT_EXCEEDED',
-          `El monto $${montoTotal.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+          `El monto $${totalSolicitado.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
           undefined,
-          getCorrelationId(req)
+          correlationId
         ));
+        return;
       }
 
-      const data = await createTenantContext({ tenantId, proyectoId: ctxPid, userId }, async (prisma) => {
-        return (prisma as any).$transaction(async (tx: any) => {
-          // Validar y descontar fuente
-          if (fuente === 'ANTICIPO') {
-            const pf = await tx.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: proyecto_id } });
-            const disponible = Number(pf?.anticipo_total ?? 0) - Number(pf?.anticipo_usado ?? 0);
-            if (disponible < montoTotal) {
-              throw Object.assign(new Error(`Anticipo insuficiente. Disponible: $${disponible.toFixed(2)}, Requerido: $${montoTotal.toFixed(2)}`), { status: 422 });
-            }
-            if (pf) {
-              await tx.proyectoFinanzas.update({
-                where: { id_proyecto_finanzas: pf.id_proyecto_finanzas },
-                data: { anticipo_usado: { increment: montoTotal } },
-              });
-            }
-          } else {
-            const cuenta = await tx.cuentaBancaria.findFirst({ where: { id_cuenta: cuenta_id, tenant_id: tenantId, activa: true } });
-            if (!cuenta) throw Object.assign(new Error('Cuenta bancaria no encontrada.'), { status: 404 });
-            if (Number(cuenta.saldo) < montoTotal) {
-              throw Object.assign(new Error(`Saldo insuficiente. Disponible: $${Number(cuenta.saldo).toFixed(2)}, Requerido: $${montoTotal.toFixed(2)}`), { status: 422 });
-            }
-            await tx.cuentaBancaria.update({
-              where: { id_cuenta: cuenta_id },
-              data: { saldo: { decrement: montoTotal } },
-            });
-          }
+      // La pantalla toma el proyecto del JWT; un rol tenant-level sin proyecto activo debe indicarlo en el body.
+      const egreso = parsearEgresoOc({ ...req.body, proyecto_id: req.body?.proyecto_id ?? ctxPid });
 
-          // Crear pago
-          const pago = await tx.pagoOC.create({
-            data: {
-              tenant_id:   tenantId,
-              proyecto_id: proyecto_id,
-              fuente,
-              cuenta_id:   fuente === 'CUENTA_BANCARIA' ? cuenta_id : null,
-              tipo_pago,
-              referencia,
-              concepto,
-              fecha_pago:  new Date(fecha_pago),
-              monto_total: montoTotal,
-              moneda:      'MXN',
-              usuario_id:  userId,
-              detalles: {
-                create: (detalles as any[]).map((d: any) => ({
-                  oc_id:            d.oc_id,
-                  oc_codigo:        d.oc_codigo ?? d.oc_id.slice(0, 8),
-                  proveedor_id:     d.proveedor_id,
-                  proveedor_nombre: d.proveedor_nombre ?? '',
-                  monto_aplicado:   Number(d.monto_aplicado),
-                  saldo_oc_antes:   Number(d.saldo_oc_antes ?? 0),
-                  saldo_oc_despues: Number(d.saldo_oc_despues ?? 0),
-                  concepto_id:      d.concepto_id   ?? null,
-                  concepto_clave:   d.concepto_clave ?? null,
-                })),
-              },
-            },
-            include: { detalles: true },
-          });
+      if (ctxPid && egreso.proyecto_id !== String(ctxPid).toLowerCase()) {
+        res.status(403).json(createApiError('FIN_PROYECTO_DISTINTO',
+          'El egreso debe ser del proyecto activo de la sesión.', undefined, correlationId));
+        return;
+      }
 
-          return pago;
+      const resultado = await registrarEgresoOc({ tenantId, userId }, egreso);
+
+      if (!resultado.idempotente) {
+        const context = { tenant_id: tenantId, proyecto_id: resultado.proyecto_id, user_id: userId, correlation_id: correlationId };
+        for (const d of resultado.detalles) {
+          await publishFinanceDomainEvent(
+            d.saldo_oc_despues <= 0 ? FinanzasEvents.OC_PAGADA_TOTAL : FinanzasEvents.OC_PAGADA_PARCIAL,
+            context,
+            {
+              oc_id: d.oc_id,
+              oc_codigo: d.oc_codigo,
+              proveedor_id: d.proveedor_id,
+              monto_aplicado: d.monto_aplicado,
+              saldo_pendiente: d.saldo_oc_despues,
+              pago_id: resultado.pago_id,
+            } as any,
+          );
+        }
+        await publishFinanceDomainEvent(FinanzasEvents.EGRESO_OC_REGISTRADO, context, {
+          pago_id: resultado.pago_id,
+          proyecto_id: resultado.proyecto_id,
+          fuente: resultado.fuente,
+          cuenta_id: resultado.cuenta_id,
+          tipo_pago: resultado.tipo_pago,
+          referencia: resultado.referencia,
+          fecha_pago: resultado.fecha_pago,
+          monto_total: resultado.monto_total,
+          moneda: 'MXN',
+          detalles: resultado.detalles.map((d) => ({
+            oc_id: d.oc_id,
+            oc_codigo: d.oc_codigo,
+            proveedor_id: d.proveedor_id,
+            proveedor_nombre: d.proveedor_nombre,
+            concepto_id: d.concepto_id,
+            monto_aplicado: d.monto_aplicado,
+          })),
         });
-      });
-
-      // Publicar eventos por OC pagada
-      const correlationId = getCorrelationId(req);
-      const context = { tenant_id: tenantId, proyecto_id: proyecto_id, user_id: userId, correlation_id: correlationId };
-      for (const d of (data as any).detalles) {
-        const isPagadaTotal = Number(d.saldo_oc_despues) <= 0;
-        await publishFinanceDomainEvent(
-          isPagadaTotal ? FinanzasEvents.OC_PAGADA_TOTAL : FinanzasEvents.OC_PAGADA_PARCIAL,
-          context,
-          {
-            oc_id:           d.oc_id,
-            oc_codigo:       d.oc_codigo,
-            proveedor_id:    d.proveedor_id,
-            monto_aplicado:  d.monto_aplicado,
-            saldo_pendiente: d.saldo_oc_despues,
-            pago_id:         (data as any).id_pago,
-          } as any,
-        );
       }
 
-      logInfo(req, 'finanzas', 'finanzas.pago_oc.created', 'Pago OC registrado', { pago_id: (data as any).id_pago, monto: montoTotal });
-      res.status(201).json({ success: true, data });
+      logInfo(req, 'finanzas', 'finanzas.pago_oc.created', 'Egreso OC registrado', {
+        pago_id: resultado.pago_id, monto: resultado.monto_total, ocs: resultado.detalles.length, idempotent: resultado.idempotente,
+      });
+      res.status(resultado.idempotente ? 200 : 201).json(createApiResponse(resultado, tenantId, resultado.proyecto_id, correlationId));
     } catch (error: any) {
-      res.status(error.status ?? 500).json({ success: false, message: error.message });
+      if (error instanceof ErrorEgreso) {
+        res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+        return;
+      }
+      if (error?.code === 'P2002') {
+        res.status(409).json(createApiError('FIN_FOLIO_DUPLICADO', 'El folio ya fue registrado por otro egreso concurrente.', undefined, correlationId));
+        return;
+      }
+      logError(req, 'finanzas', 'finanzas.pago_oc.error', 'Error al registrar egreso OC', { error_message: error.message });
+      res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar el pago.', undefined, correlationId));
     }
   }
 );
@@ -2168,6 +2171,26 @@ export async function handleCentroCostosCreadoEvent(event: BocamEvent): Promise<
     tenant_id: tenantId,
     proyecto_id: proyectoId,
   }));
+}
+
+// Proyección ocs_por_pagar (egreso-oc.ts). Independiente del compromiso presupuestal: una OC emitida es por pagar
+// aunque su compromiso se haya resuelto por la saga HTTP y no por este evento.
+export async function handleOcPorPagarCreadaEvent(event: BocamEvent): Promise<void> {
+  const { oc_id, codigo, total, proveedor_id, proveedor_nombre, concepto_id } = event.payload as {
+    oc_id: string; codigo: string; total: number; proveedor_id: string; proveedor_nombre?: string; concepto_id?: string | null;
+  };
+  await registrarOcPorPagar(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    { oc_id, codigo, total, proveedor_id, proveedor_nombre, concepto_id },
+  );
+}
+
+export async function handleOcPorPagarCanceladaEvent(event: BocamEvent): Promise<void> {
+  const { oc_id } = event.payload as { oc_id: string };
+  await cancelarOcPorPagar(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    oc_id,
+  );
 }
 
 export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<void> {
@@ -2590,6 +2613,7 @@ export async function startServer() {
     console.log(`[Finanzas] 📥 EVENTO recibido: OC Creada`);
     console.log(`           └─ OC: ${codigo} | Total: $${Number(total).toLocaleString()} | Proveedor: ${proveedor_id}`);
     console.log(`           └─ Tenant: ${event.context.tenant_id.substring(0, 8)}... | Proyecto: ${event.context.proyecto_id.substring(0, 8)}...`);
+    await handleOcPorPagarCreadaEvent(event);
     await handleOrdenCompraCreadaEvent(event);
   });
 
@@ -2597,6 +2621,7 @@ export async function startServer() {
     const { oc_id, codigo } = event.payload as any;
     console.log(`[Finanzas] 📥 EVENTO recibido: OC Cancelada`);
     console.log(`           └─ OC: ${codigo} | Liberando fondos comprometidos`);
+    await handleOcPorPagarCanceladaEvent(event);
     await handleOrdenCompraCanceladaEvent(event);
   });
 
