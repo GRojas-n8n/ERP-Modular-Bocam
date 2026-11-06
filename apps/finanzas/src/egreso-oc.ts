@@ -8,7 +8,7 @@
  *   1. Idempotencia natural por folio: (tenant, fuente, cuenta|proyecto, tipo_pago, referencia). Mismo folio con el
  *      mismo contenido devuelve el egreso existente; mismo folio con contenido distinto es 409. Respaldo en BD con el
  *      índice único uq_pagos_oc_folio.
- *   2. Lock por OC (el mismo de compromiso-oc.ts) y SELECT ... FOR UPDATE sobre ocs_por_pagar, ambos en orden de
+ *   2. Lock por OC (el mismo de compromiso-oc.ts, definido en outbox-eventos.ts) y SELECT ... FOR UPDATE sobre ocs_por_pagar, ambos en orden de
  *      oc_id: egresos concurrentes y cancelaciones de la misma OC se serializan sin deadlock; nunca se paga más que
  *      el saldo ni se libera presupuesto ya pagado.
  *   3. Cada OC pertenece al proyecto del egreso; el saldo antes/después lo calcula el servidor; monto en (0, saldo].
@@ -21,7 +21,8 @@
 
 import { Prisma } from './generated/prisma';
 import { createTenantContext } from './db';
-import { bloquearOc, esUuid } from './compromiso-oc';
+import { esUuid } from './compromiso-oc';
+import { bloquearOc } from './outbox-eventos';
 
 type Tx = Parameters<Parameters<typeof createTenantContext>[1]>[0];
 const Decimal = Prisma.Decimal;

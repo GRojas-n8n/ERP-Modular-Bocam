@@ -105,6 +105,7 @@ jobs:
       - name: Aplicar SQL de migraciones de Finanzas
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930120000_blindar_compromiso_oc/migration.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20260930180000_outbox_eventos_finanzas/migration.sql
           PGPASSWORD=postgres psql -h localhost -U postgres -d bocam_ci -v ON_ERROR_STOP=1             -c "SET search_path TO finanzas;"             -f apps/finanzas/prisma/migrations/20261109120000_egreso_oc_multiproveedor/migration.sql
 
       # ── Seed del catálogo de cuentas contables ────────────────────────────────
@@ -147,6 +148,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-outbox-dispatcher-arranque
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-snapshot-insumo
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:compras-oc-transiciones
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" npm run test:integration:finanzas-eventos-idempotencia-event-id -w @bocam/compras
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=compras" ALMACEN_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen" npm run test:integration:compras-recepcion-oc-compras-almacen
 
       # ── Tests inter-modulo ────────────────────────────────────────────────────
@@ -170,6 +172,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:compras-oc-cancelada -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-compromiso-conciliacion  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-liberacion-conciliacion  -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"   npm run test:integration:finanzas-fondos-idempotencia-event-id  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-pago-cfdi   -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-externo -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-sat-worker  -w @bocam/contabilidad
@@ -189,6 +192,12 @@ jobs:
       - name: Run Finanzas egreso OC multiproveedor
         run: |
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:egreso-oc -w @bocam/finanzas
+      # ── Finanzas: outbox transaccional de eventos (lote P1, modo direct por defecto; PostgreSQL y RabbitMQ reales) ──
+      - name: Run Finanzas outbox de eventos (flujo, RLS, /ready y migración)
+        run: |
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos-rls-ready -w @bocam/finanzas
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas" npm run test:integration:outbox-eventos-migracion -w @bocam/finanzas
 
       - name: Run event contract hardening suite
         run: npm run test:integration:event-contracts
