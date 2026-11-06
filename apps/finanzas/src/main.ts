@@ -25,6 +25,8 @@ import express, { Request, Response } from 'express';
 import { createTenantContext } from './db';
 import { esUuid, registrarCancelacionOc, registrarCompromisoOc } from './compromiso-oc';
 import { cancelarOcPorPagar, ErrorEgreso, parsearEgresoOc, registrarEgresoOc, registrarOcPorPagar } from './egreso-oc';
+import { parsearMontoPositivo } from './montos';
+import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
 import {
   configurarDespachadorOutbox,
@@ -50,7 +52,7 @@ import {
   PresupuestoInsuficientePayload,
   SuficienciaPresupuestal,
 } from './types';
-import type { PrismaClient } from './generated/prisma';
+import { Prisma, type PrismaClient } from './generated/prisma';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
 import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
@@ -415,347 +417,143 @@ app.get('/api/v1/finanzas/movimientos',
   }
 });
 
-// Registrar nuevo movimiento presupuestal (inmutable)
+// Registrar nuevo movimiento presupuestal (inmutable). Bloquea la fila del presupuesto antes de validar saldos.
+// Las transferencias van por /transferencias-presupuestales; las partidas de GT no aceptan movimientos manuales.
+// openspec: blindar-movimientos-y-sincronizacion-gt.
 app.post('/api/v1/finanzas/movimientos', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
     const {
       presupuesto_id, tipo, concepto, monto, moneda,
       referencia_modulo, referencia_entidad, referencia_id, referencia_codigo,
       notas,
-    } = req.body;
+    } = req.body ?? {};
 
-    // Validación RBAC
     const rolesAutorizados = ['admin', 'superintendent', 'finanzas'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para registrar movimientos presupuestales.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para registrar movimientos presupuestales.', undefined, correlationId));
       return;
     }
 
-    // Validar campos obligatorios
-    if (!presupuesto_id || !tipo || !concepto || !monto) {
-      res.status(400).json(createApiError(
-        'FIN_MISSING_FIELDS',
-        'Los campos presupuesto_id, tipo, concepto y monto son obligatorios.'
-      ));
+    if (!presupuesto_id || !tipo || !concepto || monto === undefined || monto === null || monto === '') {
+      res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'Los campos presupuesto_id, tipo, concepto y monto son obligatorios.', undefined, correlationId));
       return;
     }
 
-    // Validar tipo de movimiento
-    const tiposValidos = Object.values(TipoMovimiento);
-    if (!tiposValidos.includes(tipo as TipoMovimiento)) {
-      res.status(400).json(createApiError(
-        'FIN_INVALID_TYPE',
-        `Tipo de movimiento inválido. Valores permitidos: ${tiposValidos.join(', ')}`
-      ));
+    if (tipo === TipoMovimiento.TRANSFERENCIA) {
+      res.status(400).json(createApiError('FIN_TRANSFERENCIA_POR_ENDPOINT',
+        'Las transferencias se registran en /transferencias-presupuestales (origen y destino en una sola operación).', undefined, correlationId));
+      return;
+    }
+    if (!(TIPOS_MOVIMIENTO_MANUAL as readonly string[]).includes(tipo)) {
+      res.status(400).json(createApiError('FIN_INVALID_TYPE',
+        `Tipo de movimiento inválido. Valores permitidos: ${TIPOS_MOVIMIENTO_MANUAL.join(', ')}`, undefined, correlationId));
       return;
     }
 
-    // Validar Límite de Autoridad Financiera
     if (Number(monto) > limiteAprobacion) {
-      res.status(403).json(createApiError(
-        'FIN_LIMIT_EXCEEDED',
-        `El monto $${Number(monto).toLocaleString()} excede tu límite de autoridad financiera.`
-      ));
+      res.status(403).json(createApiError('FIN_LIMIT_EXCEEDED',
+        `El monto $${Number(monto).toLocaleString()} excede tu límite de autoridad financiera.`, undefined, correlationId));
       return;
     }
 
-    const data = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        // 1. Verificar que el presupuesto existe
-        const presupuesto = await prisma.presupuestoAsignado.findUnique({
-          where: { id_presupuesto: presupuesto_id },
-        });
+    const montoValidado = parsearMontoPositivo(monto, 'monto');
+    if (montoValidado.motivo !== undefined) {
+      res.status(400).json(createApiError('FIN_MONTO_INVALIDO', montoValidado.motivo, undefined, correlationId));
+      return;
+    }
+    if (!esUuid(presupuesto_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'presupuesto_id debe ser un UUID válido.', undefined, correlationId));
+      return;
+    }
 
-        if (!presupuesto) {
-          throw new Error('Presupuesto no encontrado.');
-        }
-        const montoNum = Number(monto);
-        const disponible = Number(presupuesto.monto_disponible);
+    const data = await registrarMovimientoManual({ tenantId, proyectoId, userId }, {
+      presupuesto_id, tipo, concepto: String(concepto).slice(0, 500), monto: montoValidado.monto!, moneda,
+      referencia_modulo, referencia_entidad, referencia_id, referencia_codigo, notas,
+    });
 
-        // 2. Validar suficiencia según tipo
-        if (tipo === TipoMovimiento.COMPROMISO || tipo === TipoMovimiento.EJERCIDO) {
-          if (montoNum > disponible) {
-            throw new Error(
-              `PRESUPUESTO_INSUFICIENTE: Disponible $${disponible.toLocaleString()}, ` +
-              `Solicitado $${montoNum.toLocaleString()}, ` +
-              `Déficit $${(montoNum - disponible).toLocaleString()}`
-            );
-          }
-        }
-
-        // 3. Crear movimiento (inmutable)
-        const movimiento = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id,
-            tipo,
-            concepto,
-            monto: montoNum,
-            moneda: moneda || 'MXN',
-            referencia_modulo,
-            referencia_entidad,
-            referencia_id,
-            referencia_codigo,
-            usuario_id: userId,
-            notas,
-          },
-        });
-
-        // 4. Actualizar saldos del presupuesto
-        let updateData: any = {};
-        switch (tipo) {
-          case TipoMovimiento.COMPROMISO:
-            updateData = {
-              monto_comprometido: { increment: montoNum },
-              monto_disponible: { decrement: montoNum },
-            };
-            break;
-          case TipoMovimiento.EJERCIDO:
-            updateData = {
-              monto_ejercido: { increment: montoNum },
-              monto_disponible: { decrement: montoNum },
-            };
-            break;
-          case TipoMovimiento.DEVENGADO:
-            // Devengado mueve de comprometido a ejercido (transición)
-            updateData = {
-              monto_comprometido: { decrement: montoNum },
-              monto_ejercido: { increment: montoNum },
-            };
-            break;
-          case TipoMovimiento.LIBERACION:
-            updateData = {
-              monto_comprometido: { decrement: montoNum },
-              monto_disponible: { increment: montoNum },
-            };
-            break;
-          case TipoMovimiento.TRANSFERENCIA:
-            // Las transferencias se manejan con 2 movimientos (origen + destino)
-            // Aquí solo procesamos la salida; el destino se registra en otro call
-            updateData = {
-              monto_disponible: { decrement: montoNum },
-            };
-            break;
-        }
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_id },
-          data: updateData,
-        });
-
-        return movimiento;
-      }
-    );
-
-    console.log(`[Finanzas] ✅ Movimiento registrado: ${tipo} → $${monto}`);
-    res.status(201).json(createApiResponse(data, tenantId, proyectoId));
+    console.log(`[Finanzas] ✅ Movimiento registrado: ${tipo} → $${montoValidado.monto!.toFixed(2)}`);
+    res.status(201).json(createApiResponse(data, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    console.error('[Finanzas] Error registrando movimiento:', error.message);
-
-    if (error.message.includes('PRESUPUESTO_INSUFICIENTE')) {
-      res.status(422).json(createApiError(
-        'FIN_INSUFFICIENT_BUDGET',
-        error.message
-      ));
+    if (error instanceof ErrorPresupuesto) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
       return;
     }
-
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar movimiento.'));
+    console.error('[Finanzas] Error registrando movimiento:', error.message);
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al registrar movimiento.', undefined, correlationId));
   }
 });
 
+// Transferencia presupuestal: mueve autorizado y disponible entre dos presupuestos del proyecto en una sola
+// transacción, con ambos bloqueados e idempotencia por transferencia_id (obligatorio).
+// openspec: blindar-movimientos-y-sincronizacion-gt.
 app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, res: Response) => {
+  const correlationId = getCorrelationId(req);
   try {
     const { tenantId, proyectoId, userId, roles, limiteAprobacion } = req.securityContext;
-    const correlationId = getCorrelationId(req);
-    const {
-      transferencia_id,
-      presupuesto_origen_id,
-      presupuesto_destino_id,
-      monto,
-      concepto,
-    } = req.body;
+    const { transferencia_id, presupuesto_origen_id, presupuesto_destino_id, monto, concepto } = req.body ?? {};
 
     const rolesAutorizados = ['admin', 'finanzas', 'superintendent'];
     if (!roles.some((r: string) => rolesAutorizados.includes(r))) {
-      res.status(403).json(createApiError(
-        'FIN_FORBIDDEN',
-        'No tienes permisos para transferir presupuesto.'
-      ));
+      res.status(403).json(createApiError('FIN_FORBIDDEN', 'No tienes permisos para transferir presupuesto.', undefined, correlationId));
       return;
     }
 
-    if (!presupuesto_origen_id || !presupuesto_destino_id || !monto || !concepto) {
-      res.status(400).json(createApiError(
-        'FIN_MISSING_FIELDS',
-        'Los campos presupuesto_origen_id, presupuesto_destino_id, monto y concepto son obligatorios.'
-      ));
+    if (!presupuesto_origen_id || !presupuesto_destino_id || monto === undefined || monto === null || monto === '' || !concepto) {
+      res.status(400).json(createApiError('FIN_MISSING_FIELDS',
+        'Los campos presupuesto_origen_id, presupuesto_destino_id, monto y concepto son obligatorios.', undefined, correlationId));
       return;
     }
 
     if (presupuesto_origen_id === presupuesto_destino_id) {
-      res.status(422).json(createApiError(
-        'FIN_INVALID_TRANSFER',
-        'El presupuesto de origen y destino deben ser distintos.'
-      ));
+      res.status(422).json(createApiError('FIN_INVALID_TRANSFER', 'El presupuesto de origen y destino deben ser distintos.', undefined, correlationId));
       return;
     }
 
-    const transferenciaId = transferencia_id || uuidv4();
-    const montoNum = Number(monto);
-
-    // Validar Límite de Autoridad Financiera
-    if (montoNum > limiteAprobacion) {
-      res.status(403).json(createApiError(
-        'FIN_LIMIT_EXCEEDED',
-        `El monto $${montoNum.toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
-        undefined,
-        correlationId
-      ));
+    // Límite de Autoridad Financiera antes de cualquier otra validación de negocio (contrato de seguridad.e2e).
+    if (Number(monto) > limiteAprobacion) {
+      res.status(403).json(createApiError('FIN_LIMIT_EXCEEDED',
+        `El monto $${Number(monto).toLocaleString()} excede tu límite de autoridad financiera ($${limiteAprobacion.toLocaleString()}).`,
+        undefined, correlationId));
       return;
     }
 
-    const result = await createTenantContext(
-      { tenantId, proyectoId, userId },
-      async (prisma) => {
-        const movimientosExistentes = await prisma.movimientoPresupuestal.findMany({
-          where: {
-            referencia_modulo: 'finanzas',
-            referencia_entidad: 'TransferenciaPresupuestal',
-            referencia_id: transferenciaId,
-            tipo: TipoMovimiento.TRANSFERENCIA,
-          },
-          orderBy: { fecha_registro: 'asc' },
-        });
+    if (!esUuid(transferencia_id)) {
+      res.status(400).json(createApiError('FIN_TRANSFERENCIA_ID_REQUERIDO',
+        'transferencia_id (UUID generado por quien solicita) es obligatorio: permite reintentar sin duplicar.', undefined, correlationId));
+      return;
+    }
+    if (!esUuid(presupuesto_origen_id) || !esUuid(presupuesto_destino_id)) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'Los presupuestos deben ser UUID válidos.', undefined, correlationId));
+      return;
+    }
+    const montoValidado = parsearMontoPositivo(monto, 'monto');
+    if (montoValidado.motivo !== undefined) {
+      res.status(400).json(createApiError('FIN_MONTO_INVALIDO', montoValidado.motivo, undefined, correlationId));
+      return;
+    }
 
-        const origen = await prisma.presupuestoAsignado.findUniqueOrThrow({
-          where: { id_presupuesto: presupuesto_origen_id },
-        });
-
-        const destino = await prisma.presupuestoAsignado.findUniqueOrThrow({
-          where: { id_presupuesto: presupuesto_destino_id },
-        });
-
-        if (movimientosExistentes.length >= 2) {
-          return {
-            evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL,
-            transferencia_id: transferenciaId,
-            movimiento_origen_id: movimientosExistentes[0].id_movimiento,
-            movimiento_destino_id: movimientosExistentes[1].id_movimiento,
-            presupuesto_origen_id,
-            presupuesto_destino_id,
-            codigo_origen: origen.codigo,
-            codigo_destino: destino.codigo,
-            capitulo_origen: origen.capitulo,
-            capitulo_destino: destino.capitulo,
-            monto_transferido: montoNum,
-            concepto,
-            idempotente: true,
-          };
-        }
-
-        if (Number(origen.monto_disponible) < montoNum) {
-          throw new Error('No hay presupuesto disponible suficiente para la transferencia.');
-        }
-
-        const movimientoOrigen = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id: presupuesto_origen_id,
-            tipo: TipoMovimiento.TRANSFERENCIA,
-            concepto,
-            monto: montoNum,
-            referencia_modulo: 'finanzas',
-            referencia_entidad: 'TransferenciaPresupuestal',
-            referencia_id: transferenciaId,
-            usuario_id: userId,
-            notas: 'Transferencia presupuestal - salida.',
-          },
-        });
-
-        const movimientoDestino = await prisma.movimientoPresupuestal.create({
-          data: {
-            tenant_id: tenantId,
-            proyecto_id: proyectoId,
-            presupuesto_id: presupuesto_destino_id,
-            tipo: TipoMovimiento.TRANSFERENCIA,
-            concepto,
-            monto: montoNum,
-            referencia_modulo: 'finanzas',
-            referencia_entidad: 'TransferenciaPresupuestal',
-            referencia_id: transferenciaId,
-            usuario_id: userId,
-            notas: 'Transferencia presupuestal - entrada.',
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_origen_id },
-          data: {
-            monto_disponible: { decrement: montoNum },
-          },
-        });
-
-        await prisma.presupuestoAsignado.update({
-          where: { id_presupuesto: presupuesto_destino_id },
-          data: {
-            monto_disponible: { increment: montoNum },
-          },
-        });
-
-        return {
-          evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL,
-          transferencia_id: transferenciaId,
-          movimiento_origen_id: movimientoOrigen.id_movimiento,
-          movimiento_destino_id: movimientoDestino.id_movimiento,
-          presupuesto_origen_id,
-          presupuesto_destino_id,
-          codigo_origen: origen.codigo,
-          codigo_destino: destino.codigo,
-          capitulo_origen: origen.capitulo,
-          capitulo_destino: destino.capitulo,
-          monto_transferido: montoNum,
-          concepto,
-          idempotente: false,
-        };
-      }
-    );
-
-    await publishFinanceDomainEvent(FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, {
-      tenant_id: tenantId,
-      proyecto_id: proyectoId,
-      user_id: userId,
-      correlation_id: correlationId,
-    }, {
-      transferencia_id: result.transferencia_id,
-      movimiento_origen_id: result.movimiento_origen_id,
-      movimiento_destino_id: result.movimiento_destino_id,
-      presupuesto_origen_id: result.presupuesto_origen_id,
-      presupuesto_destino_id: result.presupuesto_destino_id,
-      codigo_origen: result.codigo_origen,
-      codigo_destino: result.codigo_destino,
-      capitulo_origen: result.capitulo_origen,
-      capitulo_destino: result.capitulo_destino,
-      monto_transferido: result.monto_transferido,
-      concepto: result.concepto,
-      idempotente: result.idempotente,
+    const result = await transferirPresupuesto({ tenantId, proyectoId, userId }, {
+      transferencia_id, presupuesto_origen_id, presupuesto_destino_id,
+      monto: montoValidado.monto!, concepto: String(concepto).slice(0, 500),
     });
 
-    res.status(201).json(createApiResponse(result, tenantId, proyectoId, correlationId));
+    if (!result.idempotente) {
+      await publishFinanceDomainEvent(FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, {
+        tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId, correlation_id: correlationId,
+      }, { ...result });
+    }
+
+    res.status(201).json(createApiResponse(
+      { evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, ...result }, tenantId, proyectoId, correlationId));
   } catch (error: any) {
-    logError(req, 'finanzas', 'finanzas.transferencias.error', 'Error al transferir presupuesto', {
-      error_message: error.message,
-    });
-
-    const statusCode = error.message.includes('No hay presupuesto disponible suficiente') ? 422 : 500;
-    res.status(statusCode).json(createApiError('FIN_INTERNAL_ERROR', 'Error al transferir presupuesto.', undefined, getCorrelationId(req)));
+    if (error instanceof ErrorPresupuesto) {
+      res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+      return;
+    }
+    logError(req, 'finanzas', 'finanzas.transferencias.error', 'Error al transferir presupuesto', { error_message: error.message });
+    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al transferir presupuesto.', undefined, correlationId));
   }
 });
 
@@ -2396,36 +2194,26 @@ export async function handleSaldoPartidaCreadoEvent(event: BocamEvent): Promise<
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
-  await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
-    for (const partida of partidas) {
-      const monto = Number(partida.monto_aprobado);
-      const capitulo = CATEGORIA_A_CAPITULO[partida.categoria_predominante || ''] || 'INDIRECTOS';
-
-      await prisma.presupuestoAsignado.upsert({
-        where: {
-          uq_presupuesto_concepto: { tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: partida.concepto_id },
-        },
-        update: {
-          monto_autorizado: monto,
-          monto_disponible: monto,
-          concepto_clave: partida.concepto_clave,
-          capitulo,
-        },
-        create: {
-          tenant_id: tenantId,
-          proyecto_id: proyectoId,
-          concepto_id: partida.concepto_id,
-          concepto_clave: partida.concepto_clave,
-          codigo: partida.concepto_clave,
-          descripcion: partida.concepto_desc,
-          monto_autorizado: monto,
-          monto_disponible: monto,
-          capitulo,
-          estatus: 'ACTIVO',
-        },
-      });
-    }
-  });
+  // Alta idempotente o actualización relativa: el disponible respeta comprometido y ejercido (F18).
+  // openspec: blindar-movimientos-y-sincronizacion-gt.
+  const sobregiradas = await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) =>
+    sincronizarPartidasGt(prisma, { tenantId, proyectoId, userId: event.context.user_id },
+      partidas
+        .filter((p) => Number.isFinite(Number(p.monto_aprobado)) && Number(p.monto_aprobado) >= 0)
+        .map((p) => ({
+          concepto_id: p.concepto_id,
+          concepto_clave: p.concepto_clave,
+          concepto_desc: p.concepto_desc,
+          monto: new Prisma.Decimal(String(p.monto_aprobado)),
+          capitulo: CATEGORIA_A_CAPITULO[p.categoria_predominante || ''] || 'INDIRECTOS',
+        }))));
+  for (const s of sobregiradas) {
+    console.warn(JSON.stringify({
+      action: 'finanzas.event.saldo_partida_creado.sobregiro',
+      tenant_id: tenantId, proyecto_id: proyectoId, concepto_id: s.concepto_id, monto_disponible: s.disponible,
+      mensaje: 'GT redujo el autorizado por debajo de lo comprometido y ejercido.',
+    }));
+  }
 
   console.log(JSON.stringify({
     action: 'finanzas.event.saldo_partida_creado.processed',
