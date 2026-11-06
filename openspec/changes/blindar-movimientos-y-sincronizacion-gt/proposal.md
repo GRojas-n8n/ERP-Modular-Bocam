@@ -20,7 +20,7 @@ Hallazgos de la auditoría de Finanzas (5 nov 2026):
   con `SELECT ... FOR UPDATE` y validación de saldos dentro de la transacción.
 - `POST /movimientos`: rechaza TRANSFERENCIA (400), partidas de GT (422), LIBERACION/DEVENGADO por encima de lo
   comprometido (422) y montos inválidos (400).
-- `POST /transferencias-presupuestales`: `transferencia_id` obligatorio (UUID), idempotente (200 en reintento,
+- `POST /transferencias-presupuestales`: `transferencia_id` obligatorio (UUID), idempotente (201 con `idempotente: true` en reintento, contrato previo,
   409 con otro contenido), mueve autorizado y disponible, rechaza partidas de GT; el evento se publica una sola vez.
 - `handleSaldoPartidaCreadoEvent`: alta idempotente o actualización relativa (`disponible = autorizado nuevo -
   comprometido - ejercido`); una reducción por debajo de lo comprometido queda como sobregiro y se registra en log.

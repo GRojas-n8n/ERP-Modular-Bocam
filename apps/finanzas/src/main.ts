@@ -545,7 +545,7 @@ app.post('/api/v1/finanzas/transferencias-presupuestales', async (req: Request, 
       }, { ...result });
     }
 
-    res.status(result.idempotente ? 200 : 201).json(createApiResponse(
+    res.status(201).json(createApiResponse(
       { evento: FinanzasEvents.TRANSFERENCIA_PRESUPUESTAL, ...result }, tenantId, proyectoId, correlationId));
   } catch (error: any) {
     if (error instanceof ErrorPresupuesto) {
