@@ -2,7 +2,7 @@
  * Cuentas por cobrar: una estimación aprobada es dinero que el cliente debe a la constructora, no un egreso.
  * Punto único de escritura de `cuentas_por_cobrar` y `cobros_cxc`. Change: cuentas-por-cobrar-estimaciones (F20).
  *
- * Garantías (todo dentro de UNA transacción de createTenantContext, con RLS del proyecto de la cuenta por cobrar):
+ * Garantías (todo dentro de UNA transacción de createTenantContext, con RLS y filtro explícito por proyecto):
  *   1. Alta idempotente por origen: (tenant, origen, origen_id) único; una reentrega del evento no duplica.
  *   2. Cobro idempotente por folio: (tenant, folio) único. Mismo folio con el mismo contenido devuelve el cobro
  *      existente; con contenido distinto es 409. Lock advisory por folio y respaldo con uq_cobros_cxc_folio.
@@ -137,7 +137,7 @@ export async function registrarCobro(ctx: Ctx, idCxc: string, c: CobroEntrada): 
 
     const filas = await tx.$queryRaw<Array<{ id_cxc: string; monto: Dec; cobrado: Dec; estado: string }>>`
       SELECT "id_cxc", "monto", "cobrado", "estado" FROM "cuentas_por_cobrar"
-       WHERE "id_cxc" = ${idCxc}::uuid AND "tenant_id" = ${ctx.tenantId}::uuid
+       WHERE "id_cxc" = ${idCxc}::uuid AND "tenant_id" = ${ctx.tenantId}::uuid AND "proyecto_id" = ${ctx.proyectoId}::uuid
        FOR UPDATE`;
     const fila = filas[0];
     if (!fila) throw new ErrorFinanzas(404, 'FIN_CXC_NO_ENCONTRADA', 'Cuenta por cobrar no encontrada en el proyecto activo.');
@@ -189,11 +189,11 @@ export function parsearFiltroCxc(query: any): FiltroCxc {
   return { estado, limit };
 }
 
-/** Lista bajo RLS: con proyecto activo, solo ese proyecto; un rol tenant-level sin proyecto ve todo el tenant. */
+/** Con proyecto activo, solo ese proyecto (filtro explícito además del RLS); un rol tenant-level sin proyecto ve todo el tenant. */
 export async function listarCuentasPorCobrar(ctx: Ctx, f: FiltroCxc) {
   return createTenantContext(ctx, async (tx) => {
     const filas = await tx.cuentaPorCobrar.findMany({
-      where: { tenant_id: ctx.tenantId, ...(f.estado ? { estado: f.estado } : { estado: { in: ['POR_COBRAR', 'COBRO_PARCIAL'] } }) },
+      where: { tenant_id: ctx.tenantId, ...(ctx.proyectoId ? { proyecto_id: ctx.proyectoId } : {}), ...(f.estado ? { estado: f.estado } : { estado: { in: ['POR_COBRAR', 'COBRO_PARCIAL'] } }) },
       orderBy: [{ fecha_vencimiento: 'asc' }, { codigo: 'asc' }],
       take: f.limit,
     });
