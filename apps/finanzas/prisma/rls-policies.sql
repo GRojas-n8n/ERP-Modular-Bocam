@@ -326,6 +326,39 @@ CREATE POLICY rls_oc_tombstone_insert ON "oc_cancelaciones_tombstone"
     );
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 9b. OCS POR PAGAR (proyección de Compras; openspec: corregir-egreso-oc-multiproveedor)
+-- Patrón Global con Trazabilidad, igual que pagos_oc: un rol tenant-level sin proyecto activo lee todo el
+-- tenant; las escrituras exigen el proyecto activo (las hacen los handlers de oc_creada/oc_cancelada y el
+-- egreso, siempre con el proyecto de la OC). Sin DELETE: una OC cancelada conserva su historial.
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "ocs_por_pagar" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ocs_por_pagar" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_ocs_por_pagar_select ON "ocs_por_pagar";
+CREATE POLICY rls_ocs_por_pagar_select ON "ocs_por_pagar"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_ocs_por_pagar_insert ON "ocs_por_pagar";
+CREATE POLICY rls_ocs_por_pagar_insert ON "ocs_por_pagar"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_ocs_por_pagar_update ON "ocs_por_pagar";
+CREATE POLICY rls_ocs_por_pagar_update ON "ocs_por_pagar"
+    FOR UPDATE USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    ) WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 10. COMENTARIOS DE AUDITORÍA
 -- ─────────────────────────────────────────────────────────────────────────────
 COMMENT ON POLICY rls_presupuestos_select ON "presupuestos_asignados" IS 'Aisla presupuestos por constructora y centro de costos';
@@ -335,6 +368,7 @@ COMMENT ON POLICY rls_cuentas_select ON "cuentas_bancarias" IS 'Aisla cuentas ba
 COMMENT ON POLICY rls_proyectos_finanzas_select ON "proyectos_finanzas" IS 'Aisla anticipos por constructora y centro de costos';
 COMMENT ON POLICY rls_pagos_oc_select ON "pagos_oc" IS 'Aisla pagos de OC por constructora y centro de costos';
 COMMENT ON POLICY rls_detalles_pago_oc_select ON "detalles_pago_oc" IS 'Aisla detalle de pagos de OC via join a pagos_oc (no tiene tenant_id propio)';
+COMMENT ON POLICY rls_ocs_por_pagar_select ON "ocs_por_pagar" IS 'Aisla OCs por pagar por constructora y centro de costos (Patrón Global con Trazabilidad)';
 
 -- =============================================================================
 -- NOTA: El servicio de Finanzas inyecta set_config('app.current_tenant_id', ...)

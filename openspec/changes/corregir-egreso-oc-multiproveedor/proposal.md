@@ -27,8 +27,11 @@ Hallazgos que cierra (auditoría del 5 nov 2026): F0, F1 (backend), F3, F4, F5, 
 - **`compromiso-oc.ts`:** la cancelación libera `compromiso - devengado`.
 - **Evento nuevo `finanzas.egreso_oc_registrado`** para la póliza de egreso (la consume Contabilidad en un
   change aparte).
-- **Migración `20261109120000_egreso_oc_multiproveedor`:** tabla, CHECKs, RLS forzado, `uq_pagos_oc_folio`,
-  `uq_movimiento_nomina`; idempotente y con precheck; `rollback.sql`.
+- **Migración `20261109120000_egreso_oc_multiproveedor`:** tabla, CHECKs, RLS forzado (también en `rls-policies.sql`),
+  `uq_pagos_oc_folio`; idempotente y con precheck; `rollback.sql`.
+- **Fuera de alcance:** el índice único de movimientos de nómina se movió a `blindar-consumidores-finanzas`; el
+  contrato vigente (`compromiso-oc-concurrencia`, caso 10d) permite hoy dos COMPROMISO de `PreNomina` y cambiarlo
+  requiere su propio spec.
 
 ## Impact
 

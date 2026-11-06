@@ -8,14 +8,16 @@
 - [x] 2.1 `src/egreso-oc.ts`: validación del body, locks, `FOR UPDATE`, saldo calculado en servidor, descuento atómico, DEVENGADO por OC.
 - [x] 2.2 `POST /pagos-oc` reescrito; `GET /ocs-por-pagar`; handlers de proyección en `oc_creada` y `oc_cancelada`; evento `finanzas.egreso_oc_registrado`.
 - [x] 2.3 `compromiso-oc.ts`: la cancelación libera `compromiso - devengado`.
-- [x] 2.4 Migración idempotente con precheck, RLS forzado, CHECKs e índices únicos; `rollback.sql`; modelo `OcPorPagar`.
+- [x] 2.4 Migración idempotente con precheck, RLS forzado, CHECKs e índice único de folio; `rollback.sql`; modelo `OcPorPagar`.
+- [x] 2.5 Políticas de `ocs_por_pagar` también en `rls-policies.sql` (gate `Cobertura RLS (estática)`).
+- [x] 2.6 `uq_movimiento_nomina` retirado de este change (rompía el caso 10d de `compromiso-oc-concurrencia`); pasa a `blindar-consumidores-finanzas`.
 
 ## 3. Verificar
 
 - [x] 3.1 `tsc --noEmit` del servicio sobre `main` y sobre `main` + #191; `tsc --strict` de `egreso-oc.ts`.
 - [x] 3.2 Validador del body: 11/11 casos.
 - [x] 3.3 HTTP contra `main.ts` sin BD: 6/6 (límite primero, body vacío, monto negativo, proyecto distinto, OC repetida, proyecto del JWT).
-- [x] 3.4 Migración en PostgreSQL 16: RLS rechaza OC de otro proyecto; CHECK rechaza sobrepago; folio y nómina duplicados rechazados; precheck aborta y revierte; idempotente tras `db push`; rollback limpio.
+- [x] 3.4 Migración en PostgreSQL 16: RLS rechaza OC de otro proyecto; CHECK rechaza sobrepago; folio duplicado rechazado; precheck aborta y revierte; idempotente tras `db push`; rollback limpio.
 - [x] 3.5 Carga inicial validada con RLS forzado y re-ejecución sin duplicados.
 - [ ] 3.6 `npm run test:integration:egreso-oc -w @bocam/finanzas` en CI (8 casos).
 - [ ] 3.7 `test:e2e:seguridad` en CI sin cambios de contrato.
