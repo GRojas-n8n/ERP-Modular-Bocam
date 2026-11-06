@@ -49,6 +49,8 @@ export function readMigrationSql(file: 'migration.sql' | 'rollback.sql'): string
   return readFileSync(join(MIGRATION_DIR, file), 'utf8');
 }
 
+export const MIGRATION_DIR_OUTBOX = join(__dirname, '..', '..', 'prisma', 'migrations', '20260930180000_outbox_eventos_finanzas');
+
 export const RLS_POLICIES_PATH = join(__dirname, '..', '..', 'prisma', 'rls-policies.sql');
 
 export const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
