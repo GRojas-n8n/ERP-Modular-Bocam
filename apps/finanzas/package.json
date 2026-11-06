@@ -21,7 +21,9 @@
     "test:integration:event-contracts": "node -r ts-node/register/transpile-only test/integration/event-contracts.integration.test.ts",
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
     "test:e2e:idempotencia": "node -r ts-node/register/transpile-only test/e2e/idempotencia.e2e.test.ts",
-    "test:integration:egreso-oc": "node -r ts-node/register/transpile-only test/integration/egreso-oc.integration.test.ts"
+    "test:integration:egreso-oc": "node -r ts-node/register/transpile-only test/integration/egreso-oc.integration.test.ts",
+    "test:integration:consumidores-resilientes": "node -r ts-node/register/transpile-only test/integration/consumidores-resilientes.integration.test.ts",
+    "test:integration:nomina-idempotencia": "node -r ts-node/register/transpile-only test/integration/nomina-idempotencia.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
