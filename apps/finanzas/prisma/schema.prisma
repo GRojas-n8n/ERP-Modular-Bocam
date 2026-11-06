@@ -266,6 +266,7 @@ model OcPorPagar {
   @@index([tenant_id, proyecto_id, estado], map: "ocs_por_pagar_tenant_proyecto_estado_idx")
   @@index([tenant_id, proveedor_id], map: "ocs_por_pagar_tenant_proveedor_idx")
   @@map("ocs_por_pagar")
+}
 
 // ─── Outbox transaccional de eventos (lote P1) ──────────────────────────────
 // Ver openspec/changes/hacer-confiables-publicadores-eventbus-criticos. Solo se escribe con FINANZAS_EVENT_MODE=outbox.
