@@ -248,52 +248,6 @@ exports.Prisma.DetallePagoOCScalarFieldEnum = {
   concepto_clave: 'concepto_clave'
 };
 
-exports.Prisma.OcPorPagarScalarFieldEnum = {
-  tenant_id: 'tenant_id',
-  oc_id: 'oc_id',
-  proyecto_id: 'proyecto_id',
-  oc_codigo: 'oc_codigo',
-  proveedor_id: 'proveedor_id',
-  proveedor_nombre: 'proveedor_nombre',
-  concepto_id: 'concepto_id',
-  total: 'total',
-  pagado: 'pagado',
-  estado: 'estado',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-};
-
-exports.Prisma.CuentaPorCobrarScalarFieldEnum = {
-  id_cxc: 'id_cxc',
-  tenant_id: 'tenant_id',
-  proyecto_id: 'proyecto_id',
-  origen: 'origen',
-  origen_id: 'origen_id',
-  codigo: 'codigo',
-  concepto: 'concepto',
-  presupuesto_id: 'presupuesto_id',
-  monto: 'monto',
-  cobrado: 'cobrado',
-  moneda: 'moneda',
-  fecha_vencimiento: 'fecha_vencimiento',
-  estado: 'estado',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-};
-
-exports.Prisma.CobroCxcScalarFieldEnum = {
-  id_cobro: 'id_cobro',
-  tenant_id: 'tenant_id',
-  proyecto_id: 'proyecto_id',
-  cxc_id: 'cxc_id',
-  cuenta_id: 'cuenta_id',
-  folio: 'folio',
-  monto: 'monto',
-  fecha_cobro: 'fecha_cobro',
-  usuario_id: 'usuario_id',
-  created_at: 'created_at'
-};
-
 exports.Prisma.OutboxEventoScalarFieldEnum = {
   id_evento: 'id_evento',
   orden_global: 'orden_global',
@@ -351,9 +305,6 @@ exports.Prisma.ModelName = {
   ProyectoFinanzas: 'ProyectoFinanzas',
   PagoOC: 'PagoOC',
   DetallePagoOC: 'DetallePagoOC',
-  OcPorPagar: 'OcPorPagar',
-  CuentaPorCobrar: 'CuentaPorCobrar',
-  CobroCxc: 'CobroCxc',
   OutboxEvento: 'OutboxEvento'
 };
 
