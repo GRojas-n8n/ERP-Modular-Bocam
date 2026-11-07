@@ -312,6 +312,32 @@ model CobroCxc {
   @@map("cobros_cxc")
 }
 
+// ─── Nóminas por pagar (openspec: nomina-pagada-por-finanzas) ────────────────
+// Proyección de personal.nomina_autorizada; Finanzas la paga desde una cuenta. Además (no expresable en Prisma):
+// CHECK de monto y estado, RLS habilitado y forzado (migración 20261113120000_nominas_por_pagar).
+model NominaPorPagar {
+  tenant_id           String    @db.Uuid
+  prenomina_id        String    @db.Uuid
+  proyecto_id         String    @db.Uuid
+  codigo              String    @db.VarChar(60)
+  periodo_inicio      DateTime?
+  periodo_fin         DateTime?
+  total_neto          Decimal   @db.Decimal(18, 2)
+  total_empleados     Int       @default(0)
+  estado              String    @default("POR_PAGAR") @db.VarChar(20) // POR_PAGAR, PAGADA, CANCELADA
+  cuenta_id           String?   @db.Uuid
+  referencia          String?   @db.VarChar(100)
+  fecha_pago          DateTime?
+  pagado_por          String?   @db.Uuid
+  efecto_presupuestal String?   @db.VarChar(20) // devengado, ejercido_directo, sin_presupuesto
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now()) @updatedAt
+
+  @@id([tenant_id, prenomina_id])
+  @@index([tenant_id, proyecto_id, estado], map: "nominas_por_pagar_tenant_proyecto_estado_idx")
+  @@map("nominas_por_pagar")
+}
+
 // ─── Outbox transaccional de eventos (lote P1) ──────────────────────────────
 // Ver openspec/changes/hacer-confiables-publicadores-eventbus-criticos. Solo se escribe con FINANZAS_EVENT_MODE=outbox.
 // Además (no expresable en Prisma): CHECK de estado, RLS con despachador interno y las restricciones únicas de la

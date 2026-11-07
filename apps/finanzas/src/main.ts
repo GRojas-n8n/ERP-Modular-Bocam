@@ -29,6 +29,7 @@ import { parsearMontoPositivo } from './montos';
 import { ErrorFinanzas } from './errores';
 import { ejecutarPago, parsearEjecucion, parsearLote, parsearPagoProgramado, programarLote, programarPago } from './programa-pagos';
 import { cortarPagina, despuesDe, parsearPaginacion } from './paginacion';
+import { listarNominasPorPagar, pagarNomina, parsearNominaAutorizada, parsearPagoNomina, registrarNominaPorPagar } from './nomina-por-pagar';
 import { listarCuentasPorCobrar, parsearCobro, parsearFiltroCxc, registrarCobro, registrarCuentaPorCobrar } from './cuentas-por-cobrar';
 import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
@@ -51,6 +52,7 @@ import {
   PagoRegistradoPayload,
   EgresoOcRegistradoPayload,
   CobroRegistradoPayload,
+  NominaPagadaFinanzasPayload,
   TransferenciaPresupuestalPayload,
   TipoMovimiento,
   FinanzasEvents,
@@ -79,7 +81,7 @@ const eventBus = createEventBus('finanzas');
 async function publishFinanceDomainEvent(
   eventType: FinanzasEvents,
   context: { tenant_id: string; proyecto_id: string; user_id: string; correlation_id?: string },
-  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload | EgresoOcRegistradoPayload | CobroRegistradoPayload
+  payload: FondosComprometidosPayload | FondosLiberadosPayload | PresupuestoInsuficientePayload | PagoRegistradoPayload | TransferenciaPresupuestalPayload | EgresoOcRegistradoPayload | CobroRegistradoPayload | NominaPagadaFinanzasPayload
 ) {
   await eventBus.publish({
     event_type: eventType,
@@ -1521,6 +1523,53 @@ app.post('/api/v1/finanzas/cuentas-por-cobrar/:id/cobros',
   }
 );
 
+// Nóminas autorizadas pendientes de pago (proyección de personal.nomina_autorizada). Ver nomina-por-pagar.ts.
+app.get('/api/v1/finanzas/nominas-por-pagar',
+  requireRoles('finanzas', 'admin', 'director'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const data = await listarNominasPorPagar({ tenantId, proyectoId, userId }, req.query.estado as string | undefined);
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
+    } catch (error: any) {
+      responderError(req, res, error, 'finanzas.nominas.list_error', 'Error al listar nóminas por pagar');
+    }
+  }
+);
+
+// Pago de una nómina desde una cuenta bancaria. Idempotente por (cuenta, referencia). Publica finanzas.nomina_pagada
+// para que Personal marque la prenómina PAGADA y Control de Proyectos sume el costo real de mano de obra.
+app.post('/api/v1/finanzas/nominas-por-pagar/:prenominaId/pagar',
+  requireRoles('finanzas', 'admin'),
+  async (req: Request, res: Response) => {
+    const correlationId = getCorrelationId(req);
+    try {
+      const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
+      if (!proyectoId) {
+        res.status(400).json(createApiError('FIN_PROYECTO_REQUERIDO', 'El pago de nómina requiere un proyecto activo en la sesión.', undefined, correlationId));
+        return;
+      }
+      const entrada = parsearPagoNomina(req.body);
+      const r = await pagarNomina({ tenantId, proyectoId, userId }, req.params.prenominaId, entrada, limiteAprobacion);
+      if (!r.idempotente) {
+        await publishFinanceDomainEvent(FinanzasEvents.NOMINA_PAGADA,
+          { tenant_id: tenantId, proyecto_id: r.proyecto_id, user_id: userId, correlation_id: correlationId },
+          {
+            prenomina_id: r.prenomina_id, proyecto_id: r.proyecto_id, codigo: r.codigo, total_neto: r.total_neto,
+            total_empleados: r.total_empleados, periodo_inicio: r.periodo_inicio, periodo_fin: r.periodo_fin,
+            cuenta_id: r.cuenta_id, referencia: r.referencia, fecha_pago: r.fecha_pago, efecto_presupuestal: r.efecto_presupuestal,
+          });
+      }
+      logInfo(req, 'finanzas', r.idempotente ? 'finanzas.nomina.pago.idempotent' : 'finanzas.nomina.pago.created', 'Nómina pagada', {
+        prenomina_id: r.prenomina_id, monto: r.total_neto, efecto_presupuestal: r.efecto_presupuestal,
+      });
+      res.status(r.idempotente ? 200 : 201).json(createApiResponse(r, tenantId, proyectoId, correlationId));
+    } catch (error: any) {
+      responderError(req, res, error, 'finanzas.nomina.pago.error', 'Error al pagar la nómina');
+    }
+  }
+);
+
 // Egreso contra N OCs: un cheque, transferencia o SPEI liquida OCs de varios proveedores (cualquier giro) del
 // MISMO proyecto. Proyecto, proveedor, código y saldo de cada OC los resuelve el servidor desde ocs_por_pagar;
 // el cliente solo envía oc_id y monto_aplicado. Ver egreso-oc.ts y openspec/changes/corregir-egreso-oc-multiproveedor.
@@ -2188,6 +2237,15 @@ export async function handleNominaAutorizadaEvent(event: BocamEvent): Promise<vo
   const tenantId = event.context.tenant_id;
   const proyectoId = event.context.proyecto_id;
 
+  // Proyección para el pago por Finanzas (nomina-pagada-por-finanzas), independiente del presupuesto MANO_OBRA.
+  const alta = parsearNominaAutorizada(event.payload);
+  if (alta) {
+    const nueva = await registrarNominaPorPagar({ tenantId, proyectoId, userId: event.context.user_id }, alta);
+    console.log(JSON.stringify({ action: nueva ? 'finanzas.event.nomina_autorizada.por_pagar' : 'finanzas.event.nomina_autorizada.por_pagar_idempotent', prenomina_id }));
+  } else {
+    console.warn(JSON.stringify({ action: 'finanzas.event.nomina_autorizada.invalid_payload', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
+  }
+
   await createTenantContext({ tenantId, proyectoId, userId: event.context.user_id }, async (prisma) => {
     const existente = await prisma.movimientoPresupuestal.findFirst({
       where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.COMPROMISO },
@@ -2239,6 +2297,21 @@ export async function handleNominaPagadaEvent(event: BocamEvent): Promise<void> 
     });
     if (existente) {
       console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.idempotent', prenomina_id }));
+      return;
+    }
+
+    // Con nomina-pagada-por-finanzas el presupuesto se aplica al pagar en Finanzas. Este evento (que Personal emite al
+    // confirmar el pago) solo aplica a pagos previos al change, y solo si existe el compromiso que va a devengar.
+    const pagadaEnFinanzas = await prisma.nominaPorPagar.findFirst({ where: { tenant_id: tenantId, prenomina_id, estado: 'PAGADA' } });
+    if (pagadaEnFinanzas) {
+      console.log(JSON.stringify({ action: 'finanzas.event.nomina_pagada.pagada_en_finanzas', prenomina_id }));
+      return;
+    }
+    const compromiso = await prisma.movimientoPresupuestal.findFirst({
+      where: { referencia_modulo: 'personal', referencia_entidad: 'PreNomina', referencia_id: prenomina_id, tipo: TipoMovimiento.COMPROMISO },
+    });
+    if (!compromiso) {
+      console.warn(JSON.stringify({ action: 'finanzas.event.nomina_pagada.sin_compromiso', prenomina_id, tenant_id: tenantId, proyecto_id: proyectoId }));
       return;
     }
 

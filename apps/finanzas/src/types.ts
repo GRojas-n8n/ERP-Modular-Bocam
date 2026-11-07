@@ -68,6 +68,23 @@ export enum FinanzasEvents {
   /** Se cobró (parcial o total) una cuenta por cobrar (estimación). Lo consumen Contabilidad (póliza de ingreso)
    *  y Control de Proyectos (estado de la estimación). openspec: cuentas-por-cobrar-estimaciones. */
   COBRO_REGISTRADO = 'finanzas.cobro_registrado',
+  /** Finanzas pagó una prenómina desde una cuenta bancaria. Personal la marca PAGADA; Control de Proyectos la suma
+   *  al costo real de mano de obra. openspec: nomina-pagada-por-finanzas. */
+  NOMINA_PAGADA = 'finanzas.nomina_pagada',
+}
+
+export interface NominaPagadaFinanzasPayload {
+  prenomina_id: string;
+  proyecto_id: string;
+  codigo: string;
+  total_neto: number;
+  total_empleados: number;
+  periodo_inicio: string | null;
+  periodo_fin: string | null;
+  cuenta_id: string;
+  referencia: string;
+  fecha_pago: string;
+  efecto_presupuestal: 'devengado' | 'ejercido_directo' | 'sin_presupuesto';
 }
 
 export interface CobroRegistradoPayload {
