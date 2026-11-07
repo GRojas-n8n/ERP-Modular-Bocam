@@ -298,6 +298,28 @@ async function aplicarPagoPreNominaAlEvm(
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUSCRIPTOR: finanzas.nomina_pagada (openspec: evm-mano-obra-desde-finanzas)
+// Finanzas paga la nómina autorizada desde una cuenta (nomina-pagada-por-finanzas). El monto se suma al costo real
+// de mano de obra del proyecto (AC del EVM) con la misma rutina idempotente que el pago de PreNomina, usando la
+// prenómina como llave: una reentrega no duplica.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function handleNominaPagadaFinanzasEvent(event: any): Promise<void> {
+  const p = event.payload ?? {};
+  const monto = Number(p.total_neto);
+  if (!p.prenomina_id || !Number.isFinite(monto) || monto <= 0 || !event.context?.tenant_id || !event.context?.proyecto_id) {
+    console.error(JSON.stringify({
+      action: 'control_proyectos.event.finanzas.nomina_pagada.invalid_payload',
+      correlation_id: event.context?.correlation_id, tenant_id: event.context?.tenant_id, prenomina_id: p.prenomina_id,
+    }));
+    return;
+  }
+  await aplicarPagoPreNominaAlEvm(
+    { tenantId: event.context.tenant_id, proyectoId: event.context.proyecto_id, userId: event.context.user_id },
+    { id_pago: p.prenomina_id, monto },
+  );
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SUSCRIPTOR: finanzas.pago_registrado (migrado de control-obra)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2460,6 +2482,9 @@ async function initEventSubscribers(): Promise<void> {
 
     // Pago registrado en Finanzas → reconciliar estimación (migrado de control-obra)
     await eventBus.subscribe('finanzas.pago_registrado', handlePagoRegistradoEvent);
+
+    // Nómina pagada por Finanzas → costo real de mano de obra (evm-mano-obra-desde-finanzas)
+    await eventBus.subscribe('finanzas.nomina_pagada', handleNominaPagadaFinanzasEvent);
 
     // Salida de almacén hacia obra → costo real por concepto (migrado de control-obra)
     await eventBus.subscribe('almacen.salida_obra', handleSalidaObraEvent);
