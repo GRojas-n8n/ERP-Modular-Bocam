@@ -24,7 +24,8 @@
     "test:integration:egreso-oc": "node -r ts-node/register/transpile-only test/integration/egreso-oc.integration.test.ts",
     "test:integration:presupuesto-blindado": "node -r ts-node/register/transpile-only test/integration/presupuesto-blindado.integration.test.ts",
     "test:integration:programa-pagos": "node -r ts-node/register/transpile-only test/integration/programa-pagos.integration.test.ts",
-    "test:integration:cuentas-por-cobrar": "node -r ts-node/register/transpile-only test/integration/cuentas-por-cobrar.integration.test.ts"
+    "test:integration:cuentas-por-cobrar": "node -r ts-node/register/transpile-only test/integration/cuentas-por-cobrar.integration.test.ts",
+    "test:integration:api-dashboard": "node -r ts-node/register/transpile-only test/integration/api-dashboard.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",
