@@ -145,12 +145,17 @@ async function main() {
     assert.equal(countAfterDup, 1, 'Idempotencia evento duplicado: sigue siendo 1 asiento');
     console.log('ok 3 - evento personal.nomina_autorizada duplicado ignorado (idempotente)');
 
-    // ── Test 4: PATCH /pagar → asiento PAGO_NOMINA creado ──
-    const respPagar = await fetch(`${baseUrl}/api/v1/personal/prenominas/${prenomina.id_prenomina}/pagar`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    // ── Test 4: Finanzas paga (finanzas.nomina_pagada) → Personal marca PAGADA y publica personal.nomina_pagada
+    //    → asiento PAGO_NOMINA. openspec: personal-nomina-pagada-por-finanzas.
+    await personalModule.handleNominaPagadaFinanzasEvent({
+      event_type: 'finanzas.nomina_pagada',
+      timestamp: new Date().toISOString(),
+      context: { tenant_id: tenantId, proyecto_id: proyectoId, user_id: userId, correlation_id: randomUUID() },
+      payload: {
+        prenomina_id: prenomina.id_prenomina, proyecto_id: proyectoId, codigo: prenomina.codigo, total_neto: Number(prenomina.total_neto),
+        cuenta_id: randomUUID(), referencia: 'SPEI-NOM-IT', fecha_pago: new Date().toISOString(),
+      },
     });
-    assert.equal(respPagar.status, 200, `Marcar pagada: esperado 200, obtenido ${respPagar.status}`);
 
     await waitFor(async () => {
       const asientoPago = await contabilidadPrisma.asientoContable.findFirstOrThrow({
