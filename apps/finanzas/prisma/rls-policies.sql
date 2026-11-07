@@ -448,6 +448,38 @@ CREATE POLICY rls_cobros_cxc_insert ON "cobros_cxc"
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 9f. NÓMINAS POR PAGAR (openspec: nomina-pagada-por-finanzas)
+-- Patrón Global con Trazabilidad, igual que ocs_por_pagar. Sin DELETE.
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "nominas_por_pagar" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "nominas_por_pagar" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_nominas_por_pagar_select ON "nominas_por_pagar";
+CREATE POLICY rls_nominas_por_pagar_select ON "nominas_por_pagar"
+    FOR SELECT USING (
+        tenant_id = current_tenant_id()
+        AND (current_proyecto_id() IS NULL OR proyecto_id = current_proyecto_id())
+    );
+
+DROP POLICY IF EXISTS rls_nominas_por_pagar_insert ON "nominas_por_pagar";
+CREATE POLICY rls_nominas_por_pagar_insert ON "nominas_por_pagar"
+    FOR INSERT WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+DROP POLICY IF EXISTS rls_nominas_por_pagar_update ON "nominas_por_pagar";
+CREATE POLICY rls_nominas_por_pagar_update ON "nominas_por_pagar"
+    FOR UPDATE USING (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    ) WITH CHECK (
+        tenant_id = current_tenant_id()
+        AND proyecto_id = current_proyecto_id()
+    );
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 10. COMENTARIOS DE AUDITORÍA
 -- ─────────────────────────────────────────────────────────────────────────────
 COMMENT ON POLICY rls_presupuestos_select ON "presupuestos_asignados" IS 'Aisla presupuestos por constructora y centro de costos';
