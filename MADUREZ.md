@@ -19,7 +19,7 @@ Valores: `✓` completo, `½` parcial, vacío = no cumple. Cambia un criterio so
 | Módulo | Alcance | Construido % | C1 | C2 | C3 | C4 | C5 | Evidencia |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Compras | Original | 75 | ✓ | ✓ | ✓ | ½ |  | PR #169, #185, #186; integración parcial mientras falte el 25% del alcance |
-| Finanzas | Original | 100 | ✓ | ✓ | ✓ | ✓ |  | PR #185, #186; pruebas de concurrencia, RLS y migración |
+| Finanzas | Original | 84 | ✓ | ✓ | ✓ | ✓ |  | PR #185, #186; pruebas de concurrencia, RLS y migración |
 | Almacén | Incorporado | 50 | ✓ | ✓ | ½ |  |  | Recepción de OC integrada (PR #169); faltan funciones del alcance |
 | Autenticación | Original | 100 | ✓ | ✓ | ✓ | ½ |  | Prisma, migraciones y pruebas |
 | App Shell (portal) | Original | 85 | ✓ | ✓ | ✓ |  |  | Build, lint, pruebas, E2E y smoke |
