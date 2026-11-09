@@ -32,9 +32,18 @@ vi.mock('../context/NotificationContext', () => ({
   useNotification: () => ({ notify: vi.fn() }),
 }));
 
+// La pantalla de egreso multiproveedor (openspec: pantalla-egreso-multiproveedor) lista las OCs por pagar del
+// proyecto desde Finanzas; ya no se captura el UUID de la OC a mano.
+const OC_ID = '11111111-1111-4111-8111-111111111111';
 vi.mock('../lib/api', () => ({
   default: {
-    get: vi.fn(() => Promise.resolve({ data: { data: [] } })),
+    get: vi.fn((url: string) => Promise.resolve({
+      data: {
+        data: url === '/api/v1/finanzas/ocs-por-pagar'
+          ? [{ oc_id: OC_ID, oc_codigo: 'OC-001', proveedor_id: 'prov-1', proveedor_nombre: 'Aceros del Norte', total: 1000, pagado: 0, saldo: 1000, estado: 'POR_PAGAR' }]
+          : [],
+      },
+    })),
     post: postMock,
   },
 }));
@@ -58,8 +67,9 @@ async function llenarYRegistrarPago() {
 
   fireEvent.change(await screen.findByPlaceholderText('TRF-2026-001'), { target: { value: 'TRF-TEST-001' } });
   fireEvent.change(screen.getByPlaceholderText('Pago materiales factura F-001'), { target: { value: 'Pago de prueba' } });
-  fireEvent.change(screen.getByPlaceholderText('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'), { target: { value: 'oc-1' } });
-  fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '500' } });
+  fireEvent.change(screen.getByLabelText('Fuente *'), { target: { value: 'ANTICIPO' } });
+  fireEvent.click(await screen.findByLabelText('Seleccionar OC-001'));
+  fireEvent.change(screen.getByLabelText('Monto OC-001'), { target: { value: '500' } });
 
   fireEvent.click(within(modalRegistrarPago()).getByRole('button', { name: /^Registrar Pago$/ }));
 }
