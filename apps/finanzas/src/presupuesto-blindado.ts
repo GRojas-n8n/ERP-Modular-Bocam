@@ -18,15 +18,12 @@ import { Prisma } from './generated/prisma';
 import { createTenantContext } from './db';
 import { esUuid } from './compromiso-oc';
 import { Decimal, type Dec } from './montos';
+import { ErrorFinanzas } from './errores';
 
 type Tx = Parameters<Parameters<typeof createTenantContext>[1]>[0];
 type Ctx = { tenantId: string; proyectoId: string; userId: string };
 
-export class ErrorPresupuesto extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
-    super(message);
-  }
-}
+export class ErrorPresupuesto extends ErrorFinanzas {}
 
 interface FilaPresupuesto {
   id_presupuesto: string;

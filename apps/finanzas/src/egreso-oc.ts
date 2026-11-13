@@ -23,6 +23,8 @@ import { Prisma } from './generated/prisma';
 import { createTenantContext } from './db';
 import { esUuid } from './compromiso-oc';
 import { parsearMontoPositivo } from './montos';
+import { ErrorFinanzas } from './errores';
+import { descontarCuentaBancaria } from './tesoreria';
 import { bloquearOc } from './outbox-eventos';
 
 type Tx = Parameters<Parameters<typeof createTenantContext>[1]>[0];
@@ -72,11 +74,7 @@ export interface ResultadoEgreso {
   detalles: DetalleEgreso[];
 }
 
-export class ErrorEgreso extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
-    super(message);
-  }
-}
+export class ErrorEgreso extends ErrorFinanzas {}
 
 function montoValido(valor: unknown, campo: string): Dec {
   const r = parsearMontoPositivo(valor, campo);
@@ -188,22 +186,8 @@ function mismoContenido(pago: any, e: EgresoOcEntrada): boolean {
 async function descontarFuente(tx: Tx, tenantId: string, e: EgresoOcEntrada): Promise<void> {
   const total = e.monto_total.toFixed(2);
   if (e.fuente === 'CUENTA_BANCARIA') {
-    const n = await tx.$executeRaw`
-      UPDATE "cuentas_bancarias"
-         SET "saldo" = "saldo" - ${total}::numeric, "updated_at" = now()
-       WHERE "id_cuenta" = ${e.cuenta_id}::uuid
-         AND "tenant_id" = ${tenantId}::uuid
-         AND "activa" = true
-         AND ("proyecto_id" IS NULL OR "proyecto_id" = ${e.proyecto_id}::uuid)
-         AND "saldo" >= ${total}::numeric`;
-    if (n === 1) return;
-    const cuenta = await tx.cuentaBancaria.findFirst({ where: { id_cuenta: e.cuenta_id!, tenant_id: tenantId } });
-    if (!cuenta || !cuenta.activa) throw new ErrorEgreso(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada o inactiva.');
-    if (cuenta.proyecto_id && cuenta.proyecto_id !== e.proyecto_id) {
-      throw new ErrorEgreso(422, 'FIN_CUENTA_OTRO_PROYECTO', 'La cuenta pertenece a otro proyecto; no puede pagar OCs de este proyecto.');
-    }
-    throw new ErrorEgreso(422, 'FIN_SALDO_INSUFICIENTE',
-      `Saldo insuficiente. Disponible: $${num(cuenta.saldo).toFixed(2)}, requerido: $${total}.`);
+    await descontarCuentaBancaria(tx, tenantId, e.proyecto_id, e.cuenta_id!, e.monto_total);
+    return;
   }
   const n = await tx.$executeRaw`
     UPDATE "proyectos_finanzas"
