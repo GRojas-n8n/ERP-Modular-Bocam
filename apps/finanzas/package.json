@@ -26,7 +26,8 @@
     "test:integration:programa-pagos": "node -r ts-node/register/transpile-only test/integration/programa-pagos.integration.test.ts",
     "test:integration:cuentas-por-cobrar": "node -r ts-node/register/transpile-only test/integration/cuentas-por-cobrar.integration.test.ts",
     "test:integration:api-dashboard": "node -r ts-node/register/transpile-only test/integration/api-dashboard.integration.test.ts",
-    "test:integration:nomina-por-pagar": "node -r ts-node/register/transpile-only test/integration/nomina-por-pagar.integration.test.ts"
+    "test:integration:nomina-por-pagar": "node -r ts-node/register/transpile-only test/integration/nomina-por-pagar.integration.test.ts",
+    "test:integration:libro-bancario": "node -r ts-node/register/transpile-only test/integration/libro-bancario.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

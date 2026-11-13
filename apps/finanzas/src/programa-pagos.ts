@@ -220,7 +220,8 @@ export async function ejecutarPago(ctx: Ctx, idPago: string, e: EjecucionPago, l
         `El pago requiere $${ejercerDirecto.toFixed(2)} sin compromiso previo y el disponible es $${disponible.toFixed(2)}.`);
     }
 
-    await descontarCuentaBancaria(tx, ctx.tenantId, ctx.proyectoId, e.cuenta_id, monto);
+    await descontarCuentaBancaria(tx, ctx.tenantId, ctx.proyectoId, e.cuenta_id, monto,
+      { origen: 'PAGO_PROGRAMADO', origenId: idPago, referencia: e.referencia_bancaria, usuarioId: ctx.userId });
 
     const actualizado = await tx.programaPagos.update({
       where: { id_pago: idPago },

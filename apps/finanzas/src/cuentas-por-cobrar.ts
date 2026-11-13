@@ -12,6 +12,7 @@
  * Sin HTTP ni eventos dentro de la transacción: el llamador publica finanzas.cobro_registrado después del commit.
  */
 
+import { randomUUID } from 'node:crypto';
 import { createTenantContext } from './db';
 import { esUuid } from './compromiso-oc';
 import { Decimal, parsearMontoPositivo, type Dec } from './montos';
@@ -149,10 +150,14 @@ export async function registrarCobro(ctx: Ctx, idCxc: string, c: CobroEntrada): 
       throw new ErrorFinanzas(422, 'FIN_COBRO_EXCEDE_SALDO', `El cobro ($${c.monto.toFixed(2)}) excede el saldo por cobrar ($${saldo.toFixed(2)}).`);
     }
 
-    await abonarCuentaBancaria(tx, ctx.tenantId, ctx.proyectoId, c.cuenta_id, c.monto);
+    // El id del cobro se fija antes de abonar: el libro bancario lo guarda como origen (libro-bancario).
+    const cobroId = randomUUID();
+    await abonarCuentaBancaria(tx, ctx.tenantId, ctx.proyectoId, c.cuenta_id, c.monto,
+      { origen: 'COBRO_CXC', origenId: cobroId, referencia: c.folio, usuarioId: ctx.userId });
 
     const cobro = await tx.cobroCxc.create({
       data: {
+        id_cobro: cobroId,
         tenant_id: ctx.tenantId,
         proyecto_id: ctx.proyectoId,
         cxc_id: idCxc,
