@@ -19,9 +19,13 @@ COPY . .
 ARG WORKSPACE_NAME
 ARG APP_PATH
 
-RUN if [ -f "${APP_PATH}/prisma/schema.prisma" ]; then \
-    ./node_modules/.bin/prisma generate --schema "${APP_PATH}/prisma/schema.prisma"; \
-  fi
+# Se generan los clientes Prisma de TODOS los servicios, no solo el de APP_PATH (openspec: deploy-genera-todos-los-clientes-prisma).
+# El `tsc` de algunos servicios (contabilidad, almacen) compila también sus pruebas, que importan código de otros
+# servicios; con el cliente versionado de esos servicios (desactualizado) el build falla. El runtime sigue copiando
+# solo el cliente de APP_PATH.
+RUN for schema in apps/*/prisma/schema.prisma; do \
+    ./node_modules/.bin/prisma generate --schema "$schema" || exit 1; \
+  done
 RUN npm run build -w ${WORKSPACE_NAME}
 # Copiar archivos generados de Prisma al directorio dist (TypeScript no copia JS generados)
 RUN if [ -d "${APP_PATH}/src/generated/prisma" ]; then \
