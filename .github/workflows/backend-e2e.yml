@@ -84,6 +84,7 @@ jobs:
           npx prisma generate --schema apps/control-proyectos/prisma/schema.prisma
           npx prisma generate --schema apps/contabilidad/prisma/schema.prisma
           npx prisma generate --schema apps/almacen/prisma/schema.prisma
+          npx prisma generate --schema apps/personal/prisma/schema.prisma
 
       # ── Aplicar schemas al DB ─────────────────────────────────────────────────
       # Cada modulo usa su propio PostgreSQL schema para evitar que db push
@@ -97,6 +98,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=control_proyectos" npx prisma db push --schema apps/control-proyectos/prisma/schema.prisma --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=contabilidad"      npx prisma db push --schema apps/contabilidad/prisma/schema.prisma      --skip-generate --accept-data-loss
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=almacen"           npx prisma db push --schema apps/almacen/prisma/schema.prisma           --skip-generate --accept-data-loss
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=personal"          npx prisma db push --schema apps/personal/prisma/schema.prisma           --skip-generate --accept-data-loss
 
       # ── SQL crudo de migraciones (no expresable en schema.prisma) ─────────────
       # db push no crea el índice único parcial ni el RLS del tombstone de Finanzas
@@ -187,6 +189,7 @@ jobs:
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-lote  -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-banco-archivo -w @bocam/contabilidad
           DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=finanzas"     npm run test:integration:finanzas-transferencia -w @bocam/contabilidad
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bocam_ci?schema=personal" npm run test:integration:finanzas-nomina-pagada -w @bocam/personal
 
       # ── Finanzas: compromiso/liberación de OC (concurrencia real, orden de eventos y RLS) ──
       - name: Run Finanzas compromiso OC (concurrencia, RLS y migración)

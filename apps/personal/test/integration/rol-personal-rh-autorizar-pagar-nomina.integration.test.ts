@@ -141,13 +141,16 @@ async function testPersonalRhPagaPreNomina() {
       data: { estado: 'AUTORIZADA', autorizado_por: userId, fecha_autorizacion: new Date() },
     });
 
+    // nomina-pagada-por-finanzas: el pago lo registra Finanzas; Personal responde 409 y no cambia el estado.
     const tokenRh = signTenantToken({ userId, tenantId, proyectoId, roles: ['personal_rh'] });
     const r = await patch(`/api/v1/personal/prenominas/${idPrenomina}/pagar`, tokenRh);
-    assert.equal(r.status, 200, 'personal_rh debe poder marcar como pagada (no 403)');
+    assert.equal(r.status, 409, 'el pago lo registra Finanzas');
     const body = (await r.json()) as any;
-    assert.equal(body.data.estado, 'PAGADA', 'la pre-nómina debe transicionar a PAGADA');
+    assert.equal(body.error.code, 'PER_PAGO_EN_FINANZAS');
+    const pn = await prisma.preNomina.findUniqueOrThrow({ where: { id_prenomina: idPrenomina } });
+    assert.equal(pn.estado, 'AUTORIZADA', 'la pre-nómina sigue AUTORIZADA hasta que Finanzas la pague');
 
-    console.log('ok - usuario con rol personal_rh marca una pre-nómina AUTORIZADA como pagada');
+    console.log('ok - personal_rh ya no marca la nómina como pagada: la paga Finanzas (409 PER_PAGO_EN_FINANZAS)');
   } finally {
     await cleanupTenant(tenantId);
   }
