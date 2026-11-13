@@ -28,6 +28,7 @@ import { cancelarOcPorPagar, ErrorEgreso, parsearEgresoOc, registrarEgresoOc, re
 import { parsearMontoPositivo } from './montos';
 import { ErrorFinanzas } from './errores';
 import { ejecutarPago, parsearEjecucion, parsearLote, parsearPagoProgramado, programarLote, programarPago } from './programa-pagos';
+import { cortarPagina, despuesDe, parsearPaginacion } from './paginacion';
 import { listarCuentasPorCobrar, parsearCobro, parsearFiltroCxc, registrarCobro, registrarCuentaPorCobrar } from './cuentas-por-cobrar';
 import { ErrorPresupuesto, registrarMovimientoManual, sincronizarPartidasGt, TIPOS_MOVIMIENTO_MANUAL, transferirPresupuesto } from './presupuesto-blindado';
 import { modoEventos, VARIABLE_MODO_EVENTOS } from './outbox-eventos';
@@ -86,6 +87,24 @@ async function publishFinanceDomainEvent(
     context,
     payload,
   });
+}
+
+/** Respuesta estándar con `meta.paginacion` (data sigue siendo arreglo). openspec: optimizar-api-y-dashboard-finanzas. */
+function responderPagina(res: Response, pagina: { data: unknown[]; paginacion: unknown }, tenantId: string, proyectoId: string | undefined, correlationId?: string) {
+  const r = createApiResponse(pagina.data, tenantId, proyectoId, correlationId) as any;
+  r.meta.paginacion = pagina.paginacion;
+  res.json(r);
+}
+
+/** Traduce ErrorFinanzas a su código; cualquier otro error es 500 sin exponer el mensaje interno. */
+function responderError(req: Request, res: Response, error: any, accion: string, mensaje: string) {
+  const correlationId = getCorrelationId(req);
+  if (error instanceof ErrorFinanzas) {
+    res.status(error.status).json(createApiError(error.code, error.message, undefined, correlationId));
+    return;
+  }
+  logError(req, 'finanzas', accion, mensaje, { error_message: error?.message });
+  res.status(500).json(createApiError('FIN_INTERNAL_ERROR', `${mensaje}.`, undefined, correlationId));
 }
 
 export const app = express();
@@ -271,7 +290,7 @@ app.get('/api/v1/finanzas/presupuestos/:id',
           where: { id_presupuesto: id },
           include: {
             movimientos: { orderBy: { fecha_registro: 'desc' }, take: 50 },
-            programa_pagos: { orderBy: { fecha_programada: 'asc' } },
+            programa_pagos: { orderBy: { fecha_programada: 'asc' }, take: 50 },
           },
         });
       }
@@ -390,33 +409,45 @@ app.get('/api/v1/finanzas/movimientos',
     const { tenantId, proyectoId, userId } = req.securityContext;
     const presupuestoId = req.query.presupuesto_id as string | undefined;
     const conceptoId    = req.query.concepto_id as string | undefined;
+    if ((presupuestoId && !esUuid(presupuestoId)) || (conceptoId && !esUuid(conceptoId))) {
+      res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'presupuesto_id y concepto_id deben ser UUID válidos.', undefined, getCorrelationId(req)));
+      return;
+    }
+    const pag = parsearPaginacion(req.query);
 
-    const data = await createTenantContext(
+    const pagina = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
         let resolvedPresupuestoId = presupuestoId;
 
         if (!resolvedPresupuestoId && conceptoId) {
           const presupuesto = await prisma.presupuestoAsignado.findFirst({
-            where: { concepto_id: conceptoId, estatus: 'ACTIVO' },
+            where: { tenant_id: tenantId, concepto_id: conceptoId, estatus: 'ACTIVO', ...(proyectoId ? { proyecto_id: proyectoId } : {}) },
           });
-          if (!presupuesto) return [];
+          if (!presupuesto) return { data: [], paginacion: { limit: pag.limit, next_cursor: null } };
           resolvedPresupuestoId = presupuesto.id_presupuesto;
         }
 
-        return await prisma.movimientoPresupuestal.findMany({
-          where: resolvedPresupuestoId ? { presupuesto_id: resolvedPresupuestoId } : undefined,
+        const filas = await prisma.movimientoPresupuestal.findMany({
+          where: {
+            AND: [
+              { tenant_id: tenantId },
+              resolvedPresupuestoId ? { presupuesto_id: resolvedPresupuestoId } : {},
+              proyectoId ? { proyecto_id: proyectoId } : {},
+              despuesDe('fecha_registro', 'id_movimiento', 'desc', pag),
+            ],
+          },
           include: { presupuesto: { select: { codigo: true, capitulo: true } } },
-          orderBy: { fecha_registro: 'desc' },
-          take: 100,
+          orderBy: [{ fecha_registro: 'desc' }, { id_movimiento: 'desc' }],
+          take: pag.limit + 1,
         });
+        return cortarPagina(filas, pag, (f) => f.fecha_registro, (f) => f.id_movimiento);
       }
     );
 
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    responderPagina(res, pagina, tenantId, proyectoId, getCorrelationId(req));
   } catch (error: any) {
-    console.error('[Finanzas] Error listando movimientos:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar movimientos.'));
+    responderError(req, res, error, 'finanzas.movimientos.list_error', 'Error al listar movimientos');
   }
 });
 
@@ -839,23 +870,32 @@ app.get('/api/v1/finanzas/pagos',
   async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
-    const estado = req.query.estado as string;
+    const estado = req.query.estado as string | undefined;
+    const pag = parsearPaginacion(req.query);
 
-    const data = await createTenantContext(
+    const pagina = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        return await prisma.programaPagos.findMany({
-          where: estado ? { estado } : undefined,
+        const filas = await prisma.programaPagos.findMany({
+          where: {
+            AND: [
+              { tenant_id: tenantId },
+              estado ? { estado } : {},
+              proyectoId ? { proyecto_id: proyectoId } : {},
+              despuesDe('fecha_programada', 'id_pago', 'asc', pag),
+            ],
+          },
           include: { presupuesto: { select: { codigo: true, capitulo: true } } },
-          orderBy: { fecha_programada: 'asc' },
+          orderBy: [{ fecha_programada: 'asc' }, { id_pago: 'asc' }],
+          take: pag.limit + 1,
         });
+        return cortarPagina(filas, pag, (f) => f.fecha_programada, (f) => f.id_pago);
       }
     );
 
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    responderPagina(res, pagina, tenantId, proyectoId, getCorrelationId(req));
   } catch (error: any) {
-    console.error('[Finanzas] Error listando pagos:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al listar pagos.'));
+    responderError(req, res, error, 'finanzas.pagos.list_error', 'Error al listar pagos');
   }
 });
 
@@ -993,63 +1033,82 @@ app.patch('/api/v1/finanzas/pagos/:id/pagar', async (req: Request, res: Response
 // Roles: lo consume la pantalla de inicio, que no filtra por rol. El cliente
 // usa Promise.allSettled y oculta la tarjeta ante un 403, asi que cerrar esto
 // no rompe la home. El asistente tambien lo consulta, con superintendent/admin.
+// Dashboard del módulo (CLAUDE.md: { kpis, alertas, actividad_reciente }). Conserva los campos previos que lee la
+// pantalla (resumen_presupuestal, pagos_proximos, pagos_vencidos, ultimos_movimientos, alertas) y llena los que
+// estaban fijos en cero (F16): cuentas bancarias, OCs por pagar y cuentas por cobrar.
+// openspec: optimizar-api-y-dashboard-finanzas.
 app.get('/api/v1/finanzas/dashboard',
   requireRoles('finanzas', 'admin', 'director', 'superintendent'),
   async (req: Request, res: Response) => {
   try {
     const { tenantId, proyectoId, userId } = req.securityContext;
+    const delProyecto = proyectoId ? { proyecto_id: proyectoId } : {};
 
     const data = await createTenantContext(
       { tenantId, proyectoId, userId },
       async (prisma) => {
-        // 1. Resumen presupuestal
-        const presupuestos = await prisma.presupuestoAsignado.findMany({
-          where: { estatus: 'ACTIVO' },
-        });
+        const hoy = new Date();
+        const en30Dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+        const [totales, pagosProximos, pagosVencidos, ultimosMovimientos, cuentas, ocs, cxc, cxcVencidas] = await Promise.all([
+          prisma.presupuestoAsignado.aggregate({
+            where: { tenant_id: tenantId, estatus: 'ACTIVO', ...delProyecto },
+            _sum: { monto_autorizado: true, monto_ejercido: true, monto_comprometido: true, monto_disponible: true },
+          }),
+          prisma.programaPagos.findMany({
+            where: { tenant_id: tenantId, ...delProyecto, fecha_programada: { gte: hoy, lte: en30Dias }, estado: { in: ['PENDIENTE', 'PROGRAMADO'] } },
+            orderBy: { fecha_programada: 'asc' },
+            take: 10,
+          }),
+          prisma.programaPagos.count({
+            where: { tenant_id: tenantId, ...delProyecto, fecha_programada: { lt: hoy }, estado: { in: ['PENDIENTE', 'PROGRAMADO'] } },
+          }),
+          prisma.movimientoPresupuestal.findMany({
+            where: { tenant_id: tenantId, ...delProyecto },
+            orderBy: { fecha_registro: 'desc' },
+            take: 10,
+            include: { presupuesto: { select: { codigo: true } } },
+          }),
+          // Las cuentas son de la empresa y se comparten entre proyectos: se listan todas las activas del tenant.
+          prisma.cuentaBancaria.findMany({
+            where: { tenant_id: tenantId, activa: true },
+            select: { id_cuenta: true, banco: true, alias: true, moneda: true, saldo: true },
+            orderBy: { banco: 'asc' },
+          }),
+          prisma.$queryRaw<Array<{ cantidad: number; saldo: number }>>`
+            SELECT count(*)::int AS "cantidad", COALESCE(sum("total" - "pagado"), 0)::float8 AS "saldo"
+              FROM "ocs_por_pagar"
+             WHERE "tenant_id" = ${tenantId}::uuid
+               AND (${proyectoId ?? null}::uuid IS NULL OR "proyecto_id" = ${proyectoId ?? null}::uuid)
+               AND "estado" IN ('POR_PAGAR', 'PAGO_PARCIAL')`,
+          prisma.$queryRaw<Array<{ cantidad: number; saldo: number }>>`
+            SELECT count(*)::int AS "cantidad", COALESCE(sum("monto" - "cobrado"), 0)::float8 AS "saldo"
+              FROM "cuentas_por_cobrar"
+             WHERE "tenant_id" = ${tenantId}::uuid
+               AND (${proyectoId ?? null}::uuid IS NULL OR "proyecto_id" = ${proyectoId ?? null}::uuid)
+               AND "estado" IN ('POR_COBRAR', 'COBRO_PARCIAL')`,
+          prisma.cuentaPorCobrar.count({
+            where: { tenant_id: tenantId, ...delProyecto, estado: { in: ['POR_COBRAR', 'COBRO_PARCIAL'] }, fecha_vencimiento: { lt: hoy } },
+          }),
+        ]);
+
+        const n = (v: unknown) => Number(v ?? 0);
         const resumenPresupuestal = {
-          total_autorizado: presupuestos.reduce((sum, p) => sum + Number(p.monto_autorizado), 0),
-          total_ejercido: presupuestos.reduce((sum, p) => sum + Number(p.monto_ejercido), 0),
-          total_comprometido: presupuestos.reduce((sum, p) => sum + Number(p.monto_comprometido), 0),
-          total_disponible: presupuestos.reduce((sum, p) => sum + Number(p.monto_disponible), 0),
+          total_autorizado: n(totales._sum.monto_autorizado),
+          total_ejercido: n(totales._sum.monto_ejercido),
+          total_comprometido: n(totales._sum.monto_comprometido),
+          total_disponible: n(totales._sum.monto_disponible),
           porcentaje_ejercido: 0,
         };
         resumenPresupuestal.porcentaje_ejercido = resumenPresupuestal.total_autorizado > 0
           ? Math.round((resumenPresupuestal.total_ejercido / resumenPresupuestal.total_autorizado) * 100)
           : 0;
 
-        // 2. Pagos próximos (siguiente 30 días)
-        const hoy = new Date();
-        const en30Dias = new Date();
-        en30Dias.setDate(en30Dias.getDate() + 30);
-
-        const pagosProximos = await prisma.programaPagos.findMany({
-          where: {
-            fecha_programada: { gte: hoy, lte: en30Dias },
-            estado: { in: ['PENDIENTE', 'PROGRAMADO'] },
-          },
-          orderBy: { fecha_programada: 'asc' },
-          take: 10,
-        });
-
-        const totalPagosProximos = pagosProximos.reduce(
-          (sum, p) => sum + Number(p.monto_programado), 0
-        );
-
-        // 3. Últimos 10 movimientos
-        const ultimosMovimientos = await prisma.movimientoPresupuestal.findMany({
-          orderBy: { fecha_registro: 'desc' },
-          take: 10,
-          include: { presupuesto: { select: { codigo: true } } },
-        });
-
-        // 4. Pagos vencidos
-        const pagosVencidos = await prisma.programaPagos.count({
-          where: {
-            fecha_programada: { lt: hoy },
-            estado: { in: ['PENDIENTE', 'PROGRAMADO'] },
-          },
-        });
+        const totalPagosProximos = pagosProximos.reduce((sum, p) => sum + Number(p.monto_programado), 0);
+        const cuentasBancarias = cuentas.map((c) => ({ ...c, saldo: Number(c.saldo) }));
+        const saldoBancos = cuentasBancarias.reduce((sum, c) => sum + c.saldo, 0);
+        const ocsPorPagar = { cantidad: ocs[0]?.cantidad ?? 0, saldo: ocs[0]?.saldo ?? 0 };
+        const cuentasPorCobrar = { cantidad: cxc[0]?.cantidad ?? 0, saldo: cxc[0]?.saldo ?? 0, vencidas: cxcVencidas };
 
         const alertas: Array<{ tipo: string; mensaje: string; severidad: string }> = [];
         if (resumenPresupuestal.porcentaje_ejercido > 80) {
@@ -1066,27 +1125,56 @@ app.get('/api/v1/finanzas/dashboard',
             severidad: 'critical',
           });
         }
+        if (cxcVencidas > 0) {
+          alertas.push({
+            tipo: 'COBROS_VENCIDOS',
+            mensaje: `${cxcVencidas} estimaci${cxcVencidas !== 1 ? 'ones' : 'ón'} vencida${cxcVencidas !== 1 ? 's' : ''} sin cobrar`,
+            severidad: 'warning',
+          });
+        }
+        if (ocsPorPagar.saldo > saldoBancos) {
+          alertas.push({
+            tipo: 'LIQUIDEZ_INSUFICIENTE',
+            mensaje: `Las OCs por pagar ($${ocsPorPagar.saldo.toLocaleString()}) superan el saldo en bancos ($${saldoBancos.toLocaleString()})`,
+            severidad: 'warning',
+          });
+        }
 
         return {
-          resumen_presupuestal: resumenPresupuestal,
-          pagos_proximos: {
-            cantidad: pagosProximos.length,
-            monto_total: totalPagosProximos,
-            detalle: pagosProximos,
+          kpis: {
+            total_autorizado: resumenPresupuestal.total_autorizado,
+            total_comprometido: resumenPresupuestal.total_comprometido,
+            total_ejercido: resumenPresupuestal.total_ejercido,
+            total_disponible: resumenPresupuestal.total_disponible,
+            porcentaje_ejercido: resumenPresupuestal.porcentaje_ejercido,
+            saldo_bancos: saldoBancos,
+            ocs_por_pagar: ocsPorPagar.saldo,
+            cuentas_por_cobrar: cuentasPorCobrar.saldo,
+            pagos_vencidos: pagosVencidos,
           },
+          alertas,
+          actividad_reciente: ultimosMovimientos.map((m) => ({
+            id: m.id_movimiento,
+            tipo: m.tipo,
+            concepto: m.concepto,
+            monto: Number(m.monto),
+            presupuesto: m.presupuesto?.codigo ?? null,
+            fecha: m.fecha_registro,
+          })),
+          resumen_presupuestal: resumenPresupuestal,
+          pagos_proximos: { cantidad: pagosProximos.length, monto_total: totalPagosProximos, detalle: pagosProximos },
           pagos_vencidos: pagosVencidos,
           ultimos_movimientos: ultimosMovimientos,
-          alertas,
-          cuentas_bancarias: [],
-          ocs_por_pagar: 0,
+          cuentas_bancarias: cuentasBancarias,
+          ocs_por_pagar: ocsPorPagar,
+          cuentas_por_cobrar: cuentasPorCobrar,
         };
       }
     );
 
-    res.json(createApiResponse(data, tenantId, proyectoId));
+    res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
   } catch (error: any) {
-    console.error('[Finanzas] Error en dashboard:', error.message);
-    res.status(500).json(createApiError('FIN_INTERNAL_ERROR', 'Error al cargar dashboard financiero.'));
+    responderError(req, res, error, 'finanzas.dashboard.error', 'Error al cargar dashboard financiero');
   }
 });
 
@@ -1100,14 +1188,14 @@ app.get('/api/v1/finanzas/cuentas-bancarias',
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).cuentaBancaria.findMany({
+        return prisma.cuentaBancaria.findMany({
           where: { tenant_id: tenantId, activa: true },
           orderBy: { banco: 'asc' },
         });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.list_error', 'Error al listar cuentas bancarias');
     }
   }
 );
@@ -1119,7 +1207,10 @@ app.post('/api/v1/finanzas/cuentas-bancarias',
       const { tenantId, proyectoId, userId } = req.securityContext;
       const { banco, numero_cuenta, clabe, alias, moneda, saldo, proyecto_id } = req.body;
       if (!banco || !numero_cuenta || !alias) {
-        return res.status(400).json({ success: false, message: 'banco, numero_cuenta y alias son obligatorios.' });
+        return res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'banco, numero_cuenta y alias son obligatorios.', undefined, getCorrelationId(req)));
+      }
+      if (proyecto_id !== undefined && proyecto_id !== null && !esUuid(proyecto_id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyecto_id debe ser un UUID válido.', undefined, getCorrelationId(req)));
       }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
         return (prisma as any).cuentaBancaria.create({
@@ -1135,9 +1226,9 @@ app.post('/api/v1/finanzas/cuentas-bancarias',
           },
         });
       });
-      res.status(201).json({ success: true, data });
+      res.status(201).json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.create_error', 'Error al crear la cuenta bancaria');
     }
   }
 );
@@ -1148,9 +1239,14 @@ app.patch('/api/v1/finanzas/cuentas-bancarias/:id',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
+      if (!esUuid(id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id de la cuenta debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
       const { banco, numero_cuenta, clabe, alias, moneda, saldo } = req.body;
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).cuentaBancaria.update({
+        const existe = await prisma.cuentaBancaria.findFirst({ where: { id_cuenta: id, tenant_id: tenantId }, select: { id_cuenta: true } });
+        if (!existe) throw new ErrorFinanzas(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada.');
+        return prisma.cuentaBancaria.update({
           where: { id_cuenta: id },
           data: {
             ...(banco         !== undefined ? { banco }         : {}),
@@ -1162,9 +1258,9 @@ app.patch('/api/v1/finanzas/cuentas-bancarias/:id',
           },
         });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.update_error', 'Error al actualizar la cuenta bancaria');
     }
   }
 );
@@ -1175,21 +1271,19 @@ app.delete('/api/v1/finanzas/cuentas-bancarias/:id',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
+      if (!esUuid(id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id de la cuenta debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        const tiene = await (prisma as any).pagoOC.count({ where: { cuenta_id: id } });
-        if (tiene > 0) {
-          const err: any = new Error('No se puede eliminar: la cuenta tiene pagos registrados.');
-          err.status = 409;
-          throw err;
-        }
-        return (prisma as any).cuentaBancaria.update({
-          where: { id_cuenta: id },
-          data: { activa: false },
-        });
+        const existe = await prisma.cuentaBancaria.findFirst({ where: { id_cuenta: id, tenant_id: tenantId }, select: { id_cuenta: true } });
+        if (!existe) throw new ErrorFinanzas(404, 'FIN_CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada.');
+        const tiene = await prisma.pagoOC.count({ where: { cuenta_id: id } });
+        if (tiene > 0) throw new ErrorFinanzas(409, 'FIN_CUENTA_CON_PAGOS', 'No se puede eliminar: la cuenta tiene pagos registrados.');
+        return prisma.cuentaBancaria.update({ where: { id_cuenta: id }, data: { activa: false } });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(error.status ?? 500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.cuentas.delete_error', 'Error al desactivar la cuenta bancaria');
     }
   }
 );
@@ -1204,15 +1298,17 @@ app.get('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
     try {
       const { proyectoId: pId } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).proyectoFinanzas.findFirst({
-          where: { tenant_id: tenantId, proyecto_id: pId },
-        }) ?? { anticipo_total: 0, anticipo_usado: 0, disponible: 0 };
-      });
-      const record = data as any;
-      res.json({ success: true, data: { ...record, disponible: Number(record.anticipo_total ?? 0) - Number(record.anticipo_usado ?? 0) } });
+      if (!esUuid(pId)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
+      const record = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+        prisma.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: pId } }));
+      const total = Number(record?.anticipo_total ?? 0);
+      const usado = Number(record?.anticipo_usado ?? 0);
+      res.json(createApiResponse({ ...(record ?? { proyecto_id: pId }), anticipo_total: total, anticipo_usado: usado, disponible: total - usado },
+        tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.anticipo.get_error', 'Error al consultar el anticipo');
     }
   }
 );
@@ -1223,12 +1319,12 @@ app.post('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
     try {
       const { proyectoId: pId } = req.params;
       const { tenantId, proyectoId, userId, limiteAprobacion } = req.securityContext;
-      const { anticipo_total } = req.body;
+      const { anticipo_total } = req.body ?? {};
       if (anticipo_total === undefined) {
-        return res.status(400).json({ success: false, message: 'anticipo_total es obligatorio.' });
+        return res.status(400).json(createApiError('FIN_MISSING_FIELDS', 'anticipo_total es obligatorio.', undefined, getCorrelationId(req)));
       }
 
-      // Validar Límite de Autoridad Financiera
+      // Validar Límite de Autoridad Financiera (antes de validar el resto; contrato de seguridad.e2e)
       if (Number(anticipo_total) > limiteAprobacion) {
         return res.status(403).json(createApiError(
           'FIN_LIMIT_EXCEEDED',
@@ -1237,16 +1333,28 @@ app.post('/api/v1/finanzas/proyectos/:proyectoId/anticipo',
           getCorrelationId(req)
         ));
       }
+      if (!esUuid(pId)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
+      const monto = parsearMontoPositivo(anticipo_total, 'anticipo_total');
+      if (monto.motivo !== undefined) {
+        return res.status(400).json(createApiError('FIN_MONTO_INVALIDO', monto.motivo, undefined, getCorrelationId(req)));
+      }
       const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).proyectoFinanzas.upsert({
+        const actual = await prisma.proyectoFinanzas.findFirst({ where: { tenant_id: tenantId, proyecto_id: pId } });
+        if (actual && monto.monto.lt(String(actual.anticipo_usado))) {
+          throw new ErrorFinanzas(422, 'FIN_ANTICIPO_MENOR_A_USADO',
+            `El anticipo no puede ser menor a lo ya usado ($${Number(actual.anticipo_usado).toFixed(2)}).`);
+        }
+        return prisma.proyectoFinanzas.upsert({
           where: { tenant_id_proyecto_id: { tenant_id: tenantId, proyecto_id: pId } },
-          update: { anticipo_total: Number(anticipo_total) },
-          create: { tenant_id: tenantId, proyecto_id: pId, anticipo_total: Number(anticipo_total), anticipo_usado: 0 },
+          update: { anticipo_total: monto.monto.toFixed(2) },
+          create: { tenant_id: tenantId, proyecto_id: pId, anticipo_total: monto.monto.toFixed(2), anticipo_usado: 0 },
         });
       });
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.anticipo.set_error', 'Error al registrar el anticipo');
     }
   }
 );
@@ -1261,25 +1369,33 @@ app.get('/api/v1/finanzas/pagos-oc',
     try {
       const { tenantId, proyectoId, userId } = req.securityContext;
       const { proyectoId: pId, proveedorId } = req.query as Record<string, string | undefined>;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).pagoOC.findMany({
+      if ((pId && !esUuid(pId)) || (proveedorId && !esUuid(proveedorId))) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId y proveedorId deben ser UUID válidos.', undefined, getCorrelationId(req)));
+      }
+      const filtroProyecto = pId ?? proyectoId;
+      const pag = parsearPaginacion(req.query);
+      const pagina = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const filas = await prisma.pagoOC.findMany({
           where: {
-            tenant_id:  tenantId,
-            ...(pId          ? { proyecto_id: pId }            : {}),
+            AND: [
+              { tenant_id: tenantId },
+              filtroProyecto ? { proyecto_id: filtroProyecto } : {},
+              proveedorId ? { detalles: { some: { proveedor_id: proveedorId } } } : {},
+              despuesDe('created_at', 'id_pago', 'desc', pag),
+            ],
           },
           include: {
             detalles: true,
             cuenta:   { select: { banco: true, alias: true } },
           },
-          orderBy: { created_at: 'desc' },
+          orderBy: [{ created_at: 'desc' }, { id_pago: 'desc' }],
+          take: pag.limit + 1,
         });
+        return cortarPagina(filas, pag, (f) => f.created_at, (f) => f.id_pago);
       });
-      const result = proveedorId
-        ? (data as any[]).filter((p: any) => p.detalles.some((d: any) => d.proveedor_id === proveedorId))
-        : data;
-      res.json({ success: true, data: result });
+      responderPagina(res, pagina, tenantId, proyectoId, getCorrelationId(req));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.pagos_oc.list_error', 'Error al listar pagos de OC');
     }
   }
 );
@@ -1290,16 +1406,18 @@ app.get('/api/v1/finanzas/pagos-oc/:id',
     try {
       const { id } = req.params;
       const { tenantId, proyectoId, userId } = req.securityContext;
-      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
-        return (prisma as any).pagoOC.findFirst({
-          where: { id_pago: id, tenant_id: tenantId },
-          include: { detalles: true, cuenta: true },
-        });
-      });
-      if (!data) return res.status(404).json({ success: false, message: 'Pago no encontrado.' });
-      res.json({ success: true, data });
+      if (!esUuid(id)) {
+        return res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'El id del pago debe ser un UUID válido.', undefined, getCorrelationId(req)));
+      }
+      const data = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+        prisma.pagoOC.findFirst({
+          where: { id_pago: id, tenant_id: tenantId, ...(proyectoId ? { proyecto_id: proyectoId } : {}) },
+          include: { detalles: true, cuenta: { select: { id_cuenta: true, banco: true, alias: true, moneda: true } } },
+        }));
+      if (!data) return res.status(404).json(createApiError('FIN_PAGO_NO_ENCONTRADO', 'Pago no encontrado.', undefined, getCorrelationId(req)));
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.pagos_oc.get_error', 'Error al consultar el pago de OC');
     }
   }
 );
@@ -1501,7 +1619,7 @@ function requireInternalService(serviceName: string) {
   return (req: Request, res: Response, next: any) => {
     const header = req.headers['x-internal-service'];
     if (header !== serviceName) {
-      res.status(403).json({ success: false, message: 'Acceso restringido a servicios internos.' });
+      res.status(403).json(createApiError('FIN_SOLO_SERVICIO_INTERNO', 'Acceso restringido a servicios internos.', undefined, getCorrelationId(req)));
       return;
     }
     next();
@@ -1521,8 +1639,8 @@ app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
       const { tenantId, userId } = req.securityContext;
       const proyectoId = (req.query.proyectoId ?? req.query.proyecto_id) as string;
 
-      if (!proyectoId) {
-        res.status(400).json({ success: false, message: 'proyectoId es requerido.' });
+      if (!esUuid(proyectoId)) {
+        res.status(400).json(createApiError('FIN_INVALID_REFERENCE', 'proyectoId (UUID) es requerido.', undefined, getCorrelationId(req)));
         return;
       }
 
@@ -1547,9 +1665,9 @@ app.get('/api/v1/finanzas/reportes/pagado-por-concepto',
         }));
       });
 
-      res.json({ success: true, data });
+      res.json(createApiResponse(data, tenantId, proyectoId, getCorrelationId(req)));
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      responderError(req, res, error, 'finanzas.reporte_pagado.error', 'Error al generar el reporte de pagado por concepto');
     }
   }
 );
@@ -1759,6 +1877,9 @@ export async function handleOcPorPagarCanceladaEvent(event: BocamEvent): Promise
   );
 }
 
+// F25 (auditoría 5 nov 2026): compras.oc_creada no trae presupuesto_id, así que este handler hoy termina en
+// invalid_payload. El compromiso real ocurre por la saga HTTP (POST /comprometer-fondos). Se conserva como respaldo
+// del contrato del evento; eliminarlo requiere su propio spec. openspec: optimizar-api-y-dashboard-finanzas.
 export async function handleOrdenCompraCreadaEvent(event: BocamEvent): Promise<void> {
   const {
     oc_id,
