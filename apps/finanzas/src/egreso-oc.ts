@@ -22,6 +22,7 @@
 import { Prisma } from './generated/prisma';
 import { createTenantContext } from './db';
 import { esUuid } from './compromiso-oc';
+import { parsearMontoPositivo } from './montos';
 import { bloquearOc } from './outbox-eventos';
 
 type Tx = Parameters<Parameters<typeof createTenantContext>[1]>[0];
@@ -78,18 +79,9 @@ export class ErrorEgreso extends Error {
 }
 
 function montoValido(valor: unknown, campo: string): Dec {
-  if (valor === null || valor === undefined || valor === '') {
-    throw new ErrorEgreso(400, 'FIN_MONTO_INVALIDO', `${campo} es obligatorio.`);
-  }
-  let d: Dec;
-  try {
-    d = new Decimal(String(valor));
-  } catch {
-    throw new ErrorEgreso(400, 'FIN_MONTO_INVALIDO', `${campo} no es un número válido.`);
-  }
-  if (!d.isFinite() || d.lte(0)) throw new ErrorEgreso(400, 'FIN_MONTO_INVALIDO', `${campo} debe ser mayor a 0.`);
-  if (d.decimalPlaces() > 2) throw new ErrorEgreso(400, 'FIN_MONTO_INVALIDO', `${campo} admite máximo 2 decimales.`);
-  return d;
+  const r = parsearMontoPositivo(valor, campo);
+  if (r.motivo !== undefined) throw new ErrorEgreso(400, 'FIN_MONTO_INVALIDO', r.motivo);
+  return r.monto as Dec;
 }
 
 /** Valida y normaliza el body. Nunca acepta saldos, proveedor ni código de OC del cliente: los resuelve el servidor. */
