@@ -37,6 +37,10 @@ import { SlidePanel, SubmitButton } from '../components/SlidePanel';
 import { DEMO_RESUMEN_FINANCIERO, DEMO_PAGOS } from '../lib/demoData';
 import { HelpButton } from '../components/HelpButton';
 import { HelpPanel } from '../components/HelpPanel';
+import { EgresoMultiproveedorModal } from '../components/finanzas/EgresoMultiproveedorModal';
+import { CuentasPorCobrarSeccion } from '../components/finanzas/CuentasPorCobrarSeccion';
+import { NominasPorPagarSeccion } from '../components/finanzas/NominasPorPagarSeccion';
+import type { CuentaBancaria } from '../components/finanzas/comun';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PresupuestoAsignado {
@@ -215,25 +219,7 @@ export const FinanzasView: React.FC = () => {
     cuenta?: { banco: string; alias: string } | null;
   }>>([]);
   const [showPagoModal, setShowPagoModal] = useState(false);
-  const [guardandoPago, setGuardandoPago] = useState(false);
-  const [confirmRegistrarPago, setConfirmRegistrarPago] = useState(false);
-  const [pagoForm, setPagoForm] = useState({
-    fuente: 'ANTICIPO' as 'ANTICIPO' | 'CUENTA_BANCARIA',
-    cuenta_id: '',
-    tipo_pago: 'TRANSFERENCIA',
-    referencia: '',
-    concepto: '',
-    fecha_pago: new Date().toISOString().slice(0, 10),
-    oc_id: '',
-    oc_codigo: '',
-    proveedor_id: '',
-    proveedor_nombre: '',
-    monto_aplicado: '',
-    saldo_oc_antes: 0,
-    concepto_id: '' as string | null,
-  });
-  const [pagoError, setPagoError] = useState<string | null>(null);
-  const [cuentasBancarias, setCuentasBancarias] = useState<Array<{ id_cuenta: string; alias: string; banco: string; saldo: number }>>([]);
+  const [cuentasBancarias, setCuentasBancarias] = useState<CuentaBancaria[]>([]);
   const [form, setForm] = useState({
     codigo: '',
     descripcion: '',
@@ -323,66 +309,6 @@ export const FinanzasView: React.FC = () => {
   };
 
   useEffect(() => { void fetchData(); }, [currentProjectId]);
-
-  const handleGuardarPagoOC = () => {
-    if (!pagoForm.referencia || !pagoForm.concepto || !pagoForm.oc_id || !pagoForm.monto_aplicado) {
-      setPagoError('Referencia, concepto, OC y monto son obligatorios.');
-      return;
-    }
-    setPagoError(null);
-    setConfirmRegistrarPago(true);
-  };
-
-  const registrarPagoOC = async () => {
-    setConfirmRegistrarPago(false);
-    setGuardandoPago(true);
-    setPagoError(null);
-    try {
-      await api.post('/api/v1/finanzas/pagos-oc', {
-        fuente:          pagoForm.fuente,
-        cuenta_id:       pagoForm.fuente === 'CUENTA_BANCARIA' ? pagoForm.cuenta_id : undefined,
-        tipo_pago:       pagoForm.tipo_pago,
-        referencia:      pagoForm.referencia,
-        concepto:        pagoForm.concepto,
-        fecha_pago:      pagoForm.fecha_pago,
-        proyecto_id:     undefined, // tomado del JWT
-        detalles: [{
-          oc_id:            pagoForm.oc_id,
-          oc_codigo:        pagoForm.oc_codigo,
-          proveedor_id:     pagoForm.proveedor_id,
-          proveedor_nombre: pagoForm.proveedor_nombre,
-          monto_aplicado:   Number(pagoForm.monto_aplicado),
-          saldo_oc_antes:   pagoForm.saldo_oc_antes,
-          saldo_oc_despues: Math.max(0, pagoForm.saldo_oc_antes - Number(pagoForm.monto_aplicado)),
-          concepto_id:      pagoForm.concepto_id ?? null,
-        }],
-      });
-      notify({ type: 'success', title: 'Pago registrado', message: `Pago ${pagoForm.referencia} registrado exitosamente.` });
-      setShowPagoModal(false);
-      void fetchData();
-    } catch (err: any) {
-      // Finanzas responde con dos formas de error segun el endpoint: la estandar
-      // del proyecto ({ error: { code, message } }) y una local ({ message }).
-      // Se leen ambas para que el rechazo por limite de autoridad llegue al
-      // usuario con su monto, en vez del texto generico.
-      setPagoError(
-        err.response?.data?.error?.message
-        ?? err.response?.data?.message
-        ?? 'Error al registrar el pago.'
-      );
-    } finally {
-      setGuardandoPago(false);
-    }
-  };
-
-  const resolveOcConcepto = async (ocId: string) => {
-    if (!ocId) return;
-    try {
-      const res = await api.get(`/api/v1/compras/ordenes-compra/${ocId}`);
-      const concepto_id = res.data.data?.concepto_id ?? null;
-      setPagoForm(f => ({ ...f, concepto_id }));
-    } catch { /* silencioso — concepto_id queda null */ }
-  };
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-MX', {
@@ -915,7 +841,7 @@ export const FinanzasView: React.FC = () => {
           </div>
           <Button
             className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-700"
-            onClick={() => { setPagoError(null); setShowPagoModal(true); }}
+            onClick={() => setShowPagoModal(true)}
           >
             <IconPlus className="h-3.5 w-3.5" />
             Registrar Pago
@@ -963,84 +889,27 @@ export const FinanzasView: React.FC = () => {
         )}
       </div>
 
-      {/* ── Modal: Registrar Pago OC ─────────────────────────────────────── */}
-      {showPagoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPagoModal(false)}>
-          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-foreground">Registrar Pago OC</h2>
+      {/* ── Egreso multiproveedor, cuentas por cobrar y nómina por pagar (openspec: pantalla-egreso-multiproveedor) ── */}
+      <EgresoMultiproveedorModal
+        abierto={showPagoModal}
+        cuentas={cuentasBancarias}
+        proyectoNombre={currentProjectName}
+        proyectoColor={currentProjectColor.dot}
+        onCerrar={() => setShowPagoModal(false)}
+        onRegistrado={(referencia, total) => {
+          notify({ type: 'success', title: 'Egreso registrado', message: `${referencia} por ${formatCurrency(total)}.` });
+          setShowPagoModal(false);
+          void fetchData();
+        }}
+      />
 
-            {pagoError && (
-              <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-bold text-red-500">{pagoError}</div>
-            )}
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fuente *</label>
-                  <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.fuente} onChange={e => setPagoForm(f => ({ ...f, fuente: e.target.value as 'ANTICIPO' | 'CUENTA_BANCARIA' }))}>
-                    <option value="ANTICIPO">Anticipo</option>
-                    <option value="CUENTA_BANCARIA">Cuenta Bancaria</option>
-                  </select>
-                </div>
-                {pagoForm.fuente === 'CUENTA_BANCARIA' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cuenta *</label>
-                    <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.cuenta_id} onChange={e => setPagoForm(f => ({ ...f, cuenta_id: e.target.value }))}>
-                      <option value="">Seleccionar...</option>
-                      {cuentasBancarias.map(c => <option key={c.id_cuenta} value={c.id_cuenta}>{c.alias} — {formatCurrency(c.saldo)}</option>)}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de Pago *</label>
-                  <select className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.tipo_pago} onChange={e => setPagoForm(f => ({ ...f, tipo_pago: e.target.value }))}>
-                    <option value="TRANSFERENCIA">Transferencia</option>
-                    <option value="SPEI">SPEI</option>
-                    <option value="CHEQUE">Cheque</option>
-                    <option value="EFECTIVO">Efectivo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha Pago *</label>
-                  <input type="date" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" value={pagoForm.fecha_pago} onChange={e => setPagoForm(f => ({ ...f, fecha_pago: e.target.value }))} />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Referencia bancaria *</label>
-                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono" placeholder="TRF-2026-001" value={pagoForm.referencia} onChange={e => setPagoForm(f => ({ ...f, referencia: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Concepto *</label>
-                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" placeholder="Pago materiales factura F-001" value={pagoForm.concepto} onChange={e => setPagoForm(f => ({ ...f, concepto: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">ID de OC (UUID) *</label>
-                <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm font-mono" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={pagoForm.oc_id} onChange={e => setPagoForm(f => ({ ...f, oc_id: e.target.value, concepto_id: null }))} onBlur={e => void resolveOcConcepto(e.target.value)} />
-                <p className="mt-1 text-[10px] text-muted-foreground">Copia el UUID de la OC desde la sección Compras</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código OC</label>
-                  <input className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" placeholder="OC-2026-001" value={pagoForm.oc_codigo} onChange={e => setPagoForm(f => ({ ...f, oc_codigo: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monto Aplicado *</label>
-                  <input type="number" className="w-full rounded-xl border border-border/40 bg-muted/50 px-3 py-2 text-sm" placeholder="0.00" value={pagoForm.monto_aplicado} onChange={e => setPagoForm(f => ({ ...f, monto_aplicado: e.target.value }))} />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <Button className="flex-1 rounded-xl bg-emerald-600 text-xs font-black uppercase text-white hover:bg-emerald-700" onClick={handleGuardarPagoOC}>
-                {guardandoPago ? 'Guardando...' : 'Registrar Pago'}
-              </Button>
-              <Button className="flex-1 rounded-xl border border-border text-xs font-black uppercase" onClick={() => setShowPagoModal(false)}>
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </div>
+      {currentProjectId && tenant?.id !== 'iretum-demo' && (
+        <>
+          <CuentasPorCobrarSeccion cuentas={cuentasBancarias} proyectoNombre={currentProjectName} proyectoColor={currentProjectColor.dot}
+            onCambio={() => { notify({ type: 'success', title: 'Cobro registrado', message: 'El cobro se abonó a la cuenta.' }); void fetchData(); }} />
+          <NominasPorPagarSeccion cuentas={cuentasBancarias} proyectoNombre={currentProjectName} proyectoColor={currentProjectColor.dot}
+            onCambio={() => { notify({ type: 'success', title: 'Nómina pagada', message: 'Personal marcará la prenómina como pagada.' }); void fetchData(); }} />
+        </>
       )}
 
       {/* ── SlidePanel: Nuevo Presupuesto Asignado ──────────────────────── */}
@@ -1152,17 +1021,6 @@ export const FinanzasView: React.FC = () => {
         confirmDisabled={guardando}
         onConfirm={() => void crearPresupuesto()}
         onCancel={() => setConfirmCrearPresupuesto(false)}
-      />
-
-      <ConfirmCriticalActionDialog
-        open={confirmRegistrarPago}
-        dismissible={false}
-        title="¿Registrar este pago?"
-        projectName={currentProjectName}
-        projectColorDot={currentProjectColor.dot}
-        confirmDisabled={guardandoPago}
-        onConfirm={() => void registrarPagoOC()}
-        onCancel={() => setConfirmRegistrarPago(false)}
       />
 
       <HelpPanel viewId="finanzas" isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
