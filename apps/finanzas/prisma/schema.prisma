@@ -172,9 +172,41 @@ model CuentaBancaria {
   updated_at      DateTime @updatedAt
 
   pagos           PagoOC[]
+  movimientos     MovimientoBancario[]
 
   @@index([tenant_id])
   @@map("cuentas_bancarias")
+}
+
+// ─── Libro bancario (openspec: libro-bancario, M6) ────────────────────────────
+// Un movimiento por cada cambio de saldo, escrito en la misma sentencia que el UPDATE de la cuenta (tesoreria.ts).
+// Inmutable (trigger). Invariante: saldo de la cuenta = Σ ABONO - Σ CARGO.
+model MovimientoBancario {
+  id_movimiento   String   @id @default(uuid()) @db.Uuid
+  secuencia       BigInt   @default(autoincrement())
+  tenant_id       String   @db.Uuid
+  cuenta_id       String   @db.Uuid
+  cuenta          CuentaBancaria @relation(fields: [cuenta_id], references: [id_cuenta])
+  proyecto_id     String?  @db.Uuid  // proyecto de la operación; en ajustes y saldo inicial, el de la cuenta
+
+  tipo            String   @db.VarChar(10)  // CARGO | ABONO
+  origen          String   @db.VarChar(20)  // SALDO_INICIAL | AJUSTE | EGRESO_OC | PAGO_PROGRAMADO | NOMINA | COBRO_CXC
+  origen_id       String   @db.Uuid
+  referencia      String?  @db.VarChar(100)
+  motivo          String?  @db.VarChar(500)
+  categoria       String?  @db.VarChar(20)   // solo AJUSTE: COMISION | INTERES | CORRECCION | OTRO
+
+  monto           Decimal  @db.Decimal(18, 2)
+  saldo_anterior  Decimal  @db.Decimal(18, 2)
+  saldo_posterior Decimal  @db.Decimal(18, 2)
+
+  usuario_id      String?  @db.Uuid
+  created_at      DateTime @default(now())
+
+  @@unique([tenant_id, origen, origen_id], map: "uq_movimientos_bancarios_origen")
+  @@unique([secuencia], map: "uq_movimientos_bancarios_secuencia")
+  @@index([tenant_id, cuenta_id, secuencia(sort: Desc)], map: "movimientos_bancarios_cuenta_secuencia_idx")
+  @@map("movimientos_bancarios")
 }
 
 // ─── Anticipo por Proyecto ────────────────────────────────────────────────────

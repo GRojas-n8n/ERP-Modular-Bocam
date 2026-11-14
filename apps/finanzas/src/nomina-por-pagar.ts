@@ -132,7 +132,8 @@ export async function pagarNomina(ctx: Ctx, prenominaId: string, e: PagoNominaEn
         `El monto $${monto.toFixed(2)} excede tu límite de autoridad financiera ($${Number(limiteAprobacion).toLocaleString()}).`);
     }
 
-    await descontarCuentaBancaria(tx, ctx.tenantId, ctx.proyectoId, e.cuenta_id, monto);
+    await descontarCuentaBancaria(tx, ctx.tenantId, ctx.proyectoId, e.cuenta_id, monto,
+      { origen: 'NOMINA', origenId: prenominaId, referencia: e.referencia, usuarioId: ctx.userId });
     const efecto = await aplicarPresupuestoNomina(tx, ctx, f, monto);
 
     const [pagada] = await tx.$queryRaw<any[]>`

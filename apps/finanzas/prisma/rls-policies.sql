@@ -480,6 +480,22 @@ CREATE POLICY rls_nominas_por_pagar_update ON "nominas_por_pagar"
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 9g. LIBRO BANCARIO (openspec: libro-bancario, M6)
+-- Por tenant, igual que cuentas_bancarias: las cuentas son de la empresa y las comparten los proyectos.
+-- Solo SELECT e INSERT: el libro es inmutable (trigger trg_movimientos_bancarios_inmutable en la migración).
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE "movimientos_bancarios" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "movimientos_bancarios" FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_movimientos_bancarios_select ON "movimientos_bancarios";
+CREATE POLICY rls_movimientos_bancarios_select ON "movimientos_bancarios"
+    FOR SELECT USING (tenant_id = current_tenant_id());
+
+DROP POLICY IF EXISTS rls_movimientos_bancarios_insert ON "movimientos_bancarios";
+CREATE POLICY rls_movimientos_bancarios_insert ON "movimientos_bancarios"
+    FOR INSERT WITH CHECK (tenant_id = current_tenant_id());
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 10. COMENTARIOS DE AUDITORÍA
 -- ─────────────────────────────────────────────────────────────────────────────
 COMMENT ON POLICY rls_presupuestos_select ON "presupuestos_asignados" IS 'Aisla presupuestos por constructora y centro de costos';
@@ -489,6 +505,7 @@ COMMENT ON POLICY rls_cuentas_select ON "cuentas_bancarias" IS 'Aisla cuentas ba
 COMMENT ON POLICY rls_proyectos_finanzas_select ON "proyectos_finanzas" IS 'Aisla anticipos por constructora y centro de costos';
 COMMENT ON POLICY rls_pagos_oc_select ON "pagos_oc" IS 'Aisla pagos de OC por constructora y centro de costos';
 COMMENT ON POLICY rls_detalles_pago_oc_select ON "detalles_pago_oc" IS 'Aisla detalle de pagos de OC via join a pagos_oc (no tiene tenant_id propio)';
+COMMENT ON POLICY rls_movimientos_bancarios_select ON "movimientos_bancarios" IS 'Aisla el libro bancario por constructora (inmutable: solo SELECT e INSERT)';
 COMMENT ON POLICY rls_ocs_por_pagar_select ON "ocs_por_pagar" IS 'Aisla OCs por pagar por constructora y centro de costos (Patrón Global con Trazabilidad)';
 
 -- =============================================================================
