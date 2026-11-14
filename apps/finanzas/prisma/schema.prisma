@@ -194,6 +194,7 @@ model MovimientoBancario {
   origen_id       String   @db.Uuid
   referencia      String?  @db.VarChar(100)
   motivo          String?  @db.VarChar(500)
+  categoria       String?  @db.VarChar(20)   // solo AJUSTE: COMISION | INTERES | CORRECCION | OTRO
 
   monto           Decimal  @db.Decimal(18, 2)
   saldo_anterior  Decimal  @db.Decimal(18, 2)

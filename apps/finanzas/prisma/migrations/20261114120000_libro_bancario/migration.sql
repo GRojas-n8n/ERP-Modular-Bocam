@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS "movimientos_bancarios" (
   "origen_id"       UUID           NOT NULL,
   "referencia"      VARCHAR(100),
   "motivo"          VARCHAR(500),
+  "categoria"       VARCHAR(20),
   "monto"           DECIMAL(18, 2) NOT NULL,
   "saldo_anterior"  DECIMAL(18, 2) NOT NULL,
   "saldo_posterior" DECIMAL(18, 2) NOT NULL,
@@ -36,6 +37,9 @@ CREATE INDEX IF NOT EXISTS "movimientos_bancarios_cuenta_secuencia_idx" ON "movi
 -- Folio de ajuste único por cuenta: el reintento del mismo ajuste no lo duplica.
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_movimientos_bancarios_ajuste_folio" ON "movimientos_bancarios" ("tenant_id", "cuenta_id", "referencia")
   WHERE "origen" = 'AJUSTE';
+
+-- Categoría del ajuste (COMISION | INTERES | CORRECCION | OTRO): Contabilidad la usará para la contracuenta (M6b).
+ALTER TABLE "movimientos_bancarios" ADD COLUMN IF NOT EXISTS "categoria" VARCHAR(20);
 
 DO $$
 BEGIN
@@ -66,6 +70,12 @@ BEGIN
                   WHERE c.conname = 'ck_movimientos_bancarios_ajuste' AND n.nspname = current_schema()) THEN
     ALTER TABLE "movimientos_bancarios" ADD CONSTRAINT "ck_movimientos_bancarios_ajuste" CHECK (
       "origen" <> 'AJUSTE' OR ("referencia" IS NOT NULL AND "motivo" IS NOT NULL AND length(btrim("motivo")) >= 10));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace
+                  WHERE c.conname = 'ck_movimientos_bancarios_categoria' AND n.nspname = current_schema()) THEN
+    ALTER TABLE "movimientos_bancarios" ADD CONSTRAINT "ck_movimientos_bancarios_categoria" CHECK (
+      CASE WHEN "origen" = 'AJUSTE' THEN COALESCE("categoria" IN ('COMISION', 'INTERES', 'CORRECCION', 'OTRO'), false)
+           ELSE "categoria" IS NULL END);
   END IF;
 END $$;
 

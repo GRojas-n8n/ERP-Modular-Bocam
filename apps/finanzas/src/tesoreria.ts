@@ -26,6 +26,9 @@ type Ctx = { tenantId: string; proyectoId: string; userId: string };
 export type TipoMovimiento = 'CARGO' | 'ABONO';
 export type OrigenMovimiento = 'SALDO_INICIAL' | 'AJUSTE' | 'EGRESO_OC' | 'PAGO_PROGRAMADO' | 'NOMINA' | 'COBRO_CXC';
 export const ORIGENES: readonly OrigenMovimiento[] = ['SALDO_INICIAL', 'AJUSTE', 'EGRESO_OC', 'PAGO_PROGRAMADO', 'NOMINA', 'COBRO_CXC'];
+/** Categoría del ajuste: Contabilidad la usará para elegir la contracuenta de la póliza (M6b). */
+export type CategoriaAjuste = 'COMISION' | 'INTERES' | 'CORRECCION' | 'OTRO';
+export const CATEGORIAS_AJUSTE: readonly CategoriaAjuste[] = ['COMISION', 'INTERES', 'CORRECCION', 'OTRO'];
 
 /** Qué operación movió el dinero. `origenId` es el id de esa operación (egreso, pago, prenómina, cobro, ajuste). */
 export interface OrigenMov {
@@ -33,6 +36,7 @@ export interface OrigenMov {
   origenId: string;
   referencia?: string | null;
   motivo?: string | null;
+  categoria?: CategoriaAjuste | null;
   usuarioId?: string | null;
 }
 
@@ -46,6 +50,7 @@ interface FilaMovimiento {
   origen_id: string;
   referencia: string | null;
   motivo: string | null;
+  categoria: CategoriaAjuste | null;
   monto: Dec;
   saldo_anterior: Dec;
   saldo_posterior: Dec;
@@ -54,7 +59,7 @@ interface FilaMovimiento {
 }
 
 const COLUMNAS = Prisma.sql`"id_movimiento"::text, "secuencia", "cuenta_id"::text, "proyecto_id"::text, "tipo", "origen",
-  "origen_id"::text, "referencia", "motivo", "monto", "saldo_anterior", "saldo_posterior", "usuario_id"::text, "created_at"`;
+  "origen_id"::text, "referencia", "motivo", "categoria", "monto", "saldo_anterior", "saldo_posterior", "usuario_id"::text, "created_at"`;
 
 /**
  * Mueve la cuenta y escribe el movimiento en una sola sentencia. `proyectoId` null: ajuste o saldo inicial, sin
@@ -83,9 +88,10 @@ async function moverCuenta(
     )
     INSERT INTO "movimientos_bancarios"
       ("id_movimiento", "tenant_id", "cuenta_id", "proyecto_id", "tipo", "origen", "origen_id", "referencia", "motivo",
-       "monto", "saldo_anterior", "saldo_posterior", "usuario_id")
+       "categoria", "monto", "saldo_anterior", "saldo_posterior", "usuario_id")
     SELECT gen_random_uuid(), c."tenant_id", c."id_cuenta", COALESCE(${proyectoId}::uuid, c."proyecto_id"), ${tipo}::varchar, ${o.origen}::varchar,
-           ${o.origenId}::uuid, ${o.referencia ?? null}::varchar, ${o.motivo ?? null}::varchar, ${total}::numeric, ${anterior}, c."saldo",
+           ${o.origenId}::uuid, ${o.referencia ?? null}::varchar, ${o.motivo ?? null}::varchar,
+           ${o.categoria ?? null}::varchar, ${total}::numeric, ${anterior}, c."saldo",
            ${o.usuarioId ?? null}::uuid
       FROM c
     RETURNING ${COLUMNAS}`;
@@ -190,7 +196,7 @@ export async function actualizarCuentaBancaria(ctx: Ctx, idCuenta: string, body:
   if (!esUuid(idCuenta)) throw new ErrorFinanzas(400, 'FIN_INVALID_REFERENCE', 'El id de la cuenta debe ser un UUID válido.');
   if (body && Object.prototype.hasOwnProperty.call(body, 'saldo')) {
     throw new ErrorFinanzas(400, 'FIN_SALDO_NO_EDITABLE',
-      'El saldo no se edita. Regístralo con POST /cuentas-bancarias/:id/ajustes (tipo, monto, folio y motivo).');
+      'El saldo no se edita. Regístralo con POST /cuentas-bancarias/:id/ajustes (tipo, monto, folio, categoria y motivo).');
   }
   const { banco, numero_cuenta, clabe, alias, moneda } = body ?? {};
   return createTenantContext(ctx, async (tx) => {
@@ -217,6 +223,7 @@ export interface AjusteEntrada {
   monto: Dec;
   folio: string;
   motivo: string;
+  categoria: CategoriaAjuste;
 }
 
 export function validarAjuste(body: any): AjusteEntrada {
@@ -230,7 +237,11 @@ export function validarAjuste(body: any): AjusteEntrada {
   if (motivo.length < 10 || motivo.length > 500) {
     throw new ErrorFinanzas(400, 'FIN_MOTIVO_INVALIDO', 'motivo es obligatorio, entre 10 y 500 caracteres.');
   }
-  return { tipo, monto: m.monto!, folio, motivo };
+  const categoria = String(body?.categoria ?? '').trim().toUpperCase() as CategoriaAjuste;
+  if (!CATEGORIAS_AJUSTE.includes(categoria)) {
+    throw new ErrorFinanzas(400, 'FIN_CATEGORIA_INVALIDA', `categoria es obligatoria: ${CATEGORIAS_AJUSTE.join(', ')}.`);
+  }
+  return { tipo, monto: m.monto!, folio, motivo, categoria };
 }
 
 export interface ResultadoAjuste extends MovimientoPublico {
@@ -238,7 +249,8 @@ export interface ResultadoAjuste extends MovimientoPublico {
 }
 
 /**
- * Ajuste de saldo con motivo. Idempotente por (cuenta, folio): el mismo folio con el mismo tipo y monto devuelve el
+ * Ajuste de saldo con motivo y categoría. Idempotente por (cuenta, folio): el mismo folio con el mismo tipo, monto y
+ * categoría devuelve el
  * ajuste existente; con otro contenido es 409. El límite de autoridad se evalúa antes de mover dinero.
  */
 export async function registrarAjuste(ctx: Ctx, idCuenta: string, a: AjusteEntrada, limiteAprobacion: number): Promise<ResultadoAjuste> {
@@ -259,14 +271,14 @@ export async function registrarAjuste(ctx: Ctx, idCuenta: string, a: AjusteEntra
        WHERE "tenant_id" = ${ctx.tenantId}::uuid AND "cuenta_id" = ${idCuenta}::uuid
          AND "origen" = 'AJUSTE' AND "referencia" = ${a.folio}`)[0];
     if (previo) {
-      if (previo.tipo !== a.tipo || !new Decimal(String(previo.monto)).equals(a.monto)) {
+      if (previo.tipo !== a.tipo || previo.categoria !== a.categoria || !new Decimal(String(previo.monto)).equals(a.monto)) {
         throw new ErrorFinanzas(409, 'FIN_AJUSTE_DUPLICADO', `El folio ${a.folio} ya se usó en otro ajuste de esta cuenta.`);
       }
       return { ...movimientoPublico(previo), idempotente: true };
     }
 
     const mov = await moverCuenta(tx, ctx.tenantId, null, idCuenta, a.tipo, a.monto, {
-      origen: 'AJUSTE', origenId: randomUUID(), referencia: a.folio, motivo: a.motivo, usuarioId: ctx.userId,
+      origen: 'AJUSTE', origenId: randomUUID(), referencia: a.folio, motivo: a.motivo, categoria: a.categoria, usuarioId: ctx.userId,
     });
     if (!mov) {
       throw new ErrorFinanzas(422, 'FIN_SALDO_INSUFICIENTE',
@@ -288,6 +300,7 @@ export interface MovimientoPublico {
   origen_id: string;
   referencia: string | null;
   motivo: string | null;
+  categoria: CategoriaAjuste | null;
   monto: number;
   saldo_anterior: number;
   saldo_posterior: number;
@@ -306,6 +319,7 @@ function movimientoPublico(f: FilaMovimiento): MovimientoPublico {
     origen_id: f.origen_id,
     referencia: f.referencia,
     motivo: f.motivo,
+    categoria: f.categoria,
     monto: Number(f.monto),
     saldo_anterior: Number(f.saldo_anterior),
     saldo_posterior: Number(f.saldo_posterior),

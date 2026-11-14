@@ -69,11 +69,11 @@ const ajustar = (t: string, p: string, cuenta: string, body: any, limite?: numbe
 
 const saldo = async (id: string) => Number((await admin.cuentaBancaria.findUniqueOrThrow({ where: { id_cuenta: id } })).saldo);
 
-interface Mov { tipo: string; origen: string; origen_id: string; monto: number; saldo_anterior: number; saldo_posterior: number; referencia: string | null; motivo: string | null; proyecto_id: string | null }
+interface Mov { tipo: string; origen: string; origen_id: string; monto: number; saldo_anterior: number; saldo_posterior: number; referencia: string | null; motivo: string | null; categoria: string | null; proyecto_id: string | null }
 const libro = async (cuenta: string): Promise<Mov[]> => {
   const filas = await admin.$queryRawUnsafe<any[]>(
     `SELECT "tipo", "origen", "origen_id"::text AS origen_id, "monto"::float8 AS monto, "saldo_anterior"::float8 AS saldo_anterior,
-            "saldo_posterior"::float8 AS saldo_posterior, "referencia", "motivo", "proyecto_id"::text AS proyecto_id
+            "saldo_posterior"::float8 AS saldo_posterior, "referencia", "motivo", "categoria", "proyecto_id"::text AS proyecto_id
        FROM "movimientos_bancarios" WHERE "cuenta_id" = $1::uuid ORDER BY "secuencia"`, cuenta);
   return filas;
 };
@@ -159,26 +159,31 @@ async function main() {
   await test('3. ajuste: abono y cargo con motivo; folio idempotente; folio con otro contenido 409; validaciones', async () => {
     const t = randomUUID(), p = randomUUID();
     const cuenta = await crearCuenta(t, p, 1000);
-    const abono = await ajustar(t, p, cuenta, { tipo: 'ABONO', monto: 250.5, folio: 'AJ-1', motivo: 'Intereses del mes de octubre' });
+    const abono = await ajustar(t, p, cuenta, { tipo: 'ABONO', monto: 250.5, folio: 'AJ-1', categoria: 'interes', motivo: 'Intereses del mes de octubre' });
     assert.equal(abono.status, 201, JSON.stringify(abono.body));
     assert.equal(abono.body.data.saldo_posterior, 1250.5);
     assert.equal(abono.body.data.idempotente, false);
-    const cargo = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 50, folio: 'AJ-2', motivo: 'Comisión bancaria por SPEI' });
+    assert.equal(abono.body.data.categoria, 'INTERES', 'la categoría se normaliza a mayúsculas');
+    const cargo = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 50, folio: 'AJ-2', categoria: 'COMISION', motivo: 'Comisión bancaria por SPEI' });
     assert.equal(cargo.status, 201, JSON.stringify(cargo.body));
     assert.equal(await saldo(cuenta), 1200.5);
 
-    const otra = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 50, folio: 'AJ-2', motivo: 'Comisión bancaria por SPEI' });
+    const otra = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 50, folio: 'AJ-2', categoria: 'COMISION', motivo: 'Comisión bancaria por SPEI' });
     assert.equal(otra.status, 200); assert.equal(otra.body.data.idempotente, true);
-    const distinto = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 60, folio: 'AJ-2', motivo: 'Comisión bancaria por SPEI' });
+    const distinto = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 60, folio: 'AJ-2', categoria: 'COMISION', motivo: 'Comisión bancaria por SPEI' });
     assert.equal(distinto.status, 409); assert.equal(distinto.body.error.code, 'FIN_AJUSTE_DUPLICADO');
+    const otraCategoria = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 50, folio: 'AJ-2', categoria: 'CORRECCION', motivo: 'Comisión bancaria por SPEI' });
+    assert.equal(otraCategoria.status, 409, 'el mismo folio con otra categoría no es el mismo ajuste');
 
     const casos: Array<[any, number, string, number?]> = [
-      [{ tipo: 'CARGO', monto: 10, folio: 'AJ-3', motivo: 'corto' }, 400, 'FIN_MOTIVO_INVALIDO'],
-      [{ tipo: 'OTRO', monto: 10, folio: 'AJ-3', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_TIPO_INVALIDO'],
-      [{ tipo: 'CARGO', monto: 10.001, folio: 'AJ-3', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_MONTO_INVALIDO'],
-      [{ tipo: 'CARGO', monto: 10, motivo: 'Motivo suficientemente largo' }, 400, 'FIN_FOLIO_INVALIDO'],
-      [{ tipo: 'CARGO', monto: 99_999, folio: 'AJ-3', motivo: 'Motivo suficientemente largo' }, 422, 'FIN_SALDO_INSUFICIENTE'],
-      [{ tipo: 'ABONO', monto: 5000, folio: 'AJ-3', motivo: 'Motivo suficientemente largo' }, 403, 'FIN_LIMIT_EXCEEDED', 1000],
+      [{ tipo: 'CARGO', monto: 10, folio: 'AJ-3', categoria: 'COMISION', motivo: 'corto' }, 400, 'FIN_MOTIVO_INVALIDO'],
+      [{ tipo: 'CARGO', monto: 10, folio: 'AJ-3', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_CATEGORIA_INVALIDA'],
+      [{ tipo: 'CARGO', monto: 10, folio: 'AJ-3', categoria: 'REGALO', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_CATEGORIA_INVALIDA'],
+      [{ tipo: 'OTRO', monto: 10, folio: 'AJ-3', categoria: 'COMISION', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_TIPO_INVALIDO'],
+      [{ tipo: 'CARGO', monto: 10.001, folio: 'AJ-3', categoria: 'COMISION', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_MONTO_INVALIDO'],
+      [{ tipo: 'CARGO', monto: 10, categoria: 'COMISION', motivo: 'Motivo suficientemente largo' }, 400, 'FIN_FOLIO_INVALIDO'],
+      [{ tipo: 'CARGO', monto: 99_999, folio: 'AJ-3', categoria: 'COMISION', motivo: 'Motivo suficientemente largo' }, 422, 'FIN_SALDO_INSUFICIENTE'],
+      [{ tipo: 'ABONO', monto: 5000, folio: 'AJ-3', categoria: 'COMISION', motivo: 'Motivo suficientemente largo' }, 403, 'FIN_LIMIT_EXCEEDED', 1000],
     ];
     for (const [body, status, code, limite] of casos) {
       const r = await ajustar(t, p, cuenta, body, limite);
@@ -186,9 +191,9 @@ async function main() {
       assert.equal(r.body.error.code, code);
     }
     const rol = await llamar('POST', t, p, `cuentas-bancarias/${cuenta}/ajustes`,
-      { tipo: 'ABONO', monto: 1, folio: 'AJ-4', motivo: 'Motivo suficientemente largo' }, { roles: ['compras'] });
+      { tipo: 'ABONO', monto: 1, folio: 'AJ-4', categoria: 'COMISION', motivo: 'Motivo suficientemente largo' }, { roles: ['compras'] });
     assert.equal(rol.status, 403);
-    const ajena = await ajustar(randomUUID(), p, cuenta, { tipo: 'ABONO', monto: 1, folio: 'AJ-5', motivo: 'Motivo suficientemente largo' });
+    const ajena = await ajustar(randomUUID(), p, cuenta, { tipo: 'ABONO', monto: 1, folio: 'AJ-5', categoria: 'COMISION', motivo: 'Motivo suficientemente largo' });
     assert.equal(ajena.status, 404); assert.equal(ajena.body.error.code, 'FIN_CUENTA_NO_ENCONTRADA');
 
     assert.equal(await saldo(cuenta), 1200.5);
@@ -197,6 +202,7 @@ async function main() {
       ['SALDO_INICIAL', 'ABONO', null], ['AJUSTE', 'ABONO', 'AJ-1'], ['AJUSTE', 'CARGO', 'AJ-2'],
     ]);
     assert.equal(movs[2].motivo, 'Comisión bancaria por SPEI');
+    assert.deepEqual(movs.map((x) => x.categoria), [null, 'INTERES', 'COMISION'], 'solo los ajustes llevan categoría');
     await assertCuadra(cuenta);
   });
 
@@ -278,7 +284,7 @@ async function main() {
     const prog2 = await llamar('POST', t, p, 'pagos', {
       presupuesto_id: pres.id_presupuesto, concepto: 'Grande', beneficiario: 'Sub SA', monto_programado: 45_000, fecha_programada: '2026-11-20',
     });
-    const sinSaldo = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 60_000, folio: 'AJ-VACIA', motivo: 'Vaciar la cuenta para la prueba' });
+    const sinSaldo = await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 60_000, folio: 'AJ-VACIA', categoria: 'COMISION', motivo: 'Vaciar la cuenta para la prueba' });
     assert.equal(sinSaldo.status, 201, JSON.stringify(sinSaldo.body));
     const pp2 = await llamar('PATCH', t, p, `pagos/${prog2.body.data.id_pago}/pagar`, { cuenta_id: cuenta, referencia_bancaria: 'SPEI-PP-2' });
     assert.equal(pp2.status, 422); assert.equal(pp2.body.error.code, 'FIN_SALDO_INSUFICIENTE');
@@ -290,7 +296,7 @@ async function main() {
     const t = randomUUID(), p = randomUUID();
     const cuenta = await crearCuenta(t, p, 500);
     const rs = await Promise.all(Array.from({ length: 10 }, (_, i) =>
-      ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 100, folio: `CC-${i}`, motivo: 'Cargo concurrente de prueba' })));
+      ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 100, folio: `CC-${i}`, categoria: 'COMISION', motivo: 'Cargo concurrente de prueba' })));
     assert.equal(rs.filter((r) => r.status === 201).length, 5, JSON.stringify(rs.map((r) => r.status)));
     assert.equal(rs.filter((r) => r.status === 422).length, 5);
     assert.equal(await saldo(cuenta), 0);
@@ -301,7 +307,7 @@ async function main() {
   await test('6. GET movimientos: paginado por secuencia, sin repetir; filtro por origen; otro tenant 404', async () => {
     const t = randomUUID(), p = randomUUID();
     const cuenta = await crearCuenta(t, p, 1000);
-    for (let i = 0; i < 4; i++) await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 10, folio: `PG-${i}`, motivo: 'Comisión de prueba paginada' });
+    for (let i = 0; i < 4; i++) await ajustar(t, p, cuenta, { tipo: 'CARGO', monto: 10, folio: `PG-${i}`, categoria: 'COMISION', motivo: 'Comisión de prueba paginada' });
     const uno = await llamar('GET', t, p, `cuentas-bancarias/${cuenta}/movimientos?limit=3`);
     assert.equal(uno.status, 200, JSON.stringify(uno.body));
     assert.equal(uno.body.data.length, 3);
@@ -329,11 +335,18 @@ async function main() {
     await assert.rejects(admin.$executeRawUnsafe(`DELETE FROM "movimientos_bancarios" WHERE "cuenta_id" = $1::uuid`, cuenta), /inmutable/);
     assert.ok(runSqlFile(MIGRACION, dbUrl).ok, 'segunda aplicación');
     const ins = (monto: number, ant: number, post: number, origen = 'SALDO_INICIAL') => admin.$executeRawUnsafe(
-      `INSERT INTO "movimientos_bancarios" ("id_movimiento", "tenant_id", "cuenta_id", "tipo", "origen", "origen_id", "monto", "saldo_anterior", "saldo_posterior")
-       VALUES (gen_random_uuid(), $1::uuid, $2::uuid, 'ABONO', $6, gen_random_uuid(), $3, $4, $5)`, t, cuenta, monto, ant, post, origen);
+      `INSERT INTO "movimientos_bancarios" ("id_movimiento", "tenant_id", "cuenta_id", "tipo", "origen", "origen_id", "categoria", "monto", "saldo_anterior", "saldo_posterior")
+       VALUES (gen_random_uuid(), $1::uuid, $2::uuid, 'ABONO', $6, gen_random_uuid(), CASE WHEN $6 = 'AJUSTE' THEN 'OTRO' END, $3, $4, $5)`,
+      t, cuenta, monto, ant, post, origen);
     await assert.rejects(ins(0, 0, 0), /ck_movimientos_bancarios_monto/);
     await assert.rejects(ins(10, 0, 11), /ck_movimientos_bancarios_saldo/);
     await assert.rejects(ins(10, 0, 10, 'AJUSTE'), /ck_movimientos_bancarios_ajuste/);
+    await assert.rejects(admin.$executeRawUnsafe(
+      `INSERT INTO "movimientos_bancarios" ("id_movimiento", "tenant_id", "cuenta_id", "tipo", "origen", "origen_id", "categoria", "monto", "saldo_anterior", "saldo_posterior")
+       VALUES (gen_random_uuid(), $1::uuid, $2::uuid, 'ABONO', 'SALDO_INICIAL', gen_random_uuid(), 'COMISION', 10, 0, 10)`, t, cuenta), /ck_movimientos_bancarios_categoria/);
+    await assert.rejects(admin.$executeRawUnsafe(
+      `INSERT INTO "movimientos_bancarios" ("id_movimiento", "tenant_id", "cuenta_id", "tipo", "origen", "origen_id", "referencia", "motivo", "monto", "saldo_anterior", "saldo_posterior")
+       VALUES (gen_random_uuid(), $1::uuid, $2::uuid, 'ABONO', 'AJUSTE', gen_random_uuid(), 'SIN-CAT', 'Ajuste sin categoría de prueba', 10, 0, 10)`, t, cuenta), /ck_movimientos_bancarios_categoria/);
   });
 
   await test('8. script de saldo inicial: simulación no guarda; aplicado cuadra cuentas previas al libro, re-ejecutable', async () => {
@@ -342,7 +355,7 @@ async function main() {
     const previa = await admin.cuentaBancaria.create({
       data: { tenant_id: t, proyecto_id: null, banco: 'Banorte', numero_cuenta: '999', alias: 'Previa', saldo: 700 },
     });
-    const c = await ajustar(t, p, previa.id_cuenta, { tipo: 'CARGO', monto: 200, folio: 'PRE-1', motivo: 'Cargo posterior al despliegue' });
+    const c = await ajustar(t, p, previa.id_cuenta, { tipo: 'CARGO', monto: 200, folio: 'PRE-1', categoria: 'COMISION', motivo: 'Cargo posterior al despliegue' });
     assert.equal(c.status, 201, JSON.stringify(c.body));
 
     const sim = psql(SCRIPT_SALDO_INICIAL, {});

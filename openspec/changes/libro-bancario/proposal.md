@@ -26,7 +26,9 @@ Auditoría de Finanzas del 5 nov 2026, M6.
 - `POST /cuentas-bancarias`: el saldo inicial queda como movimiento SALDO_INICIAL y respeta el límite de autoridad.
   Saldo negativo o con más de 2 decimales: 400.
 - `PATCH /cuentas-bancarias/:id`: rechaza `saldo` con 400 `FIN_SALDO_NO_EDITABLE`.
-- `POST /cuentas-bancarias/:id/ajustes` (`tipo`, `monto`, `folio`, `motivo` de 10 a 500 caracteres):
+- `POST /cuentas-bancarias/:id/ajustes` (`tipo`, `monto`, `folio`, `categoria`, `motivo` de 10 a 500 caracteres):
+  - `categoria`: COMISION, INTERES, CORRECCION u OTRO. Solo los ajustes la llevan (CHECK). Contabilidad la usará para
+    elegir la contracuenta de la póliza (M6b).
   - Límite de autoridad; roles finanzas y admin.
   - Idempotente por (cuenta, folio): mismo contenido 200; otro contenido 409 `FIN_AJUSTE_DUPLICADO`.
   - Un cargo nunca deja la cuenta en negativo: 422 `FIN_SALDO_INSUFICIENTE`.
@@ -34,6 +36,12 @@ Auditoría de Finanzas del 5 nov 2026, M6.
 - Número de cuenta y CLABE enmascarados (`****1234`) en lista, alta, edición y baja.
 - `scripts/finanzas/saldo-inicial-libro-bancario.sql`: registra el saldo de las cuentas previas al libro y lista los
   descuadres. Simulación por defecto; `-v aplicar=1` para guardar. Re-ejecutable.
+
+## Fuera de alcance (M6b)
+
+- Ajustes y saldo inicial cambian el saldo del banco sin evento a Contabilidad: hoy no generan póliza. M6b publicará
+  `finanzas.ajuste_bancario_registrado` y Contabilidad hará la póliza según la categoría, cuando el contador defina las
+  contracuentas. Mientras tanto, cada ajuste se captura a mano en Contabilidad.
 
 ## Impact
 

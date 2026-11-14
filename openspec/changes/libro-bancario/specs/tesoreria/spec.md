@@ -25,10 +25,11 @@ UPDATE y DELETE sobre `movimientos_bancarios` SHALL fallar. Una corrección SHAL
 cuenta nueva SHALL registrarse como movimiento SALDO_INICIAL dentro del límite de autoridad.
 
 #### Scenario: Ajuste
-- **WHEN** Finanzas registra `POST /cuentas-bancarias/:id/ajustes` con tipo, monto, folio y motivo de al menos 10 caracteres
+- **WHEN** Finanzas registra `POST /cuentas-bancarias/:id/ajustes` con tipo, monto, folio, categoría (COMISION, INTERES, CORRECCION u OTRO) y motivo de al menos 10 caracteres
 - **THEN** SHALL registrarse un movimiento AJUSTE y responder 201
 - **AND** el mismo folio con el mismo contenido SHALL responder 200 sin duplicar
-- **AND** el mismo folio con otro contenido SHALL responder 409 `FIN_AJUSTE_DUPLICADO`
+- **AND** el mismo folio con otro tipo, monto o categoría SHALL responder 409 `FIN_AJUSTE_DUPLICADO`
+- **AND** sin categoría o con una categoría no válida SHALL responder 400 `FIN_CATEGORIA_INVALIDA`
 - **AND** un monto sobre el límite de autoridad SHALL responder 403 `FIN_LIMIT_EXCEEDED`
 - **AND** un cargo mayor al saldo SHALL responder 422 `FIN_SALDO_INSUFICIENTE`
 
