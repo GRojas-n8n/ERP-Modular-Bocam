@@ -3,10 +3,10 @@ import axios from 'axios';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { createTenantContext } from './db';
+import basePrisma, { createTenantContext } from './db';
 import type { PrismaClient } from './generated/prisma';
 import { BocamEvent, createEventBus } from '../../../packages/event-bus/src';
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import {
   buildEventContext,
@@ -28,6 +28,12 @@ import { calcularVeredictoRenglon } from './calcular-veredicto-renglon';
 import { calcularBloqueosRequisicion, calcularBloqueosProveedor, Bloqueo } from './purga-bloqueos';
 import { parseOrRespond } from './validation/parse-or-respond';
 import { longitudProveedorSchema } from './validation/schemas/proveedor.schema';
+import { OC_STATUS, TRANSICIONES_EVENTO_FINANZAS, transicionarEstadoOc } from './oc-estados';
+import { randomUUID } from 'node:crypto';
+import {
+  registrarEventoRecepcion, configurarDespachadorOutbox, estadoDespachadorOutbox, VARIABLE_DESPACHADOR, reconstruirPayloadRecepcion, problemasDePayload, snapshotDeItemOc,
+  SnapshotIncompletoError, SnapshotInsumo,
+} from './outbox';
 
 const eventBus = createEventBus('compras');
 
@@ -204,15 +210,7 @@ class PurgaBloqueadaError extends Error {
   }
 }
 
-const OC_STATUS = {
-  PENDIENTE_FINANZAS: 'PENDIENTE_CONFIRMACION_FINANZAS',
-  ERROR_FINANZAS: 'ERROR_FINANZAS',
-  EMITIDA: 'EMITIDA',
-  PARCIALMENTE_RECIBIDA: 'PARCIALMENTE_RECIBIDA',
-  RECIBIDA: 'RECIBIDA',
-  CANCELACION_PENDIENTE: 'CANCELACION_PENDIENTE',
-  CANCELADA: 'CANCELADA',
-} as const;
+// OC_STATUS y las transiciones permitidas por evento de Finanzas viven en ./oc-estados (fuente única).
 
 // Ver openspec/changes/fix-alertas-compras-procesos-atorados. Umbral de antigüedad
 // para detectar Requisiciones/CuadrosComparativos iniciados por el Residente que
@@ -247,10 +245,17 @@ async function calcularEstadoOC(orderId: string, prisma: any): Promise<string> {
 
 app.use(createAuthMiddleware({
   jwtSecret: JWT_SECRET,
-  excludePaths: ['/health'],
+  excludePaths: ['/health', '/ready'],
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'compras' }));
 app.use(requireProjectAccess());
+const requireComprasProject = requireActiveProject();
+app.use('/api/v1/compras', (req: Request, res: Response, next: NextFunction) => {
+  const path = req.originalUrl.split('?')[0].replace('/api/v1/compras', '');
+  const isTenantCatalog = path.startsWith('/proveedores') || path.startsWith('/catalog/insumos');
+  if (isTenantCatalog) return next();
+  return requireComprasProject(req, res, next);
+});
 
 app.get('/api/v1/compras/requisiciones', async (req: Request, res: Response) => {
   try {
@@ -1731,6 +1736,30 @@ app.get('/api/v1/compras/ordenes-compra/:id/recepciones',
   }
 );
 
+/**
+ * Catálogo de insumos de Gerencia Técnica como snapshots COMPLETOS (clave, descripción, unidad y categoría a partir
+ * del tipo de insumo). Se usa únicamente dentro de una petición de usuario (crear la OC o completar una OC que aún
+ * no lo tiene), con su token. Nunca durante el despacho del outbox. Devuelve solo entradas completas.
+ */
+async function resolverSnapshotInsumos(req: Request): Promise<Map<string, SnapshotInsumo>> {
+  try {
+    const resp = await axios.get(`${GT_URL}/insumos`, {
+      headers: buildForwardHeaders(req, { Authorization: req.headers.authorization || '' }),
+      timeout: 3000,
+    });
+    const mapa = new Map<string, SnapshotInsumo>();
+    for (const i of ((resp.data?.data ?? []) as any[])) {
+      if (i?.id && i.clave && i.descripcion && i.unidad_medida && i.tipo_insumo) {
+        mapa.set(i.id, { clave: i.clave, descripcion: i.descripcion, unidad: i.unidad_medida, categoria: String(i.tipo_insumo) });
+      }
+    }
+    return mapa;
+  } catch (error: any) {
+    console.warn(JSON.stringify({ action: 'compras.recepcion.snapshot_no_disponible', error: error?.message ?? String(error) }));
+    return new Map();
+  }
+}
+
 app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
   requireRoles('procurement', 'admin'),
   async (req: Request, res: Response) => {
@@ -1741,6 +1770,27 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
 
       if (!Array.isArray(itemsBody) || itemsBody.length === 0) {
         return void res.status(400).json({ success: false, message: 'Se requiere al menos un ítem en la recepción.' });
+      }
+
+      // Todo renglón de catálogo recibido debe tener su snapshot PERSISTIDO en la OC. Si algún renglón aún no lo tiene
+      // (OC anterior, o creada sin que el catálogo respondiera), se resuelve aquí, fuera de la transacción y con el
+      // token del usuario. Si no se puede resolver, la recepción se rechaza ANTES de escribir nada: nunca se registra
+      // un evento incompleto ni se deja a Almacén con un payload que seguirá siendo inválido.
+      const ocPrevia = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) =>
+        prisma.ordenCompra.findUnique({ where: { id_orden: id }, include: { items: true } }));
+      const recibidos = new Set(itemsBody.map((l: any) => l.orden_item_id));
+      const sinSnapshot = (ocPrevia?.items ?? []).filter((i: any) => recibidos.has(i.id_item) && i.insumo_id && !snapshotDeItemOc(i));
+      let catalogo = new Map<string, SnapshotInsumo>();
+      if (sinSnapshot.length > 0) {
+        catalogo = await resolverSnapshotInsumos(req);
+        const faltan = [...new Set(sinSnapshot.filter((i: any) => !catalogo.has(i.insumo_id)).map((i: any) => i.insumo_id as string))];
+        if (faltan.length > 0) {
+          return void res.status(503).json({
+            success: false,
+            error: 'SNAPSHOT_INSUMO_NO_DISPONIBLE',
+            message: `No se pudo obtener el snapshot de los insumos ${faltan.join(', ')} (clave, descripción, unidad y categoría). La recepción no se registró; reintenta cuando el catálogo esté disponible.`,
+          });
+        }
       }
 
       const result = await createTenantContext(
@@ -1756,6 +1806,17 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
           const estadosPermitidos = [OC_STATUS.EMITIDA, OC_STATUS.PARCIALMENTE_RECIBIDA];
           if (!estadosPermitidos.includes(orden.estado as any)) {
             return { error: 400, message: 'Solo se pueden registrar recepciones en OC con estado EMITIDA o PARCIALMENTE_RECIBIDA.' };
+          }
+
+          // Persistir el snapshot resuelto en los renglones de catálogo que aún no lo tenían.
+          for (const itemOc of orden.items as any[]) {
+            if (!recibidos.has(itemOc.id_item) || !itemOc.insumo_id || snapshotDeItemOc(itemOc)) continue;
+            const snap = catalogo.get(itemOc.insumo_id);
+            if (!snap) throw new SnapshotIncompletoError([`el insumo ${itemOc.insumo_id} no tiene snapshot`]);
+            Object.assign(itemOc, await prisma.ordenCompraItem.update({
+              where: { id_item: itemOc.id_item },
+              data: { clave_snapshot: snap.clave, descripcion_snapshot: snap.descripcion, unidad_snapshot: snap.unidad, categoria_snapshot: snap.categoria },
+            }));
           }
 
           // Calcular acumulados previos para validar cantidades
@@ -1815,6 +1876,34 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
             data: { estado: nuevoEstado },
           });
 
+          // Outbox transaccional: el evento de la recepción se escribe en ESTA misma transacción. Si falla,
+          // la recepción no queda registrada; si se confirma, el evento no se pierde aunque el bus esté caído.
+          const itemsOrden = new Map(orden.items.map((i: any) => [i.id_item, i]));
+          await registrarEventoRecepcion(prisma, {
+            eventId: randomUUID(),
+            tenantId,
+            proyectoId,
+            ordenId: id,
+            ordenCodigo: orden.codigo,
+            proveedorId: orden.proveedor_id,
+            recepcionId: recepcion.id_recepcion,
+            fechaRecepcion: recepcion.fecha_recepcion,
+            estadoOc: nuevoEstado,
+            recibidoPor: userId,
+            items: recepcion.items.map((ri: any) => {
+              const itemOc: any = itemsOrden.get(ri.orden_item_id);
+              return {
+                recepcionItemId: ri.id_recepcion_item,
+                ordenItemId: ri.orden_item_id,
+                insumoId: itemOc?.insumo_id ?? null,
+                cantidadRecibida: Number(ri.cantidad_recibida),
+                descripcionLibre: itemOc?.descripcion_libre ?? null,
+                unidadLibre: itemOc?.unidad_libre ?? null,
+                snapshot: itemOc ? snapshotDeItemOc(itemOc) : null,
+              };
+            }),
+          });
+
           return { recepcion, nuevoEstado, orden };
         }
       );
@@ -1828,25 +1917,7 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
         nuevo_estado: result.nuevoEstado,
       });
 
-      // Publicar evento si la OC quedó completamente recibida (best-effort)
-      if (result.nuevoEstado === OC_STATUS.RECIBIDA) {
-        try {
-          await eventBus.publish({
-            event_type: 'compras.oc_recibida_total',
-            timestamp: new Date().toISOString(),
-            context: buildEventContext(req),
-            payload: {
-              id_orden: id,
-              codigo: result.orden.codigo,
-              proveedor_id: result.orden.proveedor_id,
-              total: Number(result.orden.total),
-              proyecto_id: result.orden.proyecto_id,
-            },
-          });
-        } catch (_) {
-          /* EventBus offline — degradación elegante. La OC ya fue marcada RECIBIDA. */
-        }
-      }
+      // El evento compras.recepcion_oc_registrada.v1 ya quedó en el outbox y lo publica el despachador.
 
       res.status(201).json({
         success: true,
@@ -1856,7 +1927,55 @@ app.post('/api/v1/compras/ordenes-compra/:id/recepciones',
         },
       });
     } catch (error: any) {
+      if (error instanceof SnapshotIncompletoError) {
+        return void res.status(503).json({ success: false, error: 'SNAPSHOT_INSUMO_NO_DISPONIBLE', message: error.message });
+      }
       logError(req, 'compras', 'compras.recepcion.create.error', 'Error al registrar recepción', { error_message: error.message });
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+// Reemite el evento de una recepción: la fila vuelve a PENDIENTE con el mismo event_id, de modo que Almacén la
+// trata como reentrega idempotente. Solo admin y procurement; una recepción de otro tenant responde 404.
+app.post('/api/v1/compras/ordenes-compra/:id/recepciones/:recepcionId/reemitir-evento',
+  requireRoles('procurement', 'admin'),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId, proyectoId, userId } = req.securityContext;
+      const { id, recepcionId } = req.params;
+      const fila = await createTenantContext({ tenantId, proyectoId, userId }, async (prisma) => {
+        const existente = await prisma.outboxEvento.findFirst({
+          where: { tenant_id: tenantId, proyecto_id: proyectoId, orden_id: id, recepcion_id: recepcionId },
+        });
+        if (!existente) return null;
+        let payload = existente.payload as Record<string, any>;
+        // Si el payload guardado está incompleto se reconstruye SOLO con datos persistidos; si aún faltan datos,
+        // no se reemite (seguiría inválido): la fila permanece retenida con su causa.
+        if (problemasDePayload(payload).length > 0) {
+          try {
+            payload = await reconstruirPayloadRecepcion(prisma, {
+              tenantId, proyectoId, ordenId: id, recepcionId, eventId: existente.id_evento,
+              occurredAt: payload?.occurred_at, estadoOc: payload?.estado_oc_resultante,
+            }) as Record<string, any>;
+          } catch (e: any) {
+            if (e instanceof SnapshotIncompletoError) return { incompleto: e.message } as const;
+            throw e;
+          }
+        }
+        return prisma.outboxEvento.update({
+          where: { id_evento: existente.id_evento },
+          data: { payload: payload as any, estado: 'PENDIENTE', intentos: 0, proximo_intento_en: new Date(), ultimo_error: null, publicado_en: null },
+        });
+      });
+      if (!fila) return void res.status(404).json({ success: false, message: 'Evento de la recepción no encontrado.' });
+      if ('incompleto' in fila) {
+        return void res.status(409).json({ success: false, error: 'SNAPSHOT_INCOMPLETO', message: fila.incompleto });
+      }
+      logInfo(req, 'compras', 'compras.outbox.reemision', 'Evento de recepción reemitido', { event_id: fila.id_evento, recepcion_id: recepcionId });
+      res.json({ success: true, data: { event_id: fila.id_evento, estado: fila.estado } });
+    } catch (error: any) {
+      logError(req, 'compras', 'compras.outbox.reemision.error', 'Error al reemitir evento', { error_message: error.message });
       res.status(500).json({ success: false, message: error.message });
     }
   }
@@ -1925,7 +2044,7 @@ app.post('/api/v1/compras/proveedores', requireRoles('procurement', 'admin'), as
     logInfo(req, 'compras', 'compras.proveedor.creado', 'Proveedor creado', { proveedor_id: data.id_proveedor });
     res.status(201).json({ success: true, data });
   } catch (error: any) {
-    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe un proveedor con ese RFC para este tenant.' });
+    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe un proveedor con ese RFC (puede estar archivado; actívalo desde "Mostrar archivados").' });
     logError(req, 'compras', 'compras.proveedor.crear.error', 'Error al crear proveedor', { error_message: error.message });
     res.status(500).json({ success: false, message: 'Error al crear el proveedor.' });
   }
@@ -2068,7 +2187,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     const { tenantId, proyectoId, userId } = req.securityContext;
     const proveedorId = req.params.id;
     const {
-      razon_social, email_contacto, telefono, estatus,
+      rfc_tax_id, razon_social, email_contacto, telefono, estatus,
       ciudad, tipo_ubicacion, entrega_en_sitio,
       estatus_credito, limite_credito, ofrece_credito, dias_credito,
       tipo_proveedor, calificacion_desempeno,
@@ -2077,6 +2196,12 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     if (calificacion_desempeno !== undefined && calificacion_desempeno !== null &&
         (Number(calificacion_desempeno) < 0 || Number(calificacion_desempeno) > 5)) {
       return void res.status(400).json({ success: false, message: 'calificacion_desempeno debe estar entre 0.00 y 5.00.' });
+    }
+    if (rfc_tax_id !== undefined && (typeof rfc_tax_id !== 'string' || !rfc_tax_id.trim())) {
+      return void res.status(400).json({ success: false, message: 'rfc_tax_id no puede estar vacío.' });
+    }
+    if (razon_social !== undefined && (typeof razon_social !== 'string' || !razon_social.trim())) {
+      return void res.status(400).json({ success: false, message: 'razon_social no puede estar vacía.' });
     }
     if (!parseOrRespond(longitudProveedorSchema, req.body, res)) return;
 
@@ -2089,6 +2214,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
         return prisma.proveedor.update({
           where: { id_proveedor: proveedorId },
           data: {
+            ...(rfc_tax_id !== undefined && { rfc_tax_id: rfc_tax_id.trim().toUpperCase() }),
             ...(razon_social !== undefined && { razon_social: razon_social.trim() }),
             ...(email_contacto !== undefined && { email_contacto }),
             ...(telefono !== undefined && { telefono }),
@@ -2110,6 +2236,7 @@ app.put('/api/v1/compras/proveedores/:id', requireRoles('procurement', 'admin'),
     logInfo(req, 'compras', 'compras.proveedor.actualizado', 'Proveedor actualizado', { proveedor_id: proveedorId });
     res.json({ success: true, data });
   } catch (error: any) {
+    if (error.code === 'P2002') return void res.status(409).json({ success: false, message: 'Ya existe otro proveedor con ese RFC (puede estar archivado).' });
     const status = error.status ?? 500;
     logError(req, 'compras', 'compras.proveedor.actualizar.error', 'Error al actualizar proveedor', { error_message: error.message });
     res.status(status).json({ success: false, message: status === 500 ? 'Error al actualizar el proveedor.' : error.message });
@@ -3002,6 +3129,12 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
       advertencias.push(`Partida al límite — disponible: $${saldoPartidaGT.monto_disponible.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`);
     }
 
+    // Snapshot de los insumos de catálogo para conservarlo en cada renglón de la OC. Si el catálogo no responde, la OC
+    // se crea igual (como el resto de las integraciones B2B de este flujo) y el snapshot se completará en la primera
+    // recepción o esta se rechazará antes del commit.
+    const hayCatalogo = [...loteData.grupos.values()].some((g: any) => g.detalles.some((d: any) => d.insumo_id));
+    const catalogoOc = hayCatalogo ? await resolverSnapshotInsumos(req) : new Map<string, SnapshotInsumo>();
+
     for (const [proveedorId, grupo] of loteData.grupos) {
       idx++;
       const codigoOC = `OC-AUTO-${timestamp}-${idx}`;
@@ -3036,13 +3169,18 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
                   detalle_req_id: d.insumo_id ? null : detailReqId,
                   descripcion_libre: reqItem?.descripcion_libre ?? null,
                   unidad_libre: reqItem?.unidad_libre ?? null,
+                  ...(d.insumo_id && catalogoOc.get(d.insumo_id) ? (() => {
+                    const snap = catalogoOc.get(d.insumo_id)!;
+                    return { clave_snapshot: snap.clave, descripcion_snapshot: snap.descripcion, unidad_snapshot: snap.unidad, categoria_snapshot: snap.categoria };
+                  })() : {}),
                   cantidad,
                   precio_unitario: precioUnitario,
                   importe: cantidad * precioUnitario,
                 };
               })
             }
-          }
+          },
+          include: { proveedor: { select: { razon_social: true } } },
         })
       );
 
@@ -3123,6 +3261,8 @@ app.post('/api/v1/compras/comparativas/:id/convertir-oc', requireRoles('admin', 
               codigo:         oc.codigo,
               total:          oc.total.toNumber(),
               proveedor_id:   oc.proveedor_id,
+              // Aditivo (openspec: oc-creada-con-nombre-proveedor): Finanzas lo guarda en ocs_por_pagar.
+              proveedor_nombre: oc.proveedor?.razon_social ?? null,
               proyecto_id:    proyectoId,
               requisicion_id: loteData.requisicionId || null,
               concepto_id:    loteData.conceptoId   || null,
@@ -4485,6 +4625,29 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', module: 'compras', timestamp: new Date().toISOString() });
 });
 
+// /ready informa si las dependencias responden. No se usa como healthcheck de reinicio.
+// `outbox_dispatcher: 'disabled'` es un estado intencional (COMPRAS_OUTBOX_DISPATCHER no es `on`) y NO vuelve el servicio
+// no listo; `error` (despachador encendido cuya última tanda falló) sí.
+app.get('/ready', async (_req: Request, res: Response) => {
+  const despachador = estadoDespachadorOutbox();
+  const checks: { database: 'ok' | 'error'; event_bus: 'ok' | 'error'; outbox_dispatcher: 'ok' | 'starting' | 'disabled' | 'error' } =
+    { database: 'ok', event_bus: 'ok', outbox_dispatcher: despachador.estado };
+  try {
+    await basePrisma.$queryRaw`SELECT 1`;
+  } catch {
+    checks.database = 'error';
+  }
+  if (!eventBus.isReady()) checks.event_bus = 'error';
+  const ready = checks.database === 'ok' && checks.event_bus === 'ok' && despachador.estado !== 'error';
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'not_ready',
+    service: 'compras',
+    checks,
+    outbox_dispatcher: despachador,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.post('/api/v1/compras/ordenes-compra/:id/cancelar', requireRoles('admin', 'superintendent', 'procurement'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -4782,13 +4945,18 @@ export async function handleFondosComprometidosEvent(event: BocamEvent): Promise
     referencia_oc_id,
     referencia_oc_codigo,
     presupuesto_id,
+    movimiento_id,
+    monto_comprometido,
   } = event.payload as {
     referencia_oc_id?: string;
     referencia_oc_codigo?: string;
     presupuesto_id?: string;
+    movimiento_id?: string;
+    monto_comprometido?: number;
   };
 
-  if (!referencia_oc_id || !referencia_oc_codigo || !presupuesto_id) {
+  // Un compromiso confirmado por Finanzas siempre trae el movimiento registrado y un monto positivo.
+  if (!referencia_oc_id || !referencia_oc_codigo || !presupuesto_id || !movimiento_id || !(Number(monto_comprometido) > 0)) {
     console.error(JSON.stringify({
       action: 'compras.event.finanzas.fondos_comprometidos.invalid_payload',
       event_type: event.event_type,
@@ -4801,130 +4969,63 @@ export async function handleFondosComprometidosEvent(event: BocamEvent): Promise
     return;
   }
 
-  type FondosComprometidosLoaded = {
-    oc: Awaited<ReturnType<PrismaClient['ordenCompra']['findUnique']>>;
+  const actions = {
+    notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
+    idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
+    applied: 'compras.event.finanzas.fondos_comprometidos.applied',
+  };
+  const logContext = {
+    eventType: event.event_type,
+    correlationId: event.context.correlation_id,
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
   };
 
-  type FondosComprometidosResult =
-    | {
-        status: 'oc_not_found';
-      }
-    | {
-        status: 'idempotent';
-        oc_codigo: string;
-      }
-    | {
-        status: 'applied';
-        oc_codigo: string;
-      };
-
-  const result = await applyTerminalMutationInContext<
-    { tenantId: string; proyectoId: string; userId: string },
-    PrismaClient,
-    FondosComprometidosLoaded,
-    { status: 'oc_not_found' },
-    { status: 'idempotent'; oc_codigo: string },
-    { status: 'applied'; oc_codigo: string }
-  >({
-    context: {
+  // Transición atómica (UPDATE ... WHERE id AND estado IN lista blanca): un evento tardío nunca resucita una OC
+  // cancelada, en recepción o recibida. Ver ./oc-estados (matriz de transiciones).
+  const transicion = TRANSICIONES_EVENTO_FINANZAS.fondos_comprometidos;
+  const resultado = await createTenantContext(
+    {
       tenantId: event.context.tenant_id,
       proyectoId: event.context.proyecto_id,
       userId: event.context.user_id,
     },
-    runInContext: createTenantContext,
-    load: async (prisma) => {
-      const oc = await prisma.ordenCompra.findUnique({
-        where: { id_orden: referencia_oc_id },
-      });
-
-      return { oc };
-    },
-    notFoundResult: async (loaded) => {
-      if (loaded.oc) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'not_found',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
-          applied: 'compras.event.finanzas.fondos_comprometidos.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-        },
-      });
-
-      return { status: 'oc_not_found' };
-    },
-    idempotentResult: async (loaded) => {
-      if (!loaded.oc || loaded.oc.estado !== OC_STATUS.EMITIDA) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'idempotent',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
-          applied: 'compras.event.finanzas.fondos_comprometidos.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-          oc_codigo: loaded.oc.codigo,
-        },
-      });
-
-      return {
-        status: 'idempotent',
-        oc_codigo: loaded.oc.codigo,
-      };
-    },
-    apply: async (loaded, prisma) => {
-      await prisma.ordenCompra.update({
-        where: { id_orden: referencia_oc_id },
-        data: { estado: OC_STATUS.EMITIDA },
-      });
-
-      return {
-        status: 'applied',
-        oc_codigo: loaded.oc!.codigo,
-      };
-    },
-  });
-
-  if (result.status === 'applied') {
-    logTerminalState({
-      terminalState: 'applied',
-      actions: {
-        notFound: 'compras.event.finanzas.fondos_comprometidos.oc_not_found',
-        idempotent: 'compras.event.finanzas.fondos_comprometidos.idempotent',
-        applied: 'compras.event.finanzas.fondos_comprometidos.applied',
-      },
-      context: {
-        eventType: event.event_type,
-        correlationId: event.context.correlation_id,
+    async (prisma) => {
+      const t = await transicionarEstadoOc(prisma as any, {
+        ocId: referencia_oc_id,
         tenantId: event.context.tenant_id,
         proyectoId: event.context.proyecto_id,
-      },
-      extras: {
-        referencia_oc_id,
-        oc_codigo: result.oc_codigo,
-      },
-    });
+        destino: transicion.destino,
+        desde: transicion.desde,
+      });
+      if (t.resultado === 'aplicada') {
+        // Si la OC venía de ERROR_FINANZAS, la alerta de error deja de estar vigente (misma transacción).
+        await prisma.alertaOcError.updateMany({
+          where: { tenant_id: event.context.tenant_id, oc_id: referencia_oc_id },
+          data: { resuelta: true },
+        });
+      }
+      return t;
+    }
+  );
+
+  if (resultado.resultado === 'oc_no_encontrada') {
+    logTerminalState({ terminalState: 'not_found', actions, context: logContext, extras: { referencia_oc_id } });
+  } else if (resultado.resultado === 'aplicada') {
+    logTerminalState({ terminalState: 'applied', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else if (resultado.estadoActual === transicion.destino) {
+    logTerminalState({ terminalState: 'idempotent', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else {
+    // No-op: el estado actual no admite la transición. Se registra sin modificar nada.
+    console.warn(JSON.stringify({
+      action: 'compras.event.finanzas.fondos_comprometidos.no_op_estado',
+      event_type: event.event_type,
+      correlation_id: event.context.correlation_id,
+      tenant_id: event.context.tenant_id,
+      proyecto_id: event.context.proyecto_id,
+      referencia_oc_id,
+      estado_actual: resultado.estadoActual,
+    }));
   }
 }
 
@@ -4952,130 +5053,54 @@ export async function handleFondosLiberadosEvent(event: BocamEvent): Promise<voi
     return;
   }
 
-  type FondosLiberadosLoaded = {
-    oc: Awaited<ReturnType<PrismaClient['ordenCompra']['findUnique']>>;
+  const actions = {
+    notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
+    idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
+    applied: 'compras.event.finanzas.fondos_liberados.applied',
+  };
+  const logContext = {
+    eventType: event.event_type,
+    correlationId: event.context.correlation_id,
+    tenantId: event.context.tenant_id,
+    proyectoId: event.context.proyecto_id,
   };
 
-  type FondosLiberadosResult =
-    | {
-        status: 'oc_not_found';
-      }
-    | {
-        status: 'idempotent';
-        oc_codigo: string;
-      }
-    | {
-        status: 'applied';
-        oc_codigo: string;
-      };
-
-  const result = await applyTerminalMutationInContext<
-    { tenantId: string; proyectoId: string; userId: string },
-    PrismaClient,
-    FondosLiberadosLoaded,
-    { status: 'oc_not_found' },
-    { status: 'idempotent'; oc_codigo: string },
-    { status: 'applied'; oc_codigo: string }
-  >({
-    context: {
+  // El flujo real de cancelación (POST ordenes-compra/:id/cancelar y reconciliar-finanzas) deja la OC en
+  // CANCELACION_PENDIENTE ANTES de pedir la liberación a Finanzas. Solo ese estado pasa a CANCELADA; cualquier otro
+  // (EMITIDA, ERROR_FINANZAS, en recepción, recibida...) es un no-op. La transición es una actualización condicional
+  // atómica y este handler no tiene más efectos secundarios que el cambio de estado.
+  const transicion = TRANSICIONES_EVENTO_FINANZAS.fondos_liberados;
+  const resultado = await createTenantContext(
+    {
       tenantId: event.context.tenant_id,
       proyectoId: event.context.proyecto_id,
       userId: event.context.user_id,
     },
-    runInContext: createTenantContext,
-    load: async (prisma) => {
-      const oc = await prisma.ordenCompra.findUnique({
-        where: { id_orden: referencia_oc_id },
-      });
+    async (prisma) => transicionarEstadoOc(prisma as any, {
+      ocId: referencia_oc_id,
+      tenantId: event.context.tenant_id,
+      proyectoId: event.context.proyecto_id,
+      destino: transicion.destino,
+      desde: transicion.desde,
+    })
+  );
 
-      return { oc };
-    },
-    notFoundResult: async (loaded) => {
-      if (loaded.oc) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'not_found',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
-          applied: 'compras.event.finanzas.fondos_liberados.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-        },
-      });
-
-      return { status: 'oc_not_found' };
-    },
-    idempotentResult: async (loaded) => {
-      if (!loaded.oc || loaded.oc.estado !== OC_STATUS.CANCELADA) {
-        return null;
-      }
-
-      logTerminalState({
-        terminalState: 'idempotent',
-        actions: {
-          notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
-          idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
-          applied: 'compras.event.finanzas.fondos_liberados.applied',
-        },
-        context: {
-          eventType: event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId: event.context.tenant_id,
-          proyectoId: event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-          oc_codigo: loaded.oc.codigo,
-        },
-      });
-
-      return {
-        status: 'idempotent',
-        oc_codigo: loaded.oc.codigo,
-      };
-    },
-    apply: async (loaded, prisma) => {
-      await prisma.ordenCompra.update({
-        where: { id_orden: referencia_oc_id },
-        data: { estado: OC_STATUS.CANCELADA },
-      });
-
-      return {
-        status: 'applied',
-        oc_codigo: loaded.oc!.codigo,
-      };
-    },
-  });
-
-  if (result.status === 'applied') {
-    logTerminalState({
-      terminalState: 'applied',
-      actions: {
-        notFound: 'compras.event.finanzas.fondos_liberados.oc_not_found',
-        idempotent: 'compras.event.finanzas.fondos_liberados.idempotent',
-        applied: 'compras.event.finanzas.fondos_liberados.applied',
-      },
-      context: {
-        eventType: event.event_type,
-        correlationId: event.context.correlation_id,
-        tenantId: event.context.tenant_id,
-        proyectoId: event.context.proyecto_id,
-      },
-      extras: {
-        referencia_oc_id,
-        oc_codigo: result.oc_codigo,
-      },
-    });
+  if (resultado.resultado === 'oc_no_encontrada') {
+    logTerminalState({ terminalState: 'not_found', actions, context: logContext, extras: { referencia_oc_id } });
+  } else if (resultado.resultado === 'aplicada') {
+    logTerminalState({ terminalState: 'applied', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else if (resultado.estadoActual === transicion.destino) {
+    logTerminalState({ terminalState: 'idempotent', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+  } else {
+    console.warn(JSON.stringify({
+      action: 'compras.event.finanzas.fondos_liberados.no_op_estado',
+      event_type: event.event_type,
+      correlation_id: event.context.correlation_id,
+      tenant_id: event.context.tenant_id,
+      proyecto_id: event.context.proyecto_id,
+      referencia_oc_id,
+      estado_actual: resultado.estadoActual,
+    }));
   }
 }
 
@@ -5103,70 +5128,44 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
     return;
   }
 
-  await createTenantContext(
+  const actions = {
+    notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
+    idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
+    applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
+  };
+  const logContext = {
+    eventType:     event.event_type,
+    correlationId: event.context.correlation_id,
+    tenantId:      event.context.tenant_id,
+    proyectoId:    event.context.proyecto_id,
+  };
+
+  // Transición atómica: solo una OC pendiente de confirmación pasa a ERROR_FINANZAS. Una OC ya emitida, en
+  // recepción, recibida o cancelada NO se degrada por un evento tardío. La alerta se crea en la misma transacción
+  // y solo cuando la transición se aplicó.
+  const transicion = TRANSICIONES_EVENTO_FINANZAS.presupuesto_insuficiente;
+  const resultado = await createTenantContext(
     {
       tenantId: event.context.tenant_id,
       proyectoId: event.context.proyecto_id,
       userId: event.context.user_id,
     },
     async (prisma) => {
-      const oc = await prisma.ordenCompra.findUnique({
-        where: { id_orden: referencia_oc_id },
+      const t = await transicionarEstadoOc(prisma as any, {
+        ocId: referencia_oc_id,
+        tenantId: event.context.tenant_id,
+        proyectoId: event.context.proyecto_id,
+        destino: transicion.destino,
+        desde: transicion.desde,
       });
-
-      if (!oc) {
-        logTerminalState({
-          terminalState: 'not_found',
-          actions: {
-            notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
-            idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
-            applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
-          },
-          context: {
-            eventType: event.event_type,
-            correlationId: event.context.correlation_id,
-            tenantId: event.context.tenant_id,
-            proyectoId: event.context.proyecto_id,
-          },
-          extras: {
-            referencia_oc_id,
-          },
-        });
-        return;
-      }
-
-      if (oc.estado === OC_STATUS.ERROR_FINANZAS) {
-        logTerminalState({
-          terminalState: 'idempotent',
-          actions: {
-            notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
-            idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
-            applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
-          },
-          context: {
-            eventType: event.event_type,
-            correlationId: event.context.correlation_id,
-            tenantId: event.context.tenant_id,
-            proyectoId: event.context.proyecto_id,
-          },
-          extras: {
-            referencia_oc_id,
-            oc_codigo: oc.codigo,
-          },
-        });
-        return;
-      }
-
-      await prisma.ordenCompra.update({
-        where: { id_orden: referencia_oc_id },
-        data: { estado: OC_STATUS.ERROR_FINANZAS },
-      });
+      if (t.resultado !== 'aplicada') return t;
 
       // ── [ALERTA] 3.1 Persistir alerta en BD (mismo contexto RLS, idempotente) ──────
       await prisma.alertaOcError.upsert({
         where: { tenant_id_oc_id: { tenant_id: event.context.tenant_id, oc_id: referencia_oc_id } },
         update: {
           error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
+          resuelta: false,
           updated_at: new Date(),
         },
         create: {
@@ -5178,36 +5177,44 @@ export async function handlePresupuestoInsuficienteEvent(event: BocamEvent): Pro
           error_message: 'Presupuesto insuficiente — evento asíncrono de Finanzas',
         },
       });
-      console.log(JSON.stringify({
-        action:     'compras.oc_error_finanzas.alerta_creada',
-        path:       'async',
-        oc_id:      referencia_oc_id,
-        tenant_id:  event.context.tenant_id,
-        proyecto_id: event.context.proyecto_id,
-      }));
-
-      logTerminalState({
-        terminalState: 'applied',
-        actions: {
-          notFound: 'compras.event.finanzas.presupuesto_insuficiente.oc_not_found',
-          idempotent: 'compras.event.finanzas.presupuesto_insuficiente.idempotent',
-          applied: 'compras.event.finanzas.presupuesto_insuficiente.applied',
-        },
-        context: {
-          eventType:     event.event_type,
-          correlationId: event.context.correlation_id,
-          tenantId:      event.context.tenant_id,
-          proyectoId:    event.context.proyecto_id,
-        },
-        extras: {
-          referencia_oc_id,
-          oc_codigo: oc.codigo,
-        },
-      });
+      return t;
     }
   );
 
+  if (resultado.resultado === 'oc_no_encontrada') {
+    logTerminalState({ terminalState: 'not_found', actions, context: logContext, extras: { referencia_oc_id } });
+    return;
+  }
+
+  if (resultado.resultado === 'no_op') {
+    if (resultado.estadoActual === transicion.destino) {
+      logTerminalState({ terminalState: 'idempotent', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+    } else {
+      // No-op: el estado actual no admite la transición (p. ej. OC ya EMITIDA). No se crea alerta ni se publica nada.
+      console.warn(JSON.stringify({
+        action: 'compras.event.finanzas.presupuesto_insuficiente.no_op_estado',
+        event_type: event.event_type,
+        correlation_id: event.context.correlation_id,
+        tenant_id: event.context.tenant_id,
+        proyecto_id: event.context.proyecto_id,
+        referencia_oc_id,
+        estado_actual: resultado.estadoActual,
+      }));
+    }
+    return;
+  }
+
+  console.log(JSON.stringify({
+    action:     'compras.oc_error_finanzas.alerta_creada',
+    path:       'async',
+    oc_id:      referencia_oc_id,
+    tenant_id:  event.context.tenant_id,
+    proyecto_id: event.context.proyecto_id,
+  }));
+  logTerminalState({ terminalState: 'applied', actions, context: logContext, extras: { referencia_oc_id, oc_codigo: referencia_oc_codigo } });
+
   // ── [ALERTA] 3.2 Publicar evento al bus (best-effort, fuera del contexto prisma) ──
+  // Solo cuando la transición se aplicó: un no-op no anuncia un error que la OC no tiene.
   try {
     await eventBus.publish({
       event_type: 'compras.oc_error_finanzas',
@@ -5404,6 +5411,14 @@ export async function startServer() {
   await eventBus.subscribe('finanzas.oc_pagada_parcial', handleOcPagadaParcialEvent);
   await eventBus.subscribe('gerencia_tecnica.transferencia_partida_aprobada', handleTransferenciaPartidaAprobadaEvent);
   await eventBus.subscribe('auth.centro_costos_creado', handleCentroCostosCreadoEvent);
+  // Despachador del outbox: APAGADO por defecto. Solo COMPRAS_OUTBOX_DISPATCHER=on (valor exacto) lo enciende; ausente,
+  // vacío, `off` o inválido registran `dispatcher disabled`. El outbox sigue guardando eventos, pero no se publican.
+  // Encendido, publica con confirmación del broker y, al arrancar, retoma lo pendiente tras un reinicio.
+  configurarDespachadorOutbox(eventBus, {
+    valor: process.env[VARIABLE_DESPACHADOR],
+    intervaloMs: Number(process.env.COMPRAS_OUTBOX_INTERVALO_MS ?? 5000),
+    maxAttempts: Number(process.env.COMPRAS_OUTBOX_MAX_INTENTOS ?? 10),
+  });
   console.log('[Compras] Eventos: finanzas.fondos_*, finanzas.oc_pagada_*, gerencia_tecnica.transferencia_partida_aprobada, auth.centro_costos_creado');
   });
 }

@@ -74,6 +74,24 @@ async function seedPago(
     },
   });
 
+  // El comprometido de la semilla se respalda con su movimiento COMPROMISO (misma referencia que el pago):
+  // Finanzas devenga contra ese compromiso al pagar (openspec: corregir-ejecucion-programa-pagos).
+  const referenciaId = randomUUID();
+  await finanzasPrisma.movimientoPresupuestal.create({
+    data: {
+      tenant_id: tenantId,
+      proyecto_id: proyectoId,
+      presupuesto_id: presupuesto.id_presupuesto,
+      tipo: 'COMPROMISO',
+      concepto: `Compromiso ${label}`,
+      monto,
+      referencia_modulo: 'control-obra',
+      referencia_entidad: 'Estimacion',
+      referencia_id: referenciaId,
+      usuario_id: randomUUID(),
+    },
+  });
+
   return await finanzasPrisma.programaPagos.create({
     data: {
       tenant_id: tenantId,
@@ -86,12 +104,12 @@ async function seedPago(
       estado: 'PENDIENTE',
       referencia_modulo: 'control-obra',
       referencia_entidad: 'Estimacion',
-      referencia_id: randomUUID(),
+      referencia_id: referenciaId,
     },
   });
 }
 
-async function pagar(finanzasBaseUrl: string, token: string, pagoId: string, referenciaBancaria: string) {
+async function pagar(finanzasBaseUrl: string, token: string, pagoId: string, referenciaBancaria: string, cuentaId: string) {
   const response = await fetch(`${finanzasBaseUrl}/api/v1/finanzas/pagos/${pagoId}/pagar`, {
     method: 'PATCH',
     headers: {
@@ -99,6 +117,7 @@ async function pagar(finanzasBaseUrl: string, token: string, pagoId: string, ref
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      cuenta_id: cuentaId,
       referencia_bancaria: referenciaBancaria,
       metodo_pago: 'TRANSFERENCIA',
       banco: 'BBVA',
@@ -175,6 +194,10 @@ async function main() {
   const bankEvents: BocamEvent<ConciliacionBancariaPayload>[] = [];
 
   try {
+    // Finanzas exige la cuenta de la que sale el pago (openspec: corregir-ejecucion-programa-pagos).
+    const cuenta = await finanzasPrisma.cuentaBancaria.create({
+      data: { tenant_id: tenantId, proyecto_id: null, banco: 'BBVA', numero_cuenta: `CTA-${Date.now()}`.slice(0, 20), alias: 'Conciliación', saldo: 1_000_000 },
+    });
     const pago1 = await seedPago(tenantId, proyectoId, 'LOTE-A', pago1Monto);
     const pago2 = await seedPago(tenantId, proyectoId, 'LOTE-B', pago2Monto);
 
@@ -200,8 +223,8 @@ async function main() {
       limiteAprobacion: 999999999,
     });
 
-    await pagar(finanzasStarted.baseUrl, token, pago1.id_pago, pago1Ref);
-    await pagar(finanzasStarted.baseUrl, token, pago2.id_pago, pago2Ref);
+    await pagar(finanzasStarted.baseUrl, token, pago1.id_pago, pago1Ref, cuenta.id_cuenta);
+    await pagar(finanzasStarted.baseUrl, token, pago2.id_pago, pago2Ref, cuenta.id_cuenta);
 
     let asiento1Id = '';
     let asiento2Id = '';

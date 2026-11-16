@@ -54,6 +54,9 @@ ALTER TABLE activos FORCE ROW LEVEL SECURITY;
 ALTER TABLE traspasos_activos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE traspasos_activos FORCE ROW LEVEL SECURITY;
 
+ALTER TABLE eventos_procesados ENABLE ROW LEVEL SECURITY;
+ALTER TABLE eventos_procesados FORCE ROW LEVEL SECURITY;
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3. POLÍTICAS DE AISLAMIENTO
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -101,6 +104,16 @@ CREATE POLICY rls_traspasos_activos_context ON traspasos_activos
     USING (tenant_id = current_tenant_id())
     WITH CHECK (tenant_id = current_tenant_id());
 
+-- ─── EVENTOS PROCESADOS (tenant + proyecto) ─────────────────────────────────
+-- Idempotencia por event_id de los eventos del bus (change
+-- fix-ingresos-almacen-por-recepcion-oc). El handler la escribe dentro de
+-- createTenantContext con el tenant y proyecto del evento.
+DROP POLICY IF EXISTS rls_eventos_procesados_context ON eventos_procesados;
+CREATE POLICY rls_eventos_procesados_context ON eventos_procesados
+    FOR ALL
+    USING (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id())
+    WITH CHECK (tenant_id = current_tenant_id() AND proyecto_id = current_proyecto_id());
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. COMENTARIOS DE AUDITORÍA
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -113,3 +126,5 @@ COMMENT ON POLICY rls_activos_context ON activos IS
     'Aislamiento Multi-Tenant (cross-proyecto por diseño). Módulo: Almacén.';
 COMMENT ON POLICY rls_traspasos_activos_context ON traspasos_activos IS
     'Aislamiento Multi-Tenant (cross-proyecto por diseño). Módulo: Almacén.';
+COMMENT ON POLICY rls_eventos_procesados_context ON eventos_procesados IS
+    'Aislamiento Multi-Tenant + Multi-Proyecto. Módulo: Almacén.';

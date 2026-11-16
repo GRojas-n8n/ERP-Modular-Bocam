@@ -12,9 +12,21 @@
     "test:integration:compras-events": "node -r ts-node/register/transpile-only test/integration/compras.events.integration.test.ts",
     "test:integration:control-obra-avance": "node -r ts-node/register/transpile-only test/integration/control-obra.avance-validado.integration.test.ts",
     "test:integration:control-obra-event": "node -r ts-node/register/transpile-only test/integration/control-obra.event.integration.test.ts",
+    "test:integration:compromiso-oc-concurrencia": "node -r ts-node/register/transpile-only test/integration/compromiso-oc-concurrencia.integration.test.ts",
+    "test:integration:compromiso-oc-rls": "node -r ts-node/register/transpile-only test/integration/compromiso-oc-rls.integration.test.ts",
+    "test:integration:outbox-eventos": "node -r ts-node/register/transpile-only test/integration/outbox-eventos.integration.test.ts",
+    "test:integration:outbox-eventos-rls-ready": "node -r ts-node/register/transpile-only test/integration/outbox-eventos-rls-ready.integration.test.ts",
+    "test:integration:outbox-eventos-migracion": "node -r ts-node/register/transpile-only test/integration/outbox-eventos-migracion.integration.test.ts",
+    "test:integration:compromiso-oc-migracion": "node -r ts-node/register/transpile-only test/integration/compromiso-oc-migracion.integration.test.ts",
     "test:integration:event-contracts": "node -r ts-node/register/transpile-only test/integration/event-contracts.integration.test.ts",
     "test:e2e:seguridad": "node -r ts-node/register/transpile-only test/e2e/seguridad.e2e.test.ts",
-    "test:e2e:idempotencia": "node -r ts-node/register/transpile-only test/e2e/idempotencia.e2e.test.ts"
+    "test:e2e:idempotencia": "node -r ts-node/register/transpile-only test/e2e/idempotencia.e2e.test.ts",
+    "test:integration:egreso-oc": "node -r ts-node/register/transpile-only test/integration/egreso-oc.integration.test.ts",
+    "test:integration:presupuesto-blindado": "node -r ts-node/register/transpile-only test/integration/presupuesto-blindado.integration.test.ts",
+    "test:integration:programa-pagos": "node -r ts-node/register/transpile-only test/integration/programa-pagos.integration.test.ts",
+    "test:integration:cuentas-por-cobrar": "node -r ts-node/register/transpile-only test/integration/cuentas-por-cobrar.integration.test.ts",
+    "test:integration:api-dashboard": "node -r ts-node/register/transpile-only test/integration/api-dashboard.integration.test.ts",
+    "test:integration:nomina-por-pagar": "node -r ts-node/register/transpile-only test/integration/nomina-por-pagar.integration.test.ts"
   },
   "dependencies": {
     "@bocam/rate-limiter": "^1.0.0",

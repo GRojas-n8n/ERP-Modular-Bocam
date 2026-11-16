@@ -29,6 +29,6 @@ export default defineConfig({
     // directamente con `node -r ts-node/register/transpile-only`, sin
     // describe/it — Vitest lo reporta como "No test suite found" si lo
     // recoge por su patrón *.test.ts por defecto.
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'test/smoke/**/*.unit.test.ts'],
   },
 })

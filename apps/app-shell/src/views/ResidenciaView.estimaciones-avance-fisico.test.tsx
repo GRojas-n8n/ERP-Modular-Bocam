@@ -228,6 +228,8 @@ describe('ResidenciaView — Crear estimación desde avances validados (5.11-5.1
     render(<ResidenciaView activeSubView="estimaciones" />);
     await screen.findByText('EST-2026-001');
 
+    // Los avances se agrupan por concepto: el detalle (con checkboxes) se expande.
+    fireEvent.click(await screen.findByRole('button', { name: /Ver detalle Cimentación de prueba/i }));
     const checkbox = await screen.findByRole('checkbox', { name: /CIM-001/i });
     fireEvent.click(checkbox);
     fireEvent.click(await screen.findByRole('button', { name: /Crear Estimación/i }));

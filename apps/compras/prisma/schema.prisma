@@ -230,6 +230,14 @@ model OrdenCompraItem {
   /// Snapshot de descripción/unidad para items de texto libre (insumo_id nulo).
   descripcion_libre String? @db.Text
   unidad_libre   String?  @db.VarChar(20)
+  /// Snapshot del insumo de catálogo (Gerencia Técnica) conservado en la OC: clave, descripción, unidad y
+  /// categoría. Nulo en OC anteriores o creadas sin que el catálogo respondiera; se completa en la primera
+  /// recepción o esta se rechaza antes del commit. El evento de recepción se arma solo con estos datos persistidos
+  /// (ver openspec/changes/fix-ingresos-almacen-por-recepcion-oc). Migración compatible: columnas opcionales.
+  clave_snapshot       String? @db.VarChar(50)
+  descripcion_snapshot String? @db.Text
+  unidad_snapshot      String? @db.VarChar(20)
+  categoria_snapshot   String? @db.VarChar(50)
   cantidad       Decimal  @db.Decimal(18, 4)
   precio_unitario Decimal @db.Decimal(18, 4)
   importe        Decimal  @db.Decimal(18, 2)
@@ -270,6 +278,30 @@ model RecepcionOCItem {
 
   @@index([tenant_id, recepcion_id])
   @@map("recepcion_oc_items")
+}
+
+// --- Outbox transaccional de eventos (change fix-ingresos-almacen-por-recepcion-oc) ---
+// Una fila por evento a publicar. Se escribe en la MISMA transacción que la recepción; un despachador la
+// publica con confirmación del broker y solo entonces la marca PUBLICADO. Estados: PENDIENTE | PUBLICADO | ERROR.
+model OutboxEvento {
+  id_evento          String    @id @db.Uuid // = event_id del evento publicado
+  tenant_id          String    @db.Uuid
+  proyecto_id        String    @db.Uuid
+  orden_id           String    @db.Uuid
+  recepcion_id       String    @db.Uuid
+  event_type         String    @db.VarChar(100)
+  event_version      Int       @default(1)
+  payload            Json
+  estado             String    @default("PENDIENTE") @db.VarChar(20)
+  intentos           Int       @default(0)
+  proximo_intento_en DateTime  @default(now())
+  ultimo_error       String?
+  created_at         DateTime  @default(now())
+  publicado_en       DateTime?
+
+  @@unique([tenant_id, recepcion_id], name: "uq_outbox_recepcion")
+  @@index([estado, proximo_intento_en])
+  @@map("outbox_eventos")
 }
 
 // --- Operativo: Cuadros Comparativos ---

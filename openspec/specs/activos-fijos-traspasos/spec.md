@@ -1,4 +1,10 @@
-## ADDED Requirements
+# activos-fijos-traspasos Specification
+
+## Purpose
+
+Define el traspaso de activos fijos entre proyectos y empleados: solicitud que deja el activo en traspaso, confirmación desde el proyecto destino, rechazo sin aplicar cambios e historial cronológico de las solicitudes.
+
+## Requirements
 
 ### Requirement: Un usuario de almacén SHALL poder solicitar el traspaso de proyecto y/o asignación de un activo
 El sistema SHALL permitir solicitar que un activo cambie de proyecto, de empleado asignado, o ambos a la vez, dejando el activo en `estado = EN_TRASPASO` y creando una solicitud `TraspasoActivo` en estado `PENDIENTE` — sin aplicar el cambio todavía.

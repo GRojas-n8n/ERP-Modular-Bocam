@@ -1,7 +1,10 @@
 # Spec: multi-oc-generacion
 
-## Requirements
+## Purpose
 
+Define la conversión de un cuadro comparativo aprobado por Gerencia Técnica en una Orden de Compra por proveedor: agrupación de los renglones ganadores, suficiencia financiera sobre el total del lote, códigos únicos, eventos, transición de la Requisición a COMPRADA y reconciliación de las OC en ERROR_FINANZAS.
+
+## Requirements
 ### Requirement: Conversión de cuadro APROBADO_GT en OCs agrupadas por proveedor
 Cuando un cuadro comparativo tiene estado `APROBADO_GT`, el endpoint `POST /comparativas/:id/convertir-oc` SHALL agrupar todos los `ComparativaDetalle` con `es_ganador=true` y `aprobacion_gt=APROBADO` por `proveedor_id`, y crear exactamente una `OrdenCompra` por cada grupo. Cada OC SHALL contener como items todos los renglones ganadores de ese proveedor con cantidades reales y precios unitarios correctos.
 

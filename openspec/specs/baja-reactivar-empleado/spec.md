@@ -1,4 +1,10 @@
-## ADDED Requirements
+# baja-reactivar-empleado Specification
+
+## Purpose
+
+Define cómo los roles personal_rh y admin reactivan a un Empleado dado de baja, y cómo la interfaz de Personal expone las acciones de baja y reactivación con confirmación previa.
+
+## Requirements
 
 ### Requirement: Un usuario personal_rh/admin SHALL poder reactivar un Empleado dado de baja
 El sistema SHALL exponer `PATCH /api/v1/personal/empleados/:id/reactivar`, restringido a roles `personal_rh` o `admin`, que revierte un empleado con `estado: 'BAJA'` a `estado: 'ACTIVO'` y limpia `fecha_baja` (`null`). La operación NO SHALL alterar ninguna otra información del empleado (asignaciones históricas, documentos, credencial, historial de nómina).

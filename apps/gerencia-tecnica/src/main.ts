@@ -27,7 +27,7 @@ import {
 } from './types';
 
 // ─── Importar middleware JWT compartido ──────────────────────────────────────
-import { createAuthMiddleware, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
+import { createAuthMiddleware, requireActiveProject, requireEnv, requireProjectAccess, requireRoles } from '../../../packages/auth-middleware/src';
 import { createRateLimiter } from '../../../packages/rate-limiter/src';
 import { initSentry, setupSentryExpressHandler } from '../../../packages/observability/src';
 import type { SecurityContext } from '../../../packages/auth-middleware/src';
@@ -65,6 +65,7 @@ app.use(createAuthMiddleware({
 }));
 app.use(createRateLimiter({ windowMs: 15 * 60 * 1000, max: 300, serviceName: 'gerencia-tecnica' }));
 app.use(requireProjectAccess());
+app.use(requireActiveProject());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // RUTAS: /api/v1/gerencia-tecnica/insumos
@@ -165,7 +166,7 @@ app.get('/api/v1/gerencia-tecnica/insumos/explosion', async (req: Request, res: 
 
 /**
  * GET /api/v1/gerencia-tecnica/presupuestos
- * Lista los presupuestos del tenant, opcionalmente filtrados por proyecto.
+ * Lista los presupuestos del proyecto activo.
  */
 app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Response) => {
   try {
@@ -176,13 +177,8 @@ app.get('/api/v1/gerencia-tecnica/presupuestos', async (req: Request, res: Respo
       proyecto_id: proyectoId,
     });
 
-    const whereClause: any = {};
-    if (proyectoId) {
-      whereClause.proyecto_id = proyectoId;
-    }
-
     const presupuestos = await db.presupuestoBase.findMany({
-      where: whereClause,
+      where: { proyecto_id: proyectoId },
       include: {
         conceptos: {
           orderBy: { clave: 'asc' },

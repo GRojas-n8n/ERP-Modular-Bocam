@@ -87,11 +87,30 @@ model MovimientoPresupuestal {
   notas          String?  @db.Text
 
   presupuesto PresupuestoAsignado @relation(fields: [presupuesto_id], references: [id_presupuesto], onDelete: Cascade)
+  // Además (no expresable en Prisma): índice único PARCIAL "uq_movimiento_oc_compromiso_liberacion" sobre
+  // (tenant_id, referencia_modulo, referencia_entidad, referencia_id, tipo) para COMPROMISO/LIBERACION de
+  // compras/OrdenCompra. Se crea en la migración 20260930120000_blindar_compromiso_oc.
 
   @@index([tenant_id, proyecto_id])
   @@index([tenant_id, presupuesto_id])
   @@index([referencia_id])
   @@map("movimientos_presupuestales")
+}
+
+// ─── Tombstone de cancelación de OC ─────────────────────────────────────────
+// Registra la cancelación de una OC cuya creación aún no se procesó (eventos fuera de orden), para que una
+// creación tardía no comprometa fondos. Única por (tenant, OC); inmutable y sin TTL. RLS forzado (ver migración).
+model OcCancelacionTombstone {
+  tenant_id   String   @db.Uuid
+  oc_id       String   @db.Uuid
+  proyecto_id String   @db.Uuid
+  oc_codigo   String?  @db.VarChar(50)
+  origen      String   @db.VarChar(30)
+  usuario_id  String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  @@id([tenant_id, oc_id])
+  @@map("oc_cancelaciones_tombstone")
 }
 
 // ─── Transaccional: Programa de Pagos ───────────────────────────────────────
@@ -221,4 +240,37 @@ model DetallePagoOC {
   @@index([oc_id])
   @@index([concepto_id])
   @@map("detalles_pago_oc")
+}
+
+// ─── Outbox transaccional de eventos (lote P1) ──────────────────────────────
+// Ver openspec/changes/hacer-confiables-publicadores-eventbus-criticos. Solo se escribe con FINANZAS_EVENT_MODE=outbox.
+// Además (no expresable en Prisma): CHECK de estado, RLS con despachador interno y las restricciones únicas de la
+// migración 20260930180000_outbox_eventos_finanzas. La aplicación accede por SQL en src/outbox-eventos.ts y
+// src/outbox-dispatcher.ts, no con este modelo.
+model OutboxEvento {
+  id_evento          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orden_global       BigInt    @default(autoincrement())
+  event_id           String    @db.Uuid
+  event_type         String    @db.VarChar(100)
+  event_version      Int       @default(1)
+  tenant_id          String    @db.Uuid
+  proyecto_id        String    @db.Uuid
+  aggregate_type     String    @db.VarChar(50)
+  aggregate_id       String    @db.Uuid
+  aggregate_seq      Int
+  usuario_id         String?   @db.Uuid
+  correlation_id     String?   @db.VarChar(100)
+  payload            Json
+  estado             String    @default("PENDIENTE") @db.VarChar(20)
+  intentos           Int       @default(0)
+  proximo_intento_en DateTime  @default(now()) @db.Timestamptz(3)
+  ultimo_error       String?
+  created_at         DateTime  @default(now()) @db.Timestamptz(3)
+  publicado_en       DateTime? @db.Timestamptz(3)
+
+  @@unique([tenant_id, event_id], map: "uq_outbox_finanzas_event")
+  @@unique([tenant_id, aggregate_type, aggregate_id, aggregate_seq], map: "uq_outbox_finanzas_agregado_seq")
+  @@unique([orden_global], map: "uq_outbox_finanzas_orden_global")
+  @@index([estado, proximo_intento_en], map: "idx_outbox_finanzas_estado_proximo")
+  @@map("outbox_eventos")
 }

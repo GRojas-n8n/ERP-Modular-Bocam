@@ -1,4 +1,10 @@
-## ADDED Requirements
+# validacion-longitud-proveedor Specification
+
+## Purpose
+
+Define la validación de longitud de los campos de texto de un Proveedor en el backend, con errores controlados que no exponen mensajes internos de Prisma o Postgres, y los límites maxLength equivalentes en el formulario de alta y edición.
+
+## Requirements
 
 ### Requirement: El backend SHALL validar la longitud de los campos de texto de un Proveedor antes de escribir a la base de datos
 `POST /api/v1/compras/proveedores` y `PUT /api/v1/compras/proveedores/:id` SHALL validar que cada campo de texto no exceda el límite de su columna (`rfc_tax_id` ≤ 20, `razon_social` ≤ 255, `email_contacto` ≤ 100, `telefono` ≤ 20, `ciudad` ≤ 100) antes de invocar `prisma.proveedor.create()`/`update()`. Un error de validación NO SHALL exponer el mensaje interno de Prisma/Postgres al cliente.

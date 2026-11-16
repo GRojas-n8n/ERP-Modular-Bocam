@@ -1704,7 +1704,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
             Nueva Requisicion
           </Button>
         )}
-        {activeTab === 'proveedores' && isProcurement && (
+        {activeTab === 'proveedores' && puedeImportarProveedores && (
           <div className="flex items-center gap-3">
             {puedeImportarProveedores && (
               <>
@@ -2401,7 +2401,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                 <div className="rounded-2xl border border-dashed border-border/50 p-12 text-center">
                   <IconShoppingCart className="mx-auto mb-3 h-10 w-10 text-muted-foreground/20" />
                   <p className="text-sm font-bold text-muted-foreground">Sin proveedores registrados</p>
-                  {isProcurement && <p className="mt-1 text-xs text-muted-foreground/70">Crea el primero con el botón "Nuevo Proveedor"</p>}
+                  {puedeImportarProveedores && <p className="mt-1 text-xs text-muted-foreground/70">Crea el primero con el botón "Nuevo Proveedor"</p>}
                 </div>
               ) : (
                 <TableScrollShadow className="rounded-2xl border border-border/50">
@@ -2413,7 +2413,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                         <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo</th>
                         <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Crédito</th>
                         <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Score</th>
-                        {isProcurement && <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones</th>}
+                        {puedeImportarProveedores && <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
@@ -2472,7 +2472,7 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                               <span className="text-[10px] text-muted-foreground/40">—</span>
                             )}
                           </td>
-                          {isProcurement && (
+                          {puedeImportarProveedores && (
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <button
@@ -4311,7 +4311,6 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
               maxLength={20}
               value={proveedorForm.rfc_tax_id}
               onChange={e => setProveedorForm(f => ({ ...f, rfc_tax_id: e.target.value }))}
-              disabled={!!editingProveedor}
             />
           </FormField>
           <FormField label="Razón Social" required>
@@ -4450,7 +4449,8 @@ export const ComprasView: React.FC<{ activeSubView?: string }> = ({ activeSubVie
                   }
                   setShowProveedorForm(false);
                 } catch (err: any) {
-                  notify({ title: err.response?.data?.message ?? 'Error al guardar proveedor', type: 'error' });
+                  const data = err.response?.data;
+                  notify({ title: data?.message ?? data?.error?.message ?? 'Error al guardar proveedor', type: 'error' });
                 } finally {
                   setFormLoading(false);
                 }

@@ -10,9 +10,7 @@ los usuarios de Finanzas del sistema, no un nombre en inglés inexistente.
 ## Requirements
 
 ### Requirement: Las acciones restringidas del módulo Finanzas SHALL verificar el rol real 'finanzas'
-Crear presupuesto, registrar movimiento presupuestal, transferir
-presupuesto entre partidas, programar pagos (individual y por lote) y
-marcar un pago como pagado SHALL verificar que `securityContext.roles`
+Crear presupuesto, registrar movimiento presupuestal, transferir presupuesto entre partidas, programar pagos (individual y por lote) y marcar un pago como pagado SHALL verificar que `securityContext.roles`
 incluya `'admin'`, `'superintendent'` o `'finanzas'` — el rol real
 asignado a los usuarios de Finanzas, no `'finance'`.
 

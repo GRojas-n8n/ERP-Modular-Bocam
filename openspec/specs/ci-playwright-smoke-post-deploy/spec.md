@@ -1,3 +1,10 @@
+# ci-playwright-smoke-post-deploy Specification
+
+## Purpose
+
+Define el smoke test de Playwright que se ejecuta contra producción tras cada deploy exitoso: cuándo se dispara, su configuración separada de la suite E2E local y el uso exclusivo de secrets para las credenciales.
+
+## Requirements
 ### Requirement: CI SHALL ejecutar un smoke test de Playwright contra producción tras cada deploy exitoso
 Tras un deploy exitoso al VPS, ya sea de frontend (`deploy-vps.yml`) o de backend (`deploy-vps-backend.yml`), el pipeline SHALL invocar un workflow reusable de Playwright que navegue a la URL real de producción, complete un login con credenciales provistas vía secrets, y verifique que el dashboard post-login renderiza contenido reconocible sin errores de consola no capturados.
 

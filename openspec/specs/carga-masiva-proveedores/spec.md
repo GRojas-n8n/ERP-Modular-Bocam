@@ -1,3 +1,9 @@
+# carga-masiva-proveedores Specification
+
+## Purpose
+
+Define la importación masiva de Proveedores desde CSV o Excel para los roles procurement y admin: validación por registro con las reglas del alta individual, reporte de errores por fila sin abortar el lote y rechazo de RFC duplicados dentro del archivo.
+
 ## Requirements
 
 ### Requirement: Un usuario procurement/admin SHALL poder importar Proveedores en lote desde CSV/Excel
